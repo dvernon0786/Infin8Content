@@ -102,9 +102,21 @@ User requested to install BMAD Method and initialize workflow tracking for the I
   - [x] Step 6: Innovation & novel patterns (5 primary innovations with validation)
   - [x] Step 7: SaaS B2B platform requirements (multi-tenant, RBAC, billing, integrations)
   - [x] Step 8: Project scoping & phased development (Phase 1: 12 weeks, Phase 2: 4 weeks)
-  - [x] Step 9: Functional requirements (129 FRs across 13 capability areas)
+  - [x] Step 9: Functional requirements (137 FRs - includes payment gating)
   - [x] Step 10: Non-functional requirements (42 NFRs across 9 quality categories)
   - [x] Step 11: PRD completion and workflow status update
+- [x] Update pricing model across all documents (2025-12-20, 23:42 AEDT)
+  - [x] Updated PRD with new pricing tiers (Starter $59/$89, Pro $175/$220, Agency $299/$399)
+  - [x] Updated Revenue Projections with new pricing calculations
+  - [x] Updated Product Brief pricing table and revenue model
+  - [x] Updated Client Email with new reseller pricing
+  - [x] Recalculated ARPU, LTV, MRR, and unit economics
+- [x] Implement paywall-first access model (2025-12-20, 23:42 AEDT)
+  - [x] Removed all free trial references from user journeys
+  - [x] Added "Access Control & Payment Model" section to PRD
+  - [x] Added 8 new Functional Requirements (FR130-FR137) for payment gating
+  - [x] Updated all documents to reflect payment-required access
+  - [x] Updated terminology: "trial" → "subscription", "trial-to-paid" → "signup-to-paid"
 - [ ] Proceed to UX Design workflow OR Architecture workflow OR Epic/Story creation
 
 ## Executor's Feedback or Assistance Requests
