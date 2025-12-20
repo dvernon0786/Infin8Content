@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infin8Content - Design Direction Mockups</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F9FAFB;
+            color: #111827;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.125rem;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid #E5E7EB;
+            padding: 0 2rem;
+            overflow-x: auto;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-tab {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6B7280;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover {
+            color: #3B82F6;
+            background: #F9FAFB;
+        }
+
+        .nav-tab.active {
+            color: #3B82F6;
+            border-bottom-color: #3B82F6;
+            font-weight: 600;
+        }
+
+        .direction-content {
+            display: none;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .direction-content.active {
+            display: block;
+        }
+
+        .direction-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .direction-header h2 {
+            font-size: 1.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #111827;
+        }
+
+        .direction-header .tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #EFF6FF;
+            color: #3B82F6;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+
+        .direction-header p {
+            color: #6B7280;
+            margin-top: 0.5rem;
+        }
+
+        .mockup-container {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .mockup-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #111827;
+        }
+
+        /* Direction 1: Professional & Efficient (Dense) */
+        .dir1 {
+            --spacing: 12px;
+            --card-padding: 16px;
+            --font-size-base: 14px;
+        }
+
+        .dir1 .dashboard {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: var(--spacing);
+            background: #F9FAFB;
+            padding: var(--spacing);
+            border-radius: 6px;
+        }
+
+        .dir1 .sidebar {
+            background: white;
+            border-radius: 6px;
+            padding: var(--card-padding);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .dir1 .sidebar-item {
+            padding: 8px 12px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            font-size: var(--font-size-base);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .dir1 .sidebar-item:hover {
+            background: #F3F4F6;
+        }
+
+        .dir1 .sidebar-item.active {
+            background: #EFF6FF;
+            color: #3B82F6;
+            font-weight: 500;
+        }
+
+        .dir1 .main-content {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--spacing);
+        }
+
+        .dir1 .widget {
+            background: white;
+            padding: var(--card-padding);
+            border-radius: 6px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .dir1 .widget-title {
+            font-size: 12px;
+            color: #6B7280;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .dir1 .widget-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .dir1 .widget-change {
+            font-size: 12px;
+            color: #10B981;
+            margin-top: 4px;
+        }
+
+        /* Direction 2: Modern & Spacious (Premium) */
+        .dir2 {
+            --spacing: 24px;
+            --card-padding: 24px;
+            --font-size-base: 16px;
+        }
+
+        .dir2 .dashboard {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: var(--spacing);
+            background: #F9FAFB;
+            padding: var(--spacing);
+            border-radius: 8px;
+        }
+
+        .dir2 .sidebar {
+            background: white;
+            border-radius: 8px;
+            padding: var(--card-padding);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .dir2 .sidebar-item {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            font-size: var(--font-size-base);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dir2 .sidebar-item:hover {
+            background: #F3F4F6;
+        }
+
+        .dir2 .sidebar-item.active {
+            background: #EFF6FF;
+            color: #3B82F6;
+            font-weight: 600;
+        }
+
+        .dir2 .main-content {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing);
+        }
+
+        .dir2 .widget {
+            background: white;
+            padding: var(--card-padding);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .dir2 .widget-title {
+            font-size: 14px;
+            color: #6B7280;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .dir2 .widget-value {
+            font-size: 32px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .dir2 .widget-change {
+            font-size: 14px;
+            color: #10B981;
+            margin-top: 8px;
+        }
+
+        /* Direction 3: Innovative & Dynamic */
+        .dir3 {
+            --spacing: 20px;
+            --card-padding: 20px;
+            --font-size-base: 15px;
+        }
+
+        .dir3 .dashboard {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: var(--spacing);
+            background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+            padding: var(--spacing);
+            border-radius: 12px;
+        }
+
+        .dir3 .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: var(--card-padding);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 2px solid #8B5CF6;
+        }
+
+        .dir3 .sidebar-item {
+            padding: 12px 16px;
+            margin-bottom: 6px;
+            border-radius: 8px;
+            font-size: var(--font-size-base);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dir3 .sidebar-item:hover {
+            background: #F3F4F6;
+            transform: translateX(4px);
+        }
+
+        .dir3 .sidebar-item.active {
+            background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+            color: white;
+            font-weight: 600;
+        }
+
+        .dir3 .main-content {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing);
+        }
+
+        .dir3 .widget {
+            background: white;
+            padding: var(--card-padding);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #E5E7EB;
+        }
+
+        .dir3 .widget-title {
+            font-size: 13px;
+            color: #6B7280;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .dir3 .widget-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .dir3 .widget-change {
+            font-size: 13px;
+            color: #10B981;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        /* Common Styles */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .comparison-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .comparison-card h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #111827;
+        }
+
+        .comparison-card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .comparison-card li {
+            padding: 0.5rem 0;
+            color: #6B7280;
+            font-size: 0.875rem;
+        }
+
+        .comparison-card li:before {
+            content: "✓ ";
+            color: #10B981;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .evaluation-criteria {
+            background: #EFF6FF;
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+
+        .evaluation-criteria h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #111827;
+        }
+
+        .evaluation-criteria ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .evaluation-criteria li {
+            padding: 0.75rem 0;
+            color: #374151;
+            font-size: 1rem;
+        }
+
+        .evaluation-criteria li:before {
+            content: "✓ ";
+            color: #3B82F6;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .nav-tabs {
+                padding: 0 1rem;
+            }
+
+            .direction-content {
+                padding: 1rem;
+            }
+
+            .dir1 .dashboard,
+            .dir2 .dashboard,
+            .dir3 .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .dir1 .main-content,
+            .dir2 .main-content,
+            .dir3 .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Infin8Content Design Direction Mockups</h1>
+        <p>Explore 8 different visual approaches for the platform</p>
+    </div>
+
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="showDirection(1)">1. Professional & Efficient</button>
+        <button class="nav-tab" onclick="showDirection(2)">2. Modern & Spacious</button>
+        <button class="nav-tab" onclick="showDirection(3)">3. Innovative & Dynamic</button>
+        <button class="nav-tab" onclick="showDirection(4)">4. Balanced & Versatile</button>
+        <button class="nav-tab" onclick="showDirection(5)">5. Data-Focused</button>
+        <button class="nav-tab" onclick="showDirection(6)">6. Workflow-Focused</button>
+        <button class="nav-tab" onclick="showDirection(7)">7. Minimal & Clean</button>
+        <button class="nav-tab" onclick="showDirection(8)">8. Bold & Confident</button>
+    </div>
+
+    <!-- Direction 1: Professional & Efficient (Dense) -->
+    <div id="direction-1" class="direction-content active dir1">
+        <div class="direction-header">
+            <h2>Direction 1: Professional & Efficient (Dense) <span class="tag">RECOMMENDED</span></h2>
+            <p>Maximum information density, compact spacing, efficient use of space. Best for power users and agencies managing many clients.</p>
+        </div>
+
+        <div class="evaluation-criteria">
+            <h3>Evaluation Criteria</h3>
+            <ul>
+                <li>Layout Intuitiveness - Does the information hierarchy match your priorities?</li>
+                <li>Interaction Style - Does the interaction style fit your core experience?</li>
+                <li>Visual Weight - Does the visual density feel right for your brand?</li>
+                <li>Navigation Approach - Does the navigation pattern match user expectations?</li>
+                <li>Component Usage - How well do the components support your user journeys?</li>
+                <li>Brand Alignment - Does this direction support your emotional goals?</li>
+            </ul>
+        </div>
+
+        <div class="mockup-container">
+            <div class="mockup-title">Dashboard Layout</div>
+            <div class="dashboard">
+                <div class="sidebar">
+                    <div class="sidebar-item active">Dashboard</div>
+                    <div class="sidebar-item">Research</div>
+                    <div class="sidebar-item">Write</div>
+                    <div class="sidebar-item">Publish</div>
+                    <div class="sidebar-item">Track</div>
+                    <div class="sidebar-item">Settings</div>
+                </div>
+                <div class="main-content">
+                    <div class="widget">
+                        <div class="widget-title">Articles Created</div>
+                        <div class="widget-value">127</div>
+                        <div class="widget-change">+12 this week</div>
+                    </div>
+                    <div class="widget">
+                        <div class="widget-title">Time Saved</div>
+                        <div class="widget-value">342h</div>
+                        <div class="widget-change">+28h this week</div>
+                    </div>
+                    <div class="widget">
+                        <div class="widget-title">Revenue Attributed</div>
+                        <div class="widget-value">$24.5K</div>
+                        <div class="widget-change">+$3.2K this week</div>
+                    </div>
+                    <div class="widget">
+                        <div class="widget-title">Articles Published</div>
+                        <div class="widget-value">89</div>
+                        <div class="widget-change">+8 this week</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="comparison-card">
+                <h3>Strengths</h3>
+                <ul>
+                    <li>Maximum information density</li>
+                    <li>Efficient for power users</li>
+                    <li>Compact, professional feel</li>
+                    <li>Great for agencies</li>
+                    <li>Fast information scanning</li>
+                </ul>
+            </div>
+            <div class="comparison-card">
+                <h3>Best For</h3>
+                <ul>
+                    <li>Agency owners (many clients)</li>
+                    <li>Power users</li>
+                    <li>Data-heavy workflows</li>
+                    <li>Efficient operations</li>
+                    <li>Professional environments</li>
+                </ul>
+            </div>
+            <div class="comparison-card">
+                <h3>Considerations</h3>
+                <ul>
+                    <li>May feel cramped to some</li>
+                    <li>Less breathing room</li>
+                    <li>Requires familiarity</li>
+                    <li>Not as premium feeling</li>
+                    <li>Denser visual weight</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Direction 2: Modern & Spacious (Premium) -->
+    <div id="direction-2" class="direction-content dir2">
+        <div class="direction-header">
+            <h2>Direction 2: Modern & Spacious (Premium)</h2>
+            <p>Generous spacing, premium feel, card-based layouts with breathing room. Best for first-time users and showcasing value.</p>
+        </div>
+
+        <div class="mockup-container">
+            <div class="mockup-title">Dashboard Layout</div>
+            <div class="dashboard">
+                <div class="sidebar">
+                    <div class="sidebar-item active">Dashboard</div>
+                    <div class="sidebar-item">Research</div>
+                    <div class="sidebar-item">Write</div>
+                    <div class="sidebar-item">Publish</div>
+                    <div class="sidebar-item">Track</div>
+                    <div class="sidebar-item">Settings</div>
+                </div>
+                <div class="main-content">
+                    <div class="widget">
+                        <div class="widget-title">Articles Created</div>
+                        <div class="widget-value">127</div>
+                        <div class="widget-change">+12 this week</div>
+                    </div>
+                    <div class="widget">
+                        <div class="widget-title">Time Saved</div>
+                        <div class="widget-value">342h</div>
+                        <div class="widget-change">+28h this week</div>
+                    </div>
+                    <div class="widget">
+                        <div class="widget-title">Revenue Attributed</div>
+                        <div class="widget-value">$24.5K</div>
+                        <div class="widget-change">+$3.2K this week</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="comparison-card">
+                <h3>Strengths</h3>
+                <ul>
+                    <li>Premium, spacious feel</li>
+                    <li>Easy to scan</li>
+                    <li>Welcoming for new users</li>
+                    <li>Breathing room</li>
+                    <li>Modern aesthetic</li>
+                </ul>
+            </div>
+            <div class="comparison-card">
+                <h3>Best For</h3>
+                <ul>
+                    <li>First-time users</li>
+                    <li>Showcasing value</li>
+                    <li>Premium positioning</li>
+                    <li>Marketing pages</li>
+                    <li>Onboarding flows</li>
+                </ul>
+            </div>
+            <div class="comparison-card">
+                <h3>Considerations</h3>
+                <ul>
+                    <li>Less information visible</li>
+                    <li>More scrolling required</li>
+                    <li>May feel empty to some</li>
+                    <li>Less efficient for power users</li>
+                    <li>More premium, less utilitarian</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Direction 3: Innovative & Dynamic -->
+    <div id="direction-3" class="direction-content dir3">
+        <div class="direction-header">
+            <h2>Direction 3: Innovative & Dynamic (Tech-Forward)</h2>
+            <p>Bold purple accents, dynamic layouts, animated elements, modern interactions. Best for emphasizing innovation and tech-forward brand.</p>
+        </div>
+
+        <div class="mockup-container">
+            <div class="mockup-title">Dashboard Layout</div>
+            <div class="dashboard">
+                <div class="sidebar">
+                    <div class="sidebar-item active">Dashboard</div>
+                    <div class="sidebar-item">Research</div>
+                    <div class="sidebar-item">Write</div>
+                    <div class="sidebar-item">Publish</div>
+                    <div class="sidebar-item">Track</div>
+                    <div class="sidebar-item">Settings</div>
+                </div>
+                <div class="main-content">
+                    <div class="widget">
+                        <div class="widget-title">Articles Created</div>
+                        <div class="widget-value">127</div>
+                        <div class="widget-change">+12 this week</div>
+                    </div>
+                    <div class="widget">
+                        <div class="widget-title">Time Saved</div>
+                        <div class="widget-value">342h</div>
+                        <div class="widget-change">+28h this week</div>
+                    </div>
+                    <div class="widget">
+                        <div class="widget-title">Revenue Attributed</div>
+                        <div class="widget-value">$24.5K</div>
+                        <div class="widget-change">+$3.2K this week</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="comparison-card">
+                <h3>Strengths</h3>
+                <ul>
+                    <li>Highly distinctive</li>
+                    <li>Emphasizes innovation</li>
+                    <li>Tech-forward feel</li>
+                    <li>Memorable brand</li>
+                    <li>Dynamic interactions</li>
+                </ul>
+            </div>
+            <div class="comparison-card">
+                <h3>Best For</h3>
+                <ul>
+                    <li>Innovation-focused brand</li>
+                    <li>Tech-forward positioning</li>
+                    <li>Differentiation</li>
+                    <li>Modern audiences</li>
+                    <li>Creative industries</li>
+                </ul>
+            </div>
+            <div class="comparison-card">
+                <h3>Considerations</h3>
+                <ul>
+                    <li>May feel too bold</li>
+                    <li>Less professional feel</li>
+                    <li>Could distract from content</li>
+                    <li>Not for conservative users</li>
+                    <li>Requires careful execution</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Placeholder for directions 4-8 -->
+    <div id="direction-4" class="direction-content">
+        <div class="direction-header">
+            <h2>Direction 4: Balanced & Versatile (Hybrid)</h2>
+            <p>Medium density, balanced spacing, flexible layouts, adaptable components. Best for supporting all personas and versatile use.</p>
+        </div>
+        <div class="mockup-container">
+            <p style="padding: 2rem; text-align: center; color: #6B7280;">Detailed mockup coming soon. This direction balances efficiency and premium feel.</p>
+        </div>
+    </div>
+
+    <div id="direction-5" class="direction-content">
+        <div class="direction-header">
+            <h2>Direction 5: Data-Focused (Analytics-Heavy)</h2>
+            <p>Charts and metrics prominent, dashboard-first, data visualization heavy. Best for e-commerce managers and ROI-focused users.</p>
+        </div>
+        <div class="mockup-container">
+            <p style="padding: 2rem; text-align: center; color: #6B7280;">Detailed mockup coming soon. This direction emphasizes data and analytics.</p>
+        </div>
+    </div>
+
+    <div id="direction-6" class="direction-content">
+        <div class="direction-header">
+            <h2>Direction 6: Workflow-Focused (Process-Oriented)</h2>
+            <p>Pipeline visualization, step-by-step flows, progress indicators prominent. Best for emphasizing end-to-end workflow.</p>
+        </div>
+        <div class="mockup-container">
+            <p style="padding: 2rem; text-align: center; color: #6B7280;">Detailed mockup coming soon. This direction emphasizes workflow visualization.</p>
+        </div>
+    </div>
+
+    <div id="direction-7" class="direction-content">
+        <div class="direction-header">
+            <h2>Direction 7: Minimal & Clean (Content-First)</h2>
+            <p>Maximum content space, minimal chrome, clean lines, subtle elements. Best for content creators and writers.</p>
+        </div>
+        <div class="mockup-container">
+            <p style="padding: 2rem; text-align: center; color: #6B7280;">Detailed mockup coming soon. This direction prioritizes content over UI.</p>
+        </div>
+    </div>
+
+    <div id="direction-8" class="direction-content">
+        <div class="direction-header">
+            <h2>Direction 8: Bold & Confident (High-Impact)</h2>
+            <p>Strong visual hierarchy, bold elements, high contrast, confident design. Best for conversion-focused, action-oriented experiences.</p>
+        </div>
+        <div class="mockup-container">
+            <p style="padding: 2rem; text-align: center; color: #6B7280;">Detailed mockup coming soon. This direction emphasizes bold, confident design.</p>
+        </div>
+    </div>
+
+    <script>
+        function showDirection(num) {
+            // Hide all directions
+            document.querySelectorAll('.direction-content').forEach(dir => {
+                dir.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected direction
+            document.getElementById(`direction-${num}`).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

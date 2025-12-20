@@ -1038,7 +1038,7 @@ Success metrics defined from each persona's perspective, measuring outcomes and 
 
 **Reporting Cadence:**
 - **Daily:** User activity, article generation volume, API costs
-- **Weekly:** Trial conversions, feature adoption, support tickets
+- **Weekly:** Signup-to-paid conversions, feature adoption, support tickets
 - **Monthly:** MRR growth, retention, user success metrics, business impact
 - **Quarterly:** Strategic objectives review, competitive analysis, market position
 
