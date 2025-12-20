@@ -111,7 +111,7 @@ This metric captures the complete end-to-end value proposition: speed from resea
 - **White-Label Adoption:** 80% of new clients onboarded through white-label portal within 3 months
 
 **Validation Thresholds:**
-- **Week 1:** Must save 5+ hours (50% of target) to justify continued trial
+- **Week 1:** Must save 5+ hours (50% of target) to justify continued subscription
 - **Month 1:** Must deliver 10+ articles across 5+ clients with revenue attribution
 - **Month 3:** Must reduce client churn to <1 client/quarter (50% reduction achieved)
 - **Month 6:** Must achieve 35%+ profit margins (approaching 40% target)
@@ -172,7 +172,7 @@ This metric captures the complete end-to-end value proposition: speed from resea
 #### Revenue & Growth
 - **$4.4M ARR** (Annual Recurring Revenue)
 - **1,000 paying customers**
-- **$367 average revenue per user per month (ARPU)** - requires significant overage revenue or Agency tier adoption
+- **$141 average revenue per user per month (ARPU)** - with 70% annual billing adoption, blended across all tiers
 - **90%+ monthly retention rate**
 - **80%+ Net Revenue Retention** (expansion from overages + upgrades)
 
@@ -538,7 +538,7 @@ Phase 2 features will be prioritized based on:
 It's 9 PM on a Thursday. Sarah Chen sits at her desk, staring at an email from her second client this quarter: "We're moving to another agency. Your turnaround times don't meet our needs." Her stomach drops. She's been running her SEO agency for 8 years, built it from scratch to $800K/year, and now she's losing clients because her freelancers can't deliver fast enough. She's tried everything—hiring more writers, using Jasper, even outsourcing to content farms. Nothing works. The problem isn't ideas; it's execution. She spends 15 hours a week just managing content workflows, and it's still not enough.
 
 **Rising Action:**
-Desperate, she googles "white-label AI content tool" at 9:30 PM. Infin8Content appears. "Agency Plan: White-label + Multi-client" catches her eye. She's skeptical—Jasper didn't work for her team—but the promise of publishing directly to client WordPress sites makes her pause. She signs up for a trial.
+Desperate, she googles "white-label AI content tool" at 9:30 PM. Infin8Content appears. "Agency Plan: White-label + Multi-client" catches her eye. She's skeptical—Jasper didn't work for her team—but the promise of publishing directly to client WordPress sites makes her pause. She signs up and selects the Agency plan ($299/month annual), completes payment, and gains immediate access to the dashboard.
 
 The next morning, she connects her first client's WordPress site. She pastes a keyword: "best running shoes for marathons." 60 seconds later, 127 keywords appear. She filters to 43 high-value ones, clicks "Create Cluster," and watches as the system generates a content strategy: one pillar article plus 5 supporting pieces. She clicks "Write" on the pillar article. Three minutes later, a 3,000-word article appears with citations, internal links, and images. She reviews it—it's actually good. She clicks "Publish" and watches it appear in her client's WordPress as a draft. 5 minutes total. She just saved 3 hours.
 
@@ -556,7 +556,7 @@ Six months later, Sarah has scaled from 20 to 45 clients. She's phased out 2 of 
 Marcus Rodriguez is 29, manages content for a $5M Shopify store selling fitness supplements. It's Monday morning, and his CMO just forwarded him an email: "Why is our conversion rate stuck at 2%? Our competitors are at 6%." Marcus's heart races. He's 12 products behind on descriptions. Each one takes him an hour to write, and he's already working 50-hour weeks. He can't keep up. His job is on the line if conversion rates don't improve.
 
 **Rising Action:**
-Panicking, he scrolls LinkedIn during lunch and sees an ad: "3× conversion rates with AI product descriptions." He clicks. The case study shows a Shopify store that went from 2% to 6% conversion in 3 months. "5-minute product descriptions" catches his eye. He signs up for a trial.
+Panicking, he scrolls LinkedIn during lunch and sees an ad: "3× conversion rates with AI product descriptions." He clicks. The case study shows a Shopify store that went from 2% to 6% conversion in 3 months. "5-minute product descriptions" catches his eye. He signs up and selects the Pro plan ($175/month annual), completes payment, and gains immediate access to the dashboard.
 
 That afternoon, a new product launches: "Premium Whey Protein Isolate." Instead of spending an hour writing a 200-word generic description, he pastes the product name into Infin8Content. The system scans his Shopify catalog, finds 8 related products, and generates a 2,000-word description with competitor comparisons, pricing analysis, and real market data. It includes internal links to related products with current prices. He reviews it—it's detailed, SEO-optimized, and actually helpful. He clicks "Publish to Shopify." 5 minutes later, it's live.
 
@@ -574,7 +574,7 @@ Three months later, Marcus has published 48 product descriptions and 16 blog pos
 Jessica Park is 31, leads growth marketing for a B2B SaaS startup. It's Q4, and she's stuck at 3,000 organic visitors/month. Her CEO's target: 10,000 by year-end. She's tried everything—hired 2 content writers, uses Surfer SEO for research, Jasper for writing, Buffer for social. But her articles don't rank. They're generic, lack citations, and Google's Helpful Content Update penalized them. She's publishing 4 articles a month, but they're not moving the needle. Her job depends on hitting that 10K target.
 
 **Rising Action:**
-Frustrated, she's browsing Product Hunt at 9 AM when she sees Infin8Content: "End-to-end content automation with real-time research." The tagline "Real-time research + SEO data = content that ranks" resonates. She's tired of tool fragmentation. She signs up for a trial.
+Frustrated, she's browsing Product Hunt at 9 AM when she sees Infin8Content: "End-to-end content automation with real-time research." The tagline "Real-time research + SEO data = content that ranks" resonates. She's tired of tool fragmentation. She signs up and selects the Pro plan ($175/month annual), completes payment, and gains immediate access to the dashboard.
 
 She imports her keyword list: "project management software," "Asana alternative," "Trello vs Monday." She selects "Asana alternative" and clicks "Write." The system shows Tavily research in real-time—actual current data, not stale 2023 training data. It includes 15 citations automatically. The article is 3,000 words, optimized for both EEAT (citations) and rankings (DataForSEO competitor analysis). She publishes it to WordPress. One month later, it ranks #3 for "Asana alternative."
 
@@ -888,7 +888,7 @@ Infin8Content challenges several fundamental assumptions about content creation 
 3. **White-Label** (Third Most Critical)
    - Unique for agency segment
    - Enables reseller business model
-   - High margin opportunity ($199/mo Agency plan)
+   - High margin opportunity ($299/mo annual Agency plan)
 
 **Fallback Strategies:**
 
@@ -1058,7 +1058,9 @@ function canAccessFeature(user: User, feature: string): boolean {
 
 **Three-Tier Pricing Model:**
 
-**Starter Plan: $29/month**
+**Starter Plan:**
+- **Monthly:** $89/month
+- **Annual:** $59/month (billed annually, save $360/year - 33.7% discount)
 - 10 articles/month
 - 50 keyword researches/month
 - 1 CMS connection
@@ -1071,7 +1073,9 @@ function canAccessFeature(user: User, feature: string): boolean {
 - Support: 48h response time
 - Uptime SLA: 99%
 
-**Pro Plan: $79/month**
+**Pro Plan:**
+- **Monthly:** $220/month
+- **Annual:** $175/month (billed annually, save $540/year - 20.5% discount)
 - 50 articles/month
 - 500 keyword researches/month
 - 3 CMS connections
@@ -1086,7 +1090,9 @@ function canAccessFeature(user: User, feature: string): boolean {
 - Support: 24h response time
 - Uptime SLA: 99.5%
 
-**Agency Plan: $199/month**
+**Agency Plan:**
+- **Monthly:** $399/month
+- **Annual:** $299/month (billed annually, save $1,200/year - 25.1% discount)
 - 150 articles/month (revised from 200 for better margins)
 - Unlimited keyword researches
 - Unlimited CMS connections
@@ -1101,6 +1107,33 @@ function canAccessFeature(user: User, feature: string): boolean {
 - Public API (unlimited)
 - Support: 4h response time
 - Uptime SLA: 99.9%
+
+### Access Control & Payment Model
+
+**Paywall-First Model:**
+- **No Free Trials:** Infin8Content does not offer free trials
+- **Payment Required for Access:** Users must complete payment before accessing the dashboard
+- **Onboarding Flow:** Account creation → Plan selection → Payment → Dashboard access
+- **Rationale:** Ensures committed users, reduces support burden from trial users, improves conversion quality
+
+**Access Control:**
+- Users cannot access dashboard features until payment is confirmed
+- Payment confirmation triggers account activation
+- Failed payments result in account suspension (grace period: 7 days)
+- Suspended accounts cannot access dashboard or generate content
+- Account reactivation occurs automatically upon successful payment
+
+**Payment Flow:**
+1. User creates account (email/password or OAuth)
+2. User selects subscription plan (Starter/Pro/Agency, Monthly/Annual)
+3. User completes payment via Stripe
+4. System confirms payment and activates account
+5. User gains immediate dashboard access
+
+**Grace Period:**
+- Failed payments: 7-day grace period before account suspension
+- Suspended accounts: Cannot access dashboard, receive email notifications
+- Reactivation: Automatic upon successful payment retry or manual payment
 
 **Usage-Based Billing:**
 
@@ -1257,6 +1290,17 @@ function canAccessFeature(user: User, feature: string): boolean {
 ### User Management & Access Control
 
 **FR1:** Users can create accounts and authenticate (email/password, OAuth)
+**Note:** Account creation does not grant dashboard access until payment is confirmed
+
+**FR130:** Users must complete payment before accessing the dashboard
+
+**FR131:** System blocks dashboard access for unpaid accounts
+
+**FR132:** System suspends accounts after payment failure (7-day grace period)
+
+**FR133:** System reactivates accounts upon successful payment
+
+**FR134:** System sends payment failure notifications to users during grace period
 
 **FR2:** Organization owners can create organizations and manage organization settings
 
@@ -1512,11 +1556,17 @@ function canAccessFeature(user: User, feature: string): boolean {
 
 ### Onboarding & Discovery
 
-**FR118:** New users can discover features through guided tours or tutorials
+**FR118:** New users can discover features through guided tours or tutorials (after payment confirmation)
 
-**FR119:** System can provide feature discovery mechanisms for new users
+**FR119:** System can provide feature discovery mechanisms for new users (after payment confirmation)
 
-**FR120:** Users can access help documentation and support resources
+**FR120:** Users can access help documentation and support resources (available before payment for information, full access after payment)
+
+**FR135:** System provides pre-payment information pages (pricing, features, case studies) without requiring account creation
+
+**FR136:** System requires account creation and payment before dashboard access
+
+**FR137:** System displays payment status and account activation status to users
 
 ### Phase 2 Capabilities (Post-Launch)
 

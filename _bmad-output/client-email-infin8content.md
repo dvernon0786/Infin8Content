@@ -191,7 +191,7 @@ We're building Infin8Content as a complete 18-module platform over 16 weeks (8 s
 Serve 2x more clients with the same team. Instead of hiring 2 more writers at $120,000/year, you can handle 50 clients instead of 25. One agency owner we're building for currently serves 20 clients and wants to scale to 50 without adding headcount—this makes that possible.
 
 **White-Label Capability**
-Resell Infin8Content under your own brand with custom domains, your logo, and your branding. Your clients never see our name—they see your professional content platform. Charge premium rates ($299/month per client) while paying wholesale ($199/month for unlimited use). That's $100 profit per client, per month.
+Resell Infin8Content under your own brand with custom domains, your logo, and your branding. Your clients never see our name—they see your professional content platform. Charge premium rates ($399/month per client) while paying wholesale ($299/month annual for unlimited use). That's $100 profit per client, per month.
 
 **Faster Delivery**
 5-minute turnaround vs. 5-10 days with freelancers. When a client requests an article on Monday, you can deliver it the same day instead of next week. This reduces client churn—agencies lose 20% of clients due to slow turnarounds. With Infin8Content, you can deliver faster than any competitor.

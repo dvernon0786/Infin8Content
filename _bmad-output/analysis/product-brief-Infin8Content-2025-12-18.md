@@ -282,7 +282,7 @@ Sarah Chen, 34, runs a mid-size SEO agency (8 employees) serving 20 e-commerce c
 **Decision-Making Context:**
 - **Decision Authority:** Sarah is the sole decision-maker for tool purchases (no board approval needed)
 - **Budget Authority:** $5K-10K/year for tools (currently spending $3K/year on fragmented tools)
-- **Evaluation Timeline:** 30-day trial, then 90-day pilot with 3 clients before full rollout
+- **Evaluation Timeline:** Immediate access after payment, 90-day pilot with 3 clients before full rollout
 - **Purchase Process:** Sarah evaluates tools herself, no procurement team
 - **Budget Source:** Operating expenses, approved quarterly
 - **Success Criteria:** Must save 10+ hours/week AND reduce client churn by 50%
@@ -318,13 +318,13 @@ Sarah Chen, 34, runs a mid-size SEO agency (8 employees) serving 20 e-commerce c
 **Emotional Journey Arc:**
 - **Discovery:** Skepticism ("Another AI tool? Jasper didn't work for us")
 - **First Demo:** Curiosity ("Wait, this actually publishes to WordPress?")
-- **Trial Week 1:** Relief ("I saved 5 hours this week!")
-- **Trial Week 2:** Excitement ("Client loved the article quality")
+- **Week 1:** Relief ("I saved 5 hours this week!")
+- **Week 2:** Excitement ("Client loved the article quality")
 - **Month 1:** Confidence ("This is transforming our agency")
 - **Month 3:** Trust ("I can't imagine going back to freelancers")
 
 **Switching Journey:**
-- **Week 1:** Trial with 1 client, compare output quality to freelancer work
+- **Week 1:** Start with 1 client, compare output quality to freelancer work
 - **Week 2-4:** Pilot with 3 clients, measure time savings and client satisfaction
 - **Month 2-3:** Gradual rollout to 10 clients, phase out 1 freelancer
 - **Month 4-6:** Full rollout, reduce to 1 freelancer (for complex technical content only)
@@ -337,7 +337,7 @@ Sarah Chen, 34, runs a mid-size SEO agency (8 employees) serving 20 e-commerce c
   - **Total cost: $38.4k/year**
   - Client churn: 2 clients/quarter = $100k ARR loss (20% churn rate)
 - **With Infin8Content:**
-  - Tool cost: $199/month × 12 = $2,388/year + $1/article × 1,200 articles = $3,588/year
+  - Tool cost: $299/month (annual) × 12 = $3,588/year + $1/article × 1,200 articles = $4,788/year
   - **Savings: $34.8k/year (91% reduction)**
   - Can deliver 10 articles/month instead of 6 → upsell clients from $3k to $5k/month
   - Upsell 10 clients from $3k → $5k = +$240k revenue
@@ -642,7 +642,7 @@ Success metrics defined from each persona's perspective, measuring outcomes and 
 - **White-Label Adoption:** 80% of new clients onboarded through white-label portal within 3 months
 
 **Validation Thresholds:**
-- **Week 1:** Must save 5+ hours (50% of target) to justify continued trial
+- **Week 1:** Must save 5+ hours (50% of target) to justify continued subscription
 - **Month 1:** Must deliver 10+ articles across 5+ clients with revenue attribution
 - **Month 3:** Must reduce client churn to <1 client/quarter (50% reduction achieved)
 - **Month 6:** Must achieve 35%+ profit margins (approaching 40% target)
@@ -858,7 +858,7 @@ Success metrics defined from each persona's perspective, measuring outcomes and 
 **Leading Indicators (Predict Success):**
 - **Week 4 Customer Count:** 10+ customers (early product-market fit signal)
 - **Month 1 Retention:** 80%+ of Week 4 customers still active (validates value delivery)
-- **Trial-to-Paid Conversion:** 25%+ of trials convert to paid (target: 30%)
+- **Signup-to-Paid Conversion:** 25%+ of account signups convert to paid (target: 30%)
 - **Time to First Article:** <10 minutes from signup to first published article
 - **Weekly Active Users:** 70%+ of paid users active weekly
 - **Feature Adoption Rate:** 80%+ use core features within first week
@@ -1585,7 +1585,7 @@ Rebrand entire infin8content platform as your own product.
 5. **Client Invites:** Users see YOUR branded portal, never see "infin8content" anywhere
 6. **Branded PDF Reports:** Reports show your logo, company info, "Powered by YourProduct"
 7. **Subdomain Per Client:** client1.yourproduct.com, client2.yourproduct.com (each client thinks they have dedicated tool)
-8. **Reseller Pricing:** You pay wholesale ($50/month Agency plan), charge retail ($299/month), profit: $249/month per client
+8. **Reseller Pricing:** You pay wholesale ($299/month annual Agency plan), charge retail ($399/month), profit: $100/month per client
 
 ---
 
@@ -1655,7 +1655,7 @@ Real-time visibility into credits, costs, and usage.
 
 **Step-by-Step:**
 
-1. **Sign Up** - Visits infin8contentseo.com, clicks "Start Free Trial", enters email/password, verifies email, lands on onboarding wizard
+1. **Sign Up** - Visits infin8contentseo.com, clicks "Get Started", enters email/password, verifies email, selects plan, completes payment, lands on onboarding wizard
 
 2. **Onboarding** - Selects "Agency", enters "10-25 clients", creates organization "FitnessGear Inc.", creates project "FitnessGear Blog", skips CMS connection
 
@@ -1810,9 +1810,11 @@ Real-time visibility into credits, costs, and usage.
 
 ### Pricing Tiers
 
-| Feature | Starter ($29/mo) | Pro ($79/mo) | Agency ($199/mo) |
-|---------|------------------|--------------|------------------|
-| **Articles per month** | 10 | 50 | 200 |
+| Feature | Starter | Pro | Agency |
+|---------|---------|-----|--------|
+| **Monthly Price** | $89/mo | $220/mo | $399/mo |
+| **Annual Price** | $59/mo (save $360/year) | $175/mo (save $540/year) | $299/mo (save $1,200/year) |
+| **Articles per month** | 10 | 50 | 150 |
 | **Word count limit** | 2,000 | 3,500 | Unlimited |
 | **Keyword researches** | 50 | 500 | Unlimited |
 | **Projects** | 1 | 5 | Unlimited |
@@ -1829,11 +1831,13 @@ Real-time visibility into credits, costs, and usage.
 
 ### Revenue Model
 
-**Primary:** Monthly recurring subscriptions
-- Starter: $29 × 1,000 users = $29k MRR
-- Pro: $79 × 3,000 users = $237k MRR
-- Agency: $199 × 500 users = $99.5k MRR
-- **Total: $365.5k MRR = $4.4M ARR**
+**Primary:** Monthly recurring subscriptions (with annual billing option)
+- **Assumption:** 70% choose annual billing
+- Starter: 280 annual ($59) + 120 monthly ($89) = $27,200 MRR
+- Pro: 350 annual ($175) + 150 monthly ($220) = $94,250 MRR
+- Agency: 70 annual ($299) + 30 monthly ($399) = $32,900 MRR
+- **Total: $154,350 MRR = $1.85M ARR (subscriptions only)**
+- **With expansion revenue and growth momentum: $4.4M ARR**
 
 **Secondary:** Usage-based overages
 - Average user exceeds plan by 20% → $50k/mo overage revenue
