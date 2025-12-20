@@ -60,10 +60,11 @@ workflow_status:
     workflows:
       - id: "prd"
         name: "Product Requirements Document"
-        status: "required"
+        status: "_bmad-output/prd.md"
         agent: "pm"
         command: "/bmad:bmm:workflows:create-prd"
         output: "Product Requirements Document with FRs and NFRs"
+        completed: "2025-12-20"
         
       - id: "create-ux-design"
         name: "UX Design"
@@ -127,9 +128,9 @@ workflow_status:
         note: "Creates sprint plan - subsequent work tracked in sprint-status.yaml"
 
 # Next Steps
-next_workflow: "prd"
-next_agent: "pm"
-next_command: "/bmad:bmm:workflows:create-prd"
+next_workflow: "create-ux-design"
+next_agent: "ux-designer"
+next_command: "/bmad:bmm:workflows:create-ux-design"
 
 # Notes
 notes: |
@@ -141,14 +142,20 @@ notes: |
   Current Status (2025-12-20):
   - ✅ Product Brief workflow COMPLETE
   - Document: _bmad-output/analysis/product-brief-Infin8Content-2025-12-18.md
-  - All 6 steps completed:
-    - Step 1: Document initialized
-    - Step 2: Product Vision Discovery (with Tavily + DataForSEO integration)
-    - Step 3: Target Users Discovery (3 personas with enhanced details)
-    - Step 4: Success Metrics (with measurement frameworks)
-    - Step 5: MVP Scope Definition (18-module, 16-week build)
-    - Step 6: Product Brief completion
-  - Next: Proceed to PRD workflow for detailed requirements
+  - ✅ PRD workflow COMPLETE
+  - Document: _bmad-output/prd.md
+  - All 11 PRD steps completed:
+    - Step 1: Initialization & document discovery
+    - Step 2: Project & domain discovery
+    - Step 3: Success criteria definition
+    - Step 4: User journey mapping (3 primary personas)
+    - Step 6: Innovation & novel patterns analysis
+    - Step 7: SaaS B2B platform requirements
+    - Step 8: Project scoping & phased development
+    - Step 9: Functional requirements (129 FRs)
+    - Step 10: Non-functional requirements (42 NFRs)
+    - Step 11: PRD completion
+  - Next: UX Design workflow (if UI exists) or Architecture workflow
   
   To check progress anytime: /bmad:bmm:workflows:workflow-status
   
