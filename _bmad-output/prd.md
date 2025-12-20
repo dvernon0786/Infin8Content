@@ -1588,13 +1588,1177 @@ function canAccessFeature(user: User, feature: string): boolean {
 
 **FR129:** System can sync live product pricing and inventory from e-commerce stores (Phase 2)
 
+### Dashboard & User Interface
+
+**FR138:** Users can access a main dashboard after payment confirmation
+
+**FR139:** Dashboard displays persona-specific default view (Agency: multi-client overview, E-commerce: revenue attribution, SaaS: ranking performance)
+
+**FR140:** Dashboard shows real-time usage credits (articles remaining, keyword researches remaining, API calls remaining)
+
+**FR141:** Dashboard displays key success metrics prominently (time saved, content output, ROI)
+
+**FR142:** Dashboard shows recent activity feed (articles generated, published, indexed)
+
+**FR143:** Dashboard provides quick action buttons (Generate Article, Research Keywords, View Reports)
+
+**FR144:** Dashboard displays revenue attribution summary (total revenue attributed, top-performing articles)
+
+**FR145:** Dashboard shows article generation queue status (in-progress, completed, failed)
+
+**FR146:** Dashboard provides navigation to all major features (Research, Writing, Publishing, Analytics, Settings)
+
+**FR147:** Dashboard supports customizable widget layout (users can rearrange dashboard sections)
+
+**FR148:** Dashboard displays notifications for important events (payment failures, usage limits, article completions)
+
+**FR149:** Dashboard shows multi-client switcher for agency users (one-click client switching)
+
+**FR150:** Dashboard displays white-label branding for agency client portals (custom logo, colors, fonts)
+
+**FR151:** Dashboard provides filtering and sorting for content lists (by date, status, performance, client)
+
+**FR152:** Dashboard shows progress indicators for long-running operations (article generation, bulk publishing)
+
+**FR153:** Dashboard displays empty states with helpful guidance (no articles yet, no clients yet, etc.)
+
+**FR154:** Dashboard provides search functionality across all content (articles, keywords, clients, projects)
+
+**FR155:** Dashboard shows time-based analytics (daily, weekly, monthly, custom date ranges)
+
+**FR156:** Dashboard displays comparison views (this month vs. last month, this client vs. all clients)
+
+**FR157:** Dashboard provides export functionality for dashboard data (CSV, PDF, shareable links)
+
+**FR158:** Dashboard supports responsive design (mobile, tablet, desktop views)
+
+**FR159:** Dashboard displays loading states gracefully (skeleton screens, progress indicators)
+
+**FR160:** Dashboard shows error states with clear recovery actions (retry buttons, error messages)
+
+---
+
+## Dashboard UI/UX Patterns & Design Requirements
+
+**Reference Screenshots:** `_bmad-output/Screenshot/Dashboard/` (5 Arvow Dashboard screenshots)
+
+### Dashboard Layout Architecture
+
+**Primary Layout Pattern:**
+- **Left Sidebar Navigation:** Main navigation with collapsible sections (Research, Write, Publish, Track, Settings)
+- **Center Workspace:** Main content area (dashboard widgets, article lists, editor)
+- **Right Contextual Panel:** Contextual tools (research data, attribution, settings) - collapsible
+- **Top Bar:** Logo, client switcher (for agencies), user menu, notifications
+
+**Navigation Structure:**
+- **Main Sections:** Research | Write | Publish | Track | Analytics | Settings
+- **Sub-navigation:** Contextual to each section (e.g., Write → Articles, Templates, Styles)
+- **Breadcrumbs:** Show workflow stage (e.g., "Research > Keyword Analysis > 'running shoes'")
+- **Active State:** Clear visual indication of current section
+- **Badge Notifications:** Show counts for pending items (e.g., "3 articles in queue")
+
+### Dashboard Widgets & Metrics Display
+
+**Widget Types (Persona-Specific Defaults):**
+
+**Agency Dashboard (Sarah):**
+- Multi-client overview card (total clients, active projects)
+- Time saved counter (hours/week saved)
+- Articles generated this month (with trend)
+- Client activity feed (recent publications across clients)
+- Revenue attribution summary (aggregated across all clients)
+- Queue status (articles in progress, pending)
+
+**E-Commerce Dashboard (Marcus):**
+- Revenue attributed (total $ from content)
+- Conversion rate improvement (before/after)
+- Top-performing articles (by revenue)
+- Product descriptions generated (with completion status)
+- Store connection status
+- Recent sales attributed to content
+
+**SaaS Dashboard (Jessica):**
+- Organic traffic growth (visitors/month trend)
+- Ranking performance (keywords in top 10)
+- Articles published this month
+- Signup attribution (signups from content)
+- Content quality metrics (average SEO score, readability)
+- Top-performing articles (by traffic)
+
+**Widget Design Patterns:**
+- **Card-based layout:** Each metric in a card with clear visual hierarchy
+- **Color-coded metrics:** Green (positive), yellow (warning), red (critical)
+- **Trend indicators:** Up/down arrows with percentage change
+- **Click-through:** Widgets link to detailed views
+- **Customizable:** Users can rearrange, add, or remove widgets
+- **Real-time updates:** Metrics update via websockets
+
+### Data Visualization Patterns
+
+**Chart Types:**
+- **Line Charts:** Time-series data (traffic over time, revenue trends, ranking positions)
+- **Bar Charts:** Comparison data (articles by status, revenue by article, keywords by difficulty)
+- **Pie Charts:** Distribution data (content by type, revenue by client)
+- **Progress Bars:** Usage limits (articles remaining, credits used)
+- **Tables:** Detailed data with sorting/filtering (article lists, keyword research results)
+
+**Time-Series Display:**
+- **Date Range Selector:** Daily, weekly, monthly, custom ranges
+- **Comparison Views:** This period vs. last period (with percentage change)
+- **Zoom Functionality:** Click to drill down into specific time ranges
+- **Export Options:** Download chart data as CSV/PDF
+
+**Real-Time Progress Visualization:**
+- **Progress Bars:** Show workflow stage completion (Research → Write → Publish → Index)
+- **Section-by-Section Indicators:** For article generation ("Writing section 3 of 8... 45%")
+- **Queue Status:** Visual queue with position indicators
+- **Live Updates:** Progress updates via websockets (no page refresh needed)
+
+### Content Lists & Tables
+
+**Article List Display:**
+- **View Options:** List view, table view, card view
+- **Columns/Fields:** Title, status, date, performance metrics, actions
+- **Status Indicators:** Color-coded badges (Draft, In Progress, Published, Indexed, Failed)
+- **Bulk Selection:** Checkboxes for multi-select operations
+- **Quick Actions:** Hover actions (Edit, Publish, Delete, Duplicate)
+
+**Filtering & Sorting:**
+- **Filters:** By status, date range, client (agencies), project, performance
+- **Sort Options:** Date (newest/oldest), performance (highest/lowest), title (A-Z)
+- **Search:** Full-text search across titles, content, keywords
+- **Saved Filters:** Users can save frequently used filter combinations
+
+**Empty States:**
+- **Helpful Guidance:** Clear messaging ("No articles yet. Create your first article to get started.")
+- **Action CTAs:** Prominent buttons to create first content
+- **Onboarding Links:** Links to tutorials or help documentation
+
+### Multi-Client Management (Agency Users)
+
+**Client Switcher:**
+- **Location:** Top bar (right side, next to user menu)
+- **Visual Design:** Dropdown with client logos/names
+- **Quick Access:** Keyboard shortcut (Cmd/Ctrl + K)
+- **Visual Indicators:** Active client highlighted, client count badge
+
+**Client-Specific Views:**
+- **Dashboard:** Shows metrics filtered to selected client
+- **Content Lists:** Only shows content for selected client
+- **White-Label Portal:** Client stakeholders see branded portal for their organization only
+
+**Bulk Operations:**
+- **Multi-Select:** Select articles across multiple clients (if needed)
+- **Bulk Actions:** Publish, delete, export, assign to project
+- **Progress Tracking:** Show bulk operation progress with success/failure counts
+
+### Revenue Attribution Visualization
+
+**Attribution Widgets:**
+- **Prominent Display:** "$X in sales from this article" inline in article lists
+- **Dashboard Summary:** Total revenue attributed, top-performing articles
+- **Time-Based:** Show attribution over time (daily, weekly, monthly)
+- **Shareable Reports:** Beautiful visual reports for stakeholders (PDF, shareable links)
+
+**Attribution Details:**
+- **Order Matching:** Show which orders were attributed to which articles
+- **UTM Tracking:** Display UTM parameters used for tracking
+- **Conversion Funnel:** Clicks → Views → Purchases visualization
+- **Export Options:** CSV export for detailed analysis
+
+### Responsive Design Patterns
+
+**Mobile (< 768px):**
+- **Collapsible Sidebar:** Hamburger menu, sidebar slides in/out
+- **Stacked Layout:** Widgets stack vertically
+- **Touch-Optimized:** Larger touch targets, swipe gestures
+- **Simplified Navigation:** Bottom navigation bar for primary actions
+
+**Tablet (768px - 1024px):**
+- **Adaptive Grid:** Widgets adjust to available space
+- **Sidebar:** Collapsible, can be hidden
+- **Touch + Mouse:** Support both interaction methods
+
+**Desktop (> 1024px):**
+- **Full Layout:** All panels visible (sidebar, workspace, contextual panel)
+- **Keyboard Shortcuts:** Full keyboard navigation support
+- **Multi-Column:** Optimized for wide screens
+
+### Loading & Error States
+
+**Loading States:**
+- **Skeleton Screens:** Show content structure while loading
+- **Progress Indicators:** For long-running operations (article generation)
+- **Spinner Overlays:** For quick operations (< 2 seconds)
+
+**Error States:**
+- **Clear Messaging:** User-friendly error messages with context
+- **Recovery Actions:** Retry buttons, alternative actions
+- **Partial Failures:** Show what succeeded vs. what failed (e.g., "Tavily research complete, DataForSEO in progress")
+
+### Arvow Dashboard Pattern Analysis
+
+**Patterns to Extract from Arvow Screenshots:**
+
+Please describe the following patterns you observe in the Arvow Dashboard screenshots:
+
+1. **Specific Layout Elements:**
+   - Exact navigation structure (sidebar items, top bar elements)
+   - Widget arrangement and sizing
+   - Color scheme and visual hierarchy
+
+2. **Unique UI Components:**
+   - Custom components not covered above
+   - Interaction patterns (hover states, transitions)
+   - Micro-interactions and animations
+
+3. **Data Presentation:**
+   - How metrics are formatted (number formatting, date formats)
+   - Chart styling and color choices
+   - Table design patterns
+
+4. **Workflow Visualization:**
+   - How multi-step processes are displayed
+   - Progress tracking UI elements
+   - Status indicators and badges
+
+5. **White-Label Patterns:**
+   - How branding is applied (if visible in screenshots)
+   - Custom domain handling in UI
+   - Client portal differences
+
+**Once patterns are described, I'll:**
+- Add specific UI component requirements
+- Create detailed design specifications
+- Update functional requirements with exact UI patterns
+- Document component-level requirements for implementation
+
+---
+
+## Component-Level UI Specifications
+
+### Navigation Components
+
+#### Sidebar Navigation Component
+
+**Specifications:**
+- **Width:** 240px (expanded), 64px (collapsed)
+- **Background:** White/light gray (#F9FAFB)
+- **Border:** Right border (1px, #E5E7EB)
+- **Position:** Fixed left, full height
+- **Z-index:** 100
+- **Collapse Toggle:** Icon button at bottom (hamburger/chevron)
+
+**Navigation Items:**
+- **Structure:** Icon (24x24px) + Label (14px, medium weight)
+- **Spacing:** 12px vertical padding, 16px horizontal padding
+- **Active State:** Background (#EFF6FF), border-left (3px, primary color), text color (primary)
+- **Hover State:** Background (#F3F4F6)
+- **Badge:** Red dot (8px) or number badge (top-right of icon)
+
+**Sections:**
+1. **Research** (Icon: Search/MagnifyingGlass)
+   - Keyword Research
+   - Competitor Analysis
+   - SERP Analysis
+2. **Write** (Icon: PencilSquare)
+   - Articles
+   - Templates
+   - Writing Styles
+3. **Publish** (Icon: PaperAirplane)
+   - CMS Connections
+   - Publishing Queue
+   - Publishing History
+4. **Track** (Icon: ChartBar)
+   - Analytics Dashboard
+   - Revenue Attribution
+   - Ranking Performance
+5. **Settings** (Icon: Cog6Tooth)
+   - Profile
+   - Organization
+   - Billing
+   - Integrations
+
+**Accessibility:**
+- Keyboard navigation (Tab, Arrow keys, Enter)
+- ARIA labels for screen readers
+- Focus indicators (2px outline, primary color)
+
+#### Top Bar Component
+
+**Specifications:**
+- **Height:** 64px
+- **Background:** White (#FFFFFF)
+- **Border:** Bottom border (1px, #E5E7EB)
+- **Position:** Fixed top, full width
+- **Z-index:** 90
+- **Padding:** 16px horizontal
+
+**Left Section:**
+- **Logo:** 120px width, clickable (navigates to dashboard)
+- **Breadcrumbs:** (if applicable) 14px text, separator "/"
+
+**Center Section:**
+- **Search Bar:** (optional) 400px width, rounded, with search icon
+- **Quick Actions:** (optional) Icon buttons for common actions
+
+**Right Section:**
+- **Client Switcher:** (Agency plan only)
+  - Dropdown button: Client name/logo + chevron
+  - Dropdown menu: List of clients with logos, "All Clients" option
+  - Keyboard shortcut: Cmd/Ctrl + K
+- **Notifications:**
+  - Bell icon with badge (red dot if unread)
+  - Dropdown: List of notifications (max 10, "View All" link)
+- **User Menu:**
+  - Avatar (32x32px, circular) or initials
+  - Dropdown: Profile, Settings, Billing, Logout
+
+**Responsive Behavior:**
+- Mobile: Logo + hamburger menu (sidebar toggle)
+- Tablet: Logo + search + user menu
+- Desktop: Full layout
+
+### Dashboard Widget Components
+
+#### Metric Card Widget
+
+**Specifications:**
+- **Dimensions:** Minimum 280px width, flexible height
+- **Background:** White (#FFFFFF)
+- **Border:** 1px solid #E5E7EB
+- **Border Radius:** 8px
+- **Padding:** 20px
+- **Shadow:** Subtle (0 1px 3px rgba(0,0,0,0.1))
+- **Hover:** Shadow increases, cursor pointer (if clickable)
+
+**Layout Structure:**
+```
+┌─────────────────────────┐
+│ Label (12px, gray)      │
+│ Value (32px, bold)      │
+│ Trend (14px, icon)      │
+│ [Optional: Mini Chart]  │
+└─────────────────────────┘
+```
+
+**Components:**
+- **Label:** 12px, #6B7280, uppercase, letter-spacing 0.5px
+- **Value:** 32px, #111827, font-weight 700, number formatting (commas, decimals)
+- **Trend Indicator:** 
+  - Icon: Up arrow (green #10B981) or Down arrow (red #EF4444)
+  - Text: "+12.5%" or "-3.2%" (14px, same color as icon)
+  - Period: "vs last month" (12px, gray)
+- **Mini Chart:** (optional) Small sparkline, 60px height
+
+**Color Coding:**
+- **Positive:** Green (#10B981)
+- **Negative:** Red (#EF4444)
+- **Neutral:** Gray (#6B7280)
+- **Warning:** Yellow (#F59E0B)
+
+**Interaction:**
+- Clickable: Navigate to detailed view
+- Loading state: Skeleton screen (animated gray bars)
+- Error state: "Unable to load" message with retry button
+
+#### Progress Widget
+
+**Specifications:**
+- **Type:** Circular or Linear
+- **Circular:** 120px diameter, center value
+- **Linear:** Full width, 8px height
+
+**Circular Progress:**
+- **Ring:** 8px stroke width
+- **Background:** #E5E7EB (gray)
+- **Progress:** Primary color (blue)
+- **Center Text:** 
+  - Percentage (24px, bold)
+  - Label (12px, gray)
+- **Color Thresholds:**
+  - 0-50%: Green
+  - 51-75%: Yellow
+  - 76-90%: Orange
+  - 91-100%: Red
+
+**Linear Progress:**
+- **Background Bar:** #E5E7EB, rounded (4px)
+- **Progress Bar:** Primary color, rounded (4px)
+- **Label:** Left side (12px, gray)
+- **Value:** Right side (12px, bold)
+- **Tooltip:** On hover, show exact value
+
+#### Activity Feed Widget
+
+**Specifications:**
+- **Max Height:** 400px
+- **Scrollable:** Vertical scroll with custom scrollbar
+- **Item Spacing:** 12px vertical
+
+**Activity Item:**
+- **Layout:** Icon (32x32px) + Content + Timestamp
+- **Icon:** Circular background, colored based on activity type
+- **Content:**
+  - Title: 14px, bold
+  - Description: 12px, gray
+- **Timestamp:** 12px, gray, relative ("2 hours ago")
+- **Action Link:** (optional) "View" link, 12px, primary color
+
+**Activity Types:**
+- **Article Generated:** Green icon, "Article 'Title' generated"
+- **Article Published:** Blue icon, "Article published to WordPress"
+- **Revenue Attributed:** Purple icon, "$X attributed to article"
+- **Error:** Red icon, "Failed to publish article"
+
+### Data Visualization Components
+
+#### Line Chart Component
+
+**Specifications:**
+- **Library:** Recharts, Chart.js, or similar
+- **Height:** 300px (default), configurable
+- **Responsive:** Maintains aspect ratio
+
+**Axes:**
+- **X-Axis:** Time labels (dates), 12px font, #6B7280
+- **Y-Axis:** Value labels, 12px font, #6B7280
+- **Grid Lines:** #E5E7EB, 1px, dashed
+
+**Line:**
+- **Stroke Width:** 2px
+- **Colors:** Primary palette (blue, green, purple, orange)
+- **Smooth:** Bezier curves (optional)
+- **Points:** 6px circles on hover
+
+**Tooltip:**
+- **Background:** White, shadow, border
+- **Content:** Date, value(s), formatted numbers
+- **Position:** Follows cursor, stays within viewport
+
+**Legend:**
+- **Position:** Top or bottom
+- **Items:** Color dot + label
+- **Interactive:** Click to show/hide series
+
+**Interactions:**
+- **Hover:** Highlight point, show tooltip
+- **Click:** (optional) Navigate to detailed view
+- **Zoom:** (optional) Drag to select range
+
+#### Bar Chart Component
+
+**Specifications:**
+- **Type:** Vertical or Horizontal
+- **Height:** 300px (default)
+- **Bar Spacing:** 8px between bars
+- **Bar Width:** Auto-calculated based on data points
+
+**Bars:**
+- **Colors:** Primary palette, or gradient
+- **Border Radius:** 4px (top corners for vertical)
+- **Hover:** Darken color, show tooltip
+
+**Grouped Bars:**
+- **Spacing:** 4px between groups
+- **Legend:** Required for multiple series
+
+**Stacked Bars:**
+- **Colors:** Different shades of same color family
+- **Legend:** Required, shows segments
+
+#### Table Component
+
+**Specifications:**
+- **Width:** 100% of container
+- **Background:** White
+- **Border:** 1px solid #E5E7EB (around table)
+- **Border Radius:** 8px
+- **Overflow:** Horizontal scroll if needed
+
+**Header Row:**
+- **Background:** #F9FAFB
+- **Height:** 48px
+- **Text:** 12px, uppercase, bold, #6B7280
+- **Sortable:** Arrow icons (up/down), click to sort
+- **Padding:** 16px horizontal, 12px vertical
+
+**Data Rows:**
+- **Height:** 56px (default)
+- **Border:** Bottom border (1px, #E5E7EB)
+- **Hover:** Background #F9FAFB
+- **Padding:** 16px horizontal, 12px vertical
+- **Text:** 14px, #111827
+
+**Cells:**
+- **Alignment:** Left (default), Right (numbers), Center (icons/status)
+- **Truncation:** Ellipsis for long text, tooltip on hover
+- **Actions:** Icon buttons (Edit, Delete, etc.) in last column
+
+**Selection:**
+- **Checkbox:** First column, 20x20px
+- **Selected State:** Background #EFF6FF
+- **Bulk Actions Bar:** Appears when items selected (bottom of table)
+
+**Pagination:**
+- **Position:** Bottom of table
+- **Elements:** Previous, Page numbers, Next, Items per page selector
+- **Info:** "Showing 1-10 of 150"
+
+**Empty State:**
+- **Icon:** 64x64px, gray
+- **Message:** "No data available"
+- **CTA:** (optional) "Create first item" button
+
+### Form Components
+
+#### Input Field Component
+
+**Specifications:**
+- **Height:** 40px (default), 48px (large)
+- **Width:** 100% of container
+- **Border:** 1px solid #D1D5DB
+- **Border Radius:** 6px
+- **Padding:** 12px horizontal
+- **Font:** 14px, #111827
+
+**States:**
+- **Default:** Border #D1D5DB, background white
+- **Focus:** Border primary color (2px), shadow (0 0 0 3px rgba(primary, 0.1))
+- **Error:** Border red (#EF4444), error message below
+- **Disabled:** Background #F3F4F6, text #9CA3AF, cursor not-allowed
+
+**Label:**
+- **Position:** Above input
+- **Font:** 14px, bold, #374151
+- **Required Indicator:** Asterisk (*), red
+
+**Helper Text:**
+- **Position:** Below input
+- **Font:** 12px, #6B7280
+- **Error Message:** 12px, #EF4444
+
+**Variants:**
+- **Text Input:** Standard text
+- **Textarea:** Multi-line, min-height 100px, resizable
+- **Select:** Dropdown, custom styled
+- **Search:** Search icon on left
+- **Number:** Numeric keyboard on mobile
+
+#### Button Component
+
+**Specifications:**
+- **Height:** 40px (default), 32px (small), 48px (large)
+- **Padding:** 12px horizontal (default), scales with size
+- **Border Radius:** 6px
+- **Font:** 14px, medium weight
+- **Cursor:** Pointer
+- **Transition:** 150ms ease
+
+**Variants:**
+- **Primary:** Background primary color, text white, hover darken
+- **Secondary:** Background white, border primary, text primary, hover background primary
+- **Danger:** Background red, text white, hover darken
+- **Ghost:** Background transparent, text primary, hover background #F3F4F6
+- **Link:** Text primary, underline on hover
+
+**States:**
+- **Default:** Normal appearance
+- **Hover:** Darken background or add shadow
+- **Active:** Slight scale down (0.98)
+- **Disabled:** Opacity 0.5, cursor not-allowed
+- **Loading:** Spinner icon, disable interaction
+
+**Sizes:**
+- **Small:** 32px height, 10px padding, 12px font
+- **Default:** 40px height, 12px padding, 14px font
+- **Large:** 48px height, 16px padding, 16px font
+
+**Icon Buttons:**
+- **Square:** 40x40px, icon centered
+- **Circular:** 40px diameter, icon centered
+- **With Label:** Icon + text, spacing 8px
+
+### Modal/Dialog Components
+
+#### Modal Component
+
+**Specifications:**
+- **Overlay:** Dark background (rgba(0,0,0,0.5)), full screen, z-index 1000
+- **Container:** Centered, max-width 600px (default), responsive
+- **Background:** White, border radius 8px, shadow (large)
+- **Z-index:** 1001
+
+**Structure:**
+```
+┌─────────────────────────────┐
+│ Header (Title + Close)     │
+├─────────────────────────────┤
+│ Content (scrollable)       │
+├─────────────────────────────┤
+│ Footer (Actions)           │
+└─────────────────────────────┘
+```
+
+**Header:**
+- **Height:** 64px
+- **Title:** 20px, bold, #111827
+- **Close Button:** Top-right, X icon, 32x32px, hover gray background
+
+**Content:**
+- **Padding:** 24px
+- **Max Height:** 60vh
+- **Overflow:** Vertical scroll if needed
+
+**Footer:**
+- **Padding:** 16px 24px
+- **Border:** Top border (1px, #E5E7EB)
+- **Actions:** Buttons aligned right, spacing 8px
+- **Primary Action:** Rightmost button
+
+**Animations:**
+- **Open:** Fade in overlay, slide up modal (200ms)
+- **Close:** Fade out overlay, slide down modal (200ms)
+
+**Accessibility:**
+- **Focus Trap:** Tab stays within modal
+- **Escape Key:** Closes modal
+- **ARIA:** role="dialog", aria-labelledby, aria-modal="true"
+
+### Status Indicator Components
+
+#### Badge Component
+
+**Specifications:**
+- **Display:** Inline-block
+- **Padding:** 4px 8px (small), 6px 12px (default)
+- **Border Radius:** 12px (pill shape)
+- **Font:** 12px, medium weight
+- **Height:** 20px (small), 24px (default)
+
+**Variants:**
+- **Success:** Background #D1FAE5, text #065F46
+- **Warning:** Background #FEF3C7, text #92400E
+- **Error:** Background #FEE2E2, text #991B1B
+- **Info:** Background #DBEAFE, text #1E40AF
+- **Neutral:** Background #F3F4F6, text #374151
+
+**Status Badges (Content):**
+- **Draft:** Gray badge
+- **In Progress:** Blue badge, animated pulse
+- **Published:** Green badge
+- **Indexed:** Purple badge
+- **Failed:** Red badge
+
+#### Status Dot Component
+
+**Specifications:**
+- **Size:** 8px diameter (small), 12px (default)
+- **Shape:** Circle
+- **Position:** Inline or absolute (top-right corner)
+
+**Colors:**
+- **Online/Active:** Green (#10B981)
+- **Offline/Inactive:** Gray (#9CA3AF)
+- **Warning:** Yellow (#F59E0B)
+- **Error:** Red (#EF4444)
+
+**Animations:**
+- **Pulse:** (for active/in-progress) Scale animation, 2s infinite
+
+### Progress Indicator Components
+
+#### Progress Bar Component
+
+**Specifications:**
+- **Type:** Linear or Circular
+- **Linear Height:** 8px (default), 4px (thin), 12px (thick)
+- **Background:** #E5E7EB
+- **Progress:** Primary color, smooth transition
+- **Border Radius:** 4px (linear), full circle (circular)
+
+**Variants:**
+- **Determinate:** Shows percentage (0-100%)
+- **Indeterminate:** Animated (for unknown duration)
+- **Multi-Step:** Shows workflow stages (Research → Write → Publish → Index)
+
+**Multi-Step Progress:**
+- **Steps:** Horizontal line with circles
+- **Active Step:** Filled circle, primary color
+- **Completed Step:** Checkmark icon, green
+- **Pending Step:** Empty circle, gray
+- **Connecting Lines:** Gray (completed), primary (active), gray (pending)
+
+**Labels:**
+- **Position:** Below steps (optional)
+- **Font:** 12px, #6B7280
+- **Active Label:** Bold, primary color
+
+#### Loading Spinner Component
+
+**Specifications:**
+- **Size:** 20px (small), 32px (default), 48px (large)
+- **Type:** Circular spinner (rotating)
+- **Color:** Primary color
+- **Speed:** 1s rotation, infinite
+
+**Variants:**
+- **Spinner:** Circular, rotating
+- **Dots:** Three dots, bouncing animation
+- **Skeleton:** Animated gray bars (for content loading)
+
+### Empty State Component
+
+**Specifications:**
+- **Layout:** Centered, vertical stack
+- **Padding:** 48px vertical, 24px horizontal
+- **Max Width:** 400px
+
+**Elements:**
+- **Icon:** 64x64px, gray (#9CA3AF), optional
+- **Title:** 20px, bold, #111827, margin-top 16px
+- **Description:** 14px, #6B7280, margin-top 8px, max-width 320px
+- **CTA Button:** Primary button, margin-top 24px
+- **Link:** (optional) Secondary link, margin-top 12px
+
+**Examples:**
+- **No Articles:** "No articles yet" + "Create your first article" button
+- **No Clients:** "No clients yet" + "Add your first client" button
+- **No Results:** "No results found" + "Clear filters" link
+
+### Error State Component
+
+**Specifications:**
+- **Layout:** Similar to empty state, but with error styling
+- **Icon:** 64x64px, red (#EF4444)
+- **Title:** 20px, bold, #111827
+- **Message:** 14px, #6B7280
+- **Error Details:** (optional) 12px, monospace, gray background, scrollable
+
+**Actions:**
+- **Primary:** Retry button (red variant)
+- **Secondary:** "Go back" or "Contact support" link
+
+**Inline Errors:**
+- **Position:** Below form field
+- **Icon:** 16x16px, red, exclamation circle
+- **Message:** 12px, red, margin-top 4px
+
+### Responsive Breakpoints
+
+**Specifications:**
+- **Mobile:** < 640px (sm)
+- **Tablet:** 640px - 1024px (md, lg)
+- **Desktop:** > 1024px (xl, 2xl)
+
+**Breakpoint Values:**
+- **sm:** 640px
+- **md:** 768px
+- **lg:** 1024px
+- **xl:** 1280px
+- **2xl:** 1536px
+
+**Responsive Behaviors:**
+- **Sidebar:** Collapsed on mobile, expanded on desktop
+- **Grid:** 1 column (mobile), 2 columns (tablet), 3-4 columns (desktop)
+- **Tables:** Horizontal scroll on mobile, or card view
+- **Modals:** Full screen on mobile, centered on desktop
+- **Navigation:** Hamburger menu on mobile, full nav on desktop
+
+### Color System
+
+**Primary Palette:**
+- **Primary 50:** #EFF6FF
+- **Primary 100:** #DBEAFE
+- **Primary 500:** #3B82F6 (main)
+- **Primary 600:** #2563EB (hover)
+- **Primary 700:** #1D4ED8 (active)
+
+**Semantic Colors:**
+- **Success:** #10B981 (green)
+- **Warning:** #F59E0B (yellow)
+- **Error:** #EF4444 (red)
+- **Info:** #3B82F6 (blue)
+
+**Neutral Colors:**
+- **Gray 50:** #F9FAFB (backgrounds)
+- **Gray 100:** #F3F4F6 (hover states)
+- **Gray 200:** #E5E7EB (borders)
+- **Gray 500:** #6B7280 (text secondary)
+- **Gray 900:** #111827 (text primary)
+
+### Typography System
+
+**Font Family:**
+- **Primary:** Inter, system-ui, sans-serif
+- **Monospace:** 'Fira Code', 'Courier New', monospace (for code/technical)
+
+**Font Sizes:**
+- **xs:** 12px
+- **sm:** 14px
+- **base:** 16px
+- **lg:** 18px
+- **xl:** 20px
+- **2xl:** 24px
+- **3xl:** 30px
+- **4xl:** 36px
+
+**Font Weights:**
+- **Regular:** 400
+- **Medium:** 500
+- **Semibold:** 600
+- **Bold:** 700
+
+**Line Heights:**
+- **Tight:** 1.25
+- **Normal:** 1.5
+- **Relaxed:** 1.75
+
+### Spacing System
+
+**Specifications:**
+- **Base Unit:** 4px
+- **Scale:** 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128
+
+**Common Spacings:**
+- **xs:** 4px
+- **sm:** 8px
+- **md:** 16px
+- **lg:** 24px
+- **xl:** 32px
+- **2xl:** 48px
+- **3xl:** 64px
+
+### Animation & Transitions
+
+**Duration:**
+- **Fast:** 150ms (hover states, button clicks)
+- **Normal:** 200ms (modals, dropdowns)
+- **Slow:** 300ms (page transitions)
+
+**Easing:**
+- **Default:** ease-in-out
+- **Ease-out:** For entrances
+- **Ease-in:** For exits
+
+**Common Animations:**
+- **Fade:** Opacity 0 → 1
+- **Slide:** Transform translateY/translateX
+- **Scale:** Transform scale (0.95 → 1)
+- **Pulse:** Scale animation (for loading states)
+
+---
+
+## Detailed Dashboard Page Requirements
+
+### Main Dashboard Page
+
+**Layout Structure:**
+- **Header Section:** Welcome message, quick stats summary, date range selector
+- **Widget Grid:** 2-4 columns (responsive), draggable/reorderable widgets
+- **Activity Feed:** Right sidebar or bottom section
+- **Quick Actions:** Floating action button or top bar buttons
+
+**Required Widgets (Default Layout):**
+1. **Usage Summary Card:** Articles remaining, credits used, plan limits
+2. **Recent Activity:** Last 5-10 activities (articles, publications, errors)
+3. **Performance Metrics:** Persona-specific (revenue, traffic, rankings)
+4. **Content Status:** Articles by status (draft, in-progress, published)
+5. **Top Performers:** Best-performing articles (by metric)
+
+**Widget Customization:**
+- **Drag & Drop:** Reorder widgets (save to user preferences)
+- **Add/Remove:** Widget selector modal, add new widgets
+- **Resize:** (optional) Adjust widget sizes
+- **Refresh:** Manual refresh button, auto-refresh every 30 seconds
+
+**Empty State (New Users):**
+- **Onboarding Flow:** Step-by-step guide to first article
+- **Video Tutorial:** (optional) Embedded video walkthrough
+- **Sample Data:** (optional) Demo dashboard with sample content
+
+### Article List Page
+
+**Layout:**
+- **Top Bar:** 
+  - Search bar (full-width, 400px max)
+  - Filter dropdowns (Status, Date, Client, Project)
+  - View toggle (List/Table/Card)
+  - Bulk actions (when items selected)
+  - "New Article" button (primary)
+
+**Content Area:**
+- **List View:** 
+  - Checkbox + Thumbnail + Title + Status + Date + Metrics + Actions
+  - Row height: 72px
+  - Hover: Highlight row, show quick actions
+- **Table View:**
+  - Sortable columns: Title, Status, Date, Performance, Actions
+  - Sticky header on scroll
+- **Card View:**
+  - Grid: 3 columns (desktop), 2 (tablet), 1 (mobile)
+  - Card: Image + Title + Excerpt + Status + Actions
+  - Card height: 280px
+
+**Pagination:**
+- **Items Per Page:** 10, 25, 50, 100
+- **Navigation:** Previous, page numbers, Next
+- **Info:** "Showing 1-10 of 150 articles"
+
+**Filters:**
+- **Status:** Draft, In Progress, Published, Indexed, Failed (multi-select)
+- **Date Range:** Last 7 days, 30 days, 90 days, Custom
+- **Client:** (Agency only) Dropdown with search
+- **Project:** (if applicable) Dropdown
+- **Performance:** Top 10%, Bottom 10%, Custom range
+- **Saved Filters:** Star icon to save, dropdown to load
+
+### Article Editor Page
+
+**Layout:**
+- **Left Panel (60%):** Article editor (rich text)
+- **Right Panel (40%):** Research panel, citations, SEO metrics
+- **Bottom Panel:** Progress bar, workflow steps
+- **Top Bar:** Save, Publish, Settings, Export buttons
+
+**Editor Features:**
+- **Rich Text:** Bold, italic, headings, lists, links, images
+- **Word Count:** Real-time, bottom-right
+- **Auto-save:** Every 30 seconds, indicator
+- **Version History:** Dropdown to view/restore versions
+- **Collaboration:** (optional) Real-time cursors, comments
+
+**Right Panel Tabs:**
+1. **Research:** Tavily sources, citations, DataForSEO data
+2. **SEO Metrics:** Score, readability, keyword density
+3. **Attribution:** Revenue data (if applicable)
+4. **Settings:** Writing style, tone, length
+
+**Progress Indicator:**
+- **Workflow Steps:** Research → Write → Review → Publish → Index
+- **Active Step:** Highlighted, animated
+- **Completed Steps:** Green checkmarks
+- **Section Progress:** (for article generation) "Writing section 3 of 8... 45%"
+
+### Keyword Research Page
+
+**Layout:**
+- **Search Bar:** Top, full-width, with filters (language, location)
+- **Results Table:** Keywords with volume, difficulty, trends
+- **Clustering Panel:** (optional) Right sidebar, keyword groups
+- **Export Button:** Download CSV
+
+**Table Columns:**
+- **Keyword:** Clickable, opens SERP analysis
+- **Volume:** Number, sortable
+- **Difficulty:** 0-100, color-coded (green/yellow/red)
+- **Trend:** Sparkline chart, 30-day trend
+- **CPC:** (optional) Cost per click
+- **Actions:** Research, Add to Article, Save
+
+**Clustering:**
+- **Groups:** Expandable sections, keyword groups
+- **Visualization:** (optional) Network graph
+- **Bulk Actions:** Select cluster, generate article for all keywords
+
+### Analytics Dashboard Page
+
+**Layout:**
+- **Date Range Selector:** Top-left, dropdown or calendar
+- **Comparison Toggle:** "Compare to previous period" checkbox
+- **Chart Area:** Main chart (line or bar), full width
+- **Metrics Grid:** 4-6 metric cards below chart
+- **Table/List:** Detailed data below metrics
+
+**Chart Types:**
+- **Traffic Over Time:** Line chart, daily/weekly/monthly
+- **Revenue Attribution:** Bar chart, by article or date
+- **Ranking Performance:** Line chart, position over time
+- **Content Performance:** Bar chart, articles by metric
+
+**Metrics Cards:**
+- **Total Traffic:** Visitors, sessions, page views
+- **Revenue Attributed:** Total $, average per article
+- **Top Keywords:** Number in top 10, average position
+- **Content Output:** Articles published, words written
+
+**Drill-Down:**
+- **Click Chart Point:** Navigate to detailed view
+- **Click Metric Card:** Open detailed report
+- **Export:** Download chart data, PDF report
+
+### Revenue Attribution Page
+
+**Layout:**
+- **Summary Cards:** Total revenue, top article, conversion rate
+- **Chart:** Revenue over time (line chart)
+- **Table:** Articles with revenue, sorted by highest
+- **Filters:** Date range, store (multi-store), article type
+
+**Article Table:**
+- **Columns:** Title, Revenue, Orders, Conversion Rate, Clicks, Actions
+- **Sortable:** All columns
+- **Clickable:** Navigate to article detail
+- **Export:** CSV download
+
+**Article Detail Modal:**
+- **Revenue Breakdown:** Orders, dates, amounts
+- **UTM Parameters:** Display tracking parameters
+- **Conversion Funnel:** Clicks → Views → Purchases
+- **Timeline:** Order dates on timeline
+- **Export:** PDF report, shareable link
+
+### Publishing Queue Page
+
+**Layout:**
+- **Queue Status:** Active, Pending, Completed, Failed tabs
+- **Queue List:** Articles with status, progress, destination
+- **Bulk Actions:** Publish selected, Retry failed, Cancel pending
+- **Filters:** Status, destination, date
+
+**Queue Item:**
+- **Article Title:** Clickable, opens preview
+- **Status Badge:** Color-coded (blue=in-progress, green=success, red=failed)
+- **Progress Bar:** (for in-progress) Percentage complete
+- **Destination:** CMS name, site name
+- **Scheduled Time:** (if scheduled) Date/time
+- **Actions:** View, Cancel, Retry (if failed)
+
+**Real-Time Updates:**
+- **Websocket:** Live progress updates
+- **Notifications:** Toast notifications on completion/failure
+- **Auto-Refresh:** Every 5 seconds (if queue active)
+
+### Settings Pages
+
+#### Profile Settings
+- **Form Layout:** Two columns (desktop), stacked (mobile)
+- **Sections:** Personal Info, Preferences, Notifications
+- **Save Button:** Sticky bottom bar or top-right
+- **Avatar Upload:** Drag & drop, preview, crop
+
+#### Organization Settings
+- **Tabs:** General, Team, Billing, Integrations, White-Label
+- **Team Management:** Table with roles, invite button
+- **Billing:** Current plan, usage, upgrade button
+- **Integrations:** Connected services, connect buttons
+
+#### White-Label Settings (Agency Only)
+- **Branding Section:** Logo upload, color picker, font selector
+- **Custom Domain:** Input field, CNAME instructions
+- **Preview:** Live preview of branded portal
+- **Save:** Apply to all client portals
+
+### Onboarding Flow
+
+**Step 1: Welcome**
+- **Layout:** Centered, full-screen
+- **Content:** Welcome message, value proposition
+- **CTA:** "Get Started" button
+
+**Step 2: Persona Selection**
+- **Options:** Agency, E-Commerce, SaaS (cards)
+- **Selection:** Click card, highlight border
+- **CTA:** "Continue" button
+
+**Step 3: CMS Connection**
+- **Options:** WordPress, Shopify, etc. (icons/logos)
+- **Connection:** OAuth flow or API key input
+- **Skip:** "Skip for now" link
+
+**Step 4: First Article**
+- **Guided Flow:** Step-by-step article creation
+- **Tooltips:** Highlight features, explain steps
+- **Completion:** "Publish your first article" CTA
+
+**Step 5: Dashboard Tour**
+- **Highlight:** Key dashboard features
+- **Tooltips:** Explain widgets, navigation
+- **Completion:** "Start using Infin8Content" button
+
+**Progress Indicator:**
+- **Top Bar:** Step numbers (1 of 5), progress bar
+- **Navigation:** Back button, Skip link
+
+### Notification System
+
+**Notification Types:**
+- **Success:** Green, checkmark icon (article published)
+- **Error:** Red, X icon (publishing failed)
+- **Warning:** Yellow, exclamation icon (approaching limits)
+- **Info:** Blue, info icon (system updates)
+
+**Notification Display:**
+- **Position:** Top-right (desktop), bottom (mobile)
+- **Duration:** 5 seconds (auto-dismiss), or manual close
+- **Stacking:** Multiple notifications stack vertically
+- **Actions:** (optional) Click to navigate, action button
+
+**Notification Center:**
+- **Icon:** Bell with badge (unread count)
+- **Dropdown:** List of notifications (max 20)
+- **Mark as Read:** Click notification, or "Mark all as read"
+- **View All:** Link to full notifications page
+
+### Search Functionality
+
+**Global Search:**
+- **Trigger:** Cmd/Ctrl + K (keyboard shortcut)
+- **Modal:** Full-screen overlay, search input focused
+- **Results:** Grouped by type (Articles, Keywords, Clients, etc.)
+- **Quick Actions:** Create new item, navigate to result
+
+**Search Results:**
+- **Highlight:** Matching text highlighted
+- **Preview:** Snippet of content
+- **Actions:** Click to navigate, keyboard navigation (arrow keys)
+
+**Search Filters:**
+- **Type:** Articles, Keywords, Clients, Projects
+- **Date:** Recent, All time
+- **Status:** (for articles) Draft, Published, etc.
+
+### Keyboard Shortcuts
+
+**Global Shortcuts:**
+- **Cmd/Ctrl + K:** Open search
+- **Cmd/Ctrl + /:** Show keyboard shortcuts help
+- **Esc:** Close modal, cancel action
+- **Cmd/Ctrl + N:** Create new article (context-dependent)
+
+**Navigation Shortcuts:**
+- **Cmd/Ctrl + 1-6:** Navigate to main sections
+- **Cmd/Ctrl + B:** Toggle sidebar
+- **Arrow Keys:** Navigate lists/tables (when focused)
+
+**Editor Shortcuts:**
+- **Cmd/Ctrl + S:** Save
+- **Cmd/Ctrl + P:** Publish
+- **Cmd/Ctrl + B:** Bold
+- **Cmd/Ctrl + I:** Italic
+
+**Shortcut Help Modal:**
+- **Trigger:** Cmd/Ctrl + /
+- **Content:** Grouped shortcuts, searchable
+- **Layout:** Keyboard key visualization
+
 ---
 
 **Functional Requirements Summary:**
-- **Total FRs:** 129 functional requirements
-- **Phase 1 (Launch):** 120 FRs covering core platform capabilities
+- **Total FRs:** 160 functional requirements
+- **Phase 1 (Launch):** 151 FRs covering core platform capabilities
 - **Phase 2 (Post-Launch):** 9 FRs for advanced features and integrations
 - **Coverage:** All user journeys, success criteria, innovations, and project-type requirements addressed
+- **Payment Model:** Paywall-first (no free trials, payment required before dashboard access)
+- **Dashboard Requirements:** 23 FRs (FR138-FR160) covering dashboard UI/UX, analytics visualization, and user interface patterns
+
+**UI/UX Design Specifications:**
+- **Component-Level Specs:** Comprehensive specifications for 15+ UI components (Navigation, Widgets, Charts, Tables, Forms, Modals, Status Indicators, Progress Bars, etc.)
+- **Dashboard Page Requirements:** Detailed layouts and requirements for 10+ dashboard pages (Main Dashboard, Article List, Editor, Keyword Research, Analytics, Revenue Attribution, Publishing Queue, Settings, Onboarding, etc.)
+- **Design System:** Complete color palette, typography system, spacing system, animation guidelines
+- **Responsive Design:** Breakpoint specifications and responsive behaviors for mobile, tablet, and desktop
+- **Accessibility:** ARIA labels, keyboard navigation, focus indicators, screen reader support
+- **Pattern Library:** Common SaaS dashboard patterns (widget customization, real-time updates, empty states, error handling, notifications, search, keyboard shortcuts)
 
 ## Non-Functional Requirements
 
