@@ -1,0 +1,219 @@
+# generated: 2025-12-21 15:23
+# project: Infin8Content
+# project_key: 
+# tracking_system: file-system
+# story_location: {project-root}/_bmad-output
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2025-12-21 15:23
+project: Infin8Content
+project_key: ""
+tracking_system: file-system
+story_location: "{project-root}/_bmad-output"
+
+development_status:
+  epic-1: backlog
+  1-1-project-initialization-and-starter-template-setup: backlog
+  1-2-supabase-project-setup-and-database-schema-foundation: backlog
+  1-3-user-registration-with-email-and-password: backlog
+  1-4-user-login-and-session-management: backlog
+  1-5-oauth-authentication-google-and-github: backlog
+  1-6-organization-creation-and-management: backlog
+  1-7-stripe-payment-integration-and-subscription-setup: backlog
+  1-8-payment-first-access-control-paywall-implementation: backlog
+  1-9-account-suspension-and-reactivation-workflow: backlog
+  1-10-team-member-invites-and-role-assignments: backlog
+  1-11-row-level-security-rls-policies-implementation: backlog
+  1-12-basic-dashboard-access-after-payment: backlog
+  1-13-audit-logging-for-compliance: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-dashboard-layout-foundation-and-navigation-structure: backlog
+  2-2-persona-specific-default-dashboard-views: backlog
+  2-3-real-time-usage-credits-display: backlog
+  2-4-success-metrics-visualization-widgets: backlog
+  2-5-recent-activity-feed-widget: backlog
+  2-6-quick-action-buttons: backlog
+  2-7-customizable-widget-layout: backlog
+  2-8-global-search-functionality-cmdctrl-k: backlog
+  2-9-keyboard-shortcuts-and-help-modal: backlog
+  2-10-responsive-design-implementation: backlog
+  2-11-loading-states-and-skeleton-screens: backlog
+  2-12-error-states-with-clear-recovery-actions: backlog
+  2-13-empty-states-with-helpful-guidance: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-keyword-research-interface-and-dataforseo-integration: backlog
+  3-2-filter-and-organize-keyword-research-results: backlog
+  3-3-keyword-clustering-pillar-content-strategy: backlog
+  3-4-real-time-web-research-with-tavily-integration: backlog
+  3-5-serp-analysis-with-dataforseo-integration: backlog
+  3-6-keyword-research-history-and-saved-lists: backlog
+  3-7-related-keyword-suggestions: backlog
+  3-8-batch-keyword-research-operations: backlog
+  epic-3-retrospective: optional
+
+  epic-4a: backlog
+  4a-1-article-generation-initiation-and-queue-setup: backlog
+  4a-2-section-by-section-architecture-and-outline-generation: backlog
+  4a-3-real-time-research-per-section-tavily-integration: backlog
+  4a-4-serp-analysis-per-section-dataforseo-integration: backlog
+  4a-5-llm-content-generation-with-openrouter-integration: backlog
+  4a-6-real-time-progress-tracking-and-updates: backlog
+  4a-7-automatic-seo-optimization-keyword-density-headings-meta-tags: backlog
+  4a-8-automatic-faq-section-generation: backlog
+  4a-9-automatic-internal-linking-suggestions: backlog
+  4a-10-automatic-schema-markup-generation: backlog
+  4a-11-automatic-image-integration-with-alt-text: backlog
+  epic-4a-retrospective: optional
+
+  epic-4b: backlog
+  4b-1-article-editor-interface-and-rich-text-editing: backlog
+  4b-2-section-level-editing-and-independent-section-management: backlog
+  4b-3-section-regeneration-and-partial-content-regeneration: backlog
+  4b-4-article-templates-and-structure-saving: backlog
+  4b-5-custom-writing-styles-and-tones: backlog
+  4b-6-article-duplication-and-template-creation: backlog
+  4b-7-article-draft-saving-and-auto-save: backlog
+  4b-8-version-history-and-revision-tracking: backlog
+  4b-9-content-change-tracking-and-history: backlog
+  4b-10-article-organization-folders-and-collections: backlog
+  4b-11-content-library-search-and-filtering: backlog
+  4b-12-bulk-article-selection-and-operations: backlog
+  4b-13-bulk-editing-operations: backlog
+  epic-4b-retrospective: optional
+
+  epic-5: backlog
+  5-1-cms-connection-management-and-credential-storage: backlog
+  5-2-cms-connection-credential-validation: backlog
+  5-3-wordpress-publishing-one-click-publish: backlog
+  5-4-google-search-console-indexing-integration: backlog
+  5-5-indexing-status-tracking-and-monitoring: backlog
+  5-6-publishing-settings-configuration-per-cms: backlog
+  5-7-publishing-history-and-status-tracking: backlog
+  5-8-oauth-token-refresh-automation: backlog
+  5-9-scheduled-publishing-with-timezone-support: backlog
+  5-10-bulk-publishing-operations: backlog
+  5-11-social-media-post-generation: backlog
+  5-12-article-export-in-multiple-formats: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-persona-specific-success-metrics-dashboard: backlog
+  6-2-article-performance-tracking-views-rankings-conversions: backlog
+  6-3-keyword-ranking-data-and-position-tracking: backlog
+  6-4-content-quality-metrics-dashboard: backlog
+  6-5-feature-adoption-metrics-and-usage-analytics: backlog
+  6-6-shareable-attribution-reports-generation: backlog
+  6-7-analytics-filtering-per-project-per-article-aggregated: backlog
+  6-8-time-saved-tracking-and-success-metric-calculation: backlog
+  6-9-content-output-increase-measurement: backlog
+  6-10-roi-calculation-per-organization: backlog
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-e-commerce-store-connection-shopify-and-woocommerce: backlog
+  7-2-product-catalog-synchronization: backlog
+  7-3-product-description-generation-from-product-data: backlog
+  7-4-automatic-product-linking-in-blog-content: backlog
+  7-5-utm-parameter-generation-for-content-links: backlog
+  7-6-e-commerce-order-matching-via-utm-tracking: backlog
+  7-7-revenue-attribution-reports-and-dashboard: backlog
+  7-8-revenue-attribution-data-export: backlog
+  7-9-multiple-e-commerce-store-management: backlog
+  epic-7-retrospective: optional
+
+  epic-8: backlog
+  8-1-white-label-branding-configuration-logo-colors-fonts: backlog
+  8-2-custom-domain-setup-with-ssl-provisioning: backlog
+  8-3-client-stakeholder-invitations-to-white-label-portals: backlog
+  8-4-client-portal-access-with-read-only-permissions: backlog
+  8-5-multi-tenant-data-isolation-row-level-security: backlog
+  8-6-project-management-and-organization: backlog
+  8-7-project-assignment-to-team-members-and-clients: backlog
+  epic-8-retrospective: optional
+
+  epic-9: backlog
+  9-1-article-comments-and-collaboration: backlog
+  9-2-article-approval-workflow: backlog
+  9-3-article-assignment-to-team-members: backlog
+  9-4-article-ownership-and-permissions-management: backlog
+  9-5-article-status-tracking-and-workflow-states: backlog
+  9-6-article-status-change-notifications: backlog
+  epic-9-retrospective: optional
+
+  epic-10: backlog
+  10-1-usage-credit-tracking-per-organization: backlog
+  10-2-real-time-usage-dashboard: backlog
+  10-3-usage-limit-alerts-and-notifications: backlog
+  10-4-overage-fee-calculation-and-billing: backlog
+  10-5-stripe-subscription-management: backlog
+  10-6-plan-upgrade-and-downgrade-with-prorated-billing: backlog
+  10-7-api-cost-tracking-and-monitoring: backlog
+  10-8-billing-history-and-invoice-management: backlog
+  10-9-usage-limit-enforcement-per-plan-tier: backlog
+  10-10-cost-threshold-alerts: backlog
+  10-11-upgrade-suggestions-based-on-usage-patterns: backlog
+  10-12-upgrade-value-comparison-and-feature-showcase: backlog
+  epic-10-retrospective: optional
+
+  epic-11: backlog
+  11-1-api-key-generation-and-management: backlog
+  11-2-rest-api-endpoints-for-core-operations: backlog
+  11-3-rate-limiting-per-api-key: backlog
+  11-4-webhook-receiving-from-external-systems: backlog
+  11-5-webhook-endpoint-configuration-for-custom-integrations: backlog
+  epic-11-retrospective: optional
+
+  epic-12: backlog
+  12-1-pre-payment-information-pages-pricing-features-case-studies: backlog
+  12-2-post-payment-onboarding-welcome-and-persona-selection: backlog
+  12-3-guided-cms-connection-during-onboarding: backlog
+  12-4-guided-first-article-creation-tutorial: backlog
+  12-5-dashboard-tour-and-feature-discovery: backlog
+  12-6-feature-discovery-mechanisms-for-new-users: backlog
+  12-7-help-documentation-and-support-resources: backlog
+  epic-12-retrospective: optional
+
+  epic-13: backlog
+  13-1-news-article-generation-from-latest-events: backlog
+  13-2-listicle-article-generation-with-comparison-tables: backlog
+  13-3-youtube-video-to-blog-post-conversion: backlog
+  13-4-automated-blog-content-generation-autoblog: backlog
+  13-5-competitor-comparison-page-generation: backlog
+  13-6-ai-powered-article-editing-assistant: backlog
+  13-7-additional-cms-platform-integrations: backlog
+  13-8-zapier-integration-for-no-code-automation: backlog
+  13-9-live-product-pricing-and-inventory-sync: backlog
+  epic-13-retrospective: optional
+
