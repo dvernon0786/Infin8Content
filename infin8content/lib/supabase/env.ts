@@ -21,6 +21,18 @@ export function validateSupabaseEnv() {
   }
 }
 
+// Validate Brevo API key
+export function validateBrevoEnv() {
+  const brevoApiKey = process.env.BREVO_API_KEY
+  if (!brevoApiKey) {
+    throw new Error(
+      'Missing required environment variable: BREVO_API_KEY\n' +
+        'This is required for OTP email delivery. Please set it in your .env.local file.'
+    )
+  }
+  return brevoApiKey
+}
+
 // Validate app URL for email verification redirects
 export function validateAppUrl() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL

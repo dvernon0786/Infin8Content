@@ -33,14 +33,14 @@ export async function middleware(request: NextRequest) {
   let response = await updateSession(request);
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/register', '/login', '/auth/callback', '/verify-email'];
+  const publicRoutes = ['/register', '/login', '/verify-email'];
   const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route));
 
   if (isPublicRoute) {
     return response;
   }
 
-  // Check authentication and email verification for protected routes
+  // Check authentication and OTP verification for protected routes
   // Create Supabase client for middleware (Edge runtime compatible)
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -69,10 +69,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Check email verification status
-  if (!user.email_confirmed_at) {
-    // User authenticated but email not verified - redirect to verification page
-    return NextResponse.redirect(new URL('/verify-email', request.url));
+  // Check OTP verification status by querying users table
+  // Note: We check the users table because OTP verification is stored there
+  const { data: userRecord } = await supabase
+    .from('users')
+    .select('otp_verified')
+    .eq('auth_user_id', user.id)
+    .single();
+
+  if (!userRecord || !userRecord.otp_verified) {
+    // User authenticated but OTP not verified - redirect to verification page
+    const verifyUrl = new URL('/verify-email', request.url);
+    if (user.email) {
+      verifyUrl.searchParams.set('email', user.email);
+    }
+    return NextResponse.redirect(verifyUrl);
   }
 
   // User is authenticated and email is verified - allow access

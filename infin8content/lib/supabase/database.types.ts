@@ -1,6 +1,6 @@
 // Generated TypeScript types from Supabase database schema
-// Generated from migrations: 20260101124156_initial_schema.sql, 20260104095303_link_auth_users.sql
-// Tables: organizations, users
+// Generated from migrations: 20260101124156_initial_schema.sql, 20260104095303_link_auth_users.sql, 20260104100500_add_otp_verification.sql
+// Tables: organizations, users, otp_codes
 
 export type Json =
   | string
@@ -47,6 +47,7 @@ export interface Database {
           org_id: string | null
           auth_user_id: string | null
           role: 'owner' | 'editor' | 'viewer'
+          otp_verified: boolean
           created_at: string
         }
         Insert: {
@@ -54,7 +55,8 @@ export interface Database {
           email: string
           org_id?: string | null
           auth_user_id?: string | null
-          role: 'owner' | 'editor' | 'viewer'
+          role?: 'owner' | 'editor' | 'viewer'
+          otp_verified?: boolean
           created_at?: string
         }
         Update: {
@@ -63,6 +65,7 @@ export interface Database {
           org_id?: string | null
           auth_user_id?: string | null
           role?: 'owner' | 'editor' | 'viewer'
+          otp_verified?: boolean
           created_at?: string
         }
         Relationships: [
@@ -75,6 +78,43 @@ export interface Database {
           {
             foreignKeyName: "users_auth_user_id_fkey"
             columns: ["auth_user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      otp_codes: {
+        Row: {
+          id: string
+          user_id: string
+          email: string
+          code: string
+          expires_at: string
+          verified_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          email: string
+          code: string
+          expires_at: string
+          verified_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          email?: string
+          code?: string
+          expires_at?: string
+          verified_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "otp_codes_user_id_fkey"
+            columns: ["user_id"]
             referencedRelation: "users"
             referencedColumns: ["id"]
           }

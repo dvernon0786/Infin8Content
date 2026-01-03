@@ -22,9 +22,19 @@ User requested to install BMAD Method and initialize workflow tracking for the I
   - Generated workflow tracking file: `_bmad-output/bmm-workflow-status.yaml`
 
 ### Current Task
-✅ **IN PROGRESS:** Story 1.3 - User Registration with Email and Password (2026-01-04, 10:05 AEDT)
+✅ **IN PROGRESS:** Story 1.3 - User Registration with Email and Password (2026-01-04, 10:26 AEDT)
+- **MAJOR CHANGE:** Switched from email verification to OTP verification using Brevo (2026-01-04, 10:26 AEDT)
 - Code review completed: All Critical and High issues resolved (9 issues fixed across 2 review passes)
 - Story status: in-progress (code complete, tests pending)
+- **OTP Verification Implementation:**
+  - Replaced email verification links with 6-digit OTP codes sent via Brevo
+  - Created `otp_codes` table for temporary OTP storage (10-minute expiry)
+  - Added `otp_verified` column to `users` table
+  - Integrated Brevo email service for OTP delivery
+  - Created OTP verification and resend endpoints
+  - Updated verification page to show OTP input form
+  - Updated middleware to check `otp_verified` instead of `email_confirmed_at`
+  - Database migration applied: `20260104100500_add_otp_verification.sql`
 - **Code Review Summary:**
   - First Review: Found 12 issues (3 Critical, 4 High, 3 Medium, 2 Low)
   - Second Review: Found 2 additional build errors (TypeScript, Next.js Suspense)
@@ -32,12 +42,15 @@ User requested to install BMAD Method and initialize workflow tracking for the I
 - **Implementation Complete:**
   - Registration page UI with form validation and accessibility
   - Registration API route with Zod validation and Supabase Auth integration
-  - Email verification callback route and verification page
-  - Protected route middleware with authentication and email verification checks
-  - Database migration: `20260104095303_link_auth_users.sql` (org_id nullable, auth_user_id added)
-  - Environment variable validation for `NEXT_PUBLIC_APP_URL`
+  - OTP verification flow (verify-otp endpoint and resend-otp endpoint)
+  - Protected route middleware with authentication and OTP verification checks
+  - Database migrations: 
+    - `20260104095303_link_auth_users.sql` (org_id nullable, auth_user_id added)
+    - `20260104100500_add_otp_verification.sql` (otp_codes table, otp_verified column)
+  - Brevo email service integration for OTP delivery
+  - Environment variable validation for `BREVO_API_KEY` and `NEXT_PUBLIC_APP_URL`
 - **Code Review Fixes Applied:**
-  - Environment variable validation (`validateAppUrl()` function)
+  - Environment variable validation (`validateAppUrl()` and `validateBrevoEnv()` functions)
   - Null reference protection for `data.user.email`
   - Database error handling (registration fails if users table insert fails)
   - Inline styles replaced with Tailwind classes
@@ -50,10 +63,9 @@ User requested to install BMAD Method and initialize workflow tracking for the I
   - All routes generated correctly
 - **Remaining Items:**
   - Comprehensive test suite implementation (placeholder tests exist)
-  - Manual Supabase dashboard email verification configuration
   - Rate limiting (future enhancement)
 - **Files Created/Modified:**
-  - New: `app/(auth)/register/page.tsx`, `app/api/auth/register/route.ts`, `app/auth/callback/route.ts`, `app/(auth)/verify-email/page.tsx`, `supabase/migrations/20260104095303_link_auth_users.sql`, `app/api/auth/register/route.test.ts`
+  - New: `app/(auth)/register/page.tsx`, `app/api/auth/register/route.ts`, `app/api/auth/verify-otp/route.ts`, `app/api/auth/resend-otp/route.ts`, `app/(auth)/verify-email/page.tsx`, `lib/services/brevo.ts`, `lib/services/otp.ts`, `supabase/migrations/20260104095303_link_auth_users.sql`, `supabase/migrations/20260104100500_add_otp_verification.sql`, `app/api/auth/register/route.test.ts`
   - Modified: `app/middleware.ts`, `lib/supabase/env.ts`, `lib/supabase/database.types.ts`, `package.json`, `package-lock.json`
 
 ### Previous Completed Tasks

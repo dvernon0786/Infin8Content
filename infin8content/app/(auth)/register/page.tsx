@@ -53,8 +53,8 @@ export default function RegisterPage() {
         return
       }
 
-      // Redirect to email verification page
-      router.push('/verify-email')
+      // Redirect to OTP verification page with email
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`)
     } catch (error) {
       setErrors({ email: 'An error occurred. Please try again.' })
     } finally {
