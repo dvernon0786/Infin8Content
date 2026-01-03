@@ -21,4 +21,17 @@ export function validateSupabaseEnv() {
   }
 }
 
+// Validate app URL for email verification redirects
+export function validateAppUrl() {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  if (!appUrl) {
+    throw new Error(
+      'Missing required environment variable: NEXT_PUBLIC_APP_URL\n' +
+        'This is required for email verification redirects. Please set it in your .env.local file.\n' +
+        'Example: NEXT_PUBLIC_APP_URL=http://localhost:3000 (development) or https://yourdomain.com (production)'
+    )
+  }
+  return appUrl
+}
+
 

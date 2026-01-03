@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { validateSupabaseEnv } from "@/lib/supabase/env";
+import { createServerClient } from "@supabase/ssr";
+import type { Database } from "@/lib/supabase/database.types";
 
 export async function middleware(request: NextRequest) {
   // Validate environment variables on every request
@@ -27,7 +29,54 @@ export async function middleware(request: NextRequest) {
     );
   }
 
-  return await updateSession(request);
+  // Update Supabase session (validates env vars and refreshes session)
+  let response = await updateSession(request);
+
+  // Public routes that don't require authentication
+  const publicRoutes = ['/register', '/login', '/auth/callback', '/verify-email'];
+  const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route));
+
+  if (isPublicRoute) {
+    return response;
+  }
+
+  // Check authentication and email verification for protected routes
+  // Create Supabase client for middleware (Edge runtime compatible)
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+  const supabase = createServerClient<Database>(url, anonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
+        response = NextResponse.next({
+          request,
+        });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options)
+        );
+      },
+    },
+  });
+
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    // User not authenticated - redirect to login
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // Check email verification status
+  if (!user.email_confirmed_at) {
+    // User authenticated but email not verified - redirect to verification page
+    return NextResponse.redirect(new URL('/verify-email', request.url));
+  }
+
+  // User is authenticated and email is verified - allow access
+  return response;
 }
 
 export const config = {
