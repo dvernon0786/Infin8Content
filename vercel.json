@@ -1,0 +1,8 @@
+{
+  "buildCommand": "cd infin8content && npm run build",
+  "outputDirectory": "infin8content/.next",
+  "installCommand": "cd infin8content && npm install",
+  "framework": "nextjs",
+  "rootDirectory": "infin8content"
+}
+
