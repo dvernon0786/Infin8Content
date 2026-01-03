@@ -826,4 +826,7 @@ User requested to install BMAD Method and initialize workflow tracking for the I
 - Story key format: "epic-story-title" (e.g., "1-1-project-initialization-and-starter-template-setup")
 - Epic 4A/4B handling: Stories use "4a-1-..." and "4b-1-..." format to maintain epic separation
 - Sprint status validation: YAML syntax must be valid, all epics/stories must be present, retrospectives required for each epic
+- Git submodules: If a directory has its own .git repository, it becomes a submodule and files won't be available when the parent repo is cloned. Remove nested .git directories to include files in parent repository
+- Vercel deployment: When Root Directory is set to a subdirectory, Vercel automatically changes to that directory before running commands. Don't include "cd" commands in build settings when using Root Directory
+- Vercel auto-detection: Next.js projects are auto-detected. Disable override toggles for Install Command, Build Command, and Output Directory to use defaults
 
