@@ -23,6 +23,10 @@ User requested to install BMAD Method and initialize workflow tracking for the I
 
 ### Current Task
 ✅ **COMPLETED:** Story 1.2 - Supabase Project Setup and Database Schema Foundation (2026-01-04, 09:06 AEDT)
+- Code review completed: All 10 issues resolved
+- Story status updated to "done" in sprint-status.yaml
+- Git repository structure fixed: Removed nested git repo from infin8content (was submodule)
+- Vercel deployment setup: Configured Root Directory and build settings
 - Supabase integration configured with environment variables
 - Database schema created: `organizations` and `users` tables
 - Foreign key constraints and indexes verified
@@ -239,6 +243,14 @@ User requested to install BMAD Method and initialize workflow tracking for the I
   - [x] Database schema verified (tables, constraints, indexes, triggers)
   - [x] Update story file with completion notes and review findings
   - [x] Update sprint-status.yaml to "done"
+  - [x] Push changes to git origin/main
+- [x] Vercel Deployment Setup (2026-01-04, 09:30 AEDT)
+  - [x] Fixed git repository structure: Removed nested .git from infin8content/
+  - [x] Converted infin8content from git submodule to regular directory
+  - [x] Added all 33 Next.js project files to parent repository
+  - [x] Configured Vercel Root Directory: infin8content
+  - [x] Verified build process: npm install and npm run build working
+  - [ ] Complete Vercel environment variables setup (pending)
 
 ## Executor's Feedback or Assistance Requests
 
@@ -703,9 +715,20 @@ User requested to install BMAD Method and initialize workflow tracking for the I
 - Indexes verified: 6 indexes total (primary keys, unique constraints, performance indexes)
 - Trigger verified: `update_organizations_updated_at` enabled
 
+**Vercel Deployment Setup (2026-01-04, 09:30 AEDT):**
+- Fixed git repository structure: Removed nested `.git` from `infin8content/` directory
+- Converted infin8content from git submodule to regular directory (33 files added to parent repo)
+- Configured Vercel project settings:
+  - Root Directory: `infin8content`
+  - Framework Preset: Next.js (auto-detected)
+  - Build settings: Using auto-detected defaults
+- Deployment status: Build successful, configuration in progress
+
 **Next Steps:**
 1. ✅ Story 1.2 code review complete - all issues resolved
-2. Proceed to Story 1.3 (User Registration with Email and Password)
+2. ✅ Vercel deployment configuration - repository structure fixed
+3. Complete Vercel environment variables setup (Supabase credentials)
+4. Proceed to Story 1.3 (User Registration with Email and Password)
 
 **Story 1.1 Implementation & Code Review COMPLETE!** (2025-01-01, 11:59 AEDT)
 
