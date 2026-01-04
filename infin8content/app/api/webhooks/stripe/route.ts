@@ -3,6 +3,7 @@ import { validateStripeEnv } from '@/lib/stripe/env'
 import { stripe } from '@/lib/stripe/server'
 import { retryWithBackoff } from '@/lib/stripe/retry'
 import { NextResponse } from 'next/server'
+import { sendPaymentFailureEmail, sendPaymentReactivationEmail } from '@/lib/services/payment-notifications'
 
 // Required for webhooks - must use Node.js runtime for raw body access
 export const runtime = 'nodejs'
@@ -187,7 +188,7 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   // Check if organization exists before processing
   const { data: organization, error: orgCheckError } = await supabase
     .from('organizations')
-    .select('id, name, payment_status')
+    .select('id, name, payment_status, grace_period_started_at, suspended_at')
     .eq('id', orgId)
     .single()
 
@@ -215,16 +216,27 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
     throw error
   }
 
+  // Check if this is a reactivation (payment_status is 'suspended' or 'past_due')
+  const isReactivation = organization.payment_status === 'suspended' || organization.payment_status === 'past_due'
+
   // Update organizations table with retry logic
+  const updateData: any = {
+    plan: plan,
+    stripe_customer_id: session.customer,
+    stripe_subscription_id: session.subscription,
+    payment_status: 'active',
+    payment_confirmed_at: new Date().toISOString(),
+  }
+
+  // If reactivating, clear grace period and suspension fields
+  if (isReactivation) {
+    updateData.grace_period_started_at = null
+    updateData.suspended_at = null
+  }
+
   const { error: updateError } = await supabase
     .from('organizations')
-    .update({
-      plan: plan,
-      stripe_customer_id: session.customer,
-      stripe_subscription_id: session.subscription,
-      payment_status: 'active',
-      payment_confirmed_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq('id', orgId)
 
   if (updateError) {
@@ -237,10 +249,42 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
     throw updateError
   }
 
+  // Send reactivation email if this was a reactivation (non-blocking)
+  if (isReactivation) {
+    try {
+      // Get user email from users table for this organization
+      const { data: ownerUser } = await supabase
+        .from('users')
+        .select('email')
+        .eq('org_id', orgId)
+        .eq('role', 'owner')
+        .single()
+
+      if (ownerUser?.email) {
+        await sendPaymentReactivationEmail({
+          to: ownerUser.email,
+        })
+        logWebhookEvent(event, 'Payment reactivation email sent', {
+          organizationId: orgId,
+          email: ownerUser.email,
+        })
+      } else {
+        logWebhookError(event, 'Owner user not found for reactivation email', null, {
+          organizationId: orgId,
+        })
+      }
+    } catch (emailError) {
+      // Email failures are non-blocking - log but don't fail webhook processing
+      logWebhookError(event, 'Failed to send reactivation email (non-blocking)', emailError, {
+        organizationId: orgId,
+      })
+    }
+  }
+
   // Store processed event in stripe_webhook_events table
   await storeWebhookEvent(event, supabase, orgId)
 
-  logWebhookEvent(event, 'Payment confirmed', {
+  logWebhookEvent(event, isReactivation ? 'Payment confirmed - account reactivated' : 'Payment confirmed', {
     orgId,
     plan,
     billingFrequency,
@@ -300,12 +344,20 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
 
   if (organization) {
     // Update organization payment status to 'canceled'
+    // If subscription was canceled and payment_status was 'active', start grace period
+    const updateData: any = {
+      payment_status: 'canceled',
+      stripe_subscription_id: null, // Clear subscription ID
+    }
+
+    // If payment_status was 'active', start grace period
+    if (organization.payment_status === 'active') {
+      updateData.grace_period_started_at = new Date().toISOString()
+    }
+
     const { error: updateError } = await supabase
       .from('organizations')
-      .update({
-        payment_status: 'canceled',
-        stripe_subscription_id: null, // Clear subscription ID
-      })
+      .update(updateData)
       .eq('id', organization.id)
 
     if (updateError) {
@@ -316,6 +368,39 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
       // Database errors are retryable
       ;(updateError as any).retryable = true
       throw updateError
+    }
+
+    // Send payment failure email if payment_status was 'active' (non-blocking)
+    if (organization.payment_status === 'active') {
+      try {
+        // Get user email from users table for this organization
+        const { data: ownerUser } = await supabase
+          .from('users')
+          .select('email')
+          .eq('org_id', organization.id)
+          .eq('role', 'owner')
+          .single()
+
+        if (ownerUser?.email) {
+          await sendPaymentFailureEmail({
+            to: ownerUser.email,
+            gracePeriodDays: 7,
+          })
+          logWebhookEvent(event, 'Payment failure email sent (subscription canceled)', {
+            organizationId: organization.id,
+            email: ownerUser.email,
+          })
+        } else {
+          logWebhookError(event, 'Owner user not found for payment failure email', null, {
+            organizationId: organization.id,
+          })
+        }
+      } catch (emailError) {
+        // Email failures are non-blocking - log but don't fail webhook processing
+        logWebhookError(event, 'Failed to send payment failure email (non-blocking)', emailError, {
+          organizationId: organization.id,
+        })
+      }
     }
 
     await storeWebhookEvent(event, supabase, organization.id)
@@ -347,21 +432,80 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
   // Find organization by customer ID
   const { data: organization, error: orgError } = await supabase
     .from('organizations')
-    .select('id, name, payment_status')
+    .select('id, name, payment_status, grace_period_started_at')
     .eq('stripe_customer_id', invoice.customer)
     .single()
 
   if (organization) {
-    // For Story 1.9 - payment failure handling
-    // For now, just log and store the event
-    logWebhookEvent(event, 'Payment failed', {
-      organizationId: organization.id,
-      invoiceId: invoice.id,
-      amount: invoice.amount_due,
-      currency: invoice.currency,
-      currentStatus: organization.payment_status,
-    })
-    await storeWebhookEvent(event, supabase, organization.id)
+    // Only process if payment_status is 'active' (not already in grace period)
+    if (organization.payment_status === 'active') {
+      // Update payment status to 'past_due' and start grace period
+      const { error: updateError } = await supabase
+        .from('organizations')
+        .update({
+          payment_status: 'past_due',
+          grace_period_started_at: new Date().toISOString(),
+        })
+        .eq('id', organization.id)
+
+      if (updateError) {
+        logWebhookError(event, 'Failed to update organization after payment failure', updateError, {
+          organizationId: organization.id,
+          invoiceId: invoice.id,
+        })
+        // Database errors are retryable
+        ;(updateError as any).retryable = true
+        throw updateError
+      }
+
+      // Send payment failure email (non-blocking - log errors but don't fail webhook)
+      try {
+        // Get user email from users table for this organization
+        const { data: ownerUser } = await supabase
+          .from('users')
+          .select('email')
+          .eq('org_id', organization.id)
+          .eq('role', 'owner')
+          .single()
+
+        if (ownerUser?.email) {
+          await sendPaymentFailureEmail({
+            to: ownerUser.email,
+            gracePeriodDays: 7,
+          })
+          logWebhookEvent(event, 'Payment failure email sent', {
+            organizationId: organization.id,
+            email: ownerUser.email,
+          })
+        } else {
+          logWebhookError(event, 'Owner user not found for payment failure email', null, {
+            organizationId: organization.id,
+          })
+        }
+      } catch (emailError) {
+        // Email failures are non-blocking - log but don't fail webhook processing
+        logWebhookError(event, 'Failed to send payment failure email (non-blocking)', emailError, {
+          organizationId: organization.id,
+        })
+      }
+
+      await storeWebhookEvent(event, supabase, organization.id)
+      logWebhookEvent(event, 'Payment failed - grace period started', {
+        organizationId: organization.id,
+        invoiceId: invoice.id,
+        amount: invoice.amount_due,
+        currency: invoice.currency,
+        previousStatus: organization.payment_status,
+      })
+    } else {
+      // Payment status is already 'past_due' or other status - just log and store
+      logWebhookEvent(event, 'Payment failed (already in grace period or other status)', {
+        organizationId: organization.id,
+        invoiceId: invoice.id,
+        currentStatus: organization.payment_status,
+      })
+      await storeWebhookEvent(event, supabase, organization.id)
+    }
   } else {
     // Organization not found - log warning but don't fail
     logWebhookError(event, 'Organization not found for payment failure', orgError, {
@@ -385,18 +529,29 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
   // Find organization by customer ID
   const { data: organization, error: orgError } = await supabase
     .from('organizations')
-    .select('id, name, payment_status')
+    .select('id, name, payment_status, grace_period_started_at, suspended_at')
     .eq('stripe_customer_id', invoice.customer)
     .single()
 
   if (organization) {
-    // Ensure payment status is active for successful recurring payments
+    // Check if this is a reactivation (payment_status is 'suspended' or 'past_due')
+    const isReactivation = organization.payment_status === 'suspended' || organization.payment_status === 'past_due'
+
+    // Update payment status to active for successful recurring payments
+    const updateData: any = {
+      payment_status: 'active',
+      payment_confirmed_at: new Date().toISOString(),
+    }
+
+    // If reactivating, clear grace period and suspension fields
+    if (isReactivation) {
+      updateData.grace_period_started_at = null
+      updateData.suspended_at = null
+    }
+
     const { error: updateError } = await supabase
       .from('organizations')
-      .update({
-        payment_status: 'active',
-        payment_confirmed_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', organization.id)
 
     if (updateError) {
@@ -409,8 +564,40 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
       throw updateError
     }
 
+    // Send reactivation email if this was a reactivation (non-blocking)
+    if (isReactivation) {
+      try {
+        // Get user email from users table for this organization
+        const { data: ownerUser } = await supabase
+          .from('users')
+          .select('email')
+          .eq('org_id', organization.id)
+          .eq('role', 'owner')
+          .single()
+
+        if (ownerUser?.email) {
+          await sendPaymentReactivationEmail({
+            to: ownerUser.email,
+          })
+          logWebhookEvent(event, 'Payment reactivation email sent', {
+            organizationId: organization.id,
+            email: ownerUser.email,
+          })
+        } else {
+          logWebhookError(event, 'Owner user not found for reactivation email', null, {
+            organizationId: organization.id,
+          })
+        }
+      } catch (emailError) {
+        // Email failures are non-blocking - log but don't fail webhook processing
+        logWebhookError(event, 'Failed to send reactivation email (non-blocking)', emailError, {
+          organizationId: organization.id,
+        })
+      }
+    }
+
     await storeWebhookEvent(event, supabase, organization.id)
-    logWebhookEvent(event, 'Recurring payment succeeded', {
+    logWebhookEvent(event, isReactivation ? 'Recurring payment succeeded - account reactivated' : 'Recurring payment succeeded', {
       organizationId: organization.id,
       invoiceId: invoice.id,
       amount: invoice.amount_paid,

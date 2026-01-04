@@ -84,7 +84,7 @@ const planPrices: Record<PlanType, { monthly: number; annual: number }> = {
   agency: { monthly: 399, annual: 299 },
 }
 
-export default function PaymentForm() {
+export default function PaymentForm({ isSuspended: isSuspendedProp }: { isSuspended?: boolean } = {}) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('starter')
@@ -95,14 +95,14 @@ export default function PaymentForm() {
   // Check for error from canceled payment or payment failure
   const canceled = searchParams.get('canceled') === 'true'
   const paymentError = searchParams.get('error')
-  const suspended = searchParams.get('suspended') === 'true'
+  const suspended = isSuspendedProp || searchParams.get('suspended') === 'true'
   
   // Get error message based on error type
   const getErrorMessage = () => {
     if (suspended) {
       return {
-        title: 'Account Suspended',
-        message: 'Your account has been suspended. Please contact support to resolve this issue.',
+        title: 'Account Suspended - Payment Required',
+        message: 'Your account has been suspended due to payment failure. Please update your payment method to reactivate your account. You can retry payment using the form below.',
         type: 'warning' as const,
       }
     }

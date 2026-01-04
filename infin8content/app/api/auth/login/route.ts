@@ -4,6 +4,7 @@ import { validateSupabaseEnv } from '@/lib/supabase/env'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 import type { Database } from '@/lib/supabase/database.types'
+import { getPaymentAccessStatus } from '@/lib/utils/payment-status'
 
 type Organization = Database['public']['Tables']['organizations']['Row']
 
@@ -96,10 +97,10 @@ export async function POST(request: Request) {
       // No organization - redirect to organization creation (Story 1.6)
       redirectTo = '/create-organization'
     } else {
-      // Organization exists - check payment status (Story 1.7)
+      // Organization exists - check payment status (Story 1.7, enhanced in Story 1.8)
       const { data: org, error: orgError } = await supabase
         .from('organizations')
-        .select('id, name, plan, payment_status')
+        .select('id, name, plan, payment_status, grace_period_started_at, suspended_at')
         .eq('id', userRecord.org_id)
         .single()
 
@@ -113,13 +114,16 @@ export async function POST(request: Request) {
         })
         redirectTo = '/create-organization'
       } else {
-        // Check payment status and redirect accordingly
-        const paymentStatus: Organization['payment_status'] = org.payment_status || 'pending_payment'
+        // Get payment access status using utility function (handles grace period logic)
+        const accessStatus = getPaymentAccessStatus(org)
         
-        if (paymentStatus === 'active') {
+        if (accessStatus === 'active') {
           // Payment confirmed - redirect to dashboard
           redirectTo = '/dashboard'
-        } else if (paymentStatus === 'suspended') {
+        } else if (accessStatus === 'grace_period') {
+          // Grace period active - allow access to dashboard (future: show banner)
+          redirectTo = '/dashboard'
+        } else if (accessStatus === 'suspended') {
           // Account suspended - redirect to payment page with suspended flag
           redirectTo = '/payment?suspended=true'
         } else {

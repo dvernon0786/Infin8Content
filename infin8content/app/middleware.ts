@@ -3,6 +3,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 import { validateSupabaseEnv } from "@/lib/supabase/env";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/lib/supabase/database.types";
+import { getPaymentAccessStatus, checkGracePeriodExpired } from "@/lib/utils/payment-status";
 
 export async function middleware(request: NextRequest) {
   // Validate environment variables on every request
@@ -103,24 +104,60 @@ export async function middleware(request: NextRequest) {
   if (!isPaymentRoute && userRecord.org_id) {
     const { data: org } = await supabase
       .from('organizations')
-      .select('payment_status')
+      .select('payment_status, grace_period_started_at, suspended_at')
       .eq('id', userRecord.org_id)
       .single();
 
     if (org) {
-      const paymentStatus: Database['public']['Tables']['organizations']['Row']['payment_status'] = 
-        org.payment_status || 'pending_payment';
+      // Check if grace period expired for past_due accounts
+      if (org.payment_status === 'past_due' && org.grace_period_started_at) {
+        const gracePeriodExpired = checkGracePeriodExpired(
+          org.grace_period_started_at ? new Date(org.grace_period_started_at) : null
+        );
 
-      if (paymentStatus === 'suspended') {
+        if (gracePeriodExpired) {
+          // Grace period expired - update to suspended status
+          const { error: updateError } = await supabase
+            .from('organizations')
+            .update({
+              payment_status: 'suspended',
+              suspended_at: new Date().toISOString(),
+            })
+            .eq('id', userRecord.org_id);
+
+          if (updateError) {
+            // Log error but still redirect - security is more important than perfect state
+            console.error('Failed to update organization to suspended status after grace period expiration:', {
+              orgId: userRecord.org_id,
+              error: updateError,
+              timestamp: new Date().toISOString(),
+            })
+            // Continue to redirect even if update failed - user should still be blocked
+          }
+
+          // Redirect to payment page with suspended flag
+          const paymentUrl = new URL('/payment', request.url);
+          paymentUrl.searchParams.set('suspended', 'true');
+          return NextResponse.redirect(paymentUrl);
+        }
+      }
+
+      // Get payment access status using utility function
+      const accessStatus = getPaymentAccessStatus(org);
+
+      if (accessStatus === 'suspended') {
         // Account suspended - redirect to payment page with suspended flag
         const paymentUrl = new URL('/payment', request.url);
         paymentUrl.searchParams.set('suspended', 'true');
         return NextResponse.redirect(paymentUrl);
-      } else if (paymentStatus === 'pending_payment' || paymentStatus === 'canceled') {
+      } else if (accessStatus === 'pending_payment') {
         // Payment not confirmed - redirect to payment page
         return NextResponse.redirect(new URL('/payment', request.url));
+      } else if (accessStatus === 'grace_period') {
+        // Grace period active - allow access (future: show banner)
+        // For now, allow access during grace period
       }
-      // paymentStatus === 'active' - allow access (continue below)
+      // accessStatus === 'active' - allow access (continue below)
     }
   }
 

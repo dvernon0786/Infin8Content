@@ -2,10 +2,15 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { redirect } from 'next/navigation'
 import PaymentForm from './payment-form'
 import type { Database } from '@/lib/supabase/database.types'
+import { getPaymentAccessStatus } from '@/lib/utils/payment-status'
 
 type Organization = Database['public']['Tables']['organizations']['Row']
 
-export default async function PaymentPage() {
+export default async function PaymentPage({
+  searchParams,
+}: {
+  searchParams: { suspended?: string }
+}) {
   const currentUser = await getCurrentUser()
   
   // Redirect if user is not authenticated
@@ -20,11 +25,14 @@ export default async function PaymentPage() {
   
   // Check if organization already has active payment (redirect to dashboard if payment confirmed)
   if (currentUser?.organizations) {
-    const paymentStatus: Organization['payment_status'] = currentUser.organizations.payment_status || 'pending_payment'
-    if (paymentStatus === 'active') {
+    const accessStatus = getPaymentAccessStatus(currentUser.organizations)
+    if (accessStatus === 'active') {
       redirect('/dashboard')
     }
   }
   
-  return <PaymentForm />
+  // Pass suspended flag to form component
+  const isSuspended = searchParams?.suspended === 'true'
+  
+  return <PaymentForm isSuspended={isSuspended} />
 }

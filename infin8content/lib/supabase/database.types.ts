@@ -1,5 +1,5 @@
 // Generated TypeScript types from Supabase database schema
-// Generated from migrations: 20260101124156_initial_schema.sql, 20260104095303_link_auth_users.sql, 20260104100500_add_otp_verification.sql, 20260105003507_add_stripe_payment_fields.sql
+// Generated from migrations: 20260101124156_initial_schema.sql, 20260104095303_link_auth_users.sql, 20260104100500_add_otp_verification.sql, 20260105003507_add_stripe_payment_fields.sql, 20260105074811_add_payment_grace_period_fields.sql
 // Tables: organizations, users, otp_codes, stripe_webhook_events
 
 export type Json =
@@ -21,8 +21,10 @@ export interface Database {
           white_label_settings: Json
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
-          payment_status: 'pending_payment' | 'active' | 'suspended' | 'canceled'
+          payment_status: 'pending_payment' | 'active' | 'past_due' | 'suspended' | 'canceled'
           payment_confirmed_at: string | null
+          grace_period_started_at: string | null
+          suspended_at: string | null
           created_at: string
           updated_at: string
         }
@@ -33,8 +35,10 @@ export interface Database {
           white_label_settings?: Json
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
-          payment_status?: 'pending_payment' | 'active' | 'suspended' | 'canceled'
+          payment_status?: 'pending_payment' | 'active' | 'past_due' | 'suspended' | 'canceled'
           payment_confirmed_at?: string | null
+          grace_period_started_at?: string | null
+          suspended_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -45,8 +49,10 @@ export interface Database {
           white_label_settings?: Json
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
-          payment_status?: 'pending_payment' | 'active' | 'suspended' | 'canceled'
+          payment_status?: 'pending_payment' | 'active' | 'past_due' | 'suspended' | 'canceled'
           payment_confirmed_at?: string | null
+          grace_period_started_at?: string | null
+          suspended_at?: string | null
           created_at?: string
           updated_at?: string
         }
