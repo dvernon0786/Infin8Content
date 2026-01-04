@@ -22,7 +22,7 @@ User requested to install BMAD Method and initialize workflow tracking for the I
   - Generated workflow tracking file: `_bmad-output/bmm-workflow-status.yaml`
 
 ### Current Task
-✅ **IN PROGRESS:** Story 1.3 - User Registration with Email and Password (2026-01-04, 10:26 AEDT)
+✅ **COMPLETED:** Story 1.4 - User Login and Session Management (2026-01-04, 13:10 AEDT)
 
 ### MVP Prioritization Complete (2026-01-04, 11:12 AEDT)
 - ✅ Created comprehensive MVP prioritization document (`_bmad-output/mvp-prioritization.md`)
@@ -294,6 +294,7 @@ User requested to install BMAD Method and initialize workflow tracking for the I
   - [x] Update story file with completion notes and file list
   - [x] Update sprint-status.yaml to "done"
 - [x] Complete Story 1.2 - Supabase Project Setup and Database Schema Foundation (2026-01-04)
+- [x] Complete Story 1.4 - User Login and Session Management (2026-01-04, 13:10 AEDT)
 - [x] Complete MVP Prioritization (2026-01-04, 11:12 AEDT)
   - [x] Created MVP prioritization document with P0/P1/P2 breakdown
   - [x] Updated all stories in epics.md with priority labels

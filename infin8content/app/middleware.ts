@@ -65,8 +65,17 @@ export async function middleware(request: NextRequest) {
   const { data: { user }, error } = await supabase.auth.getUser();
 
   if (error || !user) {
-    // User not authenticated - redirect to login
-    return NextResponse.redirect(new URL('/login', request.url));
+    // User not authenticated or session expired - redirect to login
+    // Supabase automatically handles JWT expiration (24 hours)
+    // When getUser() returns null/error, session is expired
+    const loginUrl = new URL('/login', request.url);
+    // Add expired parameter if session was previously authenticated (indicates expiration)
+    // Note: We can't distinguish between "never logged in" vs "expired" without additional state
+    // For now, we'll add expired=true when there's an error (likely expired session)
+    if (error) {
+      loginUrl.searchParams.set('expired', 'true');
+    }
+    return NextResponse.redirect(loginUrl);
   }
 
   // Check OTP verification status by querying users table
