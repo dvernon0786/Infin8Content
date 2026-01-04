@@ -14,14 +14,14 @@ const mockSendTransacEmail = vi.fn()
 const mockSetApiKey = vi.fn()
 
 vi.mock('@getbrevo/brevo', () => {
-  const mockTransactionalEmailsApi = vi.fn(() => ({
-    sendTransacEmail: mockSendTransacEmail,
-    setApiKey: mockSetApiKey,
-  }))
+  class MockTransactionalEmailsApi {
+    sendTransacEmail = mockSendTransacEmail
+    setApiKey = mockSetApiKey
+  }
   
   return {
     default: {},
-    TransactionalEmailsApi: mockTransactionalEmailsApi,
+    TransactionalEmailsApi: MockTransactionalEmailsApi,
     TransactionalEmailsApiApiKeys: {
       apiKey: 'apiKey',
     },
@@ -33,7 +33,6 @@ describe('sendPaymentFailureEmail', () => {
   const originalEnv = process.env
 
   beforeEach(() => {
-    vi.resetModules()
     process.env = {
       ...originalEnv,
       BREVO_API_KEY: 'test-api-key',
@@ -99,10 +98,15 @@ describe('sendPaymentFailureEmail', () => {
   })
 
   it('should throw error when BREVO_API_KEY is missing', async () => {
+    // Reset modules to clear singleton cache
+    vi.resetModules()
     delete process.env.BREVO_API_KEY
+    
+    // Re-import after reset to get fresh module with cleared singleton
+    const { sendPaymentFailureEmail: freshSendPaymentFailureEmail } = await import('./payment-notifications')
 
     await expect(
-      sendPaymentFailureEmail({
+      freshSendPaymentFailureEmail({
         to: 'user@example.com',
         gracePeriodDays: 7,
       })
@@ -111,7 +115,7 @@ describe('sendPaymentFailureEmail', () => {
 
   it('should throw user-friendly error when email sending fails', async () => {
     const error = new Error('API Error')
-    mockApiInstance.sendTransacEmail.mockRejectedValueOnce(error)
+    mockSendTransacEmail.mockRejectedValueOnce(error)
 
     await expect(
       sendPaymentFailureEmail({
@@ -139,11 +143,8 @@ describe('sendPaymentFailureEmail', () => {
 
 describe('sendPaymentReactivationEmail', () => {
   const originalEnv = process.env
-  let mockApiInstance: any
-  let mockSendTransacEmail: any
 
   beforeEach(() => {
-    vi.resetModules()
     process.env = {
       ...originalEnv,
       BREVO_API_KEY: 'test-api-key',
@@ -151,11 +152,6 @@ describe('sendPaymentReactivationEmail', () => {
       BREVO_SENDER_NAME: 'Test Sender',
       NEXT_PUBLIC_APP_URL: 'https://app.test.com',
     }
-
-    // Get mock instance and reset the mock function
-    const brevoModule = require('@getbrevo/brevo')
-    mockApiInstance = new brevoModule.TransactionalEmailsApi()
-    mockSendTransacEmail = mockApiInstance.sendTransacEmail
     vi.clearAllMocks()
   })
 
@@ -172,8 +168,8 @@ describe('sendPaymentReactivationEmail', () => {
       userName: 'Test User',
     })
 
-    expect(mockApiInstance.sendTransacEmail).toHaveBeenCalledTimes(1)
-    const callArgs = mockApiInstance.sendTransacEmail.mock.calls[0][0]
+    expect(mockSendTransacEmail).toHaveBeenCalledTimes(1)
+    const callArgs = mockSendTransacEmail.mock.calls[0][0]
     
     expect(callArgs.subject).toBe('Account Reactivated - Payment Confirmed')
     expect(callArgs.to).toEqual([{ email: 'user@example.com', name: 'Test User' }])
@@ -198,10 +194,15 @@ describe('sendPaymentReactivationEmail', () => {
   })
 
   it('should throw error when BREVO_API_KEY is missing', async () => {
+    // Reset modules to clear singleton cache
+    vi.resetModules()
     delete process.env.BREVO_API_KEY
+    
+    // Re-import after reset to get fresh module with cleared singleton
+    const { sendPaymentReactivationEmail: freshSendPaymentReactivationEmail } = await import('./payment-notifications')
 
     await expect(
-      sendPaymentReactivationEmail({
+      freshSendPaymentReactivationEmail({
         to: 'user@example.com',
       })
     ).rejects.toThrow('BREVO_API_KEY environment variable is not set')
@@ -209,7 +210,7 @@ describe('sendPaymentReactivationEmail', () => {
 
   it('should throw user-friendly error when email sending fails', async () => {
     const error = new Error('API Error')
-    mockApiInstance.sendTransacEmail.mockRejectedValueOnce(error)
+    mockSendTransacEmail.mockRejectedValueOnce(error)
 
     await expect(
       sendPaymentReactivationEmail({

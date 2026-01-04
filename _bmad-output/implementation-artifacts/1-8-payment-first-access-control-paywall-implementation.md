@@ -620,6 +620,7 @@ All tasks have been successfully implemented following the red-green-refactor cy
 - ✅ Fixed database types: Added `grace_period_started_at`, `suspended_at` fields and `'past_due'` to `payment_status` enum in `lib/supabase/database.types.ts`
 - ✅ Added error handling: Middleware now handles database update failures when suspending accounts after grace period expiration
 - ✅ Updated Task 11 status: Clarified that integration/E2E tests are pending (unit tests complete)
+- ✅ Fixed test mocks: Corrected Brevo API mock setup in `lib/services/payment-notifications.test.ts` - all 11 unit tests now passing
 
 **Next Steps:**
 - ✅ Database types updated manually (should regenerate via CLI: `supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts`)
@@ -645,6 +646,7 @@ All tasks have been successfully implemented following the red-green-refactor cy
 - `app/payment/payment-form.tsx` - Enhanced suspended account messaging
 - `app/api/auth/login/route.ts` - Updated redirect logic for grace period and suspended accounts
 - `lib/supabase/database.types.ts` - Updated to include grace period fields and 'past_due' status (fixed in code review)
+- `lib/services/payment-notifications.test.ts` - Fixed mock setup for Brevo API (all tests now passing)
 
 ## Senior Developer Review (AI)
 
