@@ -1,14 +1,30 @@
-// Placeholder payment page (Story 1.7 will implement Stripe integration)
-export default function PaymentPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-        <h1 className="text-2xl font-bold text-center text-gray-900">Payment Required</h1>
-        <p className="text-center text-gray-600">
-          Payment integration will be implemented in Story 1.7
-        </p>
-      </div>
-    </div>
-  )
-}
+import { getCurrentUser } from '@/lib/supabase/get-current-user'
+import { redirect } from 'next/navigation'
+import PaymentForm from './payment-form'
+import type { Database } from '@/lib/supabase/database.types'
 
+type Organization = Database['public']['Tables']['organizations']['Row']
+
+export default async function PaymentPage() {
+  const currentUser = await getCurrentUser()
+  
+  // Redirect if user is not authenticated
+  if (!currentUser) {
+    redirect('/login')
+  }
+  
+  // Redirect if user has no organization (must create organization first)
+  if (!currentUser?.org_id) {
+    redirect('/create-organization')
+  }
+  
+  // Check if organization already has active payment (redirect to dashboard if payment confirmed)
+  if (currentUser?.organizations) {
+    const paymentStatus: Organization['payment_status'] = currentUser.organizations.payment_status || 'pending_payment'
+    if (paymentStatus === 'active') {
+      redirect('/dashboard')
+    }
+  }
+  
+  return <PaymentForm />
+}

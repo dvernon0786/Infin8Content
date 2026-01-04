@@ -1,6 +1,6 @@
 // Generated TypeScript types from Supabase database schema
-// Generated from migrations: 20260101124156_initial_schema.sql, 20260104095303_link_auth_users.sql, 20260104100500_add_otp_verification.sql
-// Tables: organizations, users, otp_codes
+// Generated from migrations: 20260101124156_initial_schema.sql, 20260104095303_link_auth_users.sql, 20260104100500_add_otp_verification.sql, 20260105003507_add_stripe_payment_fields.sql
+// Tables: organizations, users, otp_codes, stripe_webhook_events
 
 export type Json =
   | string
@@ -19,14 +19,22 @@ export interface Database {
           name: string
           plan: 'starter' | 'pro' | 'agency'
           white_label_settings: Json
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          payment_status: 'pending_payment' | 'active' | 'suspended' | 'canceled'
+          payment_confirmed_at: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           name: string
-          plan: 'starter' | 'pro' | 'agency'
+          plan?: 'starter' | 'pro' | 'agency'
           white_label_settings?: Json
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          payment_status?: 'pending_payment' | 'active' | 'suspended' | 'canceled'
+          payment_confirmed_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -35,6 +43,10 @@ export interface Database {
           name?: string
           plan?: 'starter' | 'pro' | 'agency'
           white_label_settings?: Json
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          payment_status?: 'pending_payment' | 'active' | 'suspended' | 'canceled'
+          payment_confirmed_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -116,6 +128,40 @@ export interface Database {
             foreignKeyName: "otp_codes_user_id_fkey"
             columns: ["user_id"]
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      stripe_webhook_events: {
+        Row: {
+          id: string
+          stripe_event_id: string
+          event_type: string
+          organization_id: string | null
+          processed_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          stripe_event_id: string
+          event_type: string
+          organization_id?: string | null
+          processed_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          stripe_event_id?: string
+          event_type?: string
+          organization_id?: string | null
+          processed_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_webhook_events_organization_id_fkey"
+            columns: ["organization_id"]
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           }
         ]

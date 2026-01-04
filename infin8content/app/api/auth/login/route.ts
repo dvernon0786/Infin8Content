@@ -3,6 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { validateSupabaseEnv } from '@/lib/supabase/env'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
+import type { Database } from '@/lib/supabase/database.types'
+
+type Organization = Database['public']['Tables']['organizations']['Row']
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -94,11 +97,9 @@ export async function POST(request: Request) {
       redirectTo = '/create-organization'
     } else {
       // Organization exists - check payment status (Story 1.7)
-      // For now, assume payment is confirmed if organization exists
-      // This will be updated in Story 1.7 with actual payment status check
       const { data: org, error: orgError } = await supabase
         .from('organizations')
-        .select('id, name, plan')
+        .select('id, name, plan, payment_status')
         .eq('id', userRecord.org_id)
         .single()
 
@@ -112,9 +113,19 @@ export async function POST(request: Request) {
         })
         redirectTo = '/create-organization'
       } else {
-        // Organization exists - redirect to dashboard
-        // Payment status check will be added in Story 1.7
-        redirectTo = '/dashboard'
+        // Check payment status and redirect accordingly
+        const paymentStatus: Organization['payment_status'] = org.payment_status || 'pending_payment'
+        
+        if (paymentStatus === 'active') {
+          // Payment confirmed - redirect to dashboard
+          redirectTo = '/dashboard'
+        } else if (paymentStatus === 'suspended') {
+          // Account suspended - redirect to payment page with suspended flag
+          redirectTo = '/payment?suspended=true'
+        } else {
+          // Payment pending or canceled - redirect to payment page
+          redirectTo = '/payment'
+        }
       }
     }
 

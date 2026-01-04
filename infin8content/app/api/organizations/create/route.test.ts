@@ -284,6 +284,7 @@ describe('POST /api/organizations/create', () => {
       expect(mockOrgsInsert.insert).toHaveBeenCalledWith({
         name: 'Test Organization',
         plan: 'starter',
+        payment_status: 'pending_payment',
         white_label_settings: {},
       })
 

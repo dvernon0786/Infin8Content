@@ -68,6 +68,7 @@ export async function POST(request: Request) {
       .insert({
         name,
         plan: 'starter', // Default plan
+        payment_status: 'pending_payment', // Default payment status (Story 1.7)
         white_label_settings: {},
       })
       .select()

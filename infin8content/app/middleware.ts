@@ -40,6 +40,10 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  // Payment-related routes that don't require active payment status
+  const paymentRoutes = ['/payment', '/create-organization'];
+  const isPaymentRoute = paymentRoutes.some(route => request.nextUrl.pathname.startsWith(route));
+
   // Check authentication and OTP verification for protected routes
   // Create Supabase client for middleware (Edge runtime compatible)
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -95,7 +99,32 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(verifyUrl);
   }
 
-  // User is authenticated and email is verified - allow access
+  // Check payment status for protected routes (except payment-related routes)
+  if (!isPaymentRoute && userRecord.org_id) {
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('payment_status')
+      .eq('id', userRecord.org_id)
+      .single();
+
+    if (org) {
+      const paymentStatus: Database['public']['Tables']['organizations']['Row']['payment_status'] = 
+        org.payment_status || 'pending_payment';
+
+      if (paymentStatus === 'suspended') {
+        // Account suspended - redirect to payment page with suspended flag
+        const paymentUrl = new URL('/payment', request.url);
+        paymentUrl.searchParams.set('suspended', 'true');
+        return NextResponse.redirect(paymentUrl);
+      } else if (paymentStatus === 'pending_payment' || paymentStatus === 'canceled') {
+        // Payment not confirmed - redirect to payment page
+        return NextResponse.redirect(new URL('/payment', request.url));
+      }
+      // paymentStatus === 'active' - allow access (continue below)
+    }
+  }
+
+  // User is authenticated, email is verified, and payment is active (or no org) - allow access
   return response;
 }
 

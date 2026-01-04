@@ -99,6 +99,7 @@ describe('POST /api/auth/login', () => {
         id: 'org-id',
         name: 'Test Org',
         plan: 'pro',
+        payment_status: 'active',
       }
 
       // Mock successful authentication
@@ -290,7 +291,7 @@ describe('POST /api/auth/login', () => {
       expect(data.redirectTo).toBe('/create-organization')
     })
 
-    it('should redirect to dashboard if organization exists', async () => {
+    it('should redirect to dashboard if organization exists and payment_status is active', async () => {
       const mockAuthUser = {
         id: 'auth-user-id',
         email: 'test@example.com',
@@ -308,6 +309,7 @@ describe('POST /api/auth/login', () => {
         id: 'org-id',
         name: 'Test Org',
         plan: 'pro',
+        payment_status: 'active',
       }
 
       mockSupabase.auth.signInWithPassword.mockResolvedValue({
@@ -453,6 +455,191 @@ describe('POST /api/auth/login', () => {
 
       expect(response.status).toBe(500)
       expect(data.error).toBe('Internal server error')
+    })
+  })
+
+  describe('Payment Status Redirect Logic', () => {
+    it('should redirect to payment page if payment_status is pending_payment', async () => {
+      const mockAuthUser = {
+        id: 'auth-user-id',
+        email: 'test@example.com',
+      }
+
+      const mockUserRecord = {
+        id: 'user-id',
+        email: 'test@example.com',
+        role: 'user',
+        org_id: 'org-id',
+        otp_verified: true,
+      }
+
+      const mockOrg = {
+        id: 'org-id',
+        name: 'Test Org',
+        plan: 'starter',
+        payment_status: 'pending_payment',
+      }
+
+      mockSupabase.auth.signInWithPassword.mockResolvedValue({
+        data: { user: mockAuthUser, session: {} },
+        error: null,
+      })
+
+      const mockUsersQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockUserRecord,
+          error: null,
+        }),
+      }
+      mockSupabase.from.mockReturnValueOnce(mockUsersQuery)
+
+      const mockOrgsQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockOrg,
+          error: null,
+        }),
+      }
+      mockSupabase.from.mockReturnValueOnce(mockOrgsQuery)
+
+      mockRequest = new Request('http://localhost/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: 'test@example.com',
+          password: 'password123',
+        }),
+      })
+
+      const response = await POST(mockRequest)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.redirectTo).toBe('/payment')
+    })
+
+    it('should redirect to payment page with suspended flag if payment_status is suspended', async () => {
+      const mockAuthUser = {
+        id: 'auth-user-id',
+        email: 'test@example.com',
+      }
+
+      const mockUserRecord = {
+        id: 'user-id',
+        email: 'test@example.com',
+        role: 'user',
+        org_id: 'org-id',
+        otp_verified: true,
+      }
+
+      const mockOrg = {
+        id: 'org-id',
+        name: 'Test Org',
+        plan: 'starter',
+        payment_status: 'suspended',
+      }
+
+      mockSupabase.auth.signInWithPassword.mockResolvedValue({
+        data: { user: mockAuthUser, session: {} },
+        error: null,
+      })
+
+      const mockUsersQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockUserRecord,
+          error: null,
+        }),
+      }
+      mockSupabase.from.mockReturnValueOnce(mockUsersQuery)
+
+      const mockOrgsQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockOrg,
+          error: null,
+        }),
+      }
+      mockSupabase.from.mockReturnValueOnce(mockOrgsQuery)
+
+      mockRequest = new Request('http://localhost/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: 'test@example.com',
+          password: 'password123',
+        }),
+      })
+
+      const response = await POST(mockRequest)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.redirectTo).toBe('/payment?suspended=true')
+    })
+
+    it('should redirect to payment page if payment_status is canceled', async () => {
+      const mockAuthUser = {
+        id: 'auth-user-id',
+        email: 'test@example.com',
+      }
+
+      const mockUserRecord = {
+        id: 'user-id',
+        email: 'test@example.com',
+        role: 'user',
+        org_id: 'org-id',
+        otp_verified: true,
+      }
+
+      const mockOrg = {
+        id: 'org-id',
+        name: 'Test Org',
+        plan: 'starter',
+        payment_status: 'canceled',
+      }
+
+      mockSupabase.auth.signInWithPassword.mockResolvedValue({
+        data: { user: mockAuthUser, session: {} },
+        error: null,
+      })
+
+      const mockUsersQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockUserRecord,
+          error: null,
+        }),
+      }
+      mockSupabase.from.mockReturnValueOnce(mockUsersQuery)
+
+      const mockOrgsQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockOrg,
+          error: null,
+        }),
+      }
+      mockSupabase.from.mockReturnValueOnce(mockOrgsQuery)
+
+      mockRequest = new Request('http://localhost/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: 'test@example.com',
+          password: 'password123',
+        }),
+      })
+
+      const response = await POST(mockRequest)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.redirectTo).toBe('/payment')
     })
   })
 })
