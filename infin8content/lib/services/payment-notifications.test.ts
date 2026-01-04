@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { sendPaymentFailureEmail, sendPaymentReactivationEmail } from './payment-notifications'
+import { sendPaymentFailureEmail, sendPaymentReactivationEmail, sendSuspensionEmail } from './payment-notifications'
 import * as brevo from '@getbrevo/brevo'
 
 // Mock Brevo module
@@ -231,6 +231,137 @@ describe('sendPaymentReactivationEmail', () => {
     const callArgs = mockSendTransacEmail.mock.calls[0][0]
     expect(callArgs.sender.email).toBe('noreply@infin8content.com')
     expect(callArgs.sender.name).toBe('Infin8Content')
+  })
+})
+
+describe('sendSuspensionEmail', () => {
+  const originalEnv = process.env
+
+  beforeEach(() => {
+    process.env = {
+      ...originalEnv,
+      BREVO_API_KEY: 'test-api-key',
+      BREVO_SENDER_EMAIL: 'test@example.com',
+      BREVO_SENDER_NAME: 'Test Sender',
+      NEXT_PUBLIC_APP_URL: 'https://app.test.com',
+    }
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    process.env = originalEnv
+    vi.clearAllMocks()
+  })
+
+  it('should send suspension email successfully', async () => {
+    mockSendTransacEmail.mockResolvedValueOnce({})
+    const suspensionDate = new Date('2026-01-05')
+
+    await sendSuspensionEmail({
+      to: 'user@example.com',
+      userName: 'Test User',
+      suspensionDate,
+    })
+
+    expect(mockSendTransacEmail).toHaveBeenCalledTimes(1)
+    const callArgs = mockSendTransacEmail.mock.calls[0][0]
+    
+    expect(callArgs.subject).toBe('Account Suspended - Payment Required')
+    expect(callArgs.to).toEqual([{ email: 'user@example.com', name: 'Test User' }])
+    expect(callArgs.htmlContent).toContain('Account Suspended - Payment Required')
+    expect(callArgs.htmlContent).toContain('January 5, 2026')
+    expect(callArgs.htmlContent).toContain('Update Payment Method')
+    expect(callArgs.htmlContent).toContain('Your account was suspended on')
+    expect(callArgs.textContent).toContain('Account Suspended - Payment Required')
+    expect(callArgs.textContent).toContain('January 5, 2026')
+  })
+
+  it('should send email without userName when not provided', async () => {
+    mockSendTransacEmail.mockResolvedValueOnce({})
+    const suspensionDate = new Date('2026-01-05')
+
+    await sendSuspensionEmail({
+      to: 'user@example.com',
+      suspensionDate,
+    })
+
+    expect(mockSendTransacEmail).toHaveBeenCalledTimes(1)
+    const callArgs = mockSendTransacEmail.mock.calls[0][0]
+    
+    expect(callArgs.to).toEqual([{ email: 'user@example.com', name: 'user@example.com' }])
+    expect(callArgs.htmlContent).toContain('Hello,')
+    expect(callArgs.htmlContent).not.toContain('Hello Test User,')
+  })
+
+  it('should format suspension date correctly', async () => {
+    mockSendTransacEmail.mockResolvedValueOnce({})
+    const suspensionDate = new Date('2026-12-25')
+
+    await sendSuspensionEmail({
+      to: 'user@example.com',
+      suspensionDate,
+    })
+
+    const callArgs = mockSendTransacEmail.mock.calls[0][0]
+    expect(callArgs.htmlContent).toContain('December 25, 2026')
+    expect(callArgs.textContent).toContain('December 25, 2026')
+  })
+
+  it('should throw error when BREVO_API_KEY is missing', async () => {
+    // Reset modules to clear singleton cache
+    vi.resetModules()
+    delete process.env.BREVO_API_KEY
+    
+    // Re-import after reset to get fresh module with cleared singleton
+    const { sendSuspensionEmail: freshSendSuspensionEmail } = await import('./payment-notifications')
+
+    await expect(
+      freshSendSuspensionEmail({
+        to: 'user@example.com',
+        suspensionDate: new Date(),
+      })
+    ).rejects.toThrow('BREVO_API_KEY environment variable is not set')
+  })
+
+  it('should throw user-friendly error when email sending fails', async () => {
+    const error = new Error('API Error')
+    mockSendTransacEmail.mockRejectedValueOnce(error)
+
+    await expect(
+      sendSuspensionEmail({
+        to: 'user@example.com',
+        suspensionDate: new Date(),
+      })
+    ).rejects.toThrow('Failed to send suspension notification. Please try again.')
+  })
+
+  it('should use default sender email and name when not set', async () => {
+    delete process.env.BREVO_SENDER_EMAIL
+    delete process.env.BREVO_SENDER_NAME
+    mockSendTransacEmail.mockResolvedValueOnce({})
+
+    await sendSuspensionEmail({
+      to: 'user@example.com',
+      suspensionDate: new Date(),
+    })
+
+    const callArgs = mockSendTransacEmail.mock.calls[0][0]
+    expect(callArgs.sender.email).toBe('noreply@infin8content.com')
+    expect(callArgs.sender.name).toBe('Infin8Content')
+  })
+
+  it('should include reactivation instructions in email', async () => {
+    mockSendTransacEmail.mockResolvedValueOnce({})
+
+    await sendSuspensionEmail({
+      to: 'user@example.com',
+      suspensionDate: new Date(),
+    })
+
+    const callArgs = mockSendTransacEmail.mock.calls[0][0]
+    expect(callArgs.htmlContent).toContain('What happens after I update my payment?')
+    expect(callArgs.htmlContent).toContain('Your account will be automatically reactivated')
+    expect(callArgs.htmlContent).toContain('All your data and settings will be restored')
   })
 })
 

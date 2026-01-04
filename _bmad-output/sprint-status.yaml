@@ -49,8 +49,8 @@ development_status:
   1-6-organization-creation-and-management: done
   1-7-stripe-payment-integration-and-subscription-setup: done
   1-8-payment-first-access-control-paywall-implementation: done
-  1-9-account-suspension-and-reactivation-workflow: backlog
-  1-10-team-member-invites-and-role-assignments: backlog
+  1-9-account-suspension-and-reactivation-workflow: done
+  1-10-team-member-invites-and-role-assignments: review
   1-11-row-level-security-rls-policies-implementation: backlog
   1-12-basic-dashboard-access-after-payment: backlog
   1-13-audit-logging-for-compliance: backlog

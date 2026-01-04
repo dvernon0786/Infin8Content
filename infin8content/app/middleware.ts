@@ -4,6 +4,7 @@ import { validateSupabaseEnv } from "@/lib/supabase/env";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/lib/supabase/database.types";
 import { getPaymentAccessStatus, checkGracePeriodExpired } from "@/lib/utils/payment-status";
+import { sendSuspensionEmail } from "@/lib/services/payment-notifications";
 
 export async function middleware(request: NextRequest) {
   // Validate environment variables on every request
@@ -42,7 +43,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Payment-related routes that don't require active payment status
-  const paymentRoutes = ['/payment', '/create-organization'];
+  const paymentRoutes = ['/payment', '/create-organization', '/suspended'];
   const isPaymentRoute = paymentRoutes.some(route => request.nextUrl.pathname.startsWith(route));
 
   // Check authentication and OTP verification for protected routes
@@ -117,11 +118,12 @@ export async function middleware(request: NextRequest) {
 
         if (gracePeriodExpired) {
           // Grace period expired - update to suspended status
+          const suspendedAt = new Date().toISOString();
           const { error: updateError } = await supabase
             .from('organizations')
             .update({
               payment_status: 'suspended',
-              suspended_at: new Date().toISOString(),
+              suspended_at: suspendedAt,
             })
             .eq('id', userRecord.org_id);
 
@@ -133,12 +135,81 @@ export async function middleware(request: NextRequest) {
               timestamp: new Date().toISOString(),
             })
             // Continue to redirect even if update failed - user should still be blocked
+          } else {
+            // Send suspension email (non-blocking - log errors but don't fail redirect)
+            // Idempotency: Only send email if suspended_at was just set (not already suspended)
+            try {
+              // Query user record to get email and name
+              const { data: user, error: userQueryError } = await supabase
+                .from('users')
+                .select('email, name')
+                .eq('id', userRecord.id)
+                .single();
+
+              if (userQueryError) {
+                console.error('Failed to query user for suspension email:', {
+                  orgId: userRecord.org_id,
+                  userId: userRecord.id,
+                  error: userQueryError.message,
+                  timestamp: new Date().toISOString(),
+                });
+              } else if (user?.email) {
+                // Idempotency check: Only send email if this is a new suspension
+                // (suspended_at was just set in the update above)
+                // We check if suspended_at matches the timestamp we just set
+                const { data: updatedOrg } = await supabase
+                  .from('organizations')
+                  .select('suspended_at')
+                  .eq('id', userRecord.org_id)
+                  .single();
+
+                // Only send email if suspended_at matches what we just set (within 1 second tolerance)
+                const timeDiff = updatedOrg?.suspended_at 
+                  ? Math.abs(new Date(updatedOrg.suspended_at).getTime() - new Date(suspendedAt).getTime())
+                  : Infinity;
+
+                if (timeDiff < 1000) {
+                  // Suspension was just set - send email
+                  await sendSuspensionEmail({
+                    to: user.email,
+                    userName: user.name || undefined,
+                    suspensionDate: new Date(suspendedAt),
+                  });
+                  console.log('Suspension email sent successfully:', {
+                    orgId: userRecord.org_id,
+                    email: user.email,
+                    timestamp: new Date().toISOString(),
+                  });
+                } else {
+                  // Account was already suspended - email was likely already sent
+                  console.log('Suspension email skipped (account already suspended):', {
+                    orgId: userRecord.org_id,
+                    email: user.email,
+                    existingSuspendedAt: updatedOrg?.suspended_at,
+                    timestamp: new Date().toISOString(),
+                  });
+                }
+              } else {
+                console.warn('User email not found for suspension notification:', {
+                  orgId: userRecord.org_id,
+                  userId: userRecord.id,
+                  timestamp: new Date().toISOString(),
+                });
+              }
+            } catch (emailError) {
+              // Email failures are non-blocking - log but don't fail suspension redirect
+              console.error('Failed to send suspension email (non-blocking):', {
+                orgId: userRecord.org_id,
+                error: emailError instanceof Error ? emailError.message : String(emailError),
+                timestamp: new Date().toISOString(),
+              });
+            }
           }
 
-          // Redirect to payment page with suspended flag
-          const paymentUrl = new URL('/payment', request.url);
-          paymentUrl.searchParams.set('suspended', 'true');
-          return NextResponse.redirect(paymentUrl);
+          // Redirect to suspension page (preserve original destination for post-reactivation redirect)
+          const suspendedUrl = new URL('/suspended', request.url);
+          suspendedUrl.searchParams.set('redirect', request.nextUrl.pathname);
+          return NextResponse.redirect(suspendedUrl);
         }
       }
 
@@ -146,10 +217,10 @@ export async function middleware(request: NextRequest) {
       const accessStatus = getPaymentAccessStatus(org);
 
       if (accessStatus === 'suspended') {
-        // Account suspended - redirect to payment page with suspended flag
-        const paymentUrl = new URL('/payment', request.url);
-        paymentUrl.searchParams.set('suspended', 'true');
-        return NextResponse.redirect(paymentUrl);
+        // Account suspended - redirect to suspension page (preserve original destination for post-reactivation redirect)
+        const suspendedUrl = new URL('/suspended', request.url);
+        suspendedUrl.searchParams.set('redirect', request.nextUrl.pathname);
+        return NextResponse.redirect(suspendedUrl);
       } else if (accessStatus === 'pending_payment') {
         // Payment not confirmed - redirect to payment page
         return NextResponse.redirect(new URL('/payment', request.url));

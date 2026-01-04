@@ -12,6 +12,7 @@ type Organization = Database['public']['Tables']['organizations']['Row']
 const checkoutSchema = z.object({
   plan: z.enum(['starter', 'pro', 'agency']),
   billingFrequency: z.enum(['monthly', 'annual']),
+  redirect: z.string().optional(),
 })
 
 export async function POST(request: Request) {
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
     
     // Parse and validate request body
     const body = await request.json()
-    const { plan, billingFrequency } = checkoutSchema.parse(body)
+    const { plan, billingFrequency, redirect } = checkoutSchema.parse(body)
 
     const supabase = await createClient()
     
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
     // Get organization from database
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
-      .select('id, name, plan, stripe_customer_id, payment_status')
+      .select('id, name, plan, stripe_customer_id, payment_status, suspended_at')
       .eq('id', userRecord.org_id)
       .single()
 
@@ -198,6 +199,9 @@ export async function POST(request: Request) {
           user_id: userRecord.id,
           plan: plan,
           billing_frequency: billingFrequency,
+          ...(redirect && { redirect: redirect }),
+          // Flag to indicate if this is a reactivation (account was suspended)
+          ...(organization.suspended_at && { suspended: 'true' }),
         },
       })
 

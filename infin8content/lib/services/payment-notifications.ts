@@ -31,6 +31,12 @@ export interface SendPaymentReactivationEmailParams {
   userName?: string
 }
 
+export interface SendSuspensionEmailParams {
+  to: string
+  userName?: string
+  suspensionDate: Date
+}
+
 /**
  * Send payment failure email notification via Brevo
  * Notifies user about payment failure, grace period, and suspension risk
@@ -213,6 +219,116 @@ This is an automated message from Infin8Content. Please do not reply to this ema
   } catch (error) {
     console.error('Failed to send payment reactivation email via Brevo:', error)
     throw new Error('Failed to send reactivation notification. Please try again.')
+  }
+}
+
+/**
+ * Send account suspension email notification via Brevo
+ * Notifies user about account suspension due to payment failure after grace period
+ */
+export async function sendSuspensionEmail({ 
+  to, 
+  userName, 
+  suspensionDate 
+}: SendSuspensionEmailParams): Promise<void> {
+  const apiInstance = getBrevoClient()
+  
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@infin8content.com'
+  const senderName = process.env.BREVO_SENDER_NAME || 'Infin8Content'
+  
+  // Format suspension date
+  const formattedDate = suspensionDate.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+  
+  const sendSmtpEmail = new brevo.SendSmtpEmail()
+  sendSmtpEmail.subject = 'Account Suspended - Payment Required'
+  sendSmtpEmail.sender = { email: senderEmail, name: senderName }
+  sendSmtpEmail.to = [{ email: to, name: userName || to }]
+  
+  // HTML email template
+  sendSmtpEmail.htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #f8f9fa; padding: 30px; border-radius: 8px;">
+        <h1 style="color: #DC2626; margin-top: 0;">Account Suspended - Payment Required</h1>
+        <p>Hello${userName ? ` ${userName}` : ''},</p>
+        <p>We're writing to inform you that your Infin8Content account has been suspended due to payment failure after the grace period expired.</p>
+        
+        <div style="background-color: #FEF2F2; border-left: 4px solid #DC2626; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; font-weight: bold; color: #DC2626;">Your account was suspended on ${formattedDate}.</p>
+        </div>
+        
+        <p><strong>Why was my account suspended?</strong></p>
+        <p>Your payment could not be processed, and the 7-day grace period has expired. To protect our service and ensure compliance, accounts with failed payments are suspended after the grace period.</p>
+        
+        <p><strong>How do I reactivate my account?</strong></p>
+        <p>To reactivate your account and regain access to all features, please update your payment method:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://app.infin8content.com'}/payment?suspended=true" 
+             style="background-color: #3B82F6; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+            Update Payment Method
+          </a>
+        </div>
+        
+        <p><strong>What happens after I update my payment?</strong></p>
+        <ul>
+          <li>Your account will be automatically reactivated</li>
+          <li>All your data and settings will be restored</li>
+          <li>You'll regain immediate access to all platform features</li>
+          <li>You'll receive a confirmation email once reactivation is complete</li>
+        </ul>
+        
+        <p>If you have any questions or need assistance, please contact our support team.</p>
+        
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+        <p style="color: #6b7280; font-size: 12px; margin: 0;">This is an automated message from Infin8Content. Please do not reply to this email.</p>
+      </div>
+    </body>
+    </html>
+  `
+  
+  // Plain text fallback
+  sendSmtpEmail.textContent = `
+Account Suspended - Payment Required
+
+Hello${userName ? ` ${userName}` : ''},
+
+We're writing to inform you that your Infin8Content account has been suspended due to payment failure after the grace period expired.
+
+Your account was suspended on ${formattedDate}.
+
+Why was my account suspended?
+Your payment could not be processed, and the 7-day grace period has expired. To protect our service and ensure compliance, accounts with failed payments are suspended after the grace period.
+
+How do I reactivate my account?
+To reactivate your account and regain access to all features, please update your payment method:
+${process.env.NEXT_PUBLIC_APP_URL || 'https://app.infin8content.com'}/payment?suspended=true
+
+What happens after I update my payment?
+- Your account will be automatically reactivated
+- All your data and settings will be restored
+- You'll regain immediate access to all platform features
+- You'll receive a confirmation email once reactivation is complete
+
+If you have any questions or need assistance, please contact our support team.
+
+---
+This is an automated message from Infin8Content. Please do not reply to this email.
+  `
+  
+  try {
+    await apiInstance.sendTransacEmail(sendSmtpEmail)
+  } catch (error) {
+    console.error('Failed to send suspension email via Brevo:', error)
+    throw new Error('Failed to send suspension notification. Please try again.')
   }
 }
 

@@ -22,11 +22,55 @@ User requested to install BMAD Method and initialize workflow tracking for the I
   - Generated workflow tracking file: `_bmad-output/bmm-workflow-status.yaml`
 
 ### Current Task
-✅ **COMPLETED:** Story 1.8 - Payment-First Access Control (Paywall Implementation) (2026-01-05, 08:02:34)
-- Code review completed: All Critical, High, and Medium issues fixed (6 issues resolved across 2 review passes)
-- Story status: done (code complete, all fixes applied, all tests passing, migration applied)
-- Database migration applied successfully: `20260105074811_add_payment_grace_period_fields.sql`
-- All 11 unit tests passing for payment notifications service
+✅ **COMPLETED:** Story 1.10 - Team Member Invites and Role Assignments (2026-01-05, 10:15:43 AEDT)
+- Code review completed: All issues fixed (2 High, 1 Medium, 2 Low issues resolved)
+- Story status: review → ready for done (code complete, all fixes applied, comprehensive test coverage)
+- Comprehensive test coverage: 7 API route test files + 1 email service test file (all passing)
+- TypeScript response types exported from all API routes for better type safety
+
+### Story 1.10 - Team Member Invites and Role Assignments (2026-01-05, 10:15:43 AEDT)
+- ✅ **COMPLETED:** Story 1.10 implementation, code review, and all fixes
+- Story file: `_bmad-output/implementation-artifacts/1-10-team-member-invites-and-role-assignments.md`
+- Story status: **review** (updated in story file, ready to mark as done)
+- **Implementation Summary:**
+  - Database migration for `team_invitations` table with indexes and triggers
+  - 7 API routes implemented (invite, accept-invitation, resend-invitation, members, update-role, remove-member, cancel-invitation)
+  - Email notification service with 4 email functions (invitation, accepted, role change, removal)
+  - Team Settings page UI with invite form and members list
+  - Invitation acceptance page with registration/login flow integration
+  - Cleanup function for expired invitations
+- **Code Review Results:**
+  - First Review: Found 2 High, 4 Medium, 3 Low issues
+  - All High and Medium issues fixed:
+    - Fixed expiration check to use database-level query (`.gt('expires_at', ...)`) instead of JavaScript date comparison
+    - Added comprehensive unit tests for all API routes (7 test files)
+    - Added unit tests for email notification service
+    - Added explicit error handling for organization lookup in resend-invitation and update-role routes
+  - Second Review (Re-review): Found 0 High, 1 Medium, 2 Low issues
+  - All remaining issues fixed:
+    - Added null checks for organization lookup (MEDIUM)
+    - Created test files for all remaining API routes (LOW)
+    - Added TypeScript response type exports to all API routes (LOW)
+  - Test files: 8 comprehensive test files (7 API routes + 1 email service)
+- **Acceptance Criteria Verification:**
+  - ✅ AC1: Team Settings page with team members list and invite button
+  - ✅ AC2: Invite Team Member with email validation, role assignment, and invitation email
+  - ✅ AC3: Accept Invitation with token validation, expiration check, and user registration flow
+  - ✅ AC4: Invitation Expiration with 7-day expiration and cleanup function
+  - ✅ AC5: Role Management with role updates, member removal, and notifications
+- **Files Created/Modified:**
+  - New: `supabase/migrations/20260105094538_add_team_invitations.sql`, `supabase/migrations/20260105120000_add_cleanup_expired_invitations.sql`, `app/api/team/invite/route.ts`, `app/api/team/invite/route.test.ts`, `app/api/team/accept-invitation/route.ts`, `app/api/team/accept-invitation/route.test.ts`, `app/api/team/resend-invitation/route.ts`, `app/api/team/resend-invitation/route.test.ts`, `app/api/team/members/route.ts`, `app/api/team/members/route.test.ts`, `app/api/team/update-role/route.ts`, `app/api/team/update-role/route.test.ts`, `app/api/team/remove-member/route.ts`, `app/api/team/remove-member/route.test.ts`, `app/api/team/cancel-invitation/route.ts`, `app/api/team/cancel-invitation/route.test.ts`, `lib/services/team-notifications.ts`, `lib/services/team-notifications.test.ts`, `app/settings/team/page.tsx`, `app/settings/team/team-members-list.tsx`, `app/settings/team/invite-team-member-form.tsx`, `app/accept-invitation/page.tsx`, `app/accept-invitation/accept-invitation-client.tsx`
+  - Modified: `app/(auth)/register/page.tsx`, `app/(auth)/verify-email/page.tsx`, `app/(auth)/login/page.tsx`, `app/settings/organization/page.tsx`
+- **Test Coverage:**
+  - API route tests: 7 test files covering all routes (authorization, validation, business logic, error handling)
+  - Email service tests: 1 test file covering all 4 email functions
+  - Total: 8 test files with comprehensive coverage
+- **Code Quality Improvements:**
+  - Database-level expiration checks prevent timezone issues and race conditions
+  - Explicit error handling for organization lookups
+  - TypeScript response types exported for better developer experience
+  - Comprehensive test coverage for all API routes
+- **Final Status:** Story complete, all code quality issues resolved, comprehensive test coverage implemented, production ready
 
 ### Story 1.8 - Payment-First Access Control (Paywall Implementation) (2026-01-05, 08:02:34)
 - ✅ **COMPLETED:** Story 1.8 implementation and code review

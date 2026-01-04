@@ -84,7 +84,17 @@ const planPrices: Record<PlanType, { monthly: number; annual: number }> = {
   agency: { monthly: 399, annual: 299 },
 }
 
-export default function PaymentForm({ isSuspended: isSuspendedProp }: { isSuspended?: boolean } = {}) {
+interface PaymentFormProps {
+  isSuspended?: boolean
+  suspendedAt?: string | null
+  redirectTo?: string
+}
+
+export default function PaymentForm({ 
+  isSuspended: isSuspendedProp, 
+  suspendedAt,
+  redirectTo = '/dashboard'
+}: PaymentFormProps = {}) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('starter')
@@ -97,12 +107,23 @@ export default function PaymentForm({ isSuspended: isSuspendedProp }: { isSuspen
   const paymentError = searchParams.get('error')
   const suspended = isSuspendedProp || searchParams.get('suspended') === 'true'
   
+  // Format suspension date if available
+  const formattedSuspensionDate = suspendedAt 
+    ? new Date(suspendedAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : null
+  
   // Get error message based on error type
   const getErrorMessage = () => {
     if (suspended) {
       return {
         title: 'Account Suspended - Payment Required',
-        message: 'Your account has been suspended due to payment failure. Please update your payment method to reactivate your account. You can retry payment using the form below.',
+        message: formattedSuspensionDate
+          ? `Your account has been suspended due to payment failure. Your account was suspended on ${formattedSuspensionDate}. Please update your payment method to reactivate your account and regain access to all features.`
+          : 'Your account has been suspended due to payment failure. Please update your payment method to reactivate your account. You can retry payment using the form below.',
         type: 'warning' as const,
       }
     }
@@ -158,6 +179,7 @@ export default function PaymentForm({ isSuspended: isSuspendedProp }: { isSuspen
         body: JSON.stringify({
           plan: selectedPlan,
           billingFrequency,
+          redirect: redirectTo,
         }),
       })
       

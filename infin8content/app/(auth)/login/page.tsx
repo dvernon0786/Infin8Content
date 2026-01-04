@@ -11,6 +11,7 @@ function LoginPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const invitationToken = searchParams.get('invitation_token')
   
   // Check for expired session message
   useEffect(() => {
@@ -22,6 +23,13 @@ function LoginPageContent() {
       }))
     }
   }, [searchParams])
+  
+  // Store invitation token in localStorage if present
+  useEffect(() => {
+    if (invitationToken) {
+      localStorage.setItem('invitation_token', invitationToken)
+    }
+  }, [invitationToken])
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -74,8 +82,13 @@ function LoginPageContent() {
         return
       }
 
-      // Redirect based on payment status
-      if (data.redirectTo) {
+      // If invitation token exists, redirect to accept invitation page
+      // Otherwise redirect based on payment status
+      const storedToken = invitationToken || localStorage.getItem('invitation_token')
+      if (storedToken) {
+        localStorage.removeItem('invitation_token')
+        router.push(`/accept-invitation?token=${storedToken}`)
+      } else if (data.redirectTo) {
         router.push(data.redirectTo)
       } else {
         // Default redirect to dashboard
@@ -110,6 +123,7 @@ function LoginPageContent() {
             </label>
             <input
               id="email"
+              data-testid="email-input"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -132,6 +146,7 @@ function LoginPageContent() {
             </label>
             <input
               id="password"
+              data-testid="password-input"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -158,6 +173,7 @@ function LoginPageContent() {
 
           <button
             type="submit"
+            data-testid="login-button"
             disabled={isSubmitting}
             className="w-full flex justify-center py-3 px-4 h-10 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >

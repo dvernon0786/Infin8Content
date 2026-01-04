@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import OrganizationSettingsForm from './organization-settings-form'
 
 export default async function OrganizationSettingsPage() {
@@ -23,7 +24,17 @@ export default async function OrganizationSettingsPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">Organization Settings</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Organization Settings</h1>
+          {currentUser.role === 'owner' && (
+            <Link
+              href="/settings/team"
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Team Settings →
+            </Link>
+          )}
+        </div>
         
         <div className="bg-white rounded-lg shadow p-6 space-y-6">
           <div>

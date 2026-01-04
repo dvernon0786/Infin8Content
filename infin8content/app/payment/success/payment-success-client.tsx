@@ -6,16 +6,20 @@ import Link from 'next/link'
 interface PaymentSuccessClientProps {
   status: 'active' | 'pending' | 'processing'
   plan?: string
+  redirectTo?: string
+  isReactivation?: boolean
 }
 
 export default function PaymentSuccessClient({
   status,
   plan,
+  redirectTo = '/dashboard',
+  isReactivation = false,
 }: PaymentSuccessClientProps) {
   useEffect(() => {
     if (status === 'active') {
       const timer = setTimeout(() => {
-        window.location.href = '/dashboard'
+        window.location.href = redirectTo
       }, 3000)
       return () => clearTimeout(timer)
     } else if (status === 'pending') {
@@ -24,7 +28,7 @@ export default function PaymentSuccessClient({
       }, 3000)
       return () => clearTimeout(timer)
     }
-  }, [status])
+  }, [status, redirectTo])
 
   if (status === 'active') {
     return (
@@ -48,19 +52,29 @@ export default function PaymentSuccessClient({
             </div>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Payment Confirmed!
+            {isReactivation ? 'Account Reactivated!' : 'Payment Confirmed!'}
           </h1>
           <p className="text-gray-600 mb-6">
-            Your account is now active. You can start using all features of your{' '}
-            <span className="font-semibold capitalize">{plan || 'selected'}</span>{' '}
-            plan.
+            {isReactivation ? (
+              <>
+                Payment successful! Your account is being reactivated and all your data and settings have been restored. You can now access all features of your{' '}
+                <span className="font-semibold capitalize">{plan || 'selected'}</span>{' '}
+                plan.
+              </>
+            ) : (
+              <>
+                Your account is now active. You can start using all features of your{' '}
+                <span className="font-semibold capitalize">{plan || 'selected'}</span>{' '}
+                plan.
+              </>
+            )}
           </p>
           <div className="space-y-3">
             <Link
-              href="/dashboard"
+              href={redirectTo}
               className="block w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center"
             >
-              Go to Dashboard
+              {redirectTo === '/dashboard' ? 'Go to Dashboard' : 'Continue'}
             </Link>
             <p className="text-sm text-gray-500">
               Redirecting automatically in 3 seconds...

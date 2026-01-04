@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import type { Database } from '@/lib/supabase/database.types'
 import { getPaymentAccessStatus, checkGracePeriodExpired } from '@/lib/utils/payment-status'
@@ -17,6 +18,7 @@ interface PaymentStatusBannerProps {
  * Story 1.8: Payment-First Access Control (Paywall Implementation)
  */
 export default function PaymentStatusBanner({ organization }: PaymentStatusBannerProps) {
+  const router = useRouter()
   const [gracePeriodDaysRemaining, setGracePeriodDaysRemaining] = useState<number | null>(null)
 
   // Calculate grace period days remaining
@@ -76,14 +78,13 @@ export default function PaymentStatusBanner({ organization }: PaymentStatusBanne
               </p>
             </div>
             <div className="mt-4">
-              <div className="-mx-2 -my-1.5 flex">
-                <Link
-                  href="/payment"
-                  className="bg-yellow-50 px-2 py-1.5 rounded-md text-sm font-medium text-yellow-800 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-yellow-50 focus:ring-yellow-600"
-                >
-                  Update Payment Method
-                </Link>
-              </div>
+              <button
+                onClick={() => router.push('/payment')}
+                data-testid="grace-period-retry-payment-button"
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-yellow-50 focus:ring-yellow-500 transition-colors font-semibold"
+              >
+                Retry Payment
+              </button>
             </div>
           </div>
         </div>

@@ -578,7 +578,7 @@ describe('POST /api/auth/login', () => {
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data.redirectTo).toBe('/payment?suspended=true')
+      expect(data.redirectTo).toBe('/suspended')
     })
 
     it('should redirect to payment page if payment_status is canceled', async () => {

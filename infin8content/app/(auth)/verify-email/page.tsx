@@ -9,6 +9,7 @@ function VerifyOTPContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email')
+  const invitationToken = searchParams.get('invitation_token') || localStorage.getItem('invitation_token')
   
   const [otpCode, setOtpCode] = useState('')
   const [error, setError] = useState('')
@@ -48,9 +49,17 @@ function VerifyOTPContent() {
       }
 
       setSuccess(true)
-      // Redirect to dashboard after 2 seconds
+      // If invitation token exists, redirect to accept invitation page
+      // Otherwise redirect to dashboard
+      const redirectUrl = invitationToken
+        ? `/accept-invitation?token=${invitationToken}`
+        : '/'
       setTimeout(() => {
-        router.push('/')
+        router.push(redirectUrl)
+        // Clear invitation token from localStorage
+        if (invitationToken) {
+          localStorage.removeItem('invitation_token')
+        }
       }, 2000)
     } catch (error) {
       setError('An error occurred. Please try again.')

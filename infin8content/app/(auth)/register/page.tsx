@@ -1,15 +1,26 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Suspense } from 'react'
 
-export default function RegisterPage() {
+function RegisterPageContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const invitationToken = searchParams.get('invitation_token')
+  
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const router = useRouter()
+
+  // If invitation token exists, store it in localStorage
+  useEffect(() => {
+    if (invitationToken) {
+      localStorage.setItem('invitation_token', invitationToken)
+    }
+  }, [invitationToken])
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -53,8 +64,11 @@ export default function RegisterPage() {
         return
       }
 
-      // Redirect to OTP verification page with email
-      router.push(`/verify-email?email=${encodeURIComponent(email)}`)
+      // Redirect to OTP verification page with email and invitation token if present
+      const redirectUrl = invitationToken
+        ? `/verify-email?email=${encodeURIComponent(email)}&invitation_token=${invitationToken}`
+        : `/verify-email?email=${encodeURIComponent(email)}`
+      router.push(redirectUrl)
     } catch (error) {
       setErrors({ email: 'An error occurred. Please try again.' })
     } finally {
@@ -129,6 +143,20 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+          <h1 className="text-2xl font-bold text-center">Loading...</h1>
+        </div>
+      </div>
+    }>
+      <RegisterPageContent />
+    </Suspense>
   )
 }
 

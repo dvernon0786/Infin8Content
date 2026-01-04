@@ -265,10 +265,16 @@ export default async function PaymentSuccessPage({
 
   // If payment is active, show success and redirect
   if (paymentStatus === 'active') {
+    // Get redirect destination from session metadata (for post-reactivation redirect)
+    const redirectTo = session.metadata?.redirect || '/dashboard'
+    // Check if this was a reactivation (account was suspended before payment)
+    const isReactivation = session.metadata?.suspended === 'true'
     return (
       <PaymentSuccessClient
         status="active"
         plan={organization.plan || session.metadata?.plan}
+        redirectTo={redirectTo}
+        isReactivation={isReactivation}
       />
     )
   }

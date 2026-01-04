@@ -124,8 +124,8 @@ export async function POST(request: Request) {
           // Grace period active - allow access to dashboard (future: show banner)
           redirectTo = '/dashboard'
         } else if (accessStatus === 'suspended') {
-          // Account suspended - redirect to payment page with suspended flag
-          redirectTo = '/payment?suspended=true'
+          // Account suspended - redirect to suspension page
+          redirectTo = '/suspended'
         } else {
           // Payment pending or canceled - redirect to payment page
           redirectTo = '/payment'

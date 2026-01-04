@@ -9,7 +9,7 @@ type Organization = Database['public']['Tables']['organizations']['Row']
 export default async function PaymentPage({
   searchParams,
 }: {
-  searchParams: { suspended?: string }
+  searchParams: { suspended?: string; redirect?: string }
 }) {
   const currentUser = await getCurrentUser()
   
@@ -27,12 +27,16 @@ export default async function PaymentPage({
   if (currentUser?.organizations) {
     const accessStatus = getPaymentAccessStatus(currentUser.organizations)
     if (accessStatus === 'active') {
-      redirect('/dashboard')
+      // Check for redirect parameter for post-reactivation redirect
+      const redirectTo = searchParams?.redirect || '/dashboard'
+      redirect(redirectTo)
     }
   }
   
-  // Pass suspended flag to form component
+  // Pass suspended flag and suspension date to form component
   const isSuspended = searchParams?.suspended === 'true'
+  const suspendedAt = currentUser?.organizations?.suspended_at || null
+  const redirectTo = searchParams?.redirect || '/dashboard'
   
-  return <PaymentForm isSuspended={isSuspended} />
+  return <PaymentForm isSuspended={isSuspended} suspendedAt={suspendedAt} redirectTo={redirectTo} />
 }
