@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { generateOTP, storeOTPCode } from '@/lib/services/otp'
 import { sendOTPEmail } from '@/lib/services/brevo'
+import { checkOTPResendRateLimit } from '@/lib/utils/rate-limit'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 
@@ -36,6 +37,24 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { message: 'Email is already verified.' },
         { status: 200 }
+      )
+    }
+
+    // Check rate limit before generating OTP
+    const rateLimit = await checkOTPResendRateLimit(email)
+    if (!rateLimit.allowed) {
+      const secondsUntilReset = Math.ceil(
+        (rateLimit.resetAt.getTime() - Date.now()) / 1000
+      )
+      return NextResponse.json(
+        {
+          error: `Too many resend attempts. Please try again in ${Math.ceil(secondsUntilReset / 60)} minute(s).`,
+          rateLimit: {
+            remaining: rateLimit.remaining,
+            resetAt: rateLimit.resetAt.toISOString(),
+          },
+        },
+        { status: 429 }
       )
     }
 

@@ -12,6 +12,7 @@ function VerifyOTPContent() {
   
   const [otpCode, setOtpCode] = useState('')
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [isVerifying, setIsVerifying] = useState(false)
   const [isResending, setIsResending] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -78,11 +79,17 @@ function VerifyOTPContent() {
 
       if (!response.ok) {
         setError(data.error || 'Failed to resend code')
+        setSuccessMessage('')
         return
       }
 
       setError('')
-      alert('Verification code has been sent to your email.')
+      setSuccessMessage(data.message || 'Verification code has been sent to your email.')
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setSuccessMessage('')
+      }, 5000)
     } catch (error) {
       setError('Failed to resend code. Please try again.')
     } finally {
@@ -143,6 +150,11 @@ function VerifyOTPContent() {
             {error && (
               <p id="otp-error" className="mt-1 text-sm flex items-center gap-1 text-red-600">
                 <span aria-hidden="true">⚠</span> {error}
+              </p>
+            )}
+            {successMessage && (
+              <p className="mt-1 text-sm flex items-center gap-1 text-green-600">
+                <span aria-hidden="true">✓</span> {successMessage}
               </p>
             )}
           </div>
