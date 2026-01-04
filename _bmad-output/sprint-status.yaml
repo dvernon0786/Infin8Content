@@ -43,7 +43,7 @@ development_status:
   epic-1: in-progress
   1-1-project-initialization-and-starter-template-setup: done
   1-2-supabase-project-setup-and-database-schema-foundation: done
-  1-3-user-registration-with-email-and-password: in-progress
+  1-3-user-registration-with-email-and-password: done
   1-4-user-login-and-session-management: done
   1-5-oauth-authentication-google-and-github: backlog
   1-6-organization-creation-and-management: done
