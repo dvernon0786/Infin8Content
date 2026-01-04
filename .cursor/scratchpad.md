@@ -83,6 +83,41 @@ User requested to install BMAD Method and initialize workflow tracking for the I
   - New: `app/(auth)/register/page.tsx`, `app/api/auth/register/route.ts`, `app/api/auth/verify-otp/route.ts`, `app/api/auth/resend-otp/route.ts`, `app/(auth)/verify-email/page.tsx`, `lib/services/brevo.ts`, `lib/services/otp.ts`, `supabase/migrations/20260104095303_link_auth_users.sql`, `supabase/migrations/20260104100500_add_otp_verification.sql`, `app/api/auth/register/route.test.ts`
   - Modified: `app/middleware.ts`, `lib/supabase/env.ts`, `lib/supabase/database.types.ts`, `package.json`, `package-lock.json`
 
+### Story 1.4 - User Login and Session Management (2026-01-04, 13:10 AEDT)
+- ✅ **COMPLETED:** Story 1.4 implementation and code review
+- Story file: `_bmad-output/implementation-artifacts/1-4-user-login-and-session-management.md`
+- Story status: **done** (updated in story file and sprint-status.yaml)
+- **Implementation Summary:**
+  - Login page UI with form validation and error handling (`app/(auth)/login/page.tsx`)
+  - Login API route with OTP verification and redirect logic (`app/api/auth/login/route.ts`)
+  - Session persistence and expiration handling (middleware updates)
+  - Payment status check and redirect logic (dashboard/payment/create-organization)
+  - User context helper function (`lib/supabase/get-current-user.ts`)
+  - API documentation updated (`_bmad-output/api-contracts.md`)
+- **Code Review Results:**
+  - First Review: Found 10 issues (2 Critical, 3 High, 3 Medium, 2 Low)
+  - All 7 code quality issues fixed:
+    - Form error styling (amber to red for consistency)
+    - Organization query error handling (explicit orgError check)
+    - get-current-user error logging (console.error added)
+    - Button height consistency (py-2.5 to py-3)
+    - Security event logging (console.warn for failed attempts)
+    - TypeScript interfaces (LoginSuccessResponse, LoginErrorResponse extracted)
+  - Test files created: 36 tests passing (12 unit tests, 17 component tests, 7 register tests)
+  - Test framework: Vitest with React Testing Library configured
+- **Acceptance Criteria Verification:**
+  - ✅ AC 1: User authenticated via Supabase Auth, JWT session created, redirects based on payment status, session persists, user role and organization loaded
+  - ✅ AC 2: Generic error message for invalid credentials, rate limiting handled by Supabase
+  - ✅ AC 3: Session expiration redirects to login with expiration message
+- **Files Created/Modified:**
+  - New: `app/(auth)/login/page.tsx`, `app/api/auth/login/route.ts`, `lib/supabase/get-current-user.ts`, `app/dashboard/page.tsx`, `app/payment/page.tsx`, `app/create-organization/page.tsx`, `app/api/auth/login/route.test.ts`, `app/(auth)/login/page.test.tsx`, `vitest.config.ts`, `vitest.setup.ts`
+  - Modified: `app/middleware.ts`, `_bmad-output/api-contracts.md`, `package.json`, `package-lock.json`
+- **Test Coverage:**
+  - Unit tests: 12 test cases (validation, authentication, OTP verification, redirect logic, error handling)
+  - Component tests: 17 test cases (UI, validation, submission, accessibility, session expiration)
+  - Total: 36 tests passing, 0 failures
+- **Final Status:** Story complete, all code quality issues resolved, comprehensive test coverage implemented
+
 ### Previous Completed Tasks
 ✅ **COMPLETED:** Story 1.2 - Supabase Project Setup and Database Schema Foundation (2026-01-04, 09:06 AEDT)
 - Code review completed: All 10 issues resolved
