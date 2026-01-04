@@ -153,6 +153,113 @@ Authenticate user with email and password.
 
 ---
 
+## Organization Endpoints
+
+### POST /api/organizations/create
+
+Create a new organization for the authenticated user.
+
+**Request Body:**
+```typescript
+{
+  name: string;      // Organization name (2-100 characters)
+}
+```
+
+**Response:**
+- **200 OK**: Organization created successfully
+  ```typescript
+  {
+    success: true;
+    organization: {
+      id: string;
+      name: string;
+      plan: 'starter' | 'pro' | 'agency';
+      created_at: string;
+    };
+    redirectTo: '/dashboard';
+  }
+  ```
+- **400 Bad Request**: 
+  - Validation error (Zod schema validation)
+  - User already has an organization
+  - Organization name already exists
+- **401 Unauthorized**: Authentication required
+- **404 Not Found**: User record not found
+- **500 Internal Server Error**: Server error (database, etc.)
+
+**Notes:**
+- Creates organization record in `organizations` table
+- Sets default plan to `'starter'`
+- Links user to organization (`users.org_id = organization.id`)
+- Ensures user role is set to `'owner'`
+- Prevents duplicate organizations (one per user initially)
+- Prevents duplicate organization names (application-level check)
+- Rolls back organization creation if user update fails
+
+**Authorization:**
+- Requires authenticated user (Supabase session)
+- User must not already have an organization
+
+**Related Files:**
+- `app/api/organizations/create/route.ts`
+- `app/api/organizations/create/route.test.ts`
+- `app/create-organization/page.tsx`
+- `app/create-organization/create-organization-form.tsx`
+
+---
+
+### POST /api/organizations/update
+
+Update organization name (organization owner only).
+
+**Request Body:**
+```typescript
+{
+  name: string;      // Organization name (2-100 characters)
+}
+```
+
+**Response:**
+- **200 OK**: Organization updated successfully
+  ```typescript
+  {
+    success: true;
+    organization: {
+      id: string;
+      name: string;
+      plan: 'starter' | 'pro' | 'agency';
+      created_at: string;
+      updated_at: string;
+    };
+  }
+  ```
+- **400 Bad Request**: 
+  - Validation error (Zod schema validation)
+  - Organization name already exists
+- **401 Unauthorized**: Authentication required
+- **403 Forbidden**: User is not organization owner
+- **404 Not Found**: Organization not found
+- **500 Internal Server Error**: Server error
+
+**Notes:**
+- Updates organization name in database
+- Prevents duplicate organization names (application-level check)
+- Only organization owners can update organization settings
+
+**Authorization:**
+- Requires authenticated user (Supabase session)
+- User must be organization owner (`users.role = 'owner'`)
+- User must belong to the organization being updated
+
+**Related Files:**
+- `app/api/organizations/update/route.ts`
+- `app/api/organizations/update/route.test.ts`
+- `app/settings/organization/page.tsx`
+- `app/settings/organization/organization-settings-form.tsx`
+
+---
+
 ## Authentication Flow
 
 1. **Registration:**
@@ -193,6 +300,11 @@ Unprotected routes:
 - `/login` - Login page
 - `/verify-email` - OTP verification page
 - `/api/auth/*` - Authentication endpoints
+
+Protected routes (require authentication + OTP verification):
+- `/create-organization` - Organization creation page
+- `/settings/organization` - Organization settings page
+- `/api/organizations/*` - Organization endpoints
 
 ## Error Handling
 
