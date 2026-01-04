@@ -515,6 +515,8 @@ NFR-COM4: Privacy Policy & Terms - System must provide accessible privacy policy
 
 ### Story 1.1: Project Initialization and Starter Template Setup
 
+**Priority:** P0 (MVP - Foundation)
+
 As a developer,
 I want to initialize the Next.js project with TypeScript and Tailwind CSS,
 So that I have a clean foundation following the architecture specifications.
@@ -541,6 +543,8 @@ So that I have a clean foundation following the architecture specifications.
 
 ### Story 1.2: Supabase Project Setup and Database Schema Foundation
 
+**Priority:** P0 (MVP - Foundation)
+
 As a developer,
 I want to set up Supabase project and create the foundational database schema,
 So that I have the database infrastructure for multi-tenant authentication and data isolation.
@@ -565,6 +569,8 @@ So that I have the database infrastructure for multi-tenant authentication and d
 ---
 
 ### Story 1.3: User Registration with Email and Password
+
+**Priority:** P0 (MVP - Required for user access)
 
 As a new user,
 I want to create an account with my email and password,
@@ -601,6 +607,8 @@ So that I can access the platform after completing payment.
 
 ### Story 1.4: User Login and Session Management
 
+**Priority:** P0 (MVP - Required for user access)
+
 As a registered user,
 I want to log in with my email and password,
 So that I can access my account and the platform features I've paid for.
@@ -636,6 +644,8 @@ So that I can access my account and the platform features I've paid for.
 
 ### Story 1.5: OAuth Authentication (Google and GitHub)
 
+**Priority:** P1 (Post-MVP - Convenience feature)
+
 As a user,
 I want to sign up or log in using my Google or GitHub account,
 So that I can access the platform without creating a separate password.
@@ -669,6 +679,8 @@ So that I can access the platform without creating a separate password.
 ---
 
 ### Story 1.6: Organization Creation and Management
+
+**Priority:** P0 (MVP - Multi-tenant foundation)
 
 As a new user,
 I want to create an organization when I first sign up,
@@ -705,6 +717,8 @@ So that I can manage my content and team members under my organization.
 ---
 
 ### Story 1.7: Stripe Payment Integration and Subscription Setup
+
+**Priority:** P0 (MVP - Payment-first model)
 
 As a new user,
 I want to select a subscription plan and complete payment,
@@ -747,6 +761,8 @@ So that I can access the platform features according to my plan tier.
 ---
 
 ### Story 1.8: Payment-First Access Control (Paywall Implementation)
+
+**Priority:** P0 (MVP - Enforces payment requirement)
 
 As the system,
 I want to enforce payment before dashboard access,
@@ -791,6 +807,8 @@ So that only paying customers can use the platform features.
 
 ### Story 1.9: Account Suspension and Reactivation Workflow
 
+**Priority:** P1 (Post-MVP - Can use simple payment check)
+
 As the system,
 I want to suspend accounts after payment failure and reactivate them upon successful payment,
 So that I maintain payment compliance while giving users a grace period to resolve issues.
@@ -834,6 +852,8 @@ So that I maintain payment compliance while giving users a grace period to resol
 ---
 
 ### Story 1.10: Team Member Invites and Role Assignments
+
+**Priority:** P1 (Post-MVP - MVP is single-user)
 
 As an organization owner,
 I want to invite team members and assign them roles,
@@ -890,6 +910,8 @@ So that my team can collaborate on content with appropriate permissions.
 
 ### Story 1.11: Row-Level Security (RLS) Policies Implementation
 
+**Priority:** P1 (Post-MVP - Can defer with basic org_id checks)
+
 As the system,
 I want to enforce row-level security policies on all tables,
 So that users can only access data belonging to their organization.
@@ -930,6 +952,8 @@ So that users can only access data belonging to their organization.
 
 ### Story 1.12: Basic Dashboard Access After Payment
 
+**Priority:** P0 (MVP - Users need dashboard to navigate)
+
 As a paying user,
 I want to access a basic dashboard after completing payment,
 So that I can see my account status and navigate to platform features.
@@ -967,6 +991,8 @@ So that I can see my account status and navigate to platform features.
 ---
 
 ### Story 1.13: Audit Logging for Compliance
+
+**Priority:** P1 (Post-MVP - Not required for MVP)
 
 As the system,
 I want to log all sensitive operations,
@@ -1041,6 +1067,8 @@ So that I can maintain compliance and track security-relevant actions.
 
 ### Story 2.1: Dashboard Layout Foundation and Navigation Structure
 
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
+
 As a user,
 I want a consistent dashboard layout with navigation,
 So that I can easily access all platform features from any page.
@@ -1081,6 +1109,8 @@ So that I can easily access all platform features from any page.
 ---
 
 ### Story 2.2: Persona-Specific Default Dashboard Views
+
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
 
 As a user,
 I want to see a dashboard customized for my role (Agency, E-Commerce, or SaaS),
@@ -1140,6 +1170,8 @@ So that I see the most relevant metrics and actions for my use case.
 
 ### Story 2.3: Real-Time Usage Credits Display
 
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
+
 As a user,
 I want to see my current usage credits in real-time,
 So that I know how many articles, keyword researches, and API calls I have remaining.
@@ -1182,6 +1214,8 @@ So that I know how many articles, keyword researches, and API calls I have remai
 ---
 
 ### Story 2.4: Success Metrics Visualization Widgets
+
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
 
 As a user,
 I want to see my key success metrics prominently displayed,
@@ -1232,6 +1266,8 @@ So that I can track my progress toward my goals (time saved, content output, ROI
 
 ### Story 2.5: Recent Activity Feed Widget
 
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
+
 As a user,
 I want to see a feed of recent activities in my account,
 So that I can stay informed about article generation, publishing, and other important events.
@@ -1276,6 +1312,8 @@ So that I can stay informed about article generation, publishing, and other impo
 
 ### Story 2.6: Quick Action Buttons
 
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
+
 As a user,
 I want quick access to common actions from the dashboard,
 So that I can start creating content or performing key tasks immediately.
@@ -1318,6 +1356,8 @@ So that I can start creating content or performing key tasks immediately.
 ---
 
 ### Story 2.7: Customizable Widget Layout
+
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
 
 As a user,
 I want to customize my dashboard widget layout,
@@ -1367,6 +1407,8 @@ So that I can arrange widgets to match my workflow and priorities.
 ---
 
 ### Story 2.8: Global Search Functionality (Cmd/Ctrl + K)
+
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
 
 As a user,
 I want to search across all content using a keyboard shortcut,
@@ -1423,6 +1465,8 @@ So that I can quickly find articles, keywords, clients, or projects.
 ---
 
 ### Story 2.9: Keyboard Shortcuts and Help Modal
+
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
 
 As a user,
 I want to use keyboard shortcuts for common actions,
@@ -1488,6 +1532,8 @@ So that I can navigate and perform tasks more efficiently.
 
 ### Story 2.10: Responsive Design Implementation
 
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
+
 As a user,
 I want the dashboard to work well on mobile, tablet, and desktop devices,
 So that I can access the platform from any device.
@@ -1544,6 +1590,8 @@ So that I can access the platform from any device.
 
 ### Story 2.11: Loading States and Skeleton Screens
 
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
+
 As a user,
 I want to see loading indicators while data is being fetched,
 So that I know the system is working and content is loading.
@@ -1589,6 +1637,8 @@ So that I know the system is working and content is loading.
 ---
 
 ### Story 2.12: Error States with Clear Recovery Actions
+
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
 
 As a user,
 I want to see clear error messages with actionable recovery steps,
@@ -1643,6 +1693,8 @@ So that I know what went wrong and how to fix it.
 ---
 
 ### Story 2.13: Empty States with Helpful Guidance
+
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
 
 As a user,
 I want to see helpful empty states when I have no content,
@@ -1715,6 +1767,8 @@ So that I know what to do next and how to get started.
 
 ### Story 3.1: Keyword Research Interface and DataForSEO Integration
 
+**Priority:** P0 (MVP - Core value, users need keywords to generate articles)
+
 As a user,
 I want to research keywords with search volume, difficulty, and trend data,
 So that I can identify content opportunities and prioritize keywords for my content strategy.
@@ -1766,6 +1820,8 @@ So that I can identify content opportunities and prioritize keywords for my cont
 
 ### Story 3.2: Filter and Organize Keyword Research Results
 
+**Priority:** P1 (Post-MVP - Basic results sufficient for MVP)
+
 As a user,
 I want to filter and organize keyword research results,
 So that I can find the most relevant keywords for my content strategy.
@@ -1816,6 +1872,8 @@ So that I can find the most relevant keywords for my content strategy.
 ---
 
 ### Story 3.3: Keyword Clustering (Pillar Content Strategy)
+
+**Priority:** P1 (Post-MVP - Advanced feature)
 
 As a user,
 I want to generate keyword clusters that group related keywords,
@@ -1870,6 +1928,8 @@ So that I can create a pillar content strategy with main articles and supporting
 
 ### Story 3.4: Real-Time Web Research with Tavily Integration
 
+**Priority:** P1 (Post-MVP - Already included in 4a-3)
+
 As a user,
 I want to perform real-time web research with citations,
 So that I can gather current facts and sources for my content (EEAT compliance).
@@ -1921,6 +1981,8 @@ So that I can gather current facts and sources for my content (EEAT compliance).
 ---
 
 ### Story 3.5: SERP Analysis with DataForSEO Integration
+
+**Priority:** P1 (Post-MVP - Optimization, not required)
 
 As a user,
 I want to analyze SERP data for target keywords,
@@ -1982,6 +2044,8 @@ So that I can understand what ranks, identify competitors, and optimize my conte
 
 ### Story 3.6: Keyword Research History and Saved Lists
 
+**Priority:** P1 (Post-MVP - Convenience feature)
+
 As a user,
 I want to view my keyword research history and save keyword lists,
 So that I can reference previous research and organize keywords for content planning.
@@ -2042,6 +2106,8 @@ So that I can reference previous research and organize keywords for content plan
 
 ### Story 3.7: Related Keyword Suggestions
 
+**Priority:** P1 (Post-MVP - Advanced feature)
+
 As a user,
 I want to see related keyword suggestions based on my seed keyword,
 So that I can discover additional content opportunities I might have missed.
@@ -2093,6 +2159,8 @@ So that I can discover additional content opportunities I might have missed.
 ---
 
 ### Story 3.8: Batch Keyword Research Operations
+
+**Priority:** P1 (Post-MVP - Efficiency, not required)
 
 As a user,
 I want to research multiple keywords in one operation,
@@ -2183,6 +2251,8 @@ So that I can efficiently analyze multiple topics and save time.
 
 ### Story 4A.1: Article Generation Initiation and Queue Setup
 
+**Priority:** P0 (MVP - Users must be able to start article generation)
+
 As a user,
 I want to start generating an article from a keyword,
 So that I can create long-form content optimized for SEO.
@@ -2231,6 +2301,8 @@ So that I can create long-form content optimized for SEO.
 ---
 
 ### Story 4A.2: Section-by-Section Architecture and Outline Generation
+
+**Priority:** P0 (MVP - Enables 3,000+ word articles, core differentiator)
 
 As the system,
 I want to generate articles using a section-by-section architecture,
@@ -2283,6 +2355,8 @@ So that I can create 3,000+ word articles that beat token limits and maintain qu
 ---
 
 ### Story 4A.3: Real-Time Research Per Section (Tavily Integration)
+
+**Priority:** P0 (MVP - Citations for EEAT compliance, core differentiator)
 
 As the system,
 I want to perform fresh Tavily research for each article section,
@@ -2339,6 +2413,8 @@ So that content includes current facts and citations for EEAT compliance.
 ---
 
 ### Story 4A.4: SERP Analysis Per Section (DataForSEO Integration)
+
+**Priority:** P1 (Post-MVP - Optimization, not required)
 
 As the system,
 I want to analyze SERP data for each section to optimize for rankings,
@@ -2397,6 +2473,8 @@ So that content matches what actually ranks and outperforms competitors.
 ---
 
 ### Story 4A.5: LLM Content Generation with OpenRouter Integration
+
+**Priority:** P0 (MVP - Core value, generates article content)
 
 As the system,
 I want to generate article content using LLMs via OpenRouter,
@@ -2462,6 +2540,8 @@ So that I can create high-quality, SEO-optimized long-form content.
 
 ### Story 4A.6: Real-Time Progress Tracking and Updates
 
+**Priority:** P0 (MVP - Users need visibility into generation progress)
+
 As a user,
 I want to see real-time progress updates during article generation,
 So that I know what's happening and how long it will take.
@@ -2519,6 +2599,8 @@ So that I know what's happening and how long it will take.
 ---
 
 ### Story 4A.7: Automatic SEO Optimization (Keyword Density, Headings, Meta Tags)
+
+**Priority:** P1 (Post-MVP - Can be basic for MVP)
 
 As the system,
 I want to automatically optimize generated content for SEO,
@@ -2585,6 +2667,8 @@ So that articles rank well in search results.
 
 ### Story 4A.8: Automatic FAQ Section Generation
 
+**Priority:** P1 (Post-MVP - Nice-to-have)
+
 As the system,
 I want to automatically generate FAQ sections for articles,
 So that content answers common questions and improves SEO (FAQ schema).
@@ -2641,6 +2725,8 @@ So that content answers common questions and improves SEO (FAQ schema).
 ---
 
 ### Story 4A.9: Automatic Internal Linking Suggestions
+
+**Priority:** P1 (Post-MVP - Optimization)
 
 As the system,
 I want to automatically suggest internal links during content generation,
@@ -2713,6 +2799,8 @@ So that I can improve site structure and user navigation.
 
 ### Story 4A.10: Automatic Schema Markup Generation
 
+**Priority:** P1 (Post-MVP - Optimization)
+
 As the system,
 I want to automatically generate schema markup for articles,
 So that content is eligible for rich snippets and enhanced search results.
@@ -2764,6 +2852,8 @@ So that content is eligible for rich snippets and enhanced search results.
 ---
 
 ### Story 4A.11: Automatic Image Integration with Alt Text
+
+**Priority:** P1 (Post-MVP - Can be manual for MVP)
 
 As the system,
 I want to automatically find and integrate relevant images with alt text,
@@ -2862,6 +2952,8 @@ So that articles are visually appealing and accessible.
 
 ### Story 4B.1: Article Editor Interface and Rich Text Editing
 
+**Priority:** P0 (MVP - Users must be able to review/edit generated content)
+
 As a user,
 I want to edit generated article content in a rich text editor,
 So that I can refine and customize content before publishing.
@@ -2921,6 +3013,8 @@ So that I can refine and customize content before publishing.
 ---
 
 ### Story 4B.2: Section-Level Editing and Independent Section Management
+
+**Priority:** P1 (Post-MVP - Basic editing sufficient)
 
 As a user,
 I want to edit individual sections of articles independently,
@@ -2983,6 +3077,8 @@ So that I can refine specific parts without affecting the rest of the article.
 
 ### Story 4B.3: Section Regeneration and Partial Content Regeneration
 
+**Priority:** P1 (Post-MVP - Convenience feature)
+
 As a user,
 I want to regenerate specific sections or parts of articles,
 So that I can improve content quality without regenerating the entire article.
@@ -3041,6 +3137,8 @@ So that I can improve content quality without regenerating the entire article.
 ---
 
 ### Story 4B.4: Article Templates and Structure Saving
+
+**Priority:** P1 (Post-MVP - Efficiency feature)
 
 As a user,
 I want to save article structures as templates for reuse,
@@ -3102,6 +3200,8 @@ So that I can quickly create similar articles with consistent structure.
 ---
 
 ### Story 4B.5: Custom Writing Styles and Tones
+
+**Priority:** P1 (Post-MVP - Can use defaults)
 
 As a user,
 I want to create and use custom writing styles and tones,
@@ -3169,6 +3269,8 @@ So that my content matches my brand voice and audience preferences.
 ---
 
 ### Story 4B.6: Article Duplication and Template Creation
+
+**Priority:** P1 (Post-MVP - Convenience feature)
 
 As a user,
 I want to duplicate articles to create similar content,
@@ -3240,6 +3342,8 @@ So that I can quickly create variations or use successful articles as templates.
 
 ### Story 4B.7: Article Draft Saving and Auto-Save
 
+**Priority:** P0 (MVP - Prevents data loss during editing)
+
 As a user,
 I want articles to be saved as drafts automatically,
 So that I don't lose my work and can continue editing later.
@@ -3302,6 +3406,8 @@ So that I don't lose my work and can continue editing later.
 ---
 
 ### Story 4B.8: Version History and Revision Tracking
+
+**Priority:** P1 (Post-MVP - Not required for MVP)
 
 As a user,
 I want to view and restore previous versions of articles,
@@ -3375,6 +3481,8 @@ So that I can revert changes or compare different versions.
 
 ### Story 4B.9: Content Change Tracking and History
 
+**Priority:** P1 (Post-MVP - Not required)
+
 As a user,
 I want to see a history of content changes over time,
 So that I can understand how articles evolved and track editing activity.
@@ -3437,6 +3545,8 @@ So that I can understand how articles evolved and track editing activity.
 ---
 
 ### Story 4B.10: Article Organization (Folders and Collections)
+
+**Priority:** P1 (Post-MVP - Can use flat list)
 
 As a user,
 I want to organize articles into folders or collections,
@@ -3503,6 +3613,8 @@ So that I can manage large content libraries and group related articles.
 ---
 
 ### Story 4B.11: Content Library Search and Filtering
+
+**Priority:** P1 (Post-MVP - Can use basic filtering)
 
 As a user,
 I want to search and filter my content library,
@@ -3573,6 +3685,8 @@ So that I can quickly find specific articles among many.
 ---
 
 ### Story 4B.12: Bulk Article Selection and Operations
+
+**Priority:** P1 (Post-MVP - Efficiency, not required)
 
 As a user,
 I want to select multiple articles and perform bulk operations,
@@ -3645,6 +3759,8 @@ So that I can manage many articles efficiently.
 ---
 
 ### Story 4B.13: Bulk Editing Operations
+
+**Priority:** P1 (Post-MVP - Efficiency, not required)
 
 As a user,
 I want to perform bulk editing on multiple articles,
@@ -3740,6 +3856,8 @@ So that I can update metadata, tags, or other properties across many articles at
 
 ### Story 5.1: CMS Connection Management and Credential Storage
 
+**Priority:** P0 (MVP - Users must connect WordPress to publish articles)
+
 As a user,
 I want to connect my CMS platforms and store credentials securely,
 So that I can publish articles to my websites.
@@ -3807,6 +3925,8 @@ So that I can publish articles to my websites.
 
 ### Story 5.2: CMS Connection Credential Validation
 
+**Priority:** P0 (MVP - Prevents publishing failures)
+
 As the system,
 I want to validate CMS connection credentials before publishing,
 So that I can prevent publishing failures and provide clear error messages.
@@ -3867,6 +3987,8 @@ So that I can prevent publishing failures and provide clear error messages.
 ---
 
 ### Story 5.3: WordPress Publishing (One-Click Publish)
+
+**Priority:** P0 (MVP - Core value, publishes articles to WordPress)
 
 As a user,
 I want to publish articles to WordPress with one click,
@@ -3937,6 +4059,8 @@ So that I can quickly publish content to my website.
 
 ### Story 5.4: Google Search Console Indexing Integration
 
+**Priority:** P0 (MVP - Core value, submits URLs for indexing, part of North Star Metric)
+
 As the system,
 I want to automatically submit published URLs to Google Search Console for indexing,
 So that articles are indexed quickly and appear in search results.
@@ -3996,6 +4120,8 @@ So that articles are indexed quickly and appear in search results.
 ---
 
 ### Story 5.5: Indexing Status Tracking and Monitoring
+
+**Priority:** P0 (MVP - Users need to see indexing confirmation)
 
 As a user,
 I want to track the indexing status of my published articles,
@@ -4064,6 +4190,8 @@ So that I know when articles are indexed and appear in search results.
 
 ### Story 5.6: Publishing Settings Configuration Per CMS
 
+**Priority:** P1 (Post-MVP - Can use defaults)
+
 As a user,
 I want to configure publishing settings per CMS connection,
 So that articles are published with the correct categories, tags, and defaults.
@@ -4124,6 +4252,8 @@ So that articles are published with the correct categories, tags, and defaults.
 ---
 
 ### Story 5.7: Publishing History and Status Tracking
+
+**Priority:** P1 (Post-MVP - Basic confirmation sufficient)
 
 As a user,
 I want to view publishing history and status for all articles,
@@ -4197,6 +4327,8 @@ So that I can track what was published, when, and where.
 
 ### Story 5.8: OAuth Token Refresh Automation
 
+**Priority:** P1 (Post-MVP - Can be manual for MVP)
+
 As the system,
 I want to automatically refresh expired OAuth tokens before they expire,
 So that CMS connections remain functional without manual intervention.
@@ -4258,6 +4390,8 @@ So that CMS connections remain functional without manual intervention.
 ---
 
 ### Story 5.9: Scheduled Publishing with Timezone Support
+
+**Priority:** P1 (Post-MVP - Not required)
 
 As a user,
 I want to schedule articles for future publishing dates,
@@ -4327,6 +4461,8 @@ So that I can plan content releases and publish at optimal times.
 ---
 
 ### Story 5.10: Bulk Publishing Operations
+
+**Priority:** P1 (Post-MVP - Efficiency, not required)
 
 As a user,
 I want to publish multiple articles to multiple destinations in one operation,
@@ -4406,6 +4542,8 @@ So that I can efficiently distribute content across platforms.
 
 ### Story 5.11: Social Media Post Generation
 
+**Priority:** P1 (Post-MVP - Not core value)
+
 As a user,
 I want to generate social media posts from articles,
 So that I can promote my content on Twitter, LinkedIn, and Facebook.
@@ -4480,6 +4618,8 @@ So that I can promote my content on Twitter, LinkedIn, and Facebook.
 ---
 
 ### Story 5.12: Article Export in Multiple Formats
+
+**Priority:** P1 (Post-MVP - Not required)
 
 As a user,
 I want to export articles in multiple formats,
@@ -4595,6 +4735,8 @@ So that I can use content in different tools or share it in various formats.
 
 ### Story 6.1: Persona-Specific Success Metrics Dashboard
 
+**Priority:** P1 (Post-MVP - Tracking/optimization, not required)
+
 As a user,
 I want to view a dashboard with success metrics tailored to my persona,
 So that I can track my progress toward my goals (time saved, content output, ROI).
@@ -4679,6 +4821,8 @@ So that I can track my progress toward my goals (time saved, content output, ROI
 ---
 
 ### Story 6.2: Article Performance Tracking (Views, Rankings, Conversions)
+
+**Priority:** P1 (Post-MVP - Tracking/optimization, not required)
 
 As a user,
 I want to track article performance metrics,
@@ -4777,6 +4921,8 @@ So that I can understand which articles are most effective and optimize my conte
 
 ### Story 6.3: Keyword Ranking Data and Position Tracking
 
+**Priority:** P1 (Post-MVP - Tracking/optimization, not required)
+
 As a user,
 I want to view keyword ranking data and track position changes over time,
 So that I can monitor SEO performance and identify ranking opportunities.
@@ -4860,6 +5006,8 @@ So that I can monitor SEO performance and identify ranking opportunities.
 ---
 
 ### Story 6.4: Content Quality Metrics Dashboard
+
+**Priority:** P1 (Post-MVP - Tracking/optimization, not required)
 
 As a user,
 I want to view content quality metrics for my articles,
@@ -4951,6 +5099,8 @@ So that I can ensure content meets quality standards and identify improvement op
 
 ### Story 6.5: Feature Adoption Metrics and Usage Analytics
 
+**Priority:** P1 (Post-MVP - Tracking/optimization, not required)
+
 As a user,
 I want to view feature adoption metrics,
 So that I can understand which features are most valuable and identify unused features.
@@ -5024,6 +5174,8 @@ So that I can understand which features are most valuable and identify unused fe
 ---
 
 ### Story 6.6: Shareable Attribution Reports Generation
+
+**Priority:** P1 (Post-MVP - Tracking/optimization, not required)
 
 As a user,
 I want to generate shareable attribution reports for stakeholders,
@@ -5115,6 +5267,8 @@ So that I can demonstrate content ROI and justify content marketing investments.
 
 ### Story 6.7: Analytics Filtering (Per Project, Per Article, Aggregated)
 
+**Priority:** P1 (Post-MVP - Tracking/optimization, not required)
+
 As a user,
 I want to view analytics filtered by project, article, or aggregated across all content,
 So that I can analyze performance at different levels of granularity.
@@ -5196,6 +5350,8 @@ So that I can analyze performance at different levels of granularity.
 
 ### Story 6.8: Time Saved Tracking and Success Metric Calculation
 
+**Priority:** P1 (Post-MVP - Tracking/optimization, not required)
+
 As the system,
 I want to track time saved per user,
 So that I can measure success against the 10+ hours/week target for agencies.
@@ -5271,6 +5427,8 @@ So that I can measure success against the 10+ hours/week target for agencies.
 
 ### Story 6.9: Content Output Increase Measurement
 
+**Priority:** P1 (Post-MVP - Tracking/optimization, not required)
+
 As the system,
 I want to measure content output increase,
 So that I can track success against the 3× content output target.
@@ -5344,6 +5502,8 @@ So that I can track success against the 3× content output target.
 ---
 
 ### Story 6.10: ROI Calculation Per Organization
+
+**Priority:** P1 (Post-MVP - Tracking/optimization, not required)
 
 As the system,
 I want to calculate ROI per organization,
@@ -5449,6 +5609,8 @@ So that users can demonstrate content marketing ROI and justify investments.
 
 ### Story 7.1: E-Commerce Store Connection (Shopify and WooCommerce)
 
+**Priority:** P1 (Post-MVP - Advanced feature, not core promise)
+
 As a user,
 I want to connect my e-commerce stores (Shopify and WooCommerce),
 So that I can sync product catalogs and track revenue attribution from content.
@@ -5521,6 +5683,8 @@ So that I can sync product catalogs and track revenue attribution from content.
 ---
 
 ### Story 7.2: Product Catalog Synchronization
+
+**Priority:** P1 (Post-MVP - Advanced feature, not core promise)
 
 As the system,
 I want to sync product catalogs from connected e-commerce stores,
@@ -5607,6 +5771,8 @@ So that I can access product data for generating descriptions and linking produc
 
 ### Story 7.3: Product Description Generation from Product Data
 
+**Priority:** P1 (Post-MVP - Advanced feature, not core promise)
+
 As a user,
 I want to generate product descriptions from product data,
 So that I can create SEO-optimized product descriptions quickly.
@@ -5684,6 +5850,8 @@ So that I can create SEO-optimized product descriptions quickly.
 
 ### Story 7.4: Automatic Product Linking in Blog Content
 
+**Priority:** P1 (Post-MVP - Advanced feature, not core promise)
+
 As the system,
 I want to automatically link to relevant products in blog content,
 So that I can drive traffic to products and enable revenue attribution.
@@ -5754,6 +5922,8 @@ So that I can drive traffic to products and enable revenue attribution.
 ---
 
 ### Story 7.5: UTM Parameter Generation for Content Links
+
+**Priority:** P1 (Post-MVP - Advanced feature, not core promise)
 
 As the system,
 I want to automatically generate UTM parameters for content links,
@@ -5827,6 +5997,8 @@ So that I can track which articles drive traffic and revenue.
 ---
 
 ### Story 7.6: E-Commerce Order Matching via UTM Tracking
+
+**Priority:** P1 (Post-MVP - Advanced feature, not core promise)
 
 As the system,
 I want to match e-commerce orders to content via UTM tracking,
@@ -5909,6 +6081,8 @@ So that I can attribute revenue to specific articles and prove content ROI.
 ---
 
 ### Story 7.7: Revenue Attribution Reports and Dashboard
+
+**Priority:** P1 (Post-MVP - Advanced feature, not core promise)
 
 As a user,
 I want to view revenue attribution reports showing which articles drove sales,
@@ -6031,6 +6205,8 @@ So that I can prove content ROI and optimize my content strategy.
 
 ### Story 7.8: Revenue Attribution Data Export
 
+**Priority:** P1 (Post-MVP - Advanced feature, not core promise)
+
 As a user,
 I want to export revenue attribution data for stakeholder reporting,
 So that I can share ROI proof with executives, clients, or investors.
@@ -6118,6 +6294,8 @@ So that I can share ROI proof with executives, clients, or investors.
 ---
 
 ### Story 7.9: Multiple E-Commerce Store Management
+
+**Priority:** P1 (Post-MVP - Advanced feature, not core promise)
 
 As a user,
 I want to manage multiple e-commerce stores per organization,
@@ -6226,6 +6404,8 @@ So that I can track attribution across all my stores or manage stores for multip
 
 ### Story 8.1: White-Label Branding Configuration (Logo, Colors, Fonts)
 
+**Priority:** P1 (Post-MVP - Agency feature, not core promise)
+
 As an organization owner (Agency plan),
 I want to configure white-label branding (logo, colors, fonts),
 So that I can rebrand the platform as my own product for client reselling.
@@ -6294,6 +6474,8 @@ So that I can rebrand the platform as my own product for client reselling.
 ---
 
 ### Story 8.2: Custom Domain Setup with SSL Provisioning
+
+**Priority:** P1 (Post-MVP - Agency feature, not core promise)
 
 As an organization owner (Agency plan),
 I want to set up a custom domain for my white-label portal,
@@ -6374,6 +6556,8 @@ So that clients access the platform via my branded domain instead of infin8conte
 ---
 
 ### Story 8.3: Client Stakeholder Invitations to White-Label Portals
+
+**Priority:** P1 (Post-MVP - Agency feature, not core promise)
 
 As an organization owner (Agency plan),
 I want to invite client stakeholders to white-label portals,
@@ -6457,6 +6641,8 @@ So that clients can access their content and reports through my branded portal.
 ---
 
 ### Story 8.4: Client Portal Access with Read-Only Permissions
+
+**Priority:** P1 (Post-MVP - Agency feature, not core promise)
 
 As a client stakeholder,
 I want to access the white-label portal with read-only permissions,
@@ -6554,6 +6740,8 @@ So that I can view my content performance and reports without modifying anything
 
 ### Story 8.5: Multi-Tenant Data Isolation (Row-Level Security)
 
+**Priority:** P1 (Post-MVP - Agency feature, not core promise)
+
 As the system,
 I want to isolate data per organization using row-level security,
 So that organizations cannot access each other's data (zero cross-organization data leakage).
@@ -6623,6 +6811,8 @@ So that organizations cannot access each other's data (zero cross-organization d
 ---
 
 ### Story 8.6: Project Management and Organization
+
+**Priority:** P1 (Post-MVP - Agency feature, not core promise)
 
 As an organization owner,
 I want to manage multiple projects (content collections),
@@ -6710,6 +6900,8 @@ So that I can organize content by client, campaign, or initiative.
 ---
 
 ### Story 8.7: Project Assignment to Team Members and Clients
+
+**Priority:** P1 (Post-MVP - Agency feature, not core promise)
 
 As an organization owner,
 I want to assign projects to specific team members or clients,
@@ -6816,6 +7008,8 @@ So that I can control who has access to which content and reports.
 
 ### Story 9.1: Article Comments and Collaboration
 
+**Priority:** P1 (Post-MVP - Collaboration, not required for MVP)
+
 As a team member,
 I want to comment on articles before publishing,
 So that I can provide feedback and collaborate with my team on content.
@@ -6894,6 +7088,8 @@ So that I can provide feedback and collaborate with my team on content.
 ---
 
 ### Story 9.2: Article Approval Workflow
+
+**Priority:** P1 (Post-MVP - Collaboration, not required for MVP)
 
 As an organization owner,
 I want to approve articles before publishing,
@@ -7070,6 +7266,8 @@ So that I can distribute work and track who is responsible for each article.
 
 ### Story 9.4: Article Ownership and Permissions Management
 
+**Priority:** P1 (Post-MVP - Collaboration, not required for MVP)
+
 As an organization owner,
 I want to manage article ownership and permissions,
 So that I can control who can edit, publish, or delete articles.
@@ -7162,6 +7360,8 @@ So that I can control who can edit, publish, or delete articles.
 
 ### Story 9.5: Article Status Tracking and Workflow States
 
+**Priority:** P1 (Post-MVP - Collaboration, not required for MVP)
+
 As a user,
 I want to track article status through workflow states,
 So that I can see where each article is in the content creation and publishing process.
@@ -7251,6 +7451,8 @@ So that I can see where each article is in the content creation and publishing p
 ---
 
 ### Story 9.6: Article Status Change Notifications
+
+**Priority:** P1 (Post-MVP - Collaboration, not required for MVP)
 
 As a user,
 I want to receive notifications when article status changes,
@@ -7374,6 +7576,8 @@ So that I can stay informed about content progress and take action when needed.
 
 ### Story 10.1: Usage Credit Tracking Per Organization
 
+**Priority:** P1 (Post-MVP - Usage tracking can be basic, billing already in 1-7)
+
 As the system,
 I want to track usage credits per organization,
 So that I can monitor usage against plan limits and calculate overages.
@@ -7445,6 +7649,8 @@ So that I can monitor usage against plan limits and calculate overages.
 ---
 
 ### Story 10.2: Real-Time Usage Dashboard
+
+**Priority:** P1 (Post-MVP - Usage tracking can be basic, billing already in 1-7)
 
 As a user,
 I want to view a real-time usage dashboard showing credits used vs. plan limits,
@@ -7533,6 +7739,8 @@ So that I can monitor my usage and avoid unexpected overages.
 
 ### Story 10.3: Usage Limit Alerts and Notifications
 
+**Priority:** P1 (Post-MVP - Usage tracking can be basic, billing already in 1-7)
+
 As the system,
 I want to alert users when they approach usage limits,
 So that users can upgrade plans or adjust usage before hitting limits.
@@ -7612,6 +7820,8 @@ So that users can upgrade plans or adjust usage before hitting limits.
 
 ### Story 10.4: Overage Fee Calculation and Billing
 
+**Priority:** P1 (Post-MVP - Usage tracking can be basic, billing already in 1-7)
+
 As the system,
 I want to calculate and charge overage fees for usage beyond plan limits,
 So that organizations pay for additional usage while maintaining predictable base pricing.
@@ -7687,6 +7897,8 @@ So that organizations pay for additional usage while maintaining predictable bas
 ---
 
 ### Story 10.5: Stripe Subscription Management
+
+**Priority:** P1 (Post-MVP - Usage tracking can be basic, billing already in 1-7)
 
 As the system,
 I want to manage subscriptions via Stripe,
@@ -7796,6 +8008,8 @@ So that users can subscribe, update, and cancel plans with proper billing.
 
 ### Story 10.6: Plan Upgrade and Downgrade with Prorated Billing
 
+**Priority:** P1 (Post-MVP - Usage tracking can be basic, billing already in 1-7)
+
 As a user,
 I want to upgrade or downgrade my subscription plan with prorated billing,
 So that I pay or receive credit for the unused portion of my current plan.
@@ -7886,6 +8100,8 @@ So that I pay or receive credit for the unused portion of my current plan.
 
 ### Story 10.7: API Cost Tracking and Monitoring
 
+**Priority:** P1 (Post-MVP - Usage tracking can be basic, billing already in 1-7)
+
 As the system,
 I want to track API costs per organization,
 So that I can monitor costs and ensure cost efficiency targets are met.
@@ -7969,6 +8185,8 @@ So that I can monitor costs and ensure cost efficiency targets are met.
 ---
 
 ### Story 10.8: Billing History and Invoice Management
+
+**Priority:** P1 (Post-MVP - Usage tracking can be basic, billing already in 1-7)
 
 As a user,
 I want to view my billing history and download invoices,
@@ -8067,6 +8285,8 @@ So that I can track payments and maintain financial records.
 
 ### Story 10.9: Usage Limit Enforcement Per Plan Tier
 
+**Priority:** P1 (Post-MVP - Usage tracking can be basic, billing already in 1-7)
+
 As the system,
 I want to enforce usage limits per plan tier,
 So that users cannot exceed their plan limits without upgrading or paying overages.
@@ -8148,6 +8368,8 @@ So that users cannot exceed their plan limits without upgrading or paying overag
 
 ### Story 10.10: Cost Threshold Alerts
 
+**Priority:** P1 (Post-MVP - Usage tracking can be basic, billing already in 1-7)
+
 As the system,
 I want to alert users when approaching cost thresholds,
 So that users can monitor costs and optimize usage.
@@ -8211,6 +8433,8 @@ So that users can monitor costs and optimize usage.
 ---
 
 ### Story 10.11: Upgrade Suggestions Based on Usage Patterns
+
+**Priority:** P1 (Post-MVP - Usage tracking can be basic, billing already in 1-7)
 
 As the system,
 I want to identify users approaching plan limits and suggest upgrades,
@@ -8286,6 +8510,8 @@ So that users can upgrade proactively and avoid hitting limits.
 ---
 
 ### Story 10.12: Upgrade Value Comparison and Feature Showcase
+
+**Priority:** P1 (Post-MVP - Usage tracking can be basic, billing already in 1-7)
 
 As a user,
 I want to see the value of upgrading with feature comparison,
@@ -8410,6 +8636,8 @@ So that I can make an informed decision about upgrading my plan.
 
 ### Story 11.1: API Key Generation and Management
 
+**Priority:** P1 (Post-MVP - Developer feature, not core promise)
+
 As a user,
 I want to generate API keys for programmatic access,
 So that I can integrate Infin8Content with my custom applications and workflows.
@@ -8499,6 +8727,8 @@ So that I can integrate Infin8Content with my custom applications and workflows.
 ---
 
 ### Story 11.2: REST API Endpoints for Core Operations
+
+**Priority:** P1 (Post-MVP - Developer feature, not core promise)
 
 As a developer,
 I want to access REST API endpoints for core operations,
@@ -8623,6 +8853,8 @@ So that I can programmatically generate content, publish articles, and perform r
 
 ### Story 11.3: Rate Limiting Per API Key
 
+**Priority:** P1 (Post-MVP - Developer feature, not core promise)
+
 As the system,
 I want to enforce rate limiting per API key,
 So that I can prevent API abuse and ensure fair usage across organizations.
@@ -8714,6 +8946,8 @@ So that I can prevent API abuse and ensure fair usage across organizations.
 
 ### Story 11.4: Webhook Receiving from External Systems
 
+**Priority:** P1 (Post-MVP - Developer feature, not core promise)
+
 As the system,
 I want to receive webhook notifications from external systems,
 So that I can integrate with third-party services and respond to external events.
@@ -8794,6 +9028,8 @@ So that I can integrate with third-party services and respond to external events
 ---
 
 ### Story 11.5: Webhook Endpoint Configuration for Custom Integrations
+
+**Priority:** P1 (Post-MVP - Developer feature, not core promise)
 
 As a user,
 I want to configure webhook endpoints for custom integrations,
@@ -8941,6 +9177,8 @@ So that external systems can notify me when events occur in Infin8Content.
 
 ### Story 12.1: Pre-Payment Information Pages (Pricing, Features, Case Studies)
 
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
+
 As a visitor,
 I want to view information about Infin8Content without creating an account,
 So that I can understand the product, pricing, and value before committing to payment.
@@ -9046,6 +9284,8 @@ So that I can understand the product, pricing, and value before committing to pa
 
 ### Story 12.2: Post-Payment Onboarding Welcome and Persona Selection
 
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
+
 As a new user,
 I want to complete onboarding after payment,
 So that I can get started with Infin8Content and configure my account.
@@ -9122,6 +9362,8 @@ So that I can get started with Infin8Content and configure my account.
 ---
 
 ### Story 12.3: Guided CMS Connection During Onboarding
+
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
 
 As a new user,
 I want to connect my CMS during onboarding,
@@ -9207,6 +9449,8 @@ So that I can publish articles immediately after creating them.
 ---
 
 ### Story 12.4: Guided First Article Creation Tutorial
+
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
 
 As a new user,
 I want to create my first article with guided steps,
@@ -9298,6 +9542,8 @@ So that I learn how to use Infin8Content and see immediate value.
 
 ### Story 12.5: Dashboard Tour and Feature Discovery
 
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
+
 As a new user,
 I want to take a guided tour of the dashboard,
 So that I can discover key features and understand how to navigate the platform.
@@ -9377,6 +9623,8 @@ So that I can discover key features and understand how to navigate the platform.
 ---
 
 ### Story 12.6: Feature Discovery Mechanisms for New Users
+
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
 
 As a new user,
 I want to discover features I haven't used yet,
@@ -9467,6 +9715,8 @@ So that I can get maximum value from Infin8Content.
 ---
 
 ### Story 12.7: Help Documentation and Support Resources
+
+**Priority:** P1 (Post-MVP - UX polish, not blocking)
 
 As a user,
 I want to access help documentation and support resources,
@@ -9583,6 +9833,8 @@ So that I can learn how to use features and get help when needed.
 
 ### Story 13.1: News Article Generation from Latest Events
 
+**Priority:** P1 (Post-MVP - Explicitly post-launch)
+
 As a user,
 I want to generate news articles from latest events,
 So that I can create timely, relevant content about recent happenings in my niche.
@@ -9655,6 +9907,8 @@ So that I can create timely, relevant content about recent happenings in my nich
 ---
 
 ### Story 13.2: Listicle Article Generation with Comparison Tables
+
+**Priority:** P1 (Post-MVP - Explicitly post-launch)
 
 As a user,
 I want to generate listicle articles with comparison tables,
@@ -9749,6 +10003,8 @@ So that I can create "Top 10" style articles with product comparisons.
 
 ### Story 13.3: YouTube Video to Blog Post Conversion
 
+**Priority:** P1 (Post-MVP - Explicitly post-launch)
+
 As a user,
 I want to convert YouTube videos to blog posts,
 So that I can repurpose video content into written articles.
@@ -9841,6 +10097,8 @@ So that I can repurpose video content into written articles.
 ---
 
 ### Story 13.4: Automated Blog Content Generation (Autoblog)
+
+**Priority:** P1 (Post-MVP - Explicitly post-launch)
 
 As a user,
 I want to set up automated blog content generation,
@@ -9938,6 +10196,8 @@ So that articles are created and published automatically on a schedule.
 
 ### Story 13.5: Competitor Comparison Page Generation
 
+**Priority:** P1 (Post-MVP - Explicitly post-launch)
+
 As a user,
 I want to generate competitor comparison pages,
 So that I can create "X vs Y" and "Alternatives to X" pages for SEO.
@@ -10026,6 +10286,8 @@ So that I can create "X vs Y" and "Alternatives to X" pages for SEO.
 ---
 
 ### Story 13.6: AI-Powered Article Editing Assistant
+
+**Priority:** P1 (Post-MVP - Explicitly post-launch)
 
 As a user,
 I want to edit existing articles with AI assistance,
@@ -10135,6 +10397,8 @@ So that I can improve content quality, update information, and enhance SEO.
 
 ### Story 13.7: Additional CMS Platform Integrations
 
+**Priority:** P1 (Post-MVP - Explicitly post-launch)
+
 As a user,
 I want to connect additional CMS platforms beyond WordPress,
 So that I can publish to Shopify, Webflow, Ghost, Wix, Squarespace, and Blogger.
@@ -10233,6 +10497,8 @@ So that I can publish to Shopify, Webflow, Ghost, Wix, Squarespace, and Blogger.
 
 ### Story 13.8: Zapier Integration for No-Code Automation
 
+**Priority:** P1 (Post-MVP - Explicitly post-launch)
+
 As a user,
 I want to integrate with Zapier for no-code automation workflows,
 So that I can connect Infin8Content with other tools and automate workflows.
@@ -10314,6 +10580,8 @@ So that I can connect Infin8Content with other tools and automate workflows.
 ---
 
 ### Story 13.9: Live Product Pricing and Inventory Sync
+
+**Priority:** P1 (Post-MVP - Explicitly post-launch)
 
 As a user,
 I want to sync live product pricing and inventory from e-commerce stores,

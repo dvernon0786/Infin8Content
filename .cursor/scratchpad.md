@@ -23,6 +23,21 @@ User requested to install BMAD Method and initialize workflow tracking for the I
 
 ### Current Task
 ✅ **IN PROGRESS:** Story 1.3 - User Registration with Email and Password (2026-01-04, 10:26 AEDT)
+
+### MVP Prioritization Complete (2026-01-04, 11:12 AEDT)
+- ✅ Created comprehensive MVP prioritization document (`_bmad-output/mvp-prioritization.md`)
+- ✅ Updated all 103 stories in `epics.md` with priority labels (P0/P1)
+- ✅ Updated `sprint-status.yaml` with priorities mapping section
+- ✅ **MVP Definition:** Core user promise: "A user can go from a keyword to a published, indexed article in under 5 minutes"
+- ✅ **P0 Stories (MVP):** 18 stories identified across 5 epics
+  - Epic 1: 8 stories (Foundation & Access Control)
+  - Epic 3: 1 story (Keyword Research)
+  - Epic 4A: 5 stories (Article Generation Core)
+  - Epic 4B: 2 stories (Basic Editing)
+  - Epic 5: 5 stories (Publishing & Indexing)
+- ✅ **P1 Stories (Post-MVP):** 85 stories deferred
+- ✅ **Timeline:** MVP can ship in 6-8 weeks (vs 16 weeks for full Phase 1)
+- ✅ **Ship Line Summary:** If only P0 is completed, MVP can ship because it delivers the complete end-to-end workflow (keyword → published, indexed article)
 - **MAJOR CHANGE:** Switched from email verification to OTP verification using Brevo (2026-01-04, 10:26 AEDT)
 - Code review completed: All Critical and High issues resolved (9 issues fixed across 2 review passes)
 - Story status: in-progress (code complete, tests pending)
@@ -279,6 +294,12 @@ User requested to install BMAD Method and initialize workflow tracking for the I
   - [x] Update story file with completion notes and file list
   - [x] Update sprint-status.yaml to "done"
 - [x] Complete Story 1.2 - Supabase Project Setup and Database Schema Foundation (2026-01-04)
+- [x] Complete MVP Prioritization (2026-01-04, 11:12 AEDT)
+  - [x] Created MVP prioritization document with P0/P1/P2 breakdown
+  - [x] Updated all stories in epics.md with priority labels
+  - [x] Updated sprint-status.yaml with priorities mapping
+  - [x] Identified 18 P0 stories required for MVP
+  - [x] Documented fastest build sequence (6-8 weeks)
   - [x] Task 1: Install and configure Supabase dependencies
   - [x] Task 2: Set up Supabase project and migrations directory
   - [x] Task 3: Create organizations table migration

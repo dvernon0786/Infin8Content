@@ -217,3 +217,166 @@ development_status:
   13-9-live-product-pricing-and-inventory-sync: backlog
   epic-13-retrospective: optional
 
+# MVP PRIORITIES (P0 = MVP, P1 = Post-MVP, P2 = Deferred)
+# ===========================================================
+# See _bmad-output/mvp-prioritization.md for full analysis
+priorities:
+  # P0 Stories (MVP - Must Ship)
+  "1-1-project-initialization-and-starter-template-setup": P0
+  "1-2-supabase-project-setup-and-database-schema-foundation": P0
+  "1-3-user-registration-with-email-and-password": P0
+  "1-4-user-login-and-session-management": P0
+  "1-6-organization-creation-and-management": P0
+  "1-7-stripe-payment-integration-and-subscription-setup": P0
+  "1-8-payment-first-access-control-paywall-implementation": P0
+  "1-12-basic-dashboard-access-after-payment": P0
+  "3-1-keyword-research-interface-and-dataforseo-integration": P0
+  "4a-1-article-generation-initiation-and-queue-setup": P0
+  "4a-2-section-by-section-architecture-and-outline-generation": P0
+  "4a-3-real-time-research-per-section-tavily-integration": P0
+  "4a-5-llm-content-generation-with-openrouter-integration": P0
+  "4a-6-real-time-progress-tracking-and-updates": P0
+  "4b-1-article-editor-interface-and-rich-text-editing": P0
+  "4b-7-article-draft-saving-and-auto-save": P0
+  "5-1-cms-connection-management-and-credential-storage": P0
+  "5-2-cms-connection-credential-validation": P0
+  "5-3-wordpress-publishing-one-click-publish": P0
+  "5-4-google-search-console-indexing-integration": P0
+  "5-5-indexing-status-tracking-and-monitoring": P0
+  
+  # P1 Stories (Post-MVP - All other stories)
+  # Epic 1
+  "1-5-oauth-authentication-google-and-github": P1
+  "1-9-account-suspension-and-reactivation-workflow": P1
+  "1-10-team-member-invites-and-role-assignments": P1
+  "1-11-row-level-security-rls-policies-implementation": P1
+  "1-13-audit-logging-for-compliance": P1
+  
+  # Epic 2 (All P1)
+  "2-1-dashboard-layout-foundation-and-navigation-structure": P1
+  "2-2-persona-specific-default-dashboard-views": P1
+  "2-3-real-time-usage-credits-display": P1
+  "2-4-success-metrics-visualization-widgets": P1
+  "2-5-recent-activity-feed-widget": P1
+  "2-6-quick-action-buttons": P1
+  "2-7-customizable-widget-layout": P1
+  "2-8-global-search-functionality-cmdctrl-k": P1
+  "2-9-keyboard-shortcuts-and-help-modal": P1
+  "2-10-responsive-design-implementation": P1
+  "2-11-loading-states-and-skeleton-screens": P1
+  "2-12-error-states-with-clear-recovery-actions": P1
+  "2-13-empty-states-with-helpful-guidance": P1
+  
+  # Epic 3 (3-1 is P0, rest P1)
+  "3-2-filter-and-organize-keyword-research-results": P1
+  "3-3-keyword-clustering-pillar-content-strategy": P1
+  "3-4-real-time-web-research-with-tavily-integration": P1
+  "3-5-serp-analysis-with-dataforseo-integration": P1
+  "3-6-keyword-research-history-and-saved-lists": P1
+  "3-7-related-keyword-suggestions": P1
+  "3-8-batch-keyword-research-operations": P1
+  
+  # Epic 4A (Some P0, rest P1)
+  "4a-4-serp-analysis-per-section-dataforseo-integration": P1
+  "4a-7-automatic-seo-optimization-keyword-density-headings-meta-tags": P1
+  "4a-8-automatic-faq-section-generation": P1
+  "4a-9-automatic-internal-linking-suggestions": P1
+  "4a-10-automatic-schema-markup-generation": P1
+  "4a-11-automatic-image-integration-with-alt-text": P1
+  
+  # Epic 4B (4b-1, 4b-7 are P0, rest P1)
+  "4b-2-section-level-editing-and-independent-section-management": P1
+  "4b-3-section-regeneration-and-partial-content-regeneration": P1
+  "4b-4-article-templates-and-structure-saving": P1
+  "4b-5-custom-writing-styles-and-tones": P1
+  "4b-6-article-duplication-and-template-creation": P1
+  "4b-8-version-history-and-revision-tracking": P1
+  "4b-9-content-change-tracking-and-history": P1
+  "4b-10-article-organization-folders-and-collections": P1
+  "4b-11-content-library-search-and-filtering": P1
+  "4b-12-bulk-article-selection-and-operations": P1
+  "4b-13-bulk-editing-operations": P1
+  
+  # Epic 5 (5-1 through 5-5 are P0, rest P1)
+  "5-6-publishing-settings-configuration-per-cms": P1
+  "5-7-publishing-history-and-status-tracking": P1
+  "5-8-oauth-token-refresh-automation": P1
+  "5-9-scheduled-publishing-with-timezone-support": P1
+  "5-10-bulk-publishing-operations": P1
+  "5-11-social-media-post-generation": P1
+  "5-12-article-export-in-multiple-formats": P1
+  
+  # Epic 6-13 (All P1)
+  "6-1-persona-specific-success-metrics-dashboard": P1
+  "6-2-article-performance-tracking-views-rankings-conversions": P1
+  "6-3-keyword-ranking-data-and-position-tracking": P1
+  "6-4-content-quality-metrics-dashboard": P1
+  "6-5-feature-adoption-metrics-and-usage-analytics": P1
+  "6-6-shareable-attribution-reports-generation": P1
+  "6-7-analytics-filtering-per-project-per-article-aggregated": P1
+  "6-8-time-saved-tracking-and-success-metric-calculation": P1
+  "6-9-content-output-increase-measurement": P1
+  "6-10-roi-calculation-per-organization": P1
+  
+  "7-1-e-commerce-store-connection-shopify-and-woocommerce": P1
+  "7-2-product-catalog-synchronization": P1
+  "7-3-product-description-generation-from-product-data": P1
+  "7-4-automatic-product-linking-in-blog-content": P1
+  "7-5-utm-parameter-generation-for-content-links": P1
+  "7-6-e-commerce-order-matching-via-utm-tracking": P1
+  "7-7-revenue-attribution-reports-and-dashboard": P1
+  "7-8-revenue-attribution-data-export": P1
+  "7-9-multiple-e-commerce-store-management": P1
+  
+  "8-1-white-label-branding-configuration-logo-colors-fonts": P1
+  "8-2-custom-domain-setup-with-ssl-provisioning": P1
+  "8-3-client-stakeholder-invitations-to-white-label-portals": P1
+  "8-4-client-portal-access-with-read-only-permissions": P1
+  "8-5-multi-tenant-data-isolation-row-level-security": P1
+  "8-6-project-management-and-organization": P1
+  "8-7-project-assignment-to-team-members-and-clients": P1
+  
+  "9-1-article-comments-and-collaboration": P1
+  "9-2-article-approval-workflow": P1
+  "9-3-article-assignment-to-team-members": P1
+  "9-4-article-ownership-and-permissions-management": P1
+  "9-5-article-status-tracking-and-workflow-states": P1
+  "9-6-article-status-change-notifications": P1
+  
+  "10-1-usage-credit-tracking-per-organization": P1
+  "10-2-real-time-usage-dashboard": P1
+  "10-3-usage-limit-alerts-and-notifications": P1
+  "10-4-overage-fee-calculation-and-billing": P1
+  "10-5-stripe-subscription-management": P1
+  "10-6-plan-upgrade-and-downgrade-with-prorated-billing": P1
+  "10-7-api-cost-tracking-and-monitoring": P1
+  "10-8-billing-history-and-invoice-management": P1
+  "10-9-usage-limit-enforcement-per-plan-tier": P1
+  "10-10-cost-threshold-alerts": P1
+  "10-11-upgrade-suggestions-based-on-usage-patterns": P1
+  "10-12-upgrade-value-comparison-and-feature-showcase": P1
+  
+  "11-1-api-key-generation-and-management": P1
+  "11-2-rest-api-endpoints-for-core-operations": P1
+  "11-3-rate-limiting-per-api-key": P1
+  "11-4-webhook-receiving-from-external-systems": P1
+  "11-5-webhook-endpoint-configuration-for-custom-integrations": P1
+  
+  "12-1-pre-payment-information-pages-pricing-features-case-studies": P1
+  "12-2-post-payment-onboarding-welcome-and-persona-selection": P1
+  "12-3-guided-cms-connection-during-onboarding": P1
+  "12-4-guided-first-article-creation-tutorial": P1
+  "12-5-dashboard-tour-and-feature-discovery": P1
+  "12-6-feature-discovery-mechanisms-for-new-users": P1
+  "12-7-help-documentation-and-support-resources": P1
+  
+  "13-1-news-article-generation-from-latest-events": P1
+  "13-2-listicle-article-generation-with-comparison-tables": P1
+  "13-3-youtube-video-to-blog-post-conversion": P1
+  "13-4-automated-blog-content-generation-autoblog": P1
+  "13-5-competitor-comparison-page-generation": P1
+  "13-6-ai-powered-article-editing-assistant": P1
+  "13-7-additional-cms-platform-integrations": P1
+  "13-8-zapier-integration-for-no-code-automation": P1
+  "13-9-live-product-pricing-and-inventory-sync": P1
+
