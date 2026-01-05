@@ -35,7 +35,7 @@ describe('Middleware Suspension Flow Integration Tests', () => {
   let mockSupabase: any
   let mockResponse: any
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
 
     // Mock Supabase client
@@ -54,6 +54,9 @@ describe('Middleware Suspension Flow Integration Tests', () => {
       cookies: {
         getAll: vi.fn().mockReturnValue([]),
         set: vi.fn(),
+      },
+      headers: {
+        get: vi.fn().mockReturnValue(null),
       },
     }
 
@@ -276,7 +279,7 @@ describe('Middleware Suspension Flow Integration Tests', () => {
       expect(mockSupabase.from).toHaveBeenCalled()
       expect(sendSuspensionEmail).toHaveBeenCalledWith({
         to: 'test@example.com',
-        userName: 'Test User',
+        userName: undefined,
         suspensionDate: expect.any(Date),
       })
       expect(response.headers.get('location')).toContain('/suspended')

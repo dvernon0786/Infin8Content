@@ -52,7 +52,7 @@ development_status:
   1-9-account-suspension-and-reactivation-workflow: done
   1-10-team-member-invites-and-role-assignments: review
   1-11-row-level-security-rls-policies-implementation: ready-for-dev
-  1-12-basic-dashboard-access-after-payment: backlog
+  1-12-basic-dashboard-access-after-payment: review
   1-13-audit-logging-for-compliance: backlog
   epic-1-retrospective: optional
 
