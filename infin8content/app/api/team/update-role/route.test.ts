@@ -16,6 +16,11 @@ vi.mock('@/lib/supabase/get-current-user')
 vi.mock('@/lib/supabase/server')
 vi.mock('@/lib/services/team-notifications')
 
+// Test Constants - Valid UUIDs
+const OWNER_ID = '11111111-1111-4111-8111-111111111111'
+const USER_ID = '22222222-2222-4222-8222-222222222222'
+const ORG_ID = '33333333-3333-4333-8333-333333333333'
+
 describe('POST /api/team/update-role', () => {
   let mockSupabase: any
   let mockRequest: Request
@@ -23,7 +28,7 @@ describe('POST /api/team/update-role', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
+
     // Mock Supabase client
     mockSupabase = {
       from: vi.fn().mockReturnThis(),
@@ -32,14 +37,14 @@ describe('POST /api/team/update-role', () => {
       single: vi.fn(),
       update: vi.fn().mockReturnThis(),
     }
-    
+
     vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
-    
+
     // Mock current user (organization owner)
     mockCurrentUser = {
-      id: 'owner-123',
+      id: OWNER_ID,
       email: 'owner@example.com',
-      org_id: 'org-123',
+      org_id: ORG_ID,
       role: 'owner',
     }
     vi.mocked(getCurrentUser).mockResolvedValue(mockCurrentUser)
@@ -49,10 +54,10 @@ describe('POST /api/team/update-role', () => {
   describe('Authorization', () => {
     it('should reject unauthenticated requests', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null)
-      
+
       mockRequest = new Request('http://localhost/api/team/update-role', {
         method: 'POST',
-        body: JSON.stringify({ userId: 'user-123', role: 'editor' }),
+        body: JSON.stringify({ userId: USER_ID, role: 'editor' }),
       })
 
       const response = await POST(mockRequest)
@@ -67,10 +72,10 @@ describe('POST /api/team/update-role', () => {
         ...mockCurrentUser,
         role: 'editor',
       })
-      
+
       mockRequest = new Request('http://localhost/api/team/update-role', {
         method: 'POST',
-        body: JSON.stringify({ userId: 'user-123', role: 'editor' }),
+        body: JSON.stringify({ userId: USER_ID, role: 'editor' }),
       })
 
       const response = await POST(mockRequest)
@@ -98,7 +103,7 @@ describe('POST /api/team/update-role', () => {
     it('should validate role is editor or viewer', async () => {
       mockRequest = new Request('http://localhost/api/team/update-role', {
         method: 'POST',
-        body: JSON.stringify({ userId: 'user-123', role: 'owner' }),
+        body: JSON.stringify({ userId: USER_ID, role: 'owner' }),
       })
 
       const response = await POST(mockRequest)
@@ -113,7 +118,7 @@ describe('POST /api/team/update-role', () => {
     it('should reject changing own role', async () => {
       mockRequest = new Request('http://localhost/api/team/update-role', {
         method: 'POST',
-        body: JSON.stringify({ userId: 'owner-123', role: 'editor' }),
+        body: JSON.stringify({ userId: OWNER_ID, role: 'editor' }),
       })
 
       const response = await POST(mockRequest)
@@ -125,7 +130,7 @@ describe('POST /api/team/update-role', () => {
 
     it('should reject changing owner role', async () => {
       const targetUser = {
-        id: 'user-123',
+        id: USER_ID,
         email: 'user@example.com',
         role: 'owner',
       }
@@ -141,7 +146,7 @@ describe('POST /api/team/update-role', () => {
 
       mockRequest = new Request('http://localhost/api/team/update-role', {
         method: 'POST',
-        body: JSON.stringify({ userId: 'user-123', role: 'editor' }),
+        body: JSON.stringify({ userId: USER_ID, role: 'editor' }),
       })
 
       const response = await POST(mockRequest)
@@ -163,7 +168,7 @@ describe('POST /api/team/update-role', () => {
 
       mockRequest = new Request('http://localhost/api/team/update-role', {
         method: 'POST',
-        body: JSON.stringify({ userId: 'user-123', role: 'editor' }),
+        body: JSON.stringify({ userId: USER_ID, role: 'editor' }),
       })
 
       const response = await POST(mockRequest)
@@ -177,7 +182,7 @@ describe('POST /api/team/update-role', () => {
   describe('Successful Role Update', () => {
     it('should update role and send notification email', async () => {
       const targetUser = {
-        id: 'user-123',
+        id: USER_ID,
         email: 'user@example.com',
         role: 'viewer',
       }
@@ -195,9 +200,13 @@ describe('POST /api/team/update-role', () => {
       // Update user role
       mockSupabase.from.mockReturnValueOnce({
         update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({
-          error: null,
-        }),
+        eq: vi.fn()
+          .mockImplementationOnce(function () {
+            return this
+          })
+          .mockResolvedValueOnce({
+            error: null,
+          }),
       })
 
       // Get organization
@@ -212,7 +221,7 @@ describe('POST /api/team/update-role', () => {
 
       mockRequest = new Request('http://localhost/api/team/update-role', {
         method: 'POST',
-        body: JSON.stringify({ userId: 'user-123', role: 'editor' }),
+        body: JSON.stringify({ userId: USER_ID, role: 'editor' }),
       })
 
       const response = await POST(mockRequest)
@@ -231,7 +240,7 @@ describe('POST /api/team/update-role', () => {
 
     it('should handle email sending failure gracefully', async () => {
       const targetUser = {
-        id: 'user-123',
+        id: USER_ID,
         email: 'user@example.com',
         role: 'viewer',
       }
@@ -247,9 +256,13 @@ describe('POST /api/team/update-role', () => {
 
       mockSupabase.from.mockReturnValueOnce({
         update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({
-          error: null,
-        }),
+        eq: vi.fn()
+          .mockImplementationOnce(function () {
+            return this
+          })
+          .mockResolvedValueOnce({
+            error: null,
+          }),
       })
 
       mockSupabase.from.mockReturnValueOnce({
@@ -265,7 +278,7 @@ describe('POST /api/team/update-role', () => {
 
       mockRequest = new Request('http://localhost/api/team/update-role', {
         method: 'POST',
-        body: JSON.stringify({ userId: 'user-123', role: 'editor' }),
+        body: JSON.stringify({ userId: USER_ID, role: 'editor' }),
       })
 
       const response = await POST(mockRequest)
@@ -277,4 +290,3 @@ describe('POST /api/team/update-role', () => {
     })
   })
 })
-

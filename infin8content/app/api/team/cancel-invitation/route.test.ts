@@ -14,6 +14,11 @@ import { createClient } from '@/lib/supabase/server'
 vi.mock('@/lib/supabase/get-current-user')
 vi.mock('@/lib/supabase/server')
 
+// Test Constants - Valid UUIDs
+const OWNER_ID = '11111111-1111-4111-8111-111111111111'
+const ORG_ID = '33333333-3333-4333-8333-333333333333'
+const INVITATION_ID = '44444444-4444-4444-8444-444444444444'
+
 describe('POST /api/team/cancel-invitation', () => {
   let mockSupabase: any
   let mockRequest: Request
@@ -21,7 +26,7 @@ describe('POST /api/team/cancel-invitation', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
+
     // Mock Supabase client
     mockSupabase = {
       from: vi.fn().mockReturnThis(),
@@ -30,14 +35,14 @@ describe('POST /api/team/cancel-invitation', () => {
       single: vi.fn(),
       update: vi.fn().mockReturnThis(),
     }
-    
+
     vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
-    
+
     // Mock current user (organization owner)
     mockCurrentUser = {
-      id: 'owner-123',
+      id: OWNER_ID,
       email: 'owner@example.com',
-      org_id: 'org-123',
+      org_id: ORG_ID,
       role: 'owner',
     }
     vi.mocked(getCurrentUser).mockResolvedValue(mockCurrentUser)
@@ -46,10 +51,10 @@ describe('POST /api/team/cancel-invitation', () => {
   describe('Authorization', () => {
     it('should reject unauthenticated requests', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null)
-      
+
       mockRequest = new Request('http://localhost/api/team/cancel-invitation', {
         method: 'POST',
-        body: JSON.stringify({ invitationId: 'invitation-123' }),
+        body: JSON.stringify({ invitationId: INVITATION_ID }),
       })
 
       const response = await POST(mockRequest)
@@ -64,10 +69,10 @@ describe('POST /api/team/cancel-invitation', () => {
         ...mockCurrentUser,
         role: 'editor',
       })
-      
+
       mockRequest = new Request('http://localhost/api/team/cancel-invitation', {
         method: 'POST',
-        body: JSON.stringify({ invitationId: 'invitation-123' }),
+        body: JSON.stringify({ invitationId: INVITATION_ID }),
       })
 
       const response = await POST(mockRequest)
@@ -106,7 +111,7 @@ describe('POST /api/team/cancel-invitation', () => {
 
       mockRequest = new Request('http://localhost/api/team/cancel-invitation', {
         method: 'POST',
-        body: JSON.stringify({ invitationId: 'invitation-123' }),
+        body: JSON.stringify({ invitationId: INVITATION_ID }),
       })
 
       const response = await POST(mockRequest)
@@ -129,7 +134,7 @@ describe('POST /api/team/cancel-invitation', () => {
 
       mockRequest = new Request('http://localhost/api/team/cancel-invitation', {
         method: 'POST',
-        body: JSON.stringify({ invitationId: 'invitation-123' }),
+        body: JSON.stringify({ invitationId: INVITATION_ID }),
       })
 
       const response = await POST(mockRequest)
@@ -143,7 +148,7 @@ describe('POST /api/team/cancel-invitation', () => {
   describe('Successful Cancellation', () => {
     it('should update invitation status to expired', async () => {
       const mockInvitation = {
-        id: 'invitation-123',
+        id: INVITATION_ID,
       }
 
       // Get invitation
@@ -166,7 +171,7 @@ describe('POST /api/team/cancel-invitation', () => {
 
       mockRequest = new Request('http://localhost/api/team/cancel-invitation', {
         method: 'POST',
-        body: JSON.stringify({ invitationId: 'invitation-123' }),
+        body: JSON.stringify({ invitationId: INVITATION_ID }),
       })
 
       const response = await POST(mockRequest)
@@ -178,7 +183,7 @@ describe('POST /api/team/cancel-invitation', () => {
 
     it('should handle update failure', async () => {
       const mockInvitation = {
-        id: 'invitation-123',
+        id: INVITATION_ID,
       }
 
       mockSupabase.from.mockReturnValueOnce({
@@ -199,7 +204,7 @@ describe('POST /api/team/cancel-invitation', () => {
 
       mockRequest = new Request('http://localhost/api/team/cancel-invitation', {
         method: 'POST',
-        body: JSON.stringify({ invitationId: 'invitation-123' }),
+        body: JSON.stringify({ invitationId: INVITATION_ID }),
       })
 
       const response = await POST(mockRequest)
@@ -210,4 +215,3 @@ describe('POST /api/team/cancel-invitation', () => {
     })
   })
 })
-

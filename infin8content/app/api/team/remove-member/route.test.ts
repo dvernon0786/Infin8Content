@@ -16,6 +16,11 @@ vi.mock('@/lib/supabase/get-current-user')
 vi.mock('@/lib/supabase/server')
 vi.mock('@/lib/services/team-notifications')
 
+// Test Constants - Valid UUIDs
+const OWNER_ID = '11111111-1111-4111-8111-111111111111'
+const USER_ID = '22222222-2222-4222-8222-222222222222'
+const ORG_ID = '33333333-3333-4333-8333-333333333333'
+
 describe('POST /api/team/remove-member', () => {
   let mockSupabase: any
   let mockRequest: Request
@@ -23,7 +28,7 @@ describe('POST /api/team/remove-member', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
+
     // Mock Supabase client
     mockSupabase = {
       from: vi.fn().mockReturnThis(),
@@ -32,14 +37,14 @@ describe('POST /api/team/remove-member', () => {
       single: vi.fn(),
       update: vi.fn().mockReturnThis(),
     }
-    
+
     vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
-    
+
     // Mock current user (organization owner)
     mockCurrentUser = {
-      id: 'owner-123',
+      id: OWNER_ID,
       email: 'owner@example.com',
-      org_id: 'org-123',
+      org_id: ORG_ID,
       role: 'owner',
     }
     vi.mocked(getCurrentUser).mockResolvedValue(mockCurrentUser)
@@ -49,10 +54,10 @@ describe('POST /api/team/remove-member', () => {
   describe('Authorization', () => {
     it('should reject unauthenticated requests', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null)
-      
+
       mockRequest = new Request('http://localhost/api/team/remove-member', {
         method: 'POST',
-        body: JSON.stringify({ userId: 'user-123' }),
+        body: JSON.stringify({ userId: USER_ID }),
       })
 
       const response = await POST(mockRequest)
@@ -67,10 +72,10 @@ describe('POST /api/team/remove-member', () => {
         ...mockCurrentUser,
         role: 'editor',
       })
-      
+
       mockRequest = new Request('http://localhost/api/team/remove-member', {
         method: 'POST',
-        body: JSON.stringify({ userId: 'user-123' }),
+        body: JSON.stringify({ userId: USER_ID }),
       })
 
       const response = await POST(mockRequest)
@@ -100,7 +105,7 @@ describe('POST /api/team/remove-member', () => {
     it('should reject removing self', async () => {
       mockRequest = new Request('http://localhost/api/team/remove-member', {
         method: 'POST',
-        body: JSON.stringify({ userId: 'owner-123' }),
+        body: JSON.stringify({ userId: OWNER_ID }),
       })
 
       const response = await POST(mockRequest)
@@ -112,7 +117,7 @@ describe('POST /api/team/remove-member', () => {
 
     it('should reject removing owner', async () => {
       const targetUser = {
-        id: 'user-123',
+        id: USER_ID,
         email: 'user@example.com',
         role: 'owner',
       }
@@ -128,7 +133,7 @@ describe('POST /api/team/remove-member', () => {
 
       mockRequest = new Request('http://localhost/api/team/remove-member', {
         method: 'POST',
-        body: JSON.stringify({ userId: 'user-123' }),
+        body: JSON.stringify({ userId: USER_ID }),
       })
 
       const response = await POST(mockRequest)
@@ -150,7 +155,7 @@ describe('POST /api/team/remove-member', () => {
 
       mockRequest = new Request('http://localhost/api/team/remove-member', {
         method: 'POST',
-        body: JSON.stringify({ userId: 'user-123' }),
+        body: JSON.stringify({ userId: USER_ID }),
       })
 
       const response = await POST(mockRequest)
@@ -164,7 +169,7 @@ describe('POST /api/team/remove-member', () => {
   describe('Successful Member Removal', () => {
     it('should remove member and send notification email', async () => {
       const targetUser = {
-        id: 'user-123',
+        id: USER_ID,
         email: 'user@example.com',
         role: 'editor',
       }
@@ -182,9 +187,13 @@ describe('POST /api/team/remove-member', () => {
       // Remove user from organization
       mockSupabase.from.mockReturnValueOnce({
         update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({
-          error: null,
-        }),
+        eq: vi.fn()
+          .mockImplementationOnce(function () {
+            return this
+          })
+          .mockResolvedValueOnce({
+            error: null,
+          }),
       })
 
       // Get organization
@@ -199,7 +208,7 @@ describe('POST /api/team/remove-member', () => {
 
       mockRequest = new Request('http://localhost/api/team/remove-member', {
         method: 'POST',
-        body: JSON.stringify({ userId: 'user-123' }),
+        body: JSON.stringify({ userId: USER_ID }),
       })
 
       const response = await POST(mockRequest)
@@ -217,7 +226,7 @@ describe('POST /api/team/remove-member', () => {
 
     it('should handle email sending failure gracefully', async () => {
       const targetUser = {
-        id: 'user-123',
+        id: USER_ID,
         email: 'user@example.com',
         role: 'editor',
       }
@@ -233,9 +242,13 @@ describe('POST /api/team/remove-member', () => {
 
       mockSupabase.from.mockReturnValueOnce({
         update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({
-          error: null,
-        }),
+        eq: vi.fn()
+          .mockImplementationOnce(function () {
+            return this
+          })
+          .mockResolvedValueOnce({
+            error: null,
+          }),
       })
 
       mockSupabase.from.mockReturnValueOnce({
@@ -251,7 +264,7 @@ describe('POST /api/team/remove-member', () => {
 
       mockRequest = new Request('http://localhost/api/team/remove-member', {
         method: 'POST',
-        body: JSON.stringify({ userId: 'user-123' }),
+        body: JSON.stringify({ userId: USER_ID }),
       })
 
       const response = await POST(mockRequest)
@@ -263,4 +276,3 @@ describe('POST /api/team/remove-member', () => {
     })
   })
 })
-

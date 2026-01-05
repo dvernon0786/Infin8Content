@@ -1,0 +1,166 @@
+
+> infin8content@0.1.0 test
+> vitest app/api/team/resend-invitation/route.test.ts app/api/team/invite/route.test.ts
+
+
+[1m[44m DEV [49m[22m [34mv4.0.16 [39m[90m/home/dghost/Infin8Content-1/infin8content[39m
+
+[90mstderr[2m | app/api/team/invite/route.test.ts[2m > [22m[2mPOST /api/team/invite[2m > [22m[2mSuccessful Invitation[2m > [22m[2mshould handle email sending failure gracefully
+[22m[39mFailed to send invitation email: Error: Email failed
+    at [90m/home/dghost/Infin8Content-1/infin8content/[39mapp/api/team/invite/route.test.ts:297:60
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:145:11
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:915:26
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1243:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1653:37
+    at Traces.$ [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
+    at trace [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+    at runTest [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1653:12[90m)[39m
+
+ [32m✓[39m app/api/team/invite/route.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [31m❯[39m app/api/team/resend-invitation/route.test.ts [2m([22m[2m7 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[32m 31[2mms[22m[39m
+       [32m✓[39m should reject unauthenticated requests[32m 7[2mms[22m[39m
+       [32m✓[39m should reject non-owner users[32m 1[2mms[22m[39m
+       [32m✓[39m should validate invitationId is UUID[32m 3[2mms[22m[39m
+[31m       [31m×[31m should reject if invitation not found[39m[32m 10[2mms[22m[39m
+[31m       [31m×[31m should reject if invitation belongs to different organization[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should regenerate token and send email[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle email sending failure gracefully[39m[32m 2[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 4 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m app/api/team/resend-invitation/route.test.ts[2m > [22mPOST /api/team/resend-invitation[2m > [22mInvitation Lookup[2m > [22mshould reject if invitation not found
+[31m[1mAssertionError[22m: expected 400 to be 404 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 404[39m
+[31m+ 400[39m
+
+[36m [2m❯[22m app/api/team/resend-invitation/route.test.ts:[2m123:31[22m[39m
+    [90m121| [39m      [35mconst[39m data [33m=[39m [35mawait[39m response[33m.[39m[34mjson[39m()
+    [90m122| [39m
+    [90m123| [39m      [34mexpect[39m(response[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m404[39m)
+    [90m   | [39m                              [31m^[39m
+    [90m124| [39m      [34mexpect[39m(data[33m.[39merror)[33m.[39m[34mtoBe[39m([32m'Invitation not found'[39m)
+    [90m125| [39m    })
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m app/api/team/resend-invitation/route.test.ts[2m > [22mPOST /api/team/resend-invitation[2m > [22mInvitation Lookup[2m > [22mshould reject if invitation belongs to different organization
+[31m[1mAssertionError[22m: expected 400 to be 404 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 404[39m
+[31m+ 400[39m
+
+[36m [2m❯[22m app/api/team/resend-invitation/route.test.ts:[2m146:31[22m[39m
+    [90m144| [39m      [35mconst[39m data [33m=[39m [35mawait[39m response[33m.[39m[34mjson[39m()
+    [90m145| [39m
+    [90m146| [39m      [34mexpect[39m(response[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m404[39m)
+    [90m   | [39m                              [31m^[39m
+    [90m147| [39m      [34mexpect[39m(data[33m.[39merror)[33m.[39m[34mtoBe[39m([32m'Invitation not found'[39m)
+    [90m148| [39m    })
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m app/api/team/resend-invitation/route.test.ts[2m > [22mPOST /api/team/resend-invitation[2m > [22mSuccessful Resend[2m > [22mshould regenerate token and send email
+[31m[1mAssertionError[22m: expected 400 to be 200 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 400[39m
+
+[36m [2m❯[22m app/api/team/resend-invitation/route.test.ts:[2m198:31[22m[39m
+    [90m196| [39m      [35mconst[39m data [33m=[39m [35mawait[39m response[33m.[39m[34mjson[39m()
+    [90m197| [39m
+    [90m198| [39m      [34mexpect[39m(response[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m200[39m)
+    [90m   | [39m                              [31m^[39m
+    [90m199| [39m      [34mexpect[39m(data[33m.[39msuccess)[33m.[39m[34mtoBe[39m([35mtrue[39m)
+    [90m200| [39m      [34mexpect[39m(sendTeamInvitationEmail)[33m.[39m[34mtoHaveBeenCalledWith[39m(
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m app/api/team/resend-invitation/route.test.ts[2m > [22mPOST /api/team/resend-invitation[2m > [22mSuccessful Resend[2m > [22mshould handle email sending failure gracefully
+[31m[1mAssertionError[22m: expected 400 to be 200 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 400[39m
+
+[36m [2m❯[22m app/api/team/resend-invitation/route.test.ts:[2m256:31[22m[39m
+    [90m254| [39m
+    [90m255| [39m      [90m// Should still succeed even if email fails[39m
+    [90m256| [39m      [34mexpect[39m(response[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m200[39m)
+    [90m   | [39m                              [31m^[39m
+    [90m257| [39m      [34mexpect[39m(data[33m.[39msuccess)[33m.[39m[34mtoBe[39m([35mtrue[39m)
+    [90m258| [39m    })
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[31m4 failed[39m[22m[2m | [22m[1m[32m13 passed[39m[22m[90m (17)[39m
+[2m   Start at [22m 09:22:29
+[2m   Duration [22m 2.03s[2m (transform 383ms, setup 209ms, import 1.51s, tests 71ms, environment 1.59s)[22m
+
+[1m[41m FAIL [49m[22m [31mTests failed. Watching for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+c[3J[1m[44m RERUN [49m[22m [34m[2mapp/api/team/resend-invitation/route.test.ts [22m[34mx1 [34m[39m
+       [2m Filename pattern: [22m[34mapp/api/team/resend-invitation/route.test.ts, app/api/team/invite/route.test.ts[39m
+
+[90mstderr[2m | app/api/team/resend-invitation/route.test.ts[2m > [22m[2mPOST /api/team/resend-invitation[2m > [22m[2mSuccessful Resend[2m > [22m[2mshould handle email sending failure gracefully
+[22m[39mFailed to send invitation email: Error: Email failed
+    at [90m/home/dghost/Infin8Content-1/infin8content/[39mapp/api/team/resend-invitation/route.test.ts:245:60
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:145:11
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:915:26
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1243:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1653:37
+    at Traces.$ [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
+    at trace [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+    at runTest [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1653:12[90m)[39m
+
+ [32m✓[39m app/api/team/resend-invitation/route.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 120[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m   Start at [22m 09:23:26
+[2m   Duration [22m 2.55s
+
+[1m[42m PASS [49m[22m [32mWaiting for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+c[3J[1m[44m RERUN [49m[22m [34m[2mapp/api/team/invite/route.test.ts [22m[34mx1 [34m[39m
+       [2m Filename pattern: [22m[34mapp/api/team/resend-invitation/route.test.ts, app/api/team/invite/route.test.ts[39m
+
+[90mstderr[2m | app/api/team/invite/route.test.ts[2m > [22m[2mPOST /api/team/invite[2m > [22m[2mSuccessful Invitation[2m > [22m[2mshould handle email sending failure gracefully
+[22m[39mFailed to send invitation email: Error: Email failed
+    at [90m/home/dghost/Infin8Content-1/infin8content/[39mapp/api/team/invite/route.test.ts:297:60
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:145:11
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:915:26
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1243:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1653:37
+    at Traces.$ [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
+    at trace [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+    at runTest [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1653:12[90m)[39m
+
+ [32m✓[39m app/api/team/invite/route.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 112[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+[2m   Start at [22m 09:23:34
+[2m   Duration [22m 2.60s
+
+[1m[42m PASS [49m[22m [32mWaiting for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m

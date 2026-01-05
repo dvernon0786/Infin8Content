@@ -16,6 +16,13 @@ vi.mock('@/lib/supabase/get-current-user')
 vi.mock('@/lib/supabase/server')
 vi.mock('@/lib/services/team-notifications')
 
+// Test Constants - Valid UUIDs
+const USER_ID = '22222222-2222-4222-8222-222222222222'
+const OWNER_ID = '11111111-1111-4111-8111-111111111111'
+const ORG_ID = '33333333-3333-4333-8333-333333333333'
+const OTHER_ORG_ID = '77777777-7777-4777-8777-777777777777'
+const INVITATION_ID = '44444444-4444-4444-8444-444444444444'
+
 describe('POST /api/team/accept-invitation', () => {
   let mockSupabase: any
   let mockRequest: Request
@@ -23,7 +30,7 @@ describe('POST /api/team/accept-invitation', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
+
     // Mock Supabase client
     mockSupabase = {
       from: vi.fn().mockReturnThis(),
@@ -33,7 +40,7 @@ describe('POST /api/team/accept-invitation', () => {
       single: vi.fn(),
       update: vi.fn().mockReturnThis(),
     }
-    
+
     vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
     vi.mocked(getCurrentUser).mockResolvedValue(null)
     vi.mocked(sendTeamInvitationAcceptedEmail).mockResolvedValue(undefined)
@@ -42,14 +49,14 @@ describe('POST /api/team/accept-invitation', () => {
     const futureDate = new Date()
     futureDate.setDate(futureDate.getDate() + 7)
     mockInvitation = {
-      id: 'invitation-123',
+      id: INVITATION_ID,
       email: 'user@example.com',
-      org_id: 'org-123',
+      org_id: ORG_ID,
       role: 'editor',
       token: 'valid-token',
       status: 'pending',
       expires_at: futureDate.toISOString(),
-      created_by: 'owner-123',
+      created_by: OWNER_ID,
     }
   })
 
@@ -64,7 +71,7 @@ describe('POST /api/team/accept-invitation', () => {
       const data = await response.json()
 
       expect(response.status).toBe(400)
-      expect(data.error).toContain('Invitation token is required')
+      expect(data.error).toContain('Invalid input')
     })
 
     it('should reject invalid or non-existent tokens', async () => {
@@ -183,9 +190,9 @@ describe('POST /api/team/accept-invitation', () => {
   describe('Organization Membership Checks', () => {
     it('should reject if user already belongs to an organization', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue({
-        id: 'user-123',
+        id: USER_ID,
         email: 'user@example.com',
-        org_id: 'other-org-123',
+        org_id: OTHER_ORG_ID,
         role: 'editor',
       })
 
@@ -214,9 +221,9 @@ describe('POST /api/team/accept-invitation', () => {
 
     it('should reject if user already belongs to this organization', async () => {
       const existingUser = {
-        id: 'user-123',
+        id: USER_ID,
         email: 'user@example.com',
-        org_id: 'org-123', // Same as invitation
+        org_id: ORG_ID, // Same as invitation
         role: 'editor',
       }
 
@@ -257,7 +264,7 @@ describe('POST /api/team/accept-invitation', () => {
   describe('Successful Acceptance', () => {
     it('should accept invitation and add user to organization', async () => {
       const existingUser = {
-        id: 'user-123',
+        id: USER_ID,
         email: 'user@example.com',
         org_id: null,
         role: 'viewer',
@@ -335,4 +342,3 @@ describe('POST /api/team/accept-invitation', () => {
     })
   })
 })
-

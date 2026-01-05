@@ -14,6 +14,13 @@ import { createClient } from '@/lib/supabase/server'
 vi.mock('@/lib/supabase/get-current-user')
 vi.mock('@/lib/supabase/server')
 
+// Test Constants - Valid UUIDs
+const USER_ID = '22222222-2222-4222-8222-222222222222'
+const MEMBER_1_ID = '66666666-6666-4666-8666-666666666661'
+const MEMBER_2_ID = '66666666-6666-4666-8666-666666666662'
+const ORG_ID = '33333333-3333-4333-8333-333333333333'
+const INVITATION_ID = '44444444-4444-4444-8444-444444444444'
+
 describe('GET /api/team/members', () => {
   let mockSupabase: any
   let mockRequest: Request
@@ -21,7 +28,7 @@ describe('GET /api/team/members', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
+
     // Mock Supabase client
     mockSupabase = {
       from: vi.fn().mockReturnThis(),
@@ -29,14 +36,14 @@ describe('GET /api/team/members', () => {
       eq: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
     }
-    
+
     vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
-    
+
     // Mock current user
     mockCurrentUser = {
-      id: 'user-123',
+      id: USER_ID,
       email: 'user@example.com',
-      org_id: 'org-123',
+      org_id: ORG_ID,
       role: 'owner',
     }
     vi.mocked(getCurrentUser).mockResolvedValue(mockCurrentUser)
@@ -45,7 +52,7 @@ describe('GET /api/team/members', () => {
   describe('Authorization', () => {
     it('should reject unauthenticated requests', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null)
-      
+
       mockRequest = new Request('http://localhost/api/team/members', {
         method: 'GET',
       })
@@ -62,7 +69,7 @@ describe('GET /api/team/members', () => {
         ...mockCurrentUser,
         org_id: null,
       })
-      
+
       mockRequest = new Request('http://localhost/api/team/members', {
         method: 'GET',
       })
@@ -79,13 +86,13 @@ describe('GET /api/team/members', () => {
     it('should return team members and pending invitations', async () => {
       const mockMembers = [
         {
-          id: 'user-1',
+          id: MEMBER_1_ID,
           email: 'member1@example.com',
           role: 'editor',
           created_at: '2024-01-01T00:00:00Z',
         },
         {
-          id: 'user-2',
+          id: MEMBER_2_ID,
           email: 'member2@example.com',
           role: 'viewer',
           created_at: '2024-01-02T00:00:00Z',
@@ -94,12 +101,12 @@ describe('GET /api/team/members', () => {
 
       const mockInvitations = [
         {
-          id: 'invitation-1',
+          id: INVITATION_ID,
           email: 'pending@example.com',
           role: 'editor',
           expires_at: '2024-01-10T00:00:00Z',
           created_at: '2024-01-03T00:00:00Z',
-          created_by: 'owner-123',
+          created_by: USER_ID,
         },
       ]
 
@@ -129,14 +136,14 @@ describe('GET /api/team/members', () => {
       expect(response.status).toBe(200)
       expect(data.members).toHaveLength(2)
       expect(data.members[0]).toEqual({
-        id: 'user-1',
+        id: MEMBER_1_ID,
         email: 'member1@example.com',
         role: 'editor',
         createdAt: '2024-01-01T00:00:00Z',
       })
       expect(data.pendingInvitations).toHaveLength(1)
       expect(data.pendingInvitations[0]).toEqual({
-        id: 'invitation-1',
+        id: INVITATION_ID,
         email: 'pending@example.com',
         role: 'editor',
         expiresAt: '2024-01-10T00:00:00Z',
@@ -194,7 +201,7 @@ describe('GET /api/team/members', () => {
     it('should handle invitations query error gracefully', async () => {
       const mockMembers = [
         {
-          id: 'user-1',
+          id: MEMBER_1_ID,
           email: 'member1@example.com',
           role: 'editor',
           created_at: '2024-01-01T00:00:00Z',
@@ -231,4 +238,3 @@ describe('GET /api/team/members', () => {
     })
   })
 })
-

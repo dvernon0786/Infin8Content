@@ -16,6 +16,12 @@ vi.mock('@/lib/supabase/get-current-user')
 vi.mock('@/lib/supabase/server')
 vi.mock('@/lib/services/team-notifications')
 
+// Test Constants - Valid UUIDs
+const OWNER_ID = '11111111-1111-4111-8111-111111111111'
+const ORG_ID = '33333333-3333-4333-8333-333333333333'
+const INVITATION_ID = '44444444-4444-4444-8444-444444444444'
+const EXISTING_USER_ID = '66666666-6666-4666-8666-666666666666'
+
 describe('POST /api/team/invite', () => {
   let mockSupabase: any
   let mockRequest: Request
@@ -23,7 +29,7 @@ describe('POST /api/team/invite', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
+
     // Mock Supabase client
     mockSupabase = {
       from: vi.fn().mockReturnThis(),
@@ -32,14 +38,14 @@ describe('POST /api/team/invite', () => {
       single: vi.fn(),
       insert: vi.fn().mockReturnThis(),
     }
-    
+
     vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
-    
+
     // Mock current user (organization owner)
     mockCurrentUser = {
-      id: 'user-123',
+      id: OWNER_ID,
       email: 'owner@example.com',
-      org_id: 'org-123',
+      org_id: ORG_ID,
       role: 'owner',
       organizations: { name: 'Test Org' },
     }
@@ -50,7 +56,7 @@ describe('POST /api/team/invite', () => {
   describe('Authorization', () => {
     it('should reject unauthenticated requests', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null)
-      
+
       mockRequest = new Request('http://localhost/api/team/invite', {
         method: 'POST',
         body: JSON.stringify({ email: 'user@example.com', role: 'editor' }),
@@ -68,7 +74,7 @@ describe('POST /api/team/invite', () => {
         ...mockCurrentUser,
         role: 'editor',
       })
-      
+
       mockRequest = new Request('http://localhost/api/team/invite', {
         method: 'POST',
         body: JSON.stringify({ email: 'user@example.com', role: 'editor' }),
@@ -86,7 +92,7 @@ describe('POST /api/team/invite', () => {
         ...mockCurrentUser,
         org_id: null,
       })
-      
+
       mockRequest = new Request('http://localhost/api/team/invite', {
         method: 'POST',
         body: JSON.stringify({ email: 'user@example.com', role: 'editor' }),
@@ -147,7 +153,7 @@ describe('POST /api/team/invite', () => {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
-          data: { id: 'existing-user' },
+          data: { id: EXISTING_USER_ID },
           error: null,
         }),
       })
@@ -180,7 +186,7 @@ describe('POST /api/team/invite', () => {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
-          data: { id: 'invitation-123' },
+          data: { id: INVITATION_ID },
           error: null,
         }),
       })
@@ -222,9 +228,9 @@ describe('POST /api/team/invite', () => {
 
       // Insert invitation
       const mockInvitation = {
-        id: 'invitation-123',
+        id: INVITATION_ID,
         email: 'newuser@example.com',
-        org_id: 'org-123',
+        org_id: ORG_ID,
         role: 'editor',
         token: 'token-123',
       }
@@ -247,7 +253,7 @@ describe('POST /api/team/invite', () => {
 
       expect(response.status).toBe(200)
       expect(data.success).toBe(true)
-      expect(data.invitationId).toBe('invitation-123')
+      expect(data.invitationId).toBe(INVITATION_ID)
       expect(sendTeamInvitationEmail).toHaveBeenCalledWith(
         expect.objectContaining({
           to: 'newuser@example.com',
@@ -283,7 +289,7 @@ describe('POST /api/team/invite', () => {
         insert: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
-          data: { id: 'invitation-123' },
+          data: { id: INVITATION_ID },
           error: null,
         }),
       })
@@ -304,4 +310,3 @@ describe('POST /api/team/invite', () => {
     })
   })
 })
-
