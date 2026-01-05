@@ -21,7 +21,7 @@ User requested to install BMAD Method and initialize workflow tracking for the I
   - Discovery workflows: Brainstorm + Product Brief (recommended)
   - Generated workflow tracking file: `_bmad-output/bmm-workflow-status.yaml`
 
-### Latest Update (2026-01-05, 20:10:00 AEDT)
+### Latest Update (2026-01-05, 20:07:45 AEDT)
 - ✅ **RLS Migration Successfully Applied** - Row Level Security enabled on all public tables
   - Migration: `20260105180000_enable_rls_and_fix_security.sql`
   - RLS enabled on: organizations, users, otp_codes, stripe_webhook_events, team_invitations
