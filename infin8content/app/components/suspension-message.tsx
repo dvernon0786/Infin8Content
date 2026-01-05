@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
 
 interface SuspensionMessageProps {
   redirectTo?: string
@@ -25,7 +26,7 @@ export default function SuspensionMessage({
   // Build payment URL with redirect parameter for post-reactivation redirect
   const paymentUrl = `/payment?suspended=true${redirectParam ? `&redirect=${encodeURIComponent(redirectParam)}` : ''}`
   
-  // Format suspension date if available
+  // Format suspension date if available (static, safe for SSR)
   const formattedSuspensionDate = suspendedAt 
     ? new Date(suspendedAt).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -34,28 +35,32 @@ export default function SuspensionMessage({
       })
     : null
   
-  // Calculate grace period info if available
-  let gracePeriodInfo: { daysRemaining: number | null; formattedStartDate: string | null } = {
+  // Calculate grace period info on client side only to avoid hydration mismatch
+  const [gracePeriodInfo, setGracePeriodInfo] = useState<{ daysRemaining: number | null; formattedStartDate: string | null }>({
     daysRemaining: null,
     formattedStartDate: null,
-  }
+  })
   
-  if (gracePeriodStartedAt) {
-    const gracePeriodStart = new Date(gracePeriodStartedAt).getTime()
-    const now = Date.now()
-    const gracePeriodDurationMs = 7 * 24 * 60 * 60 * 1000 // 7 days
-    const elapsed = now - gracePeriodStart
-    const remaining = gracePeriodDurationMs - elapsed
-    
-    if (remaining > 0) {
-      gracePeriodInfo.daysRemaining = Math.ceil(remaining / (24 * 60 * 60 * 1000))
+  useEffect(() => {
+    if (gracePeriodStartedAt) {
+      const gracePeriodStart = new Date(gracePeriodStartedAt).getTime()
+      const now = Date.now()
+      const gracePeriodDurationMs = 7 * 24 * 60 * 60 * 1000 // 7 days
+      const elapsed = now - gracePeriodStart
+      const remaining = gracePeriodDurationMs - elapsed
+      
+      const formattedStartDate = new Date(gracePeriodStartedAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+      
+      setGracePeriodInfo({
+        daysRemaining: remaining > 0 ? Math.ceil(remaining / (24 * 60 * 60 * 1000)) : null,
+        formattedStartDate,
+      })
     }
-    gracePeriodInfo.formattedStartDate = new Date(gracePeriodStartedAt).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
-  }
+  }, [gracePeriodStartedAt])
   
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 sm:px-6 lg:px-8" role="alert" aria-live="polite">

@@ -63,9 +63,9 @@ export default function PaymentSuccessClient({
               </>
             ) : (
               <>
-                Your account is now active. You can start using all features of your{' '}
-                <span className="font-semibold capitalize">{plan || 'selected'}</span>{' '}
-                plan.
+            Your account is now active. You can start using all features of your{' '}
+            <span className="font-semibold capitalize">{plan || 'selected'}</span>{' '}
+            plan.
               </>
             )}
           </p>

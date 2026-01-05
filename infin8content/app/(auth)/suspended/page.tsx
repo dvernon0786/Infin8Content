@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { redirect } from 'next/navigation'
-import SuspensionMessage from '@/components/suspension-message'
+import SuspensionMessage from '@/app/components/suspension-message'
 import { getPaymentAccessStatus } from '@/lib/utils/payment-status'
 
 export default async function SuspendedPage({

@@ -170,16 +170,16 @@ export async function middleware(request: NextRequest) {
 
                 if (timeDiff < 1000) {
                   // Suspension was just set - send email
-                  await sendSuspensionEmail({
-                    to: user.email,
-                    userName: user.name || undefined,
-                    suspensionDate: new Date(suspendedAt),
-                  });
-                  console.log('Suspension email sent successfully:', {
-                    orgId: userRecord.org_id,
-                    email: user.email,
-                    timestamp: new Date().toISOString(),
-                  });
+                await sendSuspensionEmail({
+                  to: user.email,
+                  userName: user.name || undefined,
+                  suspensionDate: new Date(suspendedAt),
+                });
+                console.log('Suspension email sent successfully:', {
+                  orgId: userRecord.org_id,
+                  email: user.email,
+                  timestamp: new Date().toISOString(),
+                });
                 } else {
                   // Account was already suspended - email was likely already sent
                   console.log('Suspension email skipped (account already suspended):', {

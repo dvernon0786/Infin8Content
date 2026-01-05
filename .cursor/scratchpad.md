@@ -21,6 +21,12 @@ User requested to install BMAD Method and initialize workflow tracking for the I
   - Discovery workflows: Brainstorm + Product Brief (recommended)
   - Generated workflow tracking file: `_bmad-output/bmm-workflow-status.yaml`
 
+### Latest Update (2026-01-05, 17:27:12 AEDT)
+- ✅ Fixed import path issue in `app/(auth)/suspended/page.tsx` - Changed from `@/components/suspension-message` to `@/app/components/suspension-message` to resolve Vercel build error
+- ✅ Fixed hydration mismatch in `app/components/suspension-message.tsx` - Moved `Date.now()` calculation to `useEffect` to prevent server/client mismatch
+- ✅ Added Sign In and Sign Up buttons to homepage (`app/page.tsx`)
+- ✅ All build errors resolved - Next.js build compiles successfully
+
 ### Current Task
 ✅ **COMPLETED:** Story 1.10 - Team Member Invites and Role Assignments (2026-01-05, 10:15:43 AEDT)
 - Code review completed: All issues fixed (2 High, 1 Medium, 2 Low issues resolved)
