@@ -7,7 +7,7 @@ import { sendRoleChangeEmail } from '@/lib/services/team-notifications'
 const updateRoleSchema = z.object({
   userId: z.string().uuid('Invalid user ID'),
   role: z.enum(['editor', 'viewer'], {
-    errorMap: () => ({ message: 'Role must be editor or viewer' }),
+    message: 'Role must be editor or viewer',
   }),
 })
 

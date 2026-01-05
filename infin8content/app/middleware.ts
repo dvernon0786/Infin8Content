@@ -88,7 +88,7 @@ export async function middleware(request: NextRequest) {
   // Note: We check the users table because OTP verification is stored there
   const { data: userRecord } = await supabase
     .from('users')
-    .select('otp_verified')
+    .select('id, otp_verified, org_id')
     .eq('auth_user_id', user.id)
     .single();
 
@@ -105,7 +105,7 @@ export async function middleware(request: NextRequest) {
   if (!isPaymentRoute && userRecord.org_id) {
     const { data: org } = await supabase
       .from('organizations')
-      .select('payment_status, grace_period_started_at, suspended_at')
+      .select('*')
       .eq('id', userRecord.org_id)
       .single();
 
@@ -140,11 +140,11 @@ export async function middleware(request: NextRequest) {
             // Idempotency: Only send email if suspended_at was just set (not already suspended)
             try {
               // Query user record to get email and name
-              const { data: user, error: userQueryError } = await supabase
-                .from('users')
-                .select('email, name')
-                .eq('id', userRecord.id)
-                .single();
+                const { data: user, error: userQueryError } = await supabase
+                  .from('users')
+                  .select('email')
+                  .eq('id', userRecord.id)
+                  .single();
 
               if (userQueryError) {
                 console.error('Failed to query user for suspension email:', {
@@ -172,7 +172,7 @@ export async function middleware(request: NextRequest) {
                   // Suspension was just set - send email
                 await sendSuspensionEmail({
                   to: user.email,
-                  userName: user.name || undefined,
+                  userName: undefined,
                   suspensionDate: new Date(suspendedAt),
                 });
                 console.log('Suspension email sent successfully:', {

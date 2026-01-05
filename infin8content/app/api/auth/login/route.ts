@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       // Organization exists - check payment status (Story 1.7, enhanced in Story 1.8)
       const { data: org, error: orgError } = await supabase
         .from('organizations')
-        .select('id, name, plan, payment_status, grace_period_started_at, suspended_at')
+        .select('*')
         .eq('id', userRecord.org_id)
         .single()
 

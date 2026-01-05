@@ -46,6 +46,9 @@ export async function POST(request: Request) {
   try {
     // Validate environment variables
     const { STRIPE_WEBHOOK_SECRET } = validateStripeEnv()
+    if (!STRIPE_WEBHOOK_SECRET) {
+      throw new Error('STRIPE_WEBHOOK_SECRET is required')
+    }
     
     // Get raw body as string (required for signature verification)
     const body = await request.text()
@@ -63,7 +66,7 @@ export async function POST(request: Request) {
       logWebhookEvent(event, 'Signature verified')
     } catch (error: any) {
       logWebhookError({ id: 'unknown', type: 'unknown' }, 'Signature verification failed', error)
-      return new Response(`Invalid signature: ${error.message}`, { status: 400 })
+      return new Response(`Invalid signature: ${error?.message || 'Unknown error'}`, { status: 400 })
     }
 
     const supabase = await createClient()

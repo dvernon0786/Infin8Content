@@ -1,6 +1,6 @@
 // Generated TypeScript types from Supabase database schema
-// Generated from migrations: 20260101124156_initial_schema.sql, 20260104095303_link_auth_users.sql, 20260104100500_add_otp_verification.sql, 20260105003507_add_stripe_payment_fields.sql, 20260105074811_add_payment_grace_period_fields.sql
-// Tables: organizations, users, otp_codes, stripe_webhook_events
+// Generated from migrations: 20260101124156_initial_schema.sql, 20260104095303_link_auth_users.sql, 20260104100500_add_otp_verification.sql, 20260105003507_add_stripe_payment_fields.sql, 20260105074811_add_payment_grace_period_fields.sql, 20260105094538_add_team_invitations.sql
+// Tables: organizations, users, otp_codes, stripe_webhook_events, team_invitations
 
 export type Json =
   | string
@@ -168,6 +168,61 @@ export interface Database {
             foreignKeyName: "stripe_webhook_events_organization_id_fkey"
             columns: ["organization_id"]
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      team_invitations: {
+        Row: {
+          id: string
+          email: string
+          org_id: string
+          role: 'editor' | 'viewer'
+          token: string
+          status: 'pending' | 'accepted' | 'expired'
+          expires_at: string
+          accepted_at: string | null
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          org_id: string
+          role: 'editor' | 'viewer'
+          token: string
+          status?: 'pending' | 'accepted' | 'expired'
+          expires_at: string
+          accepted_at?: string | null
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          org_id?: string
+          role?: 'editor' | 'viewer'
+          token?: string
+          status?: 'pending' | 'accepted' | 'expired'
+          expires_at?: string
+          accepted_at?: string | null
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invitations_org_id_fkey"
+            columns: ["org_id"]
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_invitations_created_by_fkey"
+            columns: ["created_by"]
+            referencedRelation: "users"
             referencedColumns: ["id"]
           }
         ]

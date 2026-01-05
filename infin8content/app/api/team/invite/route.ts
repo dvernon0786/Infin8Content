@@ -8,7 +8,7 @@ import { sendTeamInvitationEmail } from '@/lib/services/team-notifications'
 const inviteTeamMemberSchema = z.object({
   email: z.string().email('Invalid email address'),
   role: z.enum(['editor', 'viewer'], {
-    errorMap: () => ({ message: 'Role must be editor or viewer' }),
+    message: 'Role must be editor or viewer',
   }),
 })
 
