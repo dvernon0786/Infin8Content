@@ -31,9 +31,16 @@ vi.mock('@supabase/ssr', () => ({
 }))
 
 describe('Middleware Suspension Flow Integration Tests', () => {
+  type MockSupabaseClient = {
+    auth: {
+      getUser: ReturnType<typeof vi.fn>;
+    };
+    from: ReturnType<typeof vi.fn>;
+  }
+
   let mockRequest: NextRequest
-  let mockSupabase: any
-  let mockResponse: any
+  let mockSupabase: MockSupabaseClient
+  let mockResponse: { cookies: { getAll: ReturnType<typeof vi.fn>; set: ReturnType<typeof vi.fn> }; headers: { get: ReturnType<typeof vi.fn> } }
 
   beforeEach(async () => {
     vi.clearAllMocks()
@@ -47,7 +54,7 @@ describe('Middleware Suspension Flow Integration Tests', () => {
     }
 
     // Mock createServerClient
-    vi.mocked(createServerClient).mockReturnValue(mockSupabase as any)
+    vi.mocked(createServerClient).mockReturnValue(mockSupabase as ReturnType<typeof createServerClient>)
 
     // Mock updateSession to return a response
     mockResponse = {
@@ -61,7 +68,7 @@ describe('Middleware Suspension Flow Integration Tests', () => {
     }
 
     const { updateSession } = await import('@/lib/supabase/middleware')
-    vi.mocked(updateSession).mockResolvedValue(mockResponse as any)
+    vi.mocked(updateSession).mockResolvedValue(mockResponse as never)
 
     const { validateSupabaseEnv } = await import('@/lib/supabase/env')
     vi.mocked(validateSupabaseEnv).mockReturnValue(undefined)

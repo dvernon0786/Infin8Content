@@ -57,7 +57,7 @@ export async function middleware(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({
           request,
         });
@@ -140,11 +140,11 @@ export async function middleware(request: NextRequest) {
             // Idempotency: Only send email if suspended_at was just set (not already suspended)
             try {
               // Query user record to get email and name
-                const { data: user, error: userQueryError } = await supabase
-                  .from('users')
-                  .select('email')
-                  .eq('id', userRecord.id)
-                  .single();
+              const { data: user, error: userQueryError } = await supabase
+                .from('users')
+                .select('email')
+                .eq('id', userRecord.id)
+                .single();
 
               if (userQueryError) {
                 console.error('Failed to query user for suspension email:', {
@@ -164,22 +164,22 @@ export async function middleware(request: NextRequest) {
                   .single();
 
                 // Only send email if suspended_at matches what we just set (within 1 second tolerance)
-                const timeDiff = updatedOrg?.suspended_at 
+                const timeDiff = updatedOrg?.suspended_at
                   ? Math.abs(new Date(updatedOrg.suspended_at).getTime() - new Date(suspendedAt).getTime())
                   : Infinity;
 
                 if (timeDiff < 1000) {
                   // Suspension was just set - send email
-                await sendSuspensionEmail({
-                  to: user.email,
-                  userName: undefined,
-                  suspensionDate: new Date(suspendedAt),
-                });
-                console.log('Suspension email sent successfully:', {
-                  orgId: userRecord.org_id,
-                  email: user.email,
-                  timestamp: new Date().toISOString(),
-                });
+                  await sendSuspensionEmail({
+                    to: user.email,
+                    userName: undefined,
+                    suspensionDate: new Date(suspendedAt),
+                  });
+                  console.log('Suspension email sent successfully:', {
+                    orgId: userRecord.org_id,
+                    email: user.email,
+                    timestamp: new Date().toISOString(),
+                  });
                 } else {
                   // Account was already suspended - email was likely already sent
                   console.log('Suspension email skipped (account already suspended):', {
