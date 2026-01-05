@@ -35,8 +35,14 @@ describe('RegisterPage', () => {
       render(<RegisterPage />)
 
       expect(screen.getByLabelText(/email address/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/^password \*/i)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument()
+    })
+
+    it('should render confirm password field', () => {
+      render(<RegisterPage />)
+
+      expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument()
     })
 
     it('should render "Sign in" link', () => {
@@ -65,12 +71,52 @@ describe('RegisterPage', () => {
       const user = userEvent.setup()
       render(<RegisterPage />)
 
-      const passwordInput = screen.getByLabelText(/password/i)
+      const passwordInput = screen.getByLabelText(/^password \*/i)
       await user.type(passwordInput, 'short')
       await user.tab() // Trigger blur
 
       await waitFor(() => {
         expect(screen.getByText(/password must be at least 8 characters/i)).toBeInTheDocument()
+      })
+    })
+
+    it('should validate confirm password matches on blur', async () => {
+      const user = userEvent.setup()
+      render(<RegisterPage />)
+
+      const passwordInput = screen.getByLabelText(/^password \*/i)
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i)
+
+      await user.type(passwordInput, 'password123')
+      await user.type(confirmPasswordInput, 'different123')
+      await user.tab() // Trigger blur
+
+      await waitFor(() => {
+        expect(screen.getByText(/passwords do not match/i)).toBeInTheDocument()
+      })
+    })
+
+    it('should clear confirm password error when passwords match', async () => {
+      const user = userEvent.setup()
+      render(<RegisterPage />)
+
+      const passwordInput = screen.getByLabelText(/^password \*/i)
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i)
+
+      await user.type(passwordInput, 'password123')
+      await user.type(confirmPasswordInput, 'different123')
+      await user.tab()
+
+      await waitFor(() => {
+        expect(screen.getByText(/passwords do not match/i)).toBeInTheDocument()
+      })
+
+      await user.clear(confirmPasswordInput)
+      await user.type(confirmPasswordInput, 'password123')
+      await user.tab()
+
+      await waitFor(() => {
+        expect(screen.queryByText(/passwords do not match/i)).not.toBeInTheDocument()
       })
     })
 
@@ -81,7 +127,7 @@ describe('RegisterPage', () => {
       const emailInput = screen.getByLabelText(/email address/i)
       await user.type(emailInput, 'invalid')
       await user.tab()
-      
+
       await waitFor(() => {
         expect(screen.getByText(/please enter a valid email address/i)).toBeInTheDocument()
       })
@@ -111,7 +157,7 @@ describe('RegisterPage', () => {
       } as Response)
 
       const emailInput = screen.getByLabelText(/email address/i)
-      const passwordInput = screen.getByLabelText(/password/i)
+      const passwordInput = screen.getByLabelText(/^password \*/i)
       const submitButton = screen.getByRole('button', { name: /create account/i })
 
       await user.type(emailInput, 'test@example.com')
@@ -146,7 +192,7 @@ describe('RegisterPage', () => {
       } as Response)
 
       const emailInput = screen.getByLabelText(/email address/i)
-      const passwordInput = screen.getByLabelText(/password/i)
+      const passwordInput = screen.getByLabelText(/^password \*/i)
       const submitButton = screen.getByRole('button', { name: /create account/i })
 
       await user.type(emailInput, 'test@example.com')
@@ -163,7 +209,7 @@ describe('RegisterPage', () => {
       render(<RegisterPage />)
 
       const emailInput = screen.getByLabelText(/email address/i)
-      const passwordInput = screen.getByLabelText(/password/i)
+      const passwordInput = screen.getByLabelText(/^password \*/i)
       const submitButton = screen.getByRole('button', { name: /create account/i })
 
       await user.type(emailInput, 'invalid-email')
@@ -172,6 +218,26 @@ describe('RegisterPage', () => {
 
       await waitFor(() => {
         expect(global.fetch).not.toHaveBeenCalled()
+      })
+    })
+
+    it('should prevent submission when passwords do not match', async () => {
+      const user = userEvent.setup()
+      render(<RegisterPage />)
+
+      const emailInput = screen.getByLabelText(/email address/i)
+      const passwordInput = screen.getByLabelText(/^password \*/i)
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i)
+      const submitButton = screen.getByRole('button', { name: /create account/i })
+
+      await user.type(emailInput, 'test@example.com')
+      await user.type(passwordInput, 'password123')
+      await user.type(confirmPasswordInput, 'different123')
+      await user.click(submitButton)
+
+      await waitFor(() => {
+        expect(global.fetch).not.toHaveBeenCalled()
+        expect(screen.getByText(/passwords do not match/i)).toBeInTheDocument()
       })
     })
 
@@ -194,7 +260,7 @@ describe('RegisterPage', () => {
       )
 
       const emailInput = screen.getByLabelText(/email address/i)
-      const passwordInput = screen.getByLabelText(/password/i)
+      const passwordInput = screen.getByLabelText(/^password \*/i)
       const submitButton = screen.getByRole('button', { name: /create account/i })
 
       await user.type(emailInput, 'test@example.com')
@@ -212,7 +278,7 @@ describe('RegisterPage', () => {
       vi.mocked(global.fetch).mockRejectedValue(new Error('Network error'))
 
       const emailInput = screen.getByLabelText(/email address/i)
-      const passwordInput = screen.getByLabelText(/password/i)
+      const passwordInput = screen.getByLabelText(/^password \*/i)
       const submitButton = screen.getByRole('button', { name: /create account/i })
 
       await user.type(emailInput, 'test@example.com')
@@ -244,11 +310,33 @@ describe('RegisterPage', () => {
       })
     })
 
+    it('should have proper ARIA attributes for confirm password field', async () => {
+      const user = userEvent.setup()
+      render(<RegisterPage />)
+
+      const passwordInput = screen.getByLabelText(/^password \*/i)
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i)
+
+      expect(confirmPasswordInput).toHaveAttribute('aria-invalid', 'false')
+      expect(confirmPasswordInput).not.toHaveAttribute('aria-describedby')
+
+      await user.type(passwordInput, 'password123')
+      await user.type(confirmPasswordInput, 'different123')
+      await user.tab()
+
+      await waitFor(() => {
+        expect(confirmPasswordInput).toHaveAttribute('aria-invalid', 'true')
+        expect(confirmPasswordInput).toHaveAttribute('aria-describedby', 'confirmPassword-error')
+        expect(screen.getByText(/passwords do not match/i)).toHaveAttribute('id', 'confirmPassword-error')
+      })
+    })
+
     it('should support keyboard navigation', async () => {
       render(<RegisterPage />)
 
       const emailInput = screen.getByLabelText(/email address/i)
-      const passwordInput = screen.getByLabelText(/password/i)
+      const passwordInput = screen.getByLabelText(/^password \*/i)
+      const confirmPasswordInput = screen.getByLabelText(/confirm password/i)
       const submitButton = screen.getByRole('button', { name: /create account/i })
 
       emailInput.focus()
@@ -257,6 +345,10 @@ describe('RegisterPage', () => {
       // Tab to password
       await userEvent.tab()
       expect(passwordInput).toHaveFocus()
+
+      // Tab to confirm password
+      await userEvent.tab()
+      expect(confirmPasswordInput).toHaveFocus()
 
       // Tab to submit button
       await userEvent.tab()

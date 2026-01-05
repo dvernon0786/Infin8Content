@@ -9,10 +9,11 @@ function RegisterPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const invitationToken = searchParams.get('invitation_token')
-  
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // If invitation token exists, store it in localStorage
@@ -41,10 +42,19 @@ function RegisterPageContent() {
     return true
   }
 
+  const validateConfirmPassword = (confirmPassword: string) => {
+    if (confirmPassword !== password) {
+      setErrors((prev) => ({ ...prev, confirmPassword: 'Passwords do not match' }))
+      return false
+    }
+    setErrors((prev) => ({ ...prev, confirmPassword: undefined }))
+    return true
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (!validateEmail(email) || !validatePassword(password)) {
+
+    if (!validateEmail(email) || !validatePassword(password) || !validateConfirmPassword(confirmPassword)) {
       return
     }
 
@@ -122,6 +132,28 @@ function RegisterPageContent() {
             {errors.password && (
               <p id="password-error" className="mt-1 text-sm flex items-center gap-1 text-red-600">
                 <span aria-hidden="true">⚠</span> {errors.password}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-900">
+              Confirm Password *
+            </label>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              onBlur={() => validateConfirmPassword(confirmPassword)}
+              className="mt-1 block w-full px-3 py-3 text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+              aria-invalid={errors.confirmPassword ? 'true' : 'false'}
+              aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
+            />
+            {errors.confirmPassword && (
+              <p id="confirmPassword-error" className="mt-1 text-sm flex items-center gap-1 text-red-600">
+                <span aria-hidden="true">⚠</span> {errors.confirmPassword}
               </p>
             )}
           </div>
