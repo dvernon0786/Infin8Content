@@ -193,6 +193,29 @@ BEGIN
 END;
 $$;
 
+-- Fix cleanup_expired_invitations function (if it exists)
+CREATE OR REPLACE FUNCTION IF NOT EXISTS public.cleanup_expired_invitations()
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  updated_count INTEGER;
+BEGIN
+  -- Update invitations where expires_at < NOW() AND status = 'pending' to status = 'expired'
+  UPDATE public.team_invitations
+  SET status = 'expired',
+      updated_at = NOW()
+  WHERE expires_at < NOW()
+    AND status = 'pending';
+  
+  GET DIAGNOSTICS updated_count = ROW_COUNT;
+  
+  RETURN updated_count;
+END;
+$$;
+
 -- ============================================================================
 -- Comments
 -- ============================================================================
