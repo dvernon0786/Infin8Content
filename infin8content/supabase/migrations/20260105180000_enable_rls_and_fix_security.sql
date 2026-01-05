@@ -19,7 +19,16 @@ ALTER TABLE public.otp_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stripe_webhook_events ENABLE ROW LEVEL SECURITY;
 
 -- Enable RLS on team_invitations table (if it exists)
-ALTER TABLE IF EXISTS public.team_invitations ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables 
+    WHERE table_schema = 'public' 
+    AND table_name = 'team_invitations'
+  ) THEN
+    ALTER TABLE public.team_invitations ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 
 -- ============================================================================
 -- RLS Policies for organizations table
@@ -193,28 +202,39 @@ BEGIN
 END;
 $$;
 
--- Fix cleanup_expired_invitations function
-CREATE OR REPLACE FUNCTION public.cleanup_expired_invitations()
-RETURNS INTEGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  updated_count INTEGER;
+-- Fix cleanup_expired_invitations function (if it exists)
+DO $$
 BEGIN
-  -- Update invitations where expires_at < NOW() AND status = 'pending' to status = 'expired'
-  UPDATE public.team_invitations
-  SET status = 'expired',
-      updated_at = NOW()
-  WHERE expires_at < NOW()
-    AND status = 'pending';
-  
-  GET DIAGNOSTICS updated_count = ROW_COUNT;
-  
-  RETURN updated_count;
-END;
-$$;
+  IF EXISTS (
+    SELECT FROM pg_proc p
+    JOIN pg_namespace n ON p.pronamespace = n.oid
+    WHERE n.nspname = 'public'
+    AND p.proname = 'cleanup_expired_invitations'
+  ) THEN
+    EXECUTE '
+      CREATE OR REPLACE FUNCTION public.cleanup_expired_invitations()
+      RETURNS INTEGER
+      LANGUAGE plpgsql
+      SECURITY DEFINER
+      SET search_path = public
+      AS $func$
+      DECLARE
+        updated_count INTEGER;
+      BEGIN
+        UPDATE public.team_invitations
+        SET status = ''expired'',
+            updated_at = NOW()
+        WHERE expires_at < NOW()
+          AND status = ''pending'';
+        
+        GET DIAGNOSTICS updated_count = ROW_COUNT;
+        
+        RETURN updated_count;
+      END;
+      $func$;
+    ';
+  END IF;
+END $$;
 
 -- ============================================================================
 -- Comments
@@ -241,55 +261,64 @@ COMMENT ON POLICY "Service role can insert webhook events" ON public.stripe_webh
 -- RLS Policies for team_invitations table (if exists)
 -- ============================================================================
 
--- Policy: Users can view invitations for their organization
-DROP POLICY IF EXISTS "Users can view organization invitations" ON public.team_invitations;
-CREATE POLICY "Users can view organization invitations"
-ON public.team_invitations
-FOR SELECT
-USING (
-  org_id IN (
-    SELECT org_id FROM public.users
-    WHERE auth_user_id = auth.uid()
-  )
-);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables 
+    WHERE table_schema = 'public' 
+    AND table_name = 'team_invitations'
+  ) THEN
+    -- Policy: Users can view invitations for their organization
+    DROP POLICY IF EXISTS "Users can view organization invitations" ON public.team_invitations;
+    CREATE POLICY "Users can view organization invitations"
+    ON public.team_invitations
+    FOR SELECT
+    USING (
+      org_id IN (
+        SELECT org_id FROM public.users
+        WHERE auth_user_id = auth.uid()
+      )
+    );
 
--- Policy: Owners can create invitations for their organization
-DROP POLICY IF EXISTS "Owners can create invitations" ON public.team_invitations;
-CREATE POLICY "Owners can create invitations"
-ON public.team_invitations
-FOR INSERT
-WITH CHECK (
-  org_id IN (
-    SELECT org_id FROM public.users
-    WHERE auth_user_id = auth.uid()
-    AND role = 'owner'
-  )
-);
+    -- Policy: Owners can create invitations for their organization
+    DROP POLICY IF EXISTS "Owners can create invitations" ON public.team_invitations;
+    CREATE POLICY "Owners can create invitations"
+    ON public.team_invitations
+    FOR INSERT
+    WITH CHECK (
+      org_id IN (
+        SELECT org_id FROM public.users
+        WHERE auth_user_id = auth.uid()
+        AND role = 'owner'
+      )
+    );
 
--- Policy: Owners can update invitations for their organization
-DROP POLICY IF EXISTS "Owners can update invitations" ON public.team_invitations;
-CREATE POLICY "Owners can update invitations"
-ON public.team_invitations
-FOR UPDATE
-USING (
-  org_id IN (
-    SELECT org_id FROM public.users
-    WHERE auth_user_id = auth.uid()
-    AND role = 'owner'
-  )
-);
+    -- Policy: Owners can update invitations for their organization
+    DROP POLICY IF EXISTS "Owners can update invitations" ON public.team_invitations;
+    CREATE POLICY "Owners can update invitations"
+    ON public.team_invitations
+    FOR UPDATE
+    USING (
+      org_id IN (
+        SELECT org_id FROM public.users
+        WHERE auth_user_id = auth.uid()
+        AND role = 'owner'
+      )
+    );
 
--- Policy: Anyone can view invitations by token (for acceptance flow)
-DROP POLICY IF EXISTS "Anyone can view invitation by token" ON public.team_invitations;
-CREATE POLICY "Anyone can view invitation by token"
-ON public.team_invitations
-FOR SELECT
-USING (true); -- Token provides authorization, not RLS
+    -- Policy: Anyone can view invitations by token (for acceptance flow)
+    DROP POLICY IF EXISTS "Anyone can view invitation by token" ON public.team_invitations;
+    CREATE POLICY "Anyone can view invitation by token"
+    ON public.team_invitations
+    FOR SELECT
+    USING (true); -- Token provides authorization, not RLS
 
-COMMENT ON POLICY "Users can view organization invitations" ON public.team_invitations IS 'Allows users to view invitations for their organization';
-COMMENT ON POLICY "Owners can create invitations" ON public.team_invitations IS 'Allows organization owners to create team invitations';
-COMMENT ON POLICY "Owners can update invitations" ON public.team_invitations IS 'Allows organization owners to update/cancel invitations';
-COMMENT ON POLICY "Anyone can view invitation by token" ON public.team_invitations IS 'Allows anyone to view invitation by token (for acceptance flow)';
+    COMMENT ON POLICY "Users can view organization invitations" ON public.team_invitations IS 'Allows users to view invitations for their organization';
+    COMMENT ON POLICY "Owners can create invitations" ON public.team_invitations IS 'Allows organization owners to create team invitations';
+    COMMENT ON POLICY "Owners can update invitations" ON public.team_invitations IS 'Allows organization owners to update/cancel invitations';
+    COMMENT ON POLICY "Anyone can view invitation by token" ON public.team_invitations IS 'Allows anyone to view invitation by token (for acceptance flow)';
+  END IF;
+END $$;
 
 -- ============================================================================
 -- Notes
