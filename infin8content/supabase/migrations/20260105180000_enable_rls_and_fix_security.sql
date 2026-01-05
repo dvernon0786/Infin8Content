@@ -193,8 +193,8 @@ BEGIN
 END;
 $$;
 
--- Fix cleanup_expired_invitations function (if it exists)
-CREATE OR REPLACE FUNCTION IF NOT EXISTS public.cleanup_expired_invitations()
+-- Fix cleanup_expired_invitations function
+CREATE OR REPLACE FUNCTION public.cleanup_expired_invitations()
 RETURNS INTEGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -242,7 +242,8 @@ COMMENT ON POLICY "Service role can insert webhook events" ON public.stripe_webh
 -- ============================================================================
 
 -- Policy: Users can view invitations for their organization
-CREATE POLICY IF NOT EXISTS "Users can view organization invitations"
+DROP POLICY IF EXISTS "Users can view organization invitations" ON public.team_invitations;
+CREATE POLICY "Users can view organization invitations"
 ON public.team_invitations
 FOR SELECT
 USING (
@@ -253,7 +254,8 @@ USING (
 );
 
 -- Policy: Owners can create invitations for their organization
-CREATE POLICY IF NOT EXISTS "Owners can create invitations"
+DROP POLICY IF EXISTS "Owners can create invitations" ON public.team_invitations;
+CREATE POLICY "Owners can create invitations"
 ON public.team_invitations
 FOR INSERT
 WITH CHECK (
@@ -265,7 +267,8 @@ WITH CHECK (
 );
 
 -- Policy: Owners can update invitations for their organization
-CREATE POLICY IF NOT EXISTS "Owners can update invitations"
+DROP POLICY IF EXISTS "Owners can update invitations" ON public.team_invitations;
+CREATE POLICY "Owners can update invitations"
 ON public.team_invitations
 FOR UPDATE
 USING (
@@ -277,7 +280,8 @@ USING (
 );
 
 -- Policy: Anyone can view invitations by token (for acceptance flow)
-CREATE POLICY IF NOT EXISTS "Anyone can view invitation by token"
+DROP POLICY IF EXISTS "Anyone can view invitation by token" ON public.team_invitations;
+CREATE POLICY "Anyone can view invitation by token"
 ON public.team_invitations
 FOR SELECT
 USING (true); -- Token provides authorization, not RLS
