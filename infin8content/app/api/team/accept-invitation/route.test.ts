@@ -34,6 +34,7 @@ describe('POST /api/team/accept-invitation', () => {
     // Mock Supabase client
     mockSupabase = {
       from: vi.fn().mockReturnThis(),
+      rpc: vi.fn().mockReturnThis(), // Added rpc support
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       gt: vi.fn().mockReturnThis(),
@@ -75,8 +76,8 @@ describe('POST /api/team/accept-invitation', () => {
     })
 
     it('should reject invalid or non-existent tokens', async () => {
-      mockSupabase.from.mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
+      // Mock rpc call for invitation
+      mockSupabase.rpc.mockReturnValueOnce({
         eq: vi.fn().mockReturnThis(),
         gt: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
@@ -85,10 +86,9 @@ describe('POST /api/team/accept-invitation', () => {
         }),
       })
 
-      // Check for expired invitation
-      mockSupabase.from.mockReturnValueOnce({
+      // Check for expired invitation (rpc call)
+      mockSupabase.rpc.mockReturnValueOnce({
         select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
           data: null,
           error: { code: 'PGRST116' },
@@ -115,9 +115,8 @@ describe('POST /api/team/accept-invitation', () => {
         expires_at: pastDate.toISOString(),
       }
 
-      // First query returns null (expired)
-      mockSupabase.from.mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
+      // First query returns null due to .gt filter (expired) - called via rpc
+      mockSupabase.rpc.mockReturnValueOnce({
         eq: vi.fn().mockReturnThis(),
         gt: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
@@ -126,10 +125,9 @@ describe('POST /api/team/accept-invitation', () => {
         }),
       })
 
-      // Second query finds expired invitation
-      mockSupabase.from.mockReturnValueOnce({
+      // Second query finds expired invitation - called via rpc
+      mockSupabase.rpc.mockReturnValueOnce({
         select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
           data: expiredInvitation,
           error: null,
@@ -151,9 +149,8 @@ describe('POST /api/team/accept-invitation', () => {
 
   describe('User Registration Flow', () => {
     it('should return redirect URL if user does not exist', async () => {
-      // Valid invitation
-      mockSupabase.from.mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
+      // Valid invitation via rpc
+      mockSupabase.rpc.mockReturnValueOnce({
         eq: vi.fn().mockReturnThis(),
         gt: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
@@ -162,7 +159,7 @@ describe('POST /api/team/accept-invitation', () => {
         }),
       })
 
-      // User doesn't exist
+      // User doesn't exist via from('users')
       mockSupabase.from.mockReturnValueOnce({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
@@ -190,15 +187,15 @@ describe('POST /api/team/accept-invitation', () => {
   describe('Organization Membership Checks', () => {
     it('should reject if user already belongs to an organization', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue({
+        user: { id: 'auth-user-id', email: 'user@example.com' },
         id: USER_ID,
         email: 'user@example.com',
         org_id: OTHER_ORG_ID,
         role: 'editor',
       })
 
-      // Valid invitation
-      mockSupabase.from.mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
+      // Valid invitation via rpc
+      mockSupabase.rpc.mockReturnValueOnce({
         eq: vi.fn().mockReturnThis(),
         gt: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
@@ -227,9 +224,8 @@ describe('POST /api/team/accept-invitation', () => {
         role: 'editor',
       }
 
-      // Valid invitation
-      mockSupabase.from.mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
+      // Valid invitation via rpc
+      mockSupabase.rpc.mockReturnValueOnce({
         eq: vi.fn().mockReturnThis(),
         gt: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
@@ -238,7 +234,7 @@ describe('POST /api/team/accept-invitation', () => {
         }),
       })
 
-      // User exists and belongs to same org
+      // User exists and belongs to same org via from('users')
       mockSupabase.from.mockReturnValueOnce({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
@@ -270,9 +266,8 @@ describe('POST /api/team/accept-invitation', () => {
         role: 'viewer',
       }
 
-      // Valid invitation
-      mockSupabase.from.mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
+      // Valid invitation via rpc
+      mockSupabase.rpc.mockReturnValueOnce({
         eq: vi.fn().mockReturnThis(),
         gt: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
@@ -281,7 +276,7 @@ describe('POST /api/team/accept-invitation', () => {
         }),
       })
 
-      // User exists
+      // User exists via from('users')
       mockSupabase.from.mockReturnValueOnce({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
@@ -291,7 +286,7 @@ describe('POST /api/team/accept-invitation', () => {
         }),
       })
 
-      // Update user
+      // Update user via from('users')
       mockSupabase.from.mockReturnValueOnce({
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockResolvedValue({
@@ -299,7 +294,7 @@ describe('POST /api/team/accept-invitation', () => {
         }),
       })
 
-      // Update invitation
+      // Update invitation via from('team_invitations')
       mockSupabase.from.mockReturnValueOnce({
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockResolvedValue({
@@ -307,7 +302,7 @@ describe('POST /api/team/accept-invitation', () => {
         }),
       })
 
-      // Get organization
+      // Get organization via from('organizations')
       mockSupabase.from.mockReturnValueOnce({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
@@ -317,7 +312,7 @@ describe('POST /api/team/accept-invitation', () => {
         }),
       })
 
-      // Get owner
+      // Get owner via from('users')
       mockSupabase.from.mockReturnValueOnce({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
