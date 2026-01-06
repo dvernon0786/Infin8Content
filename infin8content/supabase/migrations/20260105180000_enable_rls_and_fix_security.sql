@@ -1,24 +1,43 @@
 -- Enable Row Level Security (RLS) and fix security issues
--- Story 1.11: Row Level Security (RLS) Policies Implementation
--- Addresses Supabase database linter security warnings
+-- Story 1.11: Row Level Security (RLS) Policies Implementation (REVISED)
+
+-- ============================================================================
+-- Helper Functions (Security Definer) - Defined FIRST to be used in policies
+-- ============================================================================
+
+-- Function to get the current user's org_id safely (avoids recursion)
+CREATE OR REPLACE FUNCTION public.get_auth_user_org_id()
+RETURNS uuid
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT org_id FROM public.users WHERE auth_user_id = auth.uid() LIMIT 1;
+$$;
+
+-- Function to get invitation by token (Secure access for acceptance flow)
+-- Replaces the need for a public RLS policy on team_invitations
+CREATE OR REPLACE FUNCTION public.get_invitation_by_token(token_input text)
+RETURNS SETOF public.team_invitations
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN QUERY SELECT * FROM public.team_invitations WHERE token = token_input;
+END;
+$$;
 
 -- ============================================================================
 -- Enable RLS on all public tables
 -- ============================================================================
 
--- Enable RLS on organizations table
 ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
-
--- Enable RLS on users table
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-
--- Enable RLS on otp_codes table
 ALTER TABLE public.otp_codes ENABLE ROW LEVEL SECURITY;
-
--- Enable RLS on stripe_webhook_events table
 ALTER TABLE public.stripe_webhook_events ENABLE ROW LEVEL SECURITY;
 
--- Enable RLS on team_invitations table (if it exists)
 DO $$
 BEGIN
   IF EXISTS (
@@ -34,30 +53,27 @@ END $$;
 -- RLS Policies for organizations table
 -- ============================================================================
 
--- Policy: Users can view their own organization
+DROP POLICY IF EXISTS "Users can view their own organization" ON public.organizations;
 CREATE POLICY "Users can view their own organization"
 ON public.organizations
 FOR SELECT
 USING (
-  id IN (
-    SELECT org_id FROM public.users
-    WHERE auth_user_id = auth.uid()
-  )
+  id = public.get_auth_user_org_id()
 );
 
--- Policy: Users can update their own organization (owners only)
+DROP POLICY IF EXISTS "Owners can update their own organization" ON public.organizations;
 CREATE POLICY "Owners can update their own organization"
 ON public.organizations
 FOR UPDATE
 USING (
-  id IN (
-    SELECT org_id FROM public.users
-    WHERE auth_user_id = auth.uid()
-    AND role = 'owner'
+  id = public.get_auth_user_org_id()
+  AND EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE auth_user_id = auth.uid() AND role = 'owner'
   )
 );
 
--- Policy: Authenticated users can create organizations (during registration)
+DROP POLICY IF EXISTS "Authenticated users can create organizations" ON public.organizations;
 CREATE POLICY "Authenticated users can create organizations"
 ON public.organizations
 FOR INSERT
@@ -67,45 +83,42 @@ WITH CHECK (auth.role() = 'authenticated');
 -- RLS Policies for users table
 -- ============================================================================
 
--- Policy: Users can view their own user record
+DROP POLICY IF EXISTS "Users can view their own user record" ON public.users;
 CREATE POLICY "Users can view their own user record"
 ON public.users
 FOR SELECT
 USING (auth_user_id = auth.uid());
 
--- Policy: Users can view other users in their organization
+DROP POLICY IF EXISTS "Users can view organization members" ON public.users;
 CREATE POLICY "Users can view organization members"
 ON public.users
 FOR SELECT
 USING (
-  org_id IN (
-    SELECT org_id FROM public.users
-    WHERE auth_user_id = auth.uid()
-  )
+  org_id = public.get_auth_user_org_id()
 );
 
--- Policy: Users can update their own user record (limited fields)
+DROP POLICY IF EXISTS "Users can update their own user record" ON public.users;
 CREATE POLICY "Users can update their own user record"
 ON public.users
 FOR UPDATE
 USING (auth_user_id = auth.uid())
 WITH CHECK (auth_user_id = auth.uid());
 
--- Policy: Authenticated users can create user records (during registration)
+DROP POLICY IF EXISTS "Authenticated users can create user records" ON public.users;
 CREATE POLICY "Authenticated users can create user records"
 ON public.users
 FOR INSERT
 WITH CHECK (auth.role() = 'authenticated');
 
--- Policy: Owners can update organization members (for role changes)
+DROP POLICY IF EXISTS "Owners can update organization members" ON public.users;
 CREATE POLICY "Owners can update organization members"
 ON public.users
 FOR UPDATE
 USING (
-  org_id IN (
-    SELECT org_id FROM public.users
-    WHERE auth_user_id = auth.uid()
-    AND role = 'owner'
+  org_id = public.get_auth_user_org_id()
+  AND EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE auth_user_id = auth.uid() AND role = 'owner'
   )
 );
 
@@ -113,36 +126,33 @@ USING (
 -- RLS Policies for otp_codes table
 -- ============================================================================
 
--- Policy: Users can view their own OTP codes
+DROP POLICY IF EXISTS "Users can view their own OTP codes" ON public.otp_codes;
 CREATE POLICY "Users can view their own OTP codes"
 ON public.otp_codes
 FOR SELECT
 USING (
   user_id IN (
-    SELECT id FROM public.users
-    WHERE auth_user_id = auth.uid()
+    SELECT id FROM public.users WHERE auth_user_id = auth.uid()
   )
 );
 
--- Policy: Users can insert their own OTP codes
+DROP POLICY IF EXISTS "Users can insert their own OTP codes" ON public.otp_codes;
 CREATE POLICY "Users can insert their own OTP codes"
 ON public.otp_codes
 FOR INSERT
 WITH CHECK (
   user_id IN (
-    SELECT id FROM public.users
-    WHERE auth_user_id = auth.uid()
+    SELECT id FROM public.users WHERE auth_user_id = auth.uid()
   )
 );
 
--- Policy: Users can update their own OTP codes (for verification)
+DROP POLICY IF EXISTS "Users can update their own OTP codes" ON public.otp_codes;
 CREATE POLICY "Users can update their own OTP codes"
 ON public.otp_codes
 FOR UPDATE
 USING (
   user_id IN (
-    SELECT id FROM public.users
-    WHERE auth_user_id = auth.uid()
+    SELECT id FROM public.users WHERE auth_user_id = auth.uid()
   )
 );
 
@@ -150,33 +160,24 @@ USING (
 -- RLS Policies for stripe_webhook_events table
 -- ============================================================================
 
--- Policy: Service role can do everything (webhooks use service role)
--- Note: Service role bypasses RLS by default, but explicit policy for clarity
--- This table is primarily accessed by webhook handlers using service role
-
--- Policy: Users can view webhook events for their organization
+DROP POLICY IF EXISTS "Users can view organization webhook events" ON public.stripe_webhook_events;
 CREATE POLICY "Users can view organization webhook events"
 ON public.stripe_webhook_events
 FOR SELECT
 USING (
-  organization_id IN (
-    SELECT org_id FROM public.users
-    WHERE auth_user_id = auth.uid()
-  )
+  organization_id = public.get_auth_user_org_id()
 );
 
--- Policy: Service role can insert webhook events
--- Note: Service role operations bypass RLS, but this policy documents intent
+DROP POLICY IF EXISTS "Service role can insert webhook events" ON public.stripe_webhook_events;
 CREATE POLICY "Service role can insert webhook events"
 ON public.stripe_webhook_events
 FOR INSERT
-WITH CHECK (true); -- Service role bypasses RLS anyway
+WITH CHECK (true);
 
 -- ============================================================================
--- Fix function search_path security issues
+-- Fix function search_path security issues (Legacy)
 -- ============================================================================
 
--- Fix cleanup_expired_otp_codes function
 CREATE OR REPLACE FUNCTION public.cleanup_expired_otp_codes()
 RETURNS void
 LANGUAGE plpgsql
@@ -189,7 +190,6 @@ BEGIN
 END;
 $$;
 
--- Fix update_updated_at_column function
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -202,7 +202,6 @@ BEGIN
 END;
 $$;
 
--- Fix cleanup_expired_invitations function (if it exists)
 DO $$
 BEGIN
   IF EXISTS (
@@ -227,35 +226,12 @@ BEGIN
         WHERE expires_at < NOW()
           AND status = ''pending'';
         
-        GET DIAGNOSTICS updated_count = ROW_COUNT;
-        
         RETURN updated_count;
       END;
       $func$;
     ';
   END IF;
 END $$;
-
--- ============================================================================
--- Comments
--- ============================================================================
-
-COMMENT ON POLICY "Users can view their own organization" ON public.organizations IS 'Allows users to view their organization data';
-COMMENT ON POLICY "Owners can update their own organization" ON public.organizations IS 'Allows organization owners to update organization settings';
-COMMENT ON POLICY "Authenticated users can create organizations" ON public.organizations IS 'Allows authenticated users to create organizations during registration';
-
-COMMENT ON POLICY "Users can view their own user record" ON public.users IS 'Allows users to view their own user record';
-COMMENT ON POLICY "Users can view organization members" ON public.users IS 'Allows users to view other members of their organization';
-COMMENT ON POLICY "Users can update their own user record" ON public.users IS 'Allows users to update their own user record';
-COMMENT ON POLICY "Authenticated users can create user records" ON public.users IS 'Allows authenticated users to create user records during registration';
-COMMENT ON POLICY "Owners can update organization members" ON public.users IS 'Allows organization owners to update member roles';
-
-COMMENT ON POLICY "Users can view their own OTP codes" ON public.otp_codes IS 'Allows users to view their own OTP codes';
-COMMENT ON POLICY "Users can insert their own OTP codes" ON public.otp_codes IS 'Allows users to create OTP codes for themselves';
-COMMENT ON POLICY "Users can update their own OTP codes" ON public.otp_codes IS 'Allows users to verify their OTP codes';
-
-COMMENT ON POLICY "Users can view organization webhook events" ON public.stripe_webhook_events IS 'Allows users to view webhook events for their organization';
-COMMENT ON POLICY "Service role can insert webhook events" ON public.stripe_webhook_events IS 'Allows service role to insert webhook events (bypasses RLS)';
 
 -- ============================================================================
 -- RLS Policies for team_invitations table (if exists)
@@ -274,10 +250,7 @@ BEGIN
     ON public.team_invitations
     FOR SELECT
     USING (
-      org_id IN (
-        SELECT org_id FROM public.users
-        WHERE auth_user_id = auth.uid()
-      )
+      org_id = public.get_auth_user_org_id()
     );
 
     -- Policy: Owners can create invitations for their organization
@@ -286,10 +259,10 @@ BEGIN
     ON public.team_invitations
     FOR INSERT
     WITH CHECK (
-      org_id IN (
-        SELECT org_id FROM public.users
-        WHERE auth_user_id = auth.uid()
-        AND role = 'owner'
+      org_id = public.get_auth_user_org_id()
+      AND EXISTS (
+        SELECT 1 FROM public.users 
+        WHERE auth_user_id = auth.uid() AND role = 'owner'
       )
     );
 
@@ -299,33 +272,16 @@ BEGIN
     ON public.team_invitations
     FOR UPDATE
     USING (
-      org_id IN (
-        SELECT org_id FROM public.users
-        WHERE auth_user_id = auth.uid()
-        AND role = 'owner'
+      org_id = public.get_auth_user_org_id()
+      AND EXISTS (
+        SELECT 1 FROM public.users 
+        WHERE auth_user_id = auth.uid() AND role = 'owner'
       )
     );
 
-    -- Policy: Anyone can view invitations by token (for acceptance flow)
+    -- CRITICAL CHANGE: Removed "Anyone can view invitation by token" policy
+    -- Access is now handled via secure RPC: get_invitation_by_token()
     DROP POLICY IF EXISTS "Anyone can view invitation by token" ON public.team_invitations;
-    CREATE POLICY "Anyone can view invitation by token"
-    ON public.team_invitations
-    FOR SELECT
-    USING (true); -- Token provides authorization, not RLS
 
-    COMMENT ON POLICY "Users can view organization invitations" ON public.team_invitations IS 'Allows users to view invitations for their organization';
-    COMMENT ON POLICY "Owners can create invitations" ON public.team_invitations IS 'Allows organization owners to create team invitations';
-    COMMENT ON POLICY "Owners can update invitations" ON public.team_invitations IS 'Allows organization owners to update/cancel invitations';
-    COMMENT ON POLICY "Anyone can view invitation by token" ON public.team_invitations IS 'Allows anyone to view invitation by token (for acceptance flow)';
   END IF;
 END $$;
-
--- ============================================================================
--- Notes
--- ============================================================================
-
--- NOTE: Leaked Password Protection must be enabled in Supabase Dashboard
--- This cannot be done via migration. Go to:
--- Supabase Dashboard > Authentication > Password Security > Enable "Leaked Password Protection"
--- https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
-

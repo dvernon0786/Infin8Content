@@ -232,7 +232,28 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_invitation_by_token: {
+        Args: {
+          token_input: string
+        }
+        Returns: {
+          id: string
+          email: string
+          org_id: string
+          role: 'editor' | 'viewer'
+          token: string
+          status: 'pending' | 'accepted' | 'expired'
+          expires_at: string
+          accepted_at: string | null
+          created_by: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
+      get_auth_user_org_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string | null
+      }
     }
     Enums: {
       [_ in never]: never

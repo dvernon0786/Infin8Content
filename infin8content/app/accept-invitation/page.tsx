@@ -27,10 +27,10 @@ export default async function AcceptInvitationPage({ searchParams }: AcceptInvit
   const supabase = await createClient()
 
   // Validate invitation token
+  // Validate invitation token
   const { data: invitation, error: invitationError } = await supabase
-    .from('team_invitations')
-    .select('*, organizations(name)')
-    .eq('token', token)
+    .rpc('get_invitation_by_token', { token_input: token })
+    .select('*')
     .single()
 
   if (invitationError || !invitation) {
@@ -95,10 +95,14 @@ export default async function AcceptInvitationPage({ searchParams }: AcceptInvit
     .eq('id', invitation.created_by)
     .single()
 
-  const organizationName =
-    invitation.organizations && typeof invitation.organizations === 'object' && 'name' in invitation.organizations
-      ? (invitation.organizations as { name: string }).name
-      : 'the organization'
+  // Get organization name separately
+  const { data: organization } = await supabase
+    .from('organizations')
+    .select('name')
+    .eq('id', invitation.org_id)
+    .single()
+
+  const organizationName = organization?.name || 'the organization'
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8">

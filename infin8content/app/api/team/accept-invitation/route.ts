@@ -33,10 +33,10 @@ export async function POST(request: Request) {
 
     // Validate: Token exists and is valid (not expired, status = 'pending')
     // Use database-level expiration check to avoid timezone issues and race conditions
+    // Validate: Token exists and is valid (not expired, status = 'pending')
+    // Use database-level expiration check to avoid timezone issues and race conditions
     const { data: invitation, error: invitationError } = await supabase
-      .from('team_invitations')
-      .select('*')
-      .eq('token', token)
+      .rpc('get_invitation_by_token', { token_input: token })
       .eq('status', 'pending')
       .gt('expires_at', new Date().toISOString())
       .single()
@@ -44,9 +44,8 @@ export async function POST(request: Request) {
     if (invitationError || !invitation) {
       // Check if invitation exists but is expired
       const { data: expiredInvitation } = await supabase
-        .from('team_invitations')
+        .rpc('get_invitation_by_token', { token_input: token })
         .select('id, expires_at')
-        .eq('token', token)
         .single()
 
       if (expiredInvitation) {
