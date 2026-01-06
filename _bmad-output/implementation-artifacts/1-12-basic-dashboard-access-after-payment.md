@@ -8,131 +8,85 @@ Status: done
 
 As a paying user,
 I want to access a basic dashboard after completing payment,
-so that I can see my account status and navigate to platform features.
+So that I can see my account status and navigate to platform features.
 
 ## Acceptance Criteria
 
-### 1. Payment-Gated Access
-- **Given** I have completed payment (Story 1.7)
-- **When** I log in or am redirected after payment
-- **Then** I can access the main dashboard route `/dashboard`
-- **And** I am NOT redirected to `/payment`
+### 1. Dashboard Access Control
+- **Given** I am a user who has completed payment (status: 'active')
+- **When** I log in or complete the payment flow
+- **Then** I can successfully access the main dashboard route (`/dashboard`)
+- **And** I am NOT redirected to the payment page
 
-- **Given** I have registered but NOT paid
+- **Given** I am a user who has NOT completed payment (status: 'unpaid' or 'pending_payment')
 - **When** I attempt to access `/dashboard` or any sub-route
-- **Then** I am redirected to `/payment`
-- **And** I see a toast or message "Payment required for access"
+- **Then** I am redirected to the payment page (`/payment` or `/subscribe`)
+- **And** I see a message indicating payment is required
 
-- **Given** my account is suspended (Story 1.9 logic)
+- **Given** I am a user whose account is suspended
 - **When** I attempt to access `/dashboard`
-- **Then** I am redirected to `/suspended`
+- **Then** I am redirected to the suspension page (`/suspended`)
+- **And** I cannot access dashboard features
 
 ### 2. Dashboard Layout Foundation
 - **Given** I am on the dashboard
-- **Then** I see the standard application shell:
-  - **Left Sidebar**: Collapsible, containing navigation links (Research, Write, Publish, Track, Settings)
-  - **Top Navigation**: Containing user menu (Avatar) and mobile toggle
-  - **Main Content Area**: Displaying the active page content
-- **And** the layout is responsive (sidebar collapses to icon-only or hidden on mobile)
+- **Then** I see the standard application shell layout
+- **And** the layout includes a collapsible Left Sidebar Navigation (width ~240px expanded)
+- **And** the layout includes a Top Navigation Bar (height ~64px)
+- **And** the Main Content Area fills the remaining space
+- **And** the layout is responsive (sidebar collapses on mobile screens < 640px)
 
-### 3. Dashboard Home Content (MVP)
-- **Given** I access `/dashboard`
-- **Then** I see a "Welcome back, {User First Name}" message
-- **And** I see my Organization Name and current Plan Tier (e.g., "Starter Plan")
-- **And** the page loads in < 2 seconds (NFR-P2)
-- **And** a skeleton loader is shown while fetching data
+### 3. Sidebar Navigation
+- **Given** I view the sidebar
+- **Then** I see the following navigation items:
+  - Research (Keywords, Competitors)
+  - Write (Articles, Templates)
+  - Publish (Connections, History)
+  - Track (Analytics, Rankings)
+  - Settings (Profile, Organization, Billing)
+- **And** the active page is visually highlighted in the sidebar
+- **And** clicking an item navigates to the corresponding route without full page reload
 
-### 4. Navigation Functionality
-- **Given** I click a navigation link (e.g., "Settings")
-- **Then** the URL updates
-- **And** the active link visual state updates
-- **And** the content area updates
+### 4. Top Navigation
+- **Given** I view the top navigation bar
+- **Then** I see the Application Logo (link to dashboard root)
+- **And** I see a User Menu (Avatar/Profile) on the right side
+- **And** on mobile, I see a "Menu" toggle button to open the sidebar
+
+### 5. Dashboard Home Content (MVP)
+- **Given** I access the dashboard root (`/dashboard`)
+- **Then** I see a personalized "Welcome back, {First Name}" message
+- **And** I see my Organization Name displayed
+- **And** I see my current Plan Tier (e.g., "Starter", "Pro") displayed as a badge
+- **And** the page content loads in < 2 seconds (NFR-P2)
 
 ## Tasks / Subtasks
 
-- [x] Task 1: Dashboard Routing & Middleware Validation (AC: 1)
-  - [x] Verify `middleware.ts` enforces `payment_status: 'active'` (or equivalent) for `/dashboard/*` routes
-  - [x] **Audit**: Explicitly check `middleware.ts` to ensure it integrates correctly with logic from Story 1.8/1.9 (grace period, suspension).
-  - [x] Ensure distinct redirects for `unpaid` vs `suspended` status
-  - [x] Add explicit integration tests for these redirects (if not fully covered in 1.8/1.9)
-  - [x] Create `app/dashboard/layout.tsx` (Server Component)
+- [ ] 1. Implement Dashboard Layout Components
+  - [ ] Initialize Shadcn UI `sidebar`, `sheet`, `avatar`, `dropdown-menu`
+  - [ ] Create `components/layout/SidebarNavigation.tsx` (Client Component, collapsible)
+  - [ ] Create `components/layout/TopNavigation.tsx` (User menu, mobile toggle)
+  - [ ] Create `app/dashboard/layout.tsx` (Server Component) using the layout components
 
-- [x] Task 2: Implement App Shell Components (AC: 2, 4)
-  - [x] Initialize/Verify Shadcn UI components: `sidebar`, `sheet`, `avatar`, `dropdown-menu`, `button`
-  - [x] Create `components/layout/sidebar-navigation.tsx` (Client Component)
-    - [x] Implement collapsible state
-    - [x] Map navigation items: Research, Write, Publish, Track, Settings
-    - [x] Handle "active" state styling
-  - [x] Create `components/layout/top-navigation.tsx`
-    - [x] User menu dropdown (Profile, Billing, Logout)
-    - [x] Mobile sidebar toggle
-  - [x] Integrate into `app/dashboard/layout.tsx`
+- [ ] 2. Implement Dashboard Access Middleware/Guard
+  - [ ] Verify `middleware.ts` correctly handles `payment_status` checks for `/dashboard` scope
+  - [ ] Ensure redirects for `unpaid` -> `/payment` and `suspended` -> `/suspended` are working
+  - [ ] Add integration tests to verify access control logic
 
-- [x] Task 3: Implement Dashboard Home Page (AC: 3)
-  - [x] Create `app/dashboard/page.tsx` (Server Component)
-  - [x] Fetch User & Organization data
-    - **Guardrail**: Use `lib/supabase/server.ts` to ensure RLS compliance
-    - **Optimization**: Run fetches in parallel using `Promise.all`
-  - [x] Create `app/dashboard/loading.tsx` with Skeleton UI
-  - [x] Display Welcome message, Org Name, and Plan Badge
+- [ ] 3. Implement Dashboard Home Page (MVP)
+  - [ ] Create `app/dashboard/page.tsx`
+  - [ ] Fetch current user and organization data server-side (using `get-current-user` helper)
+  - [ ] Display Welcome Message, Organization Name, and Plan Badge
+  - [ ] Implement `app/dashboard/loading.tsx` with Skeleton fallbacks
 
-- [x] Task 4: Integration Testing (AC: All)
-  - [x] Test: Unpaid user -> Redirect to Payment
-  - [x] Test: Paid user -> 200 OK on Dashboard
-  - [x] Test: Dashboard renders Sidebar and User Info
-  - [x] Test: Mobile layout toggle works
+- [ ] 4. Security & RLS Verification
+  - [ ] Ensure all data fetching uses `supabase-js` auth context (no Service Role)
+  - [ ] Verify users can only see their own Organization data
 
-## Dev Notes
+## Technical Notes
 
-### Architecture & Security Patterns
-- **RLS Compliance**: Since Story 1.11 (RLS) is DONE, all database queries MUST rely on `supabase-js` auth context.
-  - Do NOT use `supabase-admin` (service role) for dashboard data; use the authenticated client (`createClient` from `@/lib/supabase/server`).
-  - This ensures users only see their own Org Name and Plan.
-- **Server Components**: `page.tsx` and `layout.tsx` must be Server Components.
-  - Fetch data on the server.
-  - Pass data to Client Components (like Sidebar) if needed, or keeping Sidebar static/client-side navigation.
-- **Middleware**: This story relies heavily on the Middleware (Story 1.8) functioning correctly. Verify it before building UI. 
-  - If middleware is missing the logic, implementing it here is critical blocking work.
-
-### Component Architecture (Shadcn UI)
-- **Sidebar**: Use the `Sidebar` pattern from Shadcn (or standard Tailwind + motion).
-  - Use `lucide-react` for icons.
-- **State Management**: Sidebar collapse state can be local state or `nuqs` (URL state) if persistence is needed, but local storage or simple state is fine for MVP.
-- **User Data**: Pass user data from `layout.tsx` down to components or fetch in `page.tsx`. `layout.tsx` is better for Sidebar user context if needed, but beware of unnecessary blocking.
-
-### Project Structure Alignment
-- **Routes**: `app/dashboard/` (Protected root)
-- **Components**: `components/dashboard/` (Specific dashboard widgets), `components/layout/` (Global app shell components)
-- **Lib**: `lib/supabase/` (Auth & DB clients)
-
-## Dev Agent Record
-
-### Agent Model Used
-
-Antigravity (Google DeepMind)
-
-### Debug Log References
-
-- Verified `middleware.ts` matches logic for payment redirects.
-- Fixed `TopNavigation` component test to target accessible name "TU" instead of alt text.
-
-### Completion Notes List
-
-- Implemented Dashboard Access Control via `middleware.ts` verification.
-- Validated App Shell Components (`SidebarNavigation`, `TopNavigation`) using Shadcn UI.
-- Validated Dashboard Home Page (`page.tsx`) with RLS-compliant data fetching.
-- Added comprehensive integration tests in `tests/integration/dashboard-access.test.ts`.
-- Added unit tests for dashboard components in `tests/components/dashboard-layout.test.tsx`.
-- All tests passing.
-
-### File List
-
-- app/dashboard/layout.tsx
-- app/dashboard/page.tsx
-- app/dashboard/loading.tsx
-- components/dashboard/sidebar-navigation.tsx
-- components/dashboard/top-navigation.tsx
-- tests/integration/dashboard-access.test.ts
-- tests/components/dashboard-layout.test.tsx
-- lib/supabase/get-current-user.ts
-- app/api/team/accept-invitation/route.test.ts
+- **Architecture**: Use Next.js App Router Layouts (`dashboard/layout.tsx`) to persist the shell across pages.
+- **Authentication**: Rely on Supabase Auth and existing `get-current-user` utility.
+- **Styling**: strictly use Tailwind CSS and Shadcn UI components.
+- **Performance**: Fetch data in parallel where possible. Use React Server Components for the main page to reduce client bundle size.
+- **Guardrails**: Do not expose any administrative or cross-organization data. strictly enforce RLS concepts even in code logic.

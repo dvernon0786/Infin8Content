@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createClient } from '@/lib/supabase/server'
+import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { AuditAction } from '@/types/audit'
 
 const cancelInvitationSchema = z.object({
   invitationId: z.string().uuid('Invalid invitation ID'),
@@ -59,6 +61,18 @@ export async function POST(request: Request) {
         { status: 500 }
       )
     }
+
+    // Log audit event for compliance
+    logActionAsync({
+      orgId: currentUser.org_id,
+      userId: currentUser.id,
+      action: AuditAction.TEAM_INVITATION_REVOKED,
+      details: {
+        invitationId,
+      },
+      ipAddress: extractIpAddress(request.headers),
+      userAgent: extractUserAgent(request.headers),
+    })
 
     return NextResponse.json({
       success: true,

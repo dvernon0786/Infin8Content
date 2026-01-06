@@ -53,9 +53,8 @@ development_status:
   1-10-team-member-invites-and-role-assignments: done
   1-11-row-level-security-rls-policies-implementation: done
   1-12-basic-dashboard-access-after-payment: done
-  1-13-audit-logging-for-compliance: backlog
+  1-13-audit-logging-for-compliance: done
   epic-1-retrospective: optional
-
   epic-2: backlog
   2-1-dashboard-layout-foundation-and-navigation-structure: backlog
   2-2-persona-specific-default-dashboard-views: backlog

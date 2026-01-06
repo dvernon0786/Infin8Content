@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createClient } from '@/lib/supabase/server'
 import { sendRoleChangeEmail } from '@/lib/services/team-notifications'
+import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { AuditAction } from '@/types/audit'
 
 const updateRoleSchema = z.object({
   userId: z.string().uuid('Invalid user ID'),
@@ -109,6 +111,21 @@ export async function POST(request: Request) {
       console.error('Failed to send role change email:', emailError)
       // Don't fail the request if email fails
     }
+
+    // Log audit event for compliance
+    logActionAsync({
+      orgId: currentUser.org_id,
+      userId: currentUser.id,
+      action: AuditAction.ROLE_CHANGED,
+      details: {
+        targetUserId: userId,
+        targetUserEmail: targetUser.email,
+        oldRole,
+        newRole: role,
+      },
+      ipAddress: extractIpAddress(request.headers),
+      userAgent: extractUserAgent(request.headers),
+    })
 
     return NextResponse.json({
       success: true,

@@ -4,6 +4,8 @@ import { stripe } from '@/lib/stripe/server'
 import { retryWithBackoff } from '@/lib/stripe/retry'
 import { NextResponse } from 'next/server'
 import { sendPaymentFailureEmail, sendPaymentReactivationEmail } from '@/lib/services/payment-notifications'
+import { logActionAsync } from '@/lib/services/audit-logger'
+import { AuditAction } from '@/types/audit'
 
 // Required for webhooks - must use Node.js runtime for raw body access
 export const runtime = 'nodejs'
@@ -49,10 +51,10 @@ export async function POST(request: Request) {
     if (!STRIPE_WEBHOOK_SECRET) {
       throw new Error('STRIPE_WEBHOOK_SECRET is required')
     }
-    
+
     // Get raw body as string (required for signature verification)
     const body = await request.text()
-    
+
     // Get signature from headers
     const signature = request.headers.get('stripe-signature')
     if (!signature) {
@@ -136,7 +138,7 @@ export async function POST(request: Request) {
         requiresManualIntervention: true,
         action: 'MANUAL_INTERVENTION_REQUIRED',
       })
-      
+
       // Store event even on failure for monitoring (with error flag)
       try {
         await storeWebhookEvent(event, supabase, null)
@@ -183,8 +185,8 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   if (!orgId || !plan) {
     const error = new Error('Missing required metadata in checkout session')
     logWebhookError(event, 'Checkout session validation failed', error, { orgId, plan })
-    // Mark as non-retryable (permanent error)
-    ;(error as any).retryable = false
+      // Mark as non-retryable (permanent error)
+      ; (error as any).retryable = false
     throw error
   }
 
@@ -197,8 +199,8 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
 
   if (orgCheckError || !organization) {
     const error = new Error(`Organization not found: ${orgId}`)
-    logWebhookError(event, 'Organization not found', error, { 
-      orgId, 
+    logWebhookError(event, 'Organization not found', error, {
+      orgId,
       error: orgCheckError,
       warning: 'Organization may not exist yet - webhook received before organization creation',
       action: 'MONITOR_AND_RETRY',
@@ -214,8 +216,8 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
       alertLevel: 'WARNING',
       recommendation: 'Check if organization creation is delayed or if org_id in metadata is incorrect',
     })
-    // Mark as retryable - organization may be created later
-    ;(error as any).retryable = true
+      // Mark as retryable - organization may be created later
+      ; (error as any).retryable = true
     throw error
   }
 
@@ -247,8 +249,8 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
       orgId,
       plan,
     })
-    // Database errors are retryable
-    ;(updateError as any).retryable = true
+      // Database errors are retryable
+      ; (updateError as any).retryable = true
     throw updateError
   }
 
@@ -287,6 +289,19 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   // Store processed event in stripe_webhook_events table
   await storeWebhookEvent(event, supabase, orgId)
 
+  // Log audit event for compliance
+  logActionAsync({
+    orgId,
+    action: AuditAction.BILLING_SUBSCRIPTION_CREATED,
+    details: {
+      plan,
+      billingFrequency,
+      subscriptionId: session.subscription,
+      customerId: session.customer,
+      isReactivation,
+    },
+  })
+
   logWebhookEvent(event, isReactivation ? 'Payment confirmed - account reactivated' : 'Payment confirmed', {
     orgId,
     plan,
@@ -319,6 +334,17 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
       subscriptionId: subscription.id,
       status: subscription.status,
     })
+
+    // Log audit event for compliance
+    logActionAsync({
+      orgId: organization.id,
+      action: AuditAction.BILLING_SUBSCRIPTION_UPDATED,
+      details: {
+        subscriptionId: subscription.id,
+        status: subscription.status,
+      },
+    })
+
     await storeWebhookEvent(event, supabase, organization.id)
   } else {
     // Organization not found - log warning but don't fail (subscription may be orphaned)
@@ -368,8 +394,8 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
         organizationId: organization.id,
         subscriptionId: subscription.id,
       })
-      // Database errors are retryable
-      ;(updateError as any).retryable = true
+        // Database errors are retryable
+        ; (updateError as any).retryable = true
       throw updateError
     }
 
@@ -405,6 +431,16 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
         })
       }
     }
+
+    // Log audit event for compliance
+    logActionAsync({
+      orgId: organization.id,
+      action: AuditAction.BILLING_SUBSCRIPTION_CANCELED,
+      details: {
+        subscriptionId: subscription.id,
+        previousStatus: organization.payment_status,
+      },
+    })
 
     await storeWebhookEvent(event, supabase, organization.id)
     logWebhookEvent(event, 'Subscription canceled', {
@@ -456,8 +492,8 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
           organizationId: organization.id,
           invoiceId: invoice.id,
         })
-        // Database errors are retryable
-        ;(updateError as any).retryable = true
+          // Database errors are retryable
+          ; (updateError as any).retryable = true
         throw updateError
       }
 
@@ -491,6 +527,18 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
           organizationId: organization.id,
         })
       }
+
+      // Log audit event for compliance
+      logActionAsync({
+        orgId: organization.id,
+        action: AuditAction.BILLING_PAYMENT_FAILED,
+        details: {
+          invoiceId: invoice.id,
+          amount: invoice.amount_due,
+          currency: invoice.currency,
+          previousStatus: organization.payment_status,
+        },
+      })
 
       await storeWebhookEvent(event, supabase, organization.id)
       logWebhookEvent(event, 'Payment failed - grace period started', {
@@ -562,8 +610,8 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
         organizationId: organization.id,
         invoiceId: invoice.id,
       })
-      // Database errors are retryable
-      ;(updateError as any).retryable = true
+        // Database errors are retryable
+        ; (updateError as any).retryable = true
       throw updateError
     }
 
@@ -598,6 +646,19 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
         })
       }
     }
+
+    // Log audit event for compliance
+    logActionAsync({
+      orgId: organization.id,
+      action: AuditAction.BILLING_PAYMENT_SUCCEEDED,
+      details: {
+        invoiceId: invoice.id,
+        amount: invoice.amount_paid,
+        currency: invoice.currency,
+        previousStatus: organization.payment_status,
+        isReactivation,
+      },
+    })
 
     await storeWebhookEvent(event, supabase, organization.id)
     logWebhookEvent(event, isReactivation ? 'Recurring payment succeeded - account reactivated' : 'Recurring payment succeeded', {

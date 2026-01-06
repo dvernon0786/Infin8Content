@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createClient } from '@/lib/supabase/server'
 import { sendTeamInvitationAcceptedEmail } from '@/lib/services/team-notifications'
+import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { AuditAction } from '@/types/audit'
 
 const acceptInvitationSchema = z.object({
   token: z.string().min(1, 'Invitation token is required'),
@@ -154,6 +156,20 @@ export async function POST(request: Request) {
         // Don't fail the request if email fails
       }
     }
+
+    // Log audit event for compliance
+    logActionAsync({
+      orgId: invitation.org_id,
+      userId: existingUser.id,
+      action: AuditAction.TEAM_INVITATION_ACCEPTED,
+      details: {
+        invitationId: invitation.id,
+        role: invitation.role,
+        memberEmail: existingUser.email,
+      },
+      ipAddress: extractIpAddress(request.headers),
+      userAgent: extractUserAgent(request.headers),
+    })
 
     return NextResponse.json({
       success: true,

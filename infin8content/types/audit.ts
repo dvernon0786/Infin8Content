@@ -1,0 +1,59 @@
+/**
+ * Audit logging types for compliance tracking
+ * Story 1.13: Audit Logging for Compliance
+ */
+
+/**
+ * Enum of all auditable actions in the system
+ * Using const object for type safety and autocompletion
+ */
+export const AuditAction = {
+    // Billing actions
+    BILLING_SUBSCRIPTION_CREATED: 'billing.subscription.created',
+    BILLING_SUBSCRIPTION_UPDATED: 'billing.subscription.updated',
+    BILLING_SUBSCRIPTION_CANCELED: 'billing.subscription.canceled',
+    BILLING_PAYMENT_SUCCEEDED: 'billing.payment.succeeded',
+    BILLING_PAYMENT_FAILED: 'billing.payment.failed',
+
+    // Team actions
+    TEAM_INVITATION_SENT: 'team.invitation.sent',
+    TEAM_INVITATION_ACCEPTED: 'team.invitation.accepted',
+    TEAM_INVITATION_REVOKED: 'team.invitation.revoked',
+    TEAM_MEMBER_REMOVED: 'team.member.removed',
+
+    // Role actions
+    ROLE_ASSIGNED: 'role.assigned',
+    ROLE_CHANGED: 'role.changed',
+
+    // Data actions
+    DATA_EXPORT_REQUESTED: 'data.export.requested',
+    ACCOUNT_DELETION_REQUESTED: 'account.deletion.requested',
+} as const;
+
+export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];
+
+/**
+ * Audit log entry structure
+ */
+export interface AuditLog {
+    id: string;
+    created_at: string;
+    org_id: string;
+    user_id: string | null;
+    action: AuditActionType;
+    details: Record<string, unknown>;
+    ip_address: string | null;
+    user_agent: string | null;
+}
+
+/**
+ * Parameters for creating an audit log entry
+ */
+export interface CreateAuditLogParams {
+    orgId: string;
+    userId?: string | null;
+    action: AuditActionType;
+    details?: Record<string, unknown>;
+    ipAddress?: string | null;
+    userAgent?: string | null;
+}

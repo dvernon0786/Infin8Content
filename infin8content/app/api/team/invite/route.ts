@@ -4,6 +4,8 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createClient } from '@/lib/supabase/server'
 import { randomUUID } from 'crypto'
 import { sendTeamInvitationEmail } from '@/lib/services/team-notifications'
+import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { AuditAction } from '@/types/audit'
 
 const inviteTeamMemberSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -109,6 +111,20 @@ export async function POST(request: Request) {
       console.error('Failed to send invitation email:', emailError)
       // Don't fail the request if email fails
     }
+
+    // Log audit event for compliance
+    logActionAsync({
+      orgId: currentUser.org_id,
+      userId: currentUser.id,
+      action: AuditAction.TEAM_INVITATION_SENT,
+      details: {
+        invitedEmail: email,
+        role,
+        invitationId: invitation.id,
+      },
+      ipAddress: extractIpAddress(request.headers),
+      userAgent: extractUserAgent(request.headers),
+    })
 
     return NextResponse.json({
       success: true,
