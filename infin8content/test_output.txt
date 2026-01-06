@@ -164,3 +164,112 @@
 
 [1m[42m PASS [49m[22m [32mWaiting for file changes...[39m
        [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+c[3J[1m[44m RERUN [49m[22m [34m[2mlib/supabase/get-current-user.ts [22m[39m
+       [2m Filename pattern: [22m[34mapp/api/team/resend-invitation/route.test.ts, app/api/team/invite/route.test.ts[39m
+
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Suites 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m app/api/team/invite/route.test.ts[2m [ app/api/team/invite/route.test.ts ][22m
+[41m[1m FAIL [22m[49m app/api/team/resend-invitation/route.test.ts[2m [ app/api/team/resend-invitation/route.test.ts ][22m
+[31m[1mError[22m: Transform failed with 1 error:
+/home/dghost/Infin8Content-1/infin8content/lib/supabase/get-current-user.ts:71:0: ERROR: Expected ")" but found end of file[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36m/home/dghost/Infin8Content-1/infin8content/lib/supabase/get-current-user.ts[39m:71:0
+[33m  
+  Expected ")" but found end of file
+  69 |  }
+  70 |  
+  71 |  
+     |  ^
+  [39m
+[90m [2m❯[22m failureErrorWithLog node_modules/esbuild/lib/main.js:[2m1467:15[22m[39m
+[90m [2m❯[22m node_modules/esbuild/lib/main.js:[2m736:50[22m[39m
+[90m [2m❯[22m responseCallbacks.<computed> node_modules/esbuild/lib/main.js:[2m603:9[22m[39m
+[90m [2m❯[22m handleIncomingPacket node_modules/esbuild/lib/main.js:[2m658:12[22m[39m
+[90m [2m❯[22m Socket.readFromStdout node_modules/esbuild/lib/main.js:[2m581:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m      Tests [22m [2mno tests[22m
+[2m   Start at [22m 17:35:45
+[2m   Duration [22m 1.82s
+
+[1m[41m FAIL [49m[22m [31mTests failed. Watching for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+c[3J[1m[44m RERUN [49m[22m [34m[2mlib/supabase/get-current-user.ts [22m[39m
+       [2m Filename pattern: [22m[34mapp/api/team/resend-invitation/route.test.ts, app/api/team/invite/route.test.ts[39m
+
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Suites 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m app/api/team/invite/route.test.ts[2m [ app/api/team/invite/route.test.ts ][22m
+[41m[1m FAIL [22m[49m app/api/team/resend-invitation/route.test.ts[2m [ app/api/team/resend-invitation/route.test.ts ][22m
+[31m[1mError[22m: Transform failed with 1 error:
+/home/dghost/Infin8Content-1/infin8content/lib/supabase/get-current-user.ts:72:0: ERROR: Expected ")" but found end of file[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36m/home/dghost/Infin8Content-1/infin8content/lib/supabase/get-current-user.ts[39m:72:0
+[33m  
+  Expected ")" but found end of file
+  70 |  }
+  71 |  
+  72 |  
+     |  ^
+  [39m
+[90m [2m❯[22m failureErrorWithLog node_modules/esbuild/lib/main.js:[2m1467:15[22m[39m
+[90m [2m❯[22m node_modules/esbuild/lib/main.js:[2m736:50[22m[39m
+[90m [2m❯[22m responseCallbacks.<computed> node_modules/esbuild/lib/main.js:[2m603:9[22m[39m
+[90m [2m❯[22m handleIncomingPacket node_modules/esbuild/lib/main.js:[2m658:12[22m[39m
+[90m [2m❯[22m Socket.readFromStdout node_modules/esbuild/lib/main.js:[2m581:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m      Tests [22m [2mno tests[22m
+[2m   Start at [22m 17:35:56
+[2m   Duration [22m 1.23s
+
+[1m[41m FAIL [49m[22m [31mTests failed. Watching for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+c[3J[1m[44m RERUN [49m[22m [34m[2mlib/supabase/get-current-user.ts [22m[39m
+       [2m Filename pattern: [22m[34mapp/api/team/resend-invitation/route.test.ts, app/api/team/invite/route.test.ts[39m
+
+[90mstderr[2m | app/api/team/resend-invitation/route.test.ts[2m > [22m[2mPOST /api/team/resend-invitation[2m > [22m[2mSuccessful Resend[2m > [22m[2mshould handle email sending failure gracefully
+[22m[39mFailed to send invitation email: Error: Email failed
+    at [90m/home/dghost/Infin8Content-1/infin8content/[39mapp/api/team/resend-invitation/route.test.ts:245:60
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:145:11
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:915:26
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1243:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1653:37
+    at Traces.$ [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
+    at trace [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+    at runTest [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1653:12[90m)[39m
+
+ [32m✓[39m app/api/team/resend-invitation/route.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 360[2mms[22m[39m
+[90mstderr[2m | app/api/team/invite/route.test.ts[2m > [22m[2mPOST /api/team/invite[2m > [22m[2mSuccessful Invitation[2m > [22m[2mshould handle email sending failure gracefully
+[22m[39mFailed to send invitation email: Error: Email failed
+    at [90m/home/dghost/Infin8Content-1/infin8content/[39mapp/api/team/invite/route.test.ts:297:60
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:145:11
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:915:26
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1243:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1653:37
+    at Traces.$ [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
+    at trace [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+    at runTest [90m(file:///home/dghost/Infin8Content-1/infin8content/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1653:12[90m)[39m
+
+ [32m✓[39m app/api/team/invite/route.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 445[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[32m17 passed[39m[22m[90m (17)[39m
+[2m   Start at [22m 17:36:18
+[2m   Duration [22m 10.32s
+
+[1m[42m PASS [49m[22m [32mWaiting for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
