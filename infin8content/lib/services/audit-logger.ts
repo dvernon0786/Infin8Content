@@ -44,7 +44,7 @@ export async function logAction(params: CreateAuditLogParams): Promise<void> {
                 org_id: orgId,
                 user_id: userId ?? null,
                 action,
-                details,
+                details: details as any,
                 ip_address: ipAddress ?? null,
                 user_agent: userAgent ?? null,
             });
