@@ -50,8 +50,8 @@ development_status:
   1-7-stripe-payment-integration-and-subscription-setup: done
   1-8-payment-first-access-control-paywall-implementation: done
   1-9-account-suspension-and-reactivation-workflow: done
-  1-10-team-member-invites-and-role-assignments: review
-  1-11-row-level-security-rls-policies-implementation: ready-for-dev
+  1-10-team-member-invites-and-role-assignments: done
+  1-11-row-level-security-rls-policies-implementation: done
   1-12-basic-dashboard-access-after-payment: review
   1-13-audit-logging-for-compliance: backlog
   epic-1-retrospective: optional

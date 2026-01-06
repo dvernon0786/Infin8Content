@@ -4,8 +4,6 @@ import dotenv from 'dotenv'
 
 dotenv.config({ path: '.env.local' })
 
-// Note: These tests require a running Supabase instance and valid env vars
-// If env vars are missing, skip these tests gracefully
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
