@@ -49,13 +49,15 @@ export async function POST(request: Request) {
     // Check usage limits before API call
     const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM format
     
-    const { data: usageData, error: usageError } = await supabaseAdmin
-      .from('usage_tracking')
+    // Type assertion needed until database types are regenerated after migration
+    // TODO: Remove type assertion after running: supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts
+    const { data: usageData, error: usageError } = await (supabaseAdmin
+      .from('usage_tracking' as any)
       .select('usage_count')
       .eq('organization_id', organizationId)
       .eq('metric_type', 'keyword_research')
       .eq('billing_period', currentMonth)
-      .single()
+      .single() as unknown as Promise<{ data: { usage_count: number } | null; error: any }>)
 
     if (usageError && usageError.code !== 'PGRST116') { // PGRST116 = no rows returned
       console.error('Failed to check usage limits:', usageError)
@@ -87,22 +89,24 @@ export async function POST(request: Request) {
     // Check cache for existing research (7-day TTL)
     // Normalize keyword for cache lookup (case-insensitive)
     const cacheKey = keyword!.toLowerCase().trim()
-    const { data: cachedResearch, error: cacheError } = await supabase
-      .from('keyword_researches')
+    // Type assertion needed until database types are regenerated after migration
+    const { data: cachedResearch, error: cacheError } = await (supabase
+      .from('keyword_researches' as any)
       .select('id, results, api_cost, cached_until')
       .eq('organization_id', organizationId)
       .eq('keyword', cacheKey) // Use direct equality since keyword is normalized
       .gt('cached_until', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
+      .single() as unknown as Promise<{ data: any; error: any }>)
 
     if (cachedResearch && !cacheError) {
       // Cache hit - update updated_at timestamp
-      const { error: updateError } = await supabase
-        .from('keyword_researches')
+      // Type assertion needed until database types are regenerated after migration
+      const { error: updateError } = await (supabase
+        .from('keyword_researches' as any)
         .update({ updated_at: new Date().toISOString() })
-        .eq('id', cachedResearch.id)
+        .eq('id', cachedResearch.id) as unknown as Promise<{ error: any }>)
 
       if (updateError) {
         console.warn('Failed to update cache timestamp:', updateError)
@@ -172,8 +176,9 @@ export async function POST(request: Request) {
     // Store keyword normalized (lowercase, trimmed) for consistent cache lookups
     const normalizedKeyword = keyword!.toLowerCase().trim()
 
-    const { error: insertError } = await supabase
-      .from('keyword_researches')
+    // Type assertion needed until database types are regenerated after migration
+    const { error: insertError } = await (supabase
+      .from('keyword_researches' as any)
       .insert({
         organization_id: organizationId,
         user_id: userId,
@@ -203,7 +208,7 @@ export async function POST(request: Request) {
         },
         api_cost: apiResponse.cost,
         cached_until: cachedUntil.toISOString(),
-      })
+      }) as unknown as Promise<{ error: any }>)
 
     if (insertError) {
       console.error('Failed to store keyword research:', insertError)
@@ -211,14 +216,15 @@ export async function POST(request: Request) {
     }
 
     // Track API cost (Epic 10.7)
-    const { error: costError } = await supabaseAdmin
-      .from('api_costs')
+    // Type assertion needed until database types are regenerated after migration
+    const { error: costError } = await (supabaseAdmin
+      .from('api_costs' as any)
       .insert({
         organization_id: organizationId,
         service: 'dataforseo',
         operation: 'keyword_research',
         cost: apiResponse.cost,
-      })
+      }) as unknown as Promise<{ error: any }>)
 
     if (costError) {
       console.error('Failed to track API cost:', costError)
@@ -226,8 +232,9 @@ export async function POST(request: Request) {
     }
 
     // Increment usage tracking (Epic 10.1)
-    const { error: usageUpdateError } = await supabaseAdmin
-      .from('usage_tracking')
+    // Type assertion needed until database types are regenerated after migration
+    const { error: usageUpdateError } = await (supabaseAdmin
+      .from('usage_tracking' as any)
       .upsert({
         organization_id: organizationId,
         metric_type: 'keyword_research',
@@ -236,7 +243,7 @@ export async function POST(request: Request) {
         last_updated: new Date().toISOString(),
       }, {
         onConflict: 'organization_id,metric_type,billing_period',
-      })
+      }) as unknown as Promise<{ error: any }>)
 
     if (usageUpdateError) {
       console.error('Failed to update usage tracking:', usageUpdateError)
