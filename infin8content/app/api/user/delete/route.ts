@@ -15,8 +15,8 @@ import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/servic
 import { AuditAction } from '@/types/audit'
 
 const deleteAccountSchema = z.object({
-    confirm: z.literal(true, {
-        errorMap: () => ({ message: 'Account deletion must be explicitly confirmed' }),
+    confirm: z.boolean().refine((val) => val === true, {
+        message: 'Account deletion must be explicitly confirmed',
     }),
 })
 
