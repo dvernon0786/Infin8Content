@@ -1,4 +1,4 @@
-# Test Summary - Story 1.9: Account Suspension and Reactivation Workflow
+# Test Summary - Story 1.8: Payment-First Access Control (Paywall Implementation)
 
 ## Test Execution Status
 

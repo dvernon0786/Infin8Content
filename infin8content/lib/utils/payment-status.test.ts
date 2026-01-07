@@ -95,7 +95,7 @@ describe('getPaymentAccessStatus', () => {
       expect(result).toBe('suspended')
     })
 
-    it('should return grace_period when past_due and grace_period_started_at is null (edge case)', () => {
+    it('should return suspended when past_due and grace_period_started_at is null (edge case)', () => {
       const org = {
         ...baseOrg,
         payment_status: 'past_due' as const,
@@ -103,7 +103,8 @@ describe('getPaymentAccessStatus', () => {
       } as Organization
 
       const result = getPaymentAccessStatus(org)
-      expect(result).toBe('grace_period')
+      // If payment failed but no grace period was started, account should be suspended
+      expect(result).toBe('suspended')
     })
   })
 

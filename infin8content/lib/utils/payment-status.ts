@@ -44,6 +44,11 @@ export function getPaymentAccessStatus(org: Organization): 'active' | 'grace_per
 
   // Past due - check if grace period expired
   if (paymentStatus === 'past_due') {
+    // If grace period not started (null), account should be suspended
+    // This handles edge cases where payment_status is 'past_due' but grace_period_started_at wasn't set
+    if (!gracePeriodStartedAt) {
+      return 'suspended' // No grace period started, account should be suspended
+    }
     const gracePeriodExpired = checkGracePeriodExpired(gracePeriodStartedAt)
     if (gracePeriodExpired) {
       return 'suspended' // Grace period expired, account should be suspended

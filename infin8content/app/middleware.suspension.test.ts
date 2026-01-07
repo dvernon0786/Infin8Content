@@ -238,8 +238,10 @@ describe('Middleware Suspension Flow Integration Tests', () => {
       }
 
       // Mock update query for suspension
+      // Chain: update().eq().is() - is() returns the final result
       const mockUpdateQuery = {
-        eq: vi.fn().mockResolvedValue({
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockResolvedValue({
           error: null,
         }),
       }
@@ -351,6 +353,91 @@ describe('Middleware Suspension Flow Integration Tests', () => {
 
       // Then: Suspension email should NOT be sent (account already suspended)
       expect(sendSuspensionEmail).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Edge Case: past_due with null grace_period_started_at', () => {
+    it('should immediately suspend account and send email when past_due has null grace_period_started_at', async () => {
+      // Given: Account is past_due but grace_period_started_at is null (edge case)
+      const mockUser = { id: 'auth-user-id', email: 'test@example.com' }
+      const mockUserRecord = {
+        id: 'user-id',
+        email: 'test@example.com',
+        role: 'user',
+        org_id: 'org-id',
+        otp_verified: true,
+      }
+      const mockOrg = {
+        id: 'org-id',
+        payment_status: 'past_due',
+        grace_period_started_at: null, // Edge case: null grace period
+        suspended_at: null,
+      }
+
+      mockSupabase.auth.getUser.mockResolvedValue({
+        data: { user: mockUser },
+        error: null,
+      })
+
+      const mockUsersQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockUserRecord,
+          error: null,
+        }),
+      }
+
+      const mockOrgsQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockOrg,
+          error: null,
+        }),
+      }
+
+      // Mock update query for suspension (edge case path)
+      const mockUpdateQueryEdgeCase = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockResolvedValue({
+          error: null,
+        }),
+      }
+
+      // Mock user email query for suspension email
+      const mockUserEmailQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: { email: 'test@example.com' },
+          error: null,
+        }),
+      }
+
+      mockSupabase.from
+        .mockReturnValueOnce(mockUsersQuery) // users query (OTP check)
+        .mockReturnValueOnce(mockOrgsQuery) // organizations query (payment status)
+        .mockReturnValueOnce({ update: vi.fn().mockReturnValue(mockUpdateQueryEdgeCase) }) // update suspension (edge case)
+        .mockReturnValueOnce(mockUserEmailQuery) // users query (email)
+
+      vi.mocked(sendSuspensionEmail).mockResolvedValue(undefined)
+
+      mockRequest = new NextRequest('http://localhost:3000/dashboard', {
+        method: 'GET',
+      })
+
+      // When: Middleware processes request
+      const response = await middleware(mockRequest)
+
+      // Then: Account should be suspended and email sent
+      expect(response.status).toBe(307) // Redirect status
+      expect(response.headers.get('location')).toContain('/suspended')
+      expect(sendSuspensionEmail).toHaveBeenCalledWith({
+        to: 'test@example.com',
+        userName: undefined,
+        suspensionDate: expect.any(Date),
+      })
     })
   })
 

@@ -111,99 +111,193 @@ export async function middleware(request: NextRequest) {
 
     if (org) {
       // Check if grace period expired for past_due accounts
-      if (org.payment_status === 'past_due' && org.grace_period_started_at) {
-        const gracePeriodExpired = checkGracePeriodExpired(
-          org.grace_period_started_at ? new Date(org.grace_period_started_at) : null
-        );
-
-        if (gracePeriodExpired) {
-          // Grace period expired - update to suspended status
+      // Also handle edge case: past_due with null grace_period_started_at should be suspended
+      if (org.payment_status === 'past_due') {
+        // Edge case: past_due but no grace period started - should be suspended immediately
+        if (!org.grace_period_started_at) {
+          // Account is past_due but grace period never started - update to suspended
+          const wasAlreadySuspended = org.suspended_at !== null;
           const suspendedAt = new Date().toISOString();
-          const { error: updateError } = await supabase
-            .from('organizations')
-            .update({
-              payment_status: 'suspended',
-              suspended_at: suspendedAt,
-            })
-            .eq('id', userRecord.org_id);
+          
+          if (!wasAlreadySuspended) {
+            const { error: updateError } = await supabase
+              .from('organizations')
+              .update({
+                payment_status: 'suspended',
+                suspended_at: suspendedAt,
+              })
+              .eq('id', userRecord.org_id)
+              .is('suspended_at', null);
 
-          if (updateError) {
-            // Log error but still redirect - security is more important than perfect state
-            console.error('Failed to update organization to suspended status after grace period expiration:', {
-              orgId: userRecord.org_id,
-              error: updateError,
-              timestamp: new Date().toISOString(),
-            })
-            // Continue to redirect even if update failed - user should still be blocked
-          } else {
-            // Send suspension email (non-blocking - log errors but don't fail redirect)
-            // Idempotency: Only send email if suspended_at was just set (not already suspended)
-            try {
-              // Query user record to get email and name
-              const { data: user, error: userQueryError } = await supabase
-                .from('users')
-                .select('email')
-                .eq('id', userRecord.id)
-                .single();
-
-              if (userQueryError) {
-                console.error('Failed to query user for suspension email:', {
-                  orgId: userRecord.org_id,
-                  userId: userRecord.id,
-                  error: userQueryError.message,
-                  timestamp: new Date().toISOString(),
-                });
-              } else if (user?.email) {
-                // Idempotency check: Only send email if this is a new suspension
-                // (suspended_at was just set in the update above)
-                // We check if suspended_at matches the timestamp we just set
-                const { data: updatedOrg } = await supabase
-                  .from('organizations')
-                  .select('suspended_at')
-                  .eq('id', userRecord.org_id)
+            if (updateError) {
+              console.error('Failed to update organization to suspended status (past_due with null grace_period_started_at):', {
+                orgId: userRecord.org_id,
+                error: updateError,
+                timestamp: new Date().toISOString(),
+              });
+            } else {
+              // Send suspension email for this edge case (non-blocking)
+              try {
+                const { data: user } = await supabase
+                  .from('users')
+                  .select('email')
+                  .eq('id', userRecord.id)
                   .single();
 
-                // Only send email if suspended_at matches what we just set (within 1 second tolerance)
-                const timeDiff = updatedOrg?.suspended_at
-                  ? Math.abs(new Date(updatedOrg.suspended_at).getTime() - new Date(suspendedAt).getTime())
-                  : Infinity;
-
-                if (timeDiff < 1000) {
-                  // Suspension was just set - send email
+                if (user?.email) {
                   await sendSuspensionEmail({
                     to: user.email,
                     userName: undefined,
                     suspensionDate: new Date(suspendedAt),
                   });
-                  console.log('Suspension email sent successfully:', {
+                  console.log('Suspension email sent (past_due with null grace_period_started_at):', {
                     orgId: userRecord.org_id,
                     email: user.email,
-                    timestamp: new Date().toISOString(),
-                  });
-                } else {
-                  // Account was already suspended - email was likely already sent
-                  console.log('Suspension email skipped (account already suspended):', {
-                    orgId: userRecord.org_id,
-                    email: user.email,
-                    existingSuspendedAt: updatedOrg?.suspended_at,
                     timestamp: new Date().toISOString(),
                   });
                 }
-              } else {
-                console.warn('User email not found for suspension notification:', {
+              } catch (emailError) {
+                console.error('Failed to send suspension email (non-blocking):', {
                   orgId: userRecord.org_id,
-                  userId: userRecord.id,
+                  error: emailError instanceof Error ? emailError.message : String(emailError),
                   timestamp: new Date().toISOString(),
                 });
               }
-            } catch (emailError) {
-              // Email failures are non-blocking - log but don't fail suspension redirect
-              console.error('Failed to send suspension email (non-blocking):', {
-                orgId: userRecord.org_id,
-                error: emailError instanceof Error ? emailError.message : String(emailError),
-                timestamp: new Date().toISOString(),
-              });
             }
+          }
+          
+          // Redirect to suspension page
+          const suspendedUrl = new URL('/suspended', request.url);
+          suspendedUrl.searchParams.set('redirect', request.nextUrl.pathname);
+          return NextResponse.redirect(suspendedUrl);
+        }
+        
+        // Normal case: past_due with grace_period_started_at - check if expired
+        const gracePeriodExpired = checkGracePeriodExpired(
+          new Date(org.grace_period_started_at)
+        );
+
+        if (gracePeriodExpired) {
+          // Grace period expired - update to suspended status
+          // Idempotency: Only update if not already suspended to prevent race conditions
+          const wasAlreadySuspended = org.suspended_at !== null;
+          const suspendedAt = new Date().toISOString();
+          
+          // Only update if not already suspended (prevents duplicate updates and emails)
+          if (!wasAlreadySuspended) {
+            const { error: updateError } = await supabase
+              .from('organizations')
+              .update({
+                payment_status: 'suspended',
+                suspended_at: suspendedAt,
+              })
+              .eq('id', userRecord.org_id)
+              .is('suspended_at', null); // Additional idempotency: only update if suspended_at is null
+
+            if (updateError) {
+              // Log error but still redirect - security is more important than perfect state
+              console.error('Failed to update organization to suspended status after grace period expiration:', {
+                orgId: userRecord.org_id,
+                error: updateError,
+                timestamp: new Date().toISOString(),
+              })
+              // Continue to redirect even if update failed - user should still be blocked
+            } else {
+              // Send suspension email (non-blocking - log errors but don't fail redirect)
+              // Idempotency: Only send email if this is a new suspension (wasAlreadySuspended was false)
+              try {
+                // Query user record to get email and name
+                const { data: user, error: userQueryError } = await supabase
+                  .from('users')
+                  .select('email')
+                  .eq('id', userRecord.id)
+                  .single();
+
+                if (userQueryError) {
+                  console.error('Failed to query user for suspension email:', {
+                    orgId: userRecord.org_id,
+                    userId: userRecord.id,
+                    error: userQueryError.message,
+                    timestamp: new Date().toISOString(),
+                  });
+                } else if (user?.email) {
+                  // Verify the update succeeded by checking suspended_at was actually set
+                  // This provides additional idempotency protection
+                  const { data: updatedOrg } = await supabase
+                    .from('organizations')
+                    .select('suspended_at')
+                    .eq('id', userRecord.org_id)
+                    .single();
+
+                  // Only send email if suspended_at was actually set (within 5 second window for safety)
+                  // This handles edge cases where another request updated it between our check and update
+                  if (updatedOrg?.suspended_at) {
+                    const timeDiff = Math.abs(
+                      new Date(updatedOrg.suspended_at).getTime() - new Date(suspendedAt).getTime()
+                    );
+                    
+                    if (timeDiff < 5000) {
+                      // Suspension was just set - send email
+                      await sendSuspensionEmail({
+                        to: user.email,
+                        userName: undefined,
+                        suspensionDate: new Date(suspendedAt),
+                      });
+                      console.log('Suspension email sent successfully:', {
+                        orgId: userRecord.org_id,
+                        email: user.email,
+                        timestamp: new Date().toISOString(),
+                      });
+                    } else {
+                      // Suspension timestamp doesn't match - another request likely updated it
+                      console.log('Suspension email skipped (suspension timestamp mismatch):', {
+                        orgId: userRecord.org_id,
+                        email: user.email,
+                        expectedSuspendedAt: suspendedAt,
+                        actualSuspendedAt: updatedOrg.suspended_at,
+                        timestamp: new Date().toISOString(),
+                      });
+                    }
+                  } else {
+                    // Suspension wasn't set - update may have failed or been overwritten
+                    console.warn('Suspension email skipped (suspended_at not set):', {
+                      orgId: userRecord.org_id,
+                      email: user.email,
+                      timestamp: new Date().toISOString(),
+                    });
+                  }
+                } else {
+                  console.warn('User email not found for suspension notification:', {
+                    orgId: userRecord.org_id,
+                    userId: userRecord.id,
+                    timestamp: new Date().toISOString(),
+                  });
+                }
+              } catch (emailError) {
+                // Email failures are non-blocking - log but don't fail suspension redirect
+                // Fallback: User will see suspension page message when they try to access the site
+                // TODO: In production, consider adding a background job to retry failed emails
+                // or store email_sent flag in database for monitoring
+                console.error('Failed to send suspension email (non-blocking):', {
+                  orgId: userRecord.org_id,
+                  userId: userRecord.id,
+                  email: user?.email || 'unknown',
+                  error: emailError instanceof Error ? emailError.message : String(emailError),
+                  errorStack: emailError instanceof Error ? emailError.stack : undefined,
+                  timestamp: new Date().toISOString(),
+                  action: 'MONITOR_EMAIL_FAILURES',
+                  note: 'User will see suspension page message as fallback notification',
+                });
+                // TODO: Consider integrating with error tracking service (e.g., Sentry) in production
+              }
+            }
+          } else {
+            // Account was already suspended - skip update and email
+            console.log('Suspension skipped (account already suspended):', {
+              orgId: userRecord.org_id,
+              existingSuspendedAt: org.suspended_at,
+              timestamp: new Date().toISOString(),
+            });
           }
 
           // Redirect to suspension page (preserve original destination for post-reactivation redirect)

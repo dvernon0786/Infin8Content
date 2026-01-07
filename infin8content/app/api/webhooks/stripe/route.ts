@@ -478,15 +478,26 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
     .single()
 
   if (organization) {
-    // Only process if payment_status is 'active' (not already in grace period)
-    if (organization.payment_status === 'active') {
-      // Update payment status to 'past_due' and start grace period
+    // Process payment failure: reset grace period if already past_due, or start grace period if active
+    const shouldProcessFailure = organization.payment_status === 'active' || organization.payment_status === 'past_due'
+    
+    if (shouldProcessFailure) {
+      // Update payment status to 'past_due' and reset/start grace period
+      // This ensures repeated payment failures reset the grace period clock
+      const updateData: any = {
+        payment_status: 'past_due',
+        grace_period_started_at: new Date().toISOString(),
+      }
+      
+      // If account was suspended, clear suspension when new payment failure occurs
+      // This allows users to retry payment even after suspension
+      if (organization.payment_status === 'suspended') {
+        updateData.suspended_at = null
+      }
+
       const { error: updateError } = await supabase
         .from('organizations')
-        .update({
-          payment_status: 'past_due',
-          grace_period_started_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', organization.id)
 
       if (updateError) {
@@ -500,33 +511,44 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
       }
 
       // Send payment failure email (non-blocking - log errors but don't fail webhook)
-      try {
-        // Get user email from users table for this organization
-        const { data: ownerUser } = await supabase
-          .from('users')
-          .select('email')
-          .eq('org_id', organization.id)
-          .eq('role', 'owner')
-          .single()
+      // Only send if transitioning from 'active' to avoid spam for repeated failures
+      const isNewFailure = organization.payment_status === 'active'
+      if (isNewFailure) {
+        try {
+          // Get user email from users table for this organization
+          const { data: ownerUser } = await supabase
+            .from('users')
+            .select('email')
+            .eq('org_id', organization.id)
+            .eq('role', 'owner')
+            .single()
 
-        if (ownerUser?.email) {
-          await sendPaymentFailureEmail({
-            to: ownerUser.email,
-            gracePeriodDays: 7,
-          })
-          logWebhookEvent(event, 'Payment failure email sent', {
-            organizationId: organization.id,
-            email: ownerUser.email,
-          })
-        } else {
-          logWebhookError(event, 'Owner user not found for payment failure email', null, {
+          if (ownerUser?.email) {
+            await sendPaymentFailureEmail({
+              to: ownerUser.email,
+              gracePeriodDays: 7,
+            })
+            logWebhookEvent(event, 'Payment failure email sent', {
+              organizationId: organization.id,
+              email: ownerUser.email,
+            })
+          } else {
+            logWebhookError(event, 'Owner user not found for payment failure email', null, {
+              organizationId: organization.id,
+            })
+          }
+        } catch (emailError) {
+          // Email failures are non-blocking - log but don't fail webhook processing
+          logWebhookError(event, 'Failed to send payment failure email (non-blocking)', emailError, {
             organizationId: organization.id,
           })
         }
-      } catch (emailError) {
-        // Email failures are non-blocking - log but don't fail webhook processing
-        logWebhookError(event, 'Failed to send payment failure email (non-blocking)', emailError, {
+      } else {
+        // Repeated failure - grace period reset but no email (already notified)
+        logWebhookEvent(event, 'Payment failed - grace period reset (repeated failure)', {
           organizationId: organization.id,
+          invoiceId: invoice.id,
+          previousStatus: organization.payment_status,
         })
       }
 
@@ -539,11 +561,12 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
           amount: invoice.amount_due,
           currency: invoice.currency,
           previousStatus: organization.payment_status,
+          gracePeriodReset: organization.payment_status === 'past_due',
         },
       })
 
       await storeWebhookEvent(event, supabase, organization.id)
-      logWebhookEvent(event, 'Payment failed - grace period started', {
+      logWebhookEvent(event, 'Payment failed - grace period started/reset', {
         organizationId: organization.id,
         invoiceId: invoice.id,
         amount: invoice.amount_due,
@@ -551,8 +574,8 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
         previousStatus: organization.payment_status,
       })
     } else {
-      // Payment status is already 'past_due' or other status - just log and store
-      logWebhookEvent(event, 'Payment failed (already in grace period or other status)', {
+      // Payment status is 'canceled' or 'suspended' (non-recoverable states) - just log and store
+      logWebhookEvent(event, 'Payment failed (non-recoverable status)', {
         organizationId: organization.id,
         invoiceId: invoice.id,
         currentStatus: organization.payment_status,

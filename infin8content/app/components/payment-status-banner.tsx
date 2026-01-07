@@ -19,9 +19,12 @@ interface PaymentStatusBannerProps {
  */
 export default function PaymentStatusBanner({ organization }: PaymentStatusBannerProps) {
   const router = useRouter()
-  const [gracePeriodDaysRemaining, setGracePeriodDaysRemaining] = useState<number | null>(null)
+  const [gracePeriodDaysRemaining, setGracePeriodDaysRemaining] = useState<number | null>(null) // Explicitly initialized as null
 
   // Calculate grace period days remaining
+  // Note: This uses client-side Date.now() for display purposes only.
+  // Actual grace period enforcement happens server-side in middleware.
+  // TODO: Consider fetching server-side calculated value for production to prevent client manipulation
   useEffect(() => {
     if (organization.payment_status === 'past_due' && organization.grace_period_started_at) {
       const gracePeriodStart = new Date(organization.grace_period_started_at).getTime()
