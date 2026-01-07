@@ -220,7 +220,7 @@
 ## Log
 - 2026-01-07T23:57:31+11:00: Story 3.1 code review complete - all critical, high, and medium issues fixed. All 29 tests passing. Re-review approved. Ready for deployment after database types regeneration.
 - 2026-01-07T23:57:54+11:00: Fixed TypeScript build error by adding type assertions for new database tables (usage_tracking, api_costs, keyword_researches). Build now passes. Temporary workaround until database types are regenerated.
-- 2026-01-08T00:05:00+11:00: Updated Research page to show feature cards with navigation to Keyword Research (replaced Coming Soon placeholder). Users can now access keyword research from Research overview page.
-- 2026-01-08T00:05:00+11:00: Removed API Cost display from keyword research page per user request. API cost still tracked in backend but no longer shown in UI.
+- 2026-01-08T00:13:44+11:00: Updated Research page to show feature cards with navigation to Keyword Research (replaced Coming Soon placeholder). Users can now access keyword research from Research overview page.
+- 2026-01-08T00:13:44+11:00: Removed API Cost display from keyword research page per user request. API cost still tracked in backend but no longer shown in UI.
 
 
