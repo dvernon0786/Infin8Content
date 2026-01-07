@@ -62,8 +62,8 @@ export function SidebarNavigation() {
                             {items.map((item) => (
                                 <SidebarMenuItem key={item.title}>
                                     <SidebarMenuButton asChild isActive={pathname.startsWith(item.url)}>
-                                        <Link href={item.url}>
-                                            <item.icon />
+                                        <Link href={item.url} aria-label={`Navigate to ${item.title}`}>
+                                            <item.icon aria-hidden="true" />
                                             <span>{item.title}</span>
                                         </Link>
                                     </SidebarMenuButton>

@@ -52,6 +52,19 @@ describe('Dashboard Component Tests - Story 1.12', () => {
     })
 
     describe('TopNavigation', () => {
+        it('renders Application Logo linking to dashboard', () => {
+            render(
+                <SidebarProvider>
+                    <TopNavigation email="test@example.com" name="Test User" />
+                </SidebarProvider>
+            )
+
+            // AC 4: Application Logo (link to dashboard root)
+            const logoLink = screen.getByRole('link', { name: /Infin8Content.*Go to dashboard/i })
+            expect(logoLink).toBeInTheDocument()
+            expect(logoLink).toHaveAttribute('href', '/dashboard')
+        })
+
         it('renders user name and email', () => {
             render(
                 <SidebarProvider>

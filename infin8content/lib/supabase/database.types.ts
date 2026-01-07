@@ -237,6 +237,7 @@ export interface Database {
                     auth_user_id: string | null
                     created_at: string
                     email: string
+                    first_name: string | null
                     id: string
                     org_id: string | null
                     otp_verified: boolean
@@ -246,6 +247,7 @@ export interface Database {
                     auth_user_id?: string | null
                     created_at?: string
                     email: string
+                    first_name?: string | null
                     id?: string
                     org_id?: string | null
                     otp_verified?: boolean
@@ -255,6 +257,7 @@ export interface Database {
                     auth_user_id?: string | null
                     created_at?: string
                     email?: string
+                    first_name?: string | null
                     id?: string
                     org_id?: string | null
                     otp_verified?: boolean

@@ -1,6 +1,7 @@
 "use client"
 
 import { LogOut, User } from "lucide-react"
+import Link from "next/link"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -30,8 +31,16 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
         : email.substring(0, 2).toUpperCase()
 
     return (
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-            <SidebarTrigger className="-ml-1" />
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+            <SidebarTrigger className="-ml-1 md:hidden" aria-label="Toggle sidebar menu" />
+            <Link 
+                href="/dashboard" 
+                className="flex items-center gap-2 font-semibold text-lg hover:opacity-80 transition-opacity"
+                aria-label="Infin8Content - Go to dashboard"
+            >
+                <span className="hidden md:inline">Infin8Content</span>
+                <span className="md:hidden">I8C</span>
+            </Link>
             <div className="flex-1" />
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>

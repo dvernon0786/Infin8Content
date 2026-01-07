@@ -21,7 +21,7 @@ export default async function DashboardLayout({
             <SidebarInset>
                 <TopNavigation
                     email={currentUser.email}
-                    name={currentUser.email.split('@')[0]}
+                    name={currentUser.first_name || currentUser.email.split('@')[0]}
                 />
                 <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
                     {children}

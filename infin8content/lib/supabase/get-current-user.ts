@@ -13,6 +13,7 @@ export interface CurrentUser {
   }
   id: string
   email: string
+  first_name: string | null
   role: string
   org_id: string | null
   organizations?: OrganizationRecord | null
@@ -35,7 +36,7 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
   // Query users table to get user record
   const { data: userRecord, error: userError } = await supabase
     .from('users')
-    .select('id, email, role, org_id')
+    .select('id, email, first_name, role, org_id')
     .eq('auth_user_id', user.id)
     .single()
 
@@ -63,6 +64,7 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
     },
     id: userRecord.id,
     email: userRecord.email,
+    first_name: userRecord.first_name,
     role: userRecord.role,
     org_id: userRecord.org_id,
     organizations: organization,
