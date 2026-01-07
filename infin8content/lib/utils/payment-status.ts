@@ -4,6 +4,7 @@
  */
 
 import type { Database } from '@/lib/supabase/database.types'
+import { GRACE_PERIOD_DURATION_MS } from '@/lib/config/payment'
 
 type Organization = Database['public']['Tables']['organizations']['Row']
 
@@ -21,9 +22,8 @@ export function checkGracePeriodExpired(gracePeriodStartedAt: Date | null): bool
 
   const now = Date.now()
   const gracePeriodStart = new Date(gracePeriodStartedAt).getTime()
-  const gracePeriodDurationMs = 7 * 24 * 60 * 60 * 1000 // 7 days in milliseconds
 
-  return (now - gracePeriodStart) > gracePeriodDurationMs
+  return (now - gracePeriodStart) > GRACE_PERIOD_DURATION_MS
 }
 
 /**

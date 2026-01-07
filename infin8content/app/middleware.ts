@@ -140,14 +140,14 @@ export async function middleware(request: NextRequest) {
               try {
                 const { data: user } = await supabase
                   .from('users')
-                  .select('email')
+                  .select('email, name')
                   .eq('id', userRecord.id)
                   .single();
 
                 if (user?.email) {
                   await sendSuspensionEmail({
                     to: user.email,
-                    userName: undefined,
+                    userName: user.name || undefined,
                     suspensionDate: new Date(suspendedAt),
                   });
                   console.log('Suspension email sent (past_due with null grace_period_started_at):', {
@@ -209,7 +209,7 @@ export async function middleware(request: NextRequest) {
                 // Query user record to get email and name
                 const { data: user, error: userQueryError } = await supabase
                   .from('users')
-                  .select('email')
+                  .select('email, name')
                   .eq('id', userRecord.id)
                   .single();
 
@@ -236,11 +236,11 @@ export async function middleware(request: NextRequest) {
                       new Date(updatedOrg.suspended_at).getTime() - new Date(suspendedAt).getTime()
                     );
                     
-                    if (timeDiff < 5000) {
-                      // Suspension was just set - send email
+                    if (timeDiff < 10000) {
+                      // Suspension was just set - send email (10 second window for safety)
                       await sendSuspensionEmail({
                         to: user.email,
-                        userName: undefined,
+                        userName: user.name || undefined,
                         suspensionDate: new Date(suspendedAt),
                       });
                       console.log('Suspension email sent successfully:', {

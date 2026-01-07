@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { validateRedirect } from '@/lib/utils/validate-redirect'
+import { GRACE_PERIOD_DURATION_MS, GRACE_PERIOD_DAYS } from '@/lib/config/payment'
 
 interface SuspensionMessageProps {
   redirectTo?: string
@@ -21,7 +23,7 @@ export default function SuspensionMessage({
   gracePeriodStartedAt
 }: SuspensionMessageProps) {
   const searchParams = useSearchParams()
-  const redirectParam = searchParams?.get('redirect') || redirectTo
+  const redirectParam = validateRedirect(searchParams?.get('redirect') || redirectTo, redirectTo)
   
   // Build payment URL with redirect parameter for post-reactivation redirect
   const paymentUrl = `/payment?suspended=true${redirectParam ? `&redirect=${encodeURIComponent(redirectParam)}` : ''}`
@@ -42,12 +44,12 @@ export default function SuspensionMessage({
   })
   
   useEffect(() => {
-    if (gracePeriodStartedAt) {
+    if (gracePeriodStartedAt && suspendedAt) {
+      // Calculate how many days were remaining when suspension occurred
       const gracePeriodStart = new Date(gracePeriodStartedAt).getTime()
-      const now = Date.now()
-      const gracePeriodDurationMs = 7 * 24 * 60 * 60 * 1000 // 7 days
-      const elapsed = now - gracePeriodStart
-      const remaining = gracePeriodDurationMs - elapsed
+      const suspensionTime = new Date(suspendedAt).getTime()
+      const elapsedAtSuspension = suspensionTime - gracePeriodStart
+      const remainingAtSuspension = GRACE_PERIOD_DURATION_MS - elapsedAtSuspension
       
       const formattedStartDate = new Date(gracePeriodStartedAt).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -55,12 +57,29 @@ export default function SuspensionMessage({
         day: 'numeric',
       })
       
+      // Only show if there was time remaining (should be 0 or negative, but handle edge cases)
+      const daysRemainingAtSuspension = remainingAtSuspension > 0 
+        ? Math.ceil(remainingAtSuspension / (24 * 60 * 60 * 1000)) 
+        : 0
+      
       setGracePeriodInfo({
-        daysRemaining: remaining > 0 ? Math.ceil(remaining / (24 * 60 * 60 * 1000)) : null,
+        daysRemaining: daysRemainingAtSuspension,
+        formattedStartDate,
+      })
+    } else if (gracePeriodStartedAt) {
+      // Fallback: if no suspension date, just show when grace period started
+      const formattedStartDate = new Date(gracePeriodStartedAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+      
+      setGracePeriodInfo({
+        daysRemaining: null,
         formattedStartDate,
       })
     }
-  }, [gracePeriodStartedAt])
+  }, [gracePeriodStartedAt, suspendedAt])
   
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 sm:px-6 lg:px-8" role="alert" aria-live="polite">
@@ -106,8 +125,8 @@ export default function SuspensionMessage({
                 <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
                   <p className="text-sm text-blue-700">
                     <strong>Grace Period Information:</strong> Your grace period started on {gracePeriodInfo.formattedStartDate}.
-                    {gracePeriodInfo.daysRemaining !== null && gracePeriodInfo.daysRemaining > 0 && (
-                      <> You had {gracePeriodInfo.daysRemaining} {gracePeriodInfo.daysRemaining === 1 ? 'day' : 'days'} remaining when the grace period expired.</>
+                    {suspendedAt && (
+                      <> Your account was suspended after the {GRACE_PERIOD_DAYS}-day grace period expired.</>
                     )}
                   </p>
                 </div>

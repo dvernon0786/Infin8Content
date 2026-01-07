@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import PaymentForm from './payment-form'
 import type { Database } from '@/lib/supabase/database.types'
 import { getPaymentAccessStatus } from '@/lib/utils/payment-status'
+import { validateRedirect } from '@/lib/utils/validate-redirect'
 
 type Organization = Database['public']['Tables']['organizations']['Row']
 
@@ -31,7 +32,7 @@ export default async function PaymentPage({
     const accessStatus = getPaymentAccessStatus(currentUser.organizations)
     if (accessStatus === 'active') {
       // Check for redirect parameter for post-reactivation redirect
-      const redirectTo = params?.redirect || '/dashboard'
+      const redirectTo = validateRedirect(params?.redirect, '/dashboard')
       redirect(redirectTo)
     }
   }
@@ -39,7 +40,7 @@ export default async function PaymentPage({
   // Pass suspended flag and suspension date to form component
   const isSuspended = params?.suspended === 'true'
   const suspendedAt = currentUser?.organizations?.suspended_at || null
-  const redirectTo = params?.redirect || '/dashboard'
+  const redirectTo = validateRedirect(params?.redirect, '/dashboard')
   
   return <PaymentForm isSuspended={isSuspended} suspendedAt={suspendedAt} redirectTo={redirectTo} />
 }

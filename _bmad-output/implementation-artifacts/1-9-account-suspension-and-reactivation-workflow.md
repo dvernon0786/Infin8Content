@@ -500,6 +500,8 @@ N/A
 - AC4: Grace period banner enhanced with countdown and prominent retry button ✅
 
 **Code Review Fixes Applied:**
+
+**Initial Implementation Fixes:**
 - Fixed suspension message to display grace period information and suspension date
 - Converted grace period banner Link to button with router.push() for better prominence
 - Added idempotency check for suspension email (only sends if suspension was just set)
@@ -507,6 +509,20 @@ N/A
 - Enhanced payment success page with reactivation-specific messaging
 - Added error handling for user email query failures in middleware
 - Improved suspension page redirect logic to handle reactivation case
+
+**Code Review Fixes (2026-01-07):**
+- **Fixed userName undefined in suspension email:** Updated middleware to query `name` field from users table and pass `userName: user.name || undefined` to `sendSuspensionEmail()` function (Issue #2)
+- **Fixed open redirect vulnerability:** Created `lib/utils/validate-redirect.ts` utility function to validate redirect URLs and prevent open redirect attacks. Applied validation to all redirect parameter usages in:
+  - `app/(auth)/suspended/page.tsx`
+  - `app/payment/page.tsx`
+  - `app/payment/success/page.tsx`
+  - `app/components/suspension-message.tsx` (Issue #7)
+- **Fixed grace period display logic:** Updated suspension message component to correctly calculate and display grace period information. Removed confusing "days remaining when expired" message and replaced with clearer "suspended after X-day grace period expired" message (Issue #8)
+- **Improved idempotency check:** Increased time window from 5 seconds to 10 seconds for suspension email idempotency check to handle edge cases better (Issue #3)
+- **Extracted grace period duration to config:** Created `lib/config/payment.ts` with `GRACE_PERIOD_DAYS` and `GRACE_PERIOD_DURATION_MS` constants. Updated all files to use centralized config:
+  - `lib/utils/payment-status.ts`
+  - `app/components/payment-status-banner.tsx`
+  - `app/components/suspension-message.tsx` (Issue #11)
 
 **Ready for Review:**
 - All tasks and subtasks completed
@@ -531,23 +547,25 @@ N/A
 - `tests/support/helpers/auth.ts` - Authentication helper functions for E2E tests
 - `tests/support/helpers/payment.ts` - Payment flow helper functions for E2E tests
 - `tests/README.md` - E2E test documentation
+- `lib/utils/validate-redirect.ts` - Redirect URL validation utility (Code Review Fix)
+- `lib/config/payment.ts` - Payment configuration constants (Code Review Fix)
 
 **Files Modified:**
-- `app/middleware.ts` - Updated suspended redirect to `/suspended`, added suspension email sending when grace period expires with idempotency check, added error handling for user email queries
-- `app/components/payment-status-banner.tsx` - Enhanced grace period button prominence (converted link to button with router.push())
-- `app/(auth)/suspended/page.tsx` - Enhanced to pass suspension date and grace period info to SuspensionMessage component, improved redirect logic
-- `app/components/suspension-message.tsx` - Enhanced to display suspension date and grace period information, added accessibility attributes
-- `app/payment/page.tsx` - Enhanced suspended account messaging with suspension date, added redirect parameter handling
+- `app/middleware.ts` - Updated suspended redirect to `/suspended`, added suspension email sending when grace period expires with idempotency check, added error handling for user email queries. **Code Review Fix:** Query `name` field for userName in suspension email, increased idempotency window to 10 seconds
+- `app/components/payment-status-banner.tsx` - Enhanced grace period button prominence (converted link to button with router.push()). **Code Review Fix:** Use `GRACE_PERIOD_DURATION_MS` and `GRACE_PERIOD_DAYS` from config
+- `app/(auth)/suspended/page.tsx` - Enhanced to pass suspension date and grace period info to SuspensionMessage component, improved redirect logic. **Code Review Fix:** Added redirect URL validation using `validateRedirect()` utility
+- `app/components/suspension-message.tsx` - Enhanced to display suspension date and grace period information, added accessibility attributes. **Code Review Fix:** Fixed grace period display logic, added redirect URL validation, use config constants
+- `app/payment/page.tsx` - Enhanced suspended account messaging with suspension date, added redirect parameter handling. **Code Review Fix:** Added redirect URL validation using `validateRedirect()` utility
 - `app/payment/payment-form.tsx` - Enhanced suspended messaging with suspension date, added redirect parameter support
 - `app/payment/success/payment-success-client.tsx` - Added reactivation-specific success messaging, added redirect parameter support for post-reactivation redirect
-- `app/payment/success/page.tsx` - Added redirect parameter extraction from session metadata, added reactivation detection
+- `app/payment/success/page.tsx` - Added redirect parameter extraction from session metadata, added reactivation detection. **Code Review Fix:** Added redirect URL validation using `validateRedirect()` utility
 - `app/api/auth/login/route.ts` - Updated suspended redirect to `/suspended`
 - `app/api/payment/create-checkout-session/route.ts` - Added redirect parameter and suspended flag to checkout session metadata
 - `lib/services/payment-notifications.ts` - Added `sendSuspensionEmail()` function with comprehensive tests
 - `lib/services/payment-notifications.test.ts` - Added unit tests for `sendSuspensionEmail()` function
 - `app/api/auth/login/route.test.ts` - Updated test to expect `/suspended` redirect instead of `/payment?suspended=true`
+- `lib/utils/payment-status.ts` - **Code Review Fix:** Use `GRACE_PERIOD_DURATION_MS` from config instead of hard-coded value
 
 **Files Reviewed (No Changes Made):**
 - `app/api/webhooks/stripe/route.ts` - Verified reactivation flow (already implemented in Story 1.8, works correctly)
-- `lib/utils/payment-status.ts` - Used existing utility (no changes needed)
 

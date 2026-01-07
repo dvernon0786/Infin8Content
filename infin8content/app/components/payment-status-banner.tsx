@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import type { Database } from '@/lib/supabase/database.types'
 import { getPaymentAccessStatus, checkGracePeriodExpired } from '@/lib/utils/payment-status'
+import { GRACE_PERIOD_DURATION_MS, GRACE_PERIOD_DAYS } from '@/lib/config/payment'
 
 type Organization = Database['public']['Tables']['organizations']['Row']
 
@@ -29,9 +30,8 @@ export default function PaymentStatusBanner({ organization }: PaymentStatusBanne
     if (organization.payment_status === 'past_due' && organization.grace_period_started_at) {
       const gracePeriodStart = new Date(organization.grace_period_started_at).getTime()
       const now = Date.now()
-      const gracePeriodDurationMs = 7 * 24 * 60 * 60 * 1000 // 7 days
       const elapsed = now - gracePeriodStart
-      const remaining = gracePeriodDurationMs - elapsed
+      const remaining = GRACE_PERIOD_DURATION_MS - elapsed
       
       if (remaining > 0) {
         const daysRemaining = Math.ceil(remaining / (24 * 60 * 60 * 1000))
@@ -75,7 +75,7 @@ export default function PaymentStatusBanner({ organization }: PaymentStatusBanne
             <div className="mt-2 text-sm text-yellow-700">
               <p>
                 Your payment could not be processed. You have{' '}
-                <strong>{gracePeriodDaysRemaining !== null ? gracePeriodDaysRemaining : '7'}</strong>{' '}
+                <strong>{gracePeriodDaysRemaining !== null ? gracePeriodDaysRemaining : GRACE_PERIOD_DAYS}</strong>{' '}
                 {gracePeriodDaysRemaining === 1 ? 'day' : 'days'} remaining to update your payment method
                 before your account is suspended.
               </p>

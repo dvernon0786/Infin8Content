@@ -4,6 +4,7 @@ import { stripe } from '@/lib/stripe/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import PaymentSuccessClient from './payment-success-client'
+import { validateRedirect } from '@/lib/utils/validate-redirect'
 
 interface PaymentSuccessPageProps {
   searchParams: Promise<{ session_id?: string }>
@@ -268,7 +269,7 @@ export default async function PaymentSuccessPage({
   // If payment is active, show success and redirect
   if (paymentStatus === 'active') {
     // Get redirect destination from session metadata (for post-reactivation redirect)
-    const redirectTo = session.metadata?.redirect || '/dashboard'
+    const redirectTo = validateRedirect(session.metadata?.redirect, '/dashboard')
     // Check if this was a reactivation (account was suspended before payment)
     const isReactivation = session.metadata?.suspended === 'true'
     return (

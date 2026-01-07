@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { redirect } from 'next/navigation'
 import SuspensionMessage from '@/app/components/suspension-message'
 import { getPaymentAccessStatus } from '@/lib/utils/payment-status'
+import { validateRedirect } from '@/lib/utils/validate-redirect'
 
 export default async function SuspendedPage({
   searchParams,
@@ -30,7 +31,7 @@ export default async function SuspendedPage({
     
     if (accessStatus === 'active') {
       // Payment active - redirect to dashboard (account was reactivated)
-      const redirectTo = params?.redirect || '/dashboard'
+      const redirectTo = validateRedirect(params?.redirect, '/dashboard')
       redirect(redirectTo)
     } else if (accessStatus === 'grace_period') {
       // Grace period active - redirect to dashboard (will show banner)
@@ -44,7 +45,7 @@ export default async function SuspendedPage({
   }
   
   // Get redirect destination from query params (for post-reactivation redirect)
-  const redirectTo = params?.redirect || '/dashboard'
+  const redirectTo = validateRedirect(params?.redirect, '/dashboard')
   
   // Get suspension date and grace period info from organization
   const suspendedAt = currentUser?.organizations?.suspended_at || null
