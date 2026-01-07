@@ -1,15 +1,16 @@
 import { serve } from 'inngest/next'
 import { generateArticle } from '@/lib/inngest/functions/generate-article'
+import { inngest } from '@/lib/inngest/client'
 import { NextResponse } from 'next/server'
 
 // Validate environment variables at runtime (not build time)
-const clientId = process.env.INNGEST_EVENT_KEY
+const eventKey = process.env.INNGEST_EVENT_KEY
 const signingKey = process.env.INNGEST_SIGNING_KEY
 
 // Create handlers only if env vars are set
-const handlers = clientId
+const handlers = eventKey
   ? serve({
-      clientId,
+      client: inngest,
       signingKey,
       functions: [generateArticle],
     })
