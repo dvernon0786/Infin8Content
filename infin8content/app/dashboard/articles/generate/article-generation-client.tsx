@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { ArticleGenerationForm } from '@/components/articles/article-generation-form'
 import { ArticleQueueStatus } from '@/components/articles/article-queue-status'
@@ -13,7 +13,17 @@ interface ArticleGenerationPageClientProps {
 
 export function ArticleGenerationPageClient({ organizationId }: ArticleGenerationPageClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
+  const [initialKeyword, setInitialKeyword] = useState<string>('')
+
+  // Read keyword from URL params (for contextual link from keyword research)
+  useEffect(() => {
+    const keywordParam = searchParams.get('keyword')
+    if (keywordParam) {
+      setInitialKeyword(decodeURIComponent(keywordParam))
+    }
+  }, [searchParams])
   const [error, setError] = useState<string | null>(null)
   const [usageInfo, setUsageInfo] = useState<{ current: number; limit: number | null } | null>(null)
 
@@ -86,6 +96,7 @@ export function ArticleGenerationPageClient({ organizationId }: ArticleGeneratio
             onGenerate={handleGenerate}
             isLoading={isLoading}
             error={error}
+            initialKeyword={initialKeyword}
           />
         </CardContent>
       </Card>

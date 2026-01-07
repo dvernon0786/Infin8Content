@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { KeywordResearchForm } from '@/components/research/keyword-research-form'
 import { KeywordResultsTable, type KeywordResult } from '@/components/research/keyword-results-table'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Plus } from 'lucide-react'
 
 interface KeywordResearchResponse {
   success: boolean
@@ -29,10 +30,12 @@ interface KeywordResearchResponse {
 }
 
 export function KeywordResearchPageClient() {
+  const router = useRouter()
   const [results, setResults] = useState<KeywordResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [usageInfo, setUsageInfo] = useState<{ current: number; limit: number | null } | null>(null)
+  const [lastResearchedKeyword, setLastResearchedKeyword] = useState<string | null>(null)
 
   const handleResearch = async (keyword: string) => {
     setIsLoading(true)
@@ -71,6 +74,7 @@ export function KeywordResearchPageClient() {
       if (data.data) {
         setResults(data.data.results)
         setUsageInfo(data.data.usage)
+        setLastResearchedKeyword(keyword)
         setError(null)
       }
     } catch (err) {
@@ -153,6 +157,29 @@ export function KeywordResearchPageClient() {
 
       {/* Results Table */}
       <KeywordResultsTable results={results} isLoading={isLoading} />
+
+      {/* Create Article Button - Contextual action from research results */}
+      {results.length > 0 && lastResearchedKeyword && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Ready to create an article?</p>
+                <p className="text-sm text-muted-foreground">
+                  Use "{lastResearchedKeyword}" as your article keyword
+                </p>
+              </div>
+              <Button 
+                onClick={() => router.push(`/dashboard/articles/generate?keyword=${encodeURIComponent(lastResearchedKeyword)}`)}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Create Article
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

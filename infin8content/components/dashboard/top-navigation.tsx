@@ -1,7 +1,8 @@
 "use client"
 
-import { LogOut, User } from "lucide-react"
+import { LogOut, User, Plus } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -21,6 +22,7 @@ interface TopNavigationProps {
 }
 
 export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
+    const pathname = usePathname()
     const initials = name
         ? name
             .split(" ")
@@ -29,6 +31,9 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
             .toUpperCase()
             .slice(0, 2)
         : email.substring(0, 2).toUpperCase()
+
+    // Don't show "Create Article" button on the article generation page itself
+    const showCreateButton = pathname !== "/dashboard/articles/generate"
 
     return (
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
@@ -42,6 +47,15 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
                 <span className="md:hidden">I8C</span>
             </Link>
             <div className="flex-1" />
+            {showCreateButton && (
+                <Button asChild className="gap-2">
+                    <Link href="/dashboard/articles/generate">
+                        <Plus className="h-4 w-4" />
+                        <span className="hidden sm:inline">Create Article</span>
+                        <span className="sm:hidden">Create</span>
+                    </Link>
+                </Button>
+            )}
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
@@ -15,10 +15,11 @@ interface ArticleGenerationFormProps {
   }) => Promise<void>
   isLoading: boolean
   error?: string | null
+  initialKeyword?: string
 }
 
-export function ArticleGenerationForm({ onGenerate, isLoading, error }: ArticleGenerationFormProps) {
-  const [keyword, setKeyword] = useState('')
+export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKeyword = '' }: ArticleGenerationFormProps) {
+  const [keyword, setKeyword] = useState(initialKeyword)
   const [targetWordCount, setTargetWordCount] = useState<number>(2000)
   const [customWordCount, setCustomWordCount] = useState('')
   const [isCustomWordCount, setIsCustomWordCount] = useState(false)
@@ -26,6 +27,13 @@ export function ArticleGenerationForm({ onGenerate, isLoading, error }: ArticleG
   const [targetAudience, setTargetAudience] = useState('General')
   const [customInstructions, setCustomInstructions] = useState('')
   const [validationError, setValidationError] = useState<string | null>(null)
+
+  // Update keyword when initialKeyword prop changes (e.g., from URL params)
+  useEffect(() => {
+    if (initialKeyword) {
+      setKeyword(initialKeyword)
+    }
+  }, [initialKeyword])
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()

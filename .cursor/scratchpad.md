@@ -304,4 +304,45 @@
 - 2026-01-08T08:33:00+11:00: Fixed integration test infrastructure using @inngest/test package - all tests passing
 - 2026-01-08T08:37:00+11:00: Fixed Inngest concurrency limit from 50 to 5 (plan limit). Code review complete, all issues resolved.
 
+---
+
+# Navigation Updates: Article Generation UI Access
+
+## Status: Complete
+
+## Objectives
+1. [x] Make article generation accessible from Write page (sidebar navigation)
+2. [x] Add "Create Article" button to top navigation bar
+3. [x] Add contextual "Create Article" link from keyword research results
+4. [x] Support keyword pre-fill from URL parameters
+
+## Changes Made
+
+### Files Modified
+- `infin8content/app/dashboard/write/page.tsx` - Redirects to `/dashboard/articles/generate`
+- `infin8content/components/dashboard/top-navigation.tsx` - Added "Create Article" button (always visible, hidden on generation page)
+- `infin8content/app/dashboard/research/keywords/keyword-research-client.tsx` - Added contextual "Create Article" button after research
+- `infin8content/components/articles/article-generation-form.tsx` - Added `initialKeyword` prop support for pre-filling keyword
+- `infin8content/app/dashboard/articles/generate/article-generation-client.tsx` - Added URL parameter reading for keyword pre-fill
+
+## Entry Points Now Available
+- ✅ **Primary:** "Create Article" button in top navigation (always visible, except on generation page)
+- ✅ **Sidebar:** "Write" menu item → redirects to article generation
+- ✅ **Contextual:** "Create Article" button from keyword research results (pre-fills keyword)
+- ✅ **Direct:** `/dashboard/articles/generate` URL (still works)
+
+## User Flow Improvements
+1. **From Sidebar:** Click "Write" → Automatically redirected to article generation
+2. **From Top Nav:** Click "Create Article" → Goes directly to article generation
+3. **From Research:** Research keyword → Click "Create Article" → Keyword pre-filled in form
+4. **URL Params:** Navigate to `/dashboard/articles/generate?keyword=example` → Keyword pre-filled
+
+## Build Status
+- ✅ TypeScript compilation passes
+- ✅ No linter errors
+- ✅ Build completes successfully
+
+## Log
+- 2026-01-08T09:15:00+11:00: Added navigation links for article generation - Write page redirect, top nav button, contextual link from keyword research, URL param support for keyword pre-fill. All entry points now functional.
+
 
