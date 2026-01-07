@@ -5,7 +5,6 @@ import { KeywordResearchForm } from '@/components/research/keyword-research-form
 import { KeywordResultsTable, type KeywordResult } from '@/components/research/keyword-results-table'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { AlertCircle } from 'lucide-react'
 
 interface KeywordResearchResponse {
@@ -34,8 +33,6 @@ export function KeywordResearchPageClient() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [usageInfo, setUsageInfo] = useState<{ current: number; limit: number | null } | null>(null)
-  const [apiCost, setApiCost] = useState<number | null>(null)
-  const [isCached, setIsCached] = useState(false)
 
   const handleResearch = async (keyword: string) => {
     setIsLoading(true)
@@ -74,8 +71,6 @@ export function KeywordResearchPageClient() {
       if (data.data) {
         setResults(data.data.results)
         setUsageInfo(data.data.usage)
-        setApiCost(data.data.apiCost)
-        setIsCached(data.data.cached)
         setError(null)
       }
     } catch (err) {
@@ -151,25 +146,6 @@ export function KeywordResearchPageClient() {
               <Button onClick={handleRetry} variant="outline">
                 Retry
               </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* API Cost Info */}
-      {apiCost !== null && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">API Cost</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                Cost: ${apiCost.toFixed(4)}
-              </span>
-              {isCached && (
-                <Badge variant="secondary">Cached</Badge>
-              )}
             </div>
           </CardContent>
         </Card>
