@@ -6,9 +6,12 @@ import { getPaymentAccessStatus } from '@/lib/utils/payment-status'
 export default async function SuspendedPage({
   searchParams,
 }: {
-  searchParams: { redirect?: string }
+  searchParams: Promise<{ redirect?: string }>
 }) {
   const currentUser = await getCurrentUser()
+  
+  // Await searchParams before accessing properties (Next.js 15+ requirement)
+  const params = await searchParams
   
   // Redirect if user is not authenticated
   if (!currentUser) {
@@ -27,7 +30,7 @@ export default async function SuspendedPage({
     
     if (accessStatus === 'active') {
       // Payment active - redirect to dashboard (account was reactivated)
-      const redirectTo = searchParams?.redirect || '/dashboard'
+      const redirectTo = params?.redirect || '/dashboard'
       redirect(redirectTo)
     } else if (accessStatus === 'grace_period') {
       // Grace period active - redirect to dashboard (will show banner)
@@ -41,7 +44,7 @@ export default async function SuspendedPage({
   }
   
   // Get redirect destination from query params (for post-reactivation redirect)
-  const redirectTo = searchParams?.redirect || '/dashboard'
+  const redirectTo = params?.redirect || '/dashboard'
   
   // Get suspension date and grace period info from organization
   const suspendedAt = currentUser?.organizations?.suspended_at || null

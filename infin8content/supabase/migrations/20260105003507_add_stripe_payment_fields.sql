@@ -24,7 +24,7 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
                  WHERE table_name = 'organizations' AND column_name = 'payment_status') THEN
     ALTER TABLE organizations ADD COLUMN payment_status TEXT DEFAULT 'pending_payment' 
-      CHECK (payment_status IN ('pending_payment', 'active', 'suspended', 'canceled'));
+      CHECK (payment_status IN ('pending_payment', 'active', 'suspended', 'canceled', 'past_due'));
   END IF;
   
   -- Add payment_confirmed_at column
@@ -39,6 +39,40 @@ BEGIN
                  WHERE table_name = 'organizations' AND column_name = 'plan') THEN
     ALTER TABLE organizations ADD COLUMN plan TEXT DEFAULT 'starter' 
       CHECK (plan IN ('starter', 'pro', 'agency'));
+  END IF;
+END $$;
+
+-- ============================================================================
+-- Update payment_status constraint to include 'past_due' (if column exists)
+-- ============================================================================
+
+DO $$
+DECLARE
+  constraint_name TEXT;
+BEGIN
+  -- Check if payment_status column exists
+  IF EXISTS (SELECT 1 FROM information_schema.columns 
+             WHERE table_name = 'organizations' AND column_name = 'payment_status') THEN
+    -- Find existing constraint on payment_status
+    SELECT conname INTO constraint_name
+    FROM pg_constraint c
+    JOIN pg_class t ON c.conrelid = t.oid
+    WHERE t.relname = 'organizations'
+    AND c.contype = 'c'
+    AND EXISTS (
+      SELECT 1 FROM pg_get_constraintdef(c.oid) AS def
+      WHERE def LIKE '%payment_status%'
+    )
+    LIMIT 1;
+    
+    -- Drop old constraint if found
+    IF constraint_name IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE organizations DROP CONSTRAINT IF EXISTS %I', constraint_name);
+    END IF;
+    
+    -- Add updated constraint with 'past_due' status
+    ALTER TABLE organizations ADD CONSTRAINT organizations_payment_status_check 
+      CHECK (payment_status IN ('pending_payment', 'active', 'suspended', 'canceled', 'past_due'));
   END IF;
 END $$;
 
@@ -90,6 +124,6 @@ CREATE INDEX IF NOT EXISTS idx_stripe_webhook_events_processed_at ON stripe_webh
 COMMENT ON TABLE stripe_webhook_events IS 'Tracks processed Stripe webhook events for idempotency and audit purposes';
 COMMENT ON COLUMN organizations.stripe_customer_id IS 'Stripe customer ID for this organization';
 COMMENT ON COLUMN organizations.stripe_subscription_id IS 'Stripe subscription ID for this organization';
-COMMENT ON COLUMN organizations.payment_status IS 'Payment status: pending_payment, active, suspended, or canceled';
+COMMENT ON COLUMN organizations.payment_status IS 'Payment status: pending_payment, active, suspended, canceled, or past_due';
 COMMENT ON COLUMN organizations.payment_confirmed_at IS 'Timestamp when payment was confirmed via Stripe webhook';
 

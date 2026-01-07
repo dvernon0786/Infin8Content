@@ -700,40 +700,53 @@ Claude Sonnet 4.5 (via Cursor)
 - **Updated test mocks:** Fixed test to use valid-length Stripe price ID (27+ characters) to match new validation requirements
 - All fixes verified with passing tests (211 tests total, no regressions)
 
+**Code Review Fixes (2026-01-07):**
+- **Fixed API version mismatch:** Updated `lib/stripe/server.ts` to use correct API version `'2024-11-20.acacia'` as specified in story requirements (was using `'2025-12-15.clover'`)
+- **Fixed missing `past_due` status in migration:** Updated `supabase/migrations/20260105003507_add_stripe_payment_fields.sql` to include `'past_due'` in payment_status CHECK constraint (required for payment failure handling)
+- **Updated File List paths:** Added `infin8content/` prefix to all file paths for accurate file location
+- **Added missing files to File List:** Documented `lib/utils/payment-status.ts`, `lib/services/payment-notifications.ts`, and `lib/services/audit-logger.ts` which were used but not listed
+- **Updated migration comment:** Updated payment_status column comment to include `past_due` status
+
 ### File List
 
 **New Files Created:**
-- `lib/stripe/env.ts` - Stripe environment variable validation
-- `lib/stripe/server.ts` - Server-side Stripe client with API version pinning
-- `lib/stripe/client.ts` - Client-side Stripe.js initialization
-- `lib/stripe/prices.ts` - Type-safe Stripe price ID mapping
-- `lib/stripe/env.test.ts` - Unit tests for environment validation
-- `lib/stripe/prices.test.ts` - Unit tests for price ID mapping
-- `app/payment/page.tsx` - Payment page Server Component wrapper
-- `app/payment/payment-form.tsx` - Payment form Client Component with plan selection
-- `app/payment/page.test.tsx` - Unit tests for payment page
-- `app/payment/payment-form.test.tsx` - Unit tests for payment form
-- `app/api/payment/create-checkout-session/route.ts` - Stripe Checkout session creation API route
-- `app/api/payment/create-checkout-session/route.test.ts` - Unit tests for checkout session API route
-- `app/api/webhooks/stripe/route.ts` - Stripe webhook handler for payment events
-- `app/api/webhooks/stripe/route.test.ts` - Unit tests for webhook handler
-- `app/payment/success/page.tsx` - Payment success page Server Component
-- `app/payment/success/payment-success-client.tsx` - Payment success page Client Component with interactive UI
-- `app/payment/success/page.test.tsx` - Unit tests for payment success page
-- `supabase/migrations/20260105003507_add_stripe_payment_fields.sql` - Database migration for payment tracking
-- `MIGRATION_TASK_7_INSTRUCTIONS.md` - Instructions for applying the migration
+- `infin8content/lib/stripe/env.ts` - Stripe environment variable validation
+- `infin8content/lib/stripe/server.ts` - Server-side Stripe client with API version pinning
+- `infin8content/lib/stripe/client.ts` - Client-side Stripe.js initialization
+- `infin8content/lib/stripe/prices.ts` - Type-safe Stripe price ID mapping
+- `infin8content/lib/stripe/env.test.ts` - Unit tests for environment validation
+- `infin8content/lib/stripe/prices.test.ts` - Unit tests for price ID mapping
+- `infin8content/lib/stripe/retry.ts` - Retry utility with exponential backoff for webhook processing
+- `infin8content/lib/stripe/retry.test.ts` - Unit tests for retry utility (12 tests)
+- `infin8content/lib/utils/payment-status.ts` - Payment status utility functions (grace period and suspension logic)
+- `infin8content/lib/utils/payment-status.test.ts` - Unit tests for payment status utilities
+- `infin8content/lib/services/payment-notifications.ts` - Brevo email service for payment notifications
+- `infin8content/lib/services/payment-notifications.test.ts` - Unit tests for payment notifications
+- `infin8content/lib/services/audit-logger.ts` - Audit logging service for compliance tracking
+- `infin8content/lib/services/audit-logger.test.ts` - Unit tests for audit logger
+- `infin8content/app/payment/page.tsx` - Payment page Server Component wrapper
+- `infin8content/app/payment/payment-form.tsx` - Payment form Client Component with plan selection
+- `infin8content/app/payment/page.test.tsx` - Unit tests for payment page
+- `infin8content/app/payment/payment-form.test.tsx` - Unit tests for payment form
+- `infin8content/app/payment/success/page.tsx` - Payment success page Server Component
+- `infin8content/app/payment/success/payment-success-client.tsx` - Payment success page Client Component with interactive UI
+- `infin8content/app/payment/success/page.test.tsx` - Unit tests for payment success page
+- `infin8content/app/api/payment/create-checkout-session/route.ts` - Stripe Checkout session creation API route
+- `infin8content/app/api/payment/create-checkout-session/route.test.ts` - Unit tests for checkout session API route
+- `infin8content/app/api/webhooks/stripe/route.ts` - Stripe webhook handler for payment events
+- `infin8content/app/api/webhooks/stripe/route.test.ts` - Unit tests for webhook handler
+- `infin8content/supabase/migrations/20260105003507_add_stripe_payment_fields.sql` - Database migration for payment tracking
+- `infin8content/MIGRATION_TASK_7_INSTRUCTIONS.md` - Instructions for applying the migration
+- `infin8content/STRIPE_PRODUCTS_SETUP.md` - Comprehensive guide for creating Stripe products and prices
 
 **Modified Files:**
-- `package.json` - Added `stripe` and `@stripe/stripe-js` dependencies
-- `lib/supabase/database.types.ts` - Updated with new payment tracking columns and `stripe_webhook_events` table
-- `app/payment/payment-form.tsx` - Added comprehensive error handling for payment failures
-- `app/payment/payment-form.test.tsx` - Updated tests for error handling
-- `app/api/auth/login/route.ts` - Added payment status check in redirect logic
-- `app/api/auth/login/route.test.ts` - Added tests for payment status redirect logic
-- `app/middleware.ts` - Added payment status check for protected routes
-- `app/api/organizations/create/route.ts` - Added default `payment_status = 'pending_payment'` on organization creation
-- `app/api/organizations/create/route.test.ts` - Updated test to verify payment_status is set
-- `STRIPE_PRODUCTS_SETUP.md` - Comprehensive guide for creating Stripe products and prices
-- `lib/stripe/retry.ts` - Retry utility with exponential backoff for webhook processing
-- `lib/stripe/retry.test.ts` - Unit tests for retry utility (12 tests)
+- `infin8content/package.json` - Added `stripe` and `@stripe/stripe-js` dependencies
+- `infin8content/lib/supabase/database.types.ts` - Updated with new payment tracking columns and `stripe_webhook_events` table
+- `infin8content/app/payment/payment-form.tsx` - Added comprehensive error handling for payment failures
+- `infin8content/app/payment/payment-form.test.tsx` - Updated tests for error handling
+- `infin8content/app/api/auth/login/route.ts` - Added payment status check in redirect logic
+- `infin8content/app/api/auth/login/route.test.ts` - Added tests for payment status redirect logic
+- `infin8content/app/middleware.ts` - Added payment status check for protected routes
+- `infin8content/app/api/organizations/create/route.ts` - Added default `payment_status = 'pending_payment'` on organization creation
+- `infin8content/app/api/organizations/create/route.test.ts` - Updated test to verify payment_status is set
 

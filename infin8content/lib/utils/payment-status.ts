@@ -1,6 +1,6 @@
 /**
  * Payment status utility functions for grace period and suspension logic
- * Story 1.8: Payment-First Access Control (Paywall Implementation)
+ * Used in Story 1.7 (Payment Integration) and Story 1.8 (Paywall Implementation)
  */
 
 import type { Database } from '@/lib/supabase/database.types'

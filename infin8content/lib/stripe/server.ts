@@ -12,7 +12,7 @@ function getStripe(): Stripe {
       throw new Error('STRIPE_SECRET_KEY is required')
     }
     stripeInstance = new Stripe(STRIPE_SECRET_KEY, {
-      apiVersion: '2025-12-15.clover', // Pin API version for stability
+      apiVersion: '2024-11-20.acacia', // Pin API version for stability (Story 1.7 requirement)
     })
   }
   return stripeInstance

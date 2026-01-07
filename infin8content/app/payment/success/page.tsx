@@ -6,13 +6,15 @@ import Link from 'next/link'
 import PaymentSuccessClient from './payment-success-client'
 
 interface PaymentSuccessPageProps {
-  searchParams: { session_id?: string }
+  searchParams: Promise<{ session_id?: string }>
 }
 
 export default async function PaymentSuccessPage({
   searchParams,
 }: PaymentSuccessPageProps) {
-  const sessionId = searchParams.session_id
+  // Await searchParams before accessing properties (Next.js 15+ requirement)
+  const params = await searchParams
+  const sessionId = params.session_id
 
   // Check authentication
   const currentUser = await getCurrentUser()

@@ -9,9 +9,12 @@ type Organization = Database['public']['Tables']['organizations']['Row']
 export default async function PaymentPage({
   searchParams,
 }: {
-  searchParams: { suspended?: string; redirect?: string }
+  searchParams: Promise<{ suspended?: string; redirect?: string }>
 }) {
   const currentUser = await getCurrentUser()
+  
+  // Await searchParams before accessing properties (Next.js 15+ requirement)
+  const params = await searchParams
   
   // Redirect if user is not authenticated
   if (!currentUser) {
@@ -28,15 +31,15 @@ export default async function PaymentPage({
     const accessStatus = getPaymentAccessStatus(currentUser.organizations)
     if (accessStatus === 'active') {
       // Check for redirect parameter for post-reactivation redirect
-      const redirectTo = searchParams?.redirect || '/dashboard'
+      const redirectTo = params?.redirect || '/dashboard'
       redirect(redirectTo)
     }
   }
   
   // Pass suspended flag and suspension date to form component
-  const isSuspended = searchParams?.suspended === 'true'
+  const isSuspended = params?.suspended === 'true'
   const suspendedAt = currentUser?.organizations?.suspended_at || null
-  const redirectTo = searchParams?.redirect || '/dashboard'
+  const redirectTo = params?.redirect || '/dashboard'
   
   return <PaymentForm isSuspended={isSuspended} suspendedAt={suspendedAt} redirectTo={redirectTo} />
 }
