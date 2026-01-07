@@ -1,14 +1,28 @@
 # Scratchpad
 
 ## Current Status
-- **Date:** 2026-01-08 01:17:15 AEDT
+- **Date:** 2026-01-08 09:36:27 AEDT
 - **Epic 1:** Completed
 - **Epic 3:** Story 3-1 Complete
-- **Epic 4A:** Story 4a-1 In Progress
-- **Last Story:** 4a-1 Article Generation Initiation and Queue Setup (Review)
-- **Current Focus:** Story 4a-1 Implementation Complete - Inngest Setup & Vercel Deployment Protection Fixes
+- **Epic 4A:** Story 4a-3 Complete (Review)
+- **Last Story:** 4a-3 Real-Time Research Per Section (Tavily Integration) - Code Review Complete
+- **Current Focus:** Story 4a-3 Code Review - All HIGH/MEDIUM Issues Fixed, 44/44 Tests Passing
 
 ## Recent Achievements
+- **Story 4a-3 Code Review & Fixes (2026-01-08 09:36:27 AEDT):**
+  - ✅ Performed comprehensive adversarial code review (found 10 issues: 4 High, 4 Medium, 2 Low)
+  - ✅ Fixed unique constraint missing on tavily_research_cache table (upsert would fail)
+  - ✅ Fixed cache lookup query to use `.ilike()` for optimal index usage (LOWER() index matching)
+  - ✅ Fixed research query generation to include previous sections context (AC requirement)
+  - ✅ Added partial index `idx_tavily_cache_expiry` for efficient expired cache cleanup
+  - ✅ Created integration tests: `tests/integration/article-generation/tavily-research.test.ts` (10/10 passing)
+  - ✅ Created citation formatter unit tests: `tests/unit/utils/citation-formatter.test.ts` (24/24 passing)
+  - ✅ Fixed citation formatter to respect minCitations/maxCitations parameters
+  - ✅ Fixed integration test mocks for proper Supabase client chaining
+  - ✅ All 44 tests passing (Tavily client: 10, Citation formatter: 24, Integration: 10)
+  - ✅ Re-ran code review: 0 High/Medium issues remaining, 2 Low (documented/acceptable)
+  - ✅ Story status: "review", ready for production after migration
+  - ✅ Code review fixes documented in story Dev Agent Record
 - **Story 4a-1 Implementation & Inngest Setup (2026-01-08 01:17:15 AEDT):**
   - ✅ Created articles database table migration with RLS policies and indexes
   - ✅ Installed and configured Inngest SDK (v3.12.0)
@@ -80,17 +94,20 @@
   - All routes properly registered and accessible
 
 ## Next Steps
+- **Story 4a-3:**
+  - Run database migration: `supabase migration up` (adds unique constraint and partial index)
+  - Regenerate TypeScript types: `supabase gen types typescript --project-id <id> > lib/supabase/database.types.ts`
+  - Verify migration applied successfully
+  - Mark story as "done" after migration verification
 - **Story 4a-1:**
   - Run database migration on production
   - Regenerate TypeScript types after migration
   - Configure Inngest environment variables in Vercel (INNGEST_EVENT_KEY, INNGEST_SIGNING_KEY)
   - Configure Vercel Deployment Protection bypass in Inngest dashboard
   - Test Inngest sync endpoint: `curl -X PUT https://infin8content.com/api/inngest`
-  - Complete code review for Story 4a-1
 - **Future Stories:**
-  - Story 4a-2: Section-by-section architecture and outline generation
-  - Story 4a-3: Real-time research per section (Tavily integration)
-  - Story 4a-5: LLM content generation (OpenRouter integration)
+  - Story 4a-2: Section-by-section architecture and outline generation (Complete)
+  - Story 4a-5: LLM content generation (OpenRouter integration) - Will use Tavily research results
   - Story 4a-6: Real-time progress tracking and updates
 
 ## Code Review Summary - Story 1.9

@@ -1,9 +1,11 @@
 // Section processing service for article generation
 // Story 4a.2: Section-by-Section Architecture and Outline Generation
+// Story 4a.3: Real-Time Research Per Section (Tavily Integration)
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { Outline } from './outline-generator'
 import { summarizeSections, fitInContextWindow } from '@/lib/utils/token-management'
+import { researchQuery, type TavilySource } from '@/lib/services/tavily/tavily-client'
 
 /**
  * Section structure matching database schema
@@ -17,7 +19,16 @@ export interface Section {
   content: string
   word_count: number
   generated_at: string
-  research_sources?: Array<{ title: string; url: string }>
+  research_sources?: Array<{
+    title: string
+    url: string
+    excerpt?: string
+    published_date?: string | null
+    author?: string | null
+    relevance_score?: number
+  }>
+  citations_included?: number
+  research_query?: string
   tokens_used?: number
 }
 
@@ -36,10 +47,10 @@ export async function processSection(
 ): Promise<Section> {
   const supabase = createServiceRoleClient()
 
-  // Load article to get previous sections
+  // Load article to get previous sections and organization ID
   const { data: articleData } = await supabase
     .from('articles' as any)
-    .select('sections, keyword')
+    .select('sections, keyword, org_id')
     .eq('id', articleId)
     .single()
 
@@ -48,8 +59,9 @@ export async function processSection(
   }
 
   // Type assertion needed because database types haven't been regenerated after migration
-  const article = (articleData as unknown) as { sections?: any[]; keyword: string }
+  const article = (articleData as unknown) as { sections?: any[]; keyword: string; org_id: string }
   const previousSections = (article.sections || []) as Section[]
+  const organizationId = article.org_id
 
   // Determine section type and details based on index
   const sectionInfo = getSectionInfo(sectionIndex, outline)
@@ -57,11 +69,53 @@ export async function processSection(
   // Summarize previous sections for context (token management)
   const summaries = summarizeSections(previousSections, 1500) // ~1500 tokens for summaries
 
+  // Perform Tavily research for this section (Story 4a.3)
+  let researchSources: TavilySource[] = []
+  let researchQueryUsed = ''
+  let researchFailed = false
+
+  try {
+    // Generate research query from section topic + keyword + previous sections
+    researchQueryUsed = generateResearchQuery(
+      sectionInfo.title,
+      article.keyword as string,
+      summaries
+    )
+
+    // Normalize query for cache lookup
+    const normalizedQuery = normalizeQuery(researchQueryUsed)
+
+    // Check cache first
+    const cachedResults = await getCachedResearch(organizationId, normalizedQuery)
+    
+    if (cachedResults) {
+      researchSources = cachedResults
+    } else {
+      // Call Tavily API
+      researchSources = await researchQuery(researchQueryUsed, { maxRetries: 3 })
+      
+      // Store in cache (24-hour TTL)
+      await storeCachedResearch(organizationId, normalizedQuery, researchSources)
+      
+      // Track API cost
+      await trackApiCost(organizationId, 0.08)
+    }
+  } catch (error) {
+    // Graceful degradation: Continue without fresh research
+    console.warn(`Section generated without fresh Tavily research: ${error instanceof Error ? error.message : String(error)}`)
+    researchFailed = true
+    
+    // Update article error_details with research failure
+    await updateArticleErrorDetails(articleId, sectionIndex, researchQueryUsed, error)
+  }
+
   // Generate section content (placeholder for Story 4a-5)
+  // Research sources will be passed to LLM in Story 4a-5
   const content = await generateSectionContent(
     article.keyword as string,
     sectionInfo,
-    summaries
+    summaries,
+    researchSources // Pass research sources for citation inclusion
   )
 
   const section: Section = {
@@ -73,6 +127,16 @@ export async function processSection(
     content,
     word_count: content.split(/\s+/).length,
     generated_at: new Date().toISOString(),
+    research_sources: researchSources.map(source => ({
+      title: source.title,
+      url: source.url,
+      excerpt: source.excerpt,
+      published_date: source.published_date,
+      author: source.author,
+      relevance_score: source.relevance_score
+    })),
+    citations_included: researchSources.length > 0 ? Math.min(researchSources.length, 3) : 0, // Count citations (will be updated in Story 4a-5)
+    research_query: researchQueryUsed,
     tokens_used: undefined // Will be set by LLM call in Story 4a-5
   }
 
@@ -168,6 +232,189 @@ function getSectionInfo(
 }
 
 /**
+ * Normalize research query for cache lookup
+ */
+function normalizeQuery(query: string): string {
+  return query.toLowerCase().trim().replace(/\s+/g, ' ')
+}
+
+/**
+ * Generate research query from section topic + keyword + previous sections
+ */
+function generateResearchQuery(
+  sectionTitle: string,
+  keyword: string,
+  previousSummaries: string
+): string {
+  // Combine components into natural language query
+  // Keep concise (50-100 chars) for better API results
+  const year = new Date().getFullYear()
+  
+  // Extract key terms from previous sections for coherence (AC requirement)
+  // Take first 20-30 chars of summaries to include context without bloating query
+  const summaryContext = previousSummaries
+    ? previousSummaries
+        .split(/\s+/)
+        .slice(0, 5) // Take first 5 words from summaries
+        .join(' ')
+    : ''
+  
+  // Build query with section topic, keyword, year, and previous context
+  let query = `${sectionTitle} ${keyword} ${year}`
+  
+  // Add summary context if available (for coherence between sections)
+  if (summaryContext) {
+    query += ` ${summaryContext}`
+  }
+  
+  query += ' best practices latest'
+  
+  // Truncate to ~100 characters if needed
+  return query.length > 100 ? query.substring(0, 100).trim() : query
+}
+
+/**
+ * Get cached research results if available and not expired
+ */
+async function getCachedResearch(
+  organizationId: string,
+  normalizedQuery: string
+): Promise<TavilySource[] | null> {
+  const supabase = createServiceRoleClient()
+  
+  // Use ilike for case-insensitive matching to match the LOWER() index
+  // Since normalizedQuery is already lowercase, this ensures optimal index usage
+  const { data, error } = await (supabase
+    .from('tavily_research_cache' as any)
+    .select('research_results')
+    .eq('organization_id', organizationId)
+    .ilike('research_query', normalizedQuery) // Case-insensitive match to use LOWER() index
+    .gt('cached_until', new Date().toISOString())
+    .maybeSingle() as unknown as Promise<{ data: any; error: any }>)
+
+  if (error || !data) {
+    return null
+  }
+
+  // Parse cached results and convert to TavilySource format
+  const results = data.research_results?.results || []
+  return results.map((result: any) => ({
+    title: result.title || '',
+    url: result.url || '',
+    excerpt: result.content || '',
+    published_date: result.published_date || null,
+    author: result.author || null,
+    relevance_score: result.score || 0
+  }))
+}
+
+/**
+ * Store research results in cache with 24-hour TTL
+ */
+async function storeCachedResearch(
+  organizationId: string,
+  normalizedQuery: string,
+  sources: TavilySource[]
+): Promise<void> {
+  const supabase = createServiceRoleClient()
+  
+  // Convert sources back to Tavily API response format for storage
+  const researchResults = {
+    query: normalizedQuery,
+    results: sources.map(source => ({
+      title: source.title,
+      url: source.url,
+      content: source.excerpt,
+      score: source.relevance_score,
+      published_date: source.published_date,
+      author: source.author
+    })),
+    response_time: 0 // Not stored in cache
+  }
+
+  const cachedUntil = new Date()
+  cachedUntil.setHours(cachedUntil.getHours() + 24) // 24-hour TTL
+
+  const { error } = await (supabase
+    .from('tavily_research_cache' as any)
+    .upsert({
+      organization_id: organizationId,
+      research_query: normalizedQuery,
+      research_results: researchResults,
+      cached_until: cachedUntil.toISOString()
+    }, {
+      onConflict: 'organization_id,research_query'
+    }) as unknown as Promise<{ error: any }>)
+
+  if (error) {
+    console.error('Failed to store Tavily research cache:', error)
+    // Don't throw - cache storage failure shouldn't block article generation
+  }
+}
+
+/**
+ * Track API cost for Tavily research
+ */
+async function trackApiCost(organizationId: string, cost: number): Promise<void> {
+  const supabase = createServiceRoleClient()
+  
+  const { error } = await (supabase
+    .from('api_costs' as any)
+    .insert({
+      organization_id: organizationId,
+      service: 'tavily',
+      operation: 'section_research',
+      cost: cost
+    }) as unknown as Promise<{ error: any }>)
+
+  if (error) {
+    console.error('Failed to track Tavily API cost:', error)
+    // Don't throw - cost tracking failure shouldn't block article generation
+  }
+}
+
+/**
+ * Update article error_details with research failure information
+ */
+async function updateArticleErrorDetails(
+  articleId: string,
+  sectionIndex: number,
+  researchQuery: string,
+  error: unknown
+): Promise<void> {
+  const supabase = createServiceRoleClient()
+  
+  // Load current error_details
+  const { data: articleData } = await supabase
+    .from('articles' as any)
+    .select('error_details')
+    .eq('id', articleId)
+    .single()
+
+  const currentErrorDetails = (articleData as any)?.error_details || {}
+  const researchFailures = currentErrorDetails.research_failures || []
+  
+  researchFailures.push({
+    section_index: sectionIndex,
+    research_query: researchQuery,
+    error_type: error instanceof Error ? error.constructor.name : 'Unknown',
+    error_message: error instanceof Error ? error.message : String(error),
+    retry_attempts: 3,
+    failed_at: new Date().toISOString()
+  })
+
+  await supabase
+    .from('articles' as any)
+    .update({
+      error_details: {
+        ...currentErrorDetails,
+        research_failures: researchFailures
+      }
+    })
+    .eq('id', articleId)
+}
+
+/**
  * Generate section content (placeholder for Story 4a-5)
  * 
  * TODO: Replace with OpenRouter API call in Story 4a-5
@@ -175,14 +422,22 @@ function getSectionInfo(
 async function generateSectionContent(
   keyword: string,
   sectionInfo: { type: string; title: string },
-  previousSummaries: string
+  previousSummaries: string,
+  researchSources: TavilySource[] = [] // Research sources for citation inclusion
 ): Promise<string> {
   // PLACEHOLDER: Generate mock content
-  // Story 4a-5 will implement actual LLM content generation
+  // Story 4a-5 will implement actual LLM content generation with citations
   
-  return `This is placeholder content for the section "${sectionInfo.title}" about ${keyword}.\n\n` +
-    `The section will be generated using an LLM in Story 4a-5. ` +
-    `Previous sections summary:\n${previousSummaries.slice(0, 200)}...`
+  let content = `This is placeholder content for the section "${sectionInfo.title}" about ${keyword}.\n\n`
+  content += `The section will be generated using an LLM in Story 4a-5. `
+  content += `Previous sections summary:\n${previousSummaries.slice(0, 200)}...\n\n`
+  
+  // Include research sources info (for Story 4a-5 to use for citations)
+  if (researchSources.length > 0) {
+    content += `Research sources available: ${researchSources.length} sources found.\n`
+  }
+  
+  return content
 }
 
 /**
