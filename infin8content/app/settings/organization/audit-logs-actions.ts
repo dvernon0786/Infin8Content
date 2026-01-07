@@ -119,20 +119,35 @@ export async function exportAuditLogsAsCSV(params: GetAuditLogsParams = {}): Pro
 
     const logs = (data as AuditLog[]) ?? []
 
-    // Convert to CSV
+    // Convert to CSV with proper formatting
+    // Headers match data column order exactly
     const headers = ['Timestamp', 'User ID', 'Action', 'Details', 'IP Address', 'User Agent']
-    const csvRows = [headers.join(',')]
+    const csvRows: string[] = []
 
+    // Helper function to escape CSV fields
+    const escapeCsvField = (field: unknown): string => {
+        if (field === null || field === undefined) {
+            return ''
+        }
+        const str = String(field)
+        // Escape quotes by doubling them, then wrap in quotes
+        return `"${str.replace(/"/g, '""')}"`
+    }
+
+    // Add header row
+    csvRows.push(headers.map((h) => escapeCsvField(h)).join(','))
+
+    // Add data rows
     for (const log of logs) {
         const row = [
-            log.created_at,
-            log.user_id ?? '',
-            log.action,
-            JSON.stringify(log.details).replace(/"/g, '""'), // Escape quotes
-            log.ip_address ?? '',
-            log.user_agent ?? '',
+            log.created_at || '',
+            log.user_id || '',
+            log.action || '',
+            JSON.stringify(log.details || {}),
+            log.ip_address || '',
+            log.user_agent || '',
         ]
-        csvRows.push(row.map((field) => `"${field}"`).join(','))
+        csvRows.push(row.map(escapeCsvField).join(','))
     }
 
     return csvRows.join('\n')
