@@ -703,6 +703,18 @@ So that my team can collaborate on content with appropriate permissions.
 - ✅ Added TypeScript response type exports to all API routes for better type safety and developer experience
 - ✅ Updated story file to reflect test completion status
 
+**Code Review Fixes (2026-01-07):**
+- ✅ **CRITICAL FIX**: Fixed invalid Supabase query builder chaining on RPC calls in `app/api/team/accept-invitation/route.ts` - RPC functions return arrays directly, cannot chain `.eq()`, `.gt()`, `.select()`, or `.single()` methods. Fixed by handling array result properly.
+- ✅ **CRITICAL FIX**: Fixed duplicate comment blocks in `app/api/team/accept-invitation/route.ts` and `app/accept-invitation/page.tsx` - Removed duplicate comments for cleaner code.
+- ✅ **MEDIUM FIX**: Improved RPC result handling - Properly handle SETOF return type (array) from `get_invitation_by_token` function instead of incorrectly using `.single()`.
+- ✅ **MEDIUM FIX**: Enhanced error handling comments in `app/api/team/resend-invitation/route.ts` - Clarified that organization lookup failures indicate data integrity issues.
+- ✅ **LOW FIX**: Added clarifying comment in `app/api/team/remove-member/route.ts` - Documented that `.eq('org_id', ...)` filter applies BEFORE update (part of WHERE clause), ensuring correct behavior.
+
+**Code Review Re-Review Fixes (2026-01-07):**
+- ✅ **HIGH FIX**: Fixed test file mock pattern in `app/api/team/accept-invitation/route.test.ts` - Updated all RPC mocks to return `{ data: [array], error: null }` directly instead of chainable objects. Tests now match actual implementation.
+- ✅ **MEDIUM FIX**: Added defensive array index check in `app/api/team/accept-invitation/route.ts` and `app/accept-invitation/page.tsx` - Added explicit check for `invitationData[0]` existence before use to prevent potential undefined access.
+- ✅ **LOW FIX**: Improved error handling for organization and owner lookup in `app/api/team/accept-invitation/route.ts` - Added explicit error logging for organization and owner fetch failures to improve debugging and data integrity monitoring.
+
 ### File List
 
 **New Files Created:**

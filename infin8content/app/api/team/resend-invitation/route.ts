@@ -79,7 +79,8 @@ export async function POST(request: Request) {
 
     if (orgError || !organization) {
       console.error('Failed to fetch organization:', orgError)
-      // Continue with default name - don't fail the request
+      // This is a data integrity issue - organization should exist if user has org_id
+      // Continue with default name for email, but log the error for investigation
     }
 
     // Send invitation email (non-blocking)

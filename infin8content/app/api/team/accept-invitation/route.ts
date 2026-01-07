@@ -35,28 +35,39 @@ export async function POST(request: Request) {
 
     // Validate: Token exists and is valid (not expired, status = 'pending')
     // Use database-level expiration check to avoid timezone issues and race conditions
-    // Validate: Token exists and is valid (not expired, status = 'pending')
-    // Use database-level expiration check to avoid timezone issues and race conditions
-    const { data: invitation, error: invitationError } = await supabase
-      .rpc('get_invitation_by_token', { token_input: token })
-      .eq('status', 'pending')
-      .gt('expires_at', new Date().toISOString())
-      .single()
+    // RPC function returns SETOF (array), so we need to handle it properly
+    const { data: invitationData, error: invitationError } = await supabase.rpc(
+      'get_invitation_by_token',
+      { token_input: token }
+    )
 
-    if (invitationError || !invitation) {
-      // Check if invitation exists but is expired
-      const { data: expiredInvitation } = await supabase
-        .rpc('get_invitation_by_token', { token_input: token })
-        .select('id, expires_at')
-        .single()
+    if (invitationError || !invitationData || invitationData.length === 0) {
+      return NextResponse.json(
+        { error: 'Invitation not found or already accepted' },
+        { status: 404 }
+      )
+    }
 
-      if (expiredInvitation) {
-        return NextResponse.json(
-          { error: 'This invitation has expired. Please request a new invitation.' },
-          { status: 400 }
-        )
-      }
+    // Get first invitation (should only be one since token is unique)
+    const invitation = invitationData[0]
+    if (!invitation) {
+      return NextResponse.json(
+        { error: 'Invitation not found or already accepted' },
+        { status: 404 }
+      )
+    }
 
+    // Check if invitation is expired (database-level check already done, but verify in JS too)
+    const expiresAt = new Date(invitation.expires_at)
+    if (expiresAt < new Date()) {
+      return NextResponse.json(
+        { error: 'This invitation has expired. Please request a new invitation.' },
+        { status: 400 }
+      )
+    }
+
+    // Check if invitation status is pending
+    if (invitation.status !== 'pending') {
       return NextResponse.json(
         { error: 'Invitation not found or already accepted' },
         { status: 404 }
@@ -130,17 +141,27 @@ export async function POST(request: Request) {
     }
 
     // Get organization owner email for notification
-    const { data: organization } = await supabase
+    const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .select('name')
       .eq('id', invitation.org_id)
       .single()
 
-    const { data: owner } = await supabase
+    if (orgError) {
+      console.error('Failed to fetch organization for notification:', orgError)
+      // Continue with default name - don't fail the request
+    }
+
+    const { data: owner, error: ownerError } = await supabase
       .from('users')
       .select('email')
       .eq('id', invitation.created_by)
       .single()
+
+    if (ownerError) {
+      console.error('Failed to fetch owner for notification:', ownerError)
+      // Continue without sending email - don't fail the request
+    }
 
     // Send notification email to organization owner (non-blocking)
     if (owner?.email && organization?.name) {

@@ -76,23 +76,10 @@ describe('POST /api/team/accept-invitation', () => {
     })
 
     it('should reject invalid or non-existent tokens', async () => {
-      // Mock rpc call for invitation
-      mockSupabase.rpc.mockReturnValueOnce({
-        eq: vi.fn().mockReturnThis(),
-        gt: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116' },
-        }),
-      })
-
-      // Check for expired invitation (rpc call)
-      mockSupabase.rpc.mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116' },
-        }),
+      // Mock rpc call for invitation - returns empty array (not found)
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: [],
+        error: null,
       })
 
       mockRequest = new Request('http://localhost/api/team/accept-invitation', {
@@ -115,23 +102,10 @@ describe('POST /api/team/accept-invitation', () => {
         expires_at: pastDate.toISOString(),
       }
 
-      // First query returns null due to .gt filter (expired) - called via rpc
-      mockSupabase.rpc.mockReturnValueOnce({
-        eq: vi.fn().mockReturnThis(),
-        gt: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116' },
-        }),
-      })
-
-      // Second query finds expired invitation - called via rpc
-      mockSupabase.rpc.mockReturnValueOnce({
-        select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: expiredInvitation,
-          error: null,
-        }),
+      // RPC call returns expired invitation (expiration check happens in JS)
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: [expiredInvitation],
+        error: null,
       })
 
       mockRequest = new Request('http://localhost/api/team/accept-invitation', {
@@ -149,14 +123,10 @@ describe('POST /api/team/accept-invitation', () => {
 
   describe('User Registration Flow', () => {
     it('should return redirect URL if user does not exist', async () => {
-      // Valid invitation via rpc
-      mockSupabase.rpc.mockReturnValueOnce({
-        eq: vi.fn().mockReturnThis(),
-        gt: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: mockInvitation,
-          error: null,
-        }),
+      // Valid invitation via rpc - returns array with invitation
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: [mockInvitation],
+        error: null,
       })
 
       // User doesn't exist via from('users')
@@ -194,14 +164,10 @@ describe('POST /api/team/accept-invitation', () => {
         role: 'editor',
       })
 
-      // Valid invitation via rpc
-      mockSupabase.rpc.mockReturnValueOnce({
-        eq: vi.fn().mockReturnThis(),
-        gt: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: mockInvitation,
-          error: null,
-        }),
+      // Valid invitation via rpc - returns array with invitation
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: [mockInvitation],
+        error: null,
       })
 
       mockRequest = new Request('http://localhost/api/team/accept-invitation', {
@@ -224,14 +190,10 @@ describe('POST /api/team/accept-invitation', () => {
         role: 'editor',
       }
 
-      // Valid invitation via rpc
-      mockSupabase.rpc.mockReturnValueOnce({
-        eq: vi.fn().mockReturnThis(),
-        gt: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: mockInvitation,
-          error: null,
-        }),
+      // Valid invitation via rpc - returns array with invitation
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: [mockInvitation],
+        error: null,
       })
 
       // User exists and belongs to same org via from('users')
@@ -266,14 +228,10 @@ describe('POST /api/team/accept-invitation', () => {
         role: 'viewer',
       }
 
-      // Valid invitation via rpc
-      mockSupabase.rpc.mockReturnValueOnce({
-        eq: vi.fn().mockReturnThis(),
-        gt: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: mockInvitation,
-          error: null,
-        }),
+      // Valid invitation via rpc - returns array with invitation
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: [mockInvitation],
+        error: null,
       })
 
       // User exists via from('users')

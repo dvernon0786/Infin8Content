@@ -69,6 +69,7 @@ export async function POST(request: Request) {
     const memberEmail = targetUser.email
 
     // Remove user from organization: Set users.org_id = NULL
+    // Note: We filter by org_id BEFORE the update, not after (since we're setting it to null)
     const { error: updateError } = await supabase
       .from('users')
       .update({ org_id: null })

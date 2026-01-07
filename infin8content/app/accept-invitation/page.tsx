@@ -27,13 +27,30 @@ export default async function AcceptInvitationPage({ searchParams }: AcceptInvit
   const supabase = await createClient()
 
   // Validate invitation token
-  // Validate invitation token
-  const { data: invitation, error: invitationError } = await supabase
-    .rpc('get_invitation_by_token', { token_input: token })
-    .select('*')
-    .single()
+  // RPC function returns SETOF (array), so we need to handle it properly
+  const { data: invitationData, error: invitationError } = await supabase.rpc(
+    'get_invitation_by_token',
+    { token_input: token }
+  )
 
-  if (invitationError || !invitation) {
+  if (invitationError || !invitationData || invitationData.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md mx-auto px-4">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Invitation Not Found</h1>
+            <p className="text-gray-600">
+              This invitation link is invalid or has already been used.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Get first invitation (should only be one since token is unique)
+  const invitation = invitationData[0]
+  if (!invitation) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md mx-auto px-4">
