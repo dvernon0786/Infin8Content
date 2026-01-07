@@ -37,16 +37,18 @@ export async function processSection(
   const supabase = createServiceRoleClient()
 
   // Load article to get previous sections
-  const { data: article } = await supabase
+  const { data: articleData } = await supabase
     .from('articles' as any)
     .select('sections, keyword')
     .eq('id', articleId)
     .single()
 
-  if (!article) {
+  if (!articleData) {
     throw new Error(`Article ${articleId} not found`)
   }
 
+  // Type assertion needed because database types haven't been regenerated after migration
+  const article = (articleData as unknown) as { sections?: any[]; keyword: string }
   const previousSections = (article.sections || []) as Section[]
 
   // Determine section type and details based on index
@@ -57,7 +59,7 @@ export async function processSection(
 
   // Generate section content (placeholder for Story 4a-5)
   const content = await generateSectionContent(
-    article.keyword,
+    article.keyword as string,
     sectionInfo,
     summaries
   )

@@ -60,7 +60,9 @@ export const generateArticle = inngest.createFunction(
           })
           .eq('id', articleId)
 
-        return data
+        // Type assertion needed because database types haven't been regenerated after migration
+        // We've already checked data exists above, so this is safe
+        return (data as unknown) as { id: string; org_id: string; keyword: string; status: string }
       })
 
       // Step 2: Load keyword research data
@@ -77,8 +79,10 @@ export const generateArticle = inngest.createFunction(
           .single()
 
         // Extract keyword research data from JSONB results
-        if (data?.results) {
-          const results = data.results as any
+        // Type assertion needed because database types haven't been regenerated after migration
+        const researchData = (data as unknown) as { results?: any } | null
+        if (researchData?.results) {
+          const results = researchData.results as any
           const keywordResult = results.tasks?.[0]?.result?.[0]
           if (keywordResult) {
             return {
@@ -132,11 +136,13 @@ export const generateArticle = inngest.createFunction(
           .eq('id', articleId)
           .single()
 
-        if (!articleData?.outline) {
+        // Type assertion needed because database types haven't been regenerated after migration
+        const article = (articleData as unknown) as { outline?: any } | null
+        if (!article?.outline) {
           throw new Error('Outline not found')
         }
 
-        const outline = articleData.outline as any
+        const outline = article.outline as any
 
         // Process Introduction (index 0)
         await retryWithBackoff(() => processSection(articleId, 0, outline))
@@ -191,6 +197,9 @@ export const generateArticle = inngest.createFunction(
           .eq('id', articleId)
           .single()
 
+        // Type assertion needed because database types haven't been regenerated after migration
+        const article = (articleData as unknown) as { sections?: any[]; current_section_index?: number } | null
+
         await supabase
           .from('articles' as any)
           .update({
@@ -198,8 +207,8 @@ export const generateArticle = inngest.createFunction(
             error_details: {
               error_message: errorMessage,
               failed_at: new Date().toISOString(),
-              section_index: articleData?.current_section_index || 0,
-              partial_sections: articleData?.sections || []
+              section_index: article?.current_section_index || 0,
+              partial_sections: article?.sections || []
             }
           })
           .eq('id', articleId)

@@ -33,7 +33,7 @@ export async function analyzeSerpStructure(
 
   // Check cache first (7-day TTL)
   const cacheKey = keyword.toLowerCase().trim()
-  const { data: cachedAnalysis } = await supabase
+  const { data: cachedAnalysisData } = await supabase
     .from('serp_analyses' as any)
     .select('analysis_data, cached_until')
     .eq('organization_id', organizationId)
@@ -43,6 +43,9 @@ export async function analyzeSerpStructure(
     .limit(1)
     .single()
 
+  // Type assertion needed because database types haven't been regenerated after migration
+  const cachedAnalysis = (cachedAnalysisData as unknown) as { analysis_data?: SerpAnalysis; cached_until?: string } | null
+  
   if (cachedAnalysis?.analysis_data) {
     // Cache hit - update updated_at
     await supabase
@@ -51,7 +54,7 @@ export async function analyzeSerpStructure(
       .eq('organization_id', organizationId)
       .eq('keyword', cacheKey)
     
-    return cachedAnalysis.analysis_data as SerpAnalysis
+    return cachedAnalysis.analysis_data
   }
 
   // Cache miss - call DataForSEO SERP API
