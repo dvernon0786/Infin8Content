@@ -1,12 +1,28 @@
 # Scratchpad
 
 ## Current Status
-- **Date:** 2026-01-07 22:41:54 AEDT
+- **Date:** 2026-01-08 01:17:15 AEDT
 - **Epic 1:** Completed
-- **Last Story:** 1.12 Basic Dashboard Access After Payment (Done)
-- **Current Focus:** Story 1.12 Code Review Complete - All Issues Fixed, All Limitations Resolved
+- **Epic 3:** Story 3-1 Complete
+- **Epic 4A:** Story 4a-1 In Progress
+- **Last Story:** 4a-1 Article Generation Initiation and Queue Setup (Review)
+- **Current Focus:** Story 4a-1 Implementation Complete - Inngest Setup & Vercel Deployment Protection Fixes
 
 ## Recent Achievements
+- **Story 4a-1 Implementation & Inngest Setup (2026-01-08 01:17:15 AEDT):**
+  - ✅ Created articles database table migration with RLS policies and indexes
+  - ✅ Installed and configured Inngest SDK (v3.12.0)
+  - ✅ Created Inngest client, worker function, and sync endpoint
+  - ✅ Implemented article generation API endpoint with usage credit checking
+  - ✅ Created article generation form UI with all required fields
+  - ✅ Implemented queue status component with real-time polling
+  - ✅ Created article detail page stub for redirect after generation
+  - ✅ Fixed Inngest route to handle missing env vars gracefully (runtime vs build-time)
+  - ✅ Updated middleware to bypass authentication for Inngest webhook endpoint
+  - ✅ Added deployment protection bypass support for Vercel
+  - ✅ Created comprehensive troubleshooting guides (INNGEST_SETUP.md, INNGEST_TROUBLESHOOTING.md)
+  - ✅ All 6 tasks completed, story marked as "review" status
+  - ✅ Sprint status updated to "review"
 - **Story 1.12 Code Review & Final Fixes (2026-01-07 22:41:54 AEDT):**
   - ✅ Fixed missing Application Logo in top navigation (AC 4 requirement)
   - ✅ Fixed top navigation height from 56px to 64px (matches AC)
@@ -64,11 +80,18 @@
   - All routes properly registered and accessible
 
 ## Next Steps
-- Mark Story 1.9 as "done" after final verification
-- Investigate test failures (may be unrelated to Story 1.9)
-- Address production readiness items (error monitoring, email retry mechanism)
-- Epic 1 Retrospective (Optional)
-- Begin Epic 2: Dashboard Layout & Widgets
+- **Story 4a-1:**
+  - Run database migration on production
+  - Regenerate TypeScript types after migration
+  - Configure Inngest environment variables in Vercel (INNGEST_EVENT_KEY, INNGEST_SIGNING_KEY)
+  - Configure Vercel Deployment Protection bypass in Inngest dashboard
+  - Test Inngest sync endpoint: `curl -X PUT https://infin8content.com/api/inngest`
+  - Complete code review for Story 4a-1
+- **Future Stories:**
+  - Story 4a-2: Section-by-section architecture and outline generation
+  - Story 4a-3: Real-time research per section (Tavily integration)
+  - Story 4a-5: LLM content generation (OpenRouter integration)
+  - Story 4a-6: Real-time progress tracking and updates
 
 ## Code Review Summary - Story 1.9
 **Status:** ✅ All Critical Fixes Applied

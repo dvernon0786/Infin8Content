@@ -38,7 +38,10 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = ['/register', '/login', '/verify-email'];
   const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route));
 
-  if (isPublicRoute) {
+  // Inngest webhook endpoint - bypass authentication (Inngest handles its own auth)
+  const isInngestWebhook = request.nextUrl.pathname.startsWith('/api/inngest');
+
+  if (isPublicRoute || isInngestWebhook) {
     return response;
   }
 

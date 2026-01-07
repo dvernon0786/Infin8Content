@@ -82,8 +82,8 @@ development_status:
   3-8-batch-keyword-research-operations: backlog
   epic-3-retrospective: optional
 
-  epic-4a: backlog
-  4a-1-article-generation-initiation-and-queue-setup: backlog
+  epic-4a: in-progress
+  4a-1-article-generation-initiation-and-queue-setup: review
   4a-2-section-by-section-architecture-and-outline-generation: backlog
   4a-3-real-time-research-per-section-tavily-integration: backlog
   4a-4-serp-analysis-per-section-dataforseo-integration: backlog
