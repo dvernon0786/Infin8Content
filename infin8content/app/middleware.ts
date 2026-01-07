@@ -140,14 +140,14 @@ export async function middleware(request: NextRequest) {
               try {
                 const { data: user } = await supabase
                   .from('users')
-                  .select('email, name')
+                  .select('email')
                   .eq('id', userRecord.id)
                   .single();
 
                 if (user?.email) {
                   await sendSuspensionEmail({
                     to: user.email,
-                    userName: user.name || undefined,
+                    userName: undefined, // users table doesn't have name column
                     suspensionDate: new Date(suspendedAt),
                   });
                   console.log('Suspension email sent (past_due with null grace_period_started_at):', {
@@ -206,10 +206,11 @@ export async function middleware(request: NextRequest) {
               // Send suspension email (non-blocking - log errors but don't fail redirect)
               // Idempotency: Only send email if this is a new suspension (wasAlreadySuspended was false)
               try {
-                // Query user record to get email and name
+                // Query user record to get email
+                // Note: users table doesn't have name column, userName will be undefined
                 const { data: user, error: userQueryError } = await supabase
                   .from('users')
-                  .select('email, name')
+                  .select('email')
                   .eq('id', userRecord.id)
                   .single();
 
@@ -240,7 +241,7 @@ export async function middleware(request: NextRequest) {
                       // Suspension was just set - send email (10 second window for safety)
                       await sendSuspensionEmail({
                         to: user.email,
-                        userName: user.name || undefined,
+                        userName: undefined, // users table doesn't have name column
                         suspensionDate: new Date(suspendedAt),
                       });
                       console.log('Suspension email sent successfully:', {
