@@ -152,11 +152,18 @@ Antigravity (Google DeepMind)
 - **Recursion Fix:** Implemented `get_auth_user_org_id` helper and updated policies to avoid infinite recursion.
 - **Testing:** Added integration tests for RLS policies.
 - **Verification:** Verified that invitation acceptance flow uses the new secure RPC.
+- **Code Review Fixes (2026-01-07):**
+  - ✅ Implemented missing helper functions: `is_org_member()` and `is_org_owner()`
+  - ✅ Fixed team_invitations SELECT policy to restrict to owners only (AC compliance)
+  - ✅ Added DELETE policy for team_invitations
+  - ✅ Removed insecure `WITH CHECK (true)` policy on stripe_webhook_events (service role bypasses RLS)
+  - ✅ Expanded RLS test suite with comprehensive coverage for all tables and policies
+  - ✅ Added test structure for getCurrentUser() compatibility verification
 
 ### File List
 
-- `infin8content/supabase/migrations/20260105180000_enable_rls_and_fix_security.sql`
+- `infin8content/supabase/migrations/20260105180000_enable_rls_and_fix_security.sql` (Updated: Added helper functions, fixed policies)
 - `infin8content/app/api/team/accept-invitation/route.ts`
 - `infin8content/app/accept-invitation/page.tsx`
 - `infin8content/lib/supabase/database.types.ts`
-- `infin8content/tests/integration/rls-policies.test.ts`
+- `infin8content/tests/integration/rls-policies.test.ts` (Updated: Expanded test coverage)

@@ -16,6 +16,37 @@ AS $$
   SELECT org_id FROM public.users WHERE auth_user_id = auth.uid() LIMIT 1;
 $$;
 
+-- Function to check if current user is a member of the given organization
+CREATE OR REPLACE FUNCTION public.is_org_member(org_id uuid)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE auth_user_id = auth.uid() 
+    AND org_id = is_org_member.org_id
+  );
+$$;
+
+-- Function to check if current user is an owner of the given organization
+CREATE OR REPLACE FUNCTION public.is_org_owner(org_id uuid)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.users 
+    WHERE auth_user_id = auth.uid() 
+    AND org_id = is_org_owner.org_id
+    AND role = 'owner'
+  );
+$$;
+
 -- Function to get invitation by token (Secure access for acceptance flow)
 -- Replaces the need for a public RLS policy on team_invitations
 CREATE OR REPLACE FUNCTION public.get_invitation_by_token(token_input text)
@@ -168,11 +199,10 @@ USING (
   organization_id = public.get_auth_user_org_id()
 );
 
+-- Service role bypasses RLS, so no policy needed for INSERT
+-- If policy is required for some reason, restrict to service role only
 DROP POLICY IF EXISTS "Service role can insert webhook events" ON public.stripe_webhook_events;
-CREATE POLICY "Service role can insert webhook events"
-ON public.stripe_webhook_events
-FOR INSERT
-WITH CHECK (true);
+-- Note: Service role client bypasses RLS, so webhook handlers should use service role client
 
 -- ============================================================================
 -- Fix function search_path security issues (Legacy)
@@ -244,13 +274,19 @@ BEGIN
     WHERE table_schema = 'public' 
     AND table_name = 'team_invitations'
   ) THEN
-    -- Policy: Users can view invitations for their organization
+    -- Policy: Owners can view invitations for their organization
+    -- AC requires: "regular members (Editor/Viewer) CANNOT see invitations"
     DROP POLICY IF EXISTS "Users can view organization invitations" ON public.team_invitations;
-    CREATE POLICY "Users can view organization invitations"
+    DROP POLICY IF EXISTS "Owners can view organization invitations" ON public.team_invitations;
+    CREATE POLICY "Owners can view organization invitations"
     ON public.team_invitations
     FOR SELECT
     USING (
       org_id = public.get_auth_user_org_id()
+      AND EXISTS (
+        SELECT 1 FROM public.users 
+        WHERE auth_user_id = auth.uid() AND role = 'owner'
+      )
     );
 
     -- Policy: Owners can create invitations for their organization
@@ -271,6 +307,19 @@ BEGIN
     CREATE POLICY "Owners can update invitations"
     ON public.team_invitations
     FOR UPDATE
+    USING (
+      org_id = public.get_auth_user_org_id()
+      AND EXISTS (
+        SELECT 1 FROM public.users 
+        WHERE auth_user_id = auth.uid() AND role = 'owner'
+      )
+    );
+
+    -- Policy: Owners can delete invitations for their organization
+    DROP POLICY IF EXISTS "Owners can delete invitations" ON public.team_invitations;
+    CREATE POLICY "Owners can delete invitations"
+    ON public.team_invitations
+    FOR DELETE
     USING (
       org_id = public.get_auth_user_org_id()
       AND EXISTS (
