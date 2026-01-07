@@ -219,5 +219,6 @@
 
 ## Log
 - 2026-01-07T23:57:31+11:00: Story 3.1 code review complete - all critical, high, and medium issues fixed. All 29 tests passing. Re-review approved. Ready for deployment after database types regeneration.
+- 2026-01-07T23:57:54+11:00: Fixed TypeScript build error by adding type assertions for new database tables (usage_tracking, api_costs, keyword_researches). Build now passes. Temporary workaround until database types are regenerated.
 
 
