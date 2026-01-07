@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 import { validateStripeEnv } from '@/lib/stripe/env'
 import { stripe } from '@/lib/stripe/server'
 import { retryWithBackoff } from '@/lib/stripe/retry'
@@ -71,7 +71,9 @@ export async function POST(request: Request) {
       return new Response(`Invalid signature: ${error?.message || 'Unknown error'}`, { status: 400 })
     }
 
-    const supabase = await createClient()
+    // Use service role client for webhooks (bypasses RLS)
+    // Webhooks don't have user sessions, so we need admin access
+    const supabase = createServiceRoleClient()
 
     // Check idempotency: Query stripe_webhook_events table for stripe_event_id
     const { data: existingEvent, error: idempotencyError } = await supabase
