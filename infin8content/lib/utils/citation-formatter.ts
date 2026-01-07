@@ -123,27 +123,116 @@ export function formatCitationsForMarkdown(
   minCitations: number = 1,
   maxCitations: number = 3
 ): string {
+  if (!sources || sources.length === 0) {
+    return content
+  }
+
   const { inTextCitations, referenceList } = formatCitations(sources)
   
   // Select citations to include (1-3 per section)
-  const citationsToInclude = inTextCitations.slice(0, Math.min(maxCitations, inTextCitations.length))
+  let citationsToInclude = inTextCitations.slice(0, Math.min(maxCitations, inTextCitations.length))
   
   // Ensure minimum citations
   if (citationsToInclude.length < minCitations && inTextCitations.length >= minCitations) {
-    citationsToInclude.push(...inTextCitations.slice(citationsToInclude.length, minCitations))
+    citationsToInclude = inTextCitations.slice(0, minCitations)
+  }
+
+  if (citationsToInclude.length === 0) {
+    return content
+  }
+
+  // Insert citations naturally into content
+  let contentWithCitations = content
+  
+  // Find natural insertion points (after sentences, before paragraph breaks)
+  // Split content into sentences and paragraphs for natural insertion
+  const paragraphs = content.split(/\n\n+/)
+  const insertionPoints: Array<{ paragraphIndex: number; position: number }> = []
+  
+  // Find good insertion points in each paragraph (after sentences)
+  paragraphs.forEach((paragraph, pIndex) => {
+    // Skip headings (lines starting with #)
+    if (paragraph.trim().startsWith('#')) {
+      return
+    }
+    
+    // Find sentence endings (., !, ?) but not in URLs or markdown links
+    const sentences = paragraph.split(/(?<=[.!?])\s+(?=[A-Z])/).filter(s => s.trim().length > 20)
+    
+    if (sentences.length > 0) {
+      // Insert citations at natural breaks (after 1st, 2nd, etc. sentences)
+      // Distribute citations throughout the paragraph
+      const citationsPerParagraph = Math.ceil(citationsToInclude.length / Math.max(paragraphs.length, 1))
+      const step = Math.max(1, Math.floor(sentences.length / (citationsPerParagraph + 1)))
+      
+      for (let i = step; i < sentences.length && insertionPoints.length < citationsToInclude.length; i += step) {
+        const sentenceEnd = paragraph.indexOf(sentences[i]) + sentences[i].length
+        insertionPoints.push({
+          paragraphIndex: pIndex,
+          position: sentenceEnd
+        })
+      }
+    }
+  })
+  
+  // If we didn't find enough insertion points, add them at paragraph breaks
+  if (insertionPoints.length < citationsToInclude.length) {
+    paragraphs.forEach((paragraph, pIndex) => {
+      if (insertionPoints.length >= citationsToInclude.length) return
+      if (paragraph.trim().startsWith('#')) return
+      
+      // Insert at end of paragraph if it's substantial
+      if (paragraph.trim().length > 50) {
+        insertionPoints.push({
+          paragraphIndex: pIndex,
+          position: paragraph.length
+        })
+      }
+    })
   }
   
-  // Insert citations naturally into content (placeholder - Story 4a-5 will handle actual insertion)
-  let contentWithCitations = content
+  // Sort insertion points by position (reverse order to maintain indices when inserting)
+  insertionPoints.sort((a, b) => {
+    if (a.paragraphIndex !== b.paragraphIndex) {
+      return b.paragraphIndex - a.paragraphIndex
+    }
+    return b.position - a.position
+  })
+  
+  // Insert citations at identified points
+  const citationsToInsert = citationsToInclude.slice(0, Math.min(insertionPoints.length, citationsToInclude.length))
+  
+  citationsToInsert.forEach((citation, index) => {
+    const point = insertionPoints[index]
+    if (point) {
+      const paragraph = paragraphs[point.paragraphIndex]
+      const before = paragraph.substring(0, point.position)
+      const after = paragraph.substring(point.position)
+      
+      // Insert citation naturally (with proper spacing)
+      const citationText = citation.trim()
+      // Remove trailing comma if citation already has one
+      const cleanCitation = citationText.endsWith(',') ? citationText : citationText + ','
+      
+      paragraphs[point.paragraphIndex] = before + (before.endsWith(' ') ? '' : ' ') + cleanCitation + ' ' + after.trim()
+    }
+  })
+  
+  // Reconstruct content with citations
+  contentWithCitations = paragraphs.join('\n\n')
   
   // Add reference list at end only if citations are actually included
   // Respect minCitations/maxCitations parameters
-  const shouldIncludeReferences = citationsToInclude.length > 0 && maxCitations > 0
+  const shouldIncludeReferences = citationsToInsert.length > 0 && maxCitations > 0
   if (shouldIncludeReferences && referenceList.length > 0) {
     // Only include references for citations that were actually included
-    const referencesToInclude = referenceList.slice(0, citationsToInclude.length)
-    contentWithCitations += '\n\n## References\n\n'
-    contentWithCitations += referencesToInclude.join('\n')
+    const referencesToInclude = referenceList.slice(0, citationsToInsert.length)
+    
+    // Check if content already has a References section
+    if (!contentWithCitations.includes('## References')) {
+      contentWithCitations += '\n\n## References\n\n'
+      contentWithCitations += referencesToInclude.join('\n')
+    }
   }
   
   return contentWithCitations

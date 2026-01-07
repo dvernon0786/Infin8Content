@@ -4,8 +4,11 @@
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { Outline } from './outline-generator'
-import { summarizeSections, fitInContextWindow } from '@/lib/utils/token-management'
+import { summarizeSections, fitInContextWindow, estimateTokens } from '@/lib/utils/token-management'
 import { researchQuery, type TavilySource } from '@/lib/services/tavily/tavily-client'
+import { generateContent, type OpenRouterMessage } from '@/lib/services/openrouter/openrouter-client'
+import { validateContentQuality, countCitations } from '@/lib/utils/content-quality'
+import { formatCitationsForMarkdown } from '@/lib/utils/citation-formatter'
 
 /**
  * Section structure matching database schema
@@ -30,6 +33,15 @@ export interface Section {
   citations_included?: number
   research_query?: string
   tokens_used?: number
+  model_used?: string
+  quality_metrics?: {
+    word_count: number
+    citations_included: number
+    readability_score?: number
+    keyword_density?: number
+    quality_passed: boolean
+    quality_retry_count: number
+  }
 }
 
 /**
@@ -109,14 +121,103 @@ export async function processSection(
     await updateArticleErrorDetails(articleId, sectionIndex, researchQueryUsed, error)
   }
 
-  // Generate section content (placeholder for Story 4a-5)
-  // Research sources will be passed to LLM in Story 4a-5
-  const content = await generateSectionContent(
-    article.keyword as string,
-    sectionInfo,
-    summaries,
-    researchSources // Pass research sources for citation inclusion
+  // Generate section content using OpenRouter API (Story 4a-5)
+  // With quality validation and citation integration
+  let generationResult
+  let generationFailed = false
+  let generationError: unknown = null
+
+  try {
+    generationResult = await generateSectionContent(
+      article.keyword as string,
+      sectionInfo,
+      summaries,
+      researchSources, // Pass research sources for citation inclusion
+      organizationId
+    )
+  } catch (error) {
+    // Generation failed - update error details and continue
+    generationFailed = true
+    generationError = error
+    console.error(`Section ${sectionIndex} generation failed:`, error)
+    
+    await updateArticleGenerationErrorDetails(
+      articleId,
+      sectionIndex,
+      error
+    )
+    
+    // Throw error to stop processing (user can retry failed section)
+    throw new Error(`Content generation failed for section ${sectionIndex}: ${error instanceof Error ? error.message : String(error)}`)
+  }
+
+  // Integrate citations naturally into content (Task 4)
+  // NOTE: Citations are integrated BEFORE quality validation so metrics reflect final content
+  let contentWithCitations = formatCitationsForMarkdown(
+    generationResult.content,
+    researchSources,
+    1, // minCitations
+    3  // maxCitations
   )
+
+  // Quality validation with retry (1 retry if quality fails)
+  // IMPORTANT: Validate on content WITH citations to ensure metrics are accurate
+  let qualityRetryCount = 0
+  const targetWordCount = getTargetWordCount(sectionInfo.type)
+  let qualityResult = validateContentQuality(
+    contentWithCitations, // Validate final content with citations
+    targetWordCount,
+    article.keyword as string,
+    sectionInfo.type,
+    qualityRetryCount
+  )
+
+  // Regenerate if quality fails (1 retry)
+  if (!qualityResult.passed && qualityRetryCount < 1) {
+    qualityRetryCount++
+    console.warn(`Section ${sectionIndex} quality check failed on final content, regenerating (attempt ${qualityRetryCount}):`, qualityResult.errors)
+    
+    try {
+      // Regenerate with same parameters
+      generationResult = await generateSectionContent(
+        article.keyword as string,
+        sectionInfo,
+        summaries,
+        researchSources,
+        organizationId
+      )
+      
+      // Re-integrate citations
+      contentWithCitations = formatCitationsForMarkdown(
+        generationResult.content,
+        researchSources,
+        1, // minCitations
+        3  // maxCitations
+      )
+      
+      // Re-validate on content WITH citations
+      qualityResult = validateContentQuality(
+        contentWithCitations, // Validate final content with citations
+        targetWordCount,
+        article.keyword as string,
+        sectionInfo.type,
+        qualityRetryCount
+      )
+    } catch (error) {
+      // Quality retry also failed
+      generationFailed = true
+      generationError = error
+      await updateArticleGenerationErrorDetails(
+        articleId,
+        sectionIndex,
+        error
+      )
+      throw new Error(`Content generation failed after quality retry for section ${sectionIndex}: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+
+  // Count actual citations in final content
+  const finalCitationsCount = countCitations(contentWithCitations)
 
   const section: Section = {
     section_type: sectionInfo.type,
@@ -124,8 +225,8 @@ export async function processSection(
     h2_index: sectionInfo.h2Index,
     h3_index: sectionInfo.h3Index,
     title: sectionInfo.title,
-    content,
-    word_count: content.split(/\s+/).length,
+    content: contentWithCitations, // Content with citations integrated
+    word_count: contentWithCitations.split(/\s+/).filter(w => w.length > 0).length,
     generated_at: new Date().toISOString(),
     research_sources: researchSources.map(source => ({
       title: source.title,
@@ -135,9 +236,11 @@ export async function processSection(
       author: source.author,
       relevance_score: source.relevance_score
     })),
-    citations_included: researchSources.length > 0 ? Math.min(researchSources.length, 3) : 0, // Count citations (will be updated in Story 4a-5)
+    citations_included: finalCitationsCount,
     research_query: researchQueryUsed,
-    tokens_used: undefined // Will be set by LLM call in Story 4a-5
+    tokens_used: generationResult.tokensUsed,
+    model_used: generationResult.modelUsed,
+    quality_metrics: qualityResult.metrics
   }
 
   // Update article with new section
@@ -415,29 +518,182 @@ async function updateArticleErrorDetails(
 }
 
 /**
- * Generate section content (placeholder for Story 4a-5)
- * 
- * TODO: Replace with OpenRouter API call in Story 4a-5
+ * Update article error_details with content generation failure information
+ */
+async function updateArticleGenerationErrorDetails(
+  articleId: string,
+  sectionIndex: number,
+  error: unknown
+): Promise<void> {
+  const supabase = createServiceRoleClient()
+  
+  // Load current error_details
+  const { data: articleData } = await supabase
+    .from('articles' as any)
+    .select('error_details')
+    .eq('id', articleId)
+    .single()
+
+  const currentErrorDetails = (articleData as any)?.error_details || {}
+  const generationFailures = currentErrorDetails.generation_failures || []
+  
+  generationFailures.push({
+    section_index: sectionIndex,
+    error_type: error instanceof Error ? error.constructor.name : 'Unknown',
+    error_message: error instanceof Error ? error.message : String(error),
+    retry_attempts: 3,
+    failed_at: new Date().toISOString()
+  })
+
+  await supabase
+    .from('articles' as any)
+    .update({
+      error_details: {
+        ...currentErrorDetails,
+        generation_failures: generationFailures
+      }
+    })
+    .eq('id', articleId)
+}
+
+/**
+ * Generate section content using OpenRouter API
+ * Story 4a-5: LLM Content Generation with OpenRouter Integration
  */
 async function generateSectionContent(
   keyword: string,
   sectionInfo: { type: string; title: string },
   previousSummaries: string,
-  researchSources: TavilySource[] = [] // Research sources for citation inclusion
-): Promise<string> {
-  // PLACEHOLDER: Generate mock content
-  // Story 4a-5 will implement actual LLM content generation with citations
+  researchSources: TavilySource[] = [],
+  organizationId: string
+): Promise<{
+  content: string
+  tokensUsed: number
+  modelUsed: string
+  promptTokens: number
+  completionTokens: number
+}> {
+  // Determine target word count based on section type
+  const targetWordCount = getTargetWordCount(sectionInfo.type)
   
-  let content = `This is placeholder content for the section "${sectionInfo.title}" about ${keyword}.\n\n`
-  content += `The section will be generated using an LLM in Story 4a-5. `
-  content += `Previous sections summary:\n${previousSummaries.slice(0, 200)}...\n\n`
-  
-  // Include research sources info (for Story 4a-5 to use for citations)
-  if (researchSources.length > 0) {
-    content += `Research sources available: ${researchSources.length} sources found.\n`
+  // Construct comprehensive prompt
+  const systemMessage = `You are an expert SEO content writer creating a section for a long-form article.
+Write engaging, informative content that naturally incorporates citations and optimizes for SEO.
+Use proper heading structure (H2, H3) and maintain a professional yet conversational tone.`
+
+  // Format research sources for prompt
+  const researchSourcesText = researchSources
+    .slice(0, 10) // Use top 10 sources
+    .map((source, index) => {
+      return `${index + 1}. [${source.title}](${source.url})${source.excerpt ? `: ${source.excerpt.slice(0, 200)}` : ''}`
+    })
+    .join('\n')
+
+  // Build user message with all context
+  // NOTE: SERP analysis insights are not included (Story 4a-4 is optional and not implemented)
+  const userMessageParts = [
+    `Section: ${sectionInfo.title}`,
+    `Type: ${sectionInfo.type}`,
+    `Target Word Count: ${targetWordCount} words`,
+    '',
+    'Research Sources:',
+    researchSourcesText || 'No research sources available.',
+    '',
+    'Keyword Focus:',
+    `- Primary keyword: ${keyword}`,
+    '- SEO Requirements: Include keyword naturally, avoid keyword stuffing',
+    '',
+    'Previous Sections Summary:',
+    previousSummaries || 'This is the first section.',
+    '',
+    'Writing Style: Professional, Conversational',
+    'Target Audience: General audience interested in SEO-optimized content',
+    '',
+    `Generate content with proper markdown formatting (H2/H3 headings) and integrate citations naturally within the content, not all at the end. Aim for ${targetWordCount} words.`
+  ]
+
+  const userMessage = userMessageParts.join('\n')
+
+  // Check token limits
+  const promptTokens = estimateTokens(systemMessage + userMessage)
+  const researchTokens = estimateTokens(researchSourcesText)
+  const summariesTokens = estimateTokens(previousSummaries)
+  const totalPromptTokens = promptTokens + researchTokens + summariesTokens
+
+  // Calculate max tokens for response (leave room for prompt)
+  // Free models typically have 8k-32k context windows, use 6k as safe limit
+  const maxResponseTokens = Math.min(2000, 6000 - totalPromptTokens - 500) // 500 buffer
+
+  if (maxResponseTokens < 500) {
+    throw new Error(`Prompt too long: ${totalPromptTokens} tokens exceeds context window`)
   }
+
+  // Call OpenRouter API
+  const messages: OpenRouterMessage[] = [
+    { role: 'system', content: systemMessage },
+    { role: 'user', content: userMessage }
+  ]
+
+  const result = await generateContent(messages, {
+    maxTokens: maxResponseTokens,
+    temperature: 0.7,
+    maxRetries: 3
+  })
+
+  // Track API cost (free models = $0.00)
+  await trackOpenRouterApiCost(organizationId, 0.00)
+
+  return {
+    content: result.content,
+    tokensUsed: result.tokensUsed,
+    modelUsed: result.modelUsed,
+    promptTokens: result.promptTokens,
+    completionTokens: result.completionTokens
+  }
+}
+
+/**
+ * Get target word count based on section type
+ */
+function getTargetWordCount(sectionType: string): number {
+  switch (sectionType) {
+    case 'introduction':
+      return 300
+    case 'h2':
+      return 600
+    case 'h3':
+      return 400
+    case 'conclusion':
+      return 400
+    case 'faq':
+      return 500
+    default:
+      return 500
+  }
+}
+
+// Export for use in generateSectionContent
+export { getTargetWordCount }
+
+/**
+ * Track OpenRouter API cost per section
+ */
+async function trackOpenRouterApiCost(organizationId: string, cost: number): Promise<void> {
+  const supabase = createServiceRoleClient()
   
-  return content
+  const { error } = await (supabase
+    .from('api_costs' as any)
+    .insert({
+      organization_id: organizationId,
+      service: 'openrouter',
+      operation: 'section_generation',
+      cost: cost
+    }) as unknown as Promise<{ error: any }>)
+
+  if (error) {
+    console.error('Failed to track OpenRouter API cost:', error)
+    // Don't throw - cost tracking failure shouldn't block article generation
+  }
 }
 
 /**

@@ -1,14 +1,28 @@
 # Scratchpad
 
 ## Current Status
-- **Date:** 2026-01-08 09:36:27 AEDT
+- **Date:** 2026-01-08 10:42:47 AEDT
 - **Epic 1:** Completed
 - **Epic 3:** Story 3-1 Complete
-- **Epic 4A:** Story 4a-3 Complete (Review)
-- **Last Story:** 4a-3 Real-Time Research Per Section (Tavily Integration) - Code Review Complete
-- **Current Focus:** Story 4a-3 Code Review - All HIGH/MEDIUM Issues Fixed, 44/44 Tests Passing
+- **Epic 4A:** Story 4a-5 Complete (Review)
+- **Last Story:** 4a-5 LLM Content Generation with OpenRouter Integration - Code Review Complete
+- **Current Focus:** Story 4a-5 Code Review - All HIGH/MEDIUM Issues Fixed, Ready for Production
 
 ## Recent Achievements
+- **Story 4a-5 Code Review & Fixes (2026-01-08 10:42:47 AEDT):**
+  - ✅ Performed comprehensive adversarial code review (found 8 issues: 2 High, 4 Medium, 2 Low)
+  - ✅ **CRITICAL FIX:** Fixed `formatCitationsForMarkdown()` to actually insert in-text citations naturally (was placeholder)
+  - ✅ **CRITICAL FIX:** Moved quality validation to run AFTER citation integration (metrics now reflect final content)
+  - ✅ **CRITICAL FIX:** Fixed quality retry logic to regenerate, re-integrate citations, and re-validate final content
+  - ✅ **MEDIUM FIX:** Removed SERP analysis mentions from prompt (Story 4a-4 is optional and not implemented)
+  - ✅ **MEDIUM FIX:** Created missing integration tests: `tests/integration/article-generation/openrouter-content-generation.test.ts`
+  - ✅ **MEDIUM FIX:** Created missing E2E tests: `tests/e2e/article-generation/content-generation.spec.ts`
+  - ✅ Citation insertion now distributes citations naturally at sentence boundaries and paragraph breaks
+  - ✅ Quality metrics now accurately reflect final content with citations integrated
+  - ✅ All unit tests passing (16/16 for OpenRouter client)
+  - ✅ Re-ran code review: 0 High/Medium issues remaining, 2 Low (documented/acceptable)
+  - ✅ Story status: "review", ready for production
+  - ✅ Code review fixes documented in story Dev Agent Record
 - **Story 4a-3 Code Review & Fixes (2026-01-08 09:36:27 AEDT):**
   - ✅ Performed comprehensive adversarial code review (found 10 issues: 4 High, 4 Medium, 2 Low)
   - ✅ Fixed unique constraint missing on tavily_research_cache table (upsert would fail)
@@ -94,6 +108,11 @@
   - All routes properly registered and accessible
 
 ## Next Steps
+- **Story 4a-5:**
+  - Configure OpenRouter API key in environment variables (OPENROUTER_API_KEY)
+  - Verify citation insertion works correctly in production
+  - Monitor quality metrics to ensure they reflect final content accurately
+  - Mark story as "done" after production verification
 - **Story 4a-3:**
   - Run database migration: `supabase migration up` (adds unique constraint and partial index)
   - Regenerate TypeScript types: `supabase gen types typescript --project-id <id> > lib/supabase/database.types.ts`
@@ -107,8 +126,7 @@
   - Test Inngest sync endpoint: `curl -X PUT https://infin8content.com/api/inngest`
 - **Future Stories:**
   - Story 4a-2: Section-by-section architecture and outline generation (Complete)
-  - Story 4a-5: LLM content generation (OpenRouter integration) - Will use Tavily research results
-  - Story 4a-6: Real-time progress tracking and updates
+  - Story 4a-6: Real-time progress tracking and updates (P0 - Next)
 
 ## Code Review Summary - Story 1.9
 **Status:** ✅ All Critical Fixes Applied
