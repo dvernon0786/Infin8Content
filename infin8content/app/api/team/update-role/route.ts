@@ -72,7 +72,8 @@ export async function POST(request: Request) {
     const oldRole = targetUser.role
 
     // Update users.role in database
-    const { error: updateError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { error: updateError } = await (supabase as any)
       .from('users')
       .update({ role })
       .eq('id', userId)
