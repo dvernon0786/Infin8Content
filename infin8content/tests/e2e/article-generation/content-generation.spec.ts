@@ -128,11 +128,11 @@ test.describe('Article Content Generation', () => {
     // Should show quality passed indicator
     await expect(page.getByTestId('quality-passed-indicator')).toBeVisible()
 
-    // Should show readability score > 60
+    // Should show readability score >= 50 (threshold lowered from 60 to 50)
     const readabilityMatch = metricsText?.match(/readability[:\s]+(\d+)/i)
     if (readabilityMatch) {
       const readabilityScore = parseInt(readabilityMatch[1])
-      expect(readabilityScore).toBeGreaterThanOrEqual(60)
+      expect(readabilityScore).toBeGreaterThanOrEqual(50)
     }
 
     // Should show citations count >= 1

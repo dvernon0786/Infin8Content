@@ -263,10 +263,13 @@ export function validateContentQuality(
   }
 
   // Readability validation
+  // Lowered threshold from 60 to 50 to be more lenient
+  // 50-59 = "Fairly Difficult" which is acceptable for technical content
+  // 60+ = "Standard" readability (preferred)
   const readabilityScore = calculateReadability(content)
-  const readabilityValid = readabilityScore >= 60
+  const readabilityValid = readabilityScore >= 50
   if (!readabilityValid) {
-    errors.push(`Readability score ${readabilityScore} is below target of 60`)
+    errors.push(`Readability score ${readabilityScore} is below target of 50`)
   }
 
   const passed = errors.length === 0

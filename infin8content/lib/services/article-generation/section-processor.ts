@@ -160,7 +160,7 @@ export async function processSection(
     3  // maxCitations
   )
 
-  // Quality validation with retry (1 retry if quality fails)
+  // Quality validation with retry (2 retries if quality fails)
   // IMPORTANT: Validate on content WITH citations to ensure metrics are accurate
   let qualityRetryCount = 0
   const targetWordCount = getTargetWordCount(sectionInfo.type)
@@ -172,8 +172,8 @@ export async function processSection(
     qualityRetryCount
   )
 
-  // Regenerate if quality fails (1 retry)
-  if (!qualityResult.passed && qualityRetryCount < 1) {
+  // Regenerate if quality fails (2 retries for better success rate)
+  if (!qualityResult.passed && qualityRetryCount < 2) {
     qualityRetryCount++
     console.warn(`Section ${sectionIndex} quality check failed on final content, regenerating (attempt ${qualityRetryCount}):`, qualityResult.errors)
     
@@ -665,7 +665,8 @@ Use proper heading structure (H2, H3) and maintain a professional yet conversati
   const result = await generateContent(messages, {
     maxTokens: maxResponseTokens,
     temperature: 0.7,
-    maxRetries: 3
+    maxRetries: 3,
+    model: 'google/gemini-2.5-flash' // Explicitly use Gemini 2.5 Flash for better quality
   })
 
   // Track API cost (free models = $0.00)
