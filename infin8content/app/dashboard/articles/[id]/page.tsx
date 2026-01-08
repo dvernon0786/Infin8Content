@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ArticleQueueStatus } from '@/components/articles/article-queue-status'
+import { ArticleContentViewer } from '@/components/articles/article-content-viewer'
 import { redirect } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 
@@ -28,15 +29,25 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
   const supabase = await createClient()
 
-  // Only select columns we actually need - exclude large JSONB columns (sections, outline)
-  // to prevent FUNCTION_INVOCATION_TIMEOUT on Vercel (select('*') fetches all columns including large JSONB)
-  // TODO: Remove type assertion after running: supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts
+  // First, get basic article info (excluding large JSONB columns to prevent timeout)
   const { data: article, error } = await (supabase
     .from('articles' as any)
     .select('id, title, keyword, status, target_word_count, writing_style, target_audience, created_at, updated_at, org_id')
     .eq('id', id)
     .eq('org_id', currentUser.org_id)
     .single() as unknown as Promise<{ data: any; error: any }>)
+
+  // If article is completed, fetch sections separately to display content
+  let sections: any[] | null = null
+  if (article && article.status === 'completed') {
+    const { data: articleWithSections } = await supabase
+      .from('articles' as any)
+      .select('sections')
+      .eq('id', id)
+      .single()
+    
+    sections = articleWithSections?.sections || null
+  }
 
   if (error || !article) {
     return (
@@ -113,6 +124,24 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
           </div>
         </CardContent>
       </Card>
+
+      {/* Article Content - Only show when completed */}
+      {article.status === 'completed' && sections && sections.length > 0 && (
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight mb-6">Article Content</h2>
+          <ArticleContentViewer sections={sections} />
+        </div>
+      )}
+
+      {article.status === 'completed' && (!sections || sections.length === 0) && (
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground text-center py-8">
+              Article generation completed, but no content sections were found.
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
