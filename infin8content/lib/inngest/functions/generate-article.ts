@@ -365,8 +365,9 @@ export const generateArticle = inngest.createFunction(
         // Type assertion needed because database types haven't been regenerated after migration
         const article = (articleData as unknown) as { sections?: any[]; current_section_index?: number } | null
 
-        const { error: updateError } = await supabase
-          .from('articles' as any)
+        // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+        const { error: updateError } = await (supabase as any)
+          .from('articles')
           .update({
             status: 'failed',
             error_details: {

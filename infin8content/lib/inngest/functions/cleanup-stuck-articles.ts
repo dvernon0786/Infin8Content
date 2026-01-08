@@ -61,7 +61,7 @@ export const cleanupStuckArticles = inngest.createFunction(
             failed_at: new Date().toISOString(),
             timeout: true,
             auto_cleaned: true,
-            stuck_duration_minutes: stuckArticles.map(article => {
+            stuck_duration_minutes: (stuckArticles as any[]).map((article: any) => {
               const startTime = new Date(article.generation_started_at).getTime()
               const now = Date.now()
               return Math.round((now - startTime) / (60 * 1000))
