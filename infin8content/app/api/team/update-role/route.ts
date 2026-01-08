@@ -46,7 +46,8 @@ export async function POST(request: Request) {
     const supabase = await createClient()
 
     // Get target user to validate and get old role
-    const { data: targetUser, error: targetUserError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: targetUser, error: targetUserError } = await (supabase as any)
       .from('users')
       .select('id, email, role')
       .eq('id', userId)
