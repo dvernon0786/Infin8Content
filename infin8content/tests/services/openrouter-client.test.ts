@@ -219,9 +219,9 @@ describe('OpenRouter Service Client', () => {
         generateContent(mockMessages, { maxRetries: 1 })
       ).rejects.toThrow('OpenRouter API error')
 
-      // Should try all 3 models, each with maxRetries=1 attempt = 3 total calls
+      // Should try all 2 models, each with maxRetries=1 attempt = 2 total calls
       // (no retries since maxRetries=1 means 1 attempt per model)
-      expect(mockFetch).toHaveBeenCalledTimes(3)
+      expect(mockFetch).toHaveBeenCalledTimes(2)
     })
 
     it('should throw error if response has no choices', async () => {
@@ -245,21 +245,12 @@ describe('OpenRouter Service Client', () => {
             usage: { prompt_tokens: 50, completion_tokens: 0, total_tokens: 50 }
           })
         })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            id: 'test-id',
-            model: FREE_MODELS[2],
-            choices: [],
-            usage: { prompt_tokens: 50, completion_tokens: 0, total_tokens: 50 }
-          })
-        })
 
       await expect(
         generateContent(mockMessages)
       ).rejects.toThrow('OpenRouter API returned no choices')
       
-      expect(mockFetch).toHaveBeenCalledTimes(3) // All 3 models tried
+      expect(mockFetch).toHaveBeenCalledTimes(2) // All 2 models tried
     })
 
     it('should throw error if response has empty content', async () => {
@@ -289,24 +280,12 @@ describe('OpenRouter Service Client', () => {
             usage: { prompt_tokens: 50, completion_tokens: 0, total_tokens: 50 }
           })
         })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            id: 'test-id',
-            model: FREE_MODELS[2],
-            choices: [{
-              message: { role: 'assistant', content: '' },
-              finish_reason: 'stop'
-            }],
-            usage: { prompt_tokens: 50, completion_tokens: 0, total_tokens: 50 }
-          })
-        })
 
       await expect(
         generateContent(mockMessages)
       ).rejects.toThrow('OpenRouter API returned empty content')
       
-      expect(mockFetch).toHaveBeenCalledTimes(3) // All 3 models tried
+      expect(mockFetch).toHaveBeenCalledTimes(2) // All 2 models tried
     })
 
     it('should handle network errors with retry', async () => {
@@ -347,8 +326,8 @@ describe('OpenRouter Service Client', () => {
       expect(FREE_MODELS.length).toBeGreaterThan(0)
     })
 
-    it('should include TNS Standard as first model', () => {
-      expect(FREE_MODELS[0]).toBe('tns-standard/tns-standard-8-7.5-chimera')
+    it('should include Llama 3.3 as first model', () => {
+      expect(FREE_MODELS[0]).toBe('meta-llama/llama-3.3-70b-instruct:free')
     })
   })
 })
