@@ -49,7 +49,8 @@ export async function POST(request: Request) {
     }
 
     // Update invitation: status = 'expired'
-    const { error: updateError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { error: updateError } = await (supabase as any)
       .from('team_invitations')
       .update({ status: 'expired' })
       .eq('id', invitationId)
