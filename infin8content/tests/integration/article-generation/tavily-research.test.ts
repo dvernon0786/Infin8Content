@@ -17,7 +17,38 @@ vi.mock('@/lib/supabase/server')
 vi.mock('@/lib/services/tavily/tavily-client')
 vi.mock('@/lib/utils/token-management', () => ({
   summarizeSections: vi.fn(() => 'Previous sections summary'),
-  fitInContextWindow: vi.fn((text: string) => text)
+  fitInContextWindow: vi.fn((text: string) => text),
+  estimateTokens: vi.fn((text: string) => Math.ceil(text.length / 4))
+}))
+vi.mock('@/lib/services/openrouter/openrouter-client', () => ({
+  generateContent: vi.fn().mockResolvedValue({
+    content: 'Generated content with proper markdown formatting.\n\n## Section Content\n\nThis is test content.',
+    tokensUsed: 100,
+    modelUsed: 'test-model',
+    promptTokens: 50,
+    completionTokens: 50
+  })
+}))
+vi.mock('@/lib/utils/content-quality', () => ({
+  validateContentQuality: vi.fn(() => ({
+    passed: true,
+    metrics: {
+      word_count: 200,
+      citations_included: 2,
+      readability_score: 65,
+      keyword_density: 2.5,
+      quality_passed: true,
+      quality_retry_count: 0
+    },
+    errors: []
+  })),
+  countCitations: vi.fn(() => 2)
+}))
+vi.mock('@/lib/utils/citation-formatter', () => ({
+  formatCitationsForMarkdown: vi.fn((content: string, sources: any[]) => {
+    if (sources.length === 0) return content
+    return content + '\n\n## References\n\n- [Test Source](https://example.com)'
+  })
 }))
 
 describe('Tavily Research Integration', () => {

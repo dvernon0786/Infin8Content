@@ -1,6 +1,6 @@
 # Story 4a.3: Real-Time Research Per Section (Tavily Integration)
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -647,6 +647,16 @@ Composer (Cursor AI)
 - Created integration tests: `tests/integration/article-generation/tavily-research.test.ts`
 - Created citation formatter unit tests: `tests/unit/utils/citation-formatter.test.ts`
 - All HIGH and MEDIUM severity issues from code review resolved
+
+**Code Review Fixes Applied (2026-01-09):**
+- Fixed integration tests failing due to Story 4a-5 dependencies
+- Added missing mocks: `estimateTokens` in token-management mock
+- Added OpenRouter client mock (`generateContent`)
+- Added content-quality utils mocks (`validateContentQuality`, `countCitations`)
+- Added citation-formatter mock (`formatCitationsForMarkdown`)
+- Updated `validateContentQuality` mock to return proper structure (`passed`, `metrics`, `errors`)
+- All 10 integration tests now passing (10/10)
+- All 44 tests passing total (Tavily client: 10, Citation formatter: 24, Integration: 10)
 
 ### File List
 
