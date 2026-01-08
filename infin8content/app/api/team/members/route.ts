@@ -56,7 +56,8 @@ export async function GET() {
     }
 
     // Query team_invitations table: All pending invitations for organization
-    const { data: pendingInvitations, error: invitationsError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: pendingInvitations, error: invitationsError } = await (supabase as any)
       .from('team_invitations')
       .select('id, email, role, expires_at, created_at, created_by')
       .eq('org_id', currentUser.org_id)
