@@ -27,7 +27,8 @@ export async function POST(request: Request) {
     }
 
     // Get user record
-    const { data: userRecord, error: userError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: userRecord, error: userError } = await (supabase as any)
       .from('users')
       .select('id, org_id, role')
       .eq('auth_user_id', authUser.id)
@@ -49,7 +50,8 @@ export async function POST(request: Request) {
     }
 
     // Check for duplicate organization name (application-level check)
-    const { data: existingOrg } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: existingOrg } = await (supabase as any)
       .from('organizations')
       .select('id')
       .eq('name', name)
@@ -63,7 +65,8 @@ export async function POST(request: Request) {
     }
 
     // Create organization
-    const { data: organization, error: orgError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: organization, error: orgError } = await (supabase as any)
       .from('organizations')
       .insert({
         name,
@@ -94,7 +97,8 @@ export async function POST(request: Request) {
     }
 
     // Update user record: link to organization and ensure role is 'owner'
-    const { error: updateError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { error: updateError } = await (supabase as any)
       .from('users')
       .update({
         org_id: organization.id,
@@ -104,7 +108,7 @@ export async function POST(request: Request) {
 
     if (updateError) {
       // Rollback: delete organization if user update fails
-      await supabase.from('organizations').delete().eq('id', organization.id)
+      await (supabase as any).from('organizations').delete().eq('id', organization.id)
       
       console.error('Failed to link user to organization:', updateError)
       return NextResponse.json(

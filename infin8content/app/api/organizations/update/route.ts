@@ -27,7 +27,8 @@ export async function POST(request: Request) {
     }
 
     // Get user record with organization
-    const { data: userRecord, error: userError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: userRecord, error: userError } = await (supabase as any)
       .from('users')
       .select('id, org_id, role')
       .eq('auth_user_id', authUser.id)
@@ -49,7 +50,8 @@ export async function POST(request: Request) {
     }
 
     // Check for duplicate organization name (application-level check)
-    const { data: existingOrg } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: existingOrg } = await (supabase as any)
       .from('organizations')
       .select('id')
       .eq('name', name)
@@ -64,7 +66,8 @@ export async function POST(request: Request) {
     }
 
     // Update organization
-    const { data: organization, error: orgError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: organization, error: orgError } = await (supabase as any)
       .from('organizations')
       .update({ name })
       .eq('id', userRecord.org_id)
