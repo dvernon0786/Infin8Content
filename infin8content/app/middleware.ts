@@ -107,7 +107,8 @@ export async function middleware(request: NextRequest) {
 
   // Check payment status for protected routes (except payment-related routes)
   if (!isPaymentRoute && userRecord.org_id) {
-    const { data: org } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: org } = await (supabase as any)
       .from('organizations')
       .select('*')
       .eq('id', userRecord.org_id)
@@ -124,7 +125,8 @@ export async function middleware(request: NextRequest) {
           const suspendedAt = new Date().toISOString();
           
           if (!wasAlreadySuspended) {
-            const { error: updateError } = await supabase
+            // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+            const { error: updateError } = await (supabase as any)
               .from('organizations')
               .update({
                 payment_status: 'suspended',
@@ -189,7 +191,8 @@ export async function middleware(request: NextRequest) {
           
           // Only update if not already suspended (prevents duplicate updates and emails)
           if (!wasAlreadySuspended) {
-            const { error: updateError } = await supabase
+            // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+            const { error: updateError } = await (supabase as any)
               .from('organizations')
               .update({
                 payment_status: 'suspended',
@@ -228,7 +231,8 @@ export async function middleware(request: NextRequest) {
                 } else if (user?.email) {
                   // Verify the update succeeded by checking suspended_at was actually set
                   // This provides additional idempotency protection
-                  const { data: updatedOrg } = await supabase
+                  // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+                  const { data: updatedOrg } = await (supabase as any)
                     .from('organizations')
                     .select('suspended_at')
                     .eq('id', userRecord.org_id)
