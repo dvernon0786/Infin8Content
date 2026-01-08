@@ -73,7 +73,8 @@ export async function POST(request: Request) {
     }
 
     // Get organization name for email
-    const { data: organization, error: orgError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: organization, error: orgError } = await (supabase as any)
       .from('organizations')
       .select('name')
       .eq('id', currentUser.org_id)
