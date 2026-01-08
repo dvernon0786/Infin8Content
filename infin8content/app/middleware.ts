@@ -89,7 +89,8 @@ export async function middleware(request: NextRequest) {
 
   // Check OTP verification status by querying users table
   // Note: We check the users table because OTP verification is stored there
-  const { data: userRecord } = await supabase
+  // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+  const { data: userRecord } = await (supabase as any)
     .from('users')
     .select('id, otp_verified, org_id')
     .eq('auth_user_id', user.id)
