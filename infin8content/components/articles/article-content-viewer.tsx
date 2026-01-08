@@ -5,40 +5,24 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ExternalLink, FileText } from 'lucide-react'
-
-interface Section {
-  section_type: 'introduction' | 'h2' | 'h3' | 'conclusion' | 'faq'
-  section_index: number
-  h2_index?: number
-  h3_index?: number
-  title: string
-  content: string
-  word_count: number
-  generated_at: string
-  research_sources?: Array<{
-    title: string
-    url: string
-    excerpt?: string
-    published_date?: string | null
-    author?: string | null
-    relevance_score?: number
-  }>
-  citations_included?: number
-  research_query?: string
-  tokens_used?: number
-  model_used?: string
-  quality_metrics?: {
-    word_count: number
-    citations_included: number
-    readability_score?: number
-    keyword_density?: number
-    quality_passed: boolean
-    quality_retry_count: number
-  }
-}
+import type { ArticleSection } from '@/lib/types/article'
+import { MarkdownErrorBoundary } from './markdown-error-boundary'
 
 interface ArticleContentViewerProps {
-  sections: Section[]
+  sections: ArticleSection[]
+}
+
+/**
+ * Validates if a URL is safe to render
+ * Only allows http:// and https:// protocols
+ */
+function isValidUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    return ['http:', 'https:'].includes(parsed.protocol)
+  } catch {
+    return false
+  }
 }
 
 export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
@@ -61,9 +45,6 @@ export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
     <div className="flex flex-col gap-8">
       {sortedSections.map((section, index) => {
         const isH3 = section.section_type === 'h3'
-        const isIntroduction = section.section_type === 'introduction'
-        const isConclusion = section.section_type === 'conclusion'
-        const isFAQ = section.section_type === 'faq'
 
         return (
           <div key={section.section_index} className="flex flex-col gap-4">
@@ -71,26 +52,9 @@ export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
             {!isH3 && (
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  {isIntroduction && (
-                    <h2 className="text-2xl font-bold tracking-tight mb-2">
-                      {section.title}
-                    </h2>
-                  )}
-                  {section.section_type === 'h2' && (
-                    <h2 className="text-2xl font-bold tracking-tight mb-2">
-                      {section.title}
-                    </h2>
-                  )}
-                  {isConclusion && (
-                    <h2 className="text-2xl font-bold tracking-tight mb-2">
-                      {section.title}
-                    </h2>
-                  )}
-                  {isFAQ && (
-                    <h2 className="text-2xl font-bold tracking-tight mb-2">
-                      {section.title}
-                    </h2>
-                  )}
+                  <h2 className="text-2xl font-bold tracking-tight mb-2">
+                    {section.title}
+                  </h2>
                 </div>
                 <div className="flex items-center gap-2">
                   {section.quality_metrics?.quality_passed && (
@@ -112,55 +76,9 @@ export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
             <Card>
               <CardContent className="pt-6">
                 <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <ReactMarkdown
-                    components={{
-                      // Custom link component to open external links in new tab
-                      a: ({ node, ...props }) => (
-                        <a
-                          {...props}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline inline-flex items-center gap-1"
-                        >
-                          {props.children}
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      ),
-                      // Custom heading components
-                      h2: ({ node, ...props }) => (
-                        <h2 className="text-2xl font-bold mt-8 mb-4 first:mt-0" {...props} />
-                      ),
-                      h3: ({ node, ...props }) => (
-                        <h3 className="text-xl font-semibold mt-6 mb-3" {...props} />
-                      ),
-                      // Custom paragraph
-                      p: ({ node, ...props }) => (
-                        <p className="mb-4 leading-relaxed" {...props} />
-                      ),
-                      // Custom list
-                      ul: ({ node, ...props }) => (
-                        <ul className="list-disc list-inside mb-4 space-y-2" {...props} />
-                      ),
-                      ol: ({ node, ...props }) => (
-                        <ol className="list-decimal list-inside mb-4 space-y-2" {...props} />
-                      ),
-                      // Custom list item
-                      li: ({ node, ...props }) => (
-                        <li className="ml-4" {...props} />
-                      ),
-                      // Custom code blocks
-                      code: ({ className, ...props }: { className?: string; children?: React.ReactNode }) => {
-                        const isInline = !className
-                        return isInline ? (
-                          <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono" {...props} />
-                        ) : (
-                          <code className="block bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono" {...props} />
-                        )
-                      },
-                    }}
-                  >
-                    {section.content}
-                  </ReactMarkdown>
+                  <MarkdownErrorBoundary>
+                    <MarkdownRenderer content={section.content} />
+                  </MarkdownErrorBoundary>
                 </div>
               </CardContent>
             </Card>
@@ -209,19 +127,29 @@ export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
                         Research Sources ({section.research_sources.length})
                       </p>
                       <ul className="space-y-1 text-sm">
-                        {section.research_sources.slice(0, 5).map((source, idx) => (
-                          <li key={idx}>
-                            <a
-                              href={source.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:underline inline-flex items-center gap-1"
-                            >
-                              {source.title}
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-                          </li>
-                        ))}
+                        {section.research_sources.slice(0, 5).map((source, idx) => {
+                          const urlValid = isValidUrl(source.url)
+                          return (
+                            <li key={idx}>
+                              {urlValid ? (
+                                <a
+                                  href={source.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline inline-flex items-center gap-1"
+                                >
+                                  {source.title}
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              ) : (
+                                <span className="text-muted-foreground inline-flex items-center gap-1">
+                                  {source.title}
+                                  <span className="text-xs">(Invalid URL)</span>
+                                </span>
+                              )}
+                            </li>
+                          )
+                        })}
                         {section.research_sources.length > 5 && (
                           <li className="text-muted-foreground text-xs">
                             +{section.research_sources.length - 5} more sources
@@ -240,6 +168,100 @@ export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
         )
       })}
     </div>
+  )
+}
+
+/**
+ * Markdown renderer component with error handling
+ * Wraps ReactMarkdown to handle rendering errors gracefully
+ */
+function MarkdownRenderer({ content }: { content: string }) {
+  // ReactMarkdown handles errors internally, but we validate content first
+  if (!content || typeof content !== 'string') {
+    return (
+      <div className="text-destructive text-sm py-4">
+        <p className="font-medium">Invalid content: Content must be a string</p>
+      </div>
+    )
+  }
+
+  return (
+    <ReactMarkdown
+      components={{
+        // Custom link component to open external links in new tab
+        a: ({ href, children, ...props }: { href?: string; children?: React.ReactNode }) => {
+          // Validate URL before rendering
+          const url = href || ''
+          const urlValid = isValidUrl(url)
+          
+          if (!urlValid) {
+            return <span className="text-muted-foreground">{children}</span>
+          }
+          
+          return (
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline inline-flex items-center gap-1"
+              {...props}
+            >
+              {children}
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )
+        },
+        // Custom heading components
+        h2: ({ children, ...props }: { children?: React.ReactNode }) => (
+          <h2 className="text-2xl font-bold mt-8 mb-4 first:mt-0" {...props}>
+            {children}
+          </h2>
+        ),
+        h3: ({ children, ...props }: { children?: React.ReactNode }) => (
+          <h3 className="text-xl font-semibold mt-6 mb-3" {...props}>
+            {children}
+          </h3>
+        ),
+        // Custom paragraph
+        p: ({ children, ...props }: { children?: React.ReactNode }) => (
+          <p className="mb-4 leading-relaxed" {...props}>
+            {children}
+          </p>
+        ),
+        // Custom list
+        ul: ({ children, ...props }: { children?: React.ReactNode }) => (
+          <ul className="list-disc list-inside mb-4 space-y-2" {...props}>
+            {children}
+          </ul>
+        ),
+        ol: ({ children, ...props }: { children?: React.ReactNode }) => (
+          <ol className="list-decimal list-inside mb-4 space-y-2" {...props}>
+            {children}
+          </ol>
+        ),
+        // Custom list item
+        li: ({ children, ...props }: { children?: React.ReactNode }) => (
+          <li className="ml-4" {...props}>
+            {children}
+          </li>
+        ),
+        // Custom code blocks
+        code: ({ className, children, ...props }: { className?: string; children?: React.ReactNode }) => {
+          const isInline = !className
+          return isInline ? (
+            <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+              {children}
+            </code>
+          ) : (
+            <code className="block bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono" {...props}>
+              {children}
+            </code>
+          )
+        },
+      }}
+    >
+      {content}
+    </ReactMarkdown>
   )
 }
 

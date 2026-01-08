@@ -6,6 +6,7 @@ import { ArticleQueueStatus } from '@/components/articles/article-queue-status'
 import { ArticleContentViewer } from '@/components/articles/article-content-viewer'
 import { redirect } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
+import type { ArticleMetadata, ArticleSection, ArticleWithSections } from '@/lib/types/article'
 
 interface ArticleDetailPageProps {
   params: Promise<{ id: string }>
@@ -30,26 +31,14 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
   const supabase = await createClient()
 
   // First, get basic article info (excluding large JSONB columns to prevent timeout)
-  const { data: article, error } = await (supabase
+  const { data: articleData, error } = await supabase
     .from('articles' as any)
     .select('id, title, keyword, status, target_word_count, writing_style, target_audience, created_at, updated_at, org_id')
     .eq('id', id)
     .eq('org_id', currentUser.org_id)
-    .single() as unknown as Promise<{ data: any; error: any }>)
+    .single()
 
-  // If article is completed, fetch sections separately to display content
-  let sections: any[] | null = null
-  if (article && article.status === 'completed') {
-    const { data: articleWithSections } = await supabase
-      .from('articles' as any)
-      .select('sections')
-      .eq('id', id)
-      .single()
-    
-    sections = articleWithSections?.sections || null
-  }
-
-  if (error || !article) {
+  if (error || !articleData) {
     return (
       <div className="flex flex-col gap-6">
         <Card className="border-destructive">
@@ -60,10 +49,38 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
             <p className="text-sm text-muted-foreground">
               The article you're looking for doesn't exist or you don't have access to it.
             </p>
+            {error && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Error: {error.message}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
     )
+  }
+
+  // Type assertion with proper interface
+  const article = articleData as ArticleMetadata
+
+  // If article is completed, fetch sections separately to display content
+  let sections: ArticleSection[] | null = null
+  let sectionsError: string | null = null
+  
+  if (article.status === 'completed') {
+    const { data: articleWithSections, error: fetchError } = await supabase
+      .from('articles' as any)
+      .select('sections')
+      .eq('id', id)
+      .single()
+    
+    if (fetchError) {
+      console.error('Failed to fetch article sections:', fetchError)
+      sectionsError = fetchError.message
+    } else if (articleWithSections) {
+      const typedData = articleWithSections as ArticleWithSections
+      sections = typedData.sections || null
+    }
   }
 
   const isLoading = article.status === 'queued' || article.status === 'generating'
@@ -126,21 +143,35 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
       </Card>
 
       {/* Article Content - Only show when completed */}
-      {article.status === 'completed' && sections && sections.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight mb-6">Article Content</h2>
-          <ArticleContentViewer sections={sections} />
-        </div>
-      )}
+      {article.status === 'completed' && (
+        <>
+          {sectionsError && (
+            <Card className="border-destructive">
+              <CardContent className="pt-6">
+                <p className="text-sm text-destructive text-center py-4">
+                  Failed to load article content: {sectionsError}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+          
+          {!sectionsError && sections && sections.length > 0 && (
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight mb-6">Article Content</h2>
+              <ArticleContentViewer sections={sections} />
+            </div>
+          )}
 
-      {article.status === 'completed' && (!sections || sections.length === 0) && (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground text-center py-8">
-              Article generation completed, but no content sections were found.
-            </p>
-          </CardContent>
-        </Card>
+          {!sectionsError && (!sections || sections.length === 0) && (
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Article generation completed, but no content sections were found.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </div>
   )

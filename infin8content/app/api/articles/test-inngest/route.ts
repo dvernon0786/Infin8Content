@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
  * Test endpoint to verify Inngest connection
  * GET /api/articles/test-inngest
  */
-export async function GET(request: Request) {
+export async function GET() {
   try {
     console.log('[Test Inngest] Attempting to send test event')
     
