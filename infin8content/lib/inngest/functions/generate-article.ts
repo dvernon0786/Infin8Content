@@ -65,8 +65,9 @@ export const generateArticle = inngest.createFunction(
       // Step 1: Load article and check if it's already in a terminal state
       const article = await step.run('load-article', async () => {
         console.log(`[Inngest] Step: load-article - Loading article ${articleId}`)
-        const { data, error } = await supabase
-          .from('articles' as any)
+        // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+        const { data, error } = await (supabase as any)
+          .from('articles')
           .select('id, org_id, keyword, status')
           .eq('id', articleId)
           .single()
@@ -101,9 +102,12 @@ export const generateArticle = inngest.createFunction(
         }
 
         // Update status to generating
-        const { error: updateError } = await supabase
-          .from('articles' as any)
-          .update({
+        // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+        const { error: updateError } = await (supabase as any)
+            // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+            await (supabase as any)
+            .from('articles')
+            .update({
             status: 'generating',
             generation_started_at: new Date().toISOString()
           })

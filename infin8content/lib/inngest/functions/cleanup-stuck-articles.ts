@@ -23,14 +23,12 @@ export const cleanupStuckArticles = inngest.createFunction(
       // This gives articles enough time to complete (most take 10-20 minutes)
       const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString()
       
-      const { data: stuckArticlesData, error: findError } = await (supabase
-        .from('articles' as any)
+      // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+      const { data: stuckArticlesData, error: findError } = await (supabase as any)
+        .from('articles')
         .select('id, keyword, generation_started_at, current_section_index, sections')
         .eq('status', 'generating')
-        .lt('generation_started_at', thirtyMinutesAgo) as unknown as Promise<{ 
-          data: Array<{ id: string; keyword: string; generation_started_at: string; current_section_index?: number; sections?: any[] }> | null; 
-          error: any 
-        }>)
+        .lt('generation_started_at', thirtyMinutesAgo)
       
       if (findError) {
         console.error('Failed to find stuck articles:', findError)
