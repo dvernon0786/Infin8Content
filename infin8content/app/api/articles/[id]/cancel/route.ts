@@ -77,8 +77,9 @@ export async function POST(
     }
 
     // Update article status to cancelled
+    // Update article status to cancelled
     const { error: updateError } = await supabase
-      .from('articles' as any)
+      .from('articles')
       .update({ status: 'cancelled' })
       .eq('id', id)
 

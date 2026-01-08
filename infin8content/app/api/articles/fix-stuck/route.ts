@@ -23,7 +23,8 @@ export async function POST(request: Request) {
     const supabase = createServiceRoleClient()
 
     // Update stuck articles to failed status
-    const { data, error } = await supabase
+    // TODO: Regenerate types from Supabase Dashboard to fix table types
+    const { data, error } = await (supabase
       .from('articles' as any)
       .update({
         status: 'failed',
@@ -33,10 +34,10 @@ export async function POST(request: Request) {
           timeout: true,
           manually_fixed: true
         }
-      })
-      .in('id', articleIds)
+      } as any)
       .eq('status', 'generating')
-      .select('id, keyword, status')
+      .in('id', articleIds)
+      .select('id, keyword, status')) as any
 
     if (error) {
       console.error('Failed to update stuck articles:', error)

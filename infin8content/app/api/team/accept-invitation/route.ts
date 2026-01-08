@@ -36,7 +36,8 @@ export async function POST(request: Request) {
     // Validate: Token exists and is valid (not expired, status = 'pending')
     // Use database-level expiration check to avoid timezone issues and race conditions
     // RPC function returns SETOF (array), so we need to handle it properly
-    const { data: invitationData, error: invitationError } = await supabase.rpc(
+    // TODO: Regenerate types from Supabase Dashboard to fix RPC function types
+    const { data: invitationData, error: invitationError } = await (supabase.rpc as any)(
       'get_invitation_by_token',
       { token_input: token }
     )

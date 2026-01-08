@@ -183,7 +183,8 @@ export async function POST(request: Request) {
       })
       
       // Update article status to failed if Inngest event fails
-      await supabase
+      // TODO: Regenerate types from Supabase Dashboard to fix table types
+      await (supabase
         .from('articles' as any)
         .update({
           status: 'failed',
@@ -192,8 +193,8 @@ export async function POST(request: Request) {
             failed_at: new Date().toISOString(),
             inngest_error: true
           }
-        })
-        .eq('id', article.id)
+        } as any)
+        .eq('id', article.id)) as any
       
       return NextResponse.json(
         { 
@@ -208,8 +209,8 @@ export async function POST(request: Request) {
     if (inngestEventId) {
       const { error: updateError } = await supabase
         .from('articles' as any)
-        .update({ inngest_event_id: inngestEventId })
-        .eq('id', article.id)
+        .update({ inngest_event_id: inngestEventId } as any)
+        .eq('id', article.id) as any
       
       if (updateError) {
         console.error(`[Article Generation] Failed to update article with Inngest event ID:`, updateError)

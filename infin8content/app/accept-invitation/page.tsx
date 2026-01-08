@@ -28,7 +28,8 @@ export default async function AcceptInvitationPage({ searchParams }: AcceptInvit
 
   // Validate invitation token
   // RPC function returns SETOF (array), so we need to handle it properly
-  const { data: invitationData, error: invitationError } = await supabase.rpc(
+  // TODO: Regenerate types from Supabase Dashboard to fix RPC function types
+  const { data: invitationData, error: invitationError } = await (supabase.rpc as any)(
     'get_invitation_by_token',
     { token_input: token }
   )
@@ -106,18 +107,20 @@ export default async function AcceptInvitationPage({ searchParams }: AcceptInvit
   // This avoids fetch issues in server components
 
   // Get inviter name
-  const { data: inviter } = await supabase
-    .from('users')
+  // TODO: Regenerate types from Supabase Dashboard to fix table types
+  const { data: inviter } = await (supabase
+    .from('users' as any)
     .select('email')
     .eq('id', invitation.created_by)
-    .single()
+    .single() as any)
 
   // Get organization name separately
-  const { data: organization } = await supabase
-    .from('organizations')
+  // TODO: Regenerate types from Supabase Dashboard to fix table types
+  const { data: organization } = await (supabase
+    .from('organizations' as any)
     .select('name')
     .eq('id', invitation.org_id)
-    .single()
+    .single() as any)
 
   const organizationName = organization?.name || 'the organization'
 
