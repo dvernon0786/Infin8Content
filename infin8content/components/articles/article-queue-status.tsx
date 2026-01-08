@@ -23,43 +23,30 @@ export function ArticleQueueStatus({ organizationId }: ArticleQueueStatusProps) 
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    let isMounted = true
-
-    const fetchQueueStatus = async () => {
-      try {
-        const response = await fetch(`/api/articles/queue?orgId=${organizationId}`)
-        if (!response.ok) {
-          throw new Error('Failed to fetch queue status')
-        }
-        const data = await response.json()
-        
-        // Only update state if component is still mounted
-        if (isMounted) {
-          setArticles(data.articles || [])
-          setError(null)
-        }
-      } catch (err) {
-        console.error('Failed to fetch queue status:', err)
-        // Only update state if component is still mounted
-        if (isMounted) {
-          setError('Failed to load queue status')
-        }
-      } finally {
-        // Only update loading state if component is still mounted
-        if (isMounted) {
-          setIsLoading(false)
-        }
+  const fetchQueueStatus = async () => {
+    try {
+      const response = await fetch(`/api/articles/queue?orgId=${organizationId}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch queue status')
       }
+      const data = await response.json()
+      setArticles(data.articles || [])
+      setError(null)
+    } catch (err) {
+      console.error('Failed to fetch queue status:', err)
+      setError('Failed to load queue status')
+    } finally {
+      setIsLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchQueueStatus()
     
     // Poll every 5 seconds for real-time updates
     const interval = setInterval(fetchQueueStatus, 5000)
     
     return () => {
-      isMounted = false
       clearInterval(interval)
     }
   }, [organizationId])
@@ -73,7 +60,7 @@ export function ArticleQueueStatus({ organizationId }: ArticleQueueStatusProps) 
         throw new Error('Failed to cancel article')
       }
       // Refresh queue status
-      fetchQueueStatus()
+      await fetchQueueStatus()
     } catch (err) {
       console.error('Failed to cancel article:', err)
       setError('Failed to cancel article')

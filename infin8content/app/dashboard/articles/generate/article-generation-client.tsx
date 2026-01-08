@@ -152,7 +152,7 @@ export function ArticleGenerationPageClient({ organizationId }: ArticleGeneratio
                   Plan: {usageInfo.plan ? usageInfo.plan.charAt(0).toUpperCase() + usageInfo.plan.slice(1) : 'Starter'}
                 </p>
               </div>
-              {usageInfo.limit !== null && usageInfo.remaining !== null && usageInfo.remaining <= 3 && usageInfo.remaining > 0 && (
+              {usageInfo.limit !== null && usageInfo.remaining !== null && usageInfo.remaining !== undefined && usageInfo.remaining <= 3 && usageInfo.remaining > 0 && (
                 <button
                   onClick={() => router.push('/dashboard/settings')}
                   className="text-sm px-4 py-2 border border-input rounded-md hover:bg-accent"
