@@ -27,39 +27,52 @@ export async function GET(
       )
     }
 
+    // Type assertion after error check - cast through unknown to avoid type overlap issues
+    type ArticleDiagnostics = {
+      id: string
+      keyword: string
+      status: string
+      inngest_event_id: string | null
+      generation_started_at: string | null
+      created_at: string
+      error_details: Record<string, unknown> | null
+    }
+    
+    const articleData = article as unknown as ArticleDiagnostics
+
     // Check if article is stuck (generating for more than 5 minutes)
-    const isStuck = article.status === 'generating' && article.generation_started_at
+    const isStuck = articleData.status === 'generating' && articleData.generation_started_at
     let stuckDuration: number | null = null
     
-    if (isStuck) {
-      const startTime = new Date(article.generation_started_at).getTime()
+    if (isStuck && articleData.generation_started_at) {
+      const startTime = new Date(articleData.generation_started_at).getTime()
       const now = Date.now()
       stuckDuration = Math.round((now - startTime) / 1000) // seconds
     }
 
     return NextResponse.json({
       article: {
-        id: article.id,
-        keyword: article.keyword,
-        status: article.status,
-        inngest_event_id: article.inngest_event_id,
-        generation_started_at: article.generation_started_at,
-        created_at: article.created_at,
-        error_details: article.error_details,
+        id: articleData.id,
+        keyword: articleData.keyword,
+        status: articleData.status,
+        inngest_event_id: articleData.inngest_event_id,
+        generation_started_at: articleData.generation_started_at,
+        created_at: articleData.created_at,
+        error_details: articleData.error_details,
       },
       diagnostics: {
-        has_inngest_event_id: !!article.inngest_event_id,
+        has_inngest_event_id: !!articleData.inngest_event_id,
         is_stuck: isStuck && stuckDuration ? stuckDuration > 300 : false, // 5 minutes
         stuck_duration_seconds: stuckDuration,
-        status_age_seconds: article.created_at 
-          ? Math.round((Date.now() - new Date(article.created_at).getTime()) / 1000)
+        status_age_seconds: articleData.created_at 
+          ? Math.round((Date.now() - new Date(articleData.created_at).getTime()) / 1000)
           : null,
       },
       recommendations: [
-        !article.inngest_event_id && article.status === 'queued' 
+        !articleData.inngest_event_id && articleData.status === 'queued' 
           ? 'Article is queued but has no Inngest event ID. The event may not have been sent successfully.'
           : null,
-        article.status === 'generating' && !article.generation_started_at
+        articleData.status === 'generating' && !articleData.generation_started_at
           ? 'Article is generating but generation_started_at is not set. The Inngest function may not have started.'
           : null,
         isStuck && stuckDuration && stuckDuration > 300

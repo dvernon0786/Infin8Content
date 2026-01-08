@@ -77,17 +77,26 @@ export const generateArticle = inngest.createFunction(
           throw new Error(errorMsg)
         }
 
+        // Type assertion after error check
+        type ArticleData = {
+          id: string
+          org_id: string
+          keyword: string
+          status: string
+        }
+        const articleData = data as unknown as ArticleData
+
         // Check if article is already in a terminal state (failed, cancelled, completed)
         // This can happen if the article was manually marked as failed/cancelled
         // or if the function is retrying after the article was already processed
         const terminalStates = ['failed', 'cancelled', 'completed']
-        if (terminalStates.includes(data.status)) {
-          const msg = `Article ${articleId} is already in terminal state: ${data.status}. Skipping generation.`
+        if (terminalStates.includes(articleData.status)) {
+          const msg = `Article ${articleId} is already in terminal state: ${articleData.status}. Skipping generation.`
           console.log(`[Inngest] Step: load-article - ${msg}`)
           return {
-            ...data,
+            ...articleData,
             skipped: true,
-            reason: `Article already ${data.status}`
+            reason: `Article already ${articleData.status}`
           }
         }
 

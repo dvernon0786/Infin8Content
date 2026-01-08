@@ -60,8 +60,8 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
     )
   }
 
-  // Type assertion with proper interface
-  const article = articleData as ArticleMetadata
+  // Type assertion with proper interface - cast through unknown to avoid type overlap issues
+  const article = articleData as unknown as ArticleMetadata
 
   // If article is completed, fetch sections separately to display content
   let sections: ArticleSection[] | null = null
@@ -78,7 +78,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
       console.error('Failed to fetch article sections:', fetchError)
       sectionsError = fetchError.message
     } else if (articleWithSections) {
-      const typedData = articleWithSections as ArticleWithSections
+      const typedData = articleWithSections as unknown as ArticleWithSections
       sections = typedData.sections || null
     }
   }

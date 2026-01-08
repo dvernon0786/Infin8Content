@@ -63,11 +63,13 @@ const handlers = useInngestServe
     }
 
 // Wrap handlers with error logging
-const wrapHandler = (handler: (req: NextRequest) => Promise<Response>) => {
-  return async (req: NextRequest) => {
+// Inngest handlers have a different signature, so we need to handle both cases
+const wrapHandler = (handler: ((req: NextRequest) => Promise<Response>) | ((req: NextRequest, ...args: unknown[]) => Promise<Response>)) => {
+  return async (req: NextRequest, ...args: unknown[]) => {
     try {
       console.log(`[Inngest API] ${req.method} request to ${req.nextUrl.pathname}`)
-      const response = await handler(req)
+      // Call handler with all arguments (Inngest handlers may need additional params)
+      const response = await (handler as (req: NextRequest, ...args: unknown[]) => Promise<Response>)(req, ...args)
       console.log(`[Inngest API] ${req.method} response: ${response.status}`)
       return response
     } catch (error) {
@@ -85,7 +87,7 @@ const wrapHandler = (handler: (req: NextRequest) => Promise<Response>) => {
   }
 }
 
-export const GET = wrapHandler(handlers.GET)
-export const POST = wrapHandler(handlers.POST)
-export const PUT = wrapHandler(handlers.PUT)
+export const GET = wrapHandler(handlers.GET as (req: NextRequest, ...args: unknown[]) => Promise<Response>)
+export const POST = wrapHandler(handlers.POST as (req: NextRequest, ...args: unknown[]) => Promise<Response>)
+export const PUT = wrapHandler(handlers.PUT as (req: NextRequest, ...args: unknown[]) => Promise<Response>)
 
