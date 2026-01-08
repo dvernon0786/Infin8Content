@@ -70,11 +70,11 @@ export async function GET(request: Request) {
     }
 
     // Add position numbers for queued articles (only count queued articles, exclude generating)
-    const queuedArticles = (articles || []).filter(a => a.status === 'queued')
-    const articlesWithPosition = (articles || []).map(article => ({
+    const queuedArticles = ((articles || []) as any[]).filter((a: any) => a.status === 'queued')
+    const articlesWithPosition = ((articles || []) as any[]).map((article: any) => ({
       ...article,
       position: article.status === 'queued' 
-        ? queuedArticles.findIndex(q => q.id === article.id) + 1 
+        ? queuedArticles.findIndex((q: any) => q.id === article.id) + 1 
         : undefined,
     }))
 
