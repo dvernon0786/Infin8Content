@@ -40,7 +40,8 @@ export async function GET() {
     const supabase = await createClient()
 
     // Query users table: All users with org_id = currentUser.org_id
-    const { data: members, error: membersError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: members, error: membersError } = await (supabase as any)
       .from('users')
       .select('id, email, role, created_at')
       .eq('org_id', currentUser.org_id)

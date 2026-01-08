@@ -55,7 +55,8 @@ export async function POST(request: Request) {
     }
 
     // Validate: No pending invitation exists for this email + org
-    const { data: existingInvitation } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: existingInvitation } = await (supabase as any)
       .from('team_invitations')
       .select('id')
       .eq('email', email)
