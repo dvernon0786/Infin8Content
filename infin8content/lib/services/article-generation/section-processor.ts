@@ -259,8 +259,9 @@ export async function processSection(
   // Update article with new section
   const updatedSections = [...previousSections, section]
   
-  await supabase
-    .from('articles' as any)
+  // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+  await (supabase as any)
+    .from('articles')
     .update({
       sections: updatedSections,
       current_section_index: sectionIndex
@@ -469,7 +470,9 @@ async function storeCachedResearch(
       if (error.code === '42P10' || error.message?.includes('no unique or exclusion constraint')) {
         // Fallback: Delete existing and insert new (manual upsert)
         await supabase
-          .from('tavily_research_cache' as any)
+          // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+          await (supabase as any)
+          .from('tavily_research_cache')
           .delete()
           .eq('organization_id', organizationId)
           .eq('research_query', normalizedQuery)
@@ -548,7 +551,9 @@ async function updateArticleErrorDetails(
   })
 
   await supabase
-    .from('articles' as any)
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    await (supabase as any)
+    .from('articles')
     .update({
       error_details: {
         ...currentErrorDetails,
@@ -587,7 +592,9 @@ async function updateArticleGenerationErrorDetails(
   })
 
   await supabase
-    .from('articles' as any)
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    await (supabase as any)
+    .from('articles')
     .update({
       error_details: {
         ...currentErrorDetails,
