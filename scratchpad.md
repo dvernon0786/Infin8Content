@@ -17,7 +17,8 @@
   - ✅ **BUG FIX:** Replaced `tns-standard/tns-standard-8-7.5-chimera` with better model
   - ✅ **IMPROVEMENT:** Enhanced error handling to detect "invalid model ID" errors and trigger model fallback
   - ✅ Model fallback chain now works correctly: tries next model when current model is invalid
-  - ✅ All changes committed and pushed to git (commit 7183a4e)
+  - ✅ **TEST FIX:** Updated unit tests to match new 2-model list (all 16 tests passing)
+  - ✅ All changes committed and pushed to git (commit bfd3ee0 on main)
 - **Story 4a-5 Code Review & Fixes (2026-01-08 12:40:20 AEDT):**
   - ✅ Performed comprehensive adversarial code review (found 8 issues: 2 High, 4 Medium, 2 Low)
   - ✅ **CRITICAL FIX:** Fixed `formatCitationsForMarkdown()` to actually insert in-text citations naturally (was placeholder)
