@@ -25,8 +25,9 @@ export async function POST(request: Request) {
     }
 
     // Get the auth_user_id from users table
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
     const supabase = await createClient()
-    const { data: user, error: userError } = await supabase
+    const { data: user, error: userError } = await (supabase as any)
       .from('users')
       .select('auth_user_id')
       .eq('id', userId)

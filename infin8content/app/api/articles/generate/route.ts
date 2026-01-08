@@ -220,9 +220,9 @@ export async function POST(request: Request) {
     }
 
     // Increment usage tracking atomically (after successful queue)
-    // Type assertion needed until database types are regenerated after migration
-    const { error: usageUpdateError } = await (supabaseAdmin
-      .from('usage_tracking' as any)
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { error: usageUpdateError } = await (supabaseAdmin as any)
+      .from('usage_tracking')
       .upsert({
         organization_id: organizationId,
         metric_type: 'article_generation',
@@ -231,7 +231,7 @@ export async function POST(request: Request) {
         last_updated: new Date().toISOString(),
       }, {
         onConflict: 'organization_id,metric_type,billing_period',
-      }) as unknown as Promise<{ error: any }>)
+      })
 
     if (usageUpdateError) {
       console.error('Failed to update usage tracking:', usageUpdateError)

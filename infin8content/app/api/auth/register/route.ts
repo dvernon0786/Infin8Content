@@ -55,7 +55,8 @@ export async function POST(request: Request) {
         )
       }
 
-      const { data: userRecord, error: dbError } = await supabase
+      // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+      const { data: userRecord, error: dbError } = await (supabase as any)
         .from('users')
         .insert({
           auth_user_id: data.user.id,

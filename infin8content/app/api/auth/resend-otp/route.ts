@@ -18,7 +18,8 @@ export async function POST(request: Request) {
     const supabase = await createClient()
     
     // Find user by email
-    const { data: user, error: userError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: user, error: userError } = await (supabase as any)
       .from('users')
       .select('id, otp_verified')
       .eq('email', email)

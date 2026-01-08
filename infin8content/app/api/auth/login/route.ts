@@ -65,7 +65,8 @@ export async function POST(request: Request) {
     }
 
     // Verify user has completed OTP verification
-    const { data: userRecord, error: userError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: userRecord, error: userError } = await (supabase as any)
       .from('users')
       .select('id, email, role, org_id, otp_verified')
       .eq('auth_user_id', data.user.id)
@@ -98,7 +99,8 @@ export async function POST(request: Request) {
       redirectTo = '/create-organization'
     } else {
       // Organization exists - check payment status (Story 1.7, enhanced in Story 1.8)
-      const { data: org, error: orgError } = await supabase
+      // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+      const { data: org, error: orgError } = await (supabase as any)
         .from('organizations')
         .select('*')
         .eq('id', userRecord.org_id)
