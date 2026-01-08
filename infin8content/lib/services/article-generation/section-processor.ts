@@ -59,10 +59,10 @@ export async function processSection(
 ): Promise<Section> {
   const supabase = createServiceRoleClient()
 
-  // Load article to get previous sections and organization ID
+  // Load article to get previous sections, organization ID, and user preferences
   const { data: articleData } = await supabase
     .from('articles' as any)
-    .select('sections, keyword, org_id')
+    .select('sections, keyword, org_id, writing_style, target_audience, custom_instructions')
     .eq('id', articleId)
     .single()
 
@@ -71,7 +71,14 @@ export async function processSection(
   }
 
   // Type assertion needed because database types haven't been regenerated after migration
-  const article = (articleData as unknown) as { sections?: any[]; keyword: string; org_id: string }
+  const article = (articleData as unknown) as { 
+    sections?: any[]; 
+    keyword: string; 
+    org_id: string;
+    writing_style?: string;
+    target_audience?: string;
+    custom_instructions?: string;
+  }
   const previousSections = (article.sections || []) as Section[]
   const organizationId = article.org_id
 
@@ -133,7 +140,10 @@ export async function processSection(
       sectionInfo,
       summaries,
       researchSources, // Pass research sources for citation inclusion
-      organizationId
+      organizationId,
+      article.writing_style || 'Professional',
+      article.target_audience || 'General',
+      article.custom_instructions || undefined
     )
   } catch (error) {
     // Generation failed - update error details and continue
@@ -184,7 +194,10 @@ export async function processSection(
         sectionInfo,
         summaries,
         researchSources,
-        organizationId
+        organizationId,
+        article.writing_style || 'Professional',
+        article.target_audience || 'General',
+        article.custom_instructions || undefined
       )
       
       // Re-integrate citations
@@ -593,7 +606,10 @@ async function generateSectionContent(
   sectionInfo: { type: string; title: string },
   previousSummaries: string,
   researchSources: TavilySource[] = [],
-  organizationId: string
+  organizationId: string,
+  writingStyle: string = 'Professional',
+  targetAudience: string = 'General',
+  customInstructions?: string
 ): Promise<{
   content: string
   tokensUsed: number
@@ -634,8 +650,9 @@ Use proper heading structure (H2, H3) and maintain a professional yet conversati
     'Previous Sections Summary:',
     previousSummaries || 'This is the first section.',
     '',
-    'Writing Style: Professional, Conversational',
-    'Target Audience: General audience interested in SEO-optimized content',
+    `Writing Style: ${writingStyle}`,
+    `Target Audience: ${targetAudience}`,
+    ...(customInstructions ? ['', 'Custom Instructions:', customInstructions] : []),
     '',
     `Generate content with proper markdown formatting (H2/H3 headings) and integrate citations naturally within the content, not all at the end. Aim for ${targetWordCount} words.`
   ]
