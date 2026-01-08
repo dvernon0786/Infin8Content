@@ -89,16 +89,16 @@ export async function POST(request: Request) {
     // Check cache for existing research (7-day TTL)
     // Normalize keyword for cache lookup (case-insensitive)
     const cacheKey = keyword!.toLowerCase().trim()
-    // Type assertion needed until database types are regenerated after migration
-    const { data: cachedResearch, error: cacheError } = await (supabase
-      .from('keyword_researches' as any)
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: cachedResearch, error: cacheError } = await (supabase as any)
+      .from('keyword_researches')
       .select('id, results, api_cost, cached_until')
       .eq('organization_id', organizationId)
       .eq('keyword', cacheKey) // Use direct equality since keyword is normalized
       .gt('cached_until', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
-      .single() as unknown as Promise<{ data: any; error: any }>)
+      .single()
 
     if (cachedResearch && !cacheError) {
       // Cache hit - update updated_at timestamp
@@ -177,9 +177,9 @@ export async function POST(request: Request) {
     // Store keyword normalized (lowercase, trimmed) for consistent cache lookups
     const normalizedKeyword = keyword!.toLowerCase().trim()
 
-    // Type assertion needed until database types are regenerated after migration
-    const { error: insertError } = await (supabase
-      .from('keyword_researches' as any)
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { error: insertError } = await (supabase as any)
+      .from('keyword_researches')
       .insert({
         organization_id: organizationId,
         user_id: userId,
@@ -218,14 +218,15 @@ export async function POST(request: Request) {
 
     // Track API cost (Epic 10.7)
     // Type assertion needed until database types are regenerated after migration
-    const { error: costError } = await (supabaseAdmin
-      .from('api_costs' as any)
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { error: costError } = await (supabaseAdmin as any)
+      .from('api_costs')
       .insert({
         organization_id: organizationId,
         service: 'dataforseo',
         operation: 'keyword_research',
         cost: apiResponse.cost,
-      }) as unknown as Promise<{ error: any }>)
+      })
 
     if (costError) {
       console.error('Failed to track API cost:', costError)
