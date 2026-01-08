@@ -77,7 +77,8 @@ export async function POST(request: Request) {
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
     // Insert invitation record
-    const { data: invitation, error: insertError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: invitation, error: insertError } = await (supabase as any)
       .from('team_invitations')
       .insert({
         email,
