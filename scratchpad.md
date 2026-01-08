@@ -1,14 +1,31 @@
 # Scratchpad
 
 ## Current Status
-- **Date:** 2026-01-09 00:10:44 AEDT
+- **Date:** 2026-01-09 02:39:59 AEDT
 - **Epic 1:** Completed
 - **Epic 3:** Story 3-1 Complete
-- **Epic 4A:** Story 4a-5 Complete (Production Ready)
-- **Last Story:** 4a-5 LLM Content Generation with OpenRouter Integration - Article Content Viewer & Code Review Fixes Complete
-- **Current Focus:** Story 4a-5 Complete - Article content viewer implemented, all code review issues fixed, production ready
+- **Epic 4A:** Story 4a-2 Complete (Production Ready), Story 4a-5 Complete (Production Ready)
+- **Last Story:** 4a-2 Section-by-Section Architecture and Outline Generation - Code Review Re-run Complete, TypeScript Build Fixes Applied
+- **Current Focus:** Story 4a-2 Complete - All tests passing, code review approved, TypeScript build errors fixed, ready for production
 
 ## Recent Achievements
+- **Story 4a-2 Code Review Re-run & TypeScript Build Fixes (2026-01-09 02:39:59 AEDT):**
+  - ✅ **CODE REVIEW:** Re-ran comprehensive code review - 0 CRITICAL, 0 HIGH issues found
+  - ✅ **TEST STATUS:** All tests passing - 13/13 unit tests, 24/24 integration tests (3 skipped)
+  - ✅ **BUILD FIX:** Fixed TypeScript error in `article-generation-client.tsx` - Added undefined check for `usageInfo.remaining`
+  - ✅ **BUILD FIX:** Fixed TypeScript error in `article-queue-status.tsx` - Moved `fetchQueueStatus` outside useEffect for proper scope
+  - ✅ **VERIFICATION:** TypeScript compilation now passes, Vercel deployment ready
+  - ✅ **DOCUMENTATION:** Created comprehensive code review report: `_bmad-output/implementation-artifacts/4a-2-code-review-2026-01-09.md`
+  - ✅ **STATUS:** Story approved - All acceptance criteria met, all tasks completed, production ready
+  - ✅ All changes committed and pushed to git (commits: 35b40b2, 692316a)
+- **Story 4a-2 Unit Test Fixes & Code Review (2026-01-09 02:25:09 AEDT):**
+  - ✅ **CRITICAL FIX:** Added missing mocks for Story 4a-3/4a-5 dependencies in unit tests
+  - ✅ **MOCKS ADDED:** OpenRouter (generateContent), Tavily (researchQuery), content-quality, citation-formatter
+  - ✅ **MOCK FIX:** Updated Supabase mock to support all methods: select, update, insert, upsert, delete, ilike, gt
+  - ✅ **TEST FIX:** Updated test expectations to match actual implementation (removed outdated "placeholder content" check)
+  - ✅ **TEST RESULTS:** All 13 unit tests now passing ✅
+  - ✅ **DOCUMENTATION:** Updated story documentation to reflect actual test status
+  - ✅ All changes committed and pushed to git (commits: d66d12e, af340b0)
 - **Story 4a-5 Article Content Viewer & Code Review Fixes (2026-01-09 00:10:44 AEDT):**
   - ✅ **FEATURE:** Implemented ArticleContentViewer component to display completed articles
   - ✅ **FEATURE:** Added markdown rendering with react-markdown for article sections
@@ -155,6 +172,14 @@
   - All routes properly registered and accessible
 
 ## Next Steps
+- **Story 4a-2:**
+  - ✅ All code review issues resolved (0 CRITICAL, 0 HIGH)
+  - ✅ All tests passing (37/37 tests, 3 skipped)
+  - ✅ TypeScript build errors fixed (Vercel deployment ready)
+  - ✅ Code review approved - Story ready for production
+  - Regenerate database types: `supabase gen types typescript --project-id <id> > lib/supabase/database.types.ts`
+  - Remove type assertions after type regeneration
+  - Mark story as "done" after production verification
 - **Story 4a-5:**
   - ✅ Article content viewer implemented and tested
   - ✅ All code review issues fixed (type safety, error handling, URL validation, error boundaries)
