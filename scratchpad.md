@@ -1,22 +1,24 @@
 # Scratchpad
 
 ## Current Status
-- **Date:** 2026-01-08 10:42:47 AEDT
+- **Date:** 2026-01-08 12:40:20 AEDT
 - **Epic 1:** Completed
 - **Epic 3:** Story 3-1 Complete
 - **Epic 4A:** Story 4a-5 Complete (Review)
 - **Last Story:** 4a-5 LLM Content Generation with OpenRouter Integration - Code Review Complete
-- **Current Focus:** Story 4a-5 Bug Fix - OpenRouter Model Fallback for Invalid Model IDs
+- **Current Focus:** Story 4a-5 Complete - All fixes applied and pushed to git
 
 ## Recent Achievements
-- **Story 4a-5 Bug Fix - OpenRouter Model Fallback (2026-01-08 10:42:47 AEDT):**
+- **Story 4a-5 Model Update & Completion (2026-01-08 12:40:20 AEDT):**
+  - ✅ **MODEL UPDATE:** Updated OpenRouter model to `meta-llama/llama-3.3-70b-instruct:free`
+  - ✅ **IMPROVEMENT:** Llama 3.3 70B offers 128K context, excellent instruction following (92.1 IFEval), multilingual support
   - ✅ **BUG FIX:** Fixed OpenRouter client to properly fallback to next model when encountering invalid model IDs (400 error)
-  - ✅ **BUG FIX:** Removed invalid model `nvidia/nemotron-3-demo-70b` from FREE_MODELS list (no longer valid model ID)
-  - ✅ **IMPROVEMENT:** Enhanced error handling to detect "invalid model ID" errors and trigger model fallback instead of throwing immediately
-  - ✅ **IMPROVEMENT:** Added console warning when invalid model detected to aid debugging
-  - ✅ Error handling now distinguishes between invalid model IDs (fallback) and other 400 errors (throw immediately)
+  - ✅ **BUG FIX:** Removed invalid model `nvidia/nemotron-3-demo-70b` from FREE_MODELS list
+  - ✅ **BUG FIX:** Replaced `tns-standard/tns-standard-8-7.5-chimera` with better model
+  - ✅ **IMPROVEMENT:** Enhanced error handling to detect "invalid model ID" errors and trigger model fallback
   - ✅ Model fallback chain now works correctly: tries next model when current model is invalid
-- **Story 4a-5 Code Review & Fixes (2026-01-08 10:42:47 AEDT):**
+  - ✅ All changes committed and pushed to git (commit 7183a4e)
+- **Story 4a-5 Code Review & Fixes (2026-01-08 12:40:20 AEDT):**
   - ✅ Performed comprehensive adversarial code review (found 8 issues: 2 High, 4 Medium, 2 Low)
   - ✅ **CRITICAL FIX:** Fixed `formatCitationsForMarkdown()` to actually insert in-text citations naturally (was placeholder)
   - ✅ **CRITICAL FIX:** Moved quality validation to run AFTER citation integration (metrics now reflect final content)
@@ -117,6 +119,7 @@
 ## Next Steps
 - **Story 4a-5:**
   - Configure OpenRouter API key in environment variables (OPENROUTER_API_KEY)
+  - Test with new model: `meta-llama/llama-3.3-70b-instruct:free`
   - Verify citation insertion works correctly in production
   - Monitor quality metrics to ensure they reflect final content accurately
   - Mark story as "done" after production verification
