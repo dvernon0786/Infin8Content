@@ -6,9 +6,16 @@
 - **Epic 3:** Story 3-1 Complete
 - **Epic 4A:** Story 4a-5 Complete (Review)
 - **Last Story:** 4a-5 LLM Content Generation with OpenRouter Integration - Code Review Complete
-- **Current Focus:** Story 4a-5 Code Review - All HIGH/MEDIUM Issues Fixed, Ready for Production
+- **Current Focus:** Story 4a-5 Bug Fix - OpenRouter Model Fallback for Invalid Model IDs
 
 ## Recent Achievements
+- **Story 4a-5 Bug Fix - OpenRouter Model Fallback (2026-01-08 10:42:47 AEDT):**
+  - ✅ **BUG FIX:** Fixed OpenRouter client to properly fallback to next model when encountering invalid model IDs (400 error)
+  - ✅ **BUG FIX:** Removed invalid model `nvidia/nemotron-3-demo-70b` from FREE_MODELS list (no longer valid model ID)
+  - ✅ **IMPROVEMENT:** Enhanced error handling to detect "invalid model ID" errors and trigger model fallback instead of throwing immediately
+  - ✅ **IMPROVEMENT:** Added console warning when invalid model detected to aid debugging
+  - ✅ Error handling now distinguishes between invalid model IDs (fallback) and other 400 errors (throw immediately)
+  - ✅ Model fallback chain now works correctly: tries next model when current model is invalid
 - **Story 4a-5 Code Review & Fixes (2026-01-08 10:42:47 AEDT):**
   - ✅ Performed comprehensive adversarial code review (found 8 issues: 2 High, 4 Medium, 2 Low)
   - ✅ **CRITICAL FIX:** Fixed `formatCitationsForMarkdown()` to actually insert in-text citations naturally (was placeholder)
