@@ -76,7 +76,8 @@ export async function POST(request: Request) {
     const supabase = createServiceRoleClient()
 
     // Check idempotency: Query stripe_webhook_events table for stripe_event_id
-    const { data: existingEvent, error: idempotencyError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: existingEvent, error: idempotencyError } = await (supabase as any)
       .from('stripe_webhook_events')
       .select('id, stripe_event_id, processed_at')
       .eq('stripe_event_id', event.id)
@@ -193,7 +194,8 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   }
 
   // Check if organization exists before processing
-  const { data: organization, error: orgCheckError } = await supabase
+  // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+  const { data: organization, error: orgCheckError } = await (supabase as any)
     .from('organizations')
     .select('id, name, payment_status, grace_period_started_at, suspended_at')
     .eq('id', orgId)
@@ -323,7 +325,8 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
   })
 
   // Find organization by stripe_subscription_id
-  const { data: organization, error: orgError } = await supabase
+  // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+  const { data: organization, error: orgError } = await (supabase as any)
     .from('organizations')
     .select('id, name')
     .eq('stripe_subscription_id', subscription.id)
@@ -368,7 +371,8 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
   })
 
   // Find organization by stripe_subscription_id
-  const { data: organization, error: orgError } = await supabase
+  // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+  const { data: organization, error: orgError } = await (supabase as any)
     .from('organizations')
     .select('id, name, payment_status')
     .eq('stripe_subscription_id', subscription.id)
@@ -473,7 +477,8 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
   })
 
   // Find organization by customer ID
-  const { data: organization, error: orgError } = await supabase
+  // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+  const { data: organization, error: orgError } = await (supabase as any)
     .from('organizations')
     .select('id, name, payment_status, grace_period_started_at')
     .eq('stripe_customer_id', invoice.customer)
@@ -605,7 +610,8 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
   })
 
   // Find organization by customer ID
-  const { data: organization, error: orgError } = await supabase
+  // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+  const { data: organization, error: orgError } = await (supabase as any)
     .from('organizations')
     .select('id, name, payment_status, grace_period_started_at, suspended_at')
     .eq('stripe_customer_id', invoice.customer)
@@ -709,7 +715,8 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
 async function storeWebhookEvent(event: any, supabase: any, organizationId: string | null) {
   // Store processed event in stripe_webhook_events table for idempotency
   try {
-    const { error: insertError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { error: insertError } = await (supabase as any)
       .from('stripe_webhook_events')
       .insert({
         stripe_event_id: event.id,
