@@ -87,7 +87,8 @@ export async function POST(request: Request) {
     }
 
     // Check if user exists (by invitation email)
-    const { data: existingUser } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: existingUser } = await (supabase as any)
       .from('users')
       .select('*')
       .eq('email', invitation.email)
@@ -111,7 +112,8 @@ export async function POST(request: Request) {
     }
 
     // If user exists: Add user to organization
-    const { error: updateError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { error: updateError } = await (supabase as any)
       .from('users')
       .update({
         org_id: invitation.org_id,

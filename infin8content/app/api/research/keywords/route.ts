@@ -49,15 +49,14 @@ export async function POST(request: Request) {
     // Check usage limits before API call
     const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM format
     
-    // Type assertion needed until database types are regenerated after migration
-    // TODO: Remove type assertion after running: supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts
-    const { data: usageData, error: usageError } = await (supabaseAdmin
-      .from('usage_tracking' as any)
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: usageData, error: usageError } = await (supabaseAdmin as any)
+      .from('usage_tracking')
       .select('usage_count')
       .eq('organization_id', organizationId)
       .eq('metric_type', 'keyword_research')
       .eq('billing_period', currentMonth)
-      .single() as unknown as Promise<{ data: { usage_count: number } | null; error: any }>)
+      .single()
 
     if (usageError && usageError.code !== 'PGRST116') { // PGRST116 = no rows returned
       console.error('Failed to check usage limits:', usageError)
