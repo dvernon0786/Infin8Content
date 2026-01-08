@@ -62,7 +62,7 @@ export const generateArticle = inngest.createFunction(
     console.log(`[Inngest] Starting article generation for articleId: ${articleId}`)
 
     try {
-      // Step 1: Load article and update status to "generating"
+      // Step 1: Load article and check if it's already in a terminal state
       const article = await step.run('load-article', async () => {
         console.log(`[Inngest] Step: load-article - Loading article ${articleId}`)
         const { data, error } = await supabase
@@ -75,6 +75,20 @@ export const generateArticle = inngest.createFunction(
           const errorMsg = `Article ${articleId} not found: ${error?.message || 'Unknown error'}`
           console.error(`[Inngest] Step: load-article - ERROR: ${errorMsg}`)
           throw new Error(errorMsg)
+        }
+
+        // Check if article is already in a terminal state (failed, cancelled, completed)
+        // This can happen if the article was manually marked as failed/cancelled
+        // or if the function is retrying after the article was already processed
+        const terminalStates = ['failed', 'cancelled', 'completed']
+        if (terminalStates.includes(data.status)) {
+          const msg = `Article ${articleId} is already in terminal state: ${data.status}. Skipping generation.`
+          console.log(`[Inngest] Step: load-article - ${msg}`)
+          return {
+            ...data,
+            skipped: true,
+            reason: `Article already ${data.status}`
+          }
         }
 
         // Update status to generating
@@ -96,8 +110,19 @@ export const generateArticle = inngest.createFunction(
 
         // Type assertion needed because database types haven't been regenerated after migration
         // We've already checked data exists above, so this is safe
-        return (data as unknown) as { id: string; org_id: string; keyword: string; status: string }
+        return (data as unknown) as { id: string; org_id: string; keyword: string; status: string; skipped?: boolean; reason?: string }
       })
+
+      // Early exit if article was skipped (already in terminal state)
+      if ((article as any).skipped) {
+        console.log(`[Inngest] Article generation skipped for articleId: ${articleId} - ${(article as any).reason}`)
+        return { 
+          success: true, 
+          articleId, 
+          skipped: true,
+          reason: (article as any).reason
+        }
+      }
 
       // Step 2: Load keyword research data
       const keywordResearch = await step.run('load-keyword-research', async () => {
