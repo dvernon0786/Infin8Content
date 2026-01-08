@@ -209,7 +209,7 @@ export async function POST(request: Request) {
         },
         api_cost: apiResponse.cost,
         cached_until: cachedUntil.toISOString(),
-      }) as unknown as Promise<{ error: any }>)
+      })
 
     if (insertError) {
       console.error('Failed to store keyword research:', insertError)
