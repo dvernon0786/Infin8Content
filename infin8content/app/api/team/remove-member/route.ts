@@ -71,7 +71,8 @@ export async function POST(request: Request) {
 
     // Remove user from organization: Set users.org_id = NULL
     // Note: We filter by org_id BEFORE the update, not after (since we're setting it to null)
-    const { error: updateError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { error: updateError } = await (supabase as any)
       .from('users')
       .update({ org_id: null })
       .eq('id', userId)
