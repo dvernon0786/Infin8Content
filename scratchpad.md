@@ -1,14 +1,35 @@
 # Scratchpad
 
 ## Current Status
-- **Date:** 2026-01-08 12:40:20 AEDT
+- **Date:** 2026-01-09 00:10:44 AEDT
 - **Epic 1:** Completed
 - **Epic 3:** Story 3-1 Complete
-- **Epic 4A:** Story 4a-5 Complete (Review)
-- **Last Story:** 4a-5 LLM Content Generation with OpenRouter Integration - Code Review Complete
-- **Current Focus:** Story 4a-5 Complete - All fixes applied and pushed to git
+- **Epic 4A:** Story 4a-5 Complete (Production Ready)
+- **Last Story:** 4a-5 LLM Content Generation with OpenRouter Integration - Article Content Viewer & Code Review Fixes Complete
+- **Current Focus:** Story 4a-5 Complete - Article content viewer implemented, all code review issues fixed, production ready
 
 ## Recent Achievements
+- **Story 4a-5 Article Content Viewer & Code Review Fixes (2026-01-09 00:10:44 AEDT):**
+  - ✅ **FEATURE:** Implemented ArticleContentViewer component to display completed articles
+  - ✅ **FEATURE:** Added markdown rendering with react-markdown for article sections
+  - ✅ **FEATURE:** Display article content on detail page when status is "completed"
+  - ✅ **FEATURE:** Show section metadata (word count, citations, readability score, model used)
+  - ✅ **FEATURE:** Display research sources with validated URLs
+  - ✅ **CRITICAL FIX:** Created shared TypeScript types (ArticleMetadata, ArticleSection, ArticleWithSections)
+  - ✅ **CRITICAL FIX:** Removed all 'any' types from article detail page
+  - ✅ **CRITICAL FIX:** Added proper error handling for sections fetch with user-friendly messages
+  - ✅ **CRITICAL FIX:** Implemented URL validation for research sources (prevents XSS)
+  - ✅ **MAJOR FIX:** Created MarkdownErrorBoundary component for graceful error handling
+  - ✅ **MAJOR FIX:** Simplified redundant section type checks in ArticleContentViewer
+  - ✅ **MAJOR FIX:** Removed unused variables and parameters
+  - ✅ **IMPROVEMENT:** Added JSDoc comments for components
+  - ✅ **IMPROVEMENT:** Improved error messages with context
+  - ✅ **SECURITY:** URL validation ensures only http:// and https:// protocols are rendered
+  - ✅ **SECURITY:** External links use rel="noopener noreferrer"
+  - ✅ All code review issues fixed (2 Critical, 3 Major, 4 Minor)
+  - ✅ Comprehensive code review document created: `_bmad-output/code-reviews/article-generation-improvements-2026-01-08.md`
+  - ✅ All changes committed and pushed to git (commits: fee4796, 1d4a4e2, 39e4e54)
+  - ✅ Story status: Production ready
 - **Story 4a-5 Model Update & Completion (2026-01-08 12:40:20 AEDT):**
   - ✅ **MODEL UPDATE:** Updated OpenRouter model to `meta-llama/llama-3.3-70b-instruct:free`
   - ✅ **IMPROVEMENT:** Llama 3.3 70B offers 128K context, excellent instruction following (92.1 IFEval), multilingual support
@@ -119,9 +140,12 @@
 
 ## Next Steps
 - **Story 4a-5:**
+  - ✅ Article content viewer implemented and tested
+  - ✅ All code review issues fixed (type safety, error handling, URL validation, error boundaries)
+  - ✅ Production ready - all critical and major issues resolved
   - Configure OpenRouter API key in environment variables (OPENROUTER_API_KEY)
-  - Test with new model: `meta-llama/llama-3.3-70b-instruct:free`
-  - Verify citation insertion works correctly in production
+  - Test article generation end-to-end in production
+  - Verify article content displays correctly on detail page
   - Monitor quality metrics to ensure they reflect final content accurately
   - Mark story as "done" after production verification
 - **Story 4a-3:**
