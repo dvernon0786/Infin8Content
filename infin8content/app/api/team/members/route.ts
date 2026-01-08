@@ -76,7 +76,7 @@ export async function GET() {
         role: member.role,
         createdAt: member.created_at,
       })),
-      pendingInvitations: (pendingInvitations || []).map((invitation) => ({
+      pendingInvitations: ((pendingInvitations || []) as any[]).map((invitation: any) => ({
         id: invitation.id,
         email: invitation.email,
         role: invitation.role,
