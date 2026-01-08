@@ -41,7 +41,22 @@ export const generateArticle = inngest.createFunction(
   },
   { event: 'article/generate' },
   async ({ event, step }) => {
+    // Log function invocation immediately
+    console.log(`[Inngest] Function invoked - Event received:`, {
+      eventName: event.name,
+      eventId: event.id,
+      articleId: event.data?.articleId,
+      timestamp: new Date().toISOString(),
+    })
+
     const { articleId } = event.data
+    
+    if (!articleId) {
+      const errorMsg = 'Missing articleId in event data'
+      console.error(`[Inngest] ERROR: ${errorMsg}`, { event })
+      throw new Error(errorMsg)
+    }
+
     const supabase = createServiceRoleClient()
 
     console.log(`[Inngest] Starting article generation for articleId: ${articleId}`)

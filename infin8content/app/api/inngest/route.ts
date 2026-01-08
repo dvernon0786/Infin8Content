@@ -13,6 +13,15 @@ const isDevelopment = process.env.NODE_ENV === 'development'
 // For production, both eventKey and signingKey are required
 const useInngestServe = isDevelopment || (eventKey && signingKey)
 
+// Log function registration
+console.log('[Inngest API] Registering functions:', {
+  useInngestServe,
+  isDevelopment,
+  hasEventKey: !!eventKey,
+  hasSigningKey: !!signingKey,
+  functionIds: ['article/generate', 'articles/cleanup-stuck'],
+})
+
 // Create handlers - allow local dev without env vars
 const handlers = useInngestServe
   ? serve({
