@@ -53,9 +53,10 @@ export interface OpenRouterGenerationResult {
  * Note: Models may become unavailable - fallback logic handles this automatically
  */
 export const FREE_MODELS = [
-  'tns-standard/tns-standard-8-7.5-chimera', // Primary choice
+  'meta-llama/llama-3.3-70b-instruct:free', // Primary choice - 70B multilingual, 128K context, excellent instruction following
   'meta-llama/llama-3bmo-v1-turbo', // Fast backup
   // Removed: 'nvidia/nemotron-3-demo-70b' - no longer valid model ID
+  // Removed: 'tns-standard/tns-standard-8-7.5-chimera' - replaced with better model
 ] as const
 
 /**
