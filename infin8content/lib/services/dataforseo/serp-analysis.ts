@@ -45,7 +45,7 @@ export async function analyzeSerpStructure(
 
   // Type assertion needed because database types haven't been regenerated after migration
   const cachedAnalysis = (cachedAnalysisData as unknown) as { analysis_data?: SerpAnalysis; cached_until?: string } | null
-  
+
   if (cachedAnalysis?.analysis_data) {
     // Cache hit - update updated_at
     await supabase

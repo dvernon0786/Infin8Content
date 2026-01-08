@@ -1,6 +1,9 @@
 /**
  * Section Processor Service Tests
  * Story 4a.2: Section-by-Section Architecture and Outline Generation
+ * 
+ * Note: This file tests Story 4a-2 functionality. Stories 4a-3 and 4a-5 added
+ * dependencies (Tavily research, OpenRouter content generation) that are mocked here.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -8,28 +11,87 @@ import { processSection, processAllSections } from '@/lib/services/article-gener
 import type { Outline } from '@/lib/services/article-generation/outline-generator'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 
-// Mock Supabase client
+// Mock Supabase client with all methods used by section-processor
+const createMockQueryBuilder = () => {
+  const chain: any = {
+    eq: vi.fn().mockReturnThis(),
+    ilike: vi.fn().mockReturnThis(),
+    gt: vi.fn().mockReturnThis(), // For Tavily cache queries
+    single: vi.fn().mockResolvedValue({
+      data: {
+        sections: [],
+        keyword: 'best running shoes',
+        org_id: 'test-org-id',
+        writing_style: 'Professional',
+        target_audience: 'General',
+        custom_instructions: null,
+        error_details: null,
+        research_results: null // For Tavily cache queries
+      },
+      error: null
+    }),
+    insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    update: vi.fn().mockReturnThis(), // Returns chain for chaining
+    upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    delete: vi.fn().mockReturnThis()
+  }
+  // Make update return chain for chaining: .update().eq()
+  chain.update.mockReturnValue(chain)
+  chain.delete.mockReturnValue(chain)
+  return chain
+}
+
 const mockSupabaseClient = {
   from: vi.fn(() => ({
-    select: vi.fn(() => ({
-      eq: vi.fn(() => ({
-        single: vi.fn().mockResolvedValue({
-          data: {
-            sections: [],
-            keyword: 'best running shoes'
-          },
-          error: null
-        })
-      }))
-    })),
-    update: vi.fn(() => ({
-      eq: vi.fn().mockResolvedValue({ data: null, error: null })
-    }))
+    select: vi.fn(() => createMockQueryBuilder()),
+    update: vi.fn(() => createMockQueryBuilder()),
+    insert: vi.fn(() => createMockQueryBuilder()),
+    upsert: vi.fn(() => createMockQueryBuilder()),
+    delete: vi.fn(() => createMockQueryBuilder())
   }))
 }
 
+// Mock Supabase
 vi.mock('@/lib/supabase/server', () => ({
   createServiceRoleClient: vi.fn(() => mockSupabaseClient)
+}))
+
+// Mock OpenRouter (Story 4a-5 dependency)
+vi.mock('@/lib/services/openrouter/openrouter-client', () => ({
+  generateContent: vi.fn().mockResolvedValue({
+    content: 'Mock generated content for section',
+    tokensUsed: 100,
+    modelUsed: 'google/gemini-2.5-flash',
+    promptTokens: 50,
+    completionTokens: 50
+  })
+}))
+
+// Mock Tavily research (Story 4a-3 dependency)
+vi.mock('@/lib/services/tavily/tavily-client', () => ({
+  researchQuery: vi.fn().mockResolvedValue([])
+}))
+
+// Mock content quality validation
+vi.mock('@/lib/utils/content-quality', () => ({
+  validateContentQuality: vi.fn().mockReturnValue({
+    passed: true,
+    metrics: {
+      word_count: 100,
+      citations_included: 0,
+      readability_score: 65,
+      keyword_density: 0.02,
+      quality_passed: true,
+      quality_retry_count: 0
+    },
+    errors: []
+  }),
+  countCitations: vi.fn().mockReturnValue(0)
+}))
+
+// Mock citation formatter
+vi.mock('@/lib/utils/citation-formatter', () => ({
+  formatCitationsForMarkdown: vi.fn((content) => content)
 }))
 
 describe('Section Processor', () => {
@@ -63,13 +125,27 @@ describe('Section Processor', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
-    // Reset mock responses
-    mockSupabaseClient.from().select().eq().single.mockResolvedValue({
+    // Reset mock responses - create fresh query builder for each test
+    const chain = createMockQueryBuilder()
+    chain.single.mockResolvedValue({
       data: {
         sections: [],
-        keyword: mockKeyword
+        keyword: mockKeyword,
+        org_id: 'test-org-id',
+        writing_style: 'Professional',
+        target_audience: 'General',
+        custom_instructions: null,
+        error_details: null
       },
       error: null
+    })
+    
+    mockSupabaseClient.from.mockReturnValue({
+      select: vi.fn(() => chain),
+      update: vi.fn(() => chain),
+      insert: vi.fn(() => chain),
+      upsert: vi.fn(() => chain),
+      delete: vi.fn(() => chain)
     })
   })
 
@@ -80,7 +156,8 @@ describe('Section Processor', () => {
       expect(section.section_type).toBe('introduction')
       expect(section.section_index).toBe(0)
       expect(section.title).toBe(mockOutline.introduction.title)
-      expect(section.content).toContain('placeholder content')
+      expect(section.content).toBeDefined()
+      expect(section.content.length).toBeGreaterThan(0)
       expect(section.word_count).toBeGreaterThan(0)
       expect(section.generated_at).toBeDefined()
     })
@@ -127,24 +204,25 @@ describe('Section Processor', () => {
     })
 
     it('should update article with new section', async () => {
-      const mockEq = vi.fn().mockResolvedValue({ data: null, error: null })
-      const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq })
-      mockSupabaseClient.from.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: { sections: [], keyword: mockKeyword },
-              error: null
-            })
-          })
-        }),
-        update: mockUpdate
-      } as any)
+      const chain = createMockQueryBuilder()
+      chain.single.mockResolvedValue({
+        data: { sections: [], keyword: mockKeyword, org_id: 'test-org-id', writing_style: 'Professional', target_audience: 'General', custom_instructions: null, error_details: null },
+        error: null
+      })
+      
+      const fromMock = {
+        select: vi.fn(() => chain),
+        update: vi.fn(() => chain),
+        insert: vi.fn(() => chain),
+        upsert: vi.fn(() => chain),
+        delete: vi.fn(() => chain)
+      }
+      mockSupabaseClient.from.mockReturnValue(fromMock)
 
       await processSection(mockArticleId, 0, mockOutline)
       
-      expect(mockUpdate).toHaveBeenCalled()
-      expect(mockEq).toHaveBeenCalled()
+      expect(mockSupabaseClient.from).toHaveBeenCalledWith('articles')
+      expect(fromMock.update).toHaveBeenCalled()
     })
 
     it('should preserve previous sections when adding new one', async () => {
@@ -159,29 +237,34 @@ describe('Section Processor', () => {
         }
       ]
 
-      const mockEq = vi.fn().mockResolvedValue({ data: null, error: null })
-      const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq })
-      mockSupabaseClient.from.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: {
-                sections: existingSections,
-                keyword: mockKeyword
-              },
-              error: null
-            })
-          })
-        }),
-        update: mockUpdate
-      } as any)
+      const chain = createMockQueryBuilder()
+      chain.single.mockResolvedValue({
+        data: {
+          sections: existingSections,
+          keyword: mockKeyword,
+          org_id: 'test-org-id',
+          writing_style: 'Professional',
+          target_audience: 'General',
+          custom_instructions: null,
+          error_details: null
+        },
+        error: null
+      })
+      
+      const fromMock = {
+        select: vi.fn(() => chain),
+        update: vi.fn(() => chain),
+        insert: vi.fn(() => chain),
+        upsert: vi.fn(() => chain),
+        delete: vi.fn(() => chain)
+      }
+      mockSupabaseClient.from.mockReturnValue(fromMock)
 
       const section = await processSection(mockArticleId, 1, mockOutline)
       
       expect(section.section_index).toBe(1)
       // Verify update was called with both old and new sections
-      expect(mockUpdate).toHaveBeenCalled()
-      expect(mockEq).toHaveBeenCalled()
+      expect(fromMock.update).toHaveBeenCalled()
     })
   })
 

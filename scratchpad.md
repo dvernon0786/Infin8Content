@@ -95,7 +95,7 @@
   - ✅ **LOW-1 DOCUMENTED:** Type assertions verified and documented - Types not regenerated yet, all include TODO comments
   - ✅ **LOW-2 FIXED:** Added JSDoc comments - Comprehensive documentation added to all API endpoints
   - ✅ **FINAL REVIEW:** All 10 issues resolved (1 Critical, 3 High, 4 Medium, 2 Low)
-  - ✅ **Status:** review (✅ APPROVED - production-ready, all issues resolved)
+  - ✅ **Status:** done (✅ APPROVED - production-ready, all issues resolved)
   - ✅ Code review findings and fixes documented in story file: `_bmad-output/implementation-artifacts/4a-1-article-generation-initiation-and-queue-setup.md`
   - ✅ Sprint status synced: `sprint-status.yaml` updated to "review"
 - **Story 1.12 Code Review & Final Fixes (2026-01-07 22:41:54 AEDT):**

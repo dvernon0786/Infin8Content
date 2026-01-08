@@ -846,6 +846,19 @@ Composer (Cursor AI)
   - Simplified mock setup for Supabase chained calls
   - Marked detailed flow tests as skipped (logic covered by unit tests)
 
+**Re-Code Review Fixes Applied (2026-01-09):**
+- ✅ Fixed CRITICAL: Unit tests failing due to missing mocks for Story 4a-3/4a-5 dependencies
+  - Added mocks for `@/lib/services/openrouter/openrouter-client` (generateContent)
+  - Added mocks for `@/lib/services/tavily/tavily-client` (researchQuery)
+  - Added mocks for `@/lib/utils/content-quality` (validateContentQuality, countCitations)
+  - Added mocks for `@/lib/utils/citation-formatter` (formatCitationsForMarkdown)
+  - Updated Supabase mock to support all methods: select, update, insert, upsert, delete, ilike, gt
+  - Fixed test expectations to match actual implementation (removed outdated "placeholder content" check)
+  - All 13 unit tests now passing ✅
+- ✅ Fixed HIGH: Updated story documentation to reflect actual test status
+  - Tests: 13/13 passing (unit), 24/24 passing (integration), 3 skipped
+  - Documentation now accurately reflects test coverage
+
 ### File List
 
 **New Files Created:**
@@ -863,6 +876,7 @@ Composer (Cursor AI)
 - `lib/inngest/functions/generate-article.ts` - Extended with full generation flow, error handling, retry logic, H3 subsection processing, TypeScript type assertions, concurrency limit fix
 - `lib/services/article-generation/section-processor.ts` - Implemented H3 subsection processing with decimal indices, added type assertions
 - `lib/services/dataforseo/serp-analysis.ts` - Added type assertions for cached analysis queries
+- `tests/unit/services/article-generation/section-processor.test.ts` - Added mocks for Story 4a-3/4a-5 dependencies, fixed Supabase mock chain, updated test expectations
 - `package.json` - Added `@inngest/test` dev dependency
 - `_bmad-output/sprint-status.yaml` - Updated story status to "review"
 - `infin8content/INNGEST_SYNC_FIX.md` - Created documentation for Inngest sync configuration
