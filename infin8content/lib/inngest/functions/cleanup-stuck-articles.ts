@@ -53,8 +53,9 @@ export const cleanupStuckArticles = inngest.createFunction(
       
       // Update stuck articles to failed status
       const articleIds = stuckArticles.map(a => a.id)
-      const { error: updateError, data: updatedArticles } = await supabase
-        .from('articles' as any)
+      // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+      const { error: updateError, data: updatedArticles } = await (supabase as any)
+        .from('articles')
         .update({
           status: 'failed',
           error_details: {
