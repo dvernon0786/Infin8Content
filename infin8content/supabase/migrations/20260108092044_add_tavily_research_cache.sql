@@ -28,10 +28,11 @@ CREATE INDEX IF NOT EXISTS idx_tavily_cache_cached_until ON tavily_research_cach
 CREATE INDEX IF NOT EXISTS idx_tavily_cache_lookup 
 ON tavily_research_cache(organization_id, LOWER(research_query), cached_until);
 
--- Create partial index for expired cache cleanup (more efficient than full index)
+-- Create index for expired cache cleanup
+-- Note: Cannot use partial index with NOW() as it's not IMMUTABLE
+-- Instead, use a regular index and filter in queries: WHERE cached_until < NOW()
 CREATE INDEX IF NOT EXISTS idx_tavily_cache_expiry 
-ON tavily_research_cache(cached_until) 
-WHERE cached_until < NOW();
+ON tavily_research_cache(cached_until);
 
 -- Create trigger to automatically update updated_at on row updates
 DROP TRIGGER IF EXISTS update_tavily_research_cache_updated_at ON tavily_research_cache;
