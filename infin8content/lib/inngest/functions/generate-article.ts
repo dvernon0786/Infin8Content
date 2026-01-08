@@ -203,8 +203,9 @@ export const generateArticle = inngest.createFunction(
           console.log(`[Inngest] Step: generate-outline - Success: Outline generated in ${duration}ms`)
 
           // Store outline in article record
-          const { error: updateError } = await supabase
-            .from('articles' as any)
+          // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+          const { error: updateError } = await (supabase as any)
+            .from('articles')
             .update({
               outline: generatedOutline,
               outline_generation_duration_ms: duration
