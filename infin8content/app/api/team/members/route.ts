@@ -70,7 +70,7 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      members: (members || []).map((member) => ({
+      members: ((members || []) as any[]).map((member: any) => ({
         id: member.id,
         email: member.email,
         role: member.role,
