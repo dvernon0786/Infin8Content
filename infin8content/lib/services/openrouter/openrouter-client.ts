@@ -50,11 +50,13 @@ export interface OpenRouterGenerationResult {
 
 /**
  * Free models available via OpenRouter (in priority order)
+ * Note: Models may become unavailable - fallback logic handles this automatically
  */
 export const FREE_MODELS = [
-  'tns-standard/tns-standard-8-7.5-chimera', // Primary choice
+  'meta-llama/llama-3.3-70b-instruct:free', // Primary choice - 70B multilingual, 128K context, excellent instruction following
   'meta-llama/llama-3bmo-v1-turbo', // Fast backup
-  'nvidia/nemotron-3-demo-70b', // High quality
+  // Removed: 'nvidia/nemotron-3-demo-70b' - no longer valid model ID
+  // Removed: 'tns-standard/tns-standard-8-7.5-chimera' - replaced with better model
 ] as const
 
 /**
@@ -116,12 +118,34 @@ export async function generateContent(
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
+          const errorMessage = JSON.stringify(errorData)
           const error = new Error(
-            `OpenRouter API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`
+            `OpenRouter API error: ${response.status} ${response.statusText} - ${errorMessage}`
           )
           
           // Don't retry on 401 (invalid API key)
           if (response.status === 401) {
+            throw error
+          }
+
+          // Handle 400 errors - check if it's an invalid model ID (should fallback to next model)
+          if (response.status === 400) {
+            const isInvalidModel = errorMessage.includes('is not a valid model ID') || 
+                                   errorMessage.includes('invalid model') ||
+                                   errorMessage.includes('model not found')
+            
+            if (isInvalidModel) {
+              // Invalid model ID - try next model instead of retrying
+              console.warn(`Model ${model} is invalid, trying next model in fallback chain`)
+              lastError = error
+              // If this is the last model, throw error
+              if (model === modelsToTry[modelsToTry.length - 1]) {
+                throw error
+              }
+              // Otherwise, try next model
+              break
+            }
+            // Other 400 errors (bad request format, etc.) - throw immediately
             throw error
           }
 
