@@ -87,7 +87,7 @@ export const cleanupStuckArticles = inngest.createFunction(
       return { 
         success: true, 
         updated: stuckArticles.length,
-        articles: updatedArticles || stuckArticles.map(a => ({ id: a.id, keyword: a.keyword }))
+        articles: updatedArticles || (stuckArticles as any[]).map((a: any) => ({ id: a.id, keyword: a.keyword }))
       }
     })
   }
