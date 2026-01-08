@@ -347,6 +347,52 @@
 
 ---
 
+# Documentation Updates: Story 4a-1 and 4a-2
+
+## Status: Complete
+
+## Objectives
+1. [x] Update Story 4a-2 documentation with TypeScript build fixes
+2. [x] Update Story 4a-2 documentation with Inngest concurrency limit fix
+3. [x] Update Story 4a-1 documentation with navigation improvements
+4. [x] Validate all documentation updates
+
+## Updates Applied
+
+### Story 4a-2 Documentation Updates
+- ✅ Added "Post-Code Review Fixes Applied" section documenting:
+  - TypeScript build error fixes (type assertions for database columns)
+  - Inngest concurrency limit fix (50 → 5, matches plan limit)
+  - Integration test infrastructure fixes (@inngest/test package)
+- ✅ Updated File List section with all modified files:
+  - TypeScript type assertion fixes in multiple files
+  - @inngest/test dependency addition
+  - INNGEST_SYNC_FIX.md documentation
+
+### Story 4a-1 Documentation Updates
+- ✅ Added "Navigation Updates Applied" section documenting:
+  - Write page redirect to article generation
+  - Top navigation "Create Article" button
+  - Contextual "Create Article" link from keyword research
+  - Keyword pre-fill support via URL parameters
+  - All entry points now functional per UX requirements
+- ✅ Updated File List section with navigation-related files:
+  - Write page redirect
+  - Top navigation component
+  - Keyword research client
+  - Article generation form
+
+## Validation Results
+- ✅ Story 4a-2: All fixes documented (TypeScript, concurrency, tests)
+- ✅ Story 4a-1: All navigation improvements documented
+- ✅ File lists updated with all modified files
+- ✅ Entry points comprehensively documented
+
+## Log
+- 2026-01-09T02:16:00+11:00: Updated Story 4a-1 and 4a-2 documentation with all fixes - TypeScript build fixes, Inngest concurrency limit fix, navigation improvements. All documentation validated and complete.
+
+---
+
 # Story 4a.5: LLM Content Generation with OpenRouter Integration
 
 ## Status: Review - Code Review Complete, All Issues Fixed, Ready for Deployment
