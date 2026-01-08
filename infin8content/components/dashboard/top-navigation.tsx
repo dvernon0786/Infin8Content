@@ -2,7 +2,8 @@
 
 import { LogOut, User, Plus } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useState } from "react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -23,6 +24,9 @@ interface TopNavigationProps {
 
 export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
     const pathname = usePathname()
+    const router = useRouter()
+    const [isLoggingOut, setIsLoggingOut] = useState(false)
+    
     const initials = name
         ? name
             .split(" ")
@@ -34,6 +38,34 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
 
     // Don't show "Create Article" button on the article generation page itself
     const showCreateButton = pathname !== "/dashboard/articles/generate"
+
+    const handleLogout = async () => {
+        try {
+            setIsLoggingOut(true)
+            
+            const response = await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+
+            if (!response.ok) {
+                throw new Error('Failed to logout')
+            }
+
+            // Redirect to login page after successful logout
+            router.push('/login')
+            router.refresh() // Refresh to clear any cached data
+        } catch (error) {
+            console.error('Logout error:', error)
+            // Still redirect to login even if API call fails
+            // The middleware will handle authentication check
+            router.push('/login')
+        } finally {
+            setIsLoggingOut(false)
+        }
+    }
 
     return (
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
@@ -79,9 +111,13 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
                         <User className="mr-2 h-4 w-4" />
                         <span>Profile</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem 
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                        className="cursor-pointer"
+                    >
                         <LogOut className="mr-2 h-4 w-4" />
-                        <span>Log out</span>
+                        <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
