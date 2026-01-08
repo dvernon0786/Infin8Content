@@ -230,8 +230,9 @@ export const generateArticle = inngest.createFunction(
         console.log(`[Inngest] Step: process-sections - Starting section processing for article ${articleId}`)
         
         try {
-          const { data: articleData, error: fetchError } = await supabase
-            .from('articles' as any)
+          // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+          const { data: articleData, error: fetchError } = await (supabase as any)
+            .from('articles')
             .select('outline')
             .eq('id', articleId)
             .single()
@@ -296,8 +297,9 @@ export const generateArticle = inngest.createFunction(
           
           if (isTimeout) {
             console.error(`[Inngest] Step: process-sections - TIMEOUT ERROR: ${error instanceof Error ? error.message : String(error)}`)
-            await supabase
-              .from('articles' as any)
+            // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+            await (supabase as any)
+              .from('articles')
               .update({
                 status: 'failed',
                 error_details: {
@@ -315,8 +317,9 @@ export const generateArticle = inngest.createFunction(
       // Step 6: Update article status to completed
       await step.run('complete-article', async () => {
         console.log(`[Inngest] Step: complete-article - Marking article ${articleId} as completed`)
-        const { error: updateError } = await supabase
-          .from('articles' as any)
+        // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+        const { error: updateError } = await (supabase as any)
+          .from('articles')
           .update({
             status: 'completed',
             generation_completed_at: new Date().toISOString()
@@ -351,8 +354,9 @@ export const generateArticle = inngest.createFunction(
       await step.run('handle-error', async () => {
         console.log(`[Inngest] Step: handle-error - Handling error for article ${articleId}, isTimeout: ${isTimeout}`)
         // Get current sections to preserve partial article
-        const { data: articleData } = await supabase
-          .from('articles' as any)
+        // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+        const { data: articleData } = await (supabase as any)
+          .from('articles')
           .select('sections, current_section_index')
           .eq('id', articleId)
           .single()
