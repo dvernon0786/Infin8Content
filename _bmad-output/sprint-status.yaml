@@ -84,7 +84,7 @@ development_status:
 
   epic-4a: in-progress
   4a-1-article-generation-initiation-and-queue-setup: done
-  4a-2-section-by-section-architecture-and-outline-generation: review
+  4a-2-section-by-section-architecture-and-outline-generation: done
   4a-3-real-time-research-per-section-tavily-integration: review
   4a-4-serp-analysis-per-section-dataforseo-integration: backlog
   4a-5-llm-content-generation-with-openrouter-integration: review

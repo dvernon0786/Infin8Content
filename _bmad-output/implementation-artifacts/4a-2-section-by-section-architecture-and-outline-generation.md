@@ -1,6 +1,6 @@
 # Story 4a.2: Section-by-Section Architecture and Outline Generation
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
