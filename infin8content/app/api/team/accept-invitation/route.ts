@@ -130,7 +130,8 @@ export async function POST(request: Request) {
     }
 
     // Update invitation: status = 'accepted', accepted_at = NOW()
-    const { error: invitationUpdateError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { error: invitationUpdateError } = await (supabase as any)
       .from('team_invitations')
       .update({
         status: 'accepted',
@@ -144,7 +145,8 @@ export async function POST(request: Request) {
     }
 
     // Get organization owner email for notification
-    const { data: organization, error: orgError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: organization, error: orgError } = await (supabase as any)
       .from('organizations')
       .select('name')
       .eq('id', invitation.org_id)
@@ -155,7 +157,8 @@ export async function POST(request: Request) {
       // Continue with default name - don't fail the request
     }
 
-    const { data: owner, error: ownerError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: owner, error: ownerError } = await (supabase as any)
       .from('users')
       .select('email')
       .eq('id', invitation.created_by)
