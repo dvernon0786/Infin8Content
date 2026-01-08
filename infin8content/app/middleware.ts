@@ -144,7 +144,8 @@ export async function middleware(request: NextRequest) {
             } else {
               // Send suspension email for this edge case (non-blocking)
               try {
-                const { data: user } = await supabase
+                // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+                const { data: user } = await (supabase as any)
                   .from('users')
                   .select('email')
                   .eq('id', userRecord.id)
@@ -215,7 +216,8 @@ export async function middleware(request: NextRequest) {
               try {
                 // Query user record to get email
                 // Note: users table doesn't have name column, userName will be undefined
-                const { data: user, error: userQueryError } = await supabase
+                // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+                const { data: user, error: userQueryError } = await (supabase as any)
                   .from('users')
                   .select('email')
                   .eq('id', userRecord.id)
