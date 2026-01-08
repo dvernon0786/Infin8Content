@@ -241,7 +241,8 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
     updateData.suspended_at = null
   }
 
-  const { error: updateError } = await supabase
+  // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+  const { error: updateError } = await (supabase as any)
     .from('organizations')
     .update(updateData)
     .eq('id', orgId)
@@ -386,7 +387,8 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
       updateData.grace_period_started_at = new Date().toISOString()
     }
 
-    const { error: updateError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { error: updateError } = await (supabase as any)
       .from('organizations')
       .update(updateData)
       .eq('id', organization.id)
@@ -625,7 +627,8 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
       updateData.suspended_at = null
     }
 
-    const { error: updateError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { error: updateError } = await (supabase as any)
       .from('organizations')
       .update(updateData)
       .eq('id', organization.id)
