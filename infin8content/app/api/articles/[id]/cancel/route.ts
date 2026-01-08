@@ -2,6 +2,38 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { NextResponse } from 'next/server'
 
+/**
+ * POST /api/articles/[id]/cancel
+ * 
+ * Cancels a queued article generation request.
+ * Only articles with status "queued" can be cancelled.
+ * 
+ * @param request - HTTP request (body not used)
+ * @param params - Route parameters containing article ID
+ * @returns JSON response with success status
+ * 
+ * Route Parameters:
+ * - id: string (required) - UUID of the article to cancel
+ * 
+ * Response (Success - 200):
+ * - success: boolean
+ * - message: string
+ * 
+ * Response (Error - 400):
+ * - error: "Only queued articles can be cancelled"
+ * 
+ * Response (Error - 401):
+ * - error: "Authentication required"
+ * 
+ * Response (Error - 404):
+ * - error: "Article not found"
+ * 
+ * Response (Error - 500):
+ * - error: string - Server error message
+ * 
+ * Authentication: Requires authenticated user session
+ * Authorization: User must belong to the organization that owns the article
+ */
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

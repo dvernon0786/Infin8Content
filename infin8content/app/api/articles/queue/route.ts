@@ -2,6 +2,34 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { NextResponse } from 'next/server'
 
+/**
+ * GET /api/articles/queue
+ * 
+ * Fetches the current queue status for article generation in the user's organization.
+ * Returns articles with status "queued" or "generating", with position numbers for queued articles.
+ * 
+ * @param request - HTTP request with orgId query parameter
+ * @returns JSON response with articles array and their queue positions
+ * 
+ * Query Parameters:
+ * - orgId: string (required) - Organization ID to fetch queue for
+ * 
+ * Response (Success - 200):
+ * - articles: Array<{ id: string, keyword: string, status: "queued" | "generating", created_at: string, position?: number }>
+ *   - position is only present for queued articles (1-based index among queued articles only)
+ * 
+ * Response (Error - 401):
+ * - error: "Authentication required"
+ * 
+ * Response (Error - 403):
+ * - error: "Unauthorized" - User doesn't belong to the specified organization
+ * 
+ * Response (Error - 500):
+ * - error: string - Server error message
+ * 
+ * Authentication: Requires authenticated user session
+ * Authorization: User must belong to the organization specified in orgId parameter
+ */
 export async function GET(request: Request) {
   try {
     const currentUser = await getCurrentUser()
@@ -42,10 +70,13 @@ export async function GET(request: Request) {
       )
     }
 
-    // Add position numbers for queued articles
-    const articlesWithPosition = (articles || []).map((article, index) => ({
+    // Add position numbers for queued articles (only count queued articles, exclude generating)
+    const queuedArticles = (articles || []).filter(a => a.status === 'queued')
+    const articlesWithPosition = (articles || []).map(article => ({
       ...article,
-      position: article.status === 'queued' ? index + 1 : undefined,
+      position: article.status === 'queued' 
+        ? queuedArticles.findIndex(q => q.id === article.id) + 1 
+        : undefined,
     }))
 
     return NextResponse.json({

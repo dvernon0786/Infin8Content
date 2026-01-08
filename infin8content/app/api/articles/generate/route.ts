@@ -2,14 +2,19 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { validateSupabaseEnv } from '@/lib/supabase/env'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { inngest } from '@/lib/inngest/client'
+import { sanitizeText } from '@/lib/utils/sanitize-text'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 
+/**
+ * Zod schema for article generation request validation
+ * Validates and sanitizes user input before processing
+ */
 const articleGenerationSchema = z.object({
   keyword: z.string().min(1, 'Keyword must not be empty').max(200, 'Keyword must be less than 200 characters'),
   targetWordCount: z.number().int().min(500).max(10000),
-  writingStyle: z.string().optional().default('Professional'),
-  targetAudience: z.string().optional().default('General'),
+  writingStyle: z.enum(['Professional', 'Conversational', 'Technical', 'Casual', 'Formal']).optional().default('Professional'),
+  targetAudience: z.enum(['General', 'B2B', 'B2C', 'Technical', 'Consumer']).optional().default('General'),
   customInstructions: z.string().max(2000, 'Custom instructions must be less than 2000 characters').optional(),
 })
 
@@ -20,6 +25,44 @@ const PLAN_LIMITS: Record<string, number | null> = {
   agency: null,   // unlimited
 }
 
+/**
+ * POST /api/articles/generate
+ * 
+ * Creates a new article generation request and queues it via Inngest.
+ * 
+ * @param request - HTTP request containing article generation parameters
+ * @returns JSON response with articleId and status, or error details
+ * 
+ * Request Body:
+ * - keyword: string (required, 1-200 chars) - Target keyword for article
+ * - targetWordCount: number (required, 500-10000) - Desired article length
+ * - writingStyle: string (optional) - One of: Professional, Conversational, Technical, Casual, Formal
+ * - targetAudience: string (optional) - One of: General, B2B, B2C, Technical, Consumer
+ * - customInstructions: string (optional, max 2000 chars) - Additional instructions for article generation
+ * 
+ * Response (Success - 200):
+ * - success: boolean
+ * - articleId: string (UUID)
+ * - status: "queued"
+ * - message: string
+ * 
+ * Response (Error - 400):
+ * - error: string - Validation error message
+ * 
+ * Response (Error - 401):
+ * - error: "Authentication required"
+ * 
+ * Response (Error - 403):
+ * - error: string - Usage limit exceeded message
+ * - details: { code: "USAGE_LIMIT_EXCEEDED", usageLimitExceeded: true, currentUsage: number, limit: number }
+ * 
+ * Response (Error - 500):
+ * - error: string - Server error message
+ * - details?: string - Additional error details
+ * 
+ * Authentication: Requires authenticated user session
+ * Authorization: User must belong to an organization
+ */
 export async function POST(request: Request) {
   try {
     validateSupabaseEnv()
@@ -87,8 +130,14 @@ export async function POST(request: Request) {
       )
     }
 
+    // Sanitize custom instructions before storing in database
+    const sanitizedCustomInstructions = parsed.customInstructions 
+      ? sanitizeText(parsed.customInstructions)
+      : undefined
+
     // Create article record in database with status "queued"
     // Type assertion needed until database types are regenerated after migration
+    // TODO: Remove type assertion after running: supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts
     const { data: article, error: insertError } = await (supabase
       .from('articles' as any)
       .insert({
@@ -99,7 +148,7 @@ export async function POST(request: Request) {
         target_word_count: parsed.targetWordCount,
         writing_style: parsed.writingStyle,
         target_audience: parsed.targetAudience,
-        custom_instructions: parsed.customInstructions,
+        custom_instructions: sanitizedCustomInstructions,
       })
       .select('id')
       .single() as unknown as Promise<{ data: { id: string } | null; error: any }>)

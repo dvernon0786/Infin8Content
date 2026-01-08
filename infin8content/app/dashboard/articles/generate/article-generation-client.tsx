@@ -25,7 +25,29 @@ export function ArticleGenerationPageClient({ organizationId }: ArticleGeneratio
     }
   }, [searchParams])
   const [error, setError] = useState<string | null>(null)
-  const [usageInfo, setUsageInfo] = useState<{ current: number; limit: number | null } | null>(null)
+  const [usageInfo, setUsageInfo] = useState<{ current: number; limit: number | null; plan?: string; remaining?: number | null } | null>(null)
+
+  // Fetch usage information on component mount
+  useEffect(() => {
+    const fetchUsage = async () => {
+      try {
+        const response = await fetch('/api/articles/usage')
+        if (response.ok) {
+          const data = await response.json()
+          setUsageInfo({
+            current: data.currentUsage,
+            limit: data.limit,
+            plan: data.plan,
+            remaining: data.remaining,
+          })
+        }
+      } catch (err) {
+        console.error('Failed to fetch usage information:', err)
+        // Don't show error - usage display is nice-to-have
+      }
+    }
+    fetchUsage()
+  }, [])
 
   const handleGenerate = async (data: {
     keyword: string
@@ -100,6 +122,48 @@ export function ArticleGenerationPageClient({ organizationId }: ArticleGeneratio
           />
         </CardContent>
       </Card>
+
+      {/* Usage Display */}
+      {usageInfo && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Article Usage</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  {usageInfo.limit !== null ? (
+                    <>
+                      <span className="font-medium">{usageInfo.current}</span> / {usageInfo.limit} articles used this month
+                      {usageInfo.remaining !== null && usageInfo.remaining !== undefined && (
+                        <span className="ml-2 text-muted-foreground">
+                          ({usageInfo.remaining} remaining)
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-medium">{usageInfo.current}</span> articles generated this month (unlimited)
+                    </>
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Plan: {usageInfo.plan ? usageInfo.plan.charAt(0).toUpperCase() + usageInfo.plan.slice(1) : 'Starter'}
+                </p>
+              </div>
+              {usageInfo.limit !== null && usageInfo.remaining !== null && usageInfo.remaining <= 3 && usageInfo.remaining > 0 && (
+                <button
+                  onClick={() => router.push('/dashboard/settings')}
+                  className="text-sm px-4 py-2 border border-input rounded-md hover:bg-accent"
+                >
+                  Upgrade Plan
+                </button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Queue Status */}
       <ArticleQueueStatus organizationId={organizationId} />
