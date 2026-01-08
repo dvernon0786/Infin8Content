@@ -113,18 +113,60 @@ export async function POST(request: Request) {
     }
 
     // Queue article generation via Inngest
-    const { ids } = await inngest.send({
-      name: 'article/generate',
-      data: {
-        articleId: article.id,
-      },
-    })
+    console.log(`[Article Generation] Sending Inngest event for article ${article.id}`)
+    let inngestEventId: string | null = null
+    
+    try {
+      const result = await inngest.send({
+        name: 'article/generate',
+        data: {
+          articleId: article.id,
+        },
+      })
+      
+      inngestEventId = result.ids?.[0] || null
+      console.log(`[Article Generation] Inngest event sent successfully. Event ID: ${inngestEventId}`)
+    } catch (inngestError) {
+      const errorMsg = inngestError instanceof Error ? inngestError.message : String(inngestError)
+      console.error(`[Article Generation] Failed to send Inngest event for article ${article.id}:`, {
+        error: errorMsg,
+        stack: inngestError instanceof Error ? inngestError.stack : undefined,
+      })
+      
+      // Update article status to failed if Inngest event fails
+      await supabase
+        .from('articles' as any)
+        .update({
+          status: 'failed',
+          error_details: {
+            error_message: `Failed to queue article generation: ${errorMsg}`,
+            failed_at: new Date().toISOString(),
+            inngest_error: true
+          }
+        })
+        .eq('id', article.id)
+      
+      return NextResponse.json(
+        { 
+          error: 'Failed to queue article generation',
+          details: errorMsg
+        },
+        { status: 500 }
+      )
+    }
 
     // Update article with Inngest event ID
-    await supabase
-      .from('articles' as any)
-      .update({ inngest_event_id: ids[0] })
-      .eq('id', article.id)
+    if (inngestEventId) {
+      const { error: updateError } = await supabase
+        .from('articles' as any)
+        .update({ inngest_event_id: inngestEventId })
+        .eq('id', article.id)
+      
+      if (updateError) {
+        console.error(`[Article Generation] Failed to update article with Inngest event ID:`, updateError)
+        // Don't fail the request - event was sent successfully
+      }
+    }
 
     // Increment usage tracking atomically (after successful queue)
     // Type assertion needed until database types are regenerated after migration

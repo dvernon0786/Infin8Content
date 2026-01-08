@@ -7,33 +7,47 @@ import { NextRequest, NextResponse } from 'next/server'
 // Validate environment variables at runtime (not build time)
 const eventKey = process.env.INNGEST_EVENT_KEY
 const signingKey = process.env.INNGEST_SIGNING_KEY
+const isDevelopment = process.env.NODE_ENV === 'development'
 
-// Create handlers only if env vars are set
-const handlers = eventKey
+// For local development, Inngest dev server uses auto-discovery and doesn't require signing key
+// For production, both eventKey and signingKey are required
+const useInngestServe = isDevelopment || (eventKey && signingKey)
+
+// Create handlers - allow local dev without env vars
+const handlers = useInngestServe
   ? serve({
       client: inngest,
-      signingKey,
+      signingKey: signingKey || undefined, // Optional for local dev
       functions: [generateArticle, cleanupStuckArticles],
     })
   : {
       GET: async () => {
-        console.error('[Inngest API] ERROR: INNGEST_EVENT_KEY environment variable is not set')
+        const errorMsg = isDevelopment 
+          ? 'Inngest dev server should auto-discover functions. Make sure npx inngest-cli@latest dev is running.'
+          : 'INNGEST_EVENT_KEY and INNGEST_SIGNING_KEY environment variables are required in production'
+        console.error(`[Inngest API] ERROR: ${errorMsg}`)
         return NextResponse.json(
-          { error: 'INNGEST_EVENT_KEY environment variable is not set' },
+          { error: errorMsg },
           { status: 500 }
         )
       },
       POST: async () => {
-        console.error('[Inngest API] ERROR: INNGEST_EVENT_KEY environment variable is not set')
+        const errorMsg = isDevelopment 
+          ? 'Inngest dev server should auto-discover functions. Make sure npx inngest-cli@latest dev is running.'
+          : 'INNGEST_EVENT_KEY and INNGEST_SIGNING_KEY environment variables are required in production'
+        console.error(`[Inngest API] ERROR: ${errorMsg}`)
         return NextResponse.json(
-          { error: 'INNGEST_EVENT_KEY environment variable is not set' },
+          { error: errorMsg },
           { status: 500 }
         )
       },
       PUT: async () => {
-        console.error('[Inngest API] ERROR: INNGEST_EVENT_KEY environment variable is not set')
+        const errorMsg = isDevelopment 
+          ? 'Inngest dev server should auto-discover functions. Make sure npx inngest-cli@latest dev is running.'
+          : 'INNGEST_EVENT_KEY and INNGEST_SIGNING_KEY environment variables are required in production'
+        console.error(`[Inngest API] ERROR: ${errorMsg}`)
         return NextResponse.json(
-          { error: 'INNGEST_EVENT_KEY environment variable is not set' },
+          { error: errorMsg },
           { status: 500 }
         )
       },
