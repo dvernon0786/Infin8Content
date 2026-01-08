@@ -38,7 +38,8 @@ export async function POST(request: Request) {
     }
 
     // Get user record
-    const { data: userRecord, error: userError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: userRecord, error: userError } = await (supabase as any)
       .from('users')
       .select('id, org_id, email')
       .eq('auth_user_id', authUser.id)
@@ -60,7 +61,8 @@ export async function POST(request: Request) {
     }
 
     // Get organization from database
-    const { data: organization, error: orgError } = await supabase
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { data: organization, error: orgError } = await (supabase as any)
       .from('organizations')
       .select('id, name, plan, stripe_customer_id, payment_status, suspended_at')
       .eq('id', userRecord.org_id)
@@ -114,7 +116,8 @@ export async function POST(request: Request) {
         // Retry up to 3 times if update fails (customer was created, we must store the ID)
         let updateSuccess = false
         for (let attempt = 0; attempt < 3; attempt++) {
-          const { error: updateError } = await supabase
+          // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+          const { error: updateError } = await (supabase as any)
             .from('organizations')
             .update({ stripe_customer_id: customerId })
             .eq('id', organization.id)
