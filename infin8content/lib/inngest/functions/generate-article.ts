@@ -32,7 +32,13 @@ async function retryWithBackoff<T>(
 }
 
 export const generateArticle = inngest.createFunction(
-  { id: 'article/generate', concurrency: { limit: 5 } }, // Plan limit: 5 concurrent (can be increased when plan upgraded)
+  { 
+    id: 'article/generate', 
+    concurrency: { limit: 5 }, // Plan limit: 5 concurrent (can be increased when plan upgraded)
+    // Note: Inngest functions run in Inngest Cloud (not Vercel), so they're not subject to
+    // Vercel's 10s FUNCTION_INVOCATION_TIMEOUT. Functions can run for up to 24 hours by default.
+    // The cleanup job will catch any articles that get stuck due to unexpected failures.
+  },
   { event: 'article/generate' },
   async ({ event, step }) => {
     const { articleId } = event.data
@@ -189,6 +195,12 @@ export const generateArticle = inngest.createFunction(
       // Handle errors: save partial article and update status
       const errorMessage = error instanceof Error ? error.message : String(error)
       
+      // Check if this is a timeout error
+      const isTimeout = errorMessage.includes('timeout') || 
+                       errorMessage.includes('TIMEOUT') ||
+                       errorMessage.includes('Function invocation timeout') ||
+                       errorMessage.includes('FUNCTION_INVOCATION_TIMEOUT')
+      
       await step.run('handle-error', async () => {
         // Get current sections to preserve partial article
         const { data: articleData } = await supabase
@@ -208,7 +220,8 @@ export const generateArticle = inngest.createFunction(
               error_message: errorMessage,
               failed_at: new Date().toISOString(),
               section_index: article?.current_section_index || 0,
-              partial_sections: article?.sections || []
+              partial_sections: article?.sections || [],
+              timeout: isTimeout
             }
           })
           .eq('id', articleId)

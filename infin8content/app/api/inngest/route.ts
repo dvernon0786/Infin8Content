@@ -1,5 +1,6 @@
 import { serve } from 'inngest/next'
 import { generateArticle } from '@/lib/inngest/functions/generate-article'
+import { cleanupStuckArticles } from '@/lib/inngest/functions/cleanup-stuck-articles'
 import { inngest } from '@/lib/inngest/client'
 import { NextResponse } from 'next/server'
 
@@ -12,7 +13,7 @@ const handlers = eventKey
   ? serve({
       client: inngest,
       signingKey,
-      functions: [generateArticle],
+      functions: [generateArticle, cleanupStuckArticles],
     })
   : {
       GET: async () => {
