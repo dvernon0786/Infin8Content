@@ -438,18 +438,46 @@ async function storeCachedResearch(
   const cachedUntil = new Date()
   cachedUntil.setHours(cachedUntil.getHours() + 24) // 24-hour TTL
 
-  const { error } = await (supabase
-    .from('tavily_research_cache' as any)
-    .upsert({
-      organization_id: organizationId,
-      research_query: normalizedQuery,
-      research_results: researchResults,
-      cached_until: cachedUntil.toISOString()
-    }, {
-      onConflict: 'organization_id,research_query'
-    }) as unknown as Promise<{ error: any }>)
+  try {
+    const { error } = await (supabase
+      .from('tavily_research_cache' as any)
+      .upsert({
+        organization_id: organizationId,
+        research_query: normalizedQuery,
+        research_results: researchResults,
+        cached_until: cachedUntil.toISOString()
+      }, {
+        onConflict: 'organization_id,research_query',
+        ignoreDuplicates: false
+      }) as unknown as Promise<{ error: any }>)
 
-  if (error) {
+    if (error) {
+      // If upsert fails due to constraint issues (42P10), try a fallback approach
+      if (error.code === '42P10' || error.message?.includes('no unique or exclusion constraint')) {
+        // Fallback: Delete existing and insert new (manual upsert)
+        await supabase
+          .from('tavily_research_cache' as any)
+          .delete()
+          .eq('organization_id', organizationId)
+          .eq('research_query', normalizedQuery)
+        
+        const { error: insertError } = await supabase
+          .from('tavily_research_cache' as any)
+          .insert({
+            organization_id: organizationId,
+            research_query: normalizedQuery,
+            research_results: researchResults,
+            cached_until: cachedUntil.toISOString()
+          })
+        
+        if (insertError) {
+          console.error('Failed to store Tavily research cache (fallback insert):', insertError)
+        }
+      } else {
+        console.error('Failed to store Tavily research cache:', error)
+      }
+    }
+  } catch (error) {
     console.error('Failed to store Tavily research cache:', error)
     // Don't throw - cache storage failure shouldn't block article generation
   }
