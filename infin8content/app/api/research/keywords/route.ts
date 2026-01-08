@@ -103,10 +103,11 @@ export async function POST(request: Request) {
     if (cachedResearch && !cacheError) {
       // Cache hit - update updated_at timestamp
       // Type assertion needed until database types are regenerated after migration
-      const { error: updateError } = await (supabase
-        .from('keyword_researches' as any)
+      // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+      const { error: updateError } = await (supabase as any)
+        .from('keyword_researches')
         .update({ updated_at: new Date().toISOString() })
-        .eq('id', cachedResearch.id) as unknown as Promise<{ error: any }>)
+        .eq('id', cachedResearch.id)
 
       if (updateError) {
         console.warn('Failed to update cache timestamp:', updateError)
