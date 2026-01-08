@@ -44,7 +44,7 @@
 - Optional: Set up monitoring for suspension email failures
 
 ## Log
-- 2026-01-07T21:51:56+11:00: Story 1.8 code review complete - all issues fixed, tests passing, database verified. Ready for deployment.
+|- 2026-01-07T21:51:56+11:00: Story 1.8 code review complete - all issues fixed, tests passing, database verified. Ready for deployment.
 
 ---
 
@@ -87,7 +87,7 @@
 - Optional: Add column-level security for users.role and users.org_id (follow-up story)
 
 ## Log
-- 2026-01-07T22:19:48+11:00: Story 1.11 code review complete - all critical and high issues fixed, comprehensive test structure added. Re-review approved. Ready for deployment.
+|- 2026-01-07T22:19:48+11:00: Story 1.11 code review complete - all critical and high issues fixed, comprehensive test structure added. Re-review approved. Ready for deployment.
 
 ---
 
@@ -143,7 +143,7 @@
 - Optional: Complete integration test data setup when Supabase test environment ready
 
 ## Log
-- 2026-01-07T22:49:17+11:00: Story 1.13 code review complete - all critical, high, and medium issues fixed. Re-review approved. Ready for deployment.
+|- 2026-01-07T22:49:17+11:00: Story 1.13 code review complete - all critical, high, and medium issues fixed. Re-review approved. Ready for deployment.
 
 ---
 
@@ -218,10 +218,10 @@
 - Optional: Monitor API costs and usage tracking in production
 
 ## Log
-- 2026-01-07T23:57:31+11:00: Story 3.1 code review complete - all critical, high, and medium issues fixed. All 29 tests passing. Re-review approved. Ready for deployment after database types regeneration.
-- 2026-01-07T23:57:54+11:00: Fixed TypeScript build error by adding type assertions for new database tables (usage_tracking, api_costs, keyword_researches). Build now passes. Temporary workaround until database types are regenerated.
-- 2026-01-08T00:13:44+11:00: Updated Research page to show feature cards with navigation to Keyword Research (replaced Coming Soon placeholder). Users can now access keyword research from Research overview page.
-- 2026-01-08T00:13:44+11:00: Removed API Cost display from keyword research page per user request. API cost still tracked in backend but no longer shown in UI.
+|- 2026-01-07T23:57:31+11:00: Story 3.1 code review complete - all critical, high, and medium issues fixed. All 29 tests passing. Re-review approved. Ready for deployment after database types regeneration.
+|- 2026-01-07T23:57:54+11:00: Fixed TypeScript build error by adding type assertions for new database tables (usage_tracking, api_costs, keyword_researches). Build now passes. Temporary workaround until database types are regenerated.
+|- 2026-01-08T00:13:44+11:00: Updated Research page to show feature cards with navigation to Keyword Research (replaced Coming Soon placeholder). Users can now access keyword research from Research overview page.
+|- 2026-01-08T00:13:44+11:00: Removed API Cost display from keyword research page per user request. API cost still tracked in backend but no longer shown in UI.
 
 ---
 
@@ -299,10 +299,10 @@
 - Story 4a-6: Implement real-time progress tracking and user notifications
 
 ## Log
-- 2026-01-08T08:27:00+11:00: Story 4a-2 code review initiated - found 8 issues (2 High, 4 Medium, 2 Low)
-- 2026-01-08T08:29:00+11:00: Fixed all HIGH and MEDIUM issues - duplicate imports, H3 subsections, user notification docs, tests
-- 2026-01-08T08:33:00+11:00: Fixed integration test infrastructure using @inngest/test package - all tests passing
-- 2026-01-08T08:37:00+11:00: Fixed Inngest concurrency limit from 50 to 5 (plan limit). Code review complete, all issues resolved.
+|- 2026-01-08T08:27:00+11:00: Story 4a-2 code review initiated - found 8 issues (2 High, 4 Medium, 2 Low)
+|- 2026-01-08T08:29:00+11:00: Fixed all HIGH and MEDIUM issues - duplicate imports, H3 subsections, user notification docs, tests
+|- 2026-01-08T08:33:00+11:00: Fixed integration test infrastructure using @inngest/test package - all tests passing
+|- 2026-01-08T08:37:00+11:00: Fixed Inngest concurrency limit from 50 to 5 (plan limit). Code review complete, all issues resolved.
 
 ---
 
@@ -343,6 +343,219 @@
 - ✅ Build completes successfully
 
 ## Log
-- 2026-01-08T09:15:00+11:00: Added navigation links for article generation - Write page redirect, top nav button, contextual link from keyword research, URL param support for keyword pre-fill. All entry points now functional.
+|- 2026-01-08T09:15:00+11:00: Added navigation links for article generation - Write page redirect, top nav button, contextual link from keyword research, URL param support for keyword pre-fill. All entry points now functional.
 
+---
+
+# Story 4a.5: LLM Content Generation with OpenRouter Integration
+
+## Status: Review - Code Review Complete, All Issues Fixed, Ready for Deployment
+
+## Objectives
+1. [x] Create OpenRouter API service client with retry logic and model fallback
+2. [x] Integrate OpenRouter into section processor for content generation
+3. [x] Implement comprehensive prompt construction with all context
+4. [x] Create content quality validation (word count, citations, headings, keyword, readability)
+5. [x] Integrate citation formatting from Story 4a-3
+6. [x] Implement API cost tracking per section ($0.00 for free models)
+7. [x] Add error handling with exponential backoff retry logic
+8. [x] Write comprehensive tests (unit, integration, E2E)
+
+## Code Review Status
+- **Review Date:** 2026-01-08
+- **Initial Issues Found:** 8 issues (2 Critical, 4 High, 2 Medium)
+- **Issues Fixed:** All 8 issues resolved
+- **Re-Review Status:** ✅ APPROVED - All blocking issues resolved
+- **Tests:** All passing (16 unit + integration + E2E tests)
+
+## Code Review Fixes Applied
+- ✅ **CRITICAL:** Fixed `formatCitationsForMarkdown()` to actually insert in-text citations naturally into content (was only adding reference list)
+- ✅ **CRITICAL:** Moved quality validation to run AFTER citation integration so metrics reflect final content
+- ✅ **CRITICAL:** Fixed quality retry logic to regenerate, re-integrate citations, and re-validate on final content
+- ✅ **HIGH:** Updated `FREE_MODELS` list to use `meta-llama/llama-3.3-70b-instruct:free` as primary model
+- ✅ **HIGH:** Removed `nvidia/nemotron-3-demo-70b` (invalid model ID) and `tns-standard/tns-standard-8-7.5-chimera`
+- ✅ **HIGH:** Enhanced error handling to detect 400 errors for invalid models and trigger fallback
+- ✅ **MEDIUM:** Removed SERP analysis mentions from prompt (Story 4a-4 is optional)
+- ✅ **MEDIUM:** Created missing integration tests (`tests/integration/article-generation/openrouter-content-generation.test.ts`)
+- ✅ **MEDIUM:** Created missing E2E tests (`tests/e2e/article-generation/content-generation.spec.ts`)
+- ✅ **MEDIUM:** Updated unit tests to reflect new 2-model list instead of 3 models
+
+## Files Created/Modified
+### New Files
+- `infin8content/lib/services/openrouter/openrouter-client.ts` - OpenRouter API service client
+- `infin8content/lib/utils/content-quality.ts` - Content quality validation utilities
+- `infin8content/tests/services/openrouter-client.test.ts` - Unit tests (16 tests)
+- `infin8content/tests/integration/article-generation/openrouter-content-generation.test.ts` - Integration tests
+- `infin8content/tests/e2e/article-generation/content-generation.spec.ts` - E2E tests
+
+### Modified Files
+- `infin8content/lib/services/article-generation/section-processor.ts` - Integrated OpenRouter, quality validation (after citations), citation integration
+- `infin8content/lib/utils/citation-formatter.ts` - Fixed to insert in-text citations naturally
+- `_bmad-output/implementation-artifacts/4a-5-llm-content-generation-with-openrouter-integration.md` - Updated with fixes
+- `_bmad-output/sprint-status.yaml` - Updated story status to "review"
+
+## Key Technical Decisions
+1. **Model Selection:** Primary: `meta-llama/llama-3.3-70b-instruct:free` (70B, 128K context), Backup: `meta-llama/llama-3bmo-v1-turbo`
+2. **Quality Validation Order:** Citations integrated FIRST, then quality validation on final content
+3. **Readability Calculator:** Custom Flesch-Kincaid implementation (no external dependencies)
+4. **Error Handling:** Enhanced 400 error detection for invalid models with automatic fallback
+5. **Citation Integration:** Natural insertion at sentence/paragraph breaks, not just at end
+
+## Test Results
+- **Unit Tests:** 16/16 passing
+  - API authentication, model selection, retry logic, error handling, fallback chain
+- **Integration Tests:** All passing
+  - Full flow: section → OpenRouter → quality → citation → cost tracking
+- **E2E Tests:** All passing
+  - Article generation UI, content display, citation inclusion
+
+## Acceptance Criteria Status
+✅ **AC 1:** OpenRouter API integration with model selection and fallback - IMPLEMENTED
+✅ **AC 2:** Content generation per section with comprehensive prompt - IMPLEMENTED
+✅ **AC 3:** Quality validation (word count, citations, headings, keyword, readability) - IMPLEMENTED
+✅ **AC 4:** Citation integration (natural in-text + reference list) - IMPLEMENTED
+✅ **AC 5:** API cost tracking ($0.00 per section) - IMPLEMENTED
+✅ **AC 6:** Error handling with retry logic (3 attempts, exponential backoff) - IMPLEMENTED
+
+## Pre-Deployment Checklist
+- ✅ All code implemented and tested
+- ✅ All code review issues resolved
+- ✅ All tests passing
+- ✅ TypeScript compilation passes
+- ✅ No linter errors
+- ⚠️ **Action Required:** Configure environment variables in Vercel (see below)
+
+## Vercel Deployment - FUNCTION_INVOCATION_TIMEOUT Issue
+
+### Root Cause
+The `FUNCTION_INVOCATION_TIMEOUT` error occurs when Vercel serverless functions fail due to missing environment variables or configuration issues.
+
+### Required Environment Variables for Vercel
+Add these to your Vercel project dashboard (Project Settings → Environment Variables):
+
+```
+# Required for Story 4a-5 (OpenRouter Integration)
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+
+# Required for Inngest (Story 4a-1)
+INNGEST_EVENT_KEY=your_inngest_event_key
+INNGEST_SIGNING_KEY=your_inngest_signing_key
+
+# Required for Supabase (existing)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# Required for Stripe (existing)
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+
+# Required for Tavily (Story 4a-3)
+TAVILY_API_KEY=your_tavily_api_key
+
+# Required for DataForSEO (Story 3-1)
+DATAFORSEO_LOGIN=your_dataforseo_login
+DATAFORSEO_PASSWORD=your_dataforseo_password
+
+# Optional but recommended
+NEXT_PUBLIC_SITE_URL=https://infin8content.com
+```
+
+### Steps to Fix Vercel Deployment
+
+1. **Access Vercel Dashboard:**
+   - Go to https://vercel.com
+   - Select your project `infin8-content-ko7cak3hr-scotts-projects-552b8fbe`
+
+2. **Configure Environment Variables:**
+   - Navigate to Project Settings → Environment Variables
+   - Add all required variables listed above
+   - **Important:** Use "Production" environment for production deployment
+   - Use "Preview" for staging/testing
+
+3. **Verify OPENROUTER_API_KEY:**
+   - Get your API key from https://openrouter.ai/settings/keys
+   - Add it to Vercel environment variables
+   - This is the most likely cause of the timeout
+
+4. **Check Vercel Logs for Specific Errors:**
+   - Go to "Deployments" tab
+   - Click on the failed deployment
+   - View "Functions" tab to see specific error messages
+   - Look for "Missing environment variable" errors
+
+5. **Redeploy:**
+   - After adding environment variables
+   - Go to "Deployments" → "Redeploy" (without build cache)
+   - Monitor deployment logs
+
+### Common Issues and Solutions
+
+**Issue 1: Missing OPENROUTER_API_KEY**
+- **Symptom:** Timeout or "environment variable is required" error
+- **Solution:** Add `OPENROUTER_API_KEY` to Vercel environment variables
+
+**Issue 2: Inngest Configuration**
+- **Symptom:** Inngest worker not syncing or timing out
+- **Solution:** Ensure `INNGEST_EVENT_KEY` and `INNGEST_SIGNING_KEY` are set
+- Verify Inngest sync endpoint: `https://infin8content.com/api/inngest`
+
+**Issue 3: Supabase Connection**
+- **Symptom:** Database connection failures
+- **Solution:** Verify all Supabase environment variables are correct
+- Check Supabase dashboard for project URL and keys
+
+**Issue 4: Function Timeout (10s limit)**
+- **Symptom:** Functions timeout even with correct env vars
+- **Solution:** This is expected for article generation (takes >10s)
+- The actual generation happens in Inngest workers, not Vercel functions
+- Vercel functions should only handle API routes and UI rendering
+
+### Verification Steps
+
+1. **Local Environment Test:**
+   ```bash
+   cd /home/dghost/Infin8Content/infin8content
+   npm run build
+   # Should complete without errors
+   ```
+
+2. **Environment Variable Check:**
+   ```bash
+   # Verify all required variables are set locally
+   echo $OPENROUTER_API_KEY
+   echo $NEXT_PUBLIC_SUPABASE_URL
+   # etc.
+   ```
+
+3. **Git Push Verification:**
+   ```bash
+   cd /home/dghost/Infin8Content
+   git log --oneline -5
+   # Should show recent commits including Story 4a-5 fixes
+   ```
+
+4. **Vercel Deployment Check:**
+   - After pushing to main, Vercel should auto-deploy
+   - Check deployment status in Vercel dashboard
+   - Look for "Build Success" and "Deploy Success"
+
+## Next Steps
+1. ✅ **Complete:** All code implemented and tested
+2. ⚠️ **Action Required:** Configure Vercel environment variables
+3. ✅ **Verify:** All changes committed and pushed to origin/main
+4. ⏳ **Pending:** Vercel deployment with correct environment variables
+5. ⏳ **Pending:** Manual testing of article generation flow in production
+
+## Log
+|- 2026-01-08T12:40:20+11:00: Updated scratchpad with Story 4a-5 completion and Vercel deployment instructions
+|- 2026-01-08T12:40:00+11:00: Fixed OpenRouter unit tests for new model list (2 models instead of 3)
+|- 2026-01-08T12:35:00+11:00: Merged sprint branch with all Story 4a-5 fixes
+|- 2026-01-08T12:30:00+11:00: Updated OpenRouter model to meta-llama/llama-3.3-70b-instruct:free
+|- 2026-01-08T08:40:00+11:00: Code review complete - all 8 issues fixed, tests passing
+|- 2026-01-08T08:30:00+11:00: Created integration and E2E tests
+|- 2026-01-08T08:20:00+11:00: Fixed citation integration and quality validation order
+|- 2026-01-08T08:00:00+11:00: Story 4a-5 implementation complete
+
+---
 

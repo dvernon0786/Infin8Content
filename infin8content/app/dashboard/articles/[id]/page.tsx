@@ -28,11 +28,12 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
   const supabase = await createClient()
 
-  // Type assertion needed until database types are regenerated after migration
+  // Only select columns we actually need - exclude large JSONB columns (sections, outline)
+  // to prevent FUNCTION_INVOCATION_TIMEOUT on Vercel (select('*') fetches all columns including large JSONB)
   // TODO: Remove type assertion after running: supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts
   const { data: article, error } = await (supabase
     .from('articles' as any)
-    .select('*')
+    .select('id, title, keyword, status, target_word_count, writing_style, target_audience, created_at, updated_at, org_id')
     .eq('id', id)
     .eq('org_id', currentUser.org_id)
     .single() as unknown as Promise<{ data: any; error: any }>)
