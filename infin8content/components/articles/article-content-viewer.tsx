@@ -149,7 +149,7 @@ export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
                         <li className="ml-4" {...props} />
                       ),
                       // Custom code blocks
-                      code: ({ node, className, ...props }: any) => {
+                      code: ({ className, ...props }: { className?: string; children?: React.ReactNode }) => {
                         const isInline = !className
                         return isInline ? (
                           <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono" {...props} />
