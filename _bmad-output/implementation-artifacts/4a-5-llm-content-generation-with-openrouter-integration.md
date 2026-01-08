@@ -1,6 +1,6 @@
 # Story 4a.5: LLM Content Generation with OpenRouter Integration
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -800,6 +800,47 @@ N/A - No debug issues encountered during implementation
 - ✅ **MEDIUM FIX:** Created missing integration tests (`tests/integration/article-generation/openrouter-content-generation.test.ts`)
 - ✅ **MEDIUM FIX:** Created missing E2E tests (`tests/e2e/article-generation/content-generation.spec.ts`)
 
+**Model & Quality Improvements (2026-01-08):**
+- ✅ **MODEL UPDATE:** Changed primary model from Llama 3.3 to `google/gemini-2.5-flash` for better quality and instruction following
+- ✅ **READABILITY THRESHOLD:** Lowered from 60 to 50 to be more lenient for technical content (50-59 = "Fairly Difficult" is acceptable)
+- ✅ **QUALITY RETRY COUNT:** Increased from 1 to 2 retries for better success rate
+- ✅ **USER PREFERENCES:** Integrated writing_style, target_audience, and custom_instructions into prompt construction
+
+**Article Content Viewer Implementation (2026-01-09):**
+- ✅ **FEATURE:** Created ArticleContentViewer component (`components/articles/article-content-viewer.tsx`) to display completed articles
+- ✅ **FEATURE:** Implemented markdown rendering with react-markdown for article sections
+- ✅ **FEATURE:** Added section metadata display (word count, citations, readability score, model used)
+- ✅ **FEATURE:** Display research sources with validated URLs
+- ✅ **FEATURE:** Enhanced article detail page to conditionally fetch and display sections when article is completed
+- ✅ **SECURITY:** Implemented URL validation to prevent XSS (only http:// and https:// protocols allowed)
+- ✅ **SECURITY:** External links use `rel="noopener noreferrer"` for security
+
+**Code Quality & Type Safety Fixes (2026-01-09):**
+- ✅ **CRITICAL FIX:** Created shared TypeScript types (`lib/types/article.ts`) - ArticleMetadata, ArticleSection, ArticleWithSections
+- ✅ **CRITICAL FIX:** Removed all 'any' types from article detail page and related files
+- ✅ **CRITICAL FIX:** Added proper error handling for sections fetch with user-friendly error messages
+- ✅ **CRITICAL FIX:** Implemented URL validation for research sources (prevents XSS)
+- ✅ **MAJOR FIX:** Created MarkdownErrorBoundary component for graceful error handling
+- ✅ **MAJOR FIX:** Simplified redundant section type checks in ArticleContentViewer
+- ✅ **MAJOR FIX:** Removed unused variables and parameters
+- ✅ **IMPROVEMENT:** Added JSDoc comments for components
+- ✅ **IMPROVEMENT:** Improved error messages with context
+
+**Error Handling Enhancements (2026-01-08 - 2026-01-09):**
+- ✅ **ENHANCEMENT:** Added comprehensive logging with `[Inngest]` prefix throughout function execution
+- ✅ **ENHANCEMENT:** Added early exit check for articles already in terminal states (failed, cancelled, completed)
+- ✅ **ENHANCEMENT:** Created cleanup-stuck-articles Inngest function (runs every 15 minutes)
+- ✅ **ENHANCEMENT:** Created manual fix endpoint (`/api/articles/fix-stuck`) for stuck articles
+- ✅ **ENHANCEMENT:** Created diagnostics endpoint (`/api/articles/[id]/diagnostics`) for article status checking
+- ✅ **ENHANCEMENT:** Improved error context and stack traces in error handling
+
+**Build & TypeScript Fixes (2026-01-09):**
+- ✅ **CRITICAL FIX:** Fixed TypeScript build errors in diagnostics route (type assertion through 'unknown')
+- ✅ **CRITICAL FIX:** Fixed TypeScript build errors in article detail page (type assertions)
+- ✅ **CRITICAL FIX:** Fixed TypeScript build errors in generate-article function (type assertions)
+- ✅ **CRITICAL FIX:** Fixed Inngest route handler signature mismatches
+- ✅ **FIX:** All TypeScript errors resolved, build passes successfully
+
 **Key Technical Decisions:**
 - Used custom Flesch-Kincaid readability calculator instead of external library to avoid dependencies
 - Implemented model fallback chain: TNS Standard → Llama 3BMo → Nemotron
@@ -819,12 +860,26 @@ N/A - No debug issues encountered during implementation
 **New Files Created:**
 - `lib/services/openrouter/openrouter-client.ts` - OpenRouter API service client
 - `lib/utils/content-quality.ts` - Content quality validation utilities
+- `lib/types/article.ts` - Shared TypeScript types (ArticleMetadata, ArticleSection, ArticleWithSections)
+- `components/articles/article-content-viewer.tsx` - Article content display component with markdown rendering
+- `components/articles/markdown-error-boundary.tsx` - React error boundary for markdown rendering
+- `lib/inngest/functions/cleanup-stuck-articles.ts` - Automated cleanup function for stuck articles
+- `app/api/articles/fix-stuck/route.ts` - Manual fix endpoint for stuck articles
+- `app/api/articles/[id]/diagnostics/route.ts` - Diagnostic endpoint for article status
+- `app/api/articles/test-inngest/route.ts` - Test endpoint for Inngest connectivity
 - `tests/services/openrouter-client.test.ts` - Unit tests for OpenRouter client
 - `tests/integration/article-generation/openrouter-content-generation.test.ts` - Integration tests for content generation flow
 - `tests/e2e/article-generation/content-generation.spec.ts` - E2E tests for article generation UI
+- `_bmad-output/code-reviews/article-generation-improvements-2026-01-08.md` - Comprehensive code review document
 
 **Files Modified:**
-- `lib/services/article-generation/section-processor.ts` - Integrated OpenRouter API, quality validation (moved after citation integration), and citation integration
+- `lib/services/article-generation/section-processor.ts` - Integrated OpenRouter API, quality validation (moved after citation integration), citation integration, user preferences integration, quality retry count increased
+- `lib/services/openrouter/openrouter-client.ts` - Model update to Gemini 2.5 Flash, improved error handling
 - `lib/utils/citation-formatter.ts` - Fixed `formatCitationsForMarkdown()` to actually insert in-text citations naturally (was placeholder)
-- `_bmad-output/sprint-status.yaml` - Updated story status from "ready-for-dev" to "in-progress" to "review"
+- `lib/utils/content-quality.ts` - Readability threshold lowered from 60 to 50
+- `app/dashboard/articles/[id]/page.tsx` - Type safety improvements, error handling, article content display
+- `lib/inngest/functions/generate-article.ts` - Enhanced error handling, logging, early exit checks, type safety
+- `app/api/inngest/route.ts` - Handler signature fixes, cleanup function registration, improved error handling
+- `app/api/articles/test-inngest/route.ts` - Removed unused parameter
+- `_bmad-output/sprint-status.yaml` - Updated story status from "ready-for-dev" to "in-progress" to "review" to "done"
 
