@@ -24,8 +24,8 @@ export async function POST(request: Request) {
 
     // Update stuck articles to failed status
     // TODO: Regenerate types from Supabase Dashboard to fix table types
-    const { data, error } = await (supabase
-      .from('articles' as any)
+    const { data, error } = await (supabase as any)
+      .from('articles')
       .update({
         status: 'failed',
         error_details: {
@@ -34,10 +34,10 @@ export async function POST(request: Request) {
           timeout: true,
           manually_fixed: true
         }
-      } as any)
+      })
       .eq('status', 'generating')
       .in('id', articleIds)
-      .select('id, keyword, status')) as any
+      .select('id, keyword, status')
 
     if (error) {
       console.error('Failed to update stuck articles:', error)

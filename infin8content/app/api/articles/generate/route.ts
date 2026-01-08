@@ -138,8 +138,8 @@ export async function POST(request: Request) {
     // Create article record in database with status "queued"
     // Type assertion needed until database types are regenerated after migration
     // TODO: Remove type assertion after running: supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts
-    const { data: article, error: insertError } = await (supabase
-      .from('articles' as any)
+    const { data: article, error: insertError } = await (supabase as any)
+      .from('articles')
       .insert({
         org_id: organizationId,
         created_by: userId,
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
         custom_instructions: sanitizedCustomInstructions,
       })
       .select('id')
-      .single() as unknown as Promise<{ data: { id: string } | null; error: any }>)
+      .single()
 
     if (insertError || !article) {
       console.error('Failed to create article record:', insertError)
@@ -184,8 +184,8 @@ export async function POST(request: Request) {
       
       // Update article status to failed if Inngest event fails
       // TODO: Regenerate types from Supabase Dashboard to fix table types
-      await (supabase
-        .from('articles' as any)
+      await (supabase as any)
+        .from('articles')
         .update({
           status: 'failed',
           error_details: {
@@ -193,8 +193,8 @@ export async function POST(request: Request) {
             failed_at: new Date().toISOString(),
             inngest_error: true
           }
-        } as any)
-        .eq('id', article.id)) as any
+        })
+        .eq('id', article.id)
       
       return NextResponse.json(
         { 
@@ -206,11 +206,12 @@ export async function POST(request: Request) {
     }
 
     // Update article with Inngest event ID
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
     if (inngestEventId) {
-      const { error: updateError } = await supabase
-        .from('articles' as any)
-        .update({ inngest_event_id: inngestEventId } as any)
-        .eq('id', article.id) as any
+      const { error: updateError } = await (supabase as any)
+        .from('articles')
+        .update({ inngest_event_id: inngestEventId })
+        .eq('id', article.id)
       
       if (updateError) {
         console.error(`[Article Generation] Failed to update article with Inngest event ID:`, updateError)

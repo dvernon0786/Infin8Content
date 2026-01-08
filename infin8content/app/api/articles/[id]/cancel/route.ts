@@ -77,12 +77,11 @@ export async function POST(
     }
 
     // Update article status to cancelled
-    // Update article status to cancelled
     // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-    const { error: updateError } = await (supabase
-      .from('articles' as any)
-      .update({ status: 'cancelled' } as any)
-      .eq('id', id)) as any
+    const { error: updateError } = await (supabase as any)
+      .from('articles')
+      .update({ status: 'cancelled' })
+      .eq('id', id)
 
     if (updateError) {
       console.error('Failed to cancel article:', updateError)
