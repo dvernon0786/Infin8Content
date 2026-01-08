@@ -15,6 +15,9 @@ describe('Tavily Client', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.TAVILY_API_KEY = mockApiKey
+    // Clear configurable env vars to test defaults
+    delete process.env.TAVILY_MAX_RESULTS
+    delete process.env.TAVILY_MAX_SOURCES
   })
 
   describe('researchQuery', () => {
@@ -119,7 +122,7 @@ describe('Tavily Client', () => {
       expect(result[2].relevance_score).toBe(0.5)
     })
 
-    it('should select top 5-10 most relevant sources', async () => {
+    it('should select top N most relevant sources (default: 10)', async () => {
       const mockResponse = {
         query: 'test',
         results: Array.from({ length: 20 }, (_, i) => ({
@@ -140,9 +143,8 @@ describe('Tavily Client', () => {
 
       const result = await researchQuery('test')
 
-      // Should return top 5-10 sources (we'll implement to return top 10)
-      expect(result.length).toBeGreaterThanOrEqual(5)
-      expect(result.length).toBeLessThanOrEqual(10)
+      // Should return top 10 sources by default
+      expect(result.length).toBe(10)
       expect(result[0].relevance_score).toBeGreaterThan(result[result.length - 1].relevance_score)
     })
 
@@ -236,7 +238,7 @@ describe('Tavily Client', () => {
       expect(callBody.search_depth).toBe('advanced')
     })
 
-    it('should set max_results to 20', async () => {
+    it('should set max_results to 20 by default', async () => {
       ;(global.fetch as any).mockResolvedValue({
         ok: true,
         json: async () => ({
@@ -250,6 +252,92 @@ describe('Tavily Client', () => {
 
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body)
       expect(callBody.max_results).toBe(20)
+    })
+
+    it('should use TAVILY_MAX_RESULTS environment variable when set', async () => {
+      process.env.TAVILY_MAX_RESULTS = '15'
+      
+      ;(global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          query: 'test',
+          results: [],
+          response_time: 1.5
+        })
+      })
+
+      await researchQuery('test query')
+
+      const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body)
+      expect(callBody.max_results).toBe(15)
+    })
+
+    it('should use TAVILY_MAX_SOURCES environment variable when set', async () => {
+      process.env.TAVILY_MAX_SOURCES = '5'
+      
+      const mockResponse = {
+        query: 'test',
+        results: Array.from({ length: 20 }, (_, i) => ({
+          title: `Source ${i}`,
+          url: `https://example.com/${i}`,
+          content: `Content ${i}`,
+          score: 1 - (i * 0.05),
+          published_date: null,
+          author: null
+        })),
+        response_time: 1.5
+      }
+
+      ;(global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse
+      })
+
+      const result = await researchQuery('test query')
+      expect(result.length).toBe(5)
+    })
+
+    it('should use options.maxResults when provided (overrides env var)', async () => {
+      process.env.TAVILY_MAX_RESULTS = '15'
+      
+      ;(global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          query: 'test',
+          results: [],
+          response_time: 1.5
+        })
+      })
+
+      await researchQuery('test query', { maxResults: 8 })
+
+      const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body)
+      expect(callBody.max_results).toBe(8)
+    })
+
+    it('should use options.maxSources when provided (overrides env var)', async () => {
+      process.env.TAVILY_MAX_SOURCES = '5'
+      
+      const mockResponse = {
+        query: 'test',
+        results: Array.from({ length: 20 }, (_, i) => ({
+          title: `Source ${i}`,
+          url: `https://example.com/${i}`,
+          content: `Content ${i}`,
+          score: 1 - (i * 0.05),
+          published_date: null,
+          author: null
+        })),
+        response_time: 1.5
+      }
+
+      ;(global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse
+      })
+
+      const result = await researchQuery('test query', { maxSources: 3 })
+      expect(result.length).toBe(3)
     })
   })
 })

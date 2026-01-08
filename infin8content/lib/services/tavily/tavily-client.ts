@@ -15,13 +15,15 @@ export interface TavilySource {
 export interface TavilyResearchOptions {
   maxRetries?: number
   retryDelay?: number
+  maxResults?: number  // Maximum number of results to request from Tavily API (default: 20)
+  maxSources?: number   // Maximum number of sources to return after ranking (default: 10)
 }
 
 /**
  * Research query using Tavily API
  * 
  * @param query - Research query string
- * @param options - Optional retry configuration
+ * @param options - Optional configuration (retry settings, result limits)
  * @returns Array of research sources ranked by relevance
  */
 export async function researchQuery(
@@ -35,6 +37,12 @@ export async function researchQuery(
 
   const maxRetries = options.maxRetries ?? 3
   const baseDelay = options.retryDelay ?? 1000 // 1 second base delay
+  
+  // Get configurable limits from options or environment variables (with defaults)
+  const maxResults = options.maxResults ?? 
+    parseInt(process.env.TAVILY_MAX_RESULTS || '20', 10)
+  const maxSources = options.maxSources ?? 
+    parseInt(process.env.TAVILY_MAX_SOURCES || '10', 10)
 
   let lastError: Error | null = null
 
@@ -52,7 +60,7 @@ export async function researchQuery(
           include_answer: false,
           include_images: false,
           include_raw_content: false,
-          max_results: 20,
+          max_results: maxResults, // Configurable via options or TAVILY_MAX_RESULTS env var
           include_domains: [],
           exclude_domains: []
         })
@@ -96,7 +104,7 @@ export async function researchQuery(
           relevance_score: result.score || 0
         }))
         .sort((a: TavilySource, b: TavilySource) => b.relevance_score - a.relevance_score) // Descending order
-        .slice(0, 10) // Select top 5-10 (we'll return top 10)
+        .slice(0, maxSources) // Select top N sources (configurable via options or TAVILY_MAX_SOURCES env var)
 
       return sources
     } catch (error) {
