@@ -234,9 +234,9 @@ export async function POST(request: Request) {
     }
 
     // Increment usage tracking (Epic 10.1)
-    // Type assertion needed until database types are regenerated after migration
-    const { error: usageUpdateError } = await (supabaseAdmin
-      .from('usage_tracking' as any)
+    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+    const { error: usageUpdateError } = await (supabaseAdmin as any)
+      .from('usage_tracking')
       .upsert({
         organization_id: organizationId,
         metric_type: 'keyword_research',
@@ -245,7 +245,7 @@ export async function POST(request: Request) {
         last_updated: new Date().toISOString(),
       }, {
         onConflict: 'organization_id,metric_type,billing_period',
-      }) as unknown as Promise<{ error: any }>)
+      })
 
     if (usageUpdateError) {
       console.error('Failed to update usage tracking:', usageUpdateError)
