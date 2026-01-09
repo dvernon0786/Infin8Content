@@ -7,6 +7,7 @@
 import { researchQuery, type TavilySource } from '@/lib/services/tavily/tavily-client'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { Outline } from './outline-generator'
+import { performanceMonitor } from './performance-monitor'
 
 /**
  * Cached research data for an entire article
@@ -64,6 +65,9 @@ export async function performBatchResearch(
     comprehensiveSources = await researchQuery(comprehensiveQuery, { maxRetries: 3 })
     console.log(`[ResearchOptimizer] Fetched ${comprehensiveSources.length} comprehensive sources`)
     
+    // Track API call for performance monitoring
+    performanceMonitor.recordApiCall(articleId, 'research')
+    
     // Track API cost
     await trackApiCost(organizationId, 0.08)
   } catch (error) {
@@ -92,6 +96,9 @@ export async function performBatchResearch(
     try {
       const targetedSources = await researchQuery(targetedQuery, { maxRetries: 2 })
       console.log(`[ResearchOptimizer] Fetched ${targetedSources.length} targeted sources`)
+      
+      // Track additional API call for performance monitoring
+      performanceMonitor.recordApiCall(articleId, 'research')
       
       // Track additional API cost
       await trackApiCost(organizationId, 0.05)
