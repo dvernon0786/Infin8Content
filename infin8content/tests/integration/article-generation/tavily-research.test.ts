@@ -197,7 +197,7 @@ describe('Tavily Research Integration', () => {
           eq: vi.fn(() => ({
             ilike: vi.fn(() => ({
               gt: vi.fn(() => ({
-                maybeSingle: vi.fn().mockResolvedValue({
+                single: vi.fn().mockResolvedValue({
                   data: cacheData,
                   error: null
                 })
