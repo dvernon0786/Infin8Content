@@ -37,6 +37,8 @@ export function ArticleStatusMonitor({
   const [isSubscribed, setIsSubscribed] = useState(false)
   const router = useRouter()
 
+  console.log(`ArticleStatusMonitor initialized for article ${articleId} with status ${initialStatus}`)
+
   useEffect(() => {
     const supabase = createClient()
     
@@ -61,9 +63,10 @@ export function ArticleStatusMonitor({
           // If article is completed, refresh the page to show content
           if (newStatus === 'completed') {
             console.log('Article completed, refreshing page...')
+            // Force a hard refresh to ensure the page reloads completely
             setTimeout(() => {
-              router.refresh()
-            }, 1000) // Small delay to ensure database is updated
+              window.location.reload()
+            }, 1500) // Slightly longer delay to ensure database is updated
           }
         }
       )
@@ -76,10 +79,49 @@ export function ArticleStatusMonitor({
         }
       })
 
+    // Fallback: Check status periodically if WebSocket fails
+    let intervalId: NodeJS.Timeout | null = null
+    const checkStatusFallback = async () => {
+      if (!isSubscribed && (status === 'queued' || status === 'generating')) {
+        try {
+          const { data, error } = await supabase
+            .from('articles' as any)
+            .select('status')
+            .eq('id', articleId)
+            .single()
+          
+          if (!error && data && (data as any).status !== status) {
+            const newStatus = (data as any).status
+            console.log(`Status fallback check found change: ${status} -> ${newStatus}`)
+            setStatus(newStatus)
+            onStatusChange?.(newStatus)
+            
+            if (newStatus === 'completed') {
+              setTimeout(() => {
+                window.location.reload()
+              }, 1500)
+            }
+          }
+        } catch (error) {
+          console.error('Status fallback check failed:', error)
+        }
+      }
+    }
+
+    // Start fallback polling if not subscribed after 3 seconds
+    const fallbackTimeout = setTimeout(() => {
+      if (!isSubscribed) {
+        console.log('WebSocket not subscribed, starting fallback polling')
+        intervalId = setInterval(checkStatusFallback, 3000) // Check every 3 seconds
+      }
+    }, 3000)
+
     return () => {
       subscription.unsubscribe()
+      if (intervalId) clearInterval(intervalId)
+      clearTimeout(fallbackTimeout)
     }
-  }, [articleId, status, onStatusChange, router])
+  }, [articleId, status, onStatusChange, router, isSubscribed])
 
   return (
     <div className="flex items-center gap-2">
@@ -91,6 +133,12 @@ export function ArticleStatusMonitor({
         <span className="text-xs text-muted-foreground flex items-center gap-1">
           <Loader2 className="h-3 w-3 animate-spin" />
           Live updates active
+        </span>
+      )}
+      {!isSubscribed && (status === 'queued' || status === 'generating') && (
+        <span className="text-xs text-muted-foreground flex items-center gap-1">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Polling for updates
         </span>
       )}
     </div>
