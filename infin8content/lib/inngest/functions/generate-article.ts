@@ -251,6 +251,17 @@ export const generateArticle = inngest.createFunction(
           const totalSections = 1 + generatedOutline.h2_sections.length + 1 + (generatedOutline.faq?.included ? 1 : 0)
           console.log(`[Inngest] Step: generate-outline - Updating progress tracker with ${totalSections} total sections`)
           
+          // Clean up any existing progress entries before creating new one
+          console.log(`[Inngest] Step: generate-outline - Cleaning up existing progress entries for article ${articleId}`)
+          const { error: cleanupError } = await supabase
+            .from('article_progress' as any)
+            .delete()
+            .eq('article_id', articleId)
+
+          if (cleanupError) {
+            console.warn(`[Inngest] Step: generate-outline - Warning: Failed to cleanup progress entries: ${cleanupError.message}`)
+          }
+
           // Create new progress tracker with correct section count
           const newProgressTracker = createProgressTracker(articleId, article.org_id, totalSections)
           await newProgressTracker.initialize('Article structure generated, starting content creation...')
@@ -579,6 +590,26 @@ export const generateArticle = inngest.createFunction(
           citations: sectionStats.totalCitations,
           apiCost: sectionStats.totalApiCost
         })
+
+        // Ensure ALL progress entries for this article are marked as completed
+        console.log(`[Inngest] Step: complete-article - Ensuring all progress entries are marked as completed`)
+        const { error: progressCleanupError } = await supabase
+          .from('article_progress' as any)
+          .update({
+            status: 'completed',
+            progress_percentage: 100,
+            current_stage: 'Completed',
+            updated_at: new Date().toISOString(),
+            word_count: sectionStats.totalWordCount,
+            citations_count: sectionStats.totalCitations,
+            api_cost: sectionStats.totalApiCost.toFixed(4)
+          })
+          .eq('article_id', articleId)
+          .in('status', ['queued', 'researching', 'writing', 'generating'])
+
+        if (progressCleanupError) {
+          console.warn(`[Inngest] Step: complete-article - Warning: Failed to cleanup remaining progress entries: ${progressCleanupError.message}`)
+        }
         
         const { error: updateError } = await supabase
           .from('articles' as any)
