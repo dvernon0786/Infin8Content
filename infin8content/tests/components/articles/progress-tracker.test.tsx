@@ -68,7 +68,7 @@ describe('ProgressTracker', () => {
     render(<ProgressTracker articleId={mockArticleId} />);
 
     expect(screen.getByText('Article Generation Progress')).toBeInTheDocument();
-    expect(screen.getByText('Writing')).toBeInTheDocument();
+    expect(screen.getByText('writing')).toBeInTheDocument();
     expect(screen.getByText('Writing Section 3')).toBeInTheDocument();
     expect(screen.getByText('38%')).toBeInTheDocument(); // Rounded percentage
     expect(screen.getByText('Section 3 of 8')).toBeInTheDocument();
@@ -204,7 +204,7 @@ describe('ProgressTracker', () => {
       const { container } = render(<ProgressTracker articleId={mockArticleId} />);
       
       // Check that status badge exists and has the correct text
-      const statusBadge = screen.getByText(status.charAt(0).toUpperCase() + status.slice(1));
+      const statusBadge = screen.getByText(status);
       expect(statusBadge).toBeInTheDocument();
     });
   });

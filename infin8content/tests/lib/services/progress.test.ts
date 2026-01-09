@@ -14,6 +14,7 @@ const mockClient = {
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => mockClient),
+  createServiceRoleClient: vi.fn(() => mockClient),
 }));
 
 describe('ArticleProgressService', () => {
