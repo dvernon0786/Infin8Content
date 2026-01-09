@@ -52,6 +52,10 @@ supabase migration new initial_schema
 supabase db reset  # or: supabase migration up
 
 # Generate TypeScript types
+# Recommended: Use database script (works without CLI project access)
+npx tsx scripts/generate-types.ts
+
+# Alternative: Use Supabase CLI (requires local or project access)
 supabase gen types typescript --local > lib/supabase/database.types.ts
 ```
 
@@ -113,10 +117,11 @@ supabase gen types typescript --local > lib/supabase/database.types.ts
 
 - [x] Task 6: Generate TypeScript types from database schema (AC: 1)
   - [x] Install `supabase` CLI if not already installed
-  - [x] Generate TypeScript types: `supabase gen types typescript --local > lib/supabase/database.types.ts` (or use hosted project) (placeholder types created, will be regenerated after migration)
-  - [x] Verify types are generated correctly for `organizations` and `users` tables (placeholder types match schema)
+  - [x] Generate TypeScript types: Created `scripts/generate-types.ts` script that queries database schema directly using `DATABASE_URL` (works without CLI project access)
+  - [x] Verify types are generated correctly for `organizations` and `users` tables (all 12 tables and 5 functions generated successfully)
   - [x] Update Supabase client files to use generated types
   - [x] Test type safety in client/server files (TypeScript compilation passes)
+  - [x] **Fix (2026-01-09):** Fixed empty `database.types.ts` causing Vercel build failures by implementing database script that generates types from PostgreSQL `information_schema`
 
 ## Dev Notes
 
@@ -638,4 +643,11 @@ Claude Sonnet 4.5 (via Cursor)
 - ✅ AC 6: Supabase migrations set up in `supabase/migrations/` directory
 
 **Final Status:** ✅ **STORY COMPLETE** - All acceptance criteria met, all issues resolved, migration applied, types generated, ready for next story.
+
+**Post-Completion Fix (2026-01-09):**
+- **Issue:** Empty `database.types.ts` file causing Vercel build failures (TypeScript error: "File is not a module")
+- **Root Cause:** Supabase CLI lacked project access privileges, preventing type generation via CLI
+- **Solution:** Created `scripts/generate-types.ts` script that generates types directly from PostgreSQL `information_schema` using `DATABASE_URL`
+- **Result:** Types successfully generated for all 12 tables and 5 functions, build passes, production ready
+- **Documentation:** Updated all documentation files to include new script-based generation method
 

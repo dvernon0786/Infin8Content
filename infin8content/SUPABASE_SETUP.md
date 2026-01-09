@@ -165,3 +165,19 @@ supabase status
 
 But the dashboard method above is usually easier for first-time setup.
 
+## Generate TypeScript Types
+
+After setting up your database, generate TypeScript types:
+
+**Recommended Method (Works Without CLI Project Access):**
+```bash
+cd infin8content
+npx tsx scripts/generate-types.ts
+```
+
+This script uses your `DATABASE_URL` to query the database schema and generate types for all tables and functions. It works even if Supabase CLI doesn't have project access privileges.
+
+**Alternative Methods:**
+- **Supabase Dashboard:** Settings > API > Database types > TypeScript (copy/paste)
+- **Supabase CLI:** `supabase gen types typescript --project-id <project-ref> > lib/supabase/database.types.ts` (requires project access)
+

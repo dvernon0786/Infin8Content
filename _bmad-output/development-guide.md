@@ -83,6 +83,10 @@ See [MIGRATION_INSTRUCTIONS.md](../infin8content/MIGRATION_INSTRUCTIONS.md) for 
 
 3. **Generate TypeScript types:**
    ```bash
+   # Recommended: Use database script (works without CLI project access)
+   npx tsx scripts/generate-types.ts
+   
+   # Alternative: Use Supabase CLI (requires project access)
    supabase gen types typescript --project-id <your-project-ref> > lib/supabase/database.types.ts
    ```
 
@@ -184,7 +188,14 @@ export async function POST(request: NextRequest) {
 1. Create migration file: `supabase/migrations/YYYYMMDDHHMMSS_description.sql`
 2. Use idempotent SQL (IF NOT EXISTS, DROP IF EXISTS, etc.)
 3. Apply migration via Supabase Dashboard or CLI
-4. Regenerate TypeScript types: `supabase gen types typescript ...`
+4. Regenerate TypeScript types:
+   ```bash
+   # Recommended: Use database script
+   npx tsx scripts/generate-types.ts
+   
+   # Alternative: Use Supabase CLI (requires project access)
+   supabase gen types typescript --project-id <project-ref> > lib/supabase/database.types.ts
+   ```
 
 ### Environment Variables
 
@@ -228,9 +239,17 @@ infin8content/
 
 ### TypeScript Errors
 
-- Regenerate database types: `supabase gen types typescript ...`
+- Regenerate database types:
+  ```bash
+  # Recommended: Use database script
+  npx tsx scripts/generate-types.ts
+  
+  # Alternative: Use Supabase CLI
+  supabase gen types typescript --project-id <project-ref> > lib/supabase/database.types.ts
+  ```
 - Clear Next.js cache: `rm -rf .next`
 - Restart TypeScript server in IDE
+- **Note:** If `database.types.ts` is empty or causing build errors, use the script method which works without CLI project access
 
 ## Related Documentation
 

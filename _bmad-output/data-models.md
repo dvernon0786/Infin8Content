@@ -128,10 +128,30 @@ Deletes expired OTP codes from `otp_codes` table.
 Auto-generated TypeScript types are available in:
 - `lib/supabase/database.types.ts`
 
-**Generation Command:**
+**Generation Methods:**
+
+### Method 1: Using Database Script (Recommended)
+If you have `DATABASE_URL` configured in `.env.local`:
+```bash
+cd infin8content
+npx tsx scripts/generate-types.ts
+```
+
+This script queries the database schema directly and generates types for all tables and functions.
+
+### Method 2: Supabase CLI (Requires Project Access)
+If you have Supabase CLI authenticated with project access:
 ```bash
 supabase gen types typescript --project-id <project-ref> > lib/supabase/database.types.ts
 ```
+
+### Method 3: Supabase Dashboard (Manual)
+1. Go to **Settings** > **API** in your Supabase project
+2. Scroll to **Database types** section
+3. Select **TypeScript** format
+4. Copy and paste into `lib/supabase/database.types.ts`
+
+**Note:** Types should be regenerated after any database schema changes (migrations).
 
 ## Migration History
 

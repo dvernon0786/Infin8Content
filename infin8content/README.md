@@ -74,12 +74,18 @@ This project uses Supabase for database and authentication. To set up Supabase:
 
 5. **Generate TypeScript types**:
    ```bash
-   # For local development
+   # Recommended: Using database script (works with DATABASE_URL)
+   cd infin8content
+   npx tsx scripts/generate-types.ts
+   
+   # Alternative: For local development with Supabase CLI
    supabase gen types typescript --local > lib/supabase/database.types.ts
    
-   # For hosted project
+   # Alternative: For hosted project (requires CLI project access)
    supabase gen types typescript --project-id <project-ref> > lib/supabase/database.types.ts
    ```
+   
+   **Note:** The script method is recommended as it works reliably without requiring CLI project access privileges. Make sure `DATABASE_URL` is set in `.env.local`.
 
 ## Learn More
 

@@ -34,6 +34,14 @@ supabase migration up
 ```
 
 ### Step 4: Generate Types
+
+**Recommended:** Use the database script (works without project access):
+```bash
+cd infin8content
+npx tsx scripts/generate-types.ts
+```
+
+**Alternative:** Use Supabase CLI (requires project access):
 ```bash
 supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts
 ```
@@ -59,17 +67,28 @@ After running the migration, verify in Supabase Dashboard:
 
 After migration is applied, generate types:
 
-### Via Dashboard (Manual):
+### Method 1: Using Database Script (Recommended - Works Without CLI Access)
+If you have `DATABASE_URL` configured in `.env.local`:
+```bash
+cd infin8content
+npx tsx scripts/generate-types.ts
+```
+
+This script connects directly to your database and generates types for all tables and functions. It works even if Supabase CLI doesn't have project access.
+
+### Method 2: Via Dashboard (Manual):
 1. Go to **Settings** > **API**
 2. Scroll to **Database types**
 3. Select **TypeScript**
 4. Copy the generated types
 5. Paste into `lib/supabase/database.types.ts`
 
-### Via CLI (After authentication):
+### Method 3: Via CLI (Requires Project Access):
 ```bash
 supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts
 ```
+
+**Note:** The script method (Method 1) is recommended as it works reliably without requiring CLI project access privileges.
 
 ## Current Migration File
 Location: `supabase/migrations/20260101124156_initial_schema.sql`
