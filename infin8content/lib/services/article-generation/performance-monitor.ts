@@ -230,7 +230,7 @@ class ArticlePerformanceMonitor {
     metrics.phaseTimings.total = metrics.totalDuration
     
     // Collect cache metrics
-    const researchStats = getResearchCacheStats(articleId)
+    const researchStats = getResearchCacheStats()
     if (researchStats) {
       metrics.cacheMetrics.researchCacheHitRate = researchStats.totalCached > 0 ? 0.85 : 0 // Estimated hit rate
       metrics.cacheMetrics.memoryUsageEstimate = researchStats.averageSourcesPerArticle * 500 // Rough estimate
@@ -317,7 +317,7 @@ class ArticlePerformanceMonitor {
         .from('article_performance_metrics' as any)
         .select('total_duration_ms, total_api_calls, total_tokens, section_failures, cache_hit_rate')
         .eq('organization_id', organizationId)
-        .gte('generated_at', cutoffDate.toISOString()) as unknown as Promise<{ data: any[] }>
+        .gte('generated_at', cutoffDate.toISOString())
       
       if (!data || data.length === 0) {
         return {
@@ -331,12 +331,12 @@ class ArticlePerformanceMonitor {
       }
       
       const totalArticles = data.length
-      const averageGenerationTime = data.reduce((sum, m) => sum + (m.total_duration_ms || 0), 0) / totalArticles
-      const averageApiCalls = data.reduce((sum, m) => sum + (m.total_api_calls || 0), 0) / totalArticles
-      const averageTokenUsage = data.reduce((sum, m) => sum + (m.total_tokens || 0), 0) / totalArticles
-      const totalFailures = data.reduce((sum, m) => sum + (m.section_failures || 0), 0)
+      const averageGenerationTime = data.reduce((sum: number, m: any) => sum + (m.total_duration_ms || 0), 0) / totalArticles
+      const averageApiCalls = data.reduce((sum: number, m: any) => sum + (m.total_api_calls || 0), 0) / totalArticles
+      const averageTokenUsage = data.reduce((sum: number, m: any) => sum + (m.total_tokens || 0), 0) / totalArticles
+      const totalFailures = data.reduce((sum: number, m: any) => sum + (m.section_failures || 0), 0)
       const successRate = (totalArticles - Math.min(totalFailures, totalArticles)) / totalArticles
-      const cacheEfficiency = data.reduce((sum, m) => sum + (m.cache_hit_rate || 0), 0) / totalArticles
+      const cacheEfficiency = data.reduce((sum: number, m: any) => sum + (m.cache_hit_rate || 0), 0) / totalArticles
       
       return {
         averageGenerationTime: Math.round(averageGenerationTime),
