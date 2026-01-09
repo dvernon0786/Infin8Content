@@ -4,6 +4,7 @@ import { generateOutline } from '@/lib/services/article-generation/outline-gener
 import { processSection } from '@/lib/services/article-generation/section-processor'
 import { analyzeSerpStructure } from '@/lib/services/dataforseo/serp-analysis'
 import { createProgressTracker } from '@/lib/services/progress-tracking'
+import type { Section } from '@/lib/services/article-generation/section-processor'
 
 /**
  * Retry with exponential backoff
@@ -256,7 +257,7 @@ export const generateArticle = inngest.createFunction(
       })
 
       // Step 5: Process sections sequentially with retry logic
-      await step.run('process-sections', async () => {
+      const sectionStats = await step.run('process-sections', async () => {
         console.log(`[Inngest] Step: process-sections - Starting section processing for article ${articleId}`)
         
         try {
@@ -290,7 +291,7 @@ export const generateArticle = inngest.createFunction(
           await (article as any).progressTracker?.updateWritingSection(currentSectionNumber, 'Writing Introduction...')
           
           try {
-            const sectionResult = await retryWithBackoff(() => processSection(articleId, 0, outline))
+            const sectionResult = await retryWithBackoff(() => processSection(articleId, 0, outline)) as Section | null
             
             // Update metrics from section result
             if (sectionResult) {
@@ -316,7 +317,7 @@ export const generateArticle = inngest.createFunction(
             await (article as any).progressTracker?.updateWritingSection(currentSectionNumber, `Writing Section ${h2Index}: ${outline.h2_sections[h2Index - 1]?.title || 'H2 Section'}...`)
             
             try {
-              const sectionResult = await retryWithBackoff(() => processSection(articleId, h2Index, outline))
+              const sectionResult = await retryWithBackoff(() => processSection(articleId, h2Index, outline)) as Section | null
               
               // Update metrics from section result
               if (sectionResult) {
@@ -342,7 +343,7 @@ export const generateArticle = inngest.createFunction(
                 console.log(`[Inngest] Step: process-sections - Processing H3 subsection ${sectionIndex}`)
                 
                 try {
-                  const h3Result = await retryWithBackoff(() => processSection(articleId, sectionIndex, outline))
+                  const h3Result = await retryWithBackoff(() => processSection(articleId, sectionIndex, outline)) as Section | null
                   
                   // Update metrics from H3 result
                   if (h3Result) {
@@ -368,7 +369,7 @@ export const generateArticle = inngest.createFunction(
           await (article as any).progressTracker?.updateWritingSection(currentSectionNumber, 'Writing Conclusion...')
           
           try {
-            const conclusionResult = await retryWithBackoff(() => processSection(articleId, conclusionIndex, outline))
+            const conclusionResult = await retryWithBackoff(() => processSection(articleId, conclusionIndex, outline)) as Section | null
             
             if (conclusionResult) {
               totalWordCount += conclusionResult.word_count || 0
@@ -393,7 +394,7 @@ export const generateArticle = inngest.createFunction(
             await (article as any).progressTracker?.updateWritingSection(currentSectionNumber, 'Writing FAQ...')
             
             try {
-              const faqResult = await retryWithBackoff(() => processSection(articleId, faqIndex, outline))
+              const faqResult = await retryWithBackoff(() => processSection(articleId, faqIndex, outline)) as Section | null
               
               if (faqResult) {
                 totalWordCount += faqResult.word_count || 0
@@ -411,6 +412,13 @@ export const generateArticle = inngest.createFunction(
           }
 
           console.log(`[Inngest] Step: process-sections - All sections processed successfully`)
+          
+          // Return the accumulated statistics for the next step
+          return {
+            totalWordCount,
+            totalCitations,
+            totalApiCost
+          };
         } catch (error) {
           // Ensure we update status even if timeout occurs mid-processing
           const isTimeout = error instanceof Error && 
@@ -440,9 +448,9 @@ export const generateArticle = inngest.createFunction(
         
         // Mark progress as completed with final statistics
         await (article as any).progressTracker?.complete({
-          wordCount: totalWordCount,
-          citations: totalCitations,
-          apiCost: totalApiCost
+          wordCount: sectionStats.totalWordCount,
+          citations: sectionStats.totalCitations,
+          apiCost: sectionStats.totalApiCost
         })
         
         const { error: updateError } = await supabase
@@ -460,7 +468,7 @@ export const generateArticle = inngest.createFunction(
         }
 
         console.log(`[Inngest] Step: complete-article - Success: Article ${articleId} marked as completed`)
-        console.log(`[Inngest] Step: complete-article - Final stats: ${totalWordCount} words, ${totalCitations} citations, $${totalApiCost.toFixed(2)} cost`)
+        console.log(`[Inngest] Step: complete-article - Final stats: ${sectionStats.totalWordCount} words, ${sectionStats.totalCitations} citations, $${sectionStats.totalApiCost.toFixed(2)} cost`)
       })
 
       console.log(`[Inngest] Article generation completed successfully for articleId: ${articleId}`)
