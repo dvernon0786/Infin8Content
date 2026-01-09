@@ -13,10 +13,11 @@ export async function middleware(request: NextRequest) {
   const timestamp = new Date().toISOString()
   const pathname = request.nextUrl.pathname
   
-  console.log(`[MIDDLEWARE-${requestId}] ${timestamp} - Processing request: ${pathname}`, {
+  console.log(`[MIDDLEWARE-${requestId}] ${timestamp} - === MIDDLEWARE EXECUTING === Processing request: ${pathname}`, {
     method: request.method,
     userAgent: request.headers.get('user-agent'),
-    cookies: request.cookies.getAll().map(c => c.name)
+    cookies: request.cookies.getAll().map(c => c.name),
+    searchParams: request.nextUrl.searchParams.toString()
   })
 
   // Validate environment variables on every request
@@ -418,6 +419,7 @@ export async function middleware(request: NextRequest) {
 
   console.log(`[MIDDLEWARE-${requestId}] Final decision - allowing access to: ${pathname}`)
   // User is authenticated, email is verified, and payment is active (or no org) - allow access
+  console.log(`[MIDDLEWARE-${requestId}] ${timestamp} - === MIDDLEWARE COMPLETED === Allowing access`)
   return response;
 }
 
