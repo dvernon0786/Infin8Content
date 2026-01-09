@@ -1,20 +1,28 @@
 # Scratchpad
 
 ## Current Status
-- **Date:** 2026-01-09 15:04:00 AEDT
+- **Date:** 2026-01-09 15:09:00 AEDT
 - **Epic 1:** Completed
 - **Epic 3:** Story 3-1 Complete
 - **Epic 4A:** Story 4a-1 Done, Story 4a-2 Done, Story 4a-3 Done, Story 4a-5 Done, Story 4a-6 Done
-- **Last Work:** Fixed RLS policy violation for article_progress table - Production deployment ready
-- **Current Focus:** Testing real-time progress tracking with local development server
+- **Last Work:** Fixed RLS policy violation for article_progress table in production
+- **Current Focus:** Testing real-time progress tracking with local server and Inngest
 
 ## Recent Achievements
-- **Production Deployment Fixes (2026-01-09 15:04:00 AEDT):**
-  - ✅ **BUILD FIX:** Fixed TypeScript build error in generate-article.ts - Variable scope issues resolved
-  - ✅ **RLS FIX:** Fixed row-level security policy violation for article_progress table
-  - ✅ **SERVICE CLIENT:** Switched progress service to use createServiceRoleClient to bypass RLS
-  - ✅ **DEPLOYMENT:** All fixes pushed to production, Vercel build successful
-  - ✅ **STATUS:** Real-time progress tracking now fully functional in production
+- **RLS Policy Violation Fix (2026-01-09 15:02:00 AEDT):**
+  - ✅ **ISSUE:** Fixed 'new row violates row-level security policy for table "article_progress"' error
+  - ✅ **ROOT CAUSE:** Progress service was using regular server client subject to RLS policies
+  - ✅ **SOLUTION:** Switched to createServiceRoleClient to bypass RLS for backend operations
+  - ✅ **SECURITY:** Safe because this is server-side code, not client-side
+  - ✅ **RESULT:** Progress tracking now works properly in production
+  - ✅ **COMMIT:** a2cb4b1 - Fix RLS policy violation for article_progress table
+- **TypeScript Build Error Fix (2026-01-09 12:51:00 AEDT):**
+  - ✅ **ISSUE:** Fixed 'Cannot find name totalWordCount' TypeScript build error
+  - ✅ **ROOT CAUSE:** Variables defined in one Inngest step but used in another
+  - ✅ **SOLUTION:** Properly passed statistics between steps using return values
+  - ✅ **TYPE FIXES:** Added type assertions to processSection calls
+  - ✅ **BUILD STATUS:** npm run build now passes successfully
+  - ✅ **COMMIT:** 3bd6952 - Fix TypeScript build error in generate-article.ts
 - **Story 4a-6 Real-Time Progress Tracking and Updates - COMPLETE (2026-01-09 12:46:00 AEDT):**
   - ✅ **FEATURE:** Implemented comprehensive real-time progress tracking for article generation
   - ✅ **DATABASE:** Created article_progress table with RLS policies and real-time subscriptions
