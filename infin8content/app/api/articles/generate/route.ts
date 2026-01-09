@@ -138,8 +138,8 @@ export async function POST(request: Request) {
     // Create article record in database with status "queued"
     // Type assertion needed until database types are regenerated after migration
     // TODO: Remove type assertion after running: supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts
-    const { data: article, error: insertError } = await (supabase as any)
-      .from('articles')
+    const { data: article, error: insertError } = await (supabase
+      .from('articles' as any)
       .insert({
         org_id: organizationId,
         created_by: userId,
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
         custom_instructions: sanitizedCustomInstructions,
       })
       .select('id')
-      .single()
+      .single() as unknown as Promise<{ data: { id: string } | null; error: any }>)
 
     if (insertError || !article) {
       console.error('Failed to create article record:', insertError)
@@ -183,9 +183,8 @@ export async function POST(request: Request) {
       })
       
       // Update article status to failed if Inngest event fails
-      // TODO: Regenerate types from Supabase Dashboard to fix table types
-      await (supabase as any)
-        .from('articles')
+      await supabase
+        .from('articles' as any)
         .update({
           status: 'failed',
           error_details: {
@@ -206,10 +205,9 @@ export async function POST(request: Request) {
     }
 
     // Update article with Inngest event ID
-    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
     if (inngestEventId) {
-      const { error: updateError } = await (supabase as any)
-        .from('articles')
+      const { error: updateError } = await supabase
+        .from('articles' as any)
         .update({ inngest_event_id: inngestEventId })
         .eq('id', article.id)
       
@@ -220,9 +218,9 @@ export async function POST(request: Request) {
     }
 
     // Increment usage tracking atomically (after successful queue)
-    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-    const { error: usageUpdateError } = await (supabaseAdmin as any)
-      .from('usage_tracking')
+    // Type assertion needed until database types are regenerated after migration
+    const { error: usageUpdateError } = await (supabaseAdmin
+      .from('usage_tracking' as any)
       .upsert({
         organization_id: organizationId,
         metric_type: 'article_generation',
@@ -231,7 +229,7 @@ export async function POST(request: Request) {
         last_updated: new Date().toISOString(),
       }, {
         onConflict: 'organization_id,metric_type,billing_period',
-      })
+      }) as unknown as Promise<{ error: any }>)
 
     if (usageUpdateError) {
       console.error('Failed to update usage tracking:', usageUpdateError)

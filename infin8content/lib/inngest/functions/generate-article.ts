@@ -65,9 +65,8 @@ export const generateArticle = inngest.createFunction(
       // Step 1: Load article and check if it's already in a terminal state
       const article = await step.run('load-article', async () => {
         console.log(`[Inngest] Step: load-article - Loading article ${articleId}`)
-        // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-        const { data, error } = await (supabase as any)
-          .from('articles')
+        const { data, error } = await supabase
+          .from('articles' as any)
           .select('id, org_id, keyword, status')
           .eq('id', articleId)
           .single()
@@ -102,12 +101,9 @@ export const generateArticle = inngest.createFunction(
         }
 
         // Update status to generating
-        // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-        const { error: updateError } = await (supabase as any)
-            // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-            await (supabase as any)
-            .from('articles')
-            .update({
+        const { error: updateError } = await supabase
+          .from('articles' as any)
+          .update({
             status: 'generating',
             generation_started_at: new Date().toISOString()
           })
@@ -203,9 +199,8 @@ export const generateArticle = inngest.createFunction(
           console.log(`[Inngest] Step: generate-outline - Success: Outline generated in ${duration}ms`)
 
           // Store outline in article record
-          // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-          const { error: updateError } = await (supabase as any)
-            .from('articles')
+          const { error: updateError } = await supabase
+            .from('articles' as any)
             .update({
               outline: generatedOutline,
               outline_generation_duration_ms: duration
@@ -231,9 +226,8 @@ export const generateArticle = inngest.createFunction(
         console.log(`[Inngest] Step: process-sections - Starting section processing for article ${articleId}`)
         
         try {
-          // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-          const { data: articleData, error: fetchError } = await (supabase as any)
-            .from('articles')
+          const { data: articleData, error: fetchError } = await supabase
+            .from('articles' as any)
             .select('outline')
             .eq('id', articleId)
             .single()
@@ -298,9 +292,8 @@ export const generateArticle = inngest.createFunction(
           
           if (isTimeout) {
             console.error(`[Inngest] Step: process-sections - TIMEOUT ERROR: ${error instanceof Error ? error.message : String(error)}`)
-            // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-            await (supabase as any)
-              .from('articles')
+            await supabase
+              .from('articles' as any)
               .update({
                 status: 'failed',
                 error_details: {
@@ -318,9 +311,8 @@ export const generateArticle = inngest.createFunction(
       // Step 6: Update article status to completed
       await step.run('complete-article', async () => {
         console.log(`[Inngest] Step: complete-article - Marking article ${articleId} as completed`)
-        // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-        const { error: updateError } = await (supabase as any)
-          .from('articles')
+        const { error: updateError } = await supabase
+          .from('articles' as any)
           .update({
             status: 'completed',
             generation_completed_at: new Date().toISOString()
@@ -355,9 +347,8 @@ export const generateArticle = inngest.createFunction(
       await step.run('handle-error', async () => {
         console.log(`[Inngest] Step: handle-error - Handling error for article ${articleId}, isTimeout: ${isTimeout}`)
         // Get current sections to preserve partial article
-        // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-        const { data: articleData } = await (supabase as any)
-          .from('articles')
+        const { data: articleData } = await supabase
+          .from('articles' as any)
           .select('sections, current_section_index')
           .eq('id', articleId)
           .single()
@@ -365,9 +356,8 @@ export const generateArticle = inngest.createFunction(
         // Type assertion needed because database types haven't been regenerated after migration
         const article = (articleData as unknown) as { sections?: any[]; current_section_index?: number } | null
 
-        // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-        const { error: updateError } = await (supabase as any)
-          .from('articles')
+        const { error: updateError } = await supabase
+          .from('articles' as any)
           .update({
             status: 'failed',
             error_details: {

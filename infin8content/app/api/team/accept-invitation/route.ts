@@ -36,8 +36,7 @@ export async function POST(request: Request) {
     // Validate: Token exists and is valid (not expired, status = 'pending')
     // Use database-level expiration check to avoid timezone issues and race conditions
     // RPC function returns SETOF (array), so we need to handle it properly
-    // TODO: Regenerate types from Supabase Dashboard to fix RPC function types
-    const { data: invitationData, error: invitationError } = await (supabase.rpc as any)(
+    const { data: invitationData, error: invitationError } = await supabase.rpc(
       'get_invitation_by_token',
       { token_input: token }
     )
@@ -87,8 +86,7 @@ export async function POST(request: Request) {
     }
 
     // Check if user exists (by invitation email)
-    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-    const { data: existingUser } = await (supabase as any)
+    const { data: existingUser } = await supabase
       .from('users')
       .select('*')
       .eq('email', invitation.email)
@@ -112,8 +110,7 @@ export async function POST(request: Request) {
     }
 
     // If user exists: Add user to organization
-    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-    const { error: updateError } = await (supabase as any)
+    const { error: updateError } = await supabase
       .from('users')
       .update({
         org_id: invitation.org_id,
@@ -130,8 +127,7 @@ export async function POST(request: Request) {
     }
 
     // Update invitation: status = 'accepted', accepted_at = NOW()
-    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-    const { error: invitationUpdateError } = await (supabase as any)
+    const { error: invitationUpdateError } = await supabase
       .from('team_invitations')
       .update({
         status: 'accepted',
@@ -145,8 +141,7 @@ export async function POST(request: Request) {
     }
 
     // Get organization owner email for notification
-    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-    const { data: organization, error: orgError } = await (supabase as any)
+    const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .select('name')
       .eq('id', invitation.org_id)
@@ -157,8 +152,7 @@ export async function POST(request: Request) {
       // Continue with default name - don't fail the request
     }
 
-    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-    const { data: owner, error: ownerError } = await (supabase as any)
+    const { data: owner, error: ownerError } = await supabase
       .from('users')
       .select('email')
       .eq('id', invitation.created_by)

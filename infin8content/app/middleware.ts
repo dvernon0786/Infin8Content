@@ -216,8 +216,7 @@ export async function middleware(request: NextRequest) {
               try {
                 // Query user record to get email
                 // Note: users table doesn't have name column, userName will be undefined
-                // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-                const { data: user, error: userQueryError } = await (supabase as any)
+                const { data: user, error: userQueryError } = await supabase
                   .from('users')
                   .select('email')
                   .eq('id', userRecord.id)

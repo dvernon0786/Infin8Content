@@ -53,13 +53,14 @@ export async function GET(request: Request) {
 
     const supabase = await createClient()
 
-    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-    const { data: articles, error } = await (supabase as any)
-      .from('articles')
+    // Type assertion needed until database types are regenerated after migration
+    // TODO: Remove type assertion after running: supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts
+    const { data: articles, error } = await (supabase
+      .from('articles' as any)
       .select('id, keyword, status, created_at')
       .eq('org_id', currentUser.org_id)
       .in('status', ['queued', 'generating'])
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: true }) as unknown as Promise<{ data: any[]; error: any }>)
 
     if (error) {
       console.error('Failed to fetch queue status:', error)
@@ -70,11 +71,11 @@ export async function GET(request: Request) {
     }
 
     // Add position numbers for queued articles (only count queued articles, exclude generating)
-    const queuedArticles = ((articles || []) as any[]).filter((a: any) => a.status === 'queued')
-    const articlesWithPosition = ((articles || []) as any[]).map((article: any) => ({
+    const queuedArticles = (articles || []).filter(a => a.status === 'queued')
+    const articlesWithPosition = (articles || []).map(article => ({
       ...article,
       position: article.status === 'queued' 
-        ? queuedArticles.findIndex((q: any) => q.id === article.id) + 1 
+        ? queuedArticles.findIndex(q => q.id === article.id) + 1 
         : undefined,
     }))
 

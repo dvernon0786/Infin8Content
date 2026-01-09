@@ -23,12 +23,14 @@ export const cleanupStuckArticles = inngest.createFunction(
       // This gives articles enough time to complete (most take 10-20 minutes)
       const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString()
       
-      // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-      const { data: stuckArticlesData, error: findError } = await (supabase as any)
-        .from('articles')
+      const { data: stuckArticlesData, error: findError } = await (supabase
+        .from('articles' as any)
         .select('id, keyword, generation_started_at, current_section_index, sections')
         .eq('status', 'generating')
-        .lt('generation_started_at', thirtyMinutesAgo)
+        .lt('generation_started_at', thirtyMinutesAgo) as unknown as Promise<{ 
+          data: Array<{ id: string; keyword: string; generation_started_at: string; current_section_index?: number; sections?: any[] }> | null; 
+          error: any 
+        }>)
       
       if (findError) {
         console.error('Failed to find stuck articles:', findError)
@@ -50,10 +52,9 @@ export const cleanupStuckArticles = inngest.createFunction(
       }
       
       // Update stuck articles to failed status
-      const articleIds = (stuckArticles as any[]).map((a: any) => a.id)
-      // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-      const { error: updateError, data: updatedArticles } = await (supabase as any)
-        .from('articles')
+      const articleIds = stuckArticles.map(a => a.id)
+      const { error: updateError, data: updatedArticles } = await supabase
+        .from('articles' as any)
         .update({
           status: 'failed',
           error_details: {
@@ -61,7 +62,7 @@ export const cleanupStuckArticles = inngest.createFunction(
             failed_at: new Date().toISOString(),
             timeout: true,
             auto_cleaned: true,
-            stuck_duration_minutes: (stuckArticles as any[]).map((article: any) => {
+            stuck_duration_minutes: stuckArticles.map(article => {
               const startTime = new Date(article.generation_started_at).getTime()
               const now = Date.now()
               return Math.round((now - startTime) / (60 * 1000))
@@ -81,13 +82,13 @@ export const cleanupStuckArticles = inngest.createFunction(
       }
       
       console.log(`Cleaned up ${stuckArticles.length} stuck article(s):`, 
-        (stuckArticles as any[]).map((a: any) => ({ id: a.id, keyword: a.keyword }))
+        stuckArticles.map(a => ({ id: a.id, keyword: a.keyword }))
       )
       
       return { 
         success: true, 
         updated: stuckArticles.length,
-        articles: updatedArticles || (stuckArticles as any[]).map((a: any) => ({ id: a.id, keyword: a.keyword }))
+        articles: updatedArticles || stuckArticles.map(a => ({ id: a.id, keyword: a.keyword }))
       }
     })
   }
