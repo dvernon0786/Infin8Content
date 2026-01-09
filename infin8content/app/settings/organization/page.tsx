@@ -57,7 +57,9 @@ export default async function OrganizationSettingsPage() {
               <div>
                 <dt className="text-sm font-medium text-gray-500">Created</dt>
                 <dd className="mt-1 text-sm text-gray-900">
-                  {new Date(currentUser.organizations.created_at).toLocaleDateString()}
+                  {currentUser.organizations.created_at
+                    ? new Date(currentUser.organizations.created_at).toLocaleDateString()
+                    : 'N/A'}
                 </dd>
               </div>
             </dl>
