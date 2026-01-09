@@ -3,7 +3,7 @@
  * Story 4a.6: Real-Time Progress Tracking and Updates
  */
 
-import { createClient } from '@/lib/supabase/server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import type { 
   ArticleProgress, 
   CreateArticleProgressParams, 
@@ -21,7 +21,7 @@ export class ArticleProgressService {
 
   private async getClient() {
     if (!this.supabase) {
-      this.supabase = await createClient();
+      this.supabase = createServiceRoleClient();
     }
     return this.supabase;
   }
