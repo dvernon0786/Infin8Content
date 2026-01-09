@@ -1,12 +1,12 @@
 # Scratchpad
 
 ## Current Status
-- **Date:** 2026-01-09 18:22:00 AEDT
+- **Date:** 2026-01-09 18:37:00 AEDT
 - **Epic 1:** Completed
 - **Epic 3:** Story 3-1 Complete
 - **Epic 4A:** Stories 4a-1, 4a-2, 4a-3, 4a-5, 4a-6, 4a-12 Complete
-- **Last Work:** **AUTO-REFRESH FIX COMPLETED** - Enhanced article status monitoring with fallback polling
-- **Current Focus:** All systems operational, auto-refresh issue resolved, production-ready
+- **Last Work:** **TAVILY API CALL TRACKING FIX COMPLETED** - Enhanced performance monitoring with API tracking
+- **Current Focus:** All systems operational, Tavily tracking fixed, auto-refresh working, production-ready
 
 ## 🎉 **ARTICLE STRUCTURE MIGRATION PROJECT - COMPLETE EXCEPTIONAL SUCCESS! (2026-01-09 17:36:00 AEDT)**
 
@@ -25,6 +25,14 @@
 - ✅ **USER FEEDBACK**: Clear indication of active update method (live vs polling)
 - ✅ **TYPESCRIPT**: Fixed all typing errors in status monitoring
 - ✅ **RELIABILITY**: Guaranteed page refresh regardless of connectivity issues
+
+### 🔧 **Tavily API Tracking Fix: COMPLETED (2026-01-09 18:28:00 AEDT)**
+- ✅ **ISSUE FIXED**: Tavily API calls not tracked in performance monitoring
+- ✅ **ENHANCED**: Added performanceMonitor.recordApiCall() calls in research optimizer
+- ✅ **TRACKING**: Now accurately tracks comprehensive and targeted research calls
+- ✅ **VISIBILITY**: Performance monitor shows correct API call counts (>0)
+- ✅ **COST TRACKING**: Proper API cost attribution for research operations
+- ✅ **DEBUGGING**: Better visibility into research activity for troubleshooting
 
 ### 📊 **Migration Project Results Summary**
 | Phase | Status | Grade | Key Achievements |
