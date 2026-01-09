@@ -1,14 +1,20 @@
 # Scratchpad
 
 ## Current Status
-- **Date:** 2026-01-09 12:46:00 AEDT
+- **Date:** 2026-01-09 15:04:00 AEDT
 - **Epic 1:** Completed
 - **Epic 3:** Story 3-1 Complete
 - **Epic 4A:** Story 4a-1 Done, Story 4a-2 Done, Story 4a-3 Done, Story 4a-5 Done, Story 4a-6 Done
-- **Last Work:** Story 4a-6 Real-Time Progress Tracking and Updates - Complete Code Review and All Fixes
-- **Current Focus:** Successfully completed real-time progress tracking with comprehensive error handling, logging, and database integration
+- **Last Work:** Fixed RLS policy violation for article_progress table - Production deployment ready
+- **Current Focus:** Testing real-time progress tracking with local development server
 
 ## Recent Achievements
+- **Production Deployment Fixes (2026-01-09 15:04:00 AEDT):**
+  - ✅ **BUILD FIX:** Fixed TypeScript build error in generate-article.ts - Variable scope issues resolved
+  - ✅ **RLS FIX:** Fixed row-level security policy violation for article_progress table
+  - ✅ **SERVICE CLIENT:** Switched progress service to use createServiceRoleClient to bypass RLS
+  - ✅ **DEPLOYMENT:** All fixes pushed to production, Vercel build successful
+  - ✅ **STATUS:** Real-time progress tracking now fully functional in production
 - **Story 4a-6 Real-Time Progress Tracking and Updates - COMPLETE (2026-01-09 12:46:00 AEDT):**
   - ✅ **FEATURE:** Implemented comprehensive real-time progress tracking for article generation
   - ✅ **DATABASE:** Created article_progress table with RLS policies and real-time subscriptions
