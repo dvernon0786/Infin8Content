@@ -4,20 +4,13 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ArticleQueueStatus } from '@/components/articles/article-queue-status'
 import { ArticleContentViewer } from '@/components/articles/article-content-viewer'
+import { ArticleStatusMonitor } from '@/components/articles/article-status-monitor'
 import { redirect } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import type { ArticleMetadata, ArticleSection, ArticleWithSections } from '@/lib/types/article'
 
 interface ArticleDetailPageProps {
   params: Promise<{ id: string }>
-}
-
-const statusColors: Record<string, 'default' | 'secondary' | 'destructive'> = {
-  queued: 'secondary',
-  generating: 'default',
-  completed: 'default',
-  failed: 'destructive',
-  cancelled: 'secondary',
 }
 
 export default async function ArticleDetailPage({ params }: ArticleDetailPageProps) {
@@ -105,9 +98,10 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Article Status</CardTitle>
-            <Badge variant={statusColors[article.status] || 'secondary'}>
-              {article.status.charAt(0).toUpperCase() + article.status.slice(1)}
-            </Badge>
+            <ArticleStatusMonitor 
+              articleId={article.id} 
+              initialStatus={article.status}
+            />
           </div>
         </CardHeader>
         <CardContent>
