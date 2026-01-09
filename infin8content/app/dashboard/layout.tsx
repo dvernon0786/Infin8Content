@@ -3,6 +3,7 @@ import { SidebarNavigation } from "@/components/dashboard/sidebar-navigation"
 import { TopNavigation } from "@/components/dashboard/top-navigation"
 import { getCurrentUser } from "@/lib/supabase/get-current-user"
 import { redirect } from "next/navigation"
+import { PaymentGuard } from "@/components/guards/payment-guard"
 
 export default async function DashboardLayout({
     children,
@@ -16,17 +17,19 @@ export default async function DashboardLayout({
     }
 
     return (
-        <SidebarProvider>
-            <SidebarNavigation />
-            <SidebarInset>
-                <TopNavigation
-                    email={currentUser.email}
-                    name={currentUser.first_name || currentUser.email.split('@')[0]}
-                />
-                <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
-                    {children}
-                </main>
-            </SidebarInset>
-        </SidebarProvider>
+        <PaymentGuard>
+            <SidebarProvider>
+                <SidebarNavigation />
+                <SidebarInset>
+                    <TopNavigation
+                        email={currentUser.email}
+                        name={currentUser.first_name || currentUser.email.split('@')[0]}
+                    />
+                    <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
+                        {children}
+                    </main>
+                </SidebarInset>
+            </SidebarProvider>
+        </PaymentGuard>
     )
 }
