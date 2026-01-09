@@ -1,6 +1,7 @@
 // Section processing service for article generation
 // Story 4a.2: Section-by-Section Architecture and Outline Generation
 // Story 4a.3: Real-Time Research Per Section (Tavily Integration)
+// Story 4a.12: Performance Optimization with Enhanced SEO Prompts
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { Outline } from './outline-generator'
@@ -21,6 +22,295 @@ import {
   getContextStats 
 } from './context-manager'
 import { type TavilySource } from '@/lib/services/tavily/tavily-client'
+
+// Enhanced SEO Helper Functions
+function calculateTargetDensity(wordCount: number): number {
+  // Aim for 0.5-1.5% density
+  const minDensity = Math.ceil(wordCount * 0.005)
+  const maxDensity = Math.floor(wordCount * 0.015)
+  return Math.floor((minDensity + maxDensity) / 2)
+}
+
+function generateSemanticKeywords(primaryKeyword: string): string {
+  // Extract root concepts and generate variations
+  const keywords = [
+    primaryKeyword,
+    primaryKeyword.replace(/best|top|how to/gi, '').trim(),
+    `${primaryKeyword} guide`,
+    `${primaryKeyword} tips`,
+    `${primaryKeyword} examples`,
+    `${primaryKeyword} strategies`,
+    `${primaryKeyword} methods`
+  ]
+  return keywords.slice(0, 5).join(', ')
+}
+
+function getUserIntentSignals(keyword: string, sectionType: string): string {
+  const intentMap = {
+    informational: 'Readers want to learn, understand, or discover information',
+    transactional: 'Readers are ready to take action, purchase, or commit',
+    commercial: 'Readers are comparing options and evaluating choices',
+    navigational: 'Readers are looking for a specific resource or location',
+  }
+  
+  // Simple intent detection from keyword
+  const intent = keyword.match(/how to|what is|why|guide/i) ? 'informational' :
+                 keyword.match(/best|top|vs|compare/i) ? 'commercial' :
+                 keyword.match(/buy|price|cost|review/i) ? 'transactional' : 
+                 'informational'
+  
+  const intentStrategy = {
+    informational: 'Provide comprehensive explanations and step-by-step guidance',
+    transactional: 'Include clear calls-to-action and practical implementation steps',
+    commercial: 'Compare options, highlight pros/cons, and help decision-making',
+    navigational: 'Direct to specific resources with clear instructions'
+  }
+  
+  return `${intentMap[intent]}\nAddress this by: ${intentStrategy[intent]}`
+}
+
+function getStyleGuidance(style: string, audience: string): string {
+  const styleMap: Record<string, string> = {
+    Professional: 'Use formal language, industry terminology, and authoritative tone. Cite sources frequently. Avoid casual expressions or humor.',
+    Conversational: 'Write as if speaking to a friend. Use "you" and "your." Include relatable examples. Keep sentences short and punchy.',
+    Technical: 'Use precise terminology. Include specifications, technical details, and in-depth explanations. Audience has domain expertise.',
+    Casual: 'Relaxed, friendly tone. Use contractions, colloquialisms. Focus on relatability over formality.',
+    Formal: 'Academic or business writing. No contractions. Objective, third-person perspective. Highly structured.',
+  }
+  
+  return styleMap[style] || styleMap.Professional
+}
+
+function formatResearchSources(sources: TavilySource[]): string {
+  return sources.slice(0, 10).map((source, index) => {
+    const excerpt = (source as any).content?.slice(0, 200) || 'No excerpt available'
+    const authority = source.url?.includes('.edu') ? '🎓 Academic' :
+                     source.url?.includes('.gov') ? '🏛️ Government' :
+                     '📰 Industry'
+    
+    return `${index + 1}. [${source.title}](${source.url}) ${authority}
+   Excerpt: ${excerpt}...
+   Relevance: ${(source as any).relevanceScore || (source as any).relevance_score || 'High'}`
+  }).join('\n\n')
+}
+
+function getEnhancedSectionGuidance(
+  sectionType: string, 
+  sectionTitle: string, 
+  keyword: string, 
+  targetWordCount: number
+): string {
+  const targetDensity = calculateTargetDensity(targetWordCount)
+  const semanticKeywords = generateSemanticKeywords(keyword)
+  
+  switch (sectionType) {
+    case 'introduction':
+      return `**SEO-Optimized Introduction Structure (300-400 words):**
+
+**Opening Hook (1-2 sentences):**
+- Use a compelling statistic, surprising fact, or provocative question about "${keyword}"
+- Example: "Did you know that [shocking stat] about ${keyword}?"
+- Alternative: "If you've ever wondered [common pain point], you're not alone."
+
+**Keyword Integration (First paragraph):**
+- Include primary keyword "${keyword}" naturally in first 50-100 words
+- Use in context: "Understanding ${keyword} is crucial because..."
+- Target density: ${targetDensity} occurrences total
+
+**Value Proposition (1-2 paragraphs):**
+- Clearly state what readers will learn
+- Address the search intent directly
+- Preview key topics covered
+- Include semantic keywords: ${semanticKeywords}
+
+**Credibility Signal (1 sentence):**
+- Add one strong citation early to establish authority
+- Format: "According to [authoritative source], [relevant insight]..."
+
+**Structure Preview (Final paragraph):**
+- Brief overview of article flow
+- Transition to first H2 section
+- Maintain momentum; don't over-explain structure
+
+**SEO Requirements:**
+☐ Primary keyword in first 100 words
+☐ Include 1-2 semantic keywords
+☐ At least 1 authoritative citation
+☐ Clear value proposition for reader
+☐ Hook that reduces bounce rate
+☐ Natural transition to next section`
+
+    case 'h2':
+      return `**SEO-Optimized H2 Section Structure (500-700 words):**
+
+**Opening (Topic Sentence + Context):**
+- Start with clear topic sentence containing keyword variation
+- Establish why this subtopic matters within the broader "${keyword}" context
+- Format: "${sectionTitle} is essential for [specific benefit] because [reason]."
+- Include one early citation to support the claim
+
+**Core Content (3-5 paragraphs):**
+
+**Paragraph 1 - Definition/Overview:**
+- Define or explain the core concept
+- Use semantic keywords naturally: ${semanticKeywords}
+- Include specific examples or data
+- Format: "At its core, [topic] means [definition]. For instance, [specific example]."
+
+**Paragraph 2-3 - Deep Dive:**
+- Provide detailed information with depth
+- Break complex ideas into digestible parts
+- Use "how it works" or "why it matters" approach
+- Include at least 2 citations supporting different points
+- Integrate statistics: "Research shows that [stat] according to [source]."
+
+**Paragraph 4 - Practical Application:**
+- Give actionable insights or real-world examples
+- Show how readers can apply this information
+- Use second-person: "You can achieve [result] by [action]."
+- Include case study or specific scenario
+
+**H3 Subsections (If needed):**
+- Break into 2-3 H3s if topic is complex
+- Each H3 should be 200-300 words
+- H3 titles should include long-tail variations
+
+**Closing (Transition):**
+- Brief summary of key takeaway (1 sentence)
+- Natural transition to next section
+- Format: "Now that you understand [this topic], let's explore [next topic]..."
+
+**SEO Requirements:**
+☐ Keyword or semantic variation in first sentence
+☐ Target density: ${targetDensity} total occurrences
+☐ 3-4 citations distributed throughout
+☐ At least 2 specific data points or statistics
+☐ 1-2 concrete examples or case studies
+☐ Proper H3 subsections if >600 words
+☐ Actionable insights included
+☐ Smooth transition to next section`
+
+    case 'h3':
+      return `**SEO-Optimized H3 Subsection Structure (300-500 words):**
+
+**Context Connection (1 sentence):**
+- Link this H3 directly to parent H2 topic
+- Format: "Within [parent H2 topic], ${sectionTitle} plays a crucial role in [specific aspect]."
+
+**Focused Content (2-4 paragraphs):**
+
+**Paragraph 1 - Specific Focus:**
+- Narrow down to the exact aspect this H3 covers
+- Use long-tail keyword variation in first 50 words
+- Provide immediate value
+
+**Paragraph 2-3 - Detailed Explanation:**
+- Go deep on this specific subtopic
+- Include 1-2 citations
+- Use examples specific to this narrow focus
+- Keep content tightly scoped (don't drift to related topics)
+
+**Paragraph 4 - Practical Takeaway:**
+- Actionable tip or insight
+- How this specific knowledge helps
+- Quick win or implementation advice
+
+**SEO Requirements:**
+☐ Long-tail keyword variation included
+☐ 1-2 targeted citations
+☐ Stays focused on H3 topic (no scope creep)
+☐ Connects to parent H2 naturally
+☐ At least 1 specific example
+☐ Practical application provided
+☐ Target density: ${targetDensity} occurrences`
+
+    case 'conclusion':
+      return `**SEO-Optimized Conclusion Structure (300-500 words):**
+
+**Summary Opening (1-2 paragraphs):**
+- Synthesize key insights from entire article
+- Restate primary keyword in context of value delivered
+- Format: "Understanding ${keyword} requires [key insight 1], [key insight 2], and [key insight 3]."
+- Don't just list topics; connect them thematically
+
+**Key Takeaways (1 paragraph with 3-5 points):**
+- Highlight most important actionable insights
+- Use brief, punchy statements
+- Format: "Remember: [takeaway 1]. [takeaway 2]. [takeaway 3]."
+- Each takeaway should be independently valuable
+
+**Future Outlook / Next Steps (1 paragraph):**
+- Where is this topic heading?
+- What should readers do next?
+- Call to action (soft or explicit)
+- Format: "As ${keyword} continues to evolve, [future trend]. To get started, [actionable next step]."
+
+**Final Memorable Statement (1 sentence):**
+- End with impact
+- Reinforce core message
+- Leave reader feeling informed and empowered
+- Example: "Master ${keyword}, and you'll [compelling outcome]."
+
+**SEO Requirements:**
+☐ Primary keyword appears 1-2 times naturally
+☐ Synthesizes article without repeating verbatim
+☐ Provides clear takeaways
+☐ Includes forward-looking insight
+☐ Actionable next steps provided
+☐ Ends on strong, memorable note
+☐ 1 citation if introducing new supporting data`
+
+    case 'faq':
+      return `**SEO-Optimized FAQ Structure (400-600 words):**
+
+**Section Introduction (1-2 sentences):**
+- Brief setup: "Here are answers to common questions about ${keyword}:"
+- Optional: Group questions thematically
+
+**Question Format (5-8 Q&A pairs):**
+
+**Question Optimization:**
+- Write as actual user queries (natural language)
+- Include long-tail keyword variations
+- Format as H3: ### What is the best way to [specific aspect of keyword]?
+- Mirror "People Also Ask" from Google if available
+- Use question words: Who, What, When, Where, Why, How
+
+**Answer Structure (Each 60-150 words):**
+
+**Sentence 1 - Direct Answer:**
+- Answer the question immediately (featured snippet optimization)
+- Be concise and definitive
+- Format: "The best way to [question topic] is [direct answer]."
+
+**Sentences 2-4 - Supporting Detail:**
+- Provide context or explanation
+- Include 1 citation if making specific claim
+- Add practical insight or example
+
+**Final Sentence - Actionable Tip:**
+- Quick takeaway or implementation advice
+- Links back to main article content when relevant
+
+**Question Selection Strategy:**
+- Cover different aspects: basics, how-to, comparison, troubleshooting, cost/time
+- Progress from beginner to advanced
+- Address objections or concerns
+- Fill content gaps from main article
+
+**SEO Requirements:**
+☐ 5-8 questions covering diverse subtopics
+☐ Questions written as natural search queries
+☐ Each answer 60-150 words
+☐ Direct answer in first sentence (snippet-ready)
+☐ 2-3 citations across all FAQs
+☐ At least 2 long-tail keyword variations
+☐ Practical advice in each answer`
+
+    default:
+      return `Generate comprehensive content for ${sectionTitle} following SEO best practices and including ${targetDensity} natural keyword occurrences.`
+  }
+}
 
 /**
  * Section structure matching database schema
@@ -458,57 +748,186 @@ async function generateSectionContent(
 }> {
   // Determine target word count based on section type
   const targetWordCount = getTargetWordCount(sectionInfo.type)
+  const targetDensity = calculateTargetDensity(targetWordCount)
+  const semanticKeywords = generateSemanticKeywords(keyword)
+  const intentSignals = getUserIntentSignals(keyword, sectionInfo.type)
+  const styleGuidance = getStyleGuidance(writingStyle, targetAudience)
   
-  // Construct comprehensive prompt with all user preferences (Performance Optimization)
-  const systemMessage = `You are an expert SEO content writer creating a section for a long-form article.
-Write engaging, informative content that naturally incorporates citations and optimizes for SEO.
-Use proper heading structure (H2, H3) and maintain a ${writingStyle.toLowerCase()} yet conversational tone.
-Target audience: ${targetAudience.toLowerCase()}
-${customInstructions ? `Additional instructions: ${customInstructions}` : ''}`
+  // Enhanced SEO-optimized system prompt
+  const systemMessage = `You are an elite SEO content strategist and expert writer specializing in high-ranking, user-focused content that satisfies both search engines and human readers.
 
-  // Format research sources for prompt
-  const researchSourcesText = researchSources
-    .slice(0, 10) // Use top 10 sources
-    .map((source, index) => {
-      return `${index + 1}. [${source.title}](${source.url})${source.excerpt ? `: ${source.excerpt.slice(0, 200)}` : ''}`
-    })
-    .join('\n')
+**Your Core Objectives:**
+1. Create content that ranks on page 1 for target keywords while providing genuine value
+2. Write naturally for humans first, optimize for search engines second
+3. Demonstrate expertise, experience, authority, and trustworthiness (E-E-A-T)
+4. Match user search intent precisely
+5. Integrate citations seamlessly for credibility
 
-  // Build user message with all context using optimized context manager and enhanced prompts
-  // NOTE: SERP analysis insights are not included (Story 4a-4 is optional and not implemented)
+**SEO Writing Principles:**
+- Use the primary keyword naturally in the first 100 words
+- Include semantic variations and related terms throughout (LSI keywords)
+- Write in active voice with clear, scannable sentences
+- Front-load important information (inverted pyramid style)
+- Use transition words for readability and flow
+- Include specific examples, data, and actionable insights
+- Optimize for featured snippets where applicable (concise definitions, lists, tables)
+- Write compelling meta-worthy content in opening paragraphs
+
+**Content Structure Requirements:**
+- Start each major section with a clear topic sentence containing relevant keywords
+- Use H2/H3 hierarchy properly (never skip levels)
+- Keep paragraphs 2-4 sentences for readability
+- Use bullet points/lists only when they enhance clarity (not by default)
+- Include relevant statistics within the first 200 words of sections
+- End sections with natural transitions to the next topic
+
+**Citation & Authority Building:**
+- Integrate citations naturally: "According to [Source]," or "Research from [Source] shows..."
+- Distribute citations evenly (not clustered at beginning/end)
+- Prioritize authoritative sources (.edu, .gov, industry leaders)
+- Use citations to support claims, not replace original analysis
+
+**Writing Style:** ${writingStyle}
+**Target Audience:** ${targetAudience}
+**Audience Knowledge Level:** Intermediate - understands basics but wants deeper insights
+${customInstructions ? `\n**Custom Requirements:** ${customInstructions}` : ''}
+
+**Forbidden Practices:**
+- Keyword stuffing or unnatural repetition
+- Generic fluff content without substance
+- Citation dumping at the end of sections
+- Over-formatting (excessive bold, lists where prose is better)
+- Clickbait or misleading information
+
+Generate content that ranks well, engages readers deeply, and establishes topical authority.`
+
+  // Format research sources with enhanced formatting
+  const researchSourcesText = formatResearchSources(researchSources)
+
+  // Enhanced section-specific guidance
+  const sectionGuidance = getEnhancedSectionGuidance(sectionInfo.type, sectionInfo.title, keyword, targetWordCount)
   
-  // Add section-specific guidance
-  const sectionGuidance = getSectionSpecificGuidance(sectionInfo.type, sectionInfo.title, keyword)
-  
+  // Build comprehensive user message with SEO optimization
   const userMessageParts = [
-    `Section: ${sectionInfo.title}`,
-    `Type: ${sectionInfo.type}`,
-    `Target Word Count: ${targetWordCount} words`,
+    `**CONTENT BRIEFING**`,
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
     '',
-    'Section-Specific Guidance:',
-    sectionGuidance,
+    `📌 **Section Details**`,
+    `Section Title: ${sectionInfo.title}`,
+    `Section Type: ${sectionInfo.type}`,
+    `Target Word Count: ${targetWordCount} words (±10% flexibility for quality)`,
+    `Section Position: ${1} of ${1}`,
     '',
-    'Research Sources:',
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+    '',
+    `🎯 **SEO STRATEGY & KEYWORD TARGETING**`,
+    '',
+    `**Primary Keyword:** "${keyword}"`,
+    `**Search Intent:** ${intentSignals.split('\n')[0]}`,
+    `**Competition Level:** Medium`,
+    '',
+    `**Keyword Integration Strategy:**`,
+    `- Target Density: ${targetDensity} occurrences (0.5-1.5% density)`,
+    `- First mention: Within first 100 words`,
+    `- H2/H3 usage: Include primary or semantic variation in heading`,
+    `- Natural placement: Prioritize readability over exact matches`,
+    '',
+    `**Semantic Keywords to Include:** ${semanticKeywords}`,
+    '',
+    `**User Intent Signals:**`,
+    intentSignals,
+    '',
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+    '',
+    `📚 **RESEARCH FOUNDATION**`,
+    '',
+    `**Primary Research Sources (${researchSources.length} sources):**`,
     researchSourcesText || 'No research sources available.',
     '',
-    'Keyword Focus:',
-    `- Primary keyword: ${keyword}`,
-    '- SEO Requirements: Include keyword naturally, avoid keyword stuffing',
+    `**Citation Requirements:**`,
+    `- Minimum citations: ${Math.ceil(targetWordCount / 200)} (distributed evenly)`,
+    `- Citation style: "According to [Source Name], ..." or "Research from [Source] indicates..."`,
+    `- Source diversity: Use at least ${Math.min(4, researchSources.length)} different sources`,
+    `- Authority priority: Favor .edu, .gov, industry publications over generic blogs`,
     '',
-    'Context from Previous Sections:',
-    optimizedContext || 'This is the first section.',
+    `**Data Integration:**`,
+    `- Include at least 1 specific statistic or data point`,
+    `- Use recent data (prefer 2024-2026 sources)`,
+    `- Cite numerical claims precisely`,
     '',
-    `Writing Style: ${writingStyle}`,
-    `Target Audience: ${targetAudience}`,
-    ...(customInstructions ? ['', 'Custom Instructions:', customInstructions] : []),
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
     '',
-    'Quality Requirements:',
-    '- Include 2-4 natural citations from research sources',
-    '- Use proper markdown formatting (H2/H3 headings)',
-    '- Maintain coherence with previous sections',
-    '- Write in complete, well-structured sentences',
+    `📖 **CONTENT CONTEXT & CONTINUITY**`,
     '',
-    `Generate ${targetWordCount} words of engaging, informative content for this section.`
+    optimizedContext ? 
+    `**Previously Covered:**\n${optimizedContext}\n\n**Continuity Requirements:**\n- Reference previous concepts when relevant: "As discussed in [previous section]..."\n- Avoid repeating information already covered\n- Build progressively on established knowledge\n- Use transition sentences to connect this section to previous content` :
+    `**This is the ${sectionInfo.type === 'introduction' ? 'INTRODUCTION' : 'FIRST'} SECTION**\n\n**Opening Requirements:**\n- Hook readers immediately (surprising fact, compelling question, bold statement)\n- Establish relevance: Why does this topic matter NOW?\n- Preview value: What will readers gain?\n- Include primary keyword in first paragraph\n- Set expectations for article flow`,
+    '',
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+    '',
+    `✍️ **SECTION-SPECIFIC REQUIREMENTS**`,
+    '',
+    sectionGuidance,
+    '',
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+    '',
+    `🎨 **WRITING STYLE & AUDIENCE**`,
+    '',
+    `**Writing Style:** ${writingStyle}`,
+    `**Target Audience:** ${targetAudience}`,
+    `**Reading Level:** Grade 10-12 (accessible but informed)`,
+    `**Tone:** Authoritative yet approachable`,
+    `**Voice:** Active voice, second-person (you/your) for engagement`,
+    '',
+    `**Style Execution:**`,
+    styleGuidance,
+    '',
+    ...(customInstructions ? [`**CUSTOM INSTRUCTIONS:**\n${customInstructions}\n`] : []),
+    '',
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+    '',
+    `✅ **QUALITY CHECKLIST**`,
+    '',
+    `**SEO Optimization:**`,
+    `☐ Primary keyword appears ${targetDensity} times naturally`,
+    `☐ Keyword in first 100 words`,
+    `☐ Semantic keywords integrated throughout`,
+    `☐ Heading includes keyword or variation`,
+    `☐ Content matches search intent for "${keyword}"`,
+    '',
+    `**Content Quality:**`,
+    `☐ Word count: ${targetWordCount - 50} to ${targetWordCount + 50} words`,
+    `☐ ${Math.ceil(targetWordCount / 200)} citations distributed evenly`,
+    `☐ At least 1 specific statistic or data point`,
+    `☐ Concrete examples or case studies included`,
+    `☐ Actionable insights provided (not just information)`,
+    `☐ No generic filler content`,
+    '',
+    `**Readability:**`,
+    `☐ Paragraphs are 2-4 sentences`,
+    `☐ Proper H2/H3 markdown formatting`,
+    `☐ Transition words between paragraphs`,
+    `☐ Active voice predominates`,
+    `☐ Scannable structure (easy to skim)`,
+    '',
+    `**E-E-A-T Signals:**`,
+    `☐ Demonstrates expertise through specific knowledge`,
+    `☐ Shows experience with real-world examples`,
+    `☐ Cites authoritative sources`,
+    `☐ Provides trustworthy, accurate information`,
+    '',
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+    '',
+    `🚀 **GENERATE CONTENT NOW**`,
+    '',
+    `Create ${targetWordCount} words of comprehensive, SEO-optimized content that:`,
+    `1. Ranks for "${keyword}" while genuinely helping readers`,
+    `2. Satisfies the ${intentSignals.split('\n')[0]} search intent completely`,
+    `3. Establishes topical authority through depth and citations`,
+    `4. Engages ${targetAudience} with ${writingStyle.toLowerCase()} writing`,
+    `5. Integrates seamlessly with previous content`,
+    '',
+    `**Output Format:** Pure markdown with proper heading hierarchy (start with ## for H2 or ### for H3)`
   ]
 
   const userMessage = userMessageParts.join('\n')
