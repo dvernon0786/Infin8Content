@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { validateSupabaseEnv } from "@/lib/supabase/env";
 import { createServerClient } from "@supabase/ssr";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
 import { getPaymentAccessStatus, checkGracePeriodExpired } from "@/lib/utils/payment-status";
 import { sendSuspensionEmail } from "@/lib/services/payment-notifications";
@@ -107,8 +108,12 @@ export async function middleware(request: NextRequest) {
 
   // Check payment status for protected routes (except payment-related routes)
   if (!isPaymentRoute && userRecord.org_id) {
+    // Use service role client to read organization payment status (bypasses RLS)
+    // This is necessary because RLS may block users from reading their own organization data
+    const adminSupabase = createServiceRoleClient();
+    
     // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-    const { data: org } = await (supabase as any)
+    const { data: org } = await (adminSupabase as any)
       .from('organizations')
       .select('*')
       .eq('id', userRecord.org_id)
@@ -126,7 +131,7 @@ export async function middleware(request: NextRequest) {
           
           if (!wasAlreadySuspended) {
             // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-            const { error: updateError } = await (supabase as any)
+            const { error: updateError } = await (adminSupabase as any)
               .from('organizations')
               .update({
                 payment_status: 'suspended',
@@ -145,7 +150,7 @@ export async function middleware(request: NextRequest) {
               // Send suspension email for this edge case (non-blocking)
               try {
                 // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-                const { data: user } = await (supabase as any)
+                const { data: user } = await (adminSupabase as any)
                   .from('users')
                   .select('email')
                   .eq('id', userRecord.id)
@@ -193,7 +198,7 @@ export async function middleware(request: NextRequest) {
           // Only update if not already suspended (prevents duplicate updates and emails)
           if (!wasAlreadySuspended) {
             // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-            const { error: updateError } = await (supabase as any)
+            const { error: updateError } = await (adminSupabase as any)
               .from('organizations')
               .update({
                 payment_status: 'suspended',
@@ -216,7 +221,7 @@ export async function middleware(request: NextRequest) {
               try {
                 // Query user record to get email
                 // Note: users table doesn't have name column, userName will be undefined
-                const { data: user, error: userQueryError } = await supabase
+                const { data: user, error: userQueryError } = await adminSupabase
                   .from('users')
                   .select('email')
                   .eq('id', userRecord.id)
@@ -233,7 +238,7 @@ export async function middleware(request: NextRequest) {
                   // Verify the update succeeded by checking suspended_at was actually set
                   // This provides additional idempotency protection
                   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-                  const { data: updatedOrg } = await (supabase as any)
+                  const { data: updatedOrg } = await (adminSupabase as any)
                     .from('organizations')
                     .select('suspended_at')
                     .eq('id', userRecord.org_id)

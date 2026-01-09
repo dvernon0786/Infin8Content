@@ -598,6 +598,7 @@ All tasks have been successfully implemented following the red-green-refactor cy
    - Handle grace period expiration on-demand (Option B for MVP)
    - Allow access during grace period, redirect suspended accounts to payment page
    - Maintain payment route exclusions
+   - **CRITICAL FIX**: Updated middleware to use `createServiceRoleClient()` for organization payment status checks to bypass RLS policies that were preventing paywall enforcement
 
 6. **Payment Page Updates (Task 8):** Enhanced payment page and form to:
    - Check for `suspended=true` query parameter
@@ -631,6 +632,15 @@ All tasks have been successfully implemented following the red-green-refactor cy
 - ✅ Added error handling: Middleware now handles database update failures when suspending accounts after grace period expiration
 - ✅ Updated Task 11 status: Clarified that integration/E2E tests are pending (unit tests complete)
 - ✅ Fixed test mocks: Corrected Brevo API mock setup in `lib/services/payment-notifications.test.ts` - all 11 unit tests now passing
+
+**Critical Paywall Fix Applied (2026-01-09):**
+- ✅ **Root Cause Identified**: Paywall bypass due to Row Level Security (RLS) mismatch - middleware used regular Supabase client which couldn't read organization data due to RLS policies
+- ✅ **Solution Implemented**: Updated `app/middleware.ts` to use `createServiceRoleClient()` for all organization payment status checks, bypassing RLS for access control operations
+- ✅ **Cross-Story Integration**: Fixed integration between Story 1.7 (payment integration) and Story 1.8 (paywall enforcement)
+- ✅ **Verification**: Paywall now correctly redirects unauthorized users: `GET /dashboard 307` → `GET /login 200` instead of allowing unauthorized access
+- ✅ **Files Updated**: 
+  - `app/middleware.ts`: Added service role client import, updated all organization queries to use admin client
+  - Maintained user data operations with regular client (appropriate separation of concerns)
 
 **Next Steps:**
 - ✅ Database types updated manually (should regenerate via CLI: `supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts`)

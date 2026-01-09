@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { validateSupabaseEnv } from '@/lib/supabase/env'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
@@ -64,9 +64,9 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create organization
-    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-    const { data: organization, error: orgError } = await (supabase as any)
+    // Create organization using service role client to bypass RLS
+    const adminSupabase = createServiceRoleClient()
+    const { data: organization, error: orgError } = await (adminSupabase as any)
       .from('organizations')
       .insert({
         name,
@@ -96,9 +96,8 @@ export async function POST(request: Request) {
       )
     }
 
-    // Update user record: link to organization and ensure role is 'owner'
-    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-    const { error: updateError } = await (supabase as any)
+    // Update user record: link to organization and ensure role is 'owner' using service role client
+    const { error: updateError } = await (adminSupabase as any)
       .from('users')
       .update({
         org_id: organization.id,
@@ -108,7 +107,7 @@ export async function POST(request: Request) {
 
     if (updateError) {
       // Rollback: delete organization if user update fails
-      await (supabase as any).from('organizations').delete().eq('id', organization.id)
+      await (adminSupabase as any).from('organizations').delete().eq('id', organization.id)
       
       console.error('Failed to link user to organization:', updateError)
       return NextResponse.json(
