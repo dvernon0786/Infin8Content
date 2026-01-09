@@ -8,11 +8,24 @@ import { getPaymentAccessStatus, checkGracePeriodExpired } from "@/lib/utils/pay
 import { sendSuspensionEmail } from "@/lib/services/payment-notifications";
 
 export async function middleware(request: NextRequest) {
+  // Add comprehensive logging for debugging paywall issues
+  const requestId = Math.random().toString(36).substring(7)
+  const timestamp = new Date().toISOString()
+  const pathname = request.nextUrl.pathname
+  
+  console.log(`[MIDDLEWARE-${requestId}] ${timestamp} - Processing request: ${pathname}`, {
+    method: request.method,
+    userAgent: request.headers.get('user-agent'),
+    cookies: request.cookies.getAll().map(c => c.name)
+  })
+
   // Validate environment variables on every request
   // This ensures env vars are present and fails fast if missing
   try {
     validateSupabaseEnv();
+    console.log(`[MIDDLEWARE-${requestId}] Environment validation passed`)
   } catch (error) {
+    console.error(`[MIDDLEWARE-${requestId}] Environment validation failed:`, error)
     // If validation fails, return error response
     // This prevents the app from running with missing configuration
     return NextResponse.json(
@@ -42,13 +55,25 @@ export async function middleware(request: NextRequest) {
   // Inngest webhook endpoint - bypass authentication (Inngest handles its own auth)
   const isInngestWebhook = request.nextUrl.pathname.startsWith('/api/inngest');
 
+  console.log(`[MIDDLEWARE-${requestId}] Route classification:`, {
+    pathname,
+    isPublicRoute,
+    isInngestWebhook
+  })
+
   if (isPublicRoute || isInngestWebhook) {
+    console.log(`[MIDDLEWARE-${requestId}] Allowing access to public/webhook route`)
     return response;
   }
 
   // Payment-related routes that don't require active payment status
   const paymentRoutes = ['/payment', '/create-organization', '/suspended'];
   const isPaymentRoute = paymentRoutes.some(route => request.nextUrl.pathname.startsWith(route));
+
+  console.log(`[MIDDLEWARE-${requestId}] Payment route classification:`, {
+    pathname,
+    isPaymentRoute
+  })
 
   // Check authentication and OTP verification for protected routes
   // Create Supabase client for middleware (Edge runtime compatible)
@@ -74,7 +99,16 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user }, error } = await supabase.auth.getUser();
 
+  console.log(`[MIDDLEWARE-${requestId}] Authentication check:`, {
+    hasUser: !!user,
+    hasError: !!error,
+    userId: user?.id,
+    userEmail: user?.email,
+    authError: error?.message
+  })
+
   if (error || !user) {
+    console.log(`[MIDDLEWARE-${requestId}] Authentication failed, redirecting to login`)
     // User not authenticated or session expired - redirect to login
     // Supabase automatically handles JWT expiration (24 hours)
     // When getUser() returns null/error, session is expired
@@ -91,13 +125,22 @@ export async function middleware(request: NextRequest) {
   // Check OTP verification status by querying users table
   // Note: We check the users table because OTP verification is stored there
   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-  const { data: userRecord } = await (supabase as any)
+  const { data: userRecord, error: userRecordError } = await (supabase as any)
     .from('users')
     .select('id, otp_verified, org_id')
     .eq('auth_user_id', user.id)
     .single();
 
+  console.log(`[MIDDLEWARE-${requestId}] User record check:`, {
+    hasUserRecord: !!userRecord,
+    userRecordError: userRecordError?.message,
+    userId: userRecord?.id,
+    otpVerified: userRecord?.otp_verified,
+    orgId: userRecord?.org_id
+  })
+
   if (!userRecord || !userRecord.otp_verified) {
+    console.log(`[MIDDLEWARE-${requestId}] OTP verification failed, redirecting to verify-email`)
     // User authenticated but OTP not verified - redirect to verification page
     const verifyUrl = new URL('/verify-email', request.url);
     if (user.email) {
@@ -108,16 +151,32 @@ export async function middleware(request: NextRequest) {
 
   // Check payment status for protected routes (except payment-related routes)
   if (!isPaymentRoute && userRecord.org_id) {
+    console.log(`[MIDDLEWARE-${requestId}] Starting payment status check for org: ${userRecord.org_id}`)
+    
     // Use service role client to read organization payment status (bypasses RLS)
     // This is necessary because RLS may block users from reading their own organization data
     const adminSupabase = createServiceRoleClient();
     
+    console.log(`[MIDDLEWARE-${requestId}] Created service role client, querying organization`)
+    
     // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-    const { data: org } = await (adminSupabase as any)
+    const { data: org, error: orgError } = await (adminSupabase as any)
       .from('organizations')
       .select('*')
       .eq('id', userRecord.org_id)
       .single();
+
+    console.log(`[MIDDLEWARE-${requestId}] Organization query result:`, {
+      hasOrg: !!org,
+      orgError: orgError?.message,
+      orgId: org?.id,
+      orgName: org?.name,
+      paymentStatus: org?.payment_status,
+      plan: org?.plan,
+      gracePeriodStarted: org?.grace_period_started_at,
+      suspendedAt: org?.suspended_at,
+      createdAt: org?.created_at
+    })
 
     if (org) {
       // Check if grace period expired for past_due accounts
@@ -325,22 +384,39 @@ export async function middleware(request: NextRequest) {
       // Get payment access status using utility function
       const accessStatus = getPaymentAccessStatus(org);
 
+      console.log(`[MIDDLEWARE-${requestId}] Payment access status determined:`, {
+        accessStatus,
+        originalPaymentStatus: org.payment_status,
+        pathname,
+        isPaymentRoute
+      })
+
       if (accessStatus === 'suspended') {
+        console.log(`[MIDDLEWARE-${requestId}] Access denied - account suspended, redirecting to /suspended`)
         // Account suspended - redirect to suspension page (preserve original destination for post-reactivation redirect)
         const suspendedUrl = new URL('/suspended', request.url);
         suspendedUrl.searchParams.set('redirect', request.nextUrl.pathname);
         return NextResponse.redirect(suspendedUrl);
       } else if (accessStatus === 'pending_payment') {
+        console.log(`[MIDDLEWARE-${requestId}] Access denied - payment pending, redirecting to /payment`)
         // Payment not confirmed - redirect to payment page
         return NextResponse.redirect(new URL('/payment', request.url));
       } else if (accessStatus === 'grace_period') {
+        console.log(`[MIDDLEWARE-${requestId}] Access granted - grace period active`)
         // Grace period active - allow access (future: show banner)
         // For now, allow access during grace period
+      } else {
+        console.log(`[MIDDLEWARE-${requestId}] Access granted - payment active`)
       }
       // accessStatus === 'active' - allow access (continue below)
+    } else {
+      console.log(`[MIDDLEWARE-${requestId}] No organization found or payment route, allowing access`)
     }
+  } else {
+    console.log(`[MIDDLEWARE-${requestId}] Payment route check bypassed or no org_id, allowing access`)
   }
 
+  console.log(`[MIDDLEWARE-${requestId}] Final decision - allowing access to: ${pathname}`)
   // User is authenticated, email is verified, and payment is active (or no org) - allow access
   return response;
 }
