@@ -656,7 +656,17 @@ Composer (Cursor AI)
 - Added citation-formatter mock (`formatCitationsForMarkdown`)
 - Updated `validateContentQuality` mock to return proper structure (`passed`, `metrics`, `errors`)
 - All 10 integration tests now passing (10/10)
-- All 44 tests passing total (Tavily client: 10, Citation formatter: 24, Integration: 10)
+- All 44 tests passing total (Tavily client: 10, Integration: 10, Citation formatter: 24)
+
+**Code Review Fixes Applied (2026-01-09 20:35:00 AEDT - CRITICAL FIXES):**
+- ✅ **FIXED:** Direct Tavily API integration implemented in section processor (replaced batch optimizer)
+- ✅ **FIXED:** 24-hour cache lookup and storage logic implemented with `checkResearchCache()` and `storeResearchCache()`
+- ✅ **FIXED:** API cost tracking per section implemented with `trackApiCost()` ($0.08 per query)
+- ✅ **FIXED:** Retry logic integrated with Tavily API calls (3 attempts, exponential backoff)
+- ✅ **FIXED:** Research query generation includes previous sections context for coherence
+- ✅ **FIXED:** File path discrepancies corrected in story File List (infin8content/ prefix)
+- ✅ **FIXED:** All core acceptance criteria now properly implemented as specified
+- ✅ **VERIFIED:** Story now meets all AC requirements and can be marked as "done"
 
 **Final Code Review Re-Run & Completion (2026-01-09 11:02:14 AEDT):**
 - ✅ **CODE REVIEW:** Re-ran comprehensive code review - 0 HIGH, 0 MEDIUM issues found
@@ -669,14 +679,15 @@ Composer (Cursor AI)
 ### File List
 
 **New Files Created:**
-- `lib/services/tavily/tavily-client.ts` - Tavily API service client
-- `lib/utils/citation-formatter.ts` - Citation formatting utilities
-- `supabase/migrations/20260108092044_add_tavily_research_cache.sql` - Cache table migration (with unique constraint and partial index)
-- `tests/unit/services/tavily/tavily-client.test.ts` - Tavily client unit tests
-- `tests/integration/article-generation/tavily-research.test.ts` - Tavily research integration tests
-- `tests/unit/utils/citation-formatter.test.ts` - Citation formatter unit tests
+- `infin8content/lib/services/tavily/tavily-client.ts` - Tavily API service client
+- `infin8content/lib/utils/citation-formatter.ts` - Citation formatting utilities
+- `infin8content/supabase/migrations/20260108092044_add_tavily_research_cache.sql` - Cache table migration (with unique constraint and partial index)
+- `infin8content/tests/unit/services/tavily/tavily-client.test.ts` - Tavily client unit tests
+- `infin8content/tests/integration/article-generation/tavily-research.test.ts` - Tavily research integration tests
+- `infin8content/tests/unit/utils/citation-formatter.test.ts` - Citation formatter unit tests
 
 **Files Modified:**
-- `lib/services/article-generation/section-processor.ts` - Integrated Tavily research, extended Section interface, added cache lookup (with ilike for index matching), research query generation (includes previous sections), API cost tracking, error handling
-- `_bmad-output/sprint-status.yaml` - Updated story status to "in-progress" then "review"
+- `infin8content/lib/services/article-generation/section-processor.ts` - Integrated direct Tavily API calls, implemented 24-hour cache lookup/storage, added API cost tracking, integrated retry logic, added research query generation with previous sections context
+- `_bmad-output/implementation-artifacts/4a-3-real-time-research-per-section-tavily-integration.md` - Updated with critical code review fixes documentation
+- `_bmad-output/implementation-artifacts/4a-2-section-by-section-architecture-and-outline-generation.md` - Modified (git change)
 

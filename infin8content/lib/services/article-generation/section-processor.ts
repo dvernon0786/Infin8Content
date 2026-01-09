@@ -9,19 +9,13 @@ import { summarizeSections, fitInContextWindow, estimateTokens } from '@/lib/uti
 import { generateContent, type OpenRouterMessage } from '@/lib/services/openrouter/openrouter-client'
 import { validateContentQuality, countCitations } from '@/lib/utils/content-quality'
 import { formatCitationsForMarkdown } from '@/lib/utils/citation-formatter'
-import { 
-  performBatchResearch, 
-  getSectionResearchSources, 
-  clearResearchCache,
-  type ArticleResearchCache 
-} from './research-optimizer'
+import { researchQuery, type TavilySource } from '@/lib/services/tavily/tavily-client'
 import { 
   buildOptimizedContext, 
   batchUpdateSections, 
   clearContextCache,
   getContextStats 
 } from './context-manager'
-import { type TavilySource } from '@/lib/services/tavily/tavily-client'
 
 // Enhanced SEO Helper Functions
 function calculateTargetDensity(wordCount: number): number {
@@ -43,6 +37,121 @@ function generateSemanticKeywords(primaryKeyword: string): string {
     `${primaryKeyword} methods`
   ]
   return keywords.slice(0, 5).join(', ')
+}
+
+// Story 4a.3 Helper Functions
+function generateResearchQuery(sectionTitle: string, keyword: string, previousSections: Section[]): string {
+  // Extract key terms from previous sections for context
+  const previousContext = previousSections
+    .slice(-2) // Use last 2 sections for context
+    .map(section => section.title)
+    .join(' ')
+  
+  // Build comprehensive research query
+  const baseQuery = `${sectionTitle} ${keyword}`
+  const contextQuery = previousContext ? ` ${previousContext}` : ''
+  
+  // Add current year for fresh results
+  const fullQuery = `${baseQuery}${contextQuery} 2024 2025 latest best practices`
+  
+  // Keep query concise (50-100 characters max for API efficiency)
+  return fullQuery.length > 100 ? fullQuery.substring(0, 97) + '...' : fullQuery
+}
+
+function normalizeQuery(query: string): string {
+  return query.toLowerCase().trim().replace(/\s+/g, ' ')
+}
+
+async function checkResearchCache(organizationId: string, normalizedQuery: string): Promise<TavilySource[] | null> {
+  const supabase = createServiceRoleClient()
+  
+  try {
+    const { data, error } = await supabase
+      .from('tavily_research_cache' as any)
+      .select('research_results')
+      .eq('organization_id', organizationId)
+      .ilike('research_query', normalizedQuery)
+      .gt('cached_until', new Date().toISOString())
+      .single()
+    
+    if (error || !data) {
+      return null
+    }
+    
+    // Parse cached results and convert to TavilySource format
+    const cachedResults = (data as any).research_results as any
+    return (cachedResults.results || []).map((result: any) => ({
+      title: result.title || '',
+      url: result.url || '',
+      excerpt: result.content || '',
+      published_date: result.published_date || null,
+      author: result.author || null,
+      relevance_score: result.score || 0
+    }))
+  } catch (error) {
+    console.warn(`[SectionProcessor] Cache lookup failed: ${error instanceof Error ? error.message : String(error)}`)
+    return null
+  }
+}
+
+async function storeResearchCache(organizationId: string, normalizedQuery: string, sources: TavilySource[]): Promise<void> {
+  const supabase = createServiceRoleClient()
+  
+  try {
+    // Calculate cache expiry (24 hours from now)
+    const cachedUntil = new Date()
+    cachedUntil.setHours(cachedUntil.getHours() + 24)
+    
+    // Prepare cache data in Tavily API response format
+    const cacheData = {
+      results: sources.map(source => ({
+        title: source.title,
+        url: source.url,
+        content: source.excerpt,
+        published_date: source.published_date,
+        author: source.author,
+        score: source.relevance_score
+      }))
+    }
+    
+    // Upsert to cache (handle existing entries)
+    await supabase
+      .from('tavily_research_cache' as any)
+      .upsert({
+        organization_id: organizationId,
+        research_query: normalizedQuery,
+        research_results: cacheData,
+        cached_until: cachedUntil.toISOString(),
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'organization_id,research_query'
+      })
+    
+    console.log(`[SectionProcessor] Cached research results for query: "${normalizedQuery}"`)
+  } catch (error) {
+    // Cache storage failure shouldn't block article generation
+    console.warn(`[SectionProcessor] Cache storage failed: ${error instanceof Error ? error.message : String(error)}`)
+  }
+}
+
+async function trackApiCost(organizationId: string, service: string, operation: string, cost: number): Promise<void> {
+  const supabase = createServiceRoleClient()
+  
+  try {
+    await supabase
+      .from('api_costs' as any)
+      .insert({
+        organization_id: organizationId,
+        service: service,
+        operation: operation,
+        cost: cost
+      })
+    
+    console.log(`[SectionProcessor] Tracked API cost: ${service} ${operation} $${cost.toFixed(2)}`)
+  } catch (error) {
+    // Cost tracking failure shouldn't block article generation
+    console.warn(`[SectionProcessor] Cost tracking failed: ${error instanceof Error ? error.message : String(error)}`)
+  }
 }
 
 function getUserIntentSignals(keyword: string, sectionType: string): string {
@@ -395,29 +504,57 @@ export async function processSection(
     getTargetWordCount(sectionInfo.type)
   )
 
-  // Perform research using batch optimizer (Story 4a-12 Performance Optimization)
+  // Perform Tavily research with cache and cost tracking (Story 4a.3)
   let researchSources: TavilySource[] = []
   let researchQueryUsed = ''
   let researchFailed = false
 
   try {
-    // Get section-specific research from batch optimizer
-    researchSources = getSectionResearchSources(articleId, sectionInfo.title)
-    researchQueryUsed = `Batch research for ${sectionInfo.title}`
+    // Generate research query from section topic + keyword + previous sections
+    researchQueryUsed = generateResearchQuery(sectionInfo.title, article.keyword as string, previousSections)
+    
+    // Normalize query for cache lookup
+    const normalizedQuery = normalizeQuery(researchQueryUsed)
+    
+    // Check cache first (24-hour TTL)
+    const cachedResults = await checkResearchCache(organizationId, normalizedQuery)
+    
+    if (cachedResults) {
+      researchSources = cachedResults
+      console.log(`[SectionProcessor] Using cached research for query: "${researchQueryUsed}" (${researchSources.length} sources)`)
+    } else {
+      // Call Tavily API with retry logic
+      console.log(`[SectionProcessor] Performing fresh Tavily research for query: "${researchQueryUsed}"`)
+      researchSources = await researchQuery(researchQueryUsed, {
+        maxRetries: 3,
+        retryDelay: 1000,
+        maxResults: 20,
+        maxSources: 10
+      })
+      
+      // Store results in cache (24-hour TTL)
+      await storeResearchCache(organizationId, normalizedQuery, researchSources)
+      
+      // Track API cost ($0.08 per query)
+      await trackApiCost(organizationId, 'tavily', 'section_research', 0.08)
+      
+      console.log(`[SectionProcessor] Fresh research completed: ${researchSources.length} sources cached and cost tracked`)
+    }
     
     if (researchSources.length === 0) {
       console.warn(`[SectionProcessor] No research sources found for section: ${sectionInfo.title}`)
       researchFailed = true
-    } else {
-      console.log(`[SectionProcessor] Using ${researchSources.length} cached sources for section: ${sectionInfo.title}`)
     }
   } catch (error) {
-    // Graceful degradation: Continue without research
-    console.warn(`[SectionProcessor] Research retrieval failed: ${error instanceof Error ? error.message : String(error)}`)
+    // Graceful degradation: Continue without fresh research
+    console.warn(`[SectionProcessor] Research failed: ${error instanceof Error ? error.message : String(error)}`)
     researchFailed = true
     
     // Update article error_details with research failure
     await updateArticleErrorDetails(articleId, sectionIndex, researchQueryUsed, error)
+    
+    // Log warning for partial research failure
+    console.warn(`Section generated without fresh Tavily research: ${sectionInfo.title}`)
   }
 
   // Generate section content using OpenRouter API (Story 4a-5)
