@@ -4,6 +4,9 @@ import { generateOutline } from '@/lib/services/article-generation/outline-gener
 import { processSection } from '@/lib/services/article-generation/section-processor'
 import { analyzeSerpStructure } from '@/lib/services/dataforseo/serp-analysis'
 import { createProgressTracker } from '@/lib/services/progress-tracking'
+import { performBatchResearch, clearResearchCache } from '@/lib/services/article-generation/research-optimizer'
+import { clearContextCache } from '@/lib/services/article-generation/context-manager'
+import { performanceMonitor } from '@/lib/services/article-generation/performance-monitor'
 import type { Section } from '@/lib/services/article-generation/section-processor'
 
 /**
@@ -119,6 +122,9 @@ export const generateArticle = inngest.createFunction(
 
         console.log(`[Inngest] Step: load-article - Success: Article ${articleId} loaded, status updated to generating`)
 
+        // Start performance monitoring after article is loaded
+        performanceMonitor.startMonitoring(articleId, articleData.org_id, articleData.keyword)
+
         // Initialize progress tracking (will be updated after outline generation)
         const progressTracker = createProgressTracker(articleId, articleData.org_id, 1) // Temporary, will be updated after outline
         await progressTracker.initialize('Starting article generation...')
@@ -198,7 +204,32 @@ export const generateArticle = inngest.createFunction(
         }
       })
 
-      // Step 4: Generate outline
+      // Step 4: Perform batch research optimization (Performance Story 4a-12)
+      const batchResearch = await step.run('batch-research', async () => {
+        console.log(`[Inngest] Step: batch-research - Performing comprehensive research for article ${articleId}`)
+        
+        try {
+          // Perform batch research once for the entire article
+          const researchCache = await performBatchResearch(
+            articleId,
+            article.keyword,
+            outline,
+            article.org_id
+          )
+          
+          console.log(`[Inngest] Step: batch-research - Success: Research completed with ${researchCache.comprehensiveSources.length} sources`)
+          return researchCache
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error)
+          console.error(`[Inngest] Step: batch-research - ERROR: ${errorMsg}`)
+          
+          // Don't fail the entire generation - continue without research
+          console.warn(`[Inngest] Step: batch-research - Continuing generation without research due to error`)
+          return null
+        }
+      })
+
+      // Step 5: Generate outline
       const outline = await step.run('generate-outline', async () => {
         console.log(`[Inngest] Step: generate-outline - Generating outline for keyword: ${article.keyword}`)
         const startTime = Date.now()
@@ -256,9 +287,9 @@ export const generateArticle = inngest.createFunction(
         }
       })
 
-      // Step 5: Process sections sequentially with retry logic
+      // Step 6: Process sections with parallel H2 processing (Performance Optimization)
       const sectionStats = await step.run('process-sections', async () => {
-        console.log(`[Inngest] Step: process-sections - Starting section processing for article ${articleId}`)
+        console.log(`[Inngest] Step: process-sections - Starting optimized section processing for article ${articleId}`)
         
         try {
           const { data: articleData, error: fetchError } = await supabase
@@ -279,29 +310,28 @@ export const generateArticle = inngest.createFunction(
 
           const outline = article.outline as any
           const totalSections = 1 + outline.h2_sections.length + 1 + (outline.faq?.included ? 1 : 0)
-          console.log(`[Inngest] Step: process-sections - Processing ${totalSections} sections total`)
+          console.log(`[Inngest] Step: process-sections - Processing ${totalSections} sections total with parallel H2 processing`)
 
           let currentSectionNumber = 1
           let totalWordCount = 0
           let totalCitations = 0
           let totalApiCost = 0
 
-          // Process Introduction (index 0)
-          console.log(`[Inngest] Step: process-sections - Processing Introduction (index 0)`)
+          // Phase 1: Process Introduction (sequential - must come first)
+          console.log(`[Inngest] Step: process-sections - Phase 1: Processing Introduction (index 0)`)
           await (article as any).progressTracker?.updateWritingSection(currentSectionNumber, 'Writing Introduction...')
           
           try {
             const sectionResult = await retryWithBackoff(() => processSection(articleId, 0, outline)) as Section | null
             
-            // Update metrics from section result
             if (sectionResult) {
               totalWordCount += sectionResult.word_count || 0
               totalCitations += sectionResult.citations_included || 0
-              totalApiCost += 0 // API cost not tracked at section level
+              totalApiCost += 0
             }
             
             await (article as any).progressTracker?.completeSection(currentSectionNumber, sectionResult?.word_count || 0, sectionResult?.citations_included || 0, 0)
-            console.log(`[Inngest] Step: process-sections - Introduction completed`)
+            console.log(`[Inngest] Step: process-sections - Phase 1: Introduction completed`)
           } catch (error) {
             const errorMsg = error instanceof Error ? error.message : String(error)
             await (article as any).progressTracker?.fail(`Introduction failed: ${errorMsg}`)
@@ -309,109 +339,206 @@ export const generateArticle = inngest.createFunction(
           }
           currentSectionNumber++
 
-          // Process H2 sections sequentially (one at a time)
-          for (let h2Index = 1; h2Index <= outline.h2_sections.length; h2Index++) {
-            console.log(`[Inngest] Step: process-sections - Processing H2 section ${h2Index}/${outline.h2_sections.length}`)
+          // Phase 2: Process all H2 sections in parallel (biggest time savings)
+          console.log(`[Inngest] Step: process-sections - Phase 2: Processing ${outline.h2_sections.length} H2 sections in parallel`)
+          const h2ProcessingPromises = outline.h2_sections.map(async (h2Section: any, h2Index: number) => {
+            const sectionIndex = h2Index + 1 // H2 sections start at index 1
             
             // Update progress for this H2 section
-            await (article as any).progressTracker?.updateWritingSection(currentSectionNumber, `Writing Section ${h2Index}: ${outline.h2_sections[h2Index - 1]?.title || 'H2 Section'}...`)
+            await (article as any).progressTracker?.updateWritingSection(
+              currentSectionNumber + h2Index, 
+              `Writing Section ${h2Index + 1}: ${h2Section?.title || 'H2 Section'}...`
+            )
             
             try {
-              const sectionResult = await retryWithBackoff(() => processSection(articleId, h2Index, outline)) as Section | null
+              const sectionResult = await retryWithBackoff(() => processSection(articleId, sectionIndex, outline)) as Section | null
               
-              // Update metrics from section result
-              if (sectionResult) {
-                totalWordCount += sectionResult.word_count || 0
-                totalCitations += sectionResult.citations_included || 0
-                totalApiCost += 0 // API cost not tracked at section level
+              console.log(`[Inngest] Step: process-sections - Phase 2: H2 section ${h2Index + 1} completed`)
+              
+              return {
+                sectionIndex,
+                h2Index,
+                sectionResult,
+                wordCount: sectionResult?.word_count || 0,
+                citations: sectionResult?.citations_included || 0
               }
-              
-              await (article as any).progressTracker?.completeSection(currentSectionNumber, sectionResult?.word_count || 0, sectionResult?.citations_included || 0, 0)
-              console.log(`[Inngest] Step: process-sections - H2 section ${h2Index} completed`)
             } catch (error) {
               const errorMsg = error instanceof Error ? error.message : String(error)
-              await (article as any).progressTracker?.fail(`H2 section ${h2Index} failed: ${errorMsg}`)
-              throw error
+              console.error(`[Inngest] Step: process-sections - Phase 2: H2 section ${h2Index + 1} failed: ${errorMsg}`)
+              
+              // Don't fail entire batch - mark individual section as failed
+              await (article as any).progressTracker?.fail(`H2 section ${h2Index + 1} failed: ${errorMsg}`)
+              
+              return {
+                sectionIndex,
+                h2Index,
+                sectionResult: null,
+                wordCount: 0,
+                citations: 0,
+                error: errorMsg
+              }
             }
-            currentSectionNumber++
+          })
 
-            // Process H3 subsections within this H2 section (decimal indices: 1.1, 1.2, etc.)
-            const h2Section = outline.h2_sections[h2Index - 1]
-            if (h2Section?.h3_subsections && Array.isArray(h2Section.h3_subsections)) {
-              for (let h3Index = 1; h3Index <= h2Section.h3_subsections.length; h3Index++) {
-                const sectionIndex = parseFloat(`${h2Index}.${h3Index}`)
-                console.log(`[Inngest] Step: process-sections - Processing H3 subsection ${sectionIndex}`)
+          // Wait for all H2 sections to complete (or fail)
+          const h2Results = await Promise.allSettled(h2ProcessingPromises)
+          
+          // Process H2 results and update totals
+          for (const promiseResult of h2Results) {
+            if (promiseResult.status === 'fulfilled') {
+              const result = promiseResult.value
+              totalWordCount += result.wordCount
+              totalCitations += result.citations
+              
+              if (result.sectionResult) {
+                await (article as any).progressTracker?.completeSection(
+                  currentSectionNumber + result.h2Index,
+                  result.wordCount,
+                  result.citations,
+                  0
+                )
+              }
+            } else {
+              console.error(`[Inngest] Step: process-sections - H2 processing promise rejected:`, promiseResult.reason)
+            }
+          }
+          
+          currentSectionNumber += outline.h2_sections.length
+
+          // Phase 3: Process H3 subsections in parallel (grouped by parent H2)
+          console.log(`[Inngest] Step: process-sections - Phase 3: Processing H3 subsections in parallel groups`)
+          
+          for (let h2Index = 0; h2Index < outline.h2_sections.length; h2Index++) {
+            const h2Section = outline.h2_sections[h2Index]
+            
+            if (h2Section?.h3_subsections && Array.isArray(h2Section.h3_subsections) && h2Section.h3_subsections.length > 0) {
+              console.log(`[Inngest] Step: process-sections - Phase 3: Processing ${h2Section.h3_subsections.length} H3 subsections for H2-${h2Index + 1} in parallel`)
+              
+              const h3ProcessingPromises = h2Section.h3_subsections.map(async (h3Subsection: string, h3Index: number) => {
+                const sectionIndex = parseFloat(`${h2Index + 1}.${h3Index + 1}`)
                 
                 try {
                   const h3Result = await retryWithBackoff(() => processSection(articleId, sectionIndex, outline)) as Section | null
                   
-                  // Update metrics from H3 result
-                  if (h3Result) {
-                    totalWordCount += h3Result.word_count || 0
-                    totalCitations += h3Result.citations_included || 0
-                    totalApiCost += 0 // API cost not tracked at section level
-                  }
+                  console.log(`[Inngest] Step: process-sections - Phase 3: H3 subsection ${sectionIndex} completed`)
                   
-                  console.log(`[Inngest] Step: process-sections - H3 subsection ${sectionIndex} completed`)
+                  return {
+                    sectionIndex,
+                    h3Index,
+                    h3Result,
+                    wordCount: h3Result?.word_count || 0,
+                    citations: h3Result?.citations_included || 0
+                  }
                 } catch (error) {
                   const errorMsg = error instanceof Error ? error.message : String(error)
-                  await (article as any).progressTracker?.fail(`H3 subsection ${sectionIndex} failed: ${errorMsg}`)
-                  throw error
+                  console.error(`[Inngest] Step: process-sections - Phase 3: H3 subsection ${sectionIndex} failed: ${errorMsg}`)
+                  
+                  return {
+                    sectionIndex,
+                    h3Index,
+                    h3Result: null,
+                    wordCount: 0,
+                    citations: 0,
+                    error: errorMsg
+                  }
+                }
+              })
+              
+              // Wait for all H3 subsections of this H2 to complete
+              const h3Results = await Promise.allSettled(h3ProcessingPromises)
+              
+              // Process H3 results and update totals
+              for (const promiseResult of h3Results) {
+                if (promiseResult.status === 'fulfilled') {
+                  const result = promiseResult.value
+                  totalWordCount += result.wordCount
+                  totalCitations += result.citations
+                } else {
+                  console.error(`[Inngest] Step: process-sections - H3 processing promise rejected:`, promiseResult.reason)
                 }
               }
             }
           }
 
-          // Process Conclusion (index N+1, where N = number of H2 sections)
+          // Phase 4: Process Conclusion and FAQ in parallel
+          console.log(`[Inngest] Step: process-sections - Phase 4: Processing Conclusion and FAQ in parallel`)
+          
           const conclusionIndex = outline.h2_sections.length + 1
-          console.log(`[Inngest] Step: process-sections - Processing Conclusion (index ${conclusionIndex})`)
+          const faqIndex = outline.faq?.included ? outline.h2_sections.length + 2 : -1
           
-          await (article as any).progressTracker?.updateWritingSection(currentSectionNumber, 'Writing Conclusion...')
+          const parallelTasks = []
           
-          try {
-            const conclusionResult = await retryWithBackoff(() => processSection(articleId, conclusionIndex, outline)) as Section | null
-            
-            if (conclusionResult) {
-              totalWordCount += conclusionResult.word_count || 0
-              totalCitations += conclusionResult.citations_included || 0
-              totalApiCost += 0 // API cost not tracked at section level
-            }
-            
-            await (article as any).progressTracker?.completeSection(currentSectionNumber, conclusionResult?.word_count || 0, conclusionResult?.citations_included || 0, 0)
-            console.log(`[Inngest] Step: process-sections - Conclusion completed`)
-          } catch (error) {
-            const errorMsg = error instanceof Error ? error.message : String(error)
-            await (article as any).progressTracker?.fail(`Conclusion failed: ${errorMsg}`)
-            throw error
-          }
-          currentSectionNumber++
-
-          // Process FAQ if included (index N+2)
-          if (outline.faq?.included) {
-            const faqIndex = outline.h2_sections.length + 2
-            console.log(`[Inngest] Step: process-sections - Processing FAQ (index ${faqIndex})`)
-            
-            await (article as any).progressTracker?.updateWritingSection(currentSectionNumber, 'Writing FAQ...')
-            
-            try {
-              const faqResult = await retryWithBackoff(() => processSection(articleId, faqIndex, outline)) as Section | null
+          // Add conclusion task
+          parallelTasks.push(
+            (async () => {
+              console.log(`[Inngest] Step: process-sections - Phase 4: Processing Conclusion (index ${conclusionIndex})`)
               
-              if (faqResult) {
-                totalWordCount += faqResult.word_count || 0
-                totalCitations += faqResult.citations_included || 0
-                totalApiCost += 0 // API cost not tracked at section level
+              await (article as any).progressTracker?.updateWritingSection(currentSectionNumber, 'Writing Conclusion...')
+              
+              try {
+                const conclusionResult = await retryWithBackoff(() => processSection(articleId, conclusionIndex, outline)) as Section | null
+                
+                if (conclusionResult) {
+                  totalWordCount += conclusionResult.word_count || 0
+                  totalCitations += conclusionResult.citations_included || 0
+                }
+                
+                await (article as any).progressTracker?.completeSection(currentSectionNumber, conclusionResult?.word_count || 0, conclusionResult?.citations_included || 0, 0)
+                console.log(`[Inngest] Step: process-sections - Phase 4: Conclusion completed`)
+                
+                return { type: 'conclusion', result: conclusionResult }
+              } catch (error) {
+                const errorMsg = error instanceof Error ? error.message : String(error)
+                await (article as any).progressTracker?.fail(`Conclusion failed: ${errorMsg}`)
+                console.error(`[Inngest] Step: process-sections - Phase 4: Conclusion failed: ${errorMsg}`)
+                return { type: 'conclusion', error: errorMsg }
               }
-              
-              await (article as any).progressTracker?.completeSection(currentSectionNumber, faqResult?.word_count || 0, faqResult?.citations_included || 0, 0)
-              console.log(`[Inngest] Step: process-sections - FAQ completed`)
-            } catch (error) {
-              const errorMsg = error instanceof Error ? error.message : String(error)
-              await (article as any).progressTracker?.fail(`FAQ failed: ${errorMsg}`)
-              throw error
+            })()
+          )
+          
+          currentSectionNumber++
+          
+          // Add FAQ task if included
+          if (outline.faq?.included && faqIndex > -1) {
+            parallelTasks.push(
+              (async () => {
+                console.log(`[Inngest] Step: process-sections - Phase 4: Processing FAQ (index ${faqIndex})`)
+                
+                await (article as any).progressTracker?.updateWritingSection(currentSectionNumber, 'Writing FAQ...')
+                
+                try {
+                  const faqResult = await retryWithBackoff(() => processSection(articleId, faqIndex, outline)) as Section | null
+                  
+                  if (faqResult) {
+                    totalWordCount += faqResult.word_count || 0
+                    totalCitations += faqResult.citations_included || 0
+                  }
+                  
+                  await (article as any).progressTracker?.completeSection(currentSectionNumber, faqResult?.word_count || 0, faqResult?.citations_included || 0, 0)
+                  console.log(`[Inngest] Step: process-sections - Phase 4: FAQ completed`)
+                  
+                  return { type: 'faq', result: faqResult }
+                } catch (error) {
+                  const errorMsg = error instanceof Error ? error.message : String(error)
+                  await (article as any).progressTracker?.fail(`FAQ failed: ${errorMsg}`)
+                  console.error(`[Inngest] Step: process-sections - Phase 4: FAQ failed: ${errorMsg}`)
+                  return { type: 'faq', error: errorMsg }
+                }
+              })()
+            )
+          }
+          
+          // Wait for conclusion and FAQ to complete
+          const finalTasksResults = await Promise.allSettled(parallelTasks)
+          
+          // Process final task results
+          for (const promiseResult of finalTasksResults) {
+            if (promiseResult.status === 'rejected') {
+              console.error(`[Inngest] Step: process-sections - Final task promise rejected:`, promiseResult.reason)
             }
           }
 
-          console.log(`[Inngest] Step: process-sections - All sections processed successfully`)
+          console.log(`[Inngest] Step: process-sections - All phases completed successfully with parallel processing`)
           
           // Return the accumulated statistics for the next step
           return {
@@ -442,7 +569,7 @@ export const generateArticle = inngest.createFunction(
         }
       })
 
-      // Step 6: Update article status to completed
+      // Step 7: Update article status to completed
       await step.run('complete-article', async () => {
         console.log(`[Inngest] Step: complete-article - Marking article ${articleId} as completed`)
         
@@ -469,9 +596,21 @@ export const generateArticle = inngest.createFunction(
 
         console.log(`[Inngest] Step: complete-article - Success: Article ${articleId} marked as completed`)
         console.log(`[Inngest] Step: complete-article - Final stats: ${sectionStats.totalWordCount} words, ${sectionStats.totalCitations} citations, $${sectionStats.totalApiCost.toFixed(2)} cost`)
+        
+        // Clean up research cache to free memory
+        clearResearchCache(articleId)
+        clearContextCache(articleId)
+        console.log(`[Inngest] Step: complete-article - All caches cleared for article ${articleId}`)
       })
 
       console.log(`[Inngest] Article generation completed successfully for articleId: ${articleId}`)
+      
+      // Complete performance monitoring
+      const performanceMetrics = await performanceMonitor.completeMonitoring(articleId)
+      if (performanceMetrics) {
+        console.log(`[PerformanceMonitor] Generation completed in ${performanceMetrics.totalDuration}ms with ${performanceMetrics.apiCalls.total} API calls`)
+      }
+      
       return { success: true, articleId }
     } catch (error) {
       // Handle errors: save partial article and update status

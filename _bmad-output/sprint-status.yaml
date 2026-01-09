@@ -88,12 +88,13 @@ development_status:
   4a-3-real-time-research-per-section-tavily-integration: done
   4a-4-serp-analysis-per-section-dataforseo-integration: backlog
   4a-5-llm-content-generation-with-openrouter-integration: done
-  4a-6-real-time-progress-tracking-and-updates: review
+  4a-6-real-time-progress-tracking-and-updates: done
   4a-7-automatic-seo-optimization-keyword-density-headings-meta-tags: backlog
   4a-8-automatic-faq-section-generation: backlog
   4a-9-automatic-internal-linking-suggestions: backlog
   4a-10-automatic-schema-markup-generation: backlog
   4a-11-automatic-image-integration-with-alt-text: backlog
+  4a-12-article-generation-performance-optimization: done
   epic-4a-retrospective: optional
 
   epic-4b: backlog
@@ -235,6 +236,7 @@ priorities:
   "4a-3-real-time-research-per-section-tavily-integration": P0
   "4a-5-llm-content-generation-with-openrouter-integration": done
   "4a-6-real-time-progress-tracking-and-updates": P0
+  "4a-12-article-generation-performance-optimization": done
   "4b-1-article-editor-interface-and-rich-text-editing": P0
   "4b-7-article-draft-saving-and-auto-save": P0
   "5-1-cms-connection-management-and-credential-storage": P0

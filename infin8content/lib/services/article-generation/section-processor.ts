@@ -5,10 +5,22 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { Outline } from './outline-generator'
 import { summarizeSections, fitInContextWindow, estimateTokens } from '@/lib/utils/token-management'
-import { researchQuery, type TavilySource } from '@/lib/services/tavily/tavily-client'
 import { generateContent, type OpenRouterMessage } from '@/lib/services/openrouter/openrouter-client'
 import { validateContentQuality, countCitations } from '@/lib/utils/content-quality'
 import { formatCitationsForMarkdown } from '@/lib/utils/citation-formatter'
+import { 
+  performBatchResearch, 
+  getSectionResearchSources, 
+  clearResearchCache,
+  type ArticleResearchCache 
+} from './research-optimizer'
+import { 
+  buildOptimizedContext, 
+  batchUpdateSections, 
+  clearContextCache,
+  getContextStats 
+} from './context-manager'
+import { type TavilySource } from '@/lib/services/tavily/tavily-client'
 
 /**
  * Section structure matching database schema
@@ -85,43 +97,33 @@ export async function processSection(
   // Determine section type and details based on index
   const sectionInfo = getSectionInfo(sectionIndex, outline)
   
-  // Summarize previous sections for context (token management)
-  const summaries = summarizeSections(previousSections, 1500) // ~1500 tokens for summaries
+  // Build optimized context using context manager (Performance Optimization)
+  const optimizedContext = buildOptimizedContext(
+    articleId,
+    sectionIndex,
+    previousSections,
+    getTargetWordCount(sectionInfo.type)
+  )
 
-  // Perform Tavily research for this section (Story 4a.3)
+  // Perform research using batch optimizer (Story 4a-12 Performance Optimization)
   let researchSources: TavilySource[] = []
   let researchQueryUsed = ''
   let researchFailed = false
 
   try {
-    // Generate research query from section topic + keyword + previous sections
-    researchQueryUsed = generateResearchQuery(
-      sectionInfo.title,
-      article.keyword as string,
-      summaries
-    )
-
-    // Normalize query for cache lookup
-    const normalizedQuery = normalizeQuery(researchQueryUsed)
-
-    // Check cache first
-    const cachedResults = await getCachedResearch(organizationId, normalizedQuery)
+    // Get section-specific research from batch optimizer
+    researchSources = getSectionResearchSources(articleId, sectionInfo.title)
+    researchQueryUsed = `Batch research for ${sectionInfo.title}`
     
-    if (cachedResults) {
-      researchSources = cachedResults
+    if (researchSources.length === 0) {
+      console.warn(`[SectionProcessor] No research sources found for section: ${sectionInfo.title}`)
+      researchFailed = true
     } else {
-      // Call Tavily API
-      researchSources = await researchQuery(researchQueryUsed, { maxRetries: 3 })
-      
-      // Store in cache (24-hour TTL)
-      await storeCachedResearch(organizationId, normalizedQuery, researchSources)
-      
-      // Track API cost
-      await trackApiCost(organizationId, 0.08)
+      console.log(`[SectionProcessor] Using ${researchSources.length} cached sources for section: ${sectionInfo.title}`)
     }
   } catch (error) {
-    // Graceful degradation: Continue without fresh research
-    console.warn(`Section generated without fresh Tavily research: ${error instanceof Error ? error.message : String(error)}`)
+    // Graceful degradation: Continue without research
+    console.warn(`[SectionProcessor] Research retrieval failed: ${error instanceof Error ? error.message : String(error)}`)
     researchFailed = true
     
     // Update article error_details with research failure
@@ -138,7 +140,7 @@ export async function processSection(
     generationResult = await generateSectionContent(
       article.keyword as string,
       sectionInfo,
-      summaries,
+      optimizedContext,
       researchSources, // Pass research sources for citation inclusion
       organizationId,
       article.writing_style || 'Professional',
@@ -170,7 +172,7 @@ export async function processSection(
     3  // maxCitations
   )
 
-  // Quality validation with retry (2 retries if quality fails)
+  // Quality validation with optimized retry (1 retry instead of 2 for performance)
   // IMPORTANT: Validate on content WITH citations to ensure metrics are accurate
   let qualityRetryCount = 0
   const targetWordCount = getTargetWordCount(sectionInfo.type)
@@ -182,8 +184,8 @@ export async function processSection(
     qualityRetryCount
   )
 
-  // Regenerate if quality fails (2 retries for better success rate)
-  if (!qualityResult.passed && qualityRetryCount < 2) {
+  // Regenerate if quality fails (1 retry for performance optimization)
+  if (!qualityResult.passed && qualityRetryCount < 1) {
     qualityRetryCount++
     console.warn(`Section ${sectionIndex} quality check failed on final content, regenerating (attempt ${qualityRetryCount}):`, qualityResult.errors)
     
@@ -192,7 +194,7 @@ export async function processSection(
       generationResult = await generateSectionContent(
         article.keyword as string,
         sectionInfo,
-        summaries,
+        optimizedContext,
         researchSources,
         organizationId,
         article.writing_style || 'Professional',
@@ -256,16 +258,23 @@ export async function processSection(
     quality_metrics: qualityResult.metrics
   }
 
-  // Update article with new section
+  // Update article with new section using batch optimization
   const updatedSections = [...previousSections, section]
   
-  await supabase
-    .from('articles' as any)
-    .update({
-      sections: updatedSections,
-      current_section_index: sectionIndex
-    })
-    .eq('id', articleId)
+  // Use batch update for better performance (only update database every few sections)
+  if (updatedSections.length % 3 === 0 || sectionIndex >= 10) {
+    // Batch update every 3 sections or for later sections
+    await batchUpdateSections(articleId, updatedSections)
+  } else {
+    // Individual update for early sections (progress tracking is more important)
+    await supabase
+      .from('articles' as any)
+      .update({
+        sections: updatedSections,
+        current_section_index: sectionIndex
+      })
+      .eq('id', articleId)
+  }
 
   return section
 }
@@ -345,176 +354,6 @@ function getSectionInfo(
   }
 
   throw new Error(`Invalid section index: ${sectionIndex}`)
-}
-
-/**
- * Normalize research query for cache lookup
- */
-function normalizeQuery(query: string): string {
-  return query.toLowerCase().trim().replace(/\s+/g, ' ')
-}
-
-/**
- * Generate research query from section topic + keyword + previous sections
- */
-function generateResearchQuery(
-  sectionTitle: string,
-  keyword: string,
-  previousSummaries: string
-): string {
-  // Combine components into natural language query
-  // Keep concise (50-100 chars) for better API results
-  const year = new Date().getFullYear()
-  
-  // Extract key terms from previous sections for coherence (AC requirement)
-  // Take first 20-30 chars of summaries to include context without bloating query
-  const summaryContext = previousSummaries
-    ? previousSummaries
-        .split(/\s+/)
-        .slice(0, 5) // Take first 5 words from summaries
-        .join(' ')
-    : ''
-  
-  // Build query with section topic, keyword, year, and previous context
-  let query = `${sectionTitle} ${keyword} ${year}`
-  
-  // Add summary context if available (for coherence between sections)
-  if (summaryContext) {
-    query += ` ${summaryContext}`
-  }
-  
-  query += ' best practices latest'
-  
-  // Truncate to ~100 characters if needed
-  return query.length > 100 ? query.substring(0, 100).trim() : query
-}
-
-/**
- * Get cached research results if available and not expired
- */
-async function getCachedResearch(
-  organizationId: string,
-  normalizedQuery: string
-): Promise<TavilySource[] | null> {
-  const supabase = createServiceRoleClient()
-  
-  // Use ilike for case-insensitive matching to match the LOWER() index
-  // Since normalizedQuery is already lowercase, this ensures optimal index usage
-  const { data, error } = await (supabase
-    .from('tavily_research_cache' as any)
-    .select('research_results')
-    .eq('organization_id', organizationId)
-    .ilike('research_query', normalizedQuery) // Case-insensitive match to use LOWER() index
-    .gt('cached_until', new Date().toISOString())
-    .maybeSingle() as unknown as Promise<{ data: any; error: any }>)
-
-  if (error || !data) {
-    return null
-  }
-
-  // Parse cached results and convert to TavilySource format
-  const results = data.research_results?.results || []
-  return results.map((result: any) => ({
-    title: result.title || '',
-    url: result.url || '',
-    excerpt: result.content || '',
-    published_date: result.published_date || null,
-    author: result.author || null,
-    relevance_score: result.score || 0
-  }))
-}
-
-/**
- * Store research results in cache with 24-hour TTL
- */
-async function storeCachedResearch(
-  organizationId: string,
-  normalizedQuery: string,
-  sources: TavilySource[]
-): Promise<void> {
-  const supabase = createServiceRoleClient()
-  
-  // Convert sources back to Tavily API response format for storage
-  const researchResults = {
-    query: normalizedQuery,
-    results: sources.map(source => ({
-      title: source.title,
-      url: source.url,
-      content: source.excerpt,
-      score: source.relevance_score,
-      published_date: source.published_date,
-      author: source.author
-    })),
-    response_time: 0 // Not stored in cache
-  }
-
-  const cachedUntil = new Date()
-  cachedUntil.setHours(cachedUntil.getHours() + 24) // 24-hour TTL
-
-  try {
-    const { error } = await (supabase
-      .from('tavily_research_cache' as any)
-      .upsert({
-        organization_id: organizationId,
-        research_query: normalizedQuery,
-        research_results: researchResults,
-        cached_until: cachedUntil.toISOString()
-      }, {
-        onConflict: 'organization_id,research_query',
-        ignoreDuplicates: false
-      }) as unknown as Promise<{ error: any }>)
-
-    if (error) {
-      // If upsert fails due to constraint issues (42P10), try a fallback approach
-      if (error.code === '42P10' || error.message?.includes('no unique or exclusion constraint')) {
-        // Fallback: Delete existing and insert new (manual upsert)
-        await supabase
-          .from('tavily_research_cache' as any)
-          .delete()
-          .eq('organization_id', organizationId)
-          .eq('research_query', normalizedQuery)
-        
-        const { error: insertError } = await supabase
-          .from('tavily_research_cache' as any)
-          .insert({
-            organization_id: organizationId,
-            research_query: normalizedQuery,
-            research_results: researchResults,
-            cached_until: cachedUntil.toISOString()
-          })
-        
-        if (insertError) {
-          console.error('Failed to store Tavily research cache (fallback insert):', insertError)
-        }
-      } else {
-        console.error('Failed to store Tavily research cache:', error)
-      }
-    }
-  } catch (error) {
-    console.error('Failed to store Tavily research cache:', error)
-    // Don't throw - cache storage failure shouldn't block article generation
-  }
-}
-
-/**
- * Track API cost for Tavily research
- */
-async function trackApiCost(organizationId: string, cost: number): Promise<void> {
-  const supabase = createServiceRoleClient()
-  
-  const { error } = await (supabase
-    .from('api_costs' as any)
-    .insert({
-      organization_id: organizationId,
-      service: 'tavily',
-      operation: 'section_research',
-      cost: cost
-    }) as unknown as Promise<{ error: any }>)
-
-  if (error) {
-    console.error('Failed to track Tavily API cost:', error)
-    // Don't throw - cost tracking failure shouldn't block article generation
-  }
 }
 
 /**
@@ -604,7 +443,7 @@ async function updateArticleGenerationErrorDetails(
 async function generateSectionContent(
   keyword: string,
   sectionInfo: { type: string; title: string },
-  previousSummaries: string,
+  optimizedContext: string,
   researchSources: TavilySource[] = [],
   organizationId: string,
   writingStyle: string = 'Professional',
@@ -620,10 +459,12 @@ async function generateSectionContent(
   // Determine target word count based on section type
   const targetWordCount = getTargetWordCount(sectionInfo.type)
   
-  // Construct comprehensive prompt
+  // Construct comprehensive prompt with all user preferences (Performance Optimization)
   const systemMessage = `You are an expert SEO content writer creating a section for a long-form article.
 Write engaging, informative content that naturally incorporates citations and optimizes for SEO.
-Use proper heading structure (H2, H3) and maintain a professional yet conversational tone.`
+Use proper heading structure (H2, H3) and maintain a ${writingStyle.toLowerCase()} yet conversational tone.
+Target audience: ${targetAudience.toLowerCase()}
+${customInstructions ? `Additional instructions: ${customInstructions}` : ''}`
 
   // Format research sources for prompt
   const researchSourcesText = researchSources
@@ -633,12 +474,19 @@ Use proper heading structure (H2, H3) and maintain a professional yet conversati
     })
     .join('\n')
 
-  // Build user message with all context
+  // Build user message with all context using optimized context manager and enhanced prompts
   // NOTE: SERP analysis insights are not included (Story 4a-4 is optional and not implemented)
+  
+  // Add section-specific guidance
+  const sectionGuidance = getSectionSpecificGuidance(sectionInfo.type, sectionInfo.title, keyword)
+  
   const userMessageParts = [
     `Section: ${sectionInfo.title}`,
     `Type: ${sectionInfo.type}`,
     `Target Word Count: ${targetWordCount} words`,
+    '',
+    'Section-Specific Guidance:',
+    sectionGuidance,
     '',
     'Research Sources:',
     researchSourcesText || 'No research sources available.',
@@ -647,14 +495,20 @@ Use proper heading structure (H2, H3) and maintain a professional yet conversati
     `- Primary keyword: ${keyword}`,
     '- SEO Requirements: Include keyword naturally, avoid keyword stuffing',
     '',
-    'Previous Sections Summary:',
-    previousSummaries || 'This is the first section.',
+    'Context from Previous Sections:',
+    optimizedContext || 'This is the first section.',
     '',
     `Writing Style: ${writingStyle}`,
     `Target Audience: ${targetAudience}`,
     ...(customInstructions ? ['', 'Custom Instructions:', customInstructions] : []),
     '',
-    `Generate content with proper markdown formatting (H2/H3 headings) and integrate citations naturally within the content, not all at the end. Aim for ${targetWordCount} words.`
+    'Quality Requirements:',
+    '- Include 2-4 natural citations from research sources',
+    '- Use proper markdown formatting (H2/H3 headings)',
+    '- Maintain coherence with previous sections',
+    '- Write in complete, well-structured sentences',
+    '',
+    `Generate ${targetWordCount} words of engaging, informative content for this section.`
   ]
 
   const userMessage = userMessageParts.join('\n')
@@ -662,8 +516,8 @@ Use proper heading structure (H2, H3) and maintain a professional yet conversati
   // Check token limits
   const promptTokens = estimateTokens(systemMessage + userMessage)
   const researchTokens = estimateTokens(researchSourcesText)
-  const summariesTokens = estimateTokens(previousSummaries)
-  const totalPromptTokens = promptTokens + researchTokens + summariesTokens
+  const contextTokens = estimateTokens(optimizedContext)
+  const totalPromptTokens = promptTokens + researchTokens + contextTokens
 
   // Calculate max tokens for response (leave room for prompt)
   // Free models typically have 8k-32k context windows, use 6k as safe limit
@@ -695,6 +549,55 @@ Use proper heading structure (H2, H3) and maintain a professional yet conversati
     modelUsed: result.modelUsed,
     promptTokens: result.promptTokens,
     completionTokens: result.completionTokens
+  }
+}
+
+/**
+ * Get section-specific guidance for better content generation
+ */
+function getSectionSpecificGuidance(sectionType: string, sectionTitle: string, keyword: string): string {
+  switch (sectionType) {
+    case 'introduction':
+      return `Write a compelling introduction that:
+- Hooks the reader immediately with an interesting fact or question about ${keyword}
+- Clearly states what this article will cover
+- Sets up the structure for the upcoming sections
+- Is approximately 300 words and engaging`
+
+    case 'conclusion':
+      return `Write a strong conclusion that:
+- Summarizes the key points covered in this article about ${keyword}
+- Provides actionable takeaways for the reader
+- Ends with a memorable final thought or call to action
+- Is approximately 400 words and impactful`
+
+    case 'faq':
+      return `Write a helpful FAQ section that:
+- Anticipates common questions about ${keyword}
+- Provides clear, concise answers (2-3 sentences each)
+- Covers practical concerns and "how-to" aspects
+- Is approximately 500 words total with 5-7 Q&A pairs`
+
+    case 'h2':
+      return `Write a comprehensive H2 section that:
+- Thoroughly covers ${sectionTitle} with depth and expertise
+- Includes relevant examples, data, or case studies
+- Uses subheadings (H3) to break up complex topics
+- Is approximately 600 words and highly informative`
+
+    case 'h3':
+      return `Write a focused H3 subsection that:
+- Expands on a specific aspect of ${sectionTitle}
+- Provides detailed information and practical insights
+- Connects logically to the parent H2 section
+- Is approximately 400 words and targeted`
+
+    default:
+      return `Write a high-quality section about ${sectionTitle} that:
+- Provides valuable, accurate information
+- Maintains reader engagement throughout
+- Supports the overall article structure
+- Meets the target word count requirements`
   }
 }
 
