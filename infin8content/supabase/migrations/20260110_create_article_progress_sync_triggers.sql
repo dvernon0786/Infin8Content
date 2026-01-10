@@ -11,39 +11,38 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Only sync if the article status is changing
     IF OLD.status IS DISTINCT FROM NEW.status THEN
-        -- Update or create article_progress entry
-        INSERT INTO article_progress (
-            article_id,
-            org_id,
-            status,
-            current_stage,
-            updated_at
-        ) VALUES (
-            NEW.id,
-            NEW.org_id,
-            CASE 
-                WHEN NEW.status = 'queued' THEN 'queued'::text
-                WHEN NEW.status = 'generating' THEN 'generating'::text
-                WHEN NEW.status = 'completed' THEN 'completed'::text
-                WHEN NEW.status = 'failed' THEN 'failed'::text
-                WHEN NEW.status = 'cancelled' THEN 'failed'::text
-                ELSE NEW.status
+        -- Update or create article_progress entry using upsert pattern
+        UPDATE article_progress 
+        SET 
+            status = NEW.status,
+            current_stage = CASE 
+                WHEN NEW.status = 'generating' THEN 'Processing'
+                WHEN NEW.status = 'completed' THEN 'Complete'
+                ELSE 'Pending'
             END,
-            CASE 
-                WHEN NEW.status = 'queued' THEN 'Queued for generation'
-                WHEN NEW.status = 'generating' THEN 'Article generation in progress'
-                WHEN NEW.status = 'completed' THEN 'Article completed successfully'
-                WHEN NEW.status = 'failed' THEN 'Article generation failed'
-                WHEN NEW.status = 'cancelled' THEN 'Article generation cancelled'
-                ELSE 'Status: ' || NEW.status
-            END,
-            NOW()
-        )
-        ON CONFLICT (article_id) 
-        DO UPDATE SET
-            status = EXCLUDED.status,
-            current_stage = EXCLUDED.current_stage,
-            updated_at = EXCLUDED.updated_at;
+            updated_at = NOW()
+        WHERE article_id = NEW.id;
+        
+        -- If no rows were updated, insert new record
+        IF NOT FOUND THEN
+            INSERT INTO article_progress (
+                article_id,
+                org_id,
+                status,
+                current_stage,
+                updated_at
+            ) VALUES (
+                NEW.id,
+                NEW.org_id,
+                NEW.status,
+                CASE 
+                    WHEN NEW.status = 'generating' THEN 'Processing'
+                    WHEN NEW.status = 'completed' THEN 'Complete'
+                    ELSE 'Pending'
+                END,
+                NOW()
+            );
+        END IF;
     END IF;
     
     RETURN NEW;
