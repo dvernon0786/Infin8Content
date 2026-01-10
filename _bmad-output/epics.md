@@ -4,14 +4,14 @@ inputDocuments:
   - '_bmad-output/prd.md'
   - '_bmad-output/architecture.md'
   - '_bmad-output/ux-design-specification.md'
-epicStructure: '11-epic-structure-approved'
-totalEpics: 13
-phase1Epics: 6
+epicStructure: '14-epic-structure-with-seo'
+totalEpics: 14
+phase1Epics: 7
 phase2Epics: 4
 phase3Epics: 3
-prioritizedEpic: 'Epic 7 - Revenue Attribution'
-date: '2025-12-21'
-status: 'epic-structure-approved'
+prioritizedEpic: 'Epic 14 - SEO Optimization Framework (MVP BLOCKER)'
+date: '2026-01-10'
+status: 'seo-epic-added'
 ---
   - '_bmad-output/prd.md'
   - '_bmad-output/architecture.md'
@@ -3831,7 +3831,7 @@ So that I can update metadata, tags, or other properties across many articles at
 ### Epic 5: Publishing & Distribution
 **User Outcome:** Users can publish articles to CMS platforms, schedule publishing, track indexing status, and export content in multiple formats.
 
-**FRs covered:** FR45-FR56
+**FRs covered:** FR57-FR68
 
 **Key Capabilities:**
 - One-click publishing to WordPress
@@ -5585,7 +5585,7 @@ So that users can demonstrate content marketing ROI and justify investments.
 ### Epic 7: E-Commerce Integration & Revenue Attribution ⭐ **PRIORITIZED**
 **User Outcome:** Users can connect e-commerce stores, sync product catalogs, generate product descriptions, and track revenue attribution from content.
 
-**FRs covered:** FR57-FR65
+**FRs covered:** FR69-FR77
 
 **Key Capabilities:**
 - Connect e-commerce stores (Shopify, WooCommerce)
@@ -6382,7 +6382,7 @@ So that I can track attribution across all my stores or manage stores for multip
 ### Epic 8: White-Label & Multi-Client Management
 **User Outcome:** Agency users can configure white-label branding, set up custom domains, manage multiple clients, and provide client portals.
 
-**FRs covered:** FR66-FR72
+**FRs covered:** FR78-FR84
 
 **Key Capabilities:**
 - Configure white-label branding (logo, colors, fonts) - Agency plan only
@@ -10665,4 +10665,170 @@ So that comparison tables and product descriptions stay current.
 - Sync frequency: Configurable (hourly, daily, real-time via webhooks)
 - Comparison table updates: Auto-update comparison tables in articles with new pricing
 - Sync storage: Product pricing and inventory stored in `products` table, sync history in `product_sync_history` table
+
+---
+
+## Epic 14: SEO Optimization Framework (MVP BLOCKER)
+
+**User Outcome:** Content creators can generate SEO-optimized articles that rank higher, capture featured snippets, and drive more organic traffic and revenue.
+
+**Business Impact:** This is a core differentiator that enables the platform to deliver on its promise of "end-to-end SEO content automation." Without this framework, generated content will not rank effectively, making the product non-viable for market success.
+
+**FRs covered:** SEO-specific requirements derived from core value proposition
+
+**MVP Status:** CRITICAL BLOCKER - Must be completed before MVP shipment
+
+### Story 14.1: Enhanced System Prompt with E-E-A-T Principles
+**Priority**: MVP Critical  
+**Story Points**: 8  
+**User Story**: As a content creator, I want the AI to generate content that demonstrates expertise, experience, authority, and trustworthiness, so that my content ranks higher and builds credibility with readers.
+
+**Acceptance Criteria:**
+- [ ] System prompt includes comprehensive E-E-A-T principles and guidelines
+- [ ] SEO rules integrated (keyword placement, paragraph structure, citation distribution)
+- [ ] Forbidden practices clearly defined and prevented (keyword stuffing, generic fluff)
+- [ ] Content quality standards enforced (readability, depth, authority signals)
+- [ ] Featured snippet optimization instructions included
+- [ ] Citation integrity requirements enforced throughout content
+
+**Technical Requirements:**
+- Update `lib/services/article-generation/system-prompt.ts`
+- Integrate E-E-A-T validation framework
+- Add SEO rule engine for content generation
+- Implement forbidden practices detection and prevention
+
+**Dependencies:** Epic 4 (Article Generation Pipeline)
+
+### Story 14.2: Enhanced User Prompt with SEO Strategy
+**Priority**: MVP Critical  
+**Story Points**: 8  
+**User Story**: As a content creator, I want to specify SEO strategy parameters including keyword density, semantic variations, and formatted research sources, so that I can control the SEO optimization level for each article.
+
+**Acceptance Criteria:**
+- [ ] SEO strategy section added to user prompt template
+- [ ] Keyword density calculator and recommendations (0.5-1.5% target)
+- [ ] Semantic keyword suggestions and integration throughout content
+- [ ] Formatted research sources with proper citation requirements
+- [ ] Quality checklist integration for user validation
+- [ ] Section-specific templates for different content types and audiences
+
+**Technical Requirements:**
+- Update `lib/services/article-generation/user-prompt.ts`
+- Create SEO strategy calculation functions
+- Build semantic keyword generation system
+- Implement research source formatting engine
+
+**Dependencies:** Story 14.1 (Enhanced System Prompt)
+
+### Story 14.3: Section Templates System
+**Priority**: MVP Critical  
+**Story Points**: 10  
+**User Story**: As a content creator, I want access to optimized templates for different article sections (intro, H2, H3, conclusion, FAQ), so that I can ensure consistent SEO-optimized structure across all content.
+
+**Acceptance Criteria:**
+- [ ] Create `section-templates.ts` with comprehensive template library
+- [ ] Introduction templates (80-150 words with keyword in first 100)
+- [ ] H2 section templates with featured snippet optimization boxes
+- [ ] H3 subsection templates with focused content guidelines
+- [ ] Conclusion templates with action-oriented formatting
+- [ ] FAQ templates with schema markup optimization
+- [ ] Template selection based on content type and target audience
+
+**Technical Requirements:**
+- New file: `lib/services/article-generation/section-templates.ts`
+- Template engine with dynamic content insertion
+- SEO validation for each template type
+- Template performance tracking and optimization
+
+**Dependencies:** Story 14.2 (Enhanced User Prompt)
+
+### Story 14.4: SEO Helper Functions
+**Priority**: MVP Critical  
+**Story Points**: 8  
+**User Story**: As a content creator, I want automated SEO helper functions for keyword analysis, semantic optimization, and source formatting, so that I can ensure maximum SEO effectiveness without manual effort.
+
+**Acceptance Criteria:**
+- [ ] Create `seo-helpers.ts` with comprehensive SEO utility functions
+- [ ] Keyword density analysis and optimization recommendations
+- [ ] Semantic keyword generation and integration throughout content
+- [ ] Source formatting with proper citation distribution (1 per 200 words)
+- [ ] Context optimization for search intent matching
+- [ ] SEO score calculation and improvement suggestions
+
+**Technical Requirements:**
+- New file: `lib/services/article-generation/seo-helpers.ts`
+- Keyword density calculation algorithms
+- Semantic keyword analysis using NLP techniques
+- Citation distribution optimization engine
+- SEO scoring and recommendation system
+
+**Dependencies:** Story 14.3 (Section Templates)
+
+### Story 14.5: Format Changes and Content Structure
+**Priority**: MVP Critical  
+**Story Points**: 6  
+**User Story**: As a content creator, I want content that follows SEO-optimized formatting rules (paragraph length, heading structure, citation distribution), so that my content is both readable and search-engine friendly.
+
+**Acceptance Criteria:**
+- [ ] Paragraph formatting: 2-4 sentences maximum for readability
+- [ ] H1 optimization: 55-65 characters with benefit-driven structure
+- [ ] Introduction optimization: 80-150 words with keyword in first 100
+- [ ] Citation distribution: 1 per 200 words, evenly distributed (not clustered)
+- [ ] Heading hierarchy: Proper H2/H3 structure without skipped levels
+- [ ] Featured snippet boxes integrated throughout content
+
+**Technical Requirements:**
+- Update content generation pipeline with formatting rules
+- Implement paragraph length validation and optimization
+- Add heading structure analysis and correction
+- Build citation distribution algorithm
+- Create featured snippet formatting engine
+
+**Dependencies:** Story 14.4 (SEO Helper Functions)
+
+### Story 14.6: SEO Testing and Validation
+**Priority**: MVP Critical  
+**Story Points**: 8  
+**User Story**: As a product owner, I want comprehensive testing of SEO optimization features, so that I can verify the system produces high-ranking, SEO-optimized content consistently.
+
+**Acceptance Criteria:**
+- [ ] Generate test articles and verify intro length compliance (80-150 words)
+- [ ] Validate paragraph density and structure optimization (2-4 sentences)
+- [ ] Test keyword placement and density accuracy (0.5-1.5% target)
+- [ ] Verify featured snippet box integration and formatting
+- [ ] Test citation distribution and formatting (1 per 200 words)
+- [ ] Validate SEO score improvements vs. baseline content
+- [ ] Performance testing for SEO optimization processing impact
+
+**Technical Requirements:**
+- Create comprehensive SEO test suite
+- Build content validation framework
+- Implement SEO performance benchmarking
+- Add automated SEO quality checks
+- Create regression tests for SEO features
+
+**Dependencies:** Story 14.5 (Format Changes)
+
+**Integration Points:**
+- **Enhances Epic 4**: Article Generation Pipeline with SEO optimization
+- **Improves Epic 7**: Revenue Attribution through better search rankings
+- **Supports Epic 12**: Content Publishing with SEO-optimized output formatting
+
+**Risk Mitigation:**
+- **Performance Impact**: SEO processing may slow content generation - implement caching
+- **Complexity**: Multiple SEO rules may conflict - create modular rule system
+- **Maintenance**: SEO rules require updates - design configurable system
+
+**Success Metrics:**
+- **SEO Score Improvement**: 40%+ improvement in content SEO scores
+- **User Adoption**: 80%+ of users enable SEO optimization features
+- **Content Performance**: 25%+ improvement in average content rankings
+- **Featured Snippets**: 30%+ of optimized content captures featured snippets
+
+**Timeline:**
+- **Week 1**: Stories 14.1, 14.2 (System and User Prompts)
+- **Week 2**: Stories 14.3, 14.4 (Templates and Helpers)
+- **Week 3**: Stories 14.5, 14.6 (Format Changes and Testing)
+
+**MVP BLOCKER STATUS**: This epic must be completed before MVP shipment. All stories are marked as MVP critical and should be prioritized above all other features.
 
