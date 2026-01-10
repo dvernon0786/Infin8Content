@@ -69,3 +69,35 @@ You must fully embody this agent's persona and follow all activation instruction
   </menu>
 </agent>
 ```
+
+## Story Context: 15-1-real-time-article-status-display
+
+**Status**: ready-for-dev
+
+**Epic**: Article Management System Enhancement
+
+**User Story**: As a content creator, I want to see real-time status updates for my articles so that I can track progress and know when changes are published.
+
+**Acceptance Criteria**:
+- Article status updates in real-time without page refresh
+- Status indicators show: Draft, In Review, Approved, Published, Archived
+- Real-time notifications when status changes occur
+- Status history log available for each article
+- Multiple users can see status changes simultaneously
+
+**Technical Requirements**:
+- WebSocket implementation for real-time updates
+- Status state management system
+- Notification system for status changes
+- Audit trail for status history
+- Concurrent user support
+
+**Dependencies**:
+- Real-time infrastructure (WebSocket/Server-Sent Events)
+- Article management backend
+- User authentication system
+- Notification service
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint

@@ -6,17 +6,20 @@ import { NextResponse } from 'next/server'
  * GET /api/articles/queue
  * 
  * Fetches the current queue status for article generation in the user's organization.
- * Returns articles with status "queued" or "generating", with position numbers for queued articles.
+ * Returns articles with status "queued", "generating", and "completed" for dashboard display.
  * 
  * @param request - HTTP request with orgId query parameter
  * @returns JSON response with articles array and their queue positions
  * 
  * Query Parameters:
  * - orgId: string (required) - Organization ID to fetch queue for
+ * - includeCompleted: boolean (optional) - Include completed articles (default: true)
+ * - limit: number (optional) - Maximum number of articles to return (default: 50)
  * 
  * Response (Success - 200):
- * - articles: Array<{ id: string, keyword: string, status: "queued" | "generating", created_at: string, position?: number }>
+ * - articles: Array<{ id: string, keyword: string, status: "queued" | "generating" | "completed", created_at: string, updated_at: string, position?: number }>
  *   - position is only present for queued articles (1-based index among queued articles only)
+ *   - updated_at included for real-time dashboard updates
  * 
  * Response (Error - 401):
  * - error: "Authentication required"
@@ -43,6 +46,8 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const orgId = searchParams.get('orgId')
+    const includeCompleted = searchParams.get('includeCompleted') !== 'false' // Default to true
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100) // Max 100 for performance
 
     if (orgId !== currentUser.org_id) {
       return NextResponse.json(
@@ -53,14 +58,20 @@ export async function GET(request: Request) {
 
     const supabase = await createClient()
 
+    // Build the status filter based on includeCompleted parameter
+    const statusFilter = includeCompleted 
+      ? ['queued', 'generating', 'completed']
+      : ['queued', 'generating']
+
     // Type assertion needed until database types are regenerated after migration
     // TODO: Remove type assertion after running: supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts
     const { data: articles, error } = await (supabase
       .from('articles' as any)
-      .select('id, keyword, status, created_at')
+      .select('id, keyword, status, created_at, updated_at, title')
       .eq('org_id', currentUser.org_id)
-      .in('status', ['queued', 'generating'])
-      .order('created_at', { ascending: true }) as unknown as Promise<{ data: any[]; error: any }>)
+      .in('status', statusFilter)
+      .order('updated_at', { ascending: false }) // Order by updated_at for real-time dashboard
+      .limit(limit) as unknown as Promise<{ data: any[]; error: any }>)
 
     if (error) {
       console.error('Failed to fetch queue status:', error)
@@ -70,7 +81,7 @@ export async function GET(request: Request) {
       )
     }
 
-    // Add position numbers for queued articles (only count queued articles, exclude generating)
+    // Add position numbers for queued articles (only count queued articles, exclude generating and completed)
     const queuedArticles = (articles || []).filter(a => a.status === 'queued')
     const articlesWithPosition = (articles || []).map(article => ({
       ...article,
@@ -81,6 +92,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       articles: articlesWithPosition,
+      total: articles?.length || 0,
+      includeCompleted,
     })
   } catch (error) {
     console.error('Queue status error:', error)
