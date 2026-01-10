@@ -27,13 +27,13 @@ export class ArticleProgressService {
   }
 
   /**
-   * Create a new progress tracking record
+   * Create a new progress tracking record (or update if exists)
    */
   async createProgress(params: CreateArticleProgressParams): Promise<ArticleProgress> {
     const client = await this.getClient();
     const { data, error } = await client
       .from('article_progress')
-      .insert({
+      .upsert({
         article_id: params.article_id,
         org_id: params.org_id,
         status: params.status,
@@ -42,6 +42,9 @@ export class ArticleProgressService {
         progress_percentage: 0,
         current_stage: params.current_stage,
         metadata: params.metadata || {},
+      }, {
+        onConflict: 'article_id',
+        ignoreDuplicates: false
       })
       .select()
       .single();
