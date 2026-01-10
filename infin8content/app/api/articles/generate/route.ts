@@ -142,7 +142,7 @@ export async function POST(request: Request) {
       .from('articles' as any)
       .insert({
         org_id: organizationId,
-        created_by: userId,
+        created_by: userId || null, // Ensure null if userId is undefined
         keyword: parsed.keyword,
         status: 'queued',
         target_word_count: parsed.targetWordCount,
@@ -154,9 +154,20 @@ export async function POST(request: Request) {
       .single() as unknown as Promise<{ data: { id: string } | null; error: any }>)
 
     if (insertError || !article) {
-      console.error('Failed to create article record:', insertError)
+      console.error('Failed to create article record:', {
+        insertError,
+        article,
+        organizationId,
+        userId,
+        parsed: {
+          keyword: parsed.keyword,
+          targetWordCount: parsed.targetWordCount,
+          writingStyle: parsed.writingStyle,
+          targetAudience: parsed.targetAudience
+        }
+      })
       return NextResponse.json(
-        { error: 'Failed to create article record' },
+        { error: 'Failed to create article record', details: insertError?.message },
         { status: 500 }
       )
     }
