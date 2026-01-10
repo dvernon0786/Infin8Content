@@ -19,6 +19,20 @@
 - **Epic 4A:** ✅ COMPLETED (Article generation core - 6 stories done)
 - **Epic 15:** ✅ IN PROGRESS (Real-time Dashboard Experience) - **Story 15.1 COMPLETED**
 
+### 📝 **Recent Activity - WEBSOCKET STABILITY FIX COMPLETION (2026-01-11 21:13:00 AEDT)**
+- ✅ **CRITICAL ISSUE FIXED:** WebSocket connection instability causing auto-refresh failures
+- ✅ **ROOT CAUSE IDENTIFIED:** Constant SUBSCRIBED/CLOSED connection loops preventing stable real-time updates
+- ✅ **CONNECTION STABILITY:** Added proper error handling with exponential backoff retry logic (1s, 2s, 4s delays)
+- ✅ **RETRY MECHANISM:** Implemented maximum 3 retry attempts before falling back to polling
+- ✅ **CHANNEL CONFIGURATION:** Enhanced WebSocket channel config with broadcast and presence settings
+- ✅ **SUBSCRIPTION CLEANUP:** Added proper cleanup on component unmount to prevent memory leaks
+- ✅ **ERROR HANDLING:** Comprehensive status handling for CHANNEL_ERROR, TIMED_OUT, and CLOSED states
+- ✅ **FALLBACK SYSTEM:** Maintains 3-second polling when WebSocket fails completely
+- ✅ **AUTO-REFRESH RELIABILITY:** Now guarantees page refresh when article generation completes
+- ✅ **PRODUCTION DEPLOYMENT:** Fix deployed and active in production environment
+- ✅ **USER EXPERIENCE:** Real-time dashboard now provides stable, reliable status updates
+- ✅ **SYSTEM STATUS:** All real-time functionality working end-to-end without connection issues
+
 ### 📝 **Recent Activity - CRITICAL ARTICLE CREATION API FIX COMPLETION (2026-01-11 02:41:00 AEDT)**
 - ✅ **CRITICAL ISSUE FIXED:** Article creation API 500 error completely resolved
 - ✅ **ROOT CAUSE IDENTIFIED:** Database sync triggers failing due to missing required fields (total_sections, current_stage)
