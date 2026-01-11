@@ -60,7 +60,7 @@ function searchSingleArticle(article: DashboardArticle, searchTerm: string): Sea
   }
 
   // Keyword search (high weight)
-  const keyword = article.keyword.toLowerCase();
+  const keyword = (article.keyword || '').toLowerCase();
   const keywordMatch = keyword.includes(searchTerm);
   if (keywordMatch) {
     matchedFields.push('keyword');
@@ -186,7 +186,7 @@ export function getSearchSuggestions(articles: DashboardArticle[], query: string
     }
 
     // Keyword suggestions
-    const keyword = article.keyword;
+    const keyword = article.keyword || '';
     if (keyword.toLowerCase().includes(searchTerm)) {
       suggestions.add(keyword);
     }
