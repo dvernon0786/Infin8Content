@@ -257,18 +257,16 @@ export function VirtualizedArticleList({
 
   return (
     <div className={cn('virtualized-article-list', className)}>
-      <List
-        ref={listRef}
-        height={height}
-        itemCount={articles.length}
-        itemSize={itemHeight}
-        itemData={itemData}
-        overscanCount={overscanCount}
-        getItemKey={getItemKey}
-        className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
-      >
-        {ArticleItem}
-      </List>
+      {React.createElement(List, {
+        height,
+        itemCount: articles.length,
+        itemSize: itemHeight,
+        itemData,
+        overscanCount,
+        getItemKey,
+        className: "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100",
+        children: ArticleItem
+      } as any)}
       
       {/* Performance info for development */}
       {process.env.NODE_ENV === 'development' && (

@@ -128,6 +128,14 @@ export interface VirtualizedArticleListProps {
   height: number;
   overscanCount?: number;
   className?: string;
+  selectedArticle?: string | null;
+  onArticleSelect?: (id: string) => void;
+  onArticleNavigation?: (id: string, event: React.MouseEvent) => void;
+  onKeyDown?: (id: string, event: React.KeyboardEvent) => void;
+  onTouchStart?: (id: string, event: React.TouchEvent, element: HTMLElement) => void;
+  onTouchMove?: (id: string, event: React.TouchEvent, element: HTMLElement) => void;
+  onTouchEnd?: (id: string, event: React.TouchEvent, element: HTMLElement) => void;
+  showProgress?: boolean;
 }
 
 // Dashboard filters hook return type
