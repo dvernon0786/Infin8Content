@@ -401,6 +401,31 @@ GET /api/articles/[id]/progress
 
 ---
 
+## Recent Updates (2026-01-11)
+
+### Real-time Subscription Stability Fixes
+**Stories Affected**: 15-1 (Real-time Article Status Display), 4a-6 (Real-time Progress Tracking)
+
+**Critical Fixes Applied**:
+- ✅ **CLOSED Status Handling**: Fixed Supabase Realtime subscriptions that were repeatedly closing
+- ✅ **Infinite Loop Prevention**: Added initialization guards to prevent multiple hook re-initializations
+- ✅ **Polling Optimization**: Changed from 5-second to 2-minute intervals (96% API call reduction)
+- ✅ **Connection Stability**: Enhanced reconnection logic for all subscription failure types
+
+**Performance Impact**:
+- API calls reduced: 720/hour → 30/hour per active user
+- Server load reduction: ~96%
+- Stable real-time connections with proper fallback mechanisms
+- Improved mobile battery life and reduced bandwidth usage
+
+**Files Updated**:
+- `lib/supabase/realtime.ts` - Added CLOSED status handling
+- `hooks/use-realtime-articles.ts` - Added initialization guards
+- `components/articles/article-status-monitor.tsx` - Optimized for completed articles
+- `lib/services/dashboard/realtime-service.ts` - Updated polling intervals
+
+---
+
 ## Generated Documentation
 
 ### Project Overview
