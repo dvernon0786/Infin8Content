@@ -1,5 +1,5 @@
 /**
- * Virtualized safeArticle list component for performance optimization
+ * Virtualized article list component for performance optimization
  * Story 15.4: Dashboard Search and Filtering
  */
 
@@ -64,27 +64,10 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
       );
     }
     
-    // Defensive checks for all required properties
-    const safeArticle = {
-      id: article.id || `unknown-${index}`,
-      title: article.title || 'Untitled Article',
-      keyword: article.keyword || '',
-      status: article.status || 'unknown',
-      created_at: article.created_at || new Date().toISOString(),
-      updated_at: article.updated_at || article.created_at || new Date().toISOString(),
-      progress: article.progress || null
-    };
-    
-    console.log('📄 Safe article data:', { 
-      index, 
-      safeId: safeArticle.id, 
-      safeTitle: safeArticle.title, 
-      safeKeyword: safeArticle.keyword,
-      safeStatus: safeArticle.status
-    });
-    
-    const isSelected = data.selectedArticle === safeArticle.id;
-  const statusConfig = getStatusConfig(safeArticle.status);
+    // Since we're using articles, all properties should be defined
+    // but we still add defensive checks for extra safety
+    const isSelected = data.selectedArticle === article.id;
+  const statusConfig = getStatusConfig(article.status);
 
   // Format time ago
   const formatTimeAgo = (timestamp: string): string => {
@@ -111,7 +94,7 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
           'mx-2 transition-all duration-200 hover:shadow-md cursor-pointer',
           isSelected && 'ring-2 ring-blue-500'
         )}
-        onClick={() => data.onArticleSelect(isSelected ? '' : safeArticle.id)}
+        onClick={() => data.onArticleSelect(isSelected ? '' : article.id)}
       >
         <CardContent className="p-4">
           <div className="flex items-start justify-between mb-3">
@@ -119,53 +102,53 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
               <h3 
                 className={cn(
                   'font-medium text-gray-900 truncate',
-                  safeArticle.status === 'completed' && 'cursor-pointer hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded'
+                  article.status === 'completed' && 'cursor-pointer hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded'
                 )}
-                title={safeArticle.status === 'completed' ? 'Click to view completed safeArticle' : undefined}
-                role={safeArticle.status === 'completed' ? 'button' : undefined}
-                tabIndex={safeArticle.status === 'completed' ? 0 : undefined}
-                aria-label={safeArticle.status === 'completed' 
-                  ? `completed safeArticle: ${safeArticle.title || safeArticle.keyword}, click to view` 
+                title={article.status === 'completed' ? 'Click to view completed article' : undefined}
+                role={article.status === 'completed' ? 'button' : undefined}
+                tabIndex={article.status === 'completed' ? 0 : undefined}
+                aria-label={article.status === 'completed' 
+                  ? `completed article: ${article.title || article.keyword}, click to view` 
                   : undefined
                 }
                 onClick={(e) => {
-                  if (safeArticle.status === 'completed') {
-                    data.onArticleNavigation(safeArticle.id, e);
+                  if (article.status === 'completed') {
+                    data.onArticleNavigation(article.id, e);
                   }
                 }}
                 onKeyDown={(e) => {
-                  if (safeArticle.status === 'completed') {
-                    data.onKeyDown(safeArticle.id, e);
+                  if (article.status === 'completed') {
+                    data.onKeyDown(article.id, e);
                   }
                 }}
                 onTouchStart={(e) => {
-                  if (safeArticle.status === 'completed') {
-                    data.onTouchStart(safeArticle.id, e, e.currentTarget);
+                  if (article.status === 'completed') {
+                    data.onTouchStart(article.id, e, e.currentTarget);
                   }
                 }}
                 onTouchMove={(e) => {
-                  if (safeArticle.status === 'completed') {
-                    data.onTouchMove(safeArticle.id, e, e.currentTarget);
+                  if (article.status === 'completed') {
+                    data.onTouchMove(article.id, e, e.currentTarget);
                   }
                 }}
                 onTouchEnd={(e) => {
-                  if (safeArticle.status === 'completed') {
-                    data.onTouchEnd(safeArticle.id, e, e.currentTarget);
+                  if (article.status === 'completed') {
+                    data.onTouchEnd(article.id, e, e.currentTarget);
                   }
                 }}
               >
-                {safeArticle.title || safeArticle.keyword}
+                {article.title || article.keyword}
               </h3>
               <p className="text-sm text-gray-500 truncate">
-                {safeArticle.keyword}
+                {article.keyword}
               </p>
             </div>
             
             {/* Visual Status Indicator */}
             <VisualStatusIndicator
-              status={safeArticle.status}
-              progress={safeArticle.progress}
-              title={safeArticle.title || safeArticle.keyword}
+              status={article.status}
+              progress={article.progress}
+              title={article.title || article.keyword}
               compact={true}
               isRealtime={true}
               onRetry={() => {
@@ -175,12 +158,12 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
           </div>
           
           {/* Progress bar for active articles */}
-          {data.showProgress && safeArticle.status === 'generating' && safeArticle.progress && (
+          {data.showProgress && article.status === 'generating' && article.progress && (
             <div className="mb-3">
               <VisualStatusIndicator
-                status={safeArticle.status}
-                progress={safeArticle.progress}
-                title={safeArticle.title || safeArticle.keyword}
+                status={article.status}
+                progress={article.progress}
+                title={article.title || article.keyword}
                 compact={false}
                 isRealtime={true}
                 onAnimationComplete={() => {
@@ -193,11 +176,11 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
           {/* Article metadata */}
           <div className="flex items-center justify-between text-xs text-gray-500">
             <div className="flex items-center gap-4">
-              <span>Created {formatTimeAgo(safeArticle.created_at || '')}</span>
-              <span>Updated {formatTimeAgo(safeArticle.updated_at || '')}</span>
+              <span>Created {formatTimeAgo(article.created_at || '')}</span>
+              <span>Updated {formatTimeAgo(article.updated_at || '')}</span>
             </div>
             
-            {safeArticle.status === 'completed' && (
+            {article.status === 'completed' && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -214,13 +197,13 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
           </div>
           
           {/* Error display */}
-          {safeArticle.status === 'failed' && safeArticle.progress?.error_message && (
+          {article.status === 'failed' && article.progress?.error_message && (
             <Card className="border-red-200 bg-red-50 mt-3">
               <CardContent className="p-3">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
                   <div className="text-sm text-red-800">
-                    {safeArticle.progress.error_message}
+                    {article.progress.error_message}
                   </div>
                 </div>
               </CardContent>
@@ -234,7 +217,7 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
     console.error('🚨 ArticleItem error:', error, { index, data });
     return (
       <div style={style} className="p-4 border border-red-200 bg-red-50">
-        <p className="text-red-600">Error rendering safeArticle</p>
+        <p className="text-red-600">Error rendering article</p>
       </div>
     );
   }
@@ -281,20 +264,63 @@ export function VirtualizedArticleList({
 
   // Validate articles data
   if (articles && Array.isArray(articles)) {
+    const firstArticle = articles[0];
     console.log('📋 Articles validation:', {
       isArray: Array.isArray(articles),
       length: articles.length,
-      firstArticle: articles[0] ? {
-        id: articles[0].id,
-        title: articles[0].title,
-        keyword: articles[0].keyword,
-        status: articles[0].status,
-        hasNullKeyword: articles[0].keyword === null,
-        hasUndefinedKeyword: articles[0].keyword === undefined,
-        keywordType: typeof articles[0].keyword
-      } : 'No first safeArticle'
+      firstArticle: firstArticle ? {
+        id: firstArticle.id,
+        title: firstArticle.title,
+        keyword: firstArticle.keyword,
+        status: firstArticle.status,
+        hasNullKeyword: firstArticle.keyword === null,
+        hasUndefinedKeyword: firstArticle.keyword === undefined,
+        keywordType: typeof firstArticle.keyword,
+        // Check for nested objects that might be undefined
+        progress: firstArticle.progress,
+        progressType: typeof firstArticle.progress,
+        hasNullProgress: firstArticle.progress === null,
+        hasUndefinedProgress: firstArticle.progress === undefined
+      } : 'No first article'
     });
   }
+
+  // Create safe articles array with all properties guaranteed to be defined
+  const safeArticles = useMemo(() => {
+    if (!articles || !Array.isArray(articles)) return [];
+    
+    return articles.map((article, index) => {
+      try {
+        // Ensure all properties have safe defaults
+        return {
+          id: article?.id || `unknown-${index}`,
+          title: article?.title || 'Untitled Article',
+          keyword: article?.keyword || '',
+          status: article?.status || 'unknown',
+          created_at: article?.created_at || new Date().toISOString(),
+          updated_at: article?.updated_at || article?.created_at || new Date().toISOString(),
+          progress: article?.progress || null
+        };
+      } catch (error) {
+        console.error(`🚨 Error processing article at index ${index}:`, error);
+        return {
+          id: `error-${index}`,
+          title: 'Error Loading Article',
+          keyword: '',
+          status: 'error',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          progress: null
+        };
+      }
+    });
+  }, [articles]);
+
+  console.log('📋 Safe articles created:', { 
+    originalCount: articles?.length || 0, 
+    safeCount: safeArticles.length,
+    firstSafeArticle: safeArticles[0] 
+  });
 
   try {
   const listRef = useRef<any>(null);
@@ -302,8 +328,8 @@ export function VirtualizedArticleList({
   // Memoize item data to prevent unnecessary re-renders
   const itemData = useMemo(() => {
     console.log('📋 Creating itemData:', {
-      articlesCount: articles?.length || 0,
-      articles: articles?.map(a => ({ id: a.id, title: a.title, keyword: a.keyword, status: a.status })),
+      articlesCount: safeArticles?.length || 0,
+      articles: safeArticles?.map(a => ({ id: a.id, title: a.title, keyword: a.keyword, status: a.status })),
       selectedArticle,
       hasCallbacks: {
         onArticleSelect: !!onArticleSelect,
@@ -317,7 +343,7 @@ export function VirtualizedArticleList({
     });
 
     return {
-      articles,
+      articles: safeArticles,
       selectedArticle: selectedArticle || null,
       onArticleSelect: onArticleSelect || (() => {}),
       onArticleNavigation: onArticleNavigation || (() => {}),
@@ -327,9 +353,9 @@ export function VirtualizedArticleList({
       onTouchEnd: onTouchEnd || (() => {}),
       showProgress,
     };
-  }, [articles, selectedArticle, onArticleSelect, onArticleNavigation, onKeyDown, onTouchStart, onTouchMove, onTouchEnd, showProgress]);
+  }, [safeArticles, selectedArticle, onArticleSelect, onArticleNavigation, onKeyDown, onTouchStart, onTouchMove, onTouchEnd, showProgress]);
 
-  // Scroll to selected safeArticle
+  // Scroll to selected article
   const scrollToItem = useCallback((index: number) => {
     if (listRef.current) {
       listRef.current.scrollToItem(index);
@@ -338,10 +364,10 @@ export function VirtualizedArticleList({
 
   // Get item key for stable rendering
   const getItemKey = useCallback((index: number): string => {
-    return articles[index]?.id || index.toString();
-  }, [articles]);
+    return safeArticles[index]?.id || index.toString();
+  }, [safeArticles]);
 
-  if (articles.length === 0) {
+  if (safeArticles.length === 0) {
     return (
       <div className={cn('flex items-center justify-center h-64', className)}>
         <div className="text-center">
@@ -356,11 +382,11 @@ export function VirtualizedArticleList({
   }
 
   return (
-    <div className={cn('virtualized-safeArticle-list', className)}>
+    <div className={cn('virtualized-article-list', className)}>
       {(() => {
         console.log('🎯 About to create React List element:', {
           height,
-          itemCount: articles.length,
+          itemCount: safeArticles.length,
           itemSize: itemHeight,
           itemDataKeys: Object.keys(itemData),
           hasChildren: !!ArticleItem
@@ -369,13 +395,12 @@ export function VirtualizedArticleList({
         try {
           return React.createElement(List, {
             height,
-            itemCount: articles.length,
+            itemCount: safeArticles.length,
             itemSize: itemHeight,
             itemData,
             overscanCount,
             getItemKey,
             className: "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100",
-            children: ArticleItem
           } as any);
         } catch (error) {
           console.error('🚨 React.createElement error:', error);
@@ -386,7 +411,7 @@ export function VirtualizedArticleList({
       {/* Performance info for development */}
       {process.env.NODE_ENV === 'development' && (
         <div className="text-xs text-gray-500 mt-2 text-center">
-          Virtualized {articles.length} articles • {itemHeight}px height • {overscanCount} overscan
+          Virtualized {safeArticles.length} articles • {itemHeight}px height • {overscanCount} overscan
         </div>
       )}
     </div>
@@ -395,7 +420,7 @@ export function VirtualizedArticleList({
     console.error('🚨 VirtualizedArticleList error:', error);
     return (
       <div className="border rounded-lg p-8 text-center">
-        <p className="text-muted-foreground">Error loading safeArticle list. Please refresh the page.</p>
+        <p className="text-muted-foreground">Error loading article list. Please refresh the page.</p>
       </div>
     );
   }
@@ -438,16 +463,16 @@ export function AdaptiveVirtualizedArticleList({
     const sampleSize = Math.min(articles.length, 10);
     
     for (let i = 0; i < sampleSize; i++) {
-      const safeArticle = articles[i];
+      const article = articles[i];
       let itemHeight = 120; // Base height
       
       // Add height for progress indicator
-      if (safeArticle.status === 'generating' && safeArticle.progress) {
+      if (article.status === 'generating' && article.progress) {
         itemHeight += 60;
       }
       
       // Add height for error message
-      if (safeArticle.status === 'failed' && safeArticle.progress?.error_message) {
+      if (article.status === 'failed' && article.progress?.error_message) {
         itemHeight += 80;
       }
       
