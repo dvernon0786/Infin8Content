@@ -40,8 +40,18 @@ interface ArticleItemProps {
 }
 
 function ArticleItem({ index, style, data }: ArticleItemProps) {
-  const article = data.articles[index];
-  const isSelected = data.selectedArticle === article.id;
+  console.log('📄 ArticleItem rendering:', { index, articlesCount: data.articles?.length || 0 });
+  
+  try {
+    const article = data.articles[index];
+    console.log('📄 Article data:', { index, articleId: article?.id, title: article?.title, keyword: article?.keyword });
+    
+    if (!article) {
+      console.error('🚨 ArticleItem: No article at index', index);
+      return null;
+    }
+    
+    const isSelected = data.selectedArticle === article.id;
   const statusConfig = getStatusConfig(article.status);
 
   // Format time ago
@@ -188,6 +198,14 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
       </Card>
     </div>
   );
+  } catch (error) {
+    console.error('🚨 ArticleItem error:', error, { index, data });
+    return (
+      <div style={style} className="p-4 border border-red-200 bg-red-50">
+        <p className="text-red-600">Error rendering article</p>
+      </div>
+    );
+  }
 }
 
 export function VirtualizedArticleList({
@@ -233,17 +251,34 @@ export function VirtualizedArticleList({
   const listRef = useRef<any>(null);
 
   // Memoize item data to prevent unnecessary re-renders
-  const itemData = useMemo(() => ({
-    articles,
-    selectedArticle: selectedArticle || null,
-    onArticleSelect: onArticleSelect || (() => {}),
-    onArticleNavigation: onArticleNavigation || (() => {}),
-    onKeyDown: onKeyDown || (() => {}),
-    onTouchStart: onTouchStart || (() => {}),
-    onTouchMove: onTouchMove || (() => {}),
-    onTouchEnd: onTouchEnd || (() => {}),
-    showProgress,
-  }), [articles, selectedArticle, onArticleSelect, onArticleNavigation, onKeyDown, onTouchStart, onTouchMove, onTouchEnd, showProgress]);
+  const itemData = useMemo(() => {
+    console.log('📋 Creating itemData:', {
+      articlesCount: articles?.length || 0,
+      articles: articles?.map(a => ({ id: a.id, title: a.title, keyword: a.keyword, status: a.status })),
+      selectedArticle,
+      hasCallbacks: {
+        onArticleSelect: !!onArticleSelect,
+        onArticleNavigation: !!onArticleNavigation,
+        onKeyDown: !!onKeyDown,
+        onTouchStart: !!onTouchStart,
+        onTouchMove: !!onTouchMove,
+        onTouchEnd: !!onTouchEnd
+      },
+      showProgress
+    });
+
+    return {
+      articles,
+      selectedArticle: selectedArticle || null,
+      onArticleSelect: onArticleSelect || (() => {}),
+      onArticleNavigation: onArticleNavigation || (() => {}),
+      onKeyDown: onKeyDown || (() => {}),
+      onTouchStart: onTouchStart || (() => {}),
+      onTouchMove: onTouchMove || (() => {}),
+      onTouchEnd: onTouchEnd || (() => {}),
+      showProgress,
+    };
+  }, [articles, selectedArticle, onArticleSelect, onArticleNavigation, onKeyDown, onTouchStart, onTouchMove, onTouchEnd, showProgress]);
 
   // Scroll to selected article
   const scrollToItem = useCallback((index: number) => {
