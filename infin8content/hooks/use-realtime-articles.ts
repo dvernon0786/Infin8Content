@@ -279,7 +279,16 @@ export function useRealtimeArticles({
       return;
     }
 
-    // Subscribe to dashboard updates
+    console.log('🔧 Initializing hook for orgId:', orgId);
+
+    // Start polling immediately if enabled (as a reliable fallback)
+    if (enablePolling) {
+      console.log('🚀 Starting polling immediately as fallback');
+      setIsPollingMode(true);
+      startPolling();
+    }
+
+    // Also try real-time subscription
     articleProgressRealtime.subscribeToDashboardUpdates(
       orgId,
       handleDashboardUpdate,
