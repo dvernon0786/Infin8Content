@@ -2,6 +2,7 @@
 
 import {
     BarChart,
+    FileText,
     Globe,
     PenTool,
     Search,
@@ -36,6 +37,11 @@ const items = [
         title: "Publish",
         url: "/dashboard/publish",
         icon: Globe,
+    },
+    {
+        title: "Articles",
+        url: "/dashboard/articles",
+        icon: FileText,
     },
     {
         title: "Track",
