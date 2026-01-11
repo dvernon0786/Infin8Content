@@ -342,8 +342,9 @@ export function VirtualizedArticleList({
       showProgress
     });
 
-    return {
-      articles: safeArticles,
+    // Create completely safe itemData - no undefined values allowed
+    const safeItemData = {
+      articles: safeArticles || [],
       selectedArticle: selectedArticle || null,
       onArticleSelect: onArticleSelect || (() => {}),
       onArticleNavigation: onArticleNavigation || (() => {}),
@@ -351,8 +352,25 @@ export function VirtualizedArticleList({
       onTouchStart: onTouchStart || (() => {}),
       onTouchMove: onTouchMove || (() => {}),
       onTouchEnd: onTouchEnd || (() => {}),
-      showProgress,
+      showProgress: showProgress ?? true
     };
+
+    // Deep clean to ensure no undefined values
+    const cleanedItemData = JSON.parse(
+      JSON.stringify(safeItemData, (key, value) => {
+        // Convert undefined to null to prevent Object.values errors
+        return value === undefined ? null : value;
+      })
+    );
+
+    console.log('🧹 Cleaned itemData:', {
+      articlesCount: cleanedItemData.articles?.length || 0,
+      hasArticles: cleanedItemData.articles?.length > 0,
+      selectedArticle: cleanedItemData.selectedArticle,
+      showProgress: cleanedItemData.showProgress
+    });
+
+    return cleanedItemData;
   }, [safeArticles, selectedArticle, onArticleSelect, onArticleNavigation, onKeyDown, onTouchStart, onTouchMove, onTouchEnd, showProgress]);
 
   // Scroll to selected article
