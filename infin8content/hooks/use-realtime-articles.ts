@@ -75,10 +75,41 @@ export function useRealtimeArticles({
       const data = await response.json();
       
       setArticles(prevArticles => {
-        // Merge new articles with existing ones, avoiding duplicates
-        const existingIds = new Set(prevArticles.map(a => a.id));
-        const newArticles = data.articles.filter((a: DashboardArticle) => !existingIds.has(a.id));
-        return [...newArticles, ...prevArticles].slice(0, 50); // Keep only 50 most recent
+        console.log('🔄 fetchArticles called with data:', data.articles.length, 'articles');
+        console.log('📊 Current state has:', prevArticles.length, 'articles');
+        
+        // Create a map of existing articles for quick lookup
+        const existingMap = new Map(prevArticles.map(a => [a.id, a]));
+        
+        // Update existing articles and add new ones
+        const updatedArticles = data.articles.map((fetchedArticle: DashboardArticle) => {
+          const existing = existingMap.get(fetchedArticle.id);
+          if (existing) {
+            console.log('🔄 Updating existing article:', fetchedArticle.id, 'from', existing.status, 'to', fetchedArticle.status);
+            // Update existing article with new data
+            return {
+              ...existing,
+              ...fetchedArticle,
+              // Preserve progress if it exists in the existing article but not in fetched data
+              progress: fetchedArticle.progress || existing.progress
+            };
+          }
+          console.log('➕ Adding new article:', fetchedArticle.id);
+          // Return new article as-is
+          return fetchedArticle;
+        });
+        
+        // Add any existing articles that weren't in the fetch response (for articles that might be filtered out)
+        const fetchedIds = new Set(data.articles.map((a: DashboardArticle) => a.id));
+        const remainingArticles = prevArticles.filter(a => !fetchedIds.has(a.id));
+        
+        // Combine and sort by updated_at desc, keep only 50 most recent
+        const result = [...updatedArticles, ...remainingArticles]
+          .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+          .slice(0, 50);
+          
+        console.log('✅ Final result has:', result.length, 'articles');
+        return result;
       });
       
       setLastUpdated(new Date().toISOString());
@@ -153,12 +184,14 @@ export function useRealtimeArticles({
 
   // Polling functions
   const startPolling = useCallback(() => {
+    console.log('🚀 Starting polling with interval:', pollingInterval);
     if (pollingTimeoutRef.current) {
       clearInterval(pollingTimeoutRef.current);
     }
     
     pollingTimeoutRef.current = setInterval(async () => {
       try {
+        console.log('📡 Polling fetch triggered...');
         await fetchArticles(lastPollRef.current || undefined);
       } catch (error) {
         console.error('Polling error:', error);

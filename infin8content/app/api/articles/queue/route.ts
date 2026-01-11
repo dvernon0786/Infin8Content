@@ -90,6 +90,8 @@ export async function GET(request: Request) {
         : undefined,
     }))
 
+    console.log('📤 API returning', articlesWithPosition.length, 'articles:', articlesWithPosition.map(a => ({ id: a.id, status: a.status, title: a.title })));
+
     return NextResponse.json({
       articles: articlesWithPosition,
       total: articles?.length || 0,

@@ -122,6 +122,9 @@ export function ArticleStatusList({
 
   // Filter and sort articles
   const filteredArticles = useMemo(() => {
+    console.log('🎯 Dashboard component rendering with', articles.length, 'articles');
+    console.log('📝 Articles:', articles.map(a => ({ id: a.id, status: a.status, title: a.title })));
+    
     let filtered = articles;
     
     if (!showCompleted) {
