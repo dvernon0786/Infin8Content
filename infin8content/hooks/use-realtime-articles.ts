@@ -3,6 +3,8 @@
  * Story 15.1: Real-time Article Status Display
  */
 
+'use client';
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { articleProgressRealtime, type DashboardUpdateEvent, type DashboardArticle } from '@/lib/supabase/realtime';
 import type { ArticleProgress } from '@/types/article';

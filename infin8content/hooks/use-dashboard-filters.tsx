@@ -3,6 +3,8 @@
  * Story 15.4: Dashboard Search and Filtering
  */
 
+'use client';
+
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { searchArticles, createDebouncedSearch } from '@/lib/utils/search-utils';

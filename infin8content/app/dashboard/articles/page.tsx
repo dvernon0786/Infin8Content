@@ -44,9 +44,9 @@ export default async function ArticlesPage() {
   )
 }
 
-// Client component for interactive features
 'use client';
 
+// Client component for interactive features
 function ArticlesClient({ orgId }: { orgId: string }) {
   const { articles, isConnected, error, lastUpdated, refresh } = useRealtimeArticles({
     orgId,
