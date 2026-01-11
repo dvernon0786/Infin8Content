@@ -401,6 +401,7 @@ export function VirtualizedArticleList({
             overscanCount,
             getItemKey,
             className: "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100",
+            children: ArticleItem
           } as any);
         } catch (error) {
           console.error('🚨 React.createElement error:', error);
