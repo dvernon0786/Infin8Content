@@ -247,6 +247,23 @@ export function VirtualizedArticleList({
     }
   });
 
+  // Validate articles data
+  if (articles && Array.isArray(articles)) {
+    console.log('📋 Articles validation:', {
+      isArray: Array.isArray(articles),
+      length: articles.length,
+      firstArticle: articles[0] ? {
+        id: articles[0].id,
+        title: articles[0].title,
+        keyword: articles[0].keyword,
+        status: articles[0].status,
+        hasNullKeyword: articles[0].keyword === null,
+        hasUndefinedKeyword: articles[0].keyword === undefined,
+        keywordType: typeof articles[0].keyword
+      } : 'No first article'
+    });
+  }
+
   try {
   const listRef = useRef<any>(null);
 
@@ -308,16 +325,31 @@ export function VirtualizedArticleList({
 
   return (
     <div className={cn('virtualized-article-list', className)}>
-      {React.createElement(List, {
-        height,
-        itemCount: articles.length,
-        itemSize: itemHeight,
-        itemData,
-        overscanCount,
-        getItemKey,
-        className: "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100",
-        children: ArticleItem
-      } as any)}
+      {(() => {
+        console.log('🎯 About to create React List element:', {
+          height,
+          itemCount: articles.length,
+          itemSize: itemHeight,
+          itemDataKeys: Object.keys(itemData),
+          hasChildren: !!ArticleItem
+        });
+        
+        try {
+          return React.createElement(List, {
+            height,
+            itemCount: articles.length,
+            itemSize: itemHeight,
+            itemData,
+            overscanCount,
+            getItemKey,
+            className: "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100",
+            children: ArticleItem
+          } as any);
+        } catch (error) {
+          console.error('🚨 React.createElement error:', error);
+          throw error;
+        }
+      })()}
       
       {/* Performance info for development */}
       {process.env.NODE_ENV === 'development' && (
