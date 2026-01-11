@@ -81,7 +81,7 @@ export function useRealtimeArticles({
         return [...newArticles, ...prevArticles].slice(0, 50); // Keep only 50 most recent
       });
       
-      setLastUpdated(data.lastUpdated);
+      setLastUpdated(new Date().toISOString());
       setError(null);
       
       return data;
@@ -254,7 +254,9 @@ export function useRealtimeArticles({
     );
 
     // Initial fetch
-    fetchArticles();
+    fetchArticles().catch(() => {
+      // Error is handled in fetchArticles function
+    });
 
     // Cleanup on unmount
     return () => {
