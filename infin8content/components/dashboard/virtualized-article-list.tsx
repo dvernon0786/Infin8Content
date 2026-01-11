@@ -450,11 +450,13 @@ const cleanedItemData = safeItemData;
       ) : (
         <div className="overflow-y-auto" style={{ height: height || 600 }}>
           {safeArticles.map((article, index) => (
-            ArticleItem({
-              index,
-              style: { height: itemHeight || 160 },
-              data: itemData
-            } as ArticleItemProps)
+            <React.Fragment key={article.id || index}>
+              {ArticleItem({
+                index,
+                style: { height: itemHeight || 160 },
+                data: itemData
+              } as ArticleItemProps)}
+            </React.Fragment>
           ))}
         </div>
       )}
