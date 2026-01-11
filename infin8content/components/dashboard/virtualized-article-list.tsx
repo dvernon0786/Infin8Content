@@ -421,6 +421,23 @@ const cleanedItemData = safeItemData;
     );
   }
 
+  // Guard: Ensure all required variables are defined before rendering List
+  if (!itemData || !getItemKey || height === undefined || itemHeight === undefined) {
+    console.warn('⚠️ VirtualizedArticleList: Missing required props', {
+      hasItemData: !!itemData,
+      hasGetItemKey: !!getItemKey,
+      height,
+      itemHeight
+    });
+    return (
+      <div className={cn('flex items-center justify-center h-64', className)}>
+        <div className="text-center">
+          <p className="text-muted-foreground">Loading article list...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={cn('virtualized-article-list', className)}>
       {(() => {
@@ -463,7 +480,7 @@ const cleanedItemData = safeItemData;
           }
           
           // Ensure no props are null/undefined
-          const safeListProps = {
+          const safeListProps: any = {
             height: height || 600,
             itemCount: safeArticles.length || 0,
             itemSize: itemHeight || 160,
@@ -474,7 +491,7 @@ const cleanedItemData = safeItemData;
             children: ArticleItem
           };
           
-          return React.createElement(List, safeListProps as any);
+          return React.createElement(List, safeListProps);
         } catch (error) {
           console.error('🚨 React.createElement error:', error);
           throw error;
