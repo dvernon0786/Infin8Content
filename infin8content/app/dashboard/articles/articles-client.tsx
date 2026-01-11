@@ -1,7 +1,5 @@
 'use client';
 
-import { getCurrentUser } from '@/lib/supabase/get-current-user'
-import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArticleStatusList } from '@/components/dashboard/article-status-list'
 import { SearchInput } from '@/components/dashboard/search-input'
@@ -183,6 +181,18 @@ function ArticlesClient({ orgId }: { orgId: string }) {
               e.preventDefault()
               window.location.href = `/dashboard/articles/${id}`
             }
+          }}
+          onTouchStart={(id, e, element) => {
+            // Handle touch start for mobile navigation
+            console.log('Touch start:', id);
+          }}
+          onTouchMove={(id, e, element) => {
+            // Handle touch move for mobile navigation
+            console.log('Touch move:', id);
+          }}
+          onTouchEnd={(id, e, element) => {
+            // Navigate on touch end for mobile
+            window.location.href = `/dashboard/articles/${id}`
           }}
           showProgress={true}
         />
