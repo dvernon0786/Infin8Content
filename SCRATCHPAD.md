@@ -1,6 +1,6 @@
 # Infin8Content - Project Scratchpad
 
-**Updated:** 2026-01-11 13:19 PM AEDT (2026-01-11 02:19:34 UTC)
+**Updated:** 2026-01-11 16:11 PM AEDT (2026-01-11 05:11:48 UTC)
 
 ## 🎯 CURRENT STATUS
 
@@ -71,13 +71,21 @@
 - ✅ **Performance**: <2 second real-time updates (exceeds 5s requirement)
 - ✅ **Implementation**: Production-ready with comprehensive error handling
 
+**🚨 CRITICAL PRODUCTION FIX (2026-01-11):**
+- **Problem**: Dashboard status updates not working despite successful polling
+- **Root Cause**: `fetchArticles` function filtered out existing articles instead of updating them
+- **Solution**: Fixed polling merge logic with Map-based article updates
+- **Impact**: Articles now auto-update from "generating" → "completed" within 5 seconds
+- **User Experience**: No page refresh required, status changes visible immediately
+
 **Key Achievements:**
 - Fixed "vanishing article" problem
 - Real-time dashboard with visual indicators
-- Polling fallback mechanism
+- Polling fallback mechanism (now working correctly)
 - Error boundary components
 - Scalable for 1000+ concurrent users
+- **NEW**: Reliable status updates via polling when Realtime fails
 
 ---
-**Last Updated**: 2026-01-11 13:19 PM AEDT
+**Last Updated**: 2026-01-11 16:11 PM AEDT
 **Status**: SPRINT 0 READY - PERFORMANCE OPTIMIZATION PRIORITY
