@@ -66,10 +66,13 @@ export function useRealtimeArticles({
         params.append('since', since);
       }
 
+      console.log('📡 Fetching articles from:', `/api/articles/queue?${params}`);
+      
       const response = await fetch(`/api/articles/queue?${params}`);
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch articles: ${response.statusText}`);
+        console.error('❌ API Response error:', response.status, response.statusText);
+        throw new Error(`Failed to fetch articles: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
