@@ -17,7 +17,7 @@
 - **Epic 1:** ✅ COMPLETED (User management, payments, organizations) - **PAYWALL FIXED**
 - **Epic 3:** ✅ COMPLETED (Keyword research, Tavily integration)
 - **Epic 4A:** ✅ COMPLETED (Article generation core - 6 stories done)
-- **Epic 15:** ✅ IN PROGRESS (Real-time Dashboard Experience) - **Story 15.1 COMPLETED**
+- **Epic 15:** ✅ IN PROGRESS (Real-time Dashboard Experience) - **Story 15.1 COMPLETED, Story 15.3 CRITICAL ISSUES FIXED**
 
 ### 📝 **Recent Activity - Sprint Planning Update Completion (2026-01-11 12:41:00 AEDT)**
 - ✅ **SPRINT PLANNING COMPLETED:** Successfully updated sprint-status.yaml with latest epics and stories
