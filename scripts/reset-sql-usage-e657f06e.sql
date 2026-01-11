@@ -1,40 +1,43 @@
 -- Reset SQL editor usage for specific user
 -- User ID: e657f06e-772c-4d5c-b3ee-2fcb94463212
 
-UPDATE user_usage 
+-- The table is named 'usage' not 'user_usage'
+-- Update SQL queries count for this organization
+UPDATE usage 
 SET 
-  sql_queries_count = 0,
-  sql_queries_reset_at = NOW(),
-  updated_at = NOW()
-WHERE user_id = 'e657f06e-772c-4d5c-b3ee-2fcb94463212';
+  usage_count = 0,
+  last_updated = NOW()
+WHERE organization_id = 'e657f06e-772c-4d5c-b3ee-2fcb94463212'
+AND metric_type = 'sql_queries';
 
 -- Verify the reset
 SELECT 
-  user_id,
-  sql_queries_count,
-  sql_queries_reset_at,
-  updated_at
-FROM user_usage 
-WHERE user_id = 'e657f06e-772c-4d5c-b3ee-2fcb94463212';
+  organization_id,
+  metric_type,
+  usage_count,
+  last_updated
+FROM usage 
+WHERE organization_id = 'e657f06e-772c-4d5c-b3ee-2fcb94463212'
+AND metric_type = 'sql_queries';
 
 -- If no record exists, insert one
-INSERT INTO user_usage (
-  user_id,
-  org_id,
-  sql_queries_count,
-  sql_queries_reset_at,
-  created_at,
-  updated_at
+INSERT INTO usage (
+  organization_id,
+  metric_type,
+  usage_count,
+  billing_period,
+  last_updated,
+  created_at
 ) 
 SELECT 
   'e657f06e-772c-4d5c-b3ee-2fcb94463212',
-  org_id,
+  'sql_queries',
   0,
-  NOW(),
+  TO_CHAR(NOW(), 'YYYY-MM'),
   NOW(),
   NOW()
-FROM users 
-WHERE id = 'e657f06e-772c-4d5c-b3ee-2fcb94463212'
-AND NOT EXISTS (
-  SELECT 1 FROM user_usage WHERE user_id = 'e657f06e-772c-4d5c-b3ee-2fcb94463212'
+WHERE NOT EXISTS (
+  SELECT 1 FROM usage 
+  WHERE organization_id = 'e657f06e-772c-4d5c-b3ee-2fcb94463212'
+  AND metric_type = 'sql_queries'
 );

@@ -43,15 +43,16 @@ export async function POST(request: Request) {
 
     const supabase = await createClient()
 
-    // Reset SQL editor usage for the user
+    // Reset SQL editor usage for the user's organization
+    // The usage table tracks by organization_id, not user_id
     const { error } = await supabase
-      .from('user_usage' as any)
+      .from('usage' as any)
       .update({
-        sql_queries_count: 0,
-        sql_queries_reset_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        usage_count: 0,
+        last_updated: new Date().toISOString()
       })
-      .eq('user_id', userId)
+      .eq('organization_id', userId) // Note: this is actually organization_id
+      .eq('metric_type', 'sql_queries')
 
     if (error) {
       console.error('Failed to reset SQL usage:', error)
