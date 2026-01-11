@@ -15,27 +15,44 @@ import { Button } from '@/components/ui/button'
 
 // Client component for interactive features
 function ArticlesClient({ orgId }: { orgId: string }) {
-  const { articles, isConnected, error, lastUpdated, refresh } = useRealtimeArticles({
-    orgId,
-    onError: (error) => {
-      console.error('Real-time articles error:', error);
-    }
-  })
+  console.log('🔧 ArticlesClient initializing with orgId:', orgId);
   
-  const {
-    search,
-    filters,
-    filteredArticles,
-    activeFilters,
-    metrics,
-    setSearchQuery,
-    setFilters,
-    clearSearch,
-    clearFilters,
-    clearAll,
-    removeFilter,
-    hasActiveFilters,
-  } = useDashboardFilters(articles)
+  try {
+    const { articles, isConnected, error, lastUpdated, refresh } = useRealtimeArticles({
+      orgId,
+      onError: (error) => {
+        console.error('🚨 Real-time articles error:', error);
+      }
+    })
+    
+    console.log('📊 useRealtimeArticles result:', {
+      articlesCount: articles?.length || 0,
+      isConnected,
+      error: error?.message,
+      lastUpdated
+    });
+    
+    const {
+      search,
+      filters,
+      filteredArticles,
+      activeFilters,
+      metrics,
+      setSearchQuery,
+      setFilters,
+      clearSearch,
+      clearFilters,
+      clearAll,
+      removeFilter,
+      hasActiveFilters,
+    } = useDashboardFilters(articles || []);
+    
+    console.log('🔍 useDashboardFilters result:', {
+      search,
+      filters,
+      filteredArticlesCount: filteredArticles?.length || 0,
+      activeFiltersCount: activeFilters?.length || 0
+    });
 
   if (error) {
     return (
@@ -199,6 +216,24 @@ function ArticlesClient({ orgId }: { orgId: string }) {
       )}
     </div>
   )
+  } catch (error) {
+    console.error('🚨 ArticlesClient error:', error);
+    return (
+      <Card className="border-destructive">
+        <CardContent className="pt-6">
+          <div className="text-center py-8">
+            <FileText className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-destructive mb-2">
+              Component Error
+            </h3>
+            <p className="text-muted-foreground">
+              An unexpected error occurred. Please refresh the page.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 }
 
 export default ArticlesClient

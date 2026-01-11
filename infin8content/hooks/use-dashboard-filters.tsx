@@ -29,13 +29,37 @@ import {
 } from '@/lib/types/dashboard.types';
 
 export function useDashboardFilters(
-  articles: DashboardArticle[]
+  articles: DashboardArticle[] = []
 ): UseDashboardFiltersReturn {
+  console.log('🔍 useDashboardFilters initializing with articles:', articles.length);
+  
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+  const isInitializedRef = useRef(false);
+
+  // Initialize search state
+  const [search, setSearch] = useState<SearchState>(() => {
+    console.log('🔍 Initializing search state');
+    try {
+      const initialQuery = searchParams?.get('search') || '';
+      return {
+        query: initialQuery,
+        isSearching: false,
+        suggestions: [],
+        debouncedQuery: initialQuery
+      };
+    } catch (error) {
+      console.error('🚨 Error initializing search state:', error);
+      return {
+        query: '',
+        isSearching: false,
+        suggestions: [],
+        debouncedQuery: ''
+      };
+    }
+  });
+
   // State management
-  const [search, setSearchState] = useState<SearchState>(DEFAULT_SEARCH_STATE);
   const [filters, setFiltersState] = useState<FilterState>(DEFAULT_FILTER_STATE);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -58,7 +82,7 @@ export function useDashboardFilters(
       const urlSearch = params.search || '';
       
       setFiltersState({ ...DEFAULT_FILTER_STATE, ...urlFilters });
-      setSearchState({ ...DEFAULT_SEARCH_STATE, query: urlSearch });
+      setSearch({ ...DEFAULT_SEARCH_STATE, query: urlSearch });
       setIsInitialized(true);
     } else if (!isInitialized) {
       setIsInitialized(true);
@@ -85,7 +109,7 @@ export function useDashboardFilters(
     const urlSearch = params.search || '';
     
     setFiltersState(prev => ({ ...prev, ...urlFilters }));
-    setSearchState(prev => ({ ...prev, query: urlSearch }));
+    setSearch(prev => ({ ...prev, query: urlSearch }));
   }, [searchParams]);
 
   // Auto-sync to URL when filters/search change
@@ -98,7 +122,7 @@ export function useDashboardFilters(
 
   // Search functionality
   const setSearchQuery = useCallback(async (query: string) => {
-    setSearchState(prev => ({ ...prev, query, isSearching: true }));
+    setSearch(prev => ({ ...prev, query, isSearching: true }));
     
     try {
       const startTime = performance.now();
@@ -106,14 +130,14 @@ export function useDashboardFilters(
       const endTime = performance.now();
       
       performanceRef.current.searchTime = endTime - startTime;
-      setSearchState(prev => ({ 
+      setSearch(prev => ({ 
         ...prev, 
         isSearching: false, 
         lastSearchTime: Date.now() 
       }));
     } catch (error) {
       console.error('Search error:', error);
-      setSearchState(prev => ({ ...prev, isSearching: false }));
+      setSearch(prev => ({ ...prev, isSearching: false }));
     }
   }, [articles]);
 
@@ -124,7 +148,7 @@ export function useDashboardFilters(
 
   // Clear functions
   const clearSearch = useCallback(() => {
-    setSearchState(DEFAULT_SEARCH_STATE);
+    setSearch(DEFAULT_SEARCH_STATE);
     debouncedSearchRef.current.clearCache();
   }, []);
 

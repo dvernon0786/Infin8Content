@@ -192,8 +192,8 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
 
 export function VirtualizedArticleList({
   articles,
-  itemHeight = 200,
-  height = 600,
+  itemHeight,
+  height,
   overscanCount = 5,
   className,
   selectedArticle,
@@ -214,6 +214,22 @@ export function VirtualizedArticleList({
   onTouchEnd?: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
   showProgress?: boolean;
 }) {
+  console.log('📋 VirtualizedArticleList initializing:', {
+    articlesCount: articles?.length || 0,
+    itemHeight,
+    height,
+    selectedArticle,
+    hasCallbacks: {
+      onArticleSelect: !!onArticleSelect,
+      onArticleNavigation: !!onArticleNavigation,
+      onKeyDown: !!onKeyDown,
+      onTouchStart: !!onTouchStart,
+      onTouchMove: !!onTouchMove,
+      onTouchEnd: !!onTouchEnd
+    }
+  });
+
+  try {
   const listRef = useRef<any>(null);
 
   // Memoize item data to prevent unnecessary re-renders
@@ -276,6 +292,14 @@ export function VirtualizedArticleList({
       )}
     </div>
   );
+  } catch (error) {
+    console.error('🚨 VirtualizedArticleList error:', error);
+    return (
+      <div className="border rounded-lg p-8 text-center">
+        <p className="text-muted-foreground">Error loading article list. Please refresh the page.</p>
+      </div>
+    );
+  }
 }
 
 /**
