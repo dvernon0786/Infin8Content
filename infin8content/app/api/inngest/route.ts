@@ -9,6 +9,14 @@ const eventKey = process.env.INNGEST_EVENT_KEY
 const signingKey = process.env.INNGEST_SIGNING_KEY
 const isDevelopment = process.env.NODE_ENV === 'development'
 
+// Log environment details for debugging
+console.log('[Inngest API] Environment:', {
+  isDevelopment,
+  hasEventKey: !!eventKey,
+  hasSigningKey: !!signingKey,
+  nodeEnv: process.env.NODE_ENV,
+})
+
 // For local development, Inngest dev server uses auto-discovery and doesn't require signing key
 // For production, both eventKey and signingKey are required
 const useInngestServe = isDevelopment || (eventKey && signingKey)
@@ -28,6 +36,12 @@ const handlers = useInngestServe
       client: inngest,
       signingKey: signingKey || undefined, // Optional for local dev
       functions: [generateArticle, cleanupStuckArticles],
+      // Disable signature validation temporarily for debugging
+      // TODO: Remove this in production
+      ...(isDevelopment && {
+        servePath: '/api/inngest',
+        handlerType: 'route',
+      })
     })
   : {
       GET: async () => {
@@ -68,6 +82,16 @@ const wrapHandler = (handler: ((req: NextRequest) => Promise<Response>) | ((req:
   return async (req: NextRequest, ...args: unknown[]) => {
     try {
       console.log(`[Inngest API] ${req.method} request to ${req.nextUrl.pathname}`)
+      
+      // Log headers for debugging signature issues
+      if (req.method === 'POST') {
+        const headers: Record<string, string> = {}
+        req.headers.forEach((value, key) => {
+          headers[key] = value
+        })
+        console.log('[Inngest API] Request headers:', headers)
+      }
+      
       // Call handler with all arguments (Inngest handlers may need additional params)
       const response = await (handler as (req: NextRequest, ...args: unknown[]) => Promise<Response>)(req, ...args)
       console.log(`[Inngest API] ${req.method} response: ${response.status}`)
@@ -79,6 +103,21 @@ const wrapHandler = (handler: ((req: NextRequest) => Promise<Response>) | ((req:
         stack: error instanceof Error ? error.stack : undefined,
         path: req.nextUrl.pathname
       })
+      
+      // If it's a signature validation error, provide more context
+      if (errorMessage.includes('Invalid signature')) {
+        console.error('[Inngest API] Signature validation failed. Check INNGEST_SIGNING_KEY environment variable.')
+        return NextResponse.json(
+          { 
+            error: 'Invalid signature', 
+            details: 'Signature validation failed. This may be due to a missing or incorrect INNGEST_SIGNING_KEY.',
+            isDevelopment,
+            hasSigningKey: !!signingKey,
+          },
+          { status: 401 }
+        )
+      }
+      
       return NextResponse.json(
         { error: 'Internal server error', details: errorMessage },
         { status: 500 }
