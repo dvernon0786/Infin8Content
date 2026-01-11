@@ -1,9 +1,9 @@
 -- Reset SQL editor usage for specific user
 -- User ID: e657f06e-772c-4d5c-b3ee-2fcb94463212
 
--- The table is named 'usage' not 'user_usage'
+-- The table is named 'usage_tracking' not 'usage'
 -- Update SQL queries count for this organization
-UPDATE usage 
+UPDATE usage_tracking 
 SET 
   usage_count = 0,
   last_updated = NOW()
@@ -15,13 +15,14 @@ SELECT
   organization_id,
   metric_type,
   usage_count,
+  billing_period,
   last_updated
-FROM usage 
+FROM usage_tracking 
 WHERE organization_id = 'e657f06e-772c-4d5c-b3ee-2fcb94463212'
 AND metric_type = 'sql_queries';
 
 -- If no record exists, insert one
-INSERT INTO usage (
+INSERT INTO usage_tracking (
   organization_id,
   metric_type,
   usage_count,
@@ -37,7 +38,7 @@ SELECT
   NOW(),
   NOW()
 WHERE NOT EXISTS (
-  SELECT 1 FROM usage 
+  SELECT 1 FROM usage_tracking 
   WHERE organization_id = 'e657f06e-772c-4d5c-b3ee-2fcb94463212'
   AND metric_type = 'sql_queries'
 );

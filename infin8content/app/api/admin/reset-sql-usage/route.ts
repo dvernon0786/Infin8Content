@@ -44,14 +44,14 @@ export async function POST(request: Request) {
     const supabase = await createClient()
 
     // Reset SQL editor usage for the user's organization
-    // The usage table tracks by organization_id, not user_id
+    // The usage_tracking table tracks by organization_id, not user_id
     const { error } = await supabase
-      .from('usage' as any)
+      .from('usage_tracking' as any)
       .update({
         usage_count: 0,
         last_updated: new Date().toISOString()
       })
-      .eq('organization_id', userId) // Note: this is actually organization_id
+      .eq('organization_id', currentUser.org_id) // Use current user's org_id
       .eq('metric_type', 'sql_queries')
 
     if (error) {
