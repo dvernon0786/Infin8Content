@@ -75,7 +75,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
   }
 
   // Verify org_id matches exactly (additional security layer)
-  if (articleData.org_id !== currentUser.org_id) {
+  if (articleData && 'org_id' in articleData && articleData.org_id !== currentUser.org_id) {
     console.error('Security: Org ID mismatch', { 
       articleOrg: articleData.org_id, 
       userOrg: currentUser.org_id 
