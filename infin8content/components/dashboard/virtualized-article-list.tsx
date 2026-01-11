@@ -440,36 +440,26 @@ const cleanedItemData = safeItemData;
 
   return (
     <div className={cn('virtualized-article-list', className)}>
-      {(() => {
-        console.log('🎯 About to create React List element:', {
-          height,
+      {safeArticles.length === 0 ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No articles found</h3>
+            <p className="text-gray-500">Try adjusting your search or filters to find articles.</p>
+          </div>
+        </div>
+      ) : (
+        React.createElement(List, {
+          height: height || 600,
           itemCount: safeArticles.length,
-          itemSize: itemHeight,
-          itemDataKeys: Object.keys(itemData || {}),
-          hasChildren: !!ArticleItem
-        });
-        
-        try {
-          // react-window List expects children to be a render function
-          // In JSX, we pass the render function directly as children
-          return React.createElement(
-            List,
-            {
-              height: height || 600,
-              itemCount: safeArticles.length || 0,
-              itemSize: itemHeight || 160,
-              itemData: itemData || {},
-              overscanCount: overscanCount || 5,
-              getItemKey: getItemKey || ((index: number) => `item-${index}`),
-              className: "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
-            } as any,
-            ArticleItem
-          );
-        } catch (error) {
-          console.error('🚨 React.createElement error:', error);
-          throw error;
-        }
-      })()}
+          itemSize: itemHeight || 160,
+          width: '100%',
+          itemData: itemData,
+          overscanCount: overscanCount || 5,
+          getItemKey: getItemKey,
+          children: ArticleItem
+        } as any)
+      )}
       
       {/* Performance info for development */}
       {process.env.NODE_ENV === 'development' && (
