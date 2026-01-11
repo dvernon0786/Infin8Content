@@ -450,48 +450,21 @@ const cleanedItemData = safeItemData;
         });
         
         try {
-          // Add comprehensive prop validation before React.createElement
-          const listProps = {
-            height,
-            itemCount: safeArticles.length,
-            itemSize: itemHeight,
-            itemData,
-            overscanCount,
-            getItemKey,
-            className: "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100",
-            children: ArticleItem
-          };
-          
-          console.log('🔍 List props check:', {
-            height: height,
-            itemCount: safeArticles.length,
-            itemSize: itemHeight,
-            itemData: itemData,
-            overscanCount: overscanCount,
-            getItemKey: typeof getItemKey,
-            className: "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100",
-            children: typeof ArticleItem
-          });
-          
-          // Check for null/undefined props
-          const nullProps = Object.keys(listProps).filter(key => (listProps as any)[key] === null || (listProps as any)[key] === undefined);
-          if (nullProps.length > 0) {
-            console.error('⚠️ NULL/UNDEFINED PROPS:', nullProps);
-          }
-          
-          // Ensure no props are null/undefined
-          const safeListProps: any = {
-            height: height || 600,
-            itemCount: safeArticles.length || 0,
-            itemSize: itemHeight || 160,
-            itemData: itemData || {},
-            overscanCount: overscanCount || 5,
-            getItemKey: getItemKey || ((index: number) => `item-${index}`),
-            className: "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100",
-            children: ArticleItem
-          };
-          
-          return React.createElement(List, safeListProps);
+          // react-window List expects children to be a render function
+          // In JSX, we pass the render function directly as children
+          return React.createElement(
+            List,
+            {
+              height: height || 600,
+              itemCount: safeArticles.length || 0,
+              itemSize: itemHeight || 160,
+              itemData: itemData || {},
+              overscanCount: overscanCount || 5,
+              getItemKey: getItemKey || ((index: number) => `item-${index}`),
+              className: "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+            } as any,
+            ArticleItem
+          );
         } catch (error) {
           console.error('🚨 React.createElement error:', error);
           throw error;
