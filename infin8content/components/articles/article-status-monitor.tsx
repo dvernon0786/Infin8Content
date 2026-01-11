@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
@@ -36,10 +36,23 @@ export function ArticleStatusMonitor({
   const [status, setStatus] = useState(initialStatus)
   const [isSubscribed, setIsSubscribed] = useState(false)
   const router = useRouter()
-
-  console.log(`ArticleStatusMonitor initialized for article ${articleId} with status ${initialStatus}`)
+  const isInitializedRef = useRef(false)
 
   useEffect(() => {
+    // Prevent multiple initializations
+    if (isInitializedRef.current) {
+      return
+    }
+    isInitializedRef.current = true
+
+    console.log(`ArticleStatusMonitor initialized for article ${articleId} with status ${initialStatus}`)
+
+    // Don't subscribe if article is already completed
+    if (initialStatus === 'completed') {
+      console.log('Article already completed, skipping subscription')
+      return
+    }
+
     const supabase = createClient()
     let subscription: any = null
     let retryCount = 0
@@ -152,6 +165,7 @@ export function ArticleStatusMonitor({
       }
       if (intervalId) clearInterval(intervalId)
       clearTimeout(fallbackTimeout)
+      isInitializedRef.current = false
     }
   }, [articleId, status, onStatusChange, router]) // Remove isSubscribed from dependencies
 
