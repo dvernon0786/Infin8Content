@@ -1,17 +1,26 @@
 /**
- * Dashboard article status list component with real-time updates
+ * Dashboard article status list component with real-time updates and search/filtering
  * Story 15.1: Real-time Article Status Display
+ * Story 15.4: Dashboard Search and Filtering
  */
 
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useRealtimeArticles } from '@/hooks/use-realtime-articles';
+import { useDashboardFilters } from '@/hooks/use-dashboard-filters';
+import { useArticleNavigation } from '@/hooks/use-article-navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { VisualStatusIndicator } from '@/components/articles/visual-status-indicator';
+import { SearchInput } from '@/components/dashboard/search-input';
+import { FilterDropdown } from '@/components/dashboard/filter-dropdown';
+import { SortDropdown } from '@/components/dashboard/sort-dropdown';
+import { ActiveFilters } from '@/components/dashboard/active-filters';
+import { FilterSummary } from '@/components/dashboard/active-filters';
 import { getStatusConfig, statusConfigs } from '@/lib/constants/status-configs';
 import { 
   Clock, 
@@ -23,10 +32,13 @@ import {
   WifiOff,
   FileText,
   TrendingUp,
-  Eye
+  Eye,
+  Filter,
+  Search
 } from 'lucide-react';
 import { DashboardErrorBoundary, useErrorHandler } from './error-boundary';
 import type { DashboardArticle, DashboardUpdateEvent } from '@/lib/supabase/realtime';
+import type { ArticleStatus } from '@/lib/types/dashboard.types';
 
 interface ArticleStatusListProps {
   orgId: string;
@@ -34,6 +46,7 @@ interface ArticleStatusListProps {
   showCompleted?: boolean;
   showProgress?: boolean;
   className?: string;
+  enableSearchFilter?: boolean;
 }
 
 
@@ -43,13 +56,24 @@ export function ArticleStatusList({
   showCompleted = true,
   showProgress = true,
   className = '',
+  enableSearchFilter = true,
 }: ArticleStatusListProps) {
+  const router = useRouter();
   const [selectedArticle, setSelectedArticle] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<string>('');
   const { handleError, createFallback } = useErrorHandler();
+  
+  // Use shared navigation hook
+  const navigation = useArticleNavigation({
+    onError: (error, context) => handleError(error, context),
+    onSuccess: (articleId) => {
+      console.log(`Successfully navigated to article: ${articleId}`);
+    },
+  });
 
+  // Get real-time articles
   const {
-    articles,
+    articles: rawArticles,
     isConnected,
     connectionStatus,
     isPollingMode,
@@ -68,6 +92,38 @@ export function ArticleStatusList({
     enablePolling: true,
   });
 
+  // Apply search and filter functionality
+  const filters = enableSearchFilter ? useDashboardFilters(rawArticles) : null;
+  const filteredArticles = filters ? filters.filteredArticles : rawArticles;
+  const availableStatuses = useMemo(() => {
+    const statuses = new Set(rawArticles.map(article => article.status));
+    return Array.from(statuses).sort() as ArticleStatus[];
+  }, [rawArticles]);
+
+  // Apply maxItems limit to filtered results
+  const displayArticles = useMemo(() => {
+    let articles = filteredArticles;
+    
+    if (!showCompleted) {
+      articles = articles.filter(article => article.status !== 'completed');
+    }
+    
+    return articles.slice(0, maxItems);
+  }, [filteredArticles, showCompleted, maxItems]);
+
+  // Navigation handler using shared hook
+  const handleArticleNavigation = (articleId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation(); // Prevent card selection when clicking title
+    }
+    navigation.navigateToArticle(articleId);
+  };
+
+  // Keyboard navigation handler using shared hook
+  const handleKeyDown = (articleId: string, e: React.KeyboardEvent) => {
+    navigation.handleKeyDown(articleId, e);
+  };
+
   function handleDashboardUpdate(event: DashboardUpdateEvent) {
     try {
       console.log('Dashboard update received:', event);
@@ -82,38 +138,6 @@ export function ArticleStatusList({
       handleError(err as Error, 'handleDashboardUpdate');
     }
   }
-
-  // Filter and sort articles
-  const filteredArticles = useMemo(() => {
-    console.log('🎯 Dashboard component rendering with', articles.length, 'articles');
-    console.log('📝 Articles:', articles.map(a => ({ id: a.id, status: a.status, title: a.title })));
-    
-    let filtered = articles;
-    
-    if (!showCompleted) {
-      filtered = filtered.filter(article => article.status !== 'completed');
-    }
-    
-    // Sort by updated_at desc, then by status priority
-    const statusPriority = {
-      generating: 0,
-      queued: 1,
-      failed: 2,
-      completed: 3,
-      cancelled: 4,
-    };
-    
-    return filtered
-      .sort((a, b) => {
-        const priorityDiff = statusPriority[a.status as keyof typeof statusPriority] - 
-                           statusPriority[b.status as keyof typeof statusPriority];
-        if (priorityDiff !== 0) return priorityDiff;
-        
-        // Same priority, sort by update time
-        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-      })
-      .slice(0, maxItems);
-  }, [articles, showCompleted, maxItems]);
 
   // Get status configuration
   const getStatusConfig = (status: string) => {
@@ -180,7 +204,7 @@ export function ArticleStatusList({
               <FileText className="h-5 w-5" />
               Article Status
               <Badge variant="outline" className="text-xs">
-                {filteredArticles.length}
+                {displayArticles.length}
               </Badge>
             </CardTitle>
             
@@ -211,6 +235,54 @@ export function ArticleStatusList({
               )}
             </div>
           </div>
+          
+          {/* Search and Filter Controls */}
+          {enableSearchFilter && filters && (
+            <div className="space-y-3 pt-3 border-t">
+              {/* Search and Filter Bar */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1">
+                  <SearchInput
+                    value={filters.search.query}
+                    onChange={filters.setSearchQuery}
+                    onClear={filters.clearSearch}
+                    isLoading={filters.search.isSearching}
+                    placeholder="Search articles..."
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <FilterDropdown
+                    value={filters.filters}
+                    onChange={filters.setFilters}
+                    availableStatuses={availableStatuses}
+                  />
+                  
+                  <SortDropdown
+                    value={filters.filters.sortBy}
+                    onChange={(sortBy) => filters.setFilters({ sortBy })}
+                  />
+                </div>
+              </div>
+              
+              {/* Active Filters */}
+              <ActiveFilters
+                filters={filters.filters}
+                search={filters.search}
+                onClearFilter={filters.removeFilter}
+                onClearAll={filters.clearAll}
+              />
+              
+              {/* Filter Summary */}
+              <FilterSummary
+                filters={filters.filters}
+                search={filters.search}
+                totalArticles={rawArticles.length}
+                filteredArticles={filteredArticles.length}
+              />
+            </div>
+          )}
         </CardHeader>
         
         {error && (
@@ -269,7 +341,54 @@ export function ArticleStatusList({
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 truncate">
+                      <h3 
+                        ref={(el) => {
+                          if (el && article.status === 'completed') {
+                            navigation.registerElement(article.id, el);
+                          }
+                        }}
+                        className={`
+                          font-medium text-gray-900 truncate 
+                          ${article.status === 'completed' 
+                            ? 'cursor-pointer hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded' 
+                            : ''
+                          }
+                          ${navigation.isNavigating ? 'opacity-50' : ''}
+                        `}
+                        title={article.status === 'completed' ? 'Click to view completed article' : undefined}
+                        role={article.status === 'completed' ? 'button' : undefined}
+                        tabIndex={article.status === 'completed' ? 0 : undefined}
+                        aria-label={article.status === 'completed' 
+                          ? `completed article: ${article.title || article.keyword}, click to view` 
+                          : undefined
+                        }
+                        aria-busy={navigation.isNavigating}
+                        onClick={(e) => {
+                          if (article.status === 'completed') {
+                            handleArticleNavigation(article.id, e);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (article.status === 'completed') {
+                            handleKeyDown(article.id, e);
+                          }
+                        }}
+                        onTouchStart={(e) => {
+                          if (article.status === 'completed') {
+                            navigation.handleTouchStart(article.id, e, e.currentTarget);
+                          }
+                        }}
+                        onTouchMove={(e) => {
+                          if (article.status === 'completed') {
+                            navigation.handleTouchMove(article.id, e, e.currentTarget);
+                          }
+                        }}
+                        onTouchEnd={(e) => {
+                          if (article.status === 'completed') {
+                            navigation.handleTouchEnd(article.id, e, e.currentTarget);
+                          }
+                        }}
+                      >
                         {article.title || article.keyword}
                       </h3>
                       <p className="text-sm text-gray-500 truncate">
@@ -396,7 +515,7 @@ export function ArticleStatusList({
       </div>
       
       {/* Load more indicator */}
-      {filteredArticles.length >= maxItems && articles.length > maxItems && (
+      {filteredArticles.length >= maxItems && rawArticles.length > maxItems && (
         <div className="text-center">
           <Button variant="outline" onClick={() => {}}>
             Load more articles

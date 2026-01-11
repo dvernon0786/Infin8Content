@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Loader2, X, CheckCircle, Clock, AlertCircle, Eye, RefreshCw, Wifi, WifiOff } from 'lucide-react'
 import { useRealtimeArticles } from '@/hooks/use-realtime-articles'
+import { useArticleNavigation } from '@/hooks/use-article-navigation'
 
 interface QueuedArticle {
   id: string
@@ -37,7 +39,26 @@ export function ArticleQueueStatus({
   showCompleted = false,
   maxItems = 10 
 }: ArticleQueueStatusProps) {
+  const router = useRouter();
   const [expandedArticle, setExpandedArticle] = useState<string | null>(null)
+  
+  // Use shared navigation hook
+  const navigation = useArticleNavigation({
+    onError: (error, context) => console.error(`Navigation error in ${context}:`, error),
+    onSuccess: (articleId) => {
+      console.log(`Successfully navigated to article: ${articleId}`);
+    },
+  });
+
+  // Navigation handler using shared hook
+  const handleViewArticle = (articleId: string) => {
+    navigation.navigateToArticle(articleId);
+  };
+
+  // Keyboard navigation handler using shared hook
+  const handleViewKeyDown = (articleId: string, e: React.KeyboardEvent) => {
+    navigation.handleKeyDown(articleId, e);
+  };
 
   const {
     articles,
@@ -220,10 +241,23 @@ export function ArticleQueueStatus({
                     
                     {article.status === 'completed' && (
                       <Button
+                        ref={(el) => {
+                          if (el) {
+                            navigation.registerElement(article.id, el);
+                          }
+                        }}
                         variant="ghost"
                         size="sm"
                         className="h-6 w-6 p-0"
-                        onClick={() => console.log('View article:', article.id)}
+                        onClick={() => handleViewArticle(article.id)}
+                        onKeyDown={(e) => handleViewKeyDown(article.id, e)}
+                        onTouchStart={(e) => navigation.handleTouchStart(article.id, e, e.currentTarget)}
+                        onTouchMove={(e) => navigation.handleTouchMove(article.id, e, e.currentTarget)}
+                        onTouchEnd={(e) => navigation.handleTouchEnd(article.id, e, e.currentTarget)}
+                        disabled={navigation.isNavigating}
+                        title="View completed article"
+                        aria-label={`View completed article: ${article.title || article.keyword}`}
+                        aria-busy={navigation.isNavigating}
                       >
                         <Eye className="h-3 w-3" />
                       </Button>

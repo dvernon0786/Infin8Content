@@ -101,3 +101,79 @@ You must fully embody this agent's persona and follow all activation instruction
 **Priority**: High
 **Story Points**: 8
 **Target Sprint**: Current sprint
+
+## Story Context: 15-3-navigation-and-access-to-completed-articles
+
+**Status**: ready-for-dev
+
+**Epic**: Article Management System Enhancement
+
+**User Story**: As a content consumer, I want to easily navigate and access completed articles so that I can find and read the content I'm interested in efficiently.
+
+**Acceptance Criteria**:
+- Intuitive navigation system for browsing completed articles
+- Search functionality to find articles by title, content, or tags
+- Category/filter system to organize articles by topic or type
+- Article preview cards with key information (title, excerpt, date, author)
+- Responsive design for mobile and desktop access
+- Quick access to recently completed articles
+- Bookmark/favorite functionality for users to save articles
+
+**Technical Requirements**:
+- Article listing component with pagination
+- Search implementation with full-text search capabilities
+- Filter and sort functionality
+- Article card component with metadata display
+- Responsive grid layout system
+- User preference storage for bookmarks
+- Performance optimization for large article collections
+
+**Dependencies**:
+- Article management backend
+- Search service implementation
+- User authentication system
+- Content delivery system
+- Database for article metadata and indexing
+
+**Priority**: High
+**Story Points**: 5
+**Target Sprint**: Current sprint
+
+## Story Context: 15-4-dashboard-search-and-filtering
+
+**Status**: ready-for-dev
+
+**Epic**: Article Management System Enhancement
+
+**User Story**: As a content manager, I want to search and filter articles on the dashboard so that I can quickly find specific articles and manage content efficiently.
+
+**Acceptance Criteria**:
+- Search functionality to find articles by title, content, author, or tags
+- Filter options for article status (Draft, In Review, Approved, Published, Archived)
+- Filter options for date ranges (created, modified, published)
+- Filter options for article categories or topics
+- Sort functionality by date, title, status, or author
+- Real-time search results as user types
+- Clear/reset filters functionality
+- Save search preferences for user sessions
+
+**Technical Requirements**:
+- Search component with debounced input
+- Filter panel with multiple filter types
+- Sort dropdown with various options
+- Search API integration with backend
+- Client-side filtering for performance
+- URL state management for shareable searches
+- Loading states and empty states
+- Responsive design for mobile and desktop
+
+**Dependencies**:
+- Article management backend
+- Search service implementation
+- User authentication system
+- Article metadata and indexing
+- Dashboard UI framework
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
