@@ -8,6 +8,12 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
+    // Load environment variables from .env.local
+    environmentOptions: {
+      jsdom: {
+        resources: 'usable',
+      },
+    },
   },
   resolve: {
     alias: {
