@@ -393,7 +393,8 @@ export function VirtualizedArticleList({
         });
         
         try {
-          return React.createElement(List, {
+          // Add comprehensive prop validation before React.createElement
+          const listProps = {
             height,
             itemCount: safeArticles.length,
             itemSize: itemHeight,
@@ -402,7 +403,38 @@ export function VirtualizedArticleList({
             getItemKey,
             className: "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100",
             children: ArticleItem
-          } as any);
+          };
+          
+          console.log('🔍 List props check:', {
+            height: height,
+            itemCount: safeArticles.length,
+            itemSize: itemHeight,
+            itemData: itemData,
+            overscanCount: overscanCount,
+            getItemKey: typeof getItemKey,
+            className: "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100",
+            children: typeof ArticleItem
+          });
+          
+          // Check for null/undefined props
+          const nullProps = Object.keys(listProps).filter(key => (listProps as any)[key] === null || (listProps as any)[key] === undefined);
+          if (nullProps.length > 0) {
+            console.error('⚠️ NULL/UNDEFINED PROPS:', nullProps);
+          }
+          
+          // Ensure no props are null/undefined
+          const safeListProps = {
+            height: height || 600,
+            itemCount: safeArticles.length || 0,
+            itemSize: itemHeight || 160,
+            itemData: itemData || {},
+            overscanCount: overscanCount || 5,
+            getItemKey: getItemKey || (() => 'default'),
+            className: "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100",
+            children: ArticleItem
+          };
+          
+          return React.createElement(List, safeListProps as any);
         } catch (error) {
           console.error('🚨 React.createElement error:', error);
           throw error;
