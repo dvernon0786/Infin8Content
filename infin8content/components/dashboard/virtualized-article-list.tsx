@@ -319,7 +319,22 @@ export function VirtualizedArticleList({
   console.log('📋 Safe articles created:', { 
     originalCount: articles?.length || 0, 
     safeCount: safeArticles.length,
-    firstSafeArticle: safeArticles[0] 
+    firstSafeArticle: safeArticles[0],
+    // Add detailed article inspection
+    allArticlesStructure: safeArticles.map((article, index) => ({
+      index,
+      id: article?.id,
+      title: article?.title,
+      keyword: article?.keyword,
+      status: article?.status,
+      created_at: article?.created_at,
+      updated_at: article?.updated_at,
+      progress: article?.progress,
+      progressType: typeof article?.progress,
+      progressKeys: article?.progress ? Object.keys(article.progress) : 'null',
+      hasNullProperties: Object.keys(article).filter(key => (article as any)[key] === null),
+      hasUndefinedProperties: Object.keys(article).filter(key => (article as any)[key] === undefined)
+    }))
   });
 
   try {
