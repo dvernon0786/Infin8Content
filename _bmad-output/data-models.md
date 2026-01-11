@@ -1,12 +1,12 @@
 # Data Models
 
 **Project:** Infin8Content  
-**Generated:** 2026-01-04  
+**Generated:** 2026-01-12 (Updated)  
 **Database:** Supabase PostgreSQL
 
 ## Overview
 
-The database schema implements a multi-tenant architecture with organizations, users, and OTP verification. All tables use UUID primary keys and include timestamps for audit trails.
+The database schema implements a multi-tenant architecture with organizations, users, articles, and comprehensive payment/research features. The system has grown to 17 migration files with advanced features like article progress tracking, keyword research, and audit logging.
 
 ## Tables
 

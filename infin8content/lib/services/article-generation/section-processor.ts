@@ -1177,8 +1177,16 @@ function getTargetWordCount(sectionType: string): number {
   }
 }
 
-// Export for use in generateSectionContent
-export { getTargetWordCount }
+// Export for use in generateSectionContent and tests
+export { 
+  getTargetWordCount,
+  calculateTargetDensity,
+  generateSemanticKeywords,
+  getUserIntentSignals,
+  getStyleGuidance,
+  formatResearchSources,
+  getEnhancedSectionGuidance
+}
 
 /**
  * Track OpenRouter API cost per section

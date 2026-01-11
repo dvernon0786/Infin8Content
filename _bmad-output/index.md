@@ -4,7 +4,7 @@
 **Type:** Monolith - Web Application (Next.js)  
 **Primary Language:** TypeScript  
 **Architecture:** Component-based with API Routes  
-**Generated:** 2026-01-04
+**Generated:** 2026-01-12 (Updated)
 
 ## Quick Reference
 
@@ -13,15 +13,18 @@
 - **Language:** TypeScript 5
 - **UI Library:** React 19.2.3
 - **Styling:** Tailwind CSS 4
-- **Database:** Supabase PostgreSQL
-- **Authentication:** Supabase Auth
+- **Database:** Supabase PostgreSQL (17 migrations)
+- **Authentication:** Supabase Auth with OTP
 - **Email Service:** Brevo
+- **Payment Processing:** Stripe
+- **Background Jobs:** Inngest
+- **Testing:** Vitest + Playwright
 
 ### Entry Points
 - **Application:** `app/page.tsx` - Home page
-- **API Routes:** `app/api/auth/*` - Authentication endpoints
+- **API Routes:** `app/api/` - 10 API modules (auth, articles, organizations, payment, team, user, admin, research, webhooks, inngest)
 - **Middleware:** `app/middleware.ts` - Route protection
-- **Database:** `supabase/migrations/` - Schema definitions
+- **Database:** `supabase/migrations/` - 17 migration files
 
 ### Architecture Pattern
 Component-based architecture with Next.js API Routes (serverless functions)
@@ -81,10 +84,13 @@ infin8content/
 ## Key Features
 
 1. **User Registration** - Email/password with OTP verification
-2. **Authentication** - Supabase Auth with middleware protection
-3. **Multi-tenant Support** - Organizations and users with RBAC
-4. **OTP Verification** - 6-digit codes via Brevo email service
-5. **Database Migrations** - Versioned schema migrations
+2. **Multi-tenant Support** - Organizations and users with RBAC
+3. **Article Management** - Content creation, outlines, progress tracking
+4. **Keyword Research** - Tavily integration for research caching
+5. **Payment Processing** - Stripe integration with multiple plans
+6. **Team Collaboration** - Invitations, role management
+7. **Audit Logging** - Comprehensive activity tracking
+8. **Background Processing** - Inngest for async operations
 
 ## API Endpoints
 

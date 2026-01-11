@@ -1,12 +1,27 @@
 # API Contracts
 
 **Project:** Infin8Content  
-**Generated:** 2026-01-04  
+**Generated:** 2026-01-12 (Updated)  
 **Base URL:** `/api`
 
 ## Overview
 
 The API follows RESTful conventions using Next.js API Routes. All authentication endpoints are located under `/api/auth/`.
+
+## API Structure
+
+Based on directory scan, the API is organized into these modules:
+
+- **Authentication** (`/api/auth/*`) - User registration, OTP verification
+- **Articles** (`/api/articles/*`) - Article management and content
+- **Organizations** (`/api/organizations/*`) - Multi-tenant organization management
+- **Payment** (`/api/payment/*`) - Stripe payment processing
+- **Team** (`/api/team/*`) - Team member management and invitations
+- **User** (`/api/user/*`) - User profile and settings
+- **Admin** (`/api/admin/*`) - Administrative operations
+- **Research** (`/api/research/*`) - Research and content analysis
+- **Webhooks** (`/api/webhooks/*`) - External service webhooks
+- **Inngest** (`/api/inngest/*`) - Background job processing
 
 ## Authentication Endpoints
 
