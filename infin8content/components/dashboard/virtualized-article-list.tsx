@@ -388,7 +388,7 @@ export function VirtualizedArticleList({
           height,
           itemCount: safeArticles.length,
           itemSize: itemHeight,
-          itemDataKeys: Object.keys(itemData),
+          itemDataKeys: Object.keys(itemData || {}),
           hasChildren: !!ArticleItem
         });
         
