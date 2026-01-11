@@ -6,7 +6,7 @@ import { Breadcrumb, generateArticleBreadcrumbs } from '@/components/ui/breadcru
 import { ArticleQueueStatus } from '@/components/articles/article-queue-status'
 import { ArticleContentViewer } from '@/components/articles/article-content-viewer'
 import { ArticleStatusMonitor } from '@/components/articles/article-status-monitor'
-import { NavigationErrorBoundary } from '@/components/navigation/navigation-error-boundary'
+import ArticleErrorBoundary from './article-error-boundary'
 import { redirect } from 'next/navigation'
 import { Loader2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -116,12 +116,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
   const isLoading = article.status === 'queued' || article.status === 'generating'
 
   return (
-    <NavigationErrorBoundary
-      onError={(error, errorInfo) => {
-        console.error('Article page error:', error, errorInfo);
-        // In production, send to error reporting service
-      }}
-    >
+    <ArticleErrorBoundary>
       <div className="flex flex-col gap-6 min-h-screen">
         {/* Breadcrumb Navigation */}
         <div className="px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8">
@@ -214,13 +209,18 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
             {/* Article Content - Only show when completed */}
             {article.status === 'completed' && (
-              <NavigationErrorBoundary
+              <ArticleErrorBoundary
                 fallback={
                   <Card className="border-destructive">
                     <CardContent className="pt-6">
-                      <p className="text-sm text-destructive text-center py-4">
-                        Failed to load article content. Please try refreshing the page.
-                      </p>
+                      <div className="text-center py-8">
+                        <h3 className="text-lg font-semibold text-destructive mb-2">
+                          Content Loading Error
+                        </h3>
+                        <p className="text-muted-foreground">
+                          Unable to load article content. Please try refreshing the page.
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
                 }
@@ -255,12 +255,12 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                     </CardContent>
                   </Card>
                 )}
-              </NavigationErrorBoundary>
+              </ArticleErrorBoundary>
             )}
           </div>
         </div>
       </div>
-    </NavigationErrorBoundary>
+    </ArticleErrorBoundary>
   )
 }
 
