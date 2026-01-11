@@ -3,6 +3,8 @@
  * Story 15.3: Navigation and Access to Completed Articles
  */
 
+'use client';
+
 import React, { Component, ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
