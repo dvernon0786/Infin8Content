@@ -33,7 +33,7 @@
 # - SM typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
-generated: 2026-01-10
+generated: 2026-01-11
 project: Infin8Content
 project_key: infin8content
 tracking_system: file-system
@@ -246,45 +246,57 @@ development_status:
   14-6-seo-testing-and-validation: backlog
   epic-14-retrospective: optional
 
-  # === ACTIVE EPICS (Dashboard Refresh Solution) ===
+  # === DASHBOARD REFRESH SOLUTION EPICS ===
   
   # Epic 15: Real-time Dashboard Experience (IN PROGRESS)
-  epic-15-dashboard: in-progress
+  epic-15: in-progress
   15-1-real-time-article-status-display: done
   15-2-visual-status-indicators: backlog
   15-3-navigation-and-access-to-completed-articles: backlog
   15-4-dashboard-search-and-filtering: backlog
-  epic-15-dashboard-retrospective: optional
+  epic-15-retrospective: optional
 
   # Epic 16: Data Synchronization & Reliability (BACKLOG)
-  epic-16-data-sync: backlog
+  epic-16: backlog
   16-1-data-synchronization-between-tables: backlog
   16-2-error-handling-and-automatic-recovery: backlog
   16-3-system-health-monitoring: backlog
   16-4-support-tools-for-diagnosing-issues: backlog
-  epic-16-data-sync-retrospective: optional
+  epic-16-retrospective: optional
 
   # Epic 17: Mobile-First Experience (BACKLOG)
-  epic-17-mobile: backlog
+  epic-17: backlog
   17-1-mobile-responsive-dashboard: backlog
   17-2-push-notifications-for-article-completion: backlog
   17-3-offline-capability-and-sync: backlog
   17-4-accessibility-on-mobile-devices: backlog
-  epic-17-mobile-retrospective: optional
+  epic-17-retrospective: optional
 
   # Epic 18: Performance & Scalability (BACKLOG)
-  epic-18-performance: backlog
+  epic-18: backlog
   18-1-real-time-infrastructure-implementation: backlog
   18-2-api-enhancements-for-real-time-polling: backlog
   18-3-performance-optimization: backlog
   18-4-scalability-testing-and-monitoring: backlog
-  epic-18-performance-retrospective: optional
+  epic-18-retrospective: optional
 
   # Epic 19: Administrative & Support Tools (BACKLOG)
-  epic-19-admin: backlog
+  epic-19: backlog
   19-1-admin-dashboard-for-system-health: backlog
   19-2-support-ticket-templates-and-automation: backlog
   19-3-user-education-and-in-app-guidance: backlog
   19-4-security-and-compliance-monitoring: backlog
   19-5-rate-limiting-and-abuse-prevention: backlog
-  epic-19-admin-retrospective: optional
+  epic-19-retrospective: optional
+
+  # === PERFORMANCE OPTIMIZATION EPIC (CRITICAL PRIORITY) ===
+  
+  # Epic 20: Article Generation Performance Optimization (CRITICAL - NEW)
+  epic-20: backlog
+  # Critical Sprint 0 priority - 85% API cost reduction, 60-70% faster generation
+  20-1-prompt-system-overhaul: backlog
+  20-2-batch-research-optimizer: backlog
+  20-3-parallel-section-processing: backlog
+  20-4-smart-quality-retry-system: backlog
+  20-5-context-management-optimization: backlog
+  epic-20-retrospective: optional
