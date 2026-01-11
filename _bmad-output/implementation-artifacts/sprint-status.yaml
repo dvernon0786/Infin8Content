@@ -253,7 +253,7 @@ development_status:
   15-1-real-time-article-status-display: done
   15-2-visual-status-indicators: done
   15-3-navigation-and-access-to-completed-articles: done
-  15-4-dashboard-search-and-filtering: done
+  15-4-dashboard-search-and-filtering: in-progress
   epic-15-retrospective: optional
 
   # Epic 16: Data Synchronization & Reliability (BACKLOG)
