@@ -291,7 +291,7 @@ export function VirtualizedArticleList({
     
     return articles.map((article, index) => {
       try {
-        // Ensure all properties have safe defaults
+        // Ensure all properties have safe defaults - NEVER null or undefined
         return {
           id: article?.id || `unknown-${index}`,
           title: article?.title || 'Untitled Article',
@@ -299,7 +299,7 @@ export function VirtualizedArticleList({
           status: article?.status || 'unknown',
           created_at: article?.created_at || new Date().toISOString(),
           updated_at: article?.updated_at || article?.created_at || new Date().toISOString(),
-          progress: article?.progress || null
+          progress: article?.progress || {} // Never null - use empty object
         };
       } catch (error) {
         console.error(`🚨 Error processing article at index ${index}:`, error);
@@ -310,7 +310,7 @@ export function VirtualizedArticleList({
           status: 'error',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          progress: null
+          progress: {} // Never null - use empty object
         };
       }
     });
