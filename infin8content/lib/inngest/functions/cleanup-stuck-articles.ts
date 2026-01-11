@@ -3,7 +3,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 
 /**
  * Cleanup job to detect and fix articles stuck in "generating" status
- * Runs every 15 minutes to catch articles that timed out without proper error handling
+ * Runs every 24 hours to catch articles that timed out without proper error handling
  * 
  * This prevents articles from being stuck indefinitely in "generating" status
  * when Inngest functions timeout or crash unexpectedly.
@@ -14,7 +14,7 @@ export const cleanupStuckArticles = inngest.createFunction(
     // Run cleanup job with lower priority (don't interfere with article generation)
     concurrency: { limit: 1 }
   },
-  { cron: '*/15 * * * *' }, // Run every 15 minutes
+  { cron: '0 0 * * *' }, // Run every 24 hours at midnight UTC
   async ({ step }) => {
     const supabase = createServiceRoleClient()
     
