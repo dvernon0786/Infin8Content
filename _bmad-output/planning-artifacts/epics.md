@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5]
+stepsCompleted: [1, 2, 3, 4]
 inputDocuments: ["_bmad-output/planning-artifacts/prd.md", "_bmad-output/planning-artifacts/architecture.md", "docs/stories/DASHBOARD_REFRESH_SOLUTION_STORY.md"]
 ---
 
@@ -13,77 +13,23 @@ This document provides the complete epic and story breakdown for Infin8Content, 
 
 ### Functional Requirements
 
-F1: Real-time Article Status Display
-- The dashboard SHALL display articles in all states: queued, generating, and completed
-- Articles SHALL transition smoothly between states with visual indicators
-- Completed articles SHALL remain visible in the dashboard for 24 hours after completion
-- Status updates SHALL occur within 5 seconds of database changes (target: <2 seconds)
-
-F2: Data Synchronization
-- The system SHALL maintain data consistency between `articles` and `article_progress` tables
-- When an article status changes to "completed", the progress table SHALL update within 2 seconds
-- Data cleanup scripts SHALL resolve existing inconsistencies without data loss
-- The system SHALL log all synchronization activities for monitoring
-
-F3: Multi-Article Management
-- The dashboard SHALL support simultaneous tracking of multiple article generations
-- Users SHALL be able to view status for all articles in their organization
-- Bulk operations SHALL be available for managing multiple completed articles
-- Queue position SHALL be displayed for queued articles
-
-F4: Mobile Experience
-- The dashboard SHALL be fully responsive on mobile devices
-- Push notifications SHALL be sent when articles complete on mobile
-- Mobile status indicators SHALL be clear and accessible
-- Offline capability SHALL be provided with sync when reconnected
-
-F5: Visual Status Indicators
-- Each article state SHALL have distinct visual styling (queued, generating, completed)
-- Progress bars SHALL show generation progress when available
-- Completion animations SHALL provide celebratory feedback
-- Color coding SHALL be accessible and consistent
-
-F6: Navigation and Access
-- Users SHALL be able to navigate directly to completed articles from dashboard
-- Article titles SHALL be clickable links to the full article view
-- Breadcrumb navigation SHALL maintain context
-- Search and filtering SHALL be available for article management
-
-F7: Error Handling and Recovery
-- The system SHALL provide clear error messages for failed generations
-- Users SHALL be able to retry failed articles from the dashboard
-- Fallback mechanisms SHALL activate if real-time updates fail
-- Error states SHALL be visually distinct from normal states
-
-F8: Real-time Infrastructure
-- The system SHALL use Supabase real-time subscriptions for instant updates
-- Polling fallback SHALL activate within 3 seconds if subscriptions fail
-- WebSocket connections SHALL be automatically reconnected on disconnect
-- Performance monitoring SHALL track update latency and connection health
-
-F9: API Enhancements
-- The `/api/articles/queue` endpoint SHALL include recently completed articles
-- New endpoints SHALL provide historical article status information
-- API responses SHALL include timestamps for all status changes
-- Rate limiting SHALL be appropriate for real-time polling
-
-F10: Performance Requirements
-- Dashboard load time SHALL be <3 seconds for typical user accounts
-- Real-time updates SHALL not degrade overall system performance
-- Database queries SHALL be optimized for high-frequency access
-- Client-side state management SHALL minimize unnecessary re-renders
-
-F11: System Monitoring
-- Admin dashboard SHALL display article generation system health
-- Synchronization failures SHALL trigger alerts for support team
-- Performance metrics SHALL be tracked and reported
-- User behavior analytics SHALL measure dashboard engagement
-
-F12: Support Tools
-- Support staff SHALL have tools to diagnose article status issues
-- User education SHALL be provided through in-app guidance
-- Common issues SHALL be detected and resolved automatically
-- Support ticket templates SHALL address frequent dashboard problems
+FR1: Real-time Article Status Display - The dashboard SHALL display articles in all states: queued, generating, and completed with smooth transitions and visual indicators
+FR2: Data Synchronization - The system SHALL maintain data consistency between `articles` and `article_progress` tables with updates within 2 seconds
+FR3: Multi-Article Management - The dashboard SHALL support simultaneous tracking of multiple article generations with bulk operations
+FR4: Mobile Experience - The dashboard SHALL be fully responsive on mobile devices with push notifications and offline capability
+FR5: Batch Research Processing - The system SHALL perform comprehensive research ONCE per article instead of per section with maximum 2 Tavily API calls (85% reduction)
+FR6: Parallel Section Generation - The system SHALL generate multiple article sections simultaneously using Promise.allSettled with 4+ simultaneous generations (60-70% faster)
+FR7: Optimized Retry Logic - The system SHALL limit retries to maximum 1 per section with 500ms delay and classify quality issues for selective retry
+FR8: Enhanced Context Management - The system SHALL build article context incrementally with 2000 token limit and summarized previous sections (40-50% token reduction)
+FR9: Visual Status Indicators - Each article state SHALL have distinct visual styling with progress bars and completion animations
+FR10: Navigation and Access - Users SHALL be able to navigate directly to completed articles from dashboard with clickable links
+FR11: Error Handling and Recovery - The system SHALL provide clear error messages with retry capabilities and fallback mechanisms
+FR12: Real-time Infrastructure - The system SHALL use Supabase real-time subscriptions with polling fallback and automatic reconnection
+FR13: API Enhancements - The `/api/articles/queue` endpoint SHALL include recently completed articles with timestamps
+FR14: Performance Requirements - Dashboard load time SHALL be <3 seconds with optimized database queries
+FR15: Generation Performance - Article generation SHALL complete in <3 minutes with <2 research API calls and parallel processing
+FR16: System Monitoring - Admin dashboard SHALL display article generation system health with performance metrics
+FR17: Support Tools - Support staff SHALL have tools to diagnose article status issues with user education features
 
 ### NonFunctional Requirements
 
@@ -131,7 +77,7 @@ NFR7: System Security
 
 ### Additional Requirements
 
-- Use existing Next.js 16 and React 19 architecture (no new framework)
+- Must use existing Next.js 16 and React 19 architecture (no new framework)
 - Supabase required for real-time subscriptions and database operations
 - TypeScript mandatory for all new code development
 - Existing component library must be leveraged for consistency
@@ -143,49 +89,271 @@ NFR7: System Security
 - Database migrations must execute without downtime
 - Feature flags must control rollout of new functionality
 - Monitoring must integrate with existing observability tools
+- **Performance Optimization Architecture**: Batch research processing (85% API reduction), parallel section processing (60-70% faster), enhanced context management (40-50% token reduction), performance monitoring and cost tracking
+- **Real-time Data Consistency**: Synchronization between articles and article_progress tables with consistent state across dashboard views
+- **Mobile-First Experience**: Responsive design with push notifications and offline capability
+- **Error Handling & Recovery**: Graceful degradation with automatic retry mechanisms and clear user communication
+- **Security & Privacy**: Real-time connection authentication with data access authorization and encrypted communications
 
 ### FR Coverage Map
 
-FR1: Epic 1 - Real-time article status display with visual indicators
-FR2: Epic 2 - Data synchronization between articles and article_progress tables
-FR3: Epic 2 - Multi-article management and bulk operations
-FR4: Epic 3 - Mobile responsive dashboard and offline capability
-FR5: Epic 3 - Push notifications for article completion
-FR6: Epic 1 - Visual status indicators and completion animations
-FR7: Epic 1 - Navigation and access to completed articles
-FR8: Epic 4 - Real-time infrastructure with Supabase subscriptions
-FR9: Epic 4 - API enhancements for real-time polling
-FR10: Epic 4 - Performance optimization and state management
-FR11: Epic 2 - Error handling and automatic recovery
-FR12: Epic 5 - System monitoring and health tracking
-F13: Epic 5 - Support tools for diagnosing issues
-NFR1: Epic 4 - Performance requirements (<5 second updates)
-NFR2: Epic 4 - Scalability (1000+ concurrent users)
-NFR3: Epic 2 - Reliability (99.9% uptime, zero data loss)
-NFR4: Epic 3 - Usability (WCAG 2.1 AA compliance)
-NFR5: Epic 1 - User experience (minimal learning curve)
-NFR6: Epic 5 - Data protection and privacy
-NFR7: Epic 5 - System security and monitoring
+FR1: Epic 15 - Real-time article status display with visual indicators
+FR2: Epic 16 - Data synchronization between articles and article_progress tables
+FR3: Epic 16 - Multi-article management and bulk operations
+FR4: Epic 17 - Mobile responsive dashboard and offline capability
+FR5: Epic 20 - Batch research processing for API cost reduction
+FR6: Epic 20 - Parallel section generation for faster processing
+FR7: Epic 20 - Optimized retry logic and error classification
+FR8: Epic 20 - Enhanced context management for token optimization
+FR9: Epic 15 - Visual status indicators and completion animations
+FR10: Epic 15 - Navigation and access to completed articles
+FR11: Epic 16 - Error handling and automatic recovery
+FR12: Epic 18 - Real-time infrastructure with Supabase subscriptions
+FR13: Epic 18 - API enhancements for real-time polling
+FR14: Epic 18 - Performance optimization and state management
+FR15: Epic 20 - Generation performance improvements
+FR16: Epic 19 - System monitoring and health tracking
+FR17: Epic 19 - Support tools for diagnosing issues
+NFR1: Epic 18 - Performance requirements (<5 second updates)
+NFR2: Epic 18 - Scalability (1000+ concurrent users)
+NFR3: Epic 16 - Reliability (99.9% uptime, zero data loss)
+NFR4: Epic 17 - Usability (WCAG 2.1 AA compliance)
+NFR5: Epic 15 - User experience (minimal learning curve)
+NFR6: Epic 19 - Data protection and privacy
+NFR7: Epic 19 - System security and monitoring
 
 ## Epic List
 
-### Epic 1: Real-time Dashboard Experience
+### Epic 15: Real-time Dashboard Experience
 Content creators can see their article generation progress in real-time with delightful visual feedback and instant status updates
-**FRs covered:** F1, F5, F6
+**FRs covered:** FR1, FR9, FR10
+**Status:** IN PROGRESS (15-1 done, 15-2 to 15-4 backlog)
 
-### Epic 2: Data Synchronization & Reliability
+### Epic 16: Data Synchronization & Reliability
 Article status is always accurate and consistent across all dashboard views with automatic error recovery
-**FRs covered:** F2, F7, F11
+**FRs covered:** FR2, FR3, FR11
+**Status:** BACKLOG (16-1 to 16-4 backlog)
 
-### Epic 3: Mobile-First Experience
+### Epic 17: Mobile-First Experience
 Users can manage articles and receive completion notifications on any device with responsive design and offline capability
-**FRs covered:** F4, F5, NFR4
+**FRs covered:** FR4
+**Status:** BACKLOG (17-1 to 17-4 backlog)
 
-### Epic 4: Performance & Scalability
+### Epic 18: Performance & Scalability
 Dashboard provides instant updates and handles growing user load with optimized real-time infrastructure
-**FRs covered:** F8, F10, NFR1, NFR2
+**FRs covered:** FR12, FR13, FR14
+**Status:** BACKLOG (18-1 to 18-4 backlog)
 
-### Epic 5: Administrative & Support Tools
+### Epic 19: Administrative & Support Tools
+Support team can monitor system health and help users effectively with comprehensive admin tools
+**FRs covered:** FR16, FR17
+**Status:** BACKLOG (19-1 to 19-5 backlog)
+
+### Epic 20: Article Generation Performance Optimization (NEW - CRITICAL PRIORITY)
+Article generation completes in <3 minutes with 85% fewer API calls through batch research, parallel processing, intelligent context management, and comprehensive prompt system overhaul
+**FRs covered:** FR5, FR6, FR7, FR8, FR15
+**Status:** BACKLOG (Critical Sprint 0 priority - 85% API cost reduction, 60-70% faster generation)
+
+### Story 20.1: Prompt System Overhaul (CRITICAL - Must Complete First)
+
+As a content creator,
+I want the system to generate SEO-optimized content on the first try,
+So that I spend less time waiting for retries and get better quality articles.
+
+**Acceptance Criteria:**
+
+**Given** I'm generating an article with SEO requirements
+**When** the system prompt is built
+**Then** it includes E-E-A-T principles (Expertise, Authoritativeness, Experience, Trustworthiness)
+**And** readability targets are enforced (Grade 10-12)
+**And** semantic SEO guidelines are included
+
+**Given** I've provided keywords and target audience
+**When** the user prompt is constructed
+**Then** it includes keyword density calculation and placement strategy
+**And** semantic keyword variations are included
+**And** content structure follows SEO best practices
+
+**Given** different sections require different approaches
+**When** section-specific templates are applied
+**Then** introduction template enforces 80-150 word count with hook
+**And** H2 section templates include topic authority building
+**And** H3 subsection templates provide detailed explanations
+**And** conclusion template includes summary and call-to-action
+**And** FAQ template addresses common user questions
+
+**Given** content quality needs validation
+**When** SEO helper functions run
+**Then** keyword density is checked (1-2% primary, 0.5-1% secondary)
+**And** semantic keyword coverage is validated
+**And** readability score is calculated (Grade 10-12 target)
+**And** content structure follows proper hierarchy
+
+**Technical Tasks:**
+- Update prompt-builder.ts with new E-E-A-T system prompt
+- Refactor buildUserPrompt() to include SEO strategy section
+- Create section-templates.ts with getSectionSpecificGuidance()
+- Implement seo-helpers.ts with keyword/semantic functions
+- Update quality checker to validate new requirements
+- Add prompt validation before API calls
+- Create template testing framework for quality assurance
+
+### Story 20.2: Batch Research Optimizer
+
+As a content creator,
+I want research to happen once per article instead of per section,
+So that my articles generate 85% faster and cost less.
+
+**Acceptance Criteria:**
+
+**Given** I'm generating an article with multiple sections
+**When** the research phase begins
+**Then** comprehensive research happens ONCE for the entire article
+**And** maximum 2 Tavily API calls are made (instead of 8-13)
+
+**Given** the research is completed
+**When** individual sections need research data
+**Then** research results are cached and reused across all sections
+**And** intelligent source ranking filters best sources per section
+
+**Given** similar topics are researched
+**When** the research cache is checked
+**Then** cache hit rate is >80% for similar topics
+**And** research results are served from cache when available
+
+**Given** insufficient sources are found
+**When** fallback research is triggered
+**Then** targeted research is performed only for that section
+**And** the system maintains the 1-2 API call limit per article
+
+**Technical Tasks:**
+- Create research-optimizer.ts module
+- Implement getArticleResearch() with comprehensive query
+- Build relevance ranking algorithm for source filtering
+- Add research cache with 24-hour TTL
+- Update section-processor.ts to use cached research
+- Add cache hit rate monitoring
+- Implement fallback research logic
+
+### Story 20.3: Parallel Section Processing
+
+As a content creator,
+I want sections to generate simultaneously instead of sequentially,
+So that my 8-section article completes in 2-3 minutes instead of 8 minutes.
+
+**Acceptance Criteria:**
+
+**Given** I'm generating an article with multiple sections
+**When** the generation process starts
+**Then** the introduction generates first (sequential requirement)
+**And** all H2 sections generate in parallel (4+ simultaneous)
+
+**Given** H2 sections are processing in parallel
+**When** H3 subsections need generation
+**Then** H3 subsections process in parallel groups by parent H2
+**And** each H3 group waits for its parent H2 completion
+
+**Given** the main sections are completed
+**When** final sections are generated
+**Then** conclusion and FAQ generate in parallel
+**And** the entire article completes within 3 minutes
+
+**Given** one section fails during parallel processing
+**When** an error occurs
+**Then** the error is isolated and doesn't block other sections
+**And** failed sections can be retried individually
+
+**Given** the system is under load
+**When** multiple articles generate simultaneously
+**Then** concurrency limits prevent API rate limiting
+**And** system maintains stable performance
+
+**Technical Tasks:**
+- Refactor generate-article.ts with phased approach
+- Implement Promise.allSettled for parallel execution
+- Add per-section error handling and isolation
+- Create concurrency limit manager (max 5 simultaneous)
+- Update progress tracking for parallel execution
+- Add performance monitoring for parallel batches
+- Implement retry logic for failed sections
+
+### Story 20.4: Smart Quality Retry System
+
+As a content creator,
+I want the system to fix minor issues automatically and only retry critical failures,
+So that generation is faster and still maintains quality.
+
+**Acceptance Criteria:**
+
+**Given** content is generated for a section
+**When** quality validation runs
+**Then** issues are classified as critical vs minor automatically
+**And** minor issues are fixed programmatically without API calls
+
+**Given** minor quality issues are detected
+**When** auto-fix is applied
+**Then** word count is adjusted to target range automatically
+**And** keyword density is corrected programmatically
+**And** formatting issues are fixed without API retry
+
+**Given** critical quality issues are detected
+**When** retry is needed
+**Then** only 1 retry is attempted (down from 3)
+**And** retry delay is reduced to 500ms (down from 1000ms)
+**And** retry prompts address specific failure reasons
+
+**Given** retry attempts fail
+**When** maximum retries are reached
+**Then** the section is marked as failed with clear error message
+**And** user can manually retry or edit the section
+
+**Technical Tasks:**
+- Add validatePromptQuality() function
+- Implement issue classifier (critical vs minor)
+- Create autoFixMinorIssues() for programmatic fixes
+- Update retry logic to limit to 1 attempt
+- Reduce retry delay to 500ms
+- Build targeted retry prompt generator
+- Add quality scoring before and after fixes
+
+### Story 20.5: Context Management Optimization
+
+As a content creator,
+I want previous section context to be summarized efficiently,
+So that token usage drops 40-50% and generation is faster.
+
+**Acceptance Criteria:**
+
+**Given** multiple sections are being generated
+**When** context is built for each section
+**Then** context is built incrementally (append-only)
+**And** previous sections are compressed to key points only
+
+**Given** context is needed for current section
+**When** context is assembled
+**Then** the last section includes more detail (400 characters)
+**And** earlier sections use compressed summaries (2-3 sentences)
+**And** total context window stays under 1500 tokens
+
+**Given** an article generation session is active
+**When** context is cached
+**Then** context is cached in memory with articleId key
+**And** no database reloads are needed during generation
+**And** cache is cleared after article completion
+
+**Given** token usage is monitored
+**When** context optimization is active
+**Then** token usage drops by 40-50% compared to full context
+**And** generation speed improves due to smaller prompts
+
+**Technical Tasks:**
+- Create context-manager.ts module
+- Implement incremental summary builder
+- Add key concept extractor for compression
+- Cache context with articleId key in memory
+- Set context window limit to 1500 tokens
+- Add token usage monitoring and reporting
+- Batch database section updates to reduce calls
 ### Epic 1: Real-time Dashboard Experience
 
 Content creators can see their article generation progress in real-time with delightful visual feedback and instant status updates

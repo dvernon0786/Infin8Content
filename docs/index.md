@@ -1,7 +1,7 @@
 # Infin8Content Project Documentation
 
-Generated: 2026-01-10 (Updated)  
-Project Type: SaaS B2B Platform  
+Generated: 2026-01-11 (Updated)  
+Project Type: Multi-Tenant SaaS Platform  
 Framework: Next.js 16.1.1 with TypeScript  
 Status: Active Development
 
@@ -401,4 +401,27 @@ GET /api/articles/[id]/progress
 
 ---
 
-*This documentation was generated as part of the BMad Method document-project workflow on 2026-01-10. For the most current information, refer to the source code and latest project artifacts.*
+## Generated Documentation
+
+### Project Overview
+- [Project Overview](./project-overview.md) - Executive summary and business context
+
+### Architecture & Technical Documentation
+- [Architecture](./architecture.md) - Complete system architecture documentation
+- [API Contracts](./api-contracts.md) - Comprehensive API endpoint documentation (44 endpoints)
+- [Data Models](./data-models.md) - Database schema and relationships (12 tables)
+- [Source Tree Analysis](./source-tree-analysis.md) - Annotated project structure
+
+### Development & Operations
+- [Development Guide](./development-guide.md) - Setup, development workflow, and testing
+- [Component Inventory](./component-inventory.md) - UI component library documentation (28 components)
+
+### Existing Documentation
+- [Project Documentation README](./project-documentation/README.md) - Original project docs
+- [Component Catalog](./project-documentation/COMPONENT_CATALOG.md) - Component reference
+- [Development Guide](./project-documentation/DEVELOPMENT_GUIDE.md) - Original development guide
+- [API Reference](./project-documentation/API_REFERENCE.md) - Original API documentation
+
+---
+
+*This documentation was generated as part of the BMad Method document-project workflow on 2026-01-11. For the most current information, refer to the source code and latest project artifacts.*
