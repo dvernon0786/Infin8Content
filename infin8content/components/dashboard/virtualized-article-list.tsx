@@ -362,7 +362,19 @@ const cleanedItemData = safeItemData;
       articlesCount: cleanedItemData.articles?.length || 0,
       hasArticles: cleanedItemData.articles?.length > 0,
       selectedArticle: cleanedItemData.selectedArticle,
-      showProgress: cleanedItemData.showProgress
+      showProgress: cleanedItemData.showProgress,
+      // Log all properties to see what's actually there
+      allKeys: Object.keys(cleanedItemData),
+      hasArticlesArray: !!cleanedItemData.articles,
+      articlesArrayLength: cleanedItemData.articles?.length || 0,
+      hasOnArticleSelect: typeof cleanedItemData.onArticleSelect === 'function',
+      hasOnArticleNavigation: typeof cleanedItemData.onArticleNavigation === 'function',
+      hasOnKeyDown: typeof cleanedItemData.onKeyDown === 'function',
+      hasOnTouchStart: typeof cleanedItemData.onTouchStart === 'function',
+      hasOnTouchMove: typeof cleanedItemData.onTouchMove === 'function',
+      hasOnTouchEnd: typeof cleanedItemData.onTouchEnd === 'function',
+      // Show the actual itemData structure
+      fullItemData: cleanedItemData
     });
 
     return cleanedItemData;
