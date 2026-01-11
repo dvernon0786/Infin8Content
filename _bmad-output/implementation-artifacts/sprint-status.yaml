@@ -251,7 +251,7 @@ development_status:
   # Epic 15: Real-time Dashboard Experience (IN PROGRESS)
   epic-15: in-progress
   15-1-real-time-article-status-display: done
-  15-2-visual-status-indicators: ready-for-dev
+  15-2-visual-status-indicators: review
   15-3-navigation-and-access-to-completed-articles: backlog
   15-4-dashboard-search-and-filtering: backlog
   epic-15-retrospective: optional

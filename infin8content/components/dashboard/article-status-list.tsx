@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { VisualStatusIndicator } from '@/components/articles/visual-status-indicator';
+import { getStatusConfig, statusConfigs } from '@/lib/constants/status-configs';
 import { 
   Clock, 
   CheckCircle, 
@@ -34,45 +36,6 @@ interface ArticleStatusListProps {
   className?: string;
 }
 
-interface StatusConfig {
-  color: string;
-  icon: React.ReactNode;
-  label: string;
-  variant: 'default' | 'secondary' | 'destructive' | 'outline';
-}
-
-const statusConfigs: Record<string, StatusConfig> = {
-  queued: {
-    color: 'text-blue-600',
-    icon: <Clock className="h-4 w-4" />,
-    label: 'Queued',
-    variant: 'secondary',
-  },
-  generating: {
-    color: 'text-orange-600',
-    icon: <Loader2 className="h-4 w-4 animate-spin" />,
-    label: 'Generating',
-    variant: 'default',
-  },
-  completed: {
-    color: 'text-green-600',
-    icon: <CheckCircle className="h-4 w-4" />,
-    label: 'Completed',
-    variant: 'outline',
-  },
-  failed: {
-    color: 'text-red-600',
-    icon: <AlertCircle className="h-4 w-4" />,
-    label: 'Failed',
-    variant: 'destructive',
-  },
-  cancelled: {
-    color: 'text-gray-600',
-    icon: <AlertCircle className="h-4 w-4" />,
-    label: 'Cancelled',
-    variant: 'secondary',
-  },
-};
 
 export function ArticleStatusList({
   orgId,
@@ -153,7 +116,7 @@ export function ArticleStatusList({
   }, [articles, showCompleted, maxItems]);
 
   // Get status configuration
-  const getStatusConfig = (status: string): StatusConfig => {
+  const getStatusConfig = (status: string) => {
     return statusConfigs[status] || statusConfigs.queued;
   };
 
@@ -314,28 +277,37 @@ export function ArticleStatusList({
                       </p>
                     </div>
                     
-                    <Badge variant={statusConfig.variant} className="flex items-center gap-1">
-                      {statusConfig.icon}
-                      {statusConfig.label}
-                    </Badge>
+                    {/* Enhanced Visual Status Indicator */}
+                    <VisualStatusIndicator
+                      status={article.status}
+                      progress={article.progress}
+                      title={article.title || article.keyword}
+                      compact={true}
+                      isRealtime={true}
+                      connectionStatus={connectionStatus}
+                      lastUpdated={lastUpdated}
+                      onRetry={() => {
+                        // Handle retry logic for failed articles
+                        console.log('Retry article:', article.id);
+                      }}
+                    />
                   </div>
                   
-                  {/* Progress bar for active articles */}
-                  {showProgress && article.progress && article.status === 'generating' && (
+                  {/* Progress bar for active articles - using VisualStatusIndicator for detailed view */}
+                  {showProgress && article.status === 'generating' && article.progress && (
                     <div className="mb-3">
-                      <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="text-gray-600">{article.progress.current_stage}</span>
-                        <span className="text-gray-500">
-                          {article.progress.progress_percentage.toFixed(1)}%
-                        </span>
-                      </div>
-                      <Progress value={article.progress.progress_percentage} className="h-2" />
-                      <div className="flex items-center justify-between text-xs text-gray-500 mt-1">
-                        <span>
-                          Section {article.progress.current_section} of {article.progress.total_sections}
-                        </span>
-                        <span>{article.progress.word_count} words</span>
-                      </div>
+                      <VisualStatusIndicator
+                        status={article.status}
+                        progress={article.progress}
+                        title={article.title || article.keyword}
+                        compact={false}
+                        isRealtime={true}
+                        connectionStatus={connectionStatus}
+                        lastUpdated={lastUpdated}
+                        onAnimationComplete={() => {
+                          console.log(`Article "${article.title}" completed!`);
+                        }}
+                      />
                     </div>
                   )}
                   

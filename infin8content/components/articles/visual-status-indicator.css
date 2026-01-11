@@ -1,0 +1,124 @@
+/* Visual Status Indicator Styles - Story 15.2 */
+
+/* Colorblind accessibility patterns */
+.bg-stripes-blue {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 4px,
+    rgba(59, 130, 246, 0.1) 4px,
+    rgba(59, 130, 246, 0.1) 8px
+  );
+}
+
+.bg-dots-orange {
+  background-image: radial-gradient(
+    circle,
+    rgba(251, 146, 60, 0.2) 2px,
+    transparent 2px
+  );
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
+}
+
+.bg-solid-green {
+  background-image: none;
+  position: relative;
+}
+
+.bg-solid-green::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 25%, transparent 25%, transparent 75%, rgba(34, 197, 94, 0.1) 75%);
+  pointer-events: none;
+}
+
+.bg-crossed-red {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 4px,
+    rgba(239, 68, 68, 0.1) 4px,
+    rgba(239, 68, 68, 0.1) 8px
+  ),
+  repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    rgba(239, 68, 68, 0.1) 4px,
+    rgba(239, 68, 68, 0.1) 8px
+  );
+}
+
+.bg-dashed-gray {
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 6px,
+    rgba(107, 114, 128, 0.1) 6px,
+    rgba(107, 114, 128, 0.1) 8px
+  );
+}
+
+/* Celebration animation */
+@keyframes celebration {
+  0% { opacity: 0; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+.animate-celebration {
+  animation: celebration 2s ease-in-out;
+}
+
+/* Extra small screen support (320px+) */
+@media (max-width: 475px) {
+  .xs\:p-2 {
+    padding: 0.5rem;
+  }
+  
+  .xs\:text-xs {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+  
+  .xs\:px-2 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  .xs\:min-h-6 {
+    min-height: 1.5rem;
+  }
+}
+
+/* Touch-friendly optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .touch-friendly {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .bg-stripes-blue,
+  .bg-dots-orange,
+  .bg-solid-green,
+  .bg-crossed-red,
+  .bg-dashed-gray {
+    background-image: none !important;
+  }
+  
+  .bg-stripes-blue::after,
+  .bg-dots-orange::after,
+  .bg-solid-green::after,
+  .bg-crossed-red::after,
+  .bg-dashed-gray::after {
+    display: none !important;
+  }
+}
