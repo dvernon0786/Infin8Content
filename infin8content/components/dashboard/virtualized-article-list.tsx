@@ -355,13 +355,8 @@ export function VirtualizedArticleList({
       showProgress: showProgress ?? true
     };
 
-    // Deep clean to ensure no undefined values
-    const cleanedItemData = JSON.parse(
-      JSON.stringify(safeItemData, (key, value) => {
-        // Convert undefined to null to prevent Object.values errors
-        return value === undefined ? null : value;
-      })
-    );
+    // Keep all properties including functions - JSON.stringify removes functions!
+const cleanedItemData = safeItemData;
 
     console.log('🧹 Cleaned itemData:', {
       articlesCount: cleanedItemData.articles?.length || 0,
