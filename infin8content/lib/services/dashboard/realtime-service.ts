@@ -29,7 +29,7 @@ export class RealtimeDashboardService {
 
   constructor(config: RealtimeServiceConfig) {
     this.config = {
-      pollingInterval: 5000, // 5 seconds
+      pollingInterval: 120000, // 2 minutes
       maxRetries: 3,
       enableFallback: true,
       ...config,

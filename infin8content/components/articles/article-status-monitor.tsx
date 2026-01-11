@@ -142,7 +142,7 @@ export function ArticleStatusMonitor({
     const fallbackTimeout = setTimeout(() => {
       if (!isSubscribed) {
         console.log('WebSocket not subscribed, starting fallback polling')
-        intervalId = setInterval(checkStatusFallback, 3000) // Check every 3 seconds
+        intervalId = setInterval(checkStatusFallback, 10000) // Check every 10 seconds
       }
     }, 3000)
 
@@ -153,7 +153,7 @@ export function ArticleStatusMonitor({
       if (intervalId) clearInterval(intervalId)
       clearTimeout(fallbackTimeout)
     }
-  }, [articleId, status, onStatusChange, router, isSubscribed])
+  }, [articleId, status, onStatusChange, router]) // Remove isSubscribed from dependencies
 
   return (
     <div className="flex items-center gap-2">

@@ -1,6 +1,6 @@
 # Infin8Content - Project Scratchpad
 
-**Updated:** 2026-01-11 16:11 PM AEDT (2026-01-11 05:11:48 UTC)
+**Updated:** 2026-01-11 18:07 PM AEDT (2026-01-11 07:07:48 UTC)
 
 ## 🎯 CURRENT STATUS
 
@@ -78,6 +78,19 @@
 - **Impact**: Articles now auto-update from "generating" → "completed" within 5 seconds
 - **User Experience**: No page refresh required, status changes visible immediately
 
+**🔧 REALTIME SUBSCRIPTION DEBUGGING (2026-01-11):**
+- **Problem**: Supabase Realtime subscriptions repeatedly closing (CLOSED status)
+- **Root Cause 1**: `CLOSED` status not handled in realtime service (only CHANNEL_ERROR/TIMED_OUT)
+- **Root Cause 2**: Hook re-initializing infinitely due to useEffect dependencies
+- **Root Cause 3**: Multiple polling intervals created simultaneously
+- **Solution 1**: Added `CLOSED` status handling in `lib/supabase/realtime.ts`
+- **Solution 2**: Added initialization guard with `isInitializedRef` in hook
+- **Solution 3**: Added guard to prevent multiple polling intervals
+- **Solution 4**: Changed polling from 5 seconds to 2 minutes (articles take >2 mins)
+- **Solution 5**: Fixed ArticleStatusMonitor infinite loop (removed isSubscribed from deps)
+- **Impact**: Stable real-time connections, no more infinite re-initializations
+- **Performance**: Reduced API calls from every 5s to every 2 minutes
+
 **Key Achievements:**
 - Fixed "vanishing article" problem
 - Real-time dashboard with visual indicators
@@ -87,5 +100,5 @@
 - **NEW**: Reliable status updates via polling when Realtime fails
 
 ---
-**Last Updated**: 2026-01-11 16:11 PM AEDT
-**Status**: SPRINT 0 READY - PERFORMANCE OPTIMIZATION PRIORITY
+**Last Updated**: 2026-01-11 18:07 PM AEDT
+**Status**: REALTIME DEBUGGING COMPLETE - STABLE SUBSCRIPTIONS ACHIEVED

@@ -145,7 +145,7 @@ export class ArticleProgressRealtime {
         if (status === 'SUBSCRIBED') {
           this.isDashboardConnected = true;
           onConnectionChange?.(true);
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           this.isDashboardConnected = false;
           onConnectionChange?.(false);
           this.handleDashboardReconnection(orgId, onDashboardUpdate, onError, onConnectionChange);
@@ -226,7 +226,7 @@ export class ArticleProgressRealtime {
           this.reconnectAttempts = 0;
           this.reconnectDelay = 1000;
           onConnectionChange?.(true);
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           this.isConnected = false;
           onConnectionChange?.(false);
           this.handleReconnection(articleId, onProgressUpdate, onError, onConnectionChange);

@@ -32,7 +32,7 @@ export function useRealtimeArticles({
   onDashboardUpdate,
   onError,
   onConnectionChange,
-  pollingInterval = 5000, // 5 seconds default
+  pollingInterval = 120000, // 2 minutes default (articles take >2 mins to complete)
   enablePolling = true,
 }: UseRealtimeArticlesOptions): UseRealtimeArticlesReturn {
   const [articles, setArticles] = useState<DashboardArticle[]>([]);
@@ -45,6 +45,7 @@ export function useRealtimeArticles({
   const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastPollRef = useRef<string | null>(null);
+  const isInitializedRef = useRef<boolean>(false);
   
   // Performance monitoring
   const performanceMetricsRef = useRef({
@@ -56,7 +57,13 @@ export function useRealtimeArticles({
 
   // Fetch articles from API
   const fetchArticles = useCallback(async (since?: string) => {
+    if (!orgId) {
+      console.warn('⚠️ No orgId available, skipping fetch');
+      return null;
+    }
+    
     try {
+      console.log('📡 Fetching articles for orgId:', orgId);
       const params = new URLSearchParams({
         orgId,
         limit: '50',
@@ -69,6 +76,8 @@ export function useRealtimeArticles({
       console.log('📡 Fetching articles from:', `/api/articles/queue?${params}`);
       
       const response = await fetch(`/api/articles/queue?${params}`);
+      
+      console.log('📡 Response status:', response.status);
       
       if (!response.ok) {
         console.error('❌ API Response error:', response.status, response.statusText);
@@ -121,6 +130,12 @@ export function useRealtimeArticles({
       return data;
     } catch (err) {
       const error = err as Error;
+      console.error('🔥 Fetch error details:', {
+        message: error.message,
+        stack: error.stack,
+        orgId,
+        timestamp: new Date().toISOString()
+      });
       setError(error);
       onError?.(error);
       throw error;
@@ -187,10 +202,13 @@ export function useRealtimeArticles({
 
   // Polling functions
   const startPolling = useCallback(() => {
-    console.log('🚀 Starting polling with interval:', pollingInterval);
+    // Prevent starting polling if it's already running
     if (pollingTimeoutRef.current) {
-      clearInterval(pollingTimeoutRef.current);
+      console.log('📡 Polling already running, skipping');
+      return;
     }
+    
+    console.log('🚀 Starting polling with interval:', pollingInterval);
     
     pollingTimeoutRef.current = setInterval(async () => {
       try {
@@ -282,10 +300,17 @@ export function useRealtimeArticles({
       return;
     }
 
+    // Prevent multiple initializations
+    if (isInitializedRef.current) {
+      console.log('🔧 Already initialized, skipping');
+      return;
+    }
+
     console.log('🔧 Initializing hook for orgId:', orgId);
+    isInitializedRef.current = true;
 
     // Start polling immediately if enabled (as a reliable fallback)
-    if (enablePolling) {
+    if (enablePolling && !isPollingMode) {
       console.log('🚀 Starting polling immediately as fallback');
       setIsPollingMode(true);
       startPolling();
@@ -306,13 +331,15 @@ export function useRealtimeArticles({
 
     // Cleanup on unmount
     return () => {
+      console.log('🧹 Cleaning up hook for orgId:', orgId);
+      isInitializedRef.current = false;
       articleProgressRealtime.unsubscribeFromDashboard();
       stopPolling();
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [orgId, handleDashboardUpdate, handleError, handleConnectionChange, fetchArticles, stopPolling]);
+  }, [orgId]); // Only depend on orgId, not on functions that change every render
 
   // Update polling reference when articles change
   useEffect(() => {
