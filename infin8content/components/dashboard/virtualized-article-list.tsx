@@ -469,7 +469,7 @@ const cleanedItemData = safeItemData;
             itemSize: itemHeight || 160,
             itemData: itemData || {},
             overscanCount: overscanCount || 5,
-            getItemKey: getItemKey || (() => 'default'),
+            getItemKey: getItemKey || ((index: number) => `item-${index}`),
             className: "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100",
             children: ArticleItem
           };
