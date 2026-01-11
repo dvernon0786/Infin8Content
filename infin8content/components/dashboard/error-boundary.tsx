@@ -78,7 +78,7 @@ export class DashboardErrorBoundary extends Component<Props, State> {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-red-700">
-              The dashboard encountered an error and couldn't display the article status.
+              The dashboard encountered an error and couldn&apos;t display the article status.
             </p>
             
             {process.env.NODE_ENV === 'development' && this.state.error && (

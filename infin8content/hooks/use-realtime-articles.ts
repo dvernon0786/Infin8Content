@@ -129,10 +129,11 @@ export function useRealtimeArticles({
       } else {
         // Add new article if it's not in the list
         if (event.metadata && typeof event.metadata === 'object') {
+          const metadata = event.metadata as Record<string, unknown>;
           const newArticle: DashboardArticle = {
             id: event.articleId,
-            keyword: (event.metadata as any).keyword || '',
-            title: (event.metadata as any).title || '',
+            keyword: (metadata.keyword as string) || '',
+            title: (metadata.title as string) || '',
             status: event.status,
             created_at: event.timestamp,
             updated_at: event.timestamp,
