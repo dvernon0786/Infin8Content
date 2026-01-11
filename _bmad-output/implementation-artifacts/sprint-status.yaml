@@ -252,7 +252,7 @@ development_status:
   epic-15: in-progress
   15-1-real-time-article-status-display: done
   15-2-visual-status-indicators: done
-  15-3-navigation-and-access-to-completed-articles: review
+  15-3-navigation-and-access-to-completed-articles: done
   15-4-dashboard-search-and-filtering: done
   epic-15-retrospective: optional
 
