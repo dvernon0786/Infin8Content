@@ -6,7 +6,6 @@
 'use client';
 
 import React, { useMemo, useCallback, useRef } from 'react';
-import { List } from 'react-window';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -449,22 +448,21 @@ const cleanedItemData = safeItemData;
           </div>
         </div>
       ) : (
-        React.createElement(List, {
-          height: height || 600,
-          itemCount: safeArticles.length,
-          itemSize: itemHeight || 160,
-          width: '100%',
-          itemData: itemData,
-          overscanCount: overscanCount || 5,
-          getItemKey: getItemKey,
-          children: ArticleItem
-        } as any)
+        <div className="overflow-y-auto" style={{ height: height || 600 }}>
+          {safeArticles.map((article, index) => (
+            ArticleItem({
+              index,
+              style: { height: itemHeight || 160 },
+              data: itemData
+            } as ArticleItemProps)
+          ))}
+        </div>
       )}
       
       {/* Performance info for development */}
       {process.env.NODE_ENV === 'development' && (
         <div className="text-xs text-gray-500 mt-2 text-center">
-          Virtualized {safeArticles.length} articles • {itemHeight}px height • {overscanCount} overscan
+          Rendered {safeArticles.length} articles • {itemHeight}px height
         </div>
       )}
     </div>
