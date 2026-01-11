@@ -73,8 +73,18 @@ function searchSingleArticle(article: DashboardArticle, searchTerm: string): Sea
   }
 
   // Content search (medium weight) - using metadata or current stage info
-  const content = JSON.stringify(article.progress?.metadata || {}).toLowerCase();
-  const currentStage = (article.progress?.current_stage || '').toLowerCase();
+  let content = '';
+  let currentStage = '';
+  
+  try {
+    if (article.progress && typeof article.progress === 'object') {
+      content = JSON.stringify(article.progress.metadata || {}).toLowerCase();
+      currentStage = (article.progress.current_stage || '').toLowerCase();
+    }
+  } catch (error) {
+    console.warn('Error processing article progress for search:', error);
+  }
+  
   const combinedContent = `${content} ${currentStage}`;
   const contentMatch = combinedContent.includes(searchTerm);
   if (contentMatch) {

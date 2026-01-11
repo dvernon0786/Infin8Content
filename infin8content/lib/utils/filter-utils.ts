@@ -12,6 +12,12 @@ import type { FilterState, FilterFunction } from '@/lib/types/dashboard.types';
 export const applyFilters: FilterFunction = (articles, filters) => {
   const startTime = performance.now();
   
+  // Defensive check for filters
+  if (!filters || typeof filters !== 'object') {
+    console.warn('applyFilters: Invalid filters object', filters);
+    return articles;
+  }
+  
   // If no active filters, return articles as-is
   if (!hasActiveFilters(filters)) {
     return articles;
@@ -60,6 +66,12 @@ export const applyFilters: FilterFunction = (articles, filters) => {
  * Check if any filters are active
  */
 export function hasActiveFilters(filters: FilterState): boolean {
+  // Defensive check for filters
+  if (!filters || typeof filters !== 'object') {
+    console.warn('hasActiveFilters: Invalid filters object', filters);
+    return false;
+  }
+  
   return (
     filters.status.length > 0 ||
     filters.keywords.length > 0 ||
@@ -75,15 +87,21 @@ export function hasActiveFilters(filters: FilterState): boolean {
  * Check if a specific filter type is active
  */
 export function isFilterActive(filters: FilterState, filterType: keyof FilterState): boolean {
+  // Defensive check for filters
+  if (!filters || typeof filters !== 'object') {
+    console.warn('isFilterActive: Invalid filters object', filters);
+    return false;
+  }
+  
   switch (filterType) {
     case 'status':
-      return filters.status.length > 0;
+      return filters.status?.length > 0 || false;
     case 'keywords':
-      return filters.keywords.length > 0;
+      return filters.keywords?.length > 0 || false;
     case 'dateRange':
-      return filters.dateRange.start !== undefined || filters.dateRange.end !== undefined;
+      return filters.dateRange?.start !== undefined || filters.dateRange?.end !== undefined || false;
     case 'wordCountRange':
-      return filters.wordCountRange.min !== undefined || filters.wordCountRange.max !== undefined;
+      return filters.wordCountRange?.min !== undefined || filters.wordCountRange?.max !== undefined || false;
     case 'sortBy':
       return filters.sortBy !== undefined;
     default:
