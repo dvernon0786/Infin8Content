@@ -24,6 +24,11 @@ export interface CleanupResult {
 function cleanBrokenCitations(content: string): string {
   let cleaned = content
 
+  // Debug: Log original content sample
+  if (cleaned.includes('https://')) {
+    console.log('DEBUG - Original content sample:', cleaned.substring(0, 200))
+  }
+
   // Fix URLs with spaces: https://www. domain.com -> https://www.domain.com
   cleaned = cleaned.replace(/https?:\/\/([^\s]*)\s+([^\s]*)/g, 'https://$1$2')
 
@@ -35,6 +40,17 @@ function cleanBrokenCitations(content: string): string {
 
   // Remove extra spaces in URLs
   cleaned = cleaned.replace(/https?:\/\/([^\s)]*)\s+/g, 'https://$1')
+
+  // Fix line breaks in URLs (newlines followed by domain parts)
+  cleaned = cleaned.replace(/https?:\/\/([^\s]*)\n([^\s]*)/g, 'https://$1$2')
+
+  // Fix URLs split across lines with spaces and dashes
+  cleaned = cleaned.replace(/https?:\/\/([^\s]*)\s*\n\s*([^\s]*)/g, 'https://$1$2')
+
+  // Debug: Log cleaned content sample
+  if (cleaned.includes('https://')) {
+    console.log('DEBUG - Cleaned content sample:', cleaned.substring(0, 200))
+  }
 
   return cleaned
 }

@@ -5,15 +5,20 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { fixBrokenCitationsInDatabase, verifyBrokenCitationsFixed } from '@/lib/services/article-generation/citation-cleanup'
+import { fixBrokenCitationsInDatabaseV2, verifyBrokenCitationsFixedV2 } from '@/lib/services/article-generation/citation-cleanup-v2'
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('Starting citation cleanup...')
+
     // Fix broken citations
-    const result = await fixBrokenCitationsInDatabase()
+    const result = await fixBrokenCitationsInDatabaseV2()
 
     // Verify fixes
-    const stillBroken = await verifyBrokenCitationsFixed()
+    const stillBroken = await verifyBrokenCitationsFixedV2()
+
+    console.log('Cleanup result:', result)
+    console.log('Still broken:', stillBroken)
 
     return NextResponse.json({
       success: true,
@@ -39,7 +44,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Just verify current state
-    const stillBroken = await verifyBrokenCitationsFixed()
+    const stillBroken = await verifyBrokenCitationsFixedV2()
 
     return NextResponse.json({
       success: true,
@@ -57,3 +62,4 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+
