@@ -39,23 +39,28 @@ interface ArticleItemProps {
 }
 
 function ArticleItem({ index, style, data }: ArticleItemProps) {
-  console.log('📄 ArticleItem rendering:', { index, articlesCount: data.articles?.length || 0 });
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('📄 ArticleItem rendering:', { index, articlesCount: data.articles?.length || 0 });
+  }
   
   try {
     const article = data.articles[index];
-    console.log('📄 Article data:', { 
-      index, 
-      articleId: article?.id, 
-      title: article?.title, 
-      keyword: article?.keyword,
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('📄 Article data:', { 
+        index, 
+        articleId: article?.id, 
+        title: article?.title, 
+        keyword: article?.keyword,
       status: article?.status,
       created_at: article?.created_at,
       updated_at: article?.updated_at,
       progress: article?.progress
     });
-    
+    }
     if (!article) {
-      console.error('🚨 ArticleItem: No article at index', index);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('🚨 ArticleItem: No article at index', index);
+      }
       return (
         <div style={style} className="p-4 border border-yellow-200 bg-yellow-50">
           <p className="text-yellow-600">No article data at index {index}</p>
@@ -213,7 +218,9 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
     </div>
   );
   } catch (error) {
-    console.error('🚨 ArticleItem error:', error, { index, data });
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('🚨 ArticleItem error:', error, { index, data });
+    }
     return (
       <div style={style} className="p-4 border border-red-200 bg-red-50">
         <p className="text-red-600">Error rendering article</p>
@@ -246,31 +253,33 @@ export function VirtualizedArticleList({
   onTouchEnd?: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
   showProgress?: boolean;
 }) {
-  console.log('📋 VirtualizedArticleList initializing:', {
-    articlesCount: articles?.length || 0,
-    itemHeight,
-    height,
-    selectedArticle,
-    hasCallbacks: {
-      onArticleSelect: !!onArticleSelect,
-      onArticleNavigation: !!onArticleNavigation,
-      onKeyDown: !!onKeyDown,
-      onTouchStart: !!onTouchStart,
-      onTouchMove: !!onTouchMove,
-      onTouchEnd: !!onTouchEnd
-    }
-  });
-
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('📋 VirtualizedArticleList initializing:', {
+      articlesCount: articles?.length || 0,
+      itemHeight,
+      height,
+      selectedArticle,
+      hasCallbacks: {
+        onArticleSelect: !!onArticleSelect,
+        onArticleNavigation: !!onArticleNavigation,
+        onKeyDown: !!onKeyDown,
+        onTouchStart: !!onTouchStart,
+        onTouchMove: !!onTouchMove,
+        onTouchEnd: !!onTouchEnd
+      }
+    });
+  }
   // Validate articles data
   if (articles && Array.isArray(articles)) {
     const firstArticle = articles[0];
-    console.log('📋 Articles validation:', {
-      isArray: Array.isArray(articles),
-      length: articles.length,
-      firstArticle: firstArticle ? {
-        id: firstArticle.id,
-        title: firstArticle.title,
-        keyword: firstArticle.keyword,
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('📋 Articles validation:', {
+        isArray: Array.isArray(articles),
+        length: articles.length,
+        firstArticle: firstArticle ? {
+          id: firstArticle.id,
+          title: firstArticle.title,
+          keyword: firstArticle.keyword,
         status: firstArticle.status,
         hasNullKeyword: firstArticle.keyword === null,
         hasUndefinedKeyword: firstArticle.keyword === undefined,
@@ -281,7 +290,8 @@ export function VirtualizedArticleList({
         hasNullProgress: firstArticle.progress === null,
         hasUndefinedProgress: firstArticle.progress === undefined
       } : 'No first article'
-    });
+      });
+    }
   }
 
   // Create safe articles array with all properties guaranteed to be defined
@@ -315,18 +325,19 @@ export function VirtualizedArticleList({
     });
   }, [articles]);
 
-  console.log('📋 Safe articles created:', { 
-    originalCount: articles?.length || 0, 
-    safeCount: safeArticles.length,
-    firstSafeArticle: safeArticles[0],
-    // Add detailed article inspection
-    allArticlesStructure: safeArticles.map((article, index) => ({
-      index,
-      id: article?.id,
-      title: article?.title,
-      keyword: article?.keyword,
-      status: article?.status,
-      created_at: article?.created_at,
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('📋 Safe articles created:', { 
+      originalCount: articles?.length || 0, 
+      safeCount: safeArticles.length,
+      firstSafeArticle: safeArticles[0],
+      // Add detailed article inspection
+      allArticlesStructure: safeArticles.map((article, index) => ({
+        index,
+        id: article?.id,
+        title: article?.title,
+        keyword: article?.keyword,
+        status: article?.status,
+        created_at: article?.created_at,
       updated_at: article?.updated_at,
       progress: article?.progress,
       progressType: typeof article?.progress,
@@ -334,17 +345,18 @@ export function VirtualizedArticleList({
       hasNullProperties: Object.keys(article).filter(key => (article as any)[key] === null),
       hasUndefinedProperties: Object.keys(article).filter(key => (article as any)[key] === undefined)
     }))
-  });
+    });
+  }
 
-  try {
   const listRef = useRef<any>(null);
 
   // Memoize item data to prevent unnecessary re-renders
   const itemData = useMemo(() => {
-    console.log('📋 Creating itemData:', {
-      articlesCount: safeArticles?.length || 0,
-      articles: safeArticles?.map(a => ({ id: a.id, title: a.title, keyword: a.keyword, status: a.status })),
-      selectedArticle,
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('📋 Creating itemData:', {
+        articlesCount: safeArticles?.length || 0,
+        articles: safeArticles?.map(a => ({ id: a.id, title: a.title, keyword: a.keyword, status: a.status })),
+        selectedArticle,
       hasCallbacks: {
         onArticleSelect: !!onArticleSelect,
         onArticleNavigation: !!onArticleNavigation,
@@ -354,7 +366,8 @@ export function VirtualizedArticleList({
         onTouchEnd: !!onTouchEnd
       },
       showProgress
-    });
+      });
+    }
 
     // Create completely safe itemData - no undefined values allowed
     const safeItemData = {
@@ -372,24 +385,26 @@ export function VirtualizedArticleList({
     // Keep all properties including functions - JSON.stringify removes functions!
 const cleanedItemData = safeItemData;
 
-    console.log('🧹 Cleaned itemData:', {
-      articlesCount: cleanedItemData.articles?.length || 0,
-      hasArticles: cleanedItemData.articles?.length > 0,
-      selectedArticle: cleanedItemData.selectedArticle,
-      showProgress: cleanedItemData.showProgress,
-      // Log all properties to see what's actually there
-      allKeys: Object.keys(cleanedItemData),
-      hasArticlesArray: !!cleanedItemData.articles,
-      articlesArrayLength: cleanedItemData.articles?.length || 0,
-      hasOnArticleSelect: typeof cleanedItemData.onArticleSelect === 'function',
-      hasOnArticleNavigation: typeof cleanedItemData.onArticleNavigation === 'function',
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🧹 Cleaned itemData:', {
+        articlesCount: cleanedItemData.articles?.length || 0,
+        hasArticles: cleanedItemData.articles?.length > 0,
+        selectedArticle: cleanedItemData.selectedArticle,
+        showProgress: cleanedItemData.showProgress,
+        // Log all properties to see what's actually there
+        allKeys: Object.keys(cleanedItemData),
+        hasArticlesArray: !!cleanedItemData.articles,
+        articlesArrayLength: cleanedItemData.articles?.length || 0,
+        hasOnArticleSelect: typeof cleanedItemData.onArticleSelect === 'function',
+        hasOnArticleNavigation: typeof cleanedItemData.onArticleNavigation === 'function',
       hasOnKeyDown: typeof cleanedItemData.onKeyDown === 'function',
       hasOnTouchStart: typeof cleanedItemData.onTouchStart === 'function',
       hasOnTouchMove: typeof cleanedItemData.onTouchMove === 'function',
       hasOnTouchEnd: typeof cleanedItemData.onTouchEnd === 'function',
       // Show the actual itemData structure
       fullItemData: cleanedItemData
-    });
+      });
+    }
 
     return cleanedItemData;
   }, [safeArticles, selectedArticle, onArticleSelect, onArticleNavigation, onKeyDown, onTouchStart, onTouchMove, onTouchEnd, showProgress]);
@@ -437,6 +452,7 @@ const cleanedItemData = safeItemData;
     );
   }
 
+  try {
   return (
     <div className={cn('virtualized-article-list', className)}>
       {safeArticles.length === 0 ? (
@@ -448,12 +464,12 @@ const cleanedItemData = safeItemData;
           </div>
         </div>
       ) : (
-        <div className="overflow-y-auto" style={{ height: height || 600 }}>
+        <div className="overflow-y-auto h-[600px]">
           {safeArticles.map((article, index) => (
             <React.Fragment key={article.id || index}>
               {ArticleItem({
                 index,
-                style: { height: itemHeight || 160 },
+                style: { height: '160px' },
                 data: itemData
               } as ArticleItemProps)}
             </React.Fragment>
@@ -469,8 +485,10 @@ const cleanedItemData = safeItemData;
       )}
     </div>
   );
-  } catch (error) {
-    console.error('🚨 VirtualizedArticleList error:', error);
+} catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('🚨 VirtualizedArticleList error:', error);
+    }
     return (
       <div className="border rounded-lg p-8 text-center">
         <p className="text-muted-foreground">Error loading article list. Please refresh the page.</p>
