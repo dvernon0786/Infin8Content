@@ -165,6 +165,13 @@ export class ArticleProgressRealtime {
     onConnectionChange?: (connected: boolean) => void
   ) {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      // In development, suppress this error as polling fallback handles it
+      if (process.env.NODE_ENV === 'development') {
+        progressLogger.log(`Max reconnection attempts reached, using polling fallback`);
+        onConnectionChange?.(false);
+        return;
+      }
+      
       const error = new Error(`Failed to reconnect dashboard after ${this.maxReconnectAttempts} attempts`);
       onError?.(error);
       return;

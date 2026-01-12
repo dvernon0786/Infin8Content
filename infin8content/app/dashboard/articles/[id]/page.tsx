@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Breadcrumb, generateArticleBreadcrumbs } from '@/components/ui/breadcrumb'
 import { ArticleQueueStatus } from '@/components/articles/article-queue-status'
 import { ArticleContentViewer } from '@/components/articles/article-content-viewer'
+import { EnhancedArticleContentViewer } from '@/components/articles/enhanced-article-content-viewer'
 import { ArticleStatusMonitor } from '@/components/articles/article-status-monitor'
 import ArticleErrorBoundary from './article-error-boundary'
 import { redirect } from 'next/navigation'
@@ -240,7 +241,14 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                     <h2 className="text-xl sm:text-2xl font-bold tracking-tight mb-6">Article Content</h2>
                     <Card>
                       <CardContent className="p-4 sm:p-6">
-                        <ArticleContentViewer sections={sections} />
+                        <EnhancedArticleContentViewer 
+                          sections={sections}
+                          articleId={article.id}
+                          articleTitle={article.title || 'Untitled Article'}
+                          primaryKeyword={article.keyword || ''}
+                          secondaryKeywords={[]}
+                          targetWordCount={article.target_word_count || 300}
+                        />
                       </CardContent>
                     </Card>
                   </div>
