@@ -33,7 +33,7 @@
 # - SM typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
-generated: 2026-01-12
+generated: 2026-01-11
 project: Infin8Content
 project_key: infin8content
 tracking_system: file-system
@@ -236,30 +236,27 @@ development_status:
   # === MVP BLOCKER EPIC (Critical for Market Success) ===
   
   # Epic 14: SEO Optimization Framework (MVP BLOCKER - READY FOR IMPLEMENTATION)
-  epic-14: done
+  epic-14: backlog
   # MVP Critical Stories (48 story points total)
-  14-1-enhanced-system-prompt-with-e-e-a-t-principles: done
-  '14-2-enhanced-user-prompt-with-seo-strategy':
-    status: done
-    progress: 100
-    notes: "All tasks completed. Enhanced buildUserPrompt function with comprehensive SEO strategy integration including keyword placement, semantic keywords, target audience guidance, and search intent signals. All tests passing (41/41). Code review completed and approved."
-  14-3-section-templates-system: done
-  14-4-seo-helper-functions: done
-  14-5-format-changes-and-content-structure: done
-  14-6-seo-testing-and-validation: done
-  epic-14-retrospective: done
+  14-1-enhanced-system-prompt-with-e-e-a-t-principles: backlog
+  14-2-enhanced-user-prompt-with-seo-strategy: backlog
+  14-3-section-templates-system: backlog
+  14-4-seo-helper-functions: backlog
+  14-5-format-changes-and-content-structure: backlog
+  14-6-seo-testing-and-validation: backlog
+  epic-14-retrospective: optional
 
   # === DASHBOARD REFRESH SOLUTION EPICS ===
   
-  # Epic 15: Real-time Dashboard Experience (IN PROGRESS)
-  epic-15: in-progress
+  # Epic 15: Real-time Dashboard Experience (COMPLETED)
+  epic-15: done
   15-1-real-time-article-status-display: done
   15-2-visual-status-indicators: done
   15-3-navigation-and-access-to-completed-articles: done
-  15-4-dashboard-search-and-filtering: ready-for-dev
+  15-4-dashboard-search-and-filtering: done
   epic-15-retrospective: optional
 
-   # Epic 16: Data Synchronization & Reliability (BACKLOG)
+  # Epic 16: Data Synchronization & Reliability (BACKLOG)
   epic-16: backlog
   16-1-data-synchronization-between-tables: backlog
   16-2-error-handling-and-automatic-recovery: backlog
@@ -303,53 +300,3 @@ development_status:
   20-4-smart-quality-retry-system: backlog
   20-5-context-management-optimization: backlog
   epic-20-retrospective: optional
-
- # === UX DASHBOARD REFRESH EPICS (NEW FROM UX DESIGN) ===
-  
-  # Epic 21: Dashboard Foundation & Data Synchronization (CRITICAL - Sprint 1)
-  epic-21: backlog
-  21-1-data-cleanup-api-integration: backlog
-  21-2-basic-real-time-dashboard-updates: backlog
-  epic-21-retrospective: optional
-
-  # Epic 22: Performance Optimization UX (CRITICAL - Sprint 1-2)
-  epic-22: backlog
-  22-1-generation-progress-visualization: backlog
-  22-2-performance-metrics-dashboard: backlog
-  epic-22-retrospective: optional
-
-  # Epic 23: Enhanced Dashboard Experience (HIGH - Sprint 2)
-  epic-23: backlog
-  23-1-multi-article-management-interface: backlog
-  23-2-advanced-activity-feed: backlog
-  epic-23-retrospective: optional
-
-  # Epic 24: Real-time Infrastructure UX (HIGH - Sprint 3)
-  epic-24: backlog
-  24-1-supabase-real-time-subscriptions: backlog
-  24-2-celebratory-completion-experience: backlog
-  epic-24-retrospective: optional
-
-  # Epic 25: Mobile Optimization (HIGH - Sprint 3-4)
-  epic-25: backlog
-  25-1-mobile-first-dashboard: backlog
-  25-2-mobile-article-creation: backlog
-  epic-25-retrospective: optional
-
-  # Epic 26: Advanced Collaboration Features (MEDIUM - Sprint 4)
-  epic-26: backlog
-  26-1-real-time-collaboration-indicators: backlog
-  26-2-enhanced-review-workflow: backlog
-  epic-26-retrospective: optional
-
-  # Epic 27: Analytics & Monitoring (MEDIUM - Sprint 4)
-  epic-27: backlog
-  27-1-content-performance-dashboard: backlog
-  27-2-system-health-monitoring: backlog
-  epic-27-retrospective: optional
-
-  # Epic 28: Launch Preparation & Polish (HIGH - Sprint 5)
-  epic-28: backlog
-  28-1-user-onboarding-enhancement: backlog
-  28-2-performance-and-accessibility-polish: backlog
-  epic-28-retrospective: optional
