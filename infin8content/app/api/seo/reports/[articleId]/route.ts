@@ -50,7 +50,7 @@ export async function POST(
 
     // Generate report
     const startTime = performance.now()
-    const report = generateSEOReport(reportInput)
+    const report = await generateSEOReport(reportInput)
     const endTime = performance.now()
     
     const processingTime = Math.round((endTime - startTime) * 100) / 100
