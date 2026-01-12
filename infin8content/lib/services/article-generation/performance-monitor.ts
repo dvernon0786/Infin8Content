@@ -232,7 +232,7 @@ class ArticlePerformanceMonitor {
     // Collect cache metrics
     const researchStats = getResearchCacheStats()
     if (researchStats) {
-      metrics.cacheMetrics.researchCacheHitRate = researchStats.totalCached > 0 ? 0.85 : 0 // Estimated hit rate
+      metrics.cacheMetrics.researchCacheHitRate = researchStats.cacheHitRate // Use actual hit rate from research optimizer
       metrics.cacheMetrics.memoryUsageEstimate = researchStats.averageSourcesPerArticle * 500 // Rough estimate
     }
     

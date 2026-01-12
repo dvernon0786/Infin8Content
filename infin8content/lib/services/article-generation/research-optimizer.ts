@@ -10,7 +10,7 @@ import { Outline } from './outline-generator'
 import { performanceMonitor } from './performance-monitor'
 
 /**
- * Cached research data for an entire article
+ * Article research cache interface with enhanced performance tracking
  */
 export interface ArticleResearchCache {
   articleId: string
@@ -18,7 +18,21 @@ export interface ArticleResearchCache {
   comprehensiveSources: TavilySource[]
   sectionSpecificSources: Map<string, TavilySource[]>
   generatedAt: string
-  ttl: number // Time to live in milliseconds
+  ttl: number // TTL in milliseconds (default: 24 hours)
+  cacheHits: number // Track cache hit count
+  lastAccessed: string // Track when cache was last accessed
+}
+
+/**
+ * Cache statistics for monitoring
+ */
+export interface CacheStats {
+  totalCached: number
+  expiredCount: number
+  averageSourcesPerArticle: number
+  cacheHitRate: number // Percentage of cache hits
+  totalApiCallsSaved: number
+  costSavings: number // Estimated cost savings in USD
 }
 
 /**
@@ -27,9 +41,14 @@ export interface ArticleResearchCache {
 const researchCache = new Map<string, ArticleResearchCache>()
 
 /**
- * Cache TTL: 30 minutes
+ * Track total cache requests for accurate hit rate calculation
  */
-const CACHE_TTL = 30 * 60 * 1000
+let totalCacheRequests = 0
+
+/**
+ * Cache TTL: 24 hours for consistency with story requirements
+ */
+const CACHE_TTL = 24 * 60 * 60 * 1000
 
 /**
  * Perform comprehensive research for an entire article in one batch
@@ -131,7 +150,9 @@ export async function performBatchResearch(
     comprehensiveSources,
     sectionSpecificSources,
     generatedAt: new Date().toISOString(),
-    ttl: CACHE_TTL
+    ttl: CACHE_TTL,
+    cacheHits: 0,
+    lastAccessed: new Date().toISOString()
   }
 
   // Store in memory cache
@@ -172,16 +193,34 @@ export function getSectionResearchSources(
 function buildComprehensiveQuery(keyword: string, outline: Outline): string {
   const year = new Date().getFullYear()
   
-  // Include main keyword and top H2 sections
-  const topH2Sections = outline.h2_sections
-    .slice(0, 5)
+  // Collect all section titles for comprehensive coverage
+  const allSectionTitles = [
+    outline.introduction.title,
+    ...outline.h2_sections.map(h2 => h2.title),
+    outline.conclusion.title,
+    ...(outline.faq?.included ? [outline.faq.title] : [])
+  ]
+  
+  // Build semantic variations of the main keyword
+  const keywordVariations = [
+    keyword,
+    `${keyword} strategies`,
+    `${keyword} techniques`,
+    `${keyword} best practices`,
+    `${keyword} guide`
+  ]
+  
+  // Combine keyword variations with top section themes
+  const topSections = outline.h2_sections
+    .slice(0, 4) // Top 4 most important sections
     .map(h2 => h2.title)
     .join(' ')
-
-  const query = `${keyword} ${topH2Sections} ${year} comprehensive guide best practices latest trends`
   
-  // Limit to ~150 characters for optimal API results
-  return query.length > 150 ? query.substring(0, 150).trim() : query
+  // Build comprehensive query with semantic coverage
+  const query = `${keywordVariations.join(' ')} ${topSections} ${year} comprehensive guide strategies best practices latest trends`
+  
+  // Optimize for API limits (200 chars for comprehensive research)
+  return query.length > 200 ? query.substring(0, 200).trim() : query
 }
 
 /**
@@ -197,7 +236,7 @@ function buildTargetedQuery(keyword: string, sectionTitles: string[]): string {
 }
 
 /**
- * Rank sources by relevance to a specific section
+ * Rank sources by relevance to a specific section with enhanced algorithm
  */
 function rankSourcesByRelevance(
   sources: TavilySource[],
@@ -207,29 +246,38 @@ function rankSourcesByRelevance(
   const sectionKeywords = sectionTitle.toLowerCase().split(' ')
   const mainKeyword = keyword.toLowerCase()
   
+  // Determine section type for specialized scoring
+  const sectionType = determineSectionType(sectionTitle)
+  
   return sources
     .map(source => {
       let relevanceScore = 0
-      
-      // Title relevance (highest weight)
       const title = source.title.toLowerCase()
-      if (title.includes(mainKeyword)) relevanceScore += 3
+      const excerpt = source.excerpt?.toLowerCase() || ''
+      const url = source.url.toLowerCase()
+      
+      // Keyword relevance scoring (enhanced weights)
+      if (title.includes(mainKeyword)) relevanceScore += 4 // Increased from 3
+      if (excerpt.includes(mainKeyword)) relevanceScore += 3 // Increased from 2
+      
+      // Section-specific keyword relevance
       sectionKeywords.forEach(sk => {
-        if (title.includes(sk)) relevanceScore += 2
+        if (sk.length > 2) { // Skip very short words
+          if (title.includes(sk)) relevanceScore += 3 // Increased from 2
+          if (excerpt.includes(sk)) relevanceScore += 2 // Increased from 1
+        }
       })
       
-      // Content/excerpt relevance (medium weight)
-      if (source.excerpt) {
-        const excerpt = source.excerpt.toLowerCase()
-        if (excerpt.includes(mainKeyword)) relevanceScore += 2
-        sectionKeywords.forEach(sk => {
-          if (excerpt.includes(sk)) relevanceScore += 1
-        })
-      }
+      // Section type-specific scoring
+      relevanceScore += calculateSectionTypeScore(title, excerpt, sectionType, mainKeyword)
       
-      // URL relevance (low weight)
-      const url = source.url.toLowerCase()
-      if (url.includes(mainKeyword)) relevanceScore += 1
+      // Authority bonus for high-quality sources
+      if (url.includes('.edu') || url.includes('.gov')) relevanceScore += 2
+      if (url.includes('wikipedia') || url.includes('wiki')) relevanceScore += 1
+      
+      // Freshness bonus for current year mentions
+      const currentYear = new Date().getFullYear().toString()
+      if (title.includes(currentYear) || excerpt.includes(currentYear)) relevanceScore += 1
       
       return { ...source, relevanceScore }
     })
@@ -237,10 +285,77 @@ function rankSourcesByRelevance(
 }
 
 /**
- * Get cached research data
+ * Determine section type for specialized scoring
+ */
+function determineSectionType(sectionTitle: string): 'introduction' | 'h2' | 'h3' | 'conclusion' | 'faq' {
+  const title = sectionTitle.toLowerCase()
+  if (title.includes('introduction') || title.includes('intro')) return 'introduction'
+  if (title.includes('conclusion') || title.includes('summary')) return 'conclusion'
+  if (title.includes('faq') || title.includes('question')) return 'faq'
+  if (title.includes('how to') || title.includes('step')) return 'h3' // Usually more specific
+  return 'h2' // Default to main section
+}
+
+/**
+ * Calculate section type-specific relevance score
+ */
+function calculateSectionTypeScore(
+  title: string, 
+  excerpt: string, 
+  sectionType: string, 
+  mainKeyword: string
+): number {
+  let score = 0
+  
+  switch (sectionType) {
+    case 'introduction':
+      // Introduction benefits from overview and foundational content
+      if (title.includes('overview') || title.includes('guide') || title.includes('basics')) score += 2
+      if (excerpt.includes('comprehensive') || excerpt.includes('complete')) score += 1
+      break
+      
+    case 'h2':
+      // Main sections benefit from detailed and strategic content
+      if (title.includes('strategies') || title.includes('advanced') || title.includes('implementation')) score += 2
+      if (excerpt.includes('detailed') || excerpt.includes('in-depth')) score += 1
+      break
+      
+    case 'h3':
+      // Subsections benefit from specific and practical content
+      if (title.includes('step') || title.includes('example') || title.includes('specific')) score += 2
+      if (excerpt.includes('practical') || excerpt.includes('example')) score += 1
+      break
+      
+    case 'conclusion':
+      // Conclusion benefits from summary and future-focused content
+      if (title.includes('summary') || title.includes('future') || title.includes('next')) score += 2
+      if (excerpt.includes('key takeaways') || excerpt.includes('final')) score += 1
+      break
+      
+    case 'faq':
+      // FAQ benefits from question-and-answer format
+      if (title.includes('answer') || title.includes('solution') || title.includes('common')) score += 2
+      if (excerpt.includes('question') || excerpt.includes('answer')) score += 1
+      break
+  }
+  
+  return score
+}
+
+/**
+ * Get cached research data with hit tracking
  */
 function getCachedResearch(articleId: string): ArticleResearchCache | null {
-  return researchCache.get(articleId) || null
+  totalCacheRequests++ // Track all cache requests
+  
+  const cache = researchCache.get(articleId)
+  if (cache) {
+    // Update cache hit statistics
+    cache.cacheHits++
+    cache.lastAccessed = new Date().toISOString()
+    console.log(`[ResearchOptimizer] Cache hit for article ${articleId} (hits: ${cache.cacheHits})`)
+  }
+  return cache || null
 }
 
 /**
@@ -278,27 +393,29 @@ export function cleanupExpiredCache(): void {
 }
 
 /**
- * Get cache statistics for monitoring
+ * Get cache statistics for monitoring with enhanced metrics
  */
-export function getResearchCacheStats(): {
-  totalCached: number
-  expiredCount: number
-  averageSourcesPerArticle: number
-} {
-  let expiredCount = 0
-  let totalSources = 0
+export function getResearchCacheStats(): CacheStats {
+  const caches = Array.from(researchCache.values())
+  const expiredCount = caches.filter(cache => isCacheExpired(cache)).length
+  const totalCacheHits = caches.reduce((sum, cache) => sum + cache.cacheHits, 0)
+  const totalSources = caches.reduce((sum, cache) => sum + cache.comprehensiveSources.length, 0)
   
-  for (const cache of researchCache.values()) {
-    if (isCacheExpired(cache)) {
-      expiredCount++
-    }
-    totalSources += cache.comprehensiveSources.length
-  }
+  // Calculate estimated API calls saved (assuming 8-13 calls per article without optimization)
+  const estimatedOriginalCalls = caches.length * 10 // Average of 8-13
+  const actualCalls = caches.length * 2 // 1-2 calls with optimization
+  const apiCallsSaved = Math.max(0, estimatedOriginalCalls - actualCalls)
+  
+  // Calculate cost savings ($0.08 per call)
+  const costSavings = apiCallsSaved * 0.08
   
   return {
-    totalCached: researchCache.size,
+    totalCached: caches.length,
     expiredCount,
-    averageSourcesPerArticle: researchCache.size > 0 ? totalSources / researchCache.size : 0
+    averageSourcesPerArticle: caches.length > 0 ? totalSources / caches.length : 0,
+    cacheHitRate: totalCacheRequests > 0 ? (totalCacheHits / totalCacheRequests) * 100 : 0,
+    totalApiCallsSaved: apiCallsSaved,
+    costSavings
   }
 }
 

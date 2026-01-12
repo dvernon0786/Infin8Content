@@ -11,6 +11,11 @@ import { validateContentQuality, countCitations } from '@/lib/utils/content-qual
 import { formatCitationsForMarkdown } from '@/lib/utils/citation-formatter'
 import { researchQuery, type TavilySource } from '@/lib/services/tavily/tavily-client'
 import { 
+  performBatchResearch,
+  getSectionResearchSources,
+  clearResearchCache
+} from './research-optimizer'
+import { 
   buildOptimizedContext, 
   batchUpdateSections, 
   clearContextCache,
@@ -1202,41 +1207,51 @@ export async function processSection(
     getTargetWordCount(sectionInfo.type)
   )
 
-  // Perform Tavily research with cache and cost tracking (Story 4a.3)
+  // Use batch research optimization (Story 20.2: Batch Research Optimizer)
   let researchSources: TavilySource[] = []
   let researchQueryUsed = ''
   let researchFailed = false
 
   try {
-    // Generate research query from section topic + keyword + previous sections
-    researchQueryUsed = generateResearchQuery(sectionInfo.title, article.keyword as string, previousSections)
+    // Get section-specific research sources from batch research cache
+    researchSources = getSectionResearchSources(articleId, sectionInfo.title)
     
-    // Normalize query for cache lookup
-    const normalizedQuery = normalizeQuery(researchQueryUsed)
-    
-    // Check cache first (24-hour TTL)
-    const cachedResults = await checkResearchCache(organizationId, normalizedQuery)
-    
-    if (cachedResults) {
-      researchSources = cachedResults
-      console.log(`[SectionProcessor] Using cached research for query: "${researchQueryUsed}" (${researchSources.length} sources)`)
+    if (researchSources.length > 0) {
+      console.log(`[SectionProcessor] Using batch research cache for section: "${sectionInfo.title}" (${researchSources.length} sources)`)
     } else {
-      // Call Tavily API with retry logic
-      console.log(`[SectionProcessor] Performing fresh Tavily research for query: "${researchQueryUsed}"`)
-      researchSources = await researchQuery(researchQueryUsed, {
-        maxRetries: 3,
-        retryDelay: 1000,
-        maxResults: 20,
-        maxSources: 10
-      })
+      // Fallback: Perform section-specific research if batch research unavailable
+      console.warn(`[SectionProcessor] No batch research found for section: "${sectionInfo.title}". Using fallback research.`)
       
-      // Store results in cache (24-hour TTL)
-      await storeResearchCache(organizationId, normalizedQuery, researchSources)
+      // Generate research query from section topic + keyword + previous sections
+      researchQueryUsed = generateResearchQuery(sectionInfo.title, article.keyword as string, previousSections)
       
-      // Track API cost ($0.08 per query)
-      await trackApiCost(organizationId, 'tavily', 'section_research', 0.08)
+      // Normalize query for cache lookup
+      const normalizedQuery = normalizeQuery(researchQueryUsed)
       
-      console.log(`[SectionProcessor] Fresh research completed: ${researchSources.length} sources cached and cost tracked`)
+      // Check cache first (24-hour TTL)
+      const cachedResults = await checkResearchCache(organizationId, normalizedQuery)
+      
+      if (cachedResults) {
+        researchSources = cachedResults
+        console.log(`[SectionProcessor] Using fallback cached research for query: "${researchQueryUsed}" (${researchSources.length} sources)`)
+      } else {
+        // Call Tavily API with retry logic as fallback
+        console.log(`[SectionProcessor] Performing fallback Tavily research for query: "${researchQueryUsed}"`)
+        researchSources = await researchQuery(researchQueryUsed, {
+          maxRetries: 3,
+          retryDelay: 1000,
+          maxResults: 20,
+          maxSources: 10
+        })
+        
+        // Store results in cache (24-hour TTL)
+        await storeResearchCache(organizationId, normalizedQuery, researchSources)
+        
+        // Track API cost ($0.08 per query)
+        await trackApiCost(organizationId, 'tavily', 'section_research_fallback', 0.08)
+        
+        console.log(`[SectionProcessor] Fallback research completed: ${researchSources.length} sources cached and cost tracked`)
+      }
     }
     
     if (researchSources.length === 0) {
@@ -1252,7 +1267,7 @@ export async function processSection(
     await updateArticleErrorDetails(articleId, sectionIndex, researchQueryUsed, error)
     
     // Log warning for partial research failure
-    console.warn(`Section generated without fresh Tavily research: ${sectionInfo.title}`)
+    console.warn(`Section generated without research: ${sectionInfo.title}`)
   }
 
   // Generate section content using OpenRouter API (Story 4a-5)

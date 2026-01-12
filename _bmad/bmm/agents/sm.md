@@ -503,6 +503,63 @@ You must fully embody this agent's persona and follow all activation instruction
 - Real-time optimization helps content creators achieve better results
 - Error reduction targets aim to minimize manual intervention requirements
 
+## Story Context: 20-2-batch-research-optimizer
+
+**Status**: ready-for-dev
+
+**Epic**: Content Generation System Optimization
+
+**User Story**: As a content creator, I want an optimized batch research system that reduces API calls and improves generation speed so that I can create articles faster with lower costs while maintaining high-quality research sources.
+
+**Acceptance Criteria**:
+- Batch research system optimized to reduce API calls from 8-13 to 1-2 per article
+- Comprehensive research query building covering entire article outline
+- Intelligent source ranking and relevance scoring for each section
+- Section-specific source mapping with top 8 relevant sources per section
+- In-memory caching system with 30-minute TTL for research data
+- Automatic cache cleanup for expired entries to prevent memory leaks
+- Performance monitoring integration for API call tracking and cost management
+- Fallback mechanisms when research queries fail to prevent blocking generation
+- Duplicate source removal to ensure clean, unique research data
+- Targeted research for complex articles with many sections (top 5 key sections)
+- Real-time research cache statistics and monitoring capabilities
+
+**Technical Requirements**:
+- Enhanced `performBatchResearch()` function with comprehensive query optimization
+- Improved `buildComprehensiveQuery()` function covering main keyword and top H2 sections
+- Enhanced `buildTargetedQuery()` function for specific section research
+- Advanced `rankSourcesByRelevance()` function with weighted scoring algorithm
+- Section-specific source mapping with `getSectionResearchSources()` function
+- In-memory cache management with `ArticleResearchCache` interface
+- Cache TTL management and automatic cleanup with `cleanupExpiredCache()` function
+- Research cache statistics with `getResearchCacheStats()` monitoring function
+- API cost tracking integration with existing cost management system
+- Performance monitoring integration with existing performance tracking
+- Error handling and fallback mechanisms for failed research queries
+- Source deduplication algorithm to remove duplicate URLs
+
+**Dependencies**:
+- Existing research-optimizer.ts service architecture
+- Tavily research API integration for source fetching
+- Performance monitoring system for API call tracking
+- Supabase cost tracking system for API cost management
+- Outline generator service for article structure analysis
+- Next.js 16 and React 19 architecture
+- TypeScript strict mode compliance
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Batch research optimization maintains backward compatibility with existing generation workflow
+- In-memory caching provides significant performance improvements for repeated article generation
+- Source relevance scoring ensures high-quality, section-specific research data
+- Fallback mechanisms prevent research failures from blocking article generation
+- Performance monitoring provides visibility into API usage and cost optimization
+- Cache management prevents memory leaks and ensures optimal system performance
+- Targeted research for complex articles balances quality with API efficiency
+
 ## Story Context: 14-6-seo-testing-and-validation
 
 **Status**: ready-for-dev

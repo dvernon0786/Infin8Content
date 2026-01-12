@@ -204,32 +204,7 @@ export const generateArticle = inngest.createFunction(
         }
       })
 
-      // Step 4: Perform batch research optimization (Performance Story 4a-12)
-      const batchResearch = await step.run('batch-research', async () => {
-        console.log(`[Inngest] Step: batch-research - Performing comprehensive research for article ${articleId}`)
-        
-        try {
-          // Perform batch research once for the entire article
-          const researchCache = await performBatchResearch(
-            articleId,
-            article.keyword,
-            outline,
-            article.org_id
-          )
-          
-          console.log(`[Inngest] Step: batch-research - Success: Research completed with ${researchCache.comprehensiveSources.length} sources`)
-          return researchCache
-        } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : String(error)
-          console.error(`[Inngest] Step: batch-research - ERROR: ${errorMsg}`)
-          
-          // Don't fail the entire generation - continue without research
-          console.warn(`[Inngest] Step: batch-research - Continuing generation without research due to error`)
-          return null
-        }
-      })
-
-      // Step 5: Generate outline
+      // Step 4: Generate outline
       const outline = await step.run('generate-outline', async () => {
         console.log(`[Inngest] Step: generate-outline - Generating outline for keyword: ${article.keyword}`)
         const startTime = Date.now()
@@ -295,6 +270,34 @@ export const generateArticle = inngest.createFunction(
           // Mark progress as failed
           await (article as any).progressTracker?.fail(`Outline generation failed: ${errorMsg}`)
           throw error
+        }
+      })
+
+      // Step 5: Perform batch research optimization (Story 20.2: Batch Research Optimizer)
+      const batchResearch = await step.run('batch-research', async () => {
+        console.log(`[Inngest] Step: batch-research - Performing comprehensive research for article ${articleId}`)
+        
+        try {
+          // Update progress to researching
+          await (article as any).progressTracker?.updateResearching('Performing comprehensive research for all sections...')
+          
+          // Perform batch research once for the entire article using the generated outline
+          const researchCache = await performBatchResearch(
+            articleId,
+            article.keyword,
+            outline,
+            article.org_id
+          )
+          
+          console.log(`[Inngest] Step: batch-research - Success: Research completed with ${researchCache.comprehensiveSources.length} comprehensive sources and ${researchCache.sectionSpecificSources.size} section-specific mappings`)
+          return researchCache
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error)
+          console.error(`[Inngest] Step: batch-research - ERROR: ${errorMsg}`)
+          
+          // Don't fail the entire generation - continue without research
+          console.warn(`[Inngest] Step: batch-research - Continuing generation without research due to error`)
+          return null
         }
       })
 
