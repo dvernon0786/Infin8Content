@@ -58,28 +58,57 @@ $$ LANGUAGE plpgsql;
 -- Update articles with fixed citations
 -- WARNING: This modifies production data - review carefully!
 
-UPDATE articles
-SET sections = (
-    SELECT jsonb_agg(
+-- Step 1: Create temporary table with fixed content
+CREATE TEMP TABLE fixed_articles AS
+SELECT 
+    a.id,
+    jsonb_agg(
         jsonb_set(
             section,
             '{content}',
-            to_jsonb(clean_citation_urls(section->>'content'))
+            to_jsonb(
+                regexp_replace(
+                    regexp_replace(
+                        regexp_replace(
+                            section->>'content',
+                            'https?://([^\s]*)\s+([^\s]*)',
+                            'https://\1\2',
+                            'g'
+                        ),
+                        '([a-z])\s+-\s+([a-z])',
+                        '\1-\2',
+                        'g'
+                    ),
+                    '(\]\(https?://[^\)]*)\s+([^\)]*\))',
+                    '\1\2',
+                    'g'
+                )
+            )
         )
-    )
-    FROM jsonb_array_elements(articles.sections) as section
-)
-WHERE id IN (
-    SELECT DISTINCT a.id
-    FROM articles a,
-         jsonb_array_elements(a.sections) as section
-    WHERE a.sections IS NOT NULL 
-        AND section->>'content' IS NOT NULL
+    ) as fixed_sections
+FROM articles a,
+     jsonb_array_elements(a.sections) as section
+WHERE a.id IN (
+    SELECT DISTINCT a2.id
+    FROM articles a2,
+         jsonb_array_elements(a2.sections) as section2
+    WHERE a2.sections IS NOT NULL 
+        AND section2->>'content' IS NOT NULL
         AND (
-            section->>'content' LIKE '%https://%' AND section->>'content' LIKE '% %'
-            OR section->>'content' LIKE '%](https://%' AND section->>'content' NOT LIKE '%)%'
+            section2->>'content' LIKE '%https://%' AND section2->>'content' LIKE '% %'
+            OR section2->>'content' LIKE '%](https://%' AND section2->>'content' NOT LIKE '%)%'
         )
-);
+)
+GROUP BY a.id;
+
+-- Step 2: Apply fixes from temporary table
+UPDATE articles a
+SET sections = fa.fixed_sections
+FROM fixed_articles fa
+WHERE a.id = fa.id;
+
+-- Step 3: Drop temporary table
+DROP TABLE fixed_articles;
 
 -- =============================================================================
 -- SECTION 4: VERIFY FIXES
