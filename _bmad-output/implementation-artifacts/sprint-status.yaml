@@ -307,7 +307,7 @@ development_status:
   # Epic 21: UX Dashboard Foundation & Data Synchronization (CRITICAL - Sprint 1)
   epic-21: backlog
   # Sprint 1 Critical - Fix vanishing articles, establish real-time foundation
-  21-1-data-cleanup-api-integration: backlog
+  21-1-data-cleanup-api-integration: ready-for-dev
   21-2-basic-real-time-dashboard-updates: backlog
   epic-21-retrospective: optional
 

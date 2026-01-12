@@ -21,8 +21,8 @@ export function formatInTextCitation(source: TavilySource, context: string = 'Ac
   const url = source.url || '#'
   
   // Clean up the title and URL to prevent broken markdown
-  const cleanTitle = title.replace(/[\[\]]/g, '').replace(/\n/g, ' ').trim()
-  const cleanUrl = url.replace(/[\[\]]/g, '').trim()
+  const cleanTitle = title.replace(/[\[\]]/g, '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()
+  const cleanUrl = url.replace(/[\[\]]/g, '').replace(/\s+/g, '').replace(/\n/g, '').trim()
   
   return `${context} [${cleanTitle}](${cleanUrl}), `
 }
@@ -40,9 +40,9 @@ export function formatReference(source: TavilySource): string {
     : ''
   
   // Clean up the title and URL to prevent broken markdown
-  const cleanTitle = title.replace(/[\[\]]/g, '').replace(/\n/g, ' ').trim()
-  const cleanUrl = url.replace(/[\[\]]/g, '').trim()
-  const cleanAuthor = author.replace(/[\[\]]/g, '').trim()
+  const cleanTitle = title.replace(/[\[\]]/g, '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()
+  const cleanUrl = url.replace(/[\[\]]/g, '').replace(/\s+/g, '').replace(/\n/g, '').trim()
+  const cleanAuthor = author.replace(/[\[\]]/g, '').replace(/\s+/g, ' ').trim()
   
   let reference = `- [${cleanTitle}](${cleanUrl})`
   
