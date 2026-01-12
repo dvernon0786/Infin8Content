@@ -560,6 +560,64 @@ You must fully embody this agent's persona and follow all activation instruction
 - Cache management prevents memory leaks and ensures optimal system performance
 - Targeted research for complex articles balances quality with API efficiency
 
+## Story Context: 20-3-parallel-section-processing
+
+**Status**: ready-for-dev
+
+**Epic**: Content Generation System Optimization
+
+**User Story**: As a content creator, I want sections to generate simultaneously instead of sequentially so that my 8-section article completes in 2-3 minutes instead of 8 minutes.
+
+**Acceptance Criteria**:
+- Introduction generates first (sequential dependency requirement)
+- All H2 sections generate in parallel (4+ simultaneous processing)
+- H3 subsections process in parallel groups by parent H2 section
+- Each H3 group waits for its parent H2 completion before starting
+- Conclusion and FAQ generate in parallel after main sections complete
+- Entire article completes within 3 minutes (60-70% improvement over 8 minutes)
+- Failed sections are isolated and don't block other sections in same batch
+- Individual sections can be retried independently without full article regeneration
+- Concurrency limits prevent API rate limiting during multiple article generation
+- System maintains stable performance under load with 10+ concurrent articles
+
+**Technical Requirements**:
+- Refactor generate-article.ts with phased parallel processing approach
+- Phase 1: Sequential introduction generation (dependency requirement)
+- Phase 2: Parallel H2 section processing using Promise.allSettled (4+ simultaneous)
+- Phase 3: Parallel H3 subsection processing grouped by parent H2
+- Phase 4: Parallel conclusion + FAQ generation
+- Promise.allSettled implementation for parallel execution with error isolation
+- Per-section error handling that doesn't block other sections
+- Individual section retry logic for failed sections
+- Concurrency limit manager with max 5 simultaneous generation limit
+- Queue management for multiple article generation
+- Enhanced article_progress table for parallel section tracking
+- Real-time progress updates for parallel batches
+- Performance monitoring for parallel batch timing and efficiency
+- Resource allocation system for stable performance
+
+**Dependencies**:
+- Existing generate-article.ts Inngest function architecture
+- Section-processor.ts service for individual section processing
+- Batch research optimization from Story 20.2
+- Performance monitoring system for metrics tracking
+- OpenRouter API integration for content generation
+- Next.js 16 and React 19 architecture
+- TypeScript strict mode compliance
+- Inngest background processing system
+
+**Priority**: High
+**Story Points**: 13
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Parallel processing reduces generation time from 8 minutes to <3 minutes
+- Error isolation prevents one section failure from blocking others
+- Concurrency management prevents API rate limiting issues
+- Maintains backward compatibility with existing generation workflow
+- Integrates with existing batch research and performance monitoring systems
+- Provides significant performance improvement while maintaining content quality
+
 ## Story Context: 14-6-seo-testing-and-validation
 
 **Status**: ready-for-dev

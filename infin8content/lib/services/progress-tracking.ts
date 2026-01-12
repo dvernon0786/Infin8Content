@@ -101,6 +101,95 @@ export class ProgressTrackingService {
   }
 
   /**
+   * Update progress for parallel batch processing
+   */
+  async updateParallelBatch(
+    batchType: string,
+    totalInBatch: number,
+    completedInBatch: number,
+    currentStage: string
+  ): Promise<void> {
+    const currentProgress = await articleProgressService.getProgress(this.articleId);
+    if (!currentProgress) return;
+
+    // Calculate progress based on parallel batch completion with atomic update
+    const batchProgress = (completedInBatch / totalInBatch) * 10; // 10% per batch
+    const newProgressPercentage = Math.min(
+      Math.max(currentProgress.progress_percentage, 0) + batchProgress, 
+      95
+    );
+
+    await this.updateProgress({
+      status: 'writing',
+      current_stage: `${currentStage} (${completedInBatch}/${totalInBatch} in batch)`,
+      progress_percentage: newProgressPercentage,
+    });
+  }
+
+  /**
+   * Update progress for individual parallel section
+   */
+  async updateParallelSection(
+    sectionNumber: number,
+    sectionType: string,
+    batchInfo: {
+      batchType: string
+      totalInBatch: number
+      completedInBatch: number
+    },
+    stage: string
+  ): Promise<void> {
+    const currentProgress = await articleProgressService.getProgress(this.articleId);
+    if (!currentProgress) return;
+
+    // For parallel processing, calculate progress more conservatively to avoid race conditions
+    const baseProgress = calculateProgressPercentage(sectionNumber, this.totalSections, 'writing');
+    const parallelBonus = Math.min((batchInfo.completedInBatch / batchInfo.totalInBatch) * 5, 5); // Cap bonus at 5%
+    const newProgressPercentage = Math.min(
+      Math.max(baseProgress, currentProgress.progress_percentage || 0) + parallelBonus, 
+      95
+    );
+
+    await this.updateProgress({
+      status: 'writing',
+      current_section: sectionNumber,
+      current_stage: `${stage} [${batchInfo.batchType}: ${batchInfo.completedInBatch}/${batchInfo.totalInBatch}]`,
+      progress_percentage: newProgressPercentage,
+    });
+  }
+
+  /**
+   * Mark a parallel batch as completed
+   */
+  async completeParallelBatch(
+    batchType: string,
+    batchStats: {
+      successful: number
+      failed: number
+      totalWordCount: number
+      totalCitations: number
+      totalApiCost: number
+    }
+  ): Promise<void> {
+    const currentProgress = await articleProgressService.getProgress(this.articleId);
+    if (!currentProgress) return;
+
+    // Update totals with batch results
+    const newWordCount = currentProgress.word_count + batchStats.totalWordCount;
+    const newCitationsCount = currentProgress.citations_count + batchStats.totalCitations;
+    const newApiCost = currentProgress.api_cost + batchStats.totalApiCost;
+
+    await this.updateProgress({
+      word_count: newWordCount,
+      citations_count: newCitationsCount,
+      api_cost: newApiCost,
+      current_stage: `Completed ${batchType} batch (${batchStats.successful} successful, ${batchStats.failed} failed)`,
+    });
+
+    console.log(`[ProgressTracker] Completed ${batchType} batch: ${batchStats.successful} successful, ${batchStats.failed} failed`);
+  }
+
+  /**
    * Update progress with real-time metrics
    */
   async updateMetrics(wordCount: number, citations: number, apiCost: number): Promise<void> {

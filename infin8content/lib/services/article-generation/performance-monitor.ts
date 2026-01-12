@@ -29,6 +29,20 @@ export interface ArticlePerformanceMetrics {
     total?: number
   }
   
+  // Parallel batch tracking
+  parallelBatches: Array<{
+    batchId: string
+    batchType: string
+    startTime: number
+    endTime?: number
+    duration?: number
+    taskCount: number
+    successful: number
+    failed: number
+    concurrencyUsed: number
+    error?: string
+  }>
+  
   // API usage metrics
   apiCalls: {
     research: number
@@ -89,6 +103,7 @@ class ArticlePerformanceMonitor {
       keyword,
       startTime: Date.now(),
       phaseTimings: {},
+      parallelBatches: [], // Initialize parallel batches tracking
       apiCalls: {
         research: 0,
         generation: 0,
@@ -296,6 +311,86 @@ class ArticlePerformanceMonitor {
     }
   }
   
+  /**
+   * Track the start of a parallel batch
+   */
+  trackBatchStart(articleId: string, batchId: string, batchType: string, taskCount: number): void {
+    const activeMetrics = this.activeMonitors.get(articleId)
+    if (activeMetrics) {
+      activeMetrics.parallelBatches.push({
+        batchId,
+        batchType,
+        startTime: Date.now(),
+        taskCount,
+        successful: 0,
+        failed: 0,
+        concurrencyUsed: 0
+      })
+      
+      console.log(`[PerformanceMonitor] Started tracking batch ${batchId} (${batchType}) with ${taskCount} tasks for article ${articleId}`)
+    } else {
+      console.warn(`[PerformanceMonitor] No active monitoring found for article ${articleId} when tracking batch ${batchId}`)
+    }
+  }
+
+  /**
+   * Track the completion of a parallel batch
+   */
+  trackBatchComplete(articleId: string, batchId: string, results: {
+    successful: number
+    failed: number
+    duration: number
+    concurrencyUsed: number
+    error?: string
+  }): void {
+    const activeMetrics = this.activeMonitors.get(articleId)
+    if (activeMetrics) {
+      const batch = activeMetrics.parallelBatches.find(b => b.batchId === batchId)
+      if (batch) {
+        batch.endTime = Date.now()
+        batch.duration = results.duration
+        batch.successful = results.successful
+        batch.failed = results.failed
+        batch.concurrencyUsed = results.concurrencyUsed
+        if (results.error) {
+          batch.error = results.error
+        }
+        
+        console.log(`[PerformanceMonitor] Completed batch ${batchId} for article ${articleId}: ${results.successful} successful, ${results.failed} failed, ${results.duration}ms`)
+      } else {
+        console.warn(`[PerformanceMonitor] Batch ${batchId} not found for article ${articleId}`)
+      }
+    } else {
+      console.warn(`[PerformanceMonitor] No active monitoring found for article ${articleId} when completing batch ${batchId}`)
+    }
+  }
+
+  /**
+   * Find metrics for a specific batch (for retry tracking)
+   */
+  findMetricsForBatch(articleId: string, batchId: string): ArticlePerformanceMetrics | null {
+    const activeMetrics = this.activeMonitors.get(articleId)
+    if (activeMetrics && activeMetrics.parallelBatches.some(b => b.batchId === batchId)) {
+      return activeMetrics
+    }
+    return null
+  }
+
+  /**
+   * Track retry attempt for a task
+   */
+  trackRetry(articleId: string, taskId: string, batchId: string, attempt: number, error: string): void {
+    const metrics = this.findMetricsForBatch(articleId, batchId)
+    if (metrics) {
+      metrics.errors.retryCount++
+      if (!metrics.errors.errorTypes.includes(error)) {
+        metrics.errors.errorTypes.push(error)
+      }
+    }
+    
+    console.log(`[PerformanceMonitor] Tracked retry for task ${taskId}, batch ${batchId}, attempt ${attempt} for article ${articleId}`)
+  }
+
   /**
    * Get performance summary for an organization
    */
