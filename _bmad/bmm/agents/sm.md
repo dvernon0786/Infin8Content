@@ -618,6 +618,56 @@ You must fully embody this agent's persona and follow all activation instruction
 - Integrates with existing batch research and performance monitoring systems
 - Provides significant performance improvement while maintaining content quality
 
+## Story Context: 20-5-context-management-optimization
+
+**Status**: ready-for-dev
+
+**Epic**: Article Generation Performance Optimization
+
+**User Story**: As a content creator, I want previous section context to be summarized efficiently so that token usage drops 40-50% and generation is faster.
+
+**Acceptance Criteria**:
+- Context is built incrementally (append-only) with previous sections compressed to key points
+- Context assembly provides last section with more detail (400 characters) and earlier sections with compressed summaries (2-3 sentences)
+- Total context window stays under 1500 tokens during generation
+- Context is cached in memory with articleId key, no database reloads needed during generation
+- Cache is cleared after article completion
+- Token usage drops by 40-50% compared to full context approach
+- Generation speed improves due to smaller prompts
+
+**Technical Requirements**:
+- Create context-manager.ts module with incremental summary builder
+- Implement memory caching system with articleId key structure
+- Add token usage monitoring and reporting for optimization tracking
+- Integrate with existing section-processor.ts for compatibility
+- Batch database section updates to reduce API calls
+- Context building must complete in <50ms per section
+- Memory usage stability during article generation sessions
+- Cache operations with minimal overhead
+- Integration with parallel processing from Story 20-3
+
+**Dependencies**:
+- Story 20-1 (Prompt System Overhaul) for context requirements
+- Story 20-2 (Batch Research Optimizer) for caching patterns
+- Story 20-3 (Parallel Section Processing) for concurrent access
+- Story 20-4 (Smart Quality Retry System) for performance integration
+- Existing section-processor.ts service architecture
+- Performance monitoring system integration
+- Next.js 16 and React 19 architecture
+- TypeScript strict mode compliance
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Incremental building uses append-only pattern with 2-3 sentence summaries
+- Memory caching uses Map with articleId keys and auto-cleanup
+- Token optimization provides full detail for immediate previous section (400 chars)
+- Context window management with 1500 token limit and intelligent truncation
+- Batch updates reduce database calls during article generation
+- Performance monitoring tracks context size, token count, cache hit rate, and generation speed
+
 ## Story Context: 14-6-seo-testing-and-validation
 
 **Status**: ready-for-dev

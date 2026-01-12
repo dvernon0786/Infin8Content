@@ -85,6 +85,14 @@ export interface ArticlePerformanceMetrics {
     averageQualityScore: number
     regenerationRequired: boolean
   }
+
+  // Context optimization metrics for Story 20.5
+  contextOptimization?: {
+    averageContextTokens: number
+    totalReduction: number
+    averageCacheHitRate: number
+    sectionsOptimized: number
+  }
 }
 
 /**
@@ -226,6 +234,42 @@ class ArticlePerformanceMonitor {
       // Calculate first pass success rate
       const successfulSections = metrics.contentMetrics.sectionsGenerated - (metrics.qualityMetrics.regenerationRequired ? 1 : 0)
       metrics.qualityMetrics.firstPassSuccessRate = successfulSections / metrics.contentMetrics.sectionsGenerated
+    }
+  }
+
+  /**
+   * Record context optimization metrics for Story 20.5
+   */
+  recordContextOptimizationMetrics(
+    articleId: string, 
+    contextTokens: number, 
+    reductionPercentage: number, 
+    cacheHitRate: number
+  ): void {
+    const metrics = this.activeMonitors.get(articleId)
+    if (metrics) {
+      // Initialize context optimization metrics if not present
+      if (!metrics.contextOptimization) {
+        metrics.contextOptimization = {
+          averageContextTokens: 0,
+          totalReduction: 0,
+          averageCacheHitRate: 0,
+          sectionsOptimized: 0
+        }
+      }
+      
+      // Update running averages
+      const sectionsSoFar = metrics.contextOptimization.sectionsOptimized + 1
+      const prevAvgTokens = metrics.contextOptimization.averageContextTokens * metrics.contextOptimization.sectionsOptimized
+      const prevAvgReduction = metrics.contextOptimization.totalReduction * metrics.contextOptimization.sectionsOptimized
+      const prevAvgCacheRate = metrics.contextOptimization.averageCacheHitRate * metrics.contextOptimization.sectionsOptimized
+      
+      metrics.contextOptimization.averageContextTokens = (prevAvgTokens + contextTokens) / sectionsSoFar
+      metrics.contextOptimization.totalReduction = (prevAvgReduction + reductionPercentage) / sectionsSoFar
+      metrics.contextOptimization.averageCacheHitRate = (prevAvgCacheRate + cacheHitRate) / sectionsSoFar
+      metrics.contextOptimization.sectionsOptimized = sectionsSoFar
+      
+      console.log(`[PerformanceMonitor] Context optimization: ${reductionPercentage}% reduction, ${cacheHitRate * 100}% cache hit rate`)
     }
   }
   

@@ -19,7 +19,10 @@ import {
   buildOptimizedContext, 
   batchUpdateSections, 
   clearContextCache,
-  getContextStats 
+  getContextStats,
+  getTokenUsageStats,
+  getCachePerformanceStats,
+  getPerformanceMetrics as getContextPerformanceMetrics
 } from './context-manager'
 import { 
   getSectionTemplate,
@@ -1208,6 +1211,19 @@ export async function processSection(
     getTargetWordCount(sectionInfo.type)
   )
 
+  // Track token usage and context optimization metrics for Story 20.5
+  const tokenUsageStats = getTokenUsageStats(articleId)
+  const cachePerformanceStats = getCachePerformanceStats()
+  const contextPerformanceMetrics = getContextPerformanceMetrics()
+  
+  if (tokenUsageStats) {
+    console.log(`[SectionProcessor] Context optimization: ${tokenUsageStats.optimizationMetrics.reduction}% reduction, ${tokenUsageStats.contextTokens} tokens`)
+  }
+  
+  if (cachePerformanceStats.hitRate > 0) {
+    console.log(`[SectionProcessor] Cache performance: ${cachePerformanceStats.hitRate * 100}% hit rate`)
+  }
+
   // Use batch research optimization (Story 20.2: Batch Research Optimizer)
   let researchSources: TavilySource[] = []
   let researchQueryUsed = ''
@@ -1331,6 +1347,16 @@ export async function processSection(
     enhancedQualityResult.passed,
     enhancedQualityResult.qualityScore
   )
+
+  // Track context optimization metrics for Story 20.5
+  if (tokenUsageStats) {
+    performanceMonitor.recordContextOptimizationMetrics(
+      articleId,
+      tokenUsageStats.contextTokens,
+      tokenUsageStats.optimizationMetrics.reduction,
+      cachePerformanceStats.hitRate
+    )
+  }
 
   // Apply auto-fix for minor issues first with proper validation
   if (enhancedQualityResult.autoFixAvailable && enhancedQualityResult.minorIssues.length > 0) {
