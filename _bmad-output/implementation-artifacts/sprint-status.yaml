@@ -301,3 +301,61 @@ development_status:
   20-4-smart-quality-retry-system: backlog
   20-5-context-management-optimization: backlog
   epic-20-retrospective: optional
+
+  # === UX DESIGN & DASHBOARD EXPERIENCE EPICS ===
+  
+  # Epic 21: UX Dashboard Foundation & Data Synchronization (CRITICAL - Sprint 1)
+  epic-21: backlog
+  # Sprint 1 Critical - Fix vanishing articles, establish real-time foundation
+  21-1-data-cleanup-api-integration: backlog
+  21-2-basic-real-time-dashboard-updates: backlog
+  epic-21-retrospective: optional
+
+  # Epic 22: Performance Optimization UX (CRITICAL - Sprint 1-2)
+  epic-22: backlog
+  # Sprint 1-2 Priority - Visualize performance improvements, progress tracking
+  22-1-generation-progress-visualization: backlog
+  22-2-performance-metrics-dashboard: backlog
+  epic-22-retrospective: optional
+
+  # Epic 23: Enhanced Dashboard Experience (HIGH - Sprint 2)
+  epic-23: backlog
+  # Sprint 2 Priority - Multi-article management, activity feeds
+  23-1-multi-article-management-interface: backlog
+  23-2-advanced-activity-feed: backlog
+  epic-23-retrospective: optional
+
+  # Epic 24: Real-time Infrastructure UX (HIGH - Sprint 3)
+  epic-24: backlog
+  # Sprint 3 Priority - Supabase real-time, celebration experience
+  24-1-supabase-real-time-subscriptions: backlog
+  24-2-celebratory-completion-experience: backlog
+  epic-24-retrospective: optional
+
+  # Epic 25: Mobile Optimization (HIGH - Sprint 3-4)
+  epic-25: backlog
+  # Sprint 3-4 Priority - Mobile-first dashboard, article creation
+  25-1-mobile-first-dashboard: backlog
+  25-2-mobile-article-creation: backlog
+  epic-25-retrospective: optional
+
+  # Epic 26: Advanced Collaboration Features (MEDIUM - Sprint 4)
+  epic-26: backlog
+  # Sprint 4 Priority - Real-time collaboration, review workflows
+  26-1-real-time-collaboration-indicators: backlog
+  26-2-enhanced-review-workflow: backlog
+  epic-26-retrospective: optional
+
+  # Epic 27: Analytics & Monitoring (MEDIUM - Sprint 4)
+  epic-27: backlog
+  # Sprint 4 Priority - Content performance, system health
+  27-1-content-performance-dashboard: backlog
+  27-2-system-health-monitoring: backlog
+  epic-27-retrospective: optional
+
+  # Epic 28: Launch Preparation & Polish (HIGH - Sprint 5)
+  epic-28: backlog
+  # Sprint 5 Priority - Onboarding, accessibility, launch readiness
+  28-1-user-onboarding-enhancement: backlog
+  28-2-performance-and-accessibility-polish: backlog
+  epic-28-retrospective: optional
