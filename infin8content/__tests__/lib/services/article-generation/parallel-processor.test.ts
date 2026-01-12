@@ -350,8 +350,8 @@ describe('Global Instance', () => {
     const stats = parallelProcessor.getSystemStats()
     expect(stats.batchConfig.maxConcurrent).toBe(4) // Default per-article limit
     expect(stats.batchConfig.timeout).toBe(300000) // 5 minutes default
-    expect(stats.batchConfig.retryAttempts).toBe(3)
-    expect(stats.batchConfig.retryDelay).toBe(1000)
+    expect(stats.batchConfig.retryAttempts).toBe(1) // Updated for Story 20.4 optimization
+    expect(stats.batchConfig.retryDelay).toBe(500) // Updated for Story 20.4 optimization
   })
 })
 
