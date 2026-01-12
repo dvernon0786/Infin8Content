@@ -443,6 +443,66 @@ You must fully embody this agent's persona and follow all activation instruction
 - Integration with existing content generation workflow maintains backward compatibility
 - Template performance monitoring ensures generation speed requirements are met
 
+## Story Context: 20-1-prompt-system-overhaul
+
+**Status**: ready-for-dev
+
+**Epic**: Content Generation System Optimization
+
+**User Story**: As a content creator, I want an overhauled prompt system that delivers consistent, high-quality content generation so that I can rely on the system to produce articles that meet quality standards without extensive manual editing or revisions.
+
+**Acceptance Criteria**:
+- Completely redesigned prompt architecture with modular, reusable components
+- Consistent content quality across all article types and topics
+- Reduced generation failures and error rates by 80%
+- Improved prompt clarity and specificity for better AI comprehension
+- Standardized prompt templates for different content types (blog posts, articles, guides)
+- Dynamic prompt adaptation based on content complexity and target audience
+- Enhanced prompt validation system to prevent malformed requests
+- Real-time prompt optimization suggestions for content creators
+- Comprehensive prompt testing framework with quality metrics
+- Backward compatibility with existing content generation workflow
+- Performance optimization maintaining <3 minute generation times
+- Multi-language prompt support for future expansion
+
+**Technical Requirements**:
+- New prompt architecture within existing section-processor.ts framework
+- Modular prompt component system with inheritance and composition
+- Prompt template engine with dynamic variable substitution
+- Prompt validation system with syntax and semantic checks
+- Quality scoring system for generated content (0-100 scale)
+- A/B testing framework for prompt optimization
+- Performance monitoring and analytics for prompt effectiveness
+- Error handling and recovery mechanisms for failed generations
+- Integration with existing SEO optimization functions
+- Token optimization within existing 2800 token limits
+- Caching system for frequently used prompt templates
+- Real-time prompt preview and testing interface
+
+**Dependencies**:
+- Existing section-processor.ts service architecture
+- OpenRouter API integration for content generation
+- Research-optimizer.ts and context-manager.ts services
+- Enhanced system prompt with E-E-A-T principles (Story 14-1)
+- SEO helper functions (Story 14-4)
+- Section templates system (Story 14-3)
+- Next.js 16 and React 19 architecture
+- TypeScript strict mode compliance
+- Content quality assessment framework
+
+**Priority**: High
+**Story Points**: 13
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Prompt overhaul should maintain backward compatibility with existing articles
+- Modular architecture enables easy maintenance and future enhancements
+- Quality scoring system provides measurable improvements in content generation
+- Performance optimization ensures generation speed requirements are maintained
+- Comprehensive testing framework validates prompt effectiveness across content types
+- Real-time optimization helps content creators achieve better results
+- Error reduction targets aim to minimize manual intervention requirements
+
 ## Story Context: 14-6-seo-testing-and-validation
 
 **Status**: ready-for-dev

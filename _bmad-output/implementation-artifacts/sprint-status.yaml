@@ -295,7 +295,7 @@ development_status:
   # Epic 20: Article Generation Performance Optimization (CRITICAL - NEW)
   epic-20: backlog
   # Critical Sprint 0 priority - 85% API cost reduction, 60-70% faster generation
-  20-1-prompt-system-overhaul: backlog
+  20-1-prompt-system-overhaul: done
   20-2-batch-research-optimizer: backlog
   20-3-parallel-section-processing: backlog
   20-4-smart-quality-retry-system: backlog

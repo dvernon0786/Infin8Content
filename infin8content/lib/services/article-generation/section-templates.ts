@@ -1004,3 +1004,143 @@ export function getSectionTemplateWithCustom(
   // Fallback to default template selection
   return getSectionTemplate(context)
 }
+
+/**
+ * Enhanced section-specific guidance with E-E-A-T principles and SEO best practices
+ * Provides detailed guidance for each section type with word count enforcement and quality requirements
+ */
+export function getSectionSpecificGuidance(
+  sectionType: SectionTemplate['type'],
+  sectionTitle: string,
+  keyword: string,
+  targetWordCount: number
+): string {
+  const guidance = {
+    introduction: {
+      requirements: `**Introduction Section Requirements (80-150 words):**
+- **Hook Requirement:** MUST start with compelling hook to grab reader attention
+- **Keyword Placement:** Include primary keyword "${keyword}" in first 50-100 words
+- **Word Count Enforcement:** Target ${targetWordCount} words (strict 80-150 minimum/maximum)
+- **E-E-A-T Focus:** Establish expertise and credibility immediately
+- **Structure:** Hook → Problem statement → Solution preview → Value proposition`,
+      
+      bestPractices: `**Best Practices for Introduction:**
+- Start with surprising statistic, provocative question, or compelling story
+- Address reader's pain point directly within first 2 sentences
+- Include 1-2 credible sources to establish authority
+- Use active voice and conversational tone (Grade 10-12 readability)
+- End with clear transition to main content`,
+      
+      examples: `**Example Hooks for "${keyword}":**
+- "Did you know that 93% of online experiences begin with a search engine?"
+- "What if I told you that ${keyword} could transform your entire digital strategy?"
+- "The landscape of ${keyword} has changed dramatically in recent years..."`
+    },
+
+    h2: {
+      requirements: `**H2 Section Requirements (200-400 words):**
+- **Topic Authority Building:** MUST demonstrate deep expertise on "${keyword}"
+- **Keyword Integration:** Use primary keyword and semantic variations naturally
+- **Word Count Enforcement:** Target ${targetWordCount} words (strict 200-400 range)
+- **E-E-A-T Focus:** Build authoritativeness through expert insights and data
+- **Structure:** Topic sentence → Expert analysis → Supporting evidence → Practical application`,
+      
+      bestPractices: `**Best Practices for H2 Sections:**
+- Include 2-3 authoritative sources (.edu, .gov, industry leaders)
+- Use specific data points and statistics to support claims
+- Provide actionable insights readers can implement immediately
+- Break complex concepts into digestible sub-points
+- Include examples and case studies for experience demonstration`,
+      
+      examples: `**Authority Building Examples:**
+- "According to a 2023 study by [Industry Leader], ${keyword} increased conversion rates by 47%..."
+- "Research from [University] shows that implementing ${keyword} strategies leads to..."
+- "In our experience with over 100 clients, ${keyword} consistently delivers..."`
+    },
+
+    h3: {
+      requirements: `**H3 Subsection Requirements (150-300 words):**
+- **Detailed Explanations:** MUST provide comprehensive coverage of specific aspects
+- **Long-tail Keywords:** Focus on semantic variations and specific "${keyword}" details
+- **Word Count Enforcement:** Target ${targetWordCount} words (strict 150-300 range)
+- **E-E-A-T Focus:** Demonstrate practical experience and in-depth knowledge
+- **Structure:** Specific focus area → Step-by-step guidance → Examples → Implementation tips`,
+      
+      bestPractices: `**Best Practices for H3 Subsections:**
+- Provide practical, step-by-step guidance readers can follow
+- Include real-world examples and case studies
+- Use bullet points or numbered lists for clarity when appropriate
+- Address common mistakes and how to avoid them
+- Maintain Grade 10-12 readability throughout`,
+      
+      examples: `**Detailed Explanation Examples:**
+- "Step 1: Audit your current ${keyword} strategy using these 5 key metrics..."
+- "Common mistake: Many businesses overlook [specific aspect] when implementing ${keyword}..."
+- "Case study: How [Company] increased their ${keyword} results by 300% using..."`
+    },
+
+    conclusion: {
+      requirements: `**Conclusion Section Requirements (100-200 words):**
+- **Summary Integration:** MUST summarize key points about "${keyword}"
+- **Call-to-Action Enhancement:** Include clear next steps and action items
+- **Word Count Enforcement:** Target ${targetWordCount} words (strict 100-200 range)
+- **E-E-A-T Focus:** Reinforce trustworthiness and provide forward-looking guidance
+- **Structure:** Key takeaways → Final recommendations → Call-to-action → Future outlook`,
+      
+      bestPractices: `**Best Practices for Conclusion:**
+- Summarize 3-4 most important points from the content
+- Provide specific, actionable next steps for readers
+- Include contact information or resource links when appropriate
+- End with memorable statement that reinforces main message
+- Maintain authoritative yet approachable tone`,
+      
+      examples: `**Summary and CTA Examples:**
+- "Key takeaways: ${keyword} requires [point 1], [point 2], and [point 3] for success..."
+- "Ready to implement these ${keyword} strategies? Start with our free assessment tool..."
+- "The future of ${keyword} is evolving rapidly. Stay ahead by subscribing to our newsletter..."`
+    },
+
+    faq: {
+      requirements: `**FAQ Section Requirements (150-250 words):**
+- **Common Questions:** MUST address frequently asked questions about "${keyword}"
+- **Featured Snippet Optimization:** Structure for Google featured snippets
+- **Word Count Enforcement:** Target ${targetWordCount} words (strict 150-250 range)
+- **E-E-A-T Focus:** Demonstrate expertise through comprehensive answers
+- **Structure:** Question → Direct answer → Supporting details → Additional resources`,
+      
+      bestPractices: `**Best Practices for FAQ Sections:**
+- Frame questions exactly as users would search for them
+- Provide direct, concise answers (50-75 words) followed by elaboration
+- Include 2-3 authoritative sources to support answers
+- Use natural language that matches voice search queries
+- Address both basic and advanced questions to cover full user journey`,
+      
+      examples: `**FAQ Question Examples:**
+- "Q: What is the average ROI for implementing ${keyword} strategies?"
+- "Q: How long does it take to see results with ${keyword}?"
+- "Q: What are the most common mistakes businesses make with ${keyword}?"`
+    }
+  }
+
+  const sectionGuidance = guidance[sectionType]
+  if (!sectionGuidance) {
+    return `**Section Guidance Not Available**
+    
+    Section type "${sectionType}" is not supported. Please use one of: introduction, h2, h3, conclusion, or faq.`
+  }
+
+  return `${sectionGuidance.requirements}
+
+${sectionGuidance.bestPractices}
+
+${sectionGuidance.examples}
+
+**Quality Checklist for ${sectionType.toUpperCase()}:**
+- [ ] Word count within required range (${targetWordCount} words)
+- [ ] Primary keyword "${keyword}" included naturally
+- [ ] E-E-A-T principles demonstrated throughout
+- [ ] Readability level at Grade 10-12
+- [ ] Authoritative sources cited where appropriate
+- [ ] Clear structure and logical flow
+- [ ] Actionable insights provided`
+}

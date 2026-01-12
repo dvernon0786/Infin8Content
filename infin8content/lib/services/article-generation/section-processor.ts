@@ -40,41 +40,61 @@ function createKeywordPlacementStrategy(
   sectionType: string, 
   targetWordCount: number
 ): string {
-  const targetDensity = calculateTargetDensity(targetWordCount, sectionType)
+  // Enhanced density calculation with SEO best practices
+  const baseDensity = calculateTargetDensity(targetWordCount, sectionType)
   const semanticList = semanticKeywords.split(', ')
   
+  // Calculate optimal keyword density based on content type and target word count
+  const getOptimalDensity = (sectionType: string, wordCount: number) => {
+    const densities = {
+      introduction: Math.max(1, Math.ceil(wordCount * 0.015)), // 1.5% for intro
+      h2: Math.max(2, Math.ceil(wordCount * 0.018)), // 1.8% for H2 sections
+      h3: Math.max(1, Math.ceil(wordCount * 0.012)), // 1.2% for H3 subsections
+      conclusion: Math.max(1, Math.ceil(wordCount * 0.010)), // 1.0% for conclusion
+      faq: Math.max(1, Math.ceil(wordCount * 0.014)) // 1.4% for FAQ
+    }
+    return densities[sectionType as keyof typeof densities] || densities.h2
+  }
+  
+  const optimalDensity = getOptimalDensity(sectionType, targetWordCount)
+  
   const strategies = {
-    introduction: `**Strategic Keyword Placement for Introduction:**
-- **Primary Keyword Placement:** Use "${keyword}" in first 50-100 words (1 occurrence)
-- **Semantic Integration:** Weave in ${semanticList.slice(0, 2).join(' or ')} naturally
-- **Hook Integration:** Consider opening with: "The Ultimate Guide to ${keyword}" or "${keyword}: What You Need to Know"
-- **Density Target:** ${targetDensity} total occurrences (aim for 1-2 in intro)`,
+    introduction: `**Enhanced Keyword Placement Strategy for Introduction:**
+- **Primary Keyword Placement:** Use "${keyword}" in first 50-100 words (1 occurrence for strong opening)
+- **Semantic Integration:** Weave in ${semanticList.slice(0, 2).join(' or ')} naturally throughout
+- **Hook Integration:** Start with compelling hook: "The Ultimate Guide to ${keyword}" or "${keyword}: What You Need to Know"
+- **Density Target:** ${optimalDensity} total occurrences (1.5% optimal for introductions)
+- **SEO Best Practice:** Place primary keyword in first sentence for search engine prominence`,
 
-    h2: `**Strategic Keyword Placement for H2 Section:**
-- **Primary Keyword Placement:** Include "${keyword}" or semantic variation in first sentence
-- **Semantic Integration:** Use ${semanticList.slice(0, 3).join(', ')} throughout section
-- **Heading Optimization:** Current heading should contain keyword or semantic variation
-- **Density Target:** ${targetDensity} total occurrences distributed evenly
-- **Long-tail Opportunities:** Create H3 subsections with semantic variations`,
+    h2: `**Enhanced Keyword Placement Strategy for H2 Section:**
+- **Primary Keyword Placement:** Include "${keyword}" or semantic variation in first sentence for topic authority
+- **Semantic Integration:** Use ${semanticList.slice(0, 3).join(', ')} distributed naturally throughout section
+- **Heading Optimization:** Current heading should contain keyword or semantic variation for hierarchy
+- **Density Target:** ${optimalDensity} total occurrences (1.8% optimal for main sections)
+- **Long-tail Opportunities:** Create H3 subsections using semantic variations like "${semanticList[0] || keyword} strategies"
+- **LSI Integration:** Include latent semantic indexing terms for topical depth`,
 
-    h3: `**Strategic Keyword Placement for H3 Subsection:**
-- **Long-tail Focus:** Use semantic variations like ${semanticList.slice(1, 3).join(' or ')} in heading
-- **Contextual Placement:** Include "${keyword}" naturally when referencing main topic
-- **Density Target:** ${Math.ceil(targetDensity * 0.4)} occurrences (focused use)
-- **Semantic Depth:** Explore specific aspects of ${semanticList[0] || keyword}`,
+    h3: `**Enhanced Keyword Placement Strategy for H3 Subsection:**
+- **Long-tail Focus:** Use semantic variations like ${semanticList.slice(1, 3).join(' or ')} in heading for specificity
+- **Contextual Placement:** Reference "${keyword}" naturally when discussing main topic
+- **Density Target:** ${optimalDensity} occurrences (1.2% optimal for subsections)
+- **Semantic Depth:** Explore specific aspects of ${semanticList[0] || keyword} with examples
+- **Expertise Building:** Demonstrate deep knowledge through detailed explanations`,
 
-    conclusion: `**Strategic Keyword Placement for Conclusion:**
-- **Keyword Reinforcement:** Use "${keyword}" 1-2 times in summary context
+    conclusion: `**Enhanced Keyword Placement Strategy for Conclusion:**
+- **Keyword Reinforcement:** Use "${keyword}" 1-2 times in summary context for retention
 - **Semantic Summary:** Reference key concepts: ${semanticList.slice(0, 2).join(', ')}
-- **Final Integration:** End with memorable statement about ${keyword}
-- **Density Target:** ${Math.ceil(targetDensity * 0.3)} occurrences (reinforcement focus)`,
+- **Final Integration:** End with memorable statement about ${keyword} for impact
+- **Density Target:** ${optimalDensity} occurrences (1.0% optimal for conclusions)
+- **Call-to-Action Enhancement:** Include keyword in final CTA for consistency`,
 
-    faq: `**Strategic Keyword Placement for FAQ:**
-- **Question Optimization:** Frame 2-3 questions using "${keyword}" and semantic variations
-- **Answer Integration:** Use semantic keywords naturally in answers
-- **Snippet Focus:** Structure for featured snippets with keyword-rich questions
-- **Density Target:** ${Math.ceil(targetDensity * 0.5)} occurrences across Q&A
-- **Semantic Questions:** "What are the best ${semanticList[0] || keyword} strategies?"`
+    faq: `**Enhanced Keyword Placement Strategy for FAQ:**
+- **Question Optimization:** Frame 2-3 questions using "${keyword}" and semantic variations for featured snippets
+- **Answer Integration:** Use semantic keywords naturally in comprehensive answers
+- **Snippet Focus:** Structure for Google featured snippets with keyword-rich questions
+- **Density Target:** ${optimalDensity} occurrences across Q&A (1.4% optimal for FAQs)
+- **Semantic Questions:** "What are the best ${semanticList[0] || keyword} strategies?" and "How does ${keyword} work?"
+- **Voice Search Optimization:** Use natural language questions that match voice search queries`
   }
 
   return strategies[sectionType as keyof typeof strategies] || strategies.h2
@@ -87,52 +107,67 @@ function generateEnhancedSemanticKeywords(primaryKeyword: string, sectionType: s
   const baseKeywords = generateSemanticKeywords(primaryKeyword)
   const baseList = baseKeywords.split(', ')
   
-  // Section-specific semantic enhancements
+  // Enhanced section-specific semantic keywords with LSI and topic cluster concepts
   const sectionEnhancements = {
     introduction: [
       `${primaryKeyword} overview`,
       `${primaryKeyword} basics`,
       `${primaryKeyword} fundamentals`,
       `getting started with ${primaryKeyword}`,
-      `${primaryKeyword} introduction`
+      `${primaryKeyword} introduction`,
+      `${primaryKeyword} for beginners`,
+      `understanding ${primaryKeyword}`,
+      `${primaryKeyword} essentials`
     ],
     h2: [
       `${primaryKeyword} strategies`,
       `${primaryKeyword} techniques`,
       `${primaryKeyword} methods`,
       `${primaryKeyword} best practices`,
-      `advanced ${primaryKeyword}`
+      `advanced ${primaryKeyword}`,
+      `${primaryKeyword} optimization`,
+      `${primaryKeyword} implementation`,
+      `${primaryKeyword} expert guide`
     ],
     h3: [
       `specific ${primaryKeyword}`,
       `${primaryKeyword} details`,
       `${primaryKeyword} implementation`,
       `${primaryKeyword} examples`,
-      `${primaryKeyword} applications`
+      `${primaryKeyword} applications`,
+      `${primaryKeyword} case studies`,
+      `${primaryKeyword} step by step`,
+      `${primaryKeyword} practical guide`
     ],
     conclusion: [
       `${primaryKeyword} summary`,
       `${primaryKeyword} key takeaways`,
       `${primaryKeyword} final thoughts`,
       `${primaryKeyword} recommendations`,
-      `${primaryKeyword} next steps`
+      `${primaryKeyword} next steps`,
+      `${primaryKeyword} recap`,
+      `${primaryKeyword} conclusion`,
+      `${primaryKeyword} action items`
     ],
     faq: [
       `${primaryKeyword} questions`,
       `${primaryKeyword} answers`,
       `${primaryKeyword} problems`,
       `${primaryKeyword} solutions`,
-      `${primaryKeyword} common issues`
+      `${primaryKeyword} common issues`,
+      `${primaryKeyword} troubleshooting`,
+      `${primaryKeyword} frequently asked`,
+      `${primaryKeyword} expert answers`
     ]
   }
 
   const enhancements = sectionEnhancements[sectionType as keyof typeof sectionEnhancements] || sectionEnhancements.h2
   
   // Combine base keywords with section-specific enhancements
-  const combinedKeywords = [...baseList, ...enhancements.slice(0, 3)]
+  const combinedKeywords = [...baseList, ...enhancements.slice(0, 5)]
   
-  // Remove duplicates and limit to 8 keywords max
-  const uniqueKeywords = [...new Set(combinedKeywords)].slice(0, 8)
+  // Remove duplicates and limit to 10 keywords max for better coverage
+  const uniqueKeywords = [...new Set(combinedKeywords)].slice(0, 10)
   
   return uniqueKeywords.join(', ')
 }
@@ -1606,39 +1641,57 @@ async function generateSectionContent(
   const intentSignals = intentResult.result
   const styleGuidance = styleResult.result
   
-  // Enhanced SEO-optimized system prompt
+  // Enhanced SEO-optimized system prompt with E-E-A-T principles and readability targets
   const systemMessage = `You are an elite SEO content strategist and expert writer specializing in high-ranking, user-focused content that satisfies both search engines and human readers.
 
 **Your Core Objectives:**
 1. Create content that ranks on page 1 for target keywords while providing genuine value
 2. Write naturally for humans first, optimize for search engines second
-3. Demonstrate expertise, experience, authority, and trustworthiness (E-E-A-T)
-4. Match user search intent precisely
-5. Integrate citations seamlessly for credibility
+3. Demonstrate expertise, experience, authority, and trustworthiness (E-E-A-T) in every section
+4. Match user search intent precisely with comprehensive coverage
+5. Integrate citations seamlessly for credibility and trust building
+
+**E-E-A-T Implementation Requirements:**
+- **Expertise:** Show deep knowledge through accurate, detailed information and industry insights
+- **Experience:** Share practical examples, case studies, and real-world applications
+- **Authoritativeness:** Reference credible sources, cite experts, and demonstrate industry leadership
+- **Trustworthiness:** Provide accurate information, be transparent, and build reader confidence
+
+**Readability Standards:**
+- Target Grade 10-12 reading level for broad accessibility and comprehension
+- Use clear, concise sentences (15-20 words average)
+- Structure content with proper hierarchy and logical flow
+- Ensure content is easily scannable with strategic formatting
 
 **SEO Writing Principles:**
-- Use the primary keyword naturally in the first 100 words
-- Include semantic variations and related terms throughout (LSI keywords)
-- Write in active voice with clear, scannable sentences
-- Front-load important information (inverted pyramid style)
-- Use transition words for readability and flow
-- Include specific examples, data, and actionable insights
-- Optimize for featured snippets where applicable (concise definitions, lists, tables)
-- Write compelling meta-worthy content in opening paragraphs
+- Use the primary keyword naturally in the first 100 words for search prominence
+- Include semantic variations and LSI keywords throughout for topical depth
+- Write in active voice with clear, scannable sentences for engagement
+- Front-load important information (inverted pyramid style) for user value
+- Use transition words for readability and logical flow between ideas
+- Include specific examples, data, and actionable insights for expertise
+- Optimize for featured snippets with concise definitions and structured content
+- Write compelling meta-worthy content in opening paragraphs for click-through rates
 
 **Content Structure Requirements:**
 - Start each major section with a clear topic sentence containing relevant keywords
-- Use H2/H3 hierarchy properly (never skip levels)
-- Keep paragraphs 2-4 sentences for readability
+- Use H2/H3 hierarchy properly (never skip levels) for semantic structure
+- Keep paragraphs 2-4 sentences for optimal readability (Grade 10-12 target)
 - Use bullet points/lists only when they enhance clarity (not by default)
-- Include relevant statistics within the first 200 words of sections
-- End sections with natural transitions to the next topic
+- Include relevant statistics within the first 200 words of sections for authority
+- End sections with natural transitions to the next topic for flow
 
 **Citation & Authority Building:**
 - Integrate citations naturally: "According to [Source]," or "Research from [Source] shows..."
-- Distribute citations evenly (not clustered at beginning/end)
-- Prioritize authoritative sources (.edu, .gov, industry leaders)
-- Use citations to support claims, not replace original analysis
+- Distribute citations evenly (not clustered at beginning/end) for readability
+- Prioritize authoritative sources (.edu, .gov, industry leaders) for E-E-A-T
+- Use citations to support claims, not replace original analysis for expertise
+
+**Semantic SEO Guidelines:**
+- Include LSI (Latent Semantic Indexing) keywords naturally throughout content
+- Use topic clusters and related concepts to build topical authority
+- Create semantic relationships between primary and secondary keywords
+- Ensure content comprehensively covers the topic for search engine understanding
 
 **Writing Style:** ${writingStyle}
 **Target Audience:** ${targetAudience}
