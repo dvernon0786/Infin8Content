@@ -688,3 +688,61 @@ You must fully embody this agent's persona and follow all activation instruction
 - Historical tracking enables long-term SEO strategy optimization
 - Competitor analysis provides context for content quality benchmarks
 - Mobile and page speed checks ensure technical SEO requirements are met
+
+## Story Context: 20-4-smart-quality-retry-system
+
+**Status**: ready-for-dev
+
+**Epic**: Content Generation System Optimization
+
+**User Story**: As a content creator, I want an intelligent quality retry system that automatically detects and fixes content quality issues so that I can publish high-quality articles without manual editing or revision cycles.
+
+**Acceptance Criteria**:
+- Automatic quality assessment for all generated content sections
+- Smart retry logic that identifies specific quality issues (readability, length, coherence, SEO compliance)
+- Up to 3 automatic retry attempts per section with progressive prompt improvements
+- Quality scoring system with minimum threshold requirements (70+ score)
+- Specific issue detection: keyword density, readability level, content coherence, factual accuracy
+- Adaptive prompt enhancement based on failure reasons
+- Manual override option for content creators to accept/retry rejected content
+- Comprehensive retry logging with success/failure analytics
+- Performance optimization maintaining <3 minute total generation time including retries
+- Fallback to original content if all retry attempts fail
+
+**Technical Requirements**:
+- Quality assessment engine integrated within section-processor.ts architecture
+- Multi-dimensional scoring algorithm (readability, SEO, coherence, completeness)
+- Smart retry controller with progressive prompt enhancement
+- Issue classification system for targeted retry strategies
+- Adaptive prompt templates for different failure types
+- Retry attempt tracking and analytics system
+- Performance monitoring for retry impact on generation time
+- Manual intervention interface for content creator oversight
+- Comprehensive error handling and fallback mechanisms
+- Integration with existing SEO optimization functions
+- Real-time quality feedback during generation process
+
+**Dependencies**:
+- Existing section-processor.ts service architecture
+- Enhanced system prompt with E-E-A-T principles (Story 14-1)
+- SEO helper functions (Story 14-4)
+- Section templates system (Story 14-3)
+- Batch research optimization (Story 20-2)
+- Parallel section processing (Story 20-3)
+- OpenRouter API integration for content generation
+- Next.js 16 and React 19 architecture
+- TypeScript strict mode compliance
+- Content quality assessment framework
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Smart retry system maintains backward compatibility with existing generation workflow
+- Quality assessment provides measurable improvements in content generation success rates
+- Progressive prompt enhancement ensures each retry attempt addresses specific issues
+- Performance optimization ensures retry logic doesn't significantly impact generation speed
+- Manual override provides content creators with final control over content acceptance
+- Comprehensive analytics enable continuous improvement of retry strategies
+- Integration with existing parallel processing maintains performance benefits

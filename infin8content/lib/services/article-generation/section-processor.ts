@@ -7,7 +7,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { Outline } from './outline-generator'
 import { summarizeSections, fitInContextWindow, estimateTokens } from '@/lib/utils/token-management'
 import { generateContent, type OpenRouterMessage } from '@/lib/services/openrouter/openrouter-client'
-import { validateContentQuality, countCitations } from '@/lib/utils/content-quality'
+import { validateContentQuality, validatePromptQuality, autoFixMinorIssues, generateTargetedRetryPrompt, countCitations } from '@/lib/utils/content-quality'
 import { formatCitationsForMarkdown } from '@/lib/utils/citation-formatter'
 import { researchQuery, type TavilySource } from '@/lib/services/tavily/tavily-client'
 import { 
@@ -32,6 +32,7 @@ import {
   validateContentWithErrorHandling,
   type FormatValidationResult
 } from './format-validator'
+import { performanceMonitor } from './performance-monitor'
 
 // Enhanced SEO Strategy Functions for Story 14.2
 
@@ -1312,11 +1313,11 @@ export async function processSection(
     3  // maxCitations
   )
 
-  // Quality validation with optimized retry (1 retry instead of 2 for performance)
-  // IMPORTANT: Validate on content WITH citations to ensure metrics are accurate
+  // Smart Quality Retry System (Story 20.4)
+  // Use enhanced validation with critical/minor classification and auto-fix
   let qualityRetryCount = 0
   const targetWordCount = getTargetWordCount(sectionInfo.type)
-  let qualityResult = validateContentQuality(
+  let enhancedQualityResult = validatePromptQuality(
     contentWithCitations, // Validate final content with citations
     targetWordCount,
     article.keyword as string,
@@ -1324,13 +1325,67 @@ export async function processSection(
     qualityRetryCount
   )
 
-  // Regenerate if quality fails (1 retry for performance optimization)
-  if (!qualityResult.passed && qualityRetryCount < 1) {
+  // Track initial quality metrics for Story 20.4
+  performanceMonitor.recordQualityMetrics(
+    articleId,
+    enhancedQualityResult.passed,
+    enhancedQualityResult.qualityScore
+  )
+
+  // Apply auto-fix for minor issues first with proper validation
+  if (enhancedQualityResult.autoFixAvailable && enhancedQualityResult.minorIssues.length > 0) {
+    console.log(`[SectionProcessor] Auto-fixing ${enhancedQualityResult.minorIssues.length} minor issues for section ${sectionIndex}`)
+    
+    const autoFixResult = autoFixMinorIssues(
+      contentWithCitations,
+      enhancedQualityResult.minorIssues,
+      targetWordCount,
+      article.keyword as string,
+      sectionInfo.type
+    )
+    
+    // Validate that auto-fix didn't break content structure
+    if (autoFixResult.fixedContent && autoFixResult.fixedContent.length > 50) {
+      contentWithCitations = autoFixResult.fixedContent
+      console.log(`[SectionProcessor] Applied fixes: ${autoFixResult.fixesApplied.join(', ')}`)
+      
+      // Re-validate after auto-fix
+      const preFixScore = enhancedQualityResult.qualityScore
+      enhancedQualityResult = validatePromptQuality(
+        contentWithCitations,
+        targetWordCount,
+        article.keyword as string,
+        sectionInfo.type,
+        qualityRetryCount
+      )
+      
+      // Log improvement or degradation
+      const scoreChange = enhancedQualityResult.qualityScore - preFixScore
+      if (scoreChange > 0) {
+        console.log(`[SectionProcessor] Auto-fix improved quality score by ${scoreChange.toFixed(1)} points`)
+      } else if (scoreChange < 0) {
+        console.warn(`[SectionProcessor] Auto-fix degraded quality score by ${Math.abs(scoreChange).toFixed(1)} points`)
+      }
+    } else {
+      console.warn(`[SectionProcessor] Auto-fix produced invalid content, skipping fixes`)
+    }
+  }
+
+  // Only retry if critical issues remain (1 retry max for performance)
+  if (!enhancedQualityResult.passed && enhancedQualityResult.criticalIssues.length > 0 && qualityRetryCount < 1) {
     qualityRetryCount++
-    console.warn(`Section ${sectionIndex} quality check failed on final content, regenerating (attempt ${qualityRetryCount}):`, qualityResult.errors)
+    console.warn(`Section ${sectionIndex} has ${enhancedQualityResult.criticalIssues.length} critical issues, retrying (attempt ${qualityRetryCount})`)
     
     try {
-      // Regenerate with same parameters
+      // Generate targeted retry prompt
+      const retryPrompt = generateTargetedRetryPrompt(
+        enhancedQualityResult.issues,
+        contentWithCitations,
+        article.keyword as string,
+        sectionInfo.type
+      )
+      
+      // Regenerate with targeted prompt
       generationResult = await generateSectionContent(
         article.keyword as string,
         sectionInfo,
@@ -1339,7 +1394,7 @@ export async function processSection(
         organizationId,
         article.writing_style || 'Professional',
         article.target_audience || 'General',
-        article.custom_instructions || undefined
+        retryPrompt // Use targeted retry prompt instead of custom instructions
       )
       
       // Re-integrate citations
@@ -1350,14 +1405,29 @@ export async function processSection(
         3  // maxCitations
       )
       
-      // Re-validate on content WITH citations
-      qualityResult = validateContentQuality(
-        contentWithCitations, // Validate final content with citations
+      // Re-validate with enhanced system
+      enhancedQualityResult = validatePromptQuality(
+        contentWithCitations,
         targetWordCount,
         article.keyword as string,
         sectionInfo.type,
         qualityRetryCount
       )
+      
+      // Apply auto-fix again if needed
+      if (enhancedQualityResult.autoFixAvailable && enhancedQualityResult.minorIssues.length > 0) {
+        const autoFixResult = autoFixMinorIssues(
+          contentWithCitations,
+          enhancedQualityResult.minorIssues,
+          targetWordCount,
+          article.keyword as string,
+          sectionInfo.type
+        )
+        
+        contentWithCitations = autoFixResult.fixedContent
+        console.log(`[SectionProcessor] Applied post-retry fixes: ${autoFixResult.fixesApplied.join(', ')}`)
+      }
+      
     } catch (error) {
       // Quality retry also failed
       generationFailed = true
@@ -1393,7 +1463,7 @@ export async function processSection(
 
   // Enhance quality metrics with readability, structure, and format data
   const enhancedQualityMetrics = {
-    ...qualityResult.metrics,
+    ...enhancedQualityResult.metrics,
     readability_score: readabilityScore,
     content_structure: {
       is_valid: structureValidation.isValid,
@@ -1405,6 +1475,13 @@ export async function processSection(
       issues: formatValidation.issues,
       suggestions: formatValidation.suggestions,
       processing_time: formatValidation.processingTime
+    },
+    smart_quality_metrics: {
+      quality_score: enhancedQualityResult.qualityScore,
+      critical_issues_count: enhancedQualityResult.criticalIssues.length,
+      minor_issues_count: enhancedQualityResult.minorIssues.length,
+      auto_fix_applied: enhancedQualityResult.autoFixAvailable,
+      retry_count: qualityRetryCount
     }
   }
 

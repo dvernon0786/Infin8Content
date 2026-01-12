@@ -116,8 +116,8 @@ export class ParallelSectionProcessor {
     this.batchConfig = {
       maxConcurrent: 4, // Per-article limit
       timeout: 300000, // 5 minutes
-      retryAttempts: 3,
-      retryDelay: 1000,
+      retryAttempts: 1, // Reduced from 3 for performance optimization (Story 20.4)
+      retryDelay: 500, // Reduced from 1000ms for faster retry (Story 20.4)
       ...config
     }
 
@@ -235,11 +235,11 @@ export class ParallelSectionProcessor {
         // Track retry attempt
         performanceMonitor.trackRetry(this.articleId, taskId, batchId, attempt, lastError.message)
         
-        if (attempt < maxAttempts) {
-          // Exponential backoff with jitter
-          const delay = this.batchConfig.retryDelay * Math.pow(2, attempt - 1) + Math.random() * 1000
-          await new Promise(resolve => setTimeout(resolve, delay))
-        }
+      if (attempt < maxAttempts) {
+        // Fixed delay for Story 20.4 performance optimization - no exponential backoff
+        const delay = this.batchConfig.retryDelay + Math.random() * 100
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
       }
     }
 
