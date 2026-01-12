@@ -280,6 +280,117 @@ You must fully embody this agent's persona and follow all activation instruction
 **Story Points**: 8
 **Target Sprint**: Current sprint
 
+## Story Context: 14-4-seo-helper-functions
+
+**Status**: ready-for-dev
+
+**Epic**: SEO Optimization Framework
+
+**User Story**: As a content developer, I want specialized SEO helper functions integrated into the content generation system so that I can automatically optimize articles for search engine performance with accurate keyword density, semantic variations, and SEO best practices.
+
+**Acceptance Criteria**:
+- calculateTargetDensity() function for optimal keyword density calculation
+- generateSemanticKeywords() function for LSI keyword generation and variations
+- getUserIntentSignals() function for search intent matching and optimization
+- getStyleGuidance() function for writing style execution based on SEO requirements
+- formatResearchSources() function with authority indicators and credibility signals
+- Enhanced content briefing section with SEO recommendations
+- Real-time SEO scoring and optimization suggestions
+- Integration with existing section-processor.ts architecture
+- Performance optimization for helper function execution (<100ms per function)
+- Comprehensive error handling and fallback mechanisms
+
+**Technical Requirements**:
+- 6 new SEO helper functions implemented in TypeScript
+- Helper function integration within existing section-processor.ts service
+- Keyword density calculation with industry-standard algorithms
+- Semantic keyword generation using LSI and NLP techniques
+- Search intent classification (informational, navigational, commercial, transactional)
+- Writing style guidance based on target audience and SEO goals
+- Research source formatting with authority scoring
+- Content briefing enhancement with SEO insights
+- Unit tests for all helper functions with >95% coverage
+- Integration tests with existing content generation workflow
+- Performance monitoring and optimization for helper function execution
+
+**Dependencies**:
+- Enhanced system prompt with E-E-A-T principles (Story 14-1)
+- Section-processor.ts service architecture
+- OpenRouter API integration for content generation
+- Research-optimizer.ts and context-manager.ts services
+- Next.js 16 and React 19 architecture
+- TypeScript strict mode compliance
+- Keyword research interface (Epic 3-1)
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Helper functions should be modular and reusable across different content types
+- Each function includes comprehensive error handling and validation
+- Integration maintains backward compatibility with existing generation functionality
+- Performance impact analysis shows minimal overhead to generation time
+- Functions designed to work with existing token limits and constraints
+
+## Story Context: 14-5-format-changes-and-content-structure
+
+**Status**: ready-for-dev
+
+**Epic**: Content Generation Enhancement
+
+**User Story**: As a content creator, I want flexible formatting options and content structure controls so that I can generate articles with customized layouts, styling, and organizational patterns that match my specific content needs and brand guidelines.
+
+**Acceptance Criteria**:
+- Dynamic content structure selection with multiple layout options
+- Customizable formatting rules for different article types and topics
+- Flexible heading hierarchy management (H1-H6) with SEO optimization
+- Content block organization with draggable/reorderable sections
+- Template-based formatting with brand-specific style guidelines
+- Rich text formatting options (bold, italics, lists, quotes, code blocks)
+- Image and media placement controls within content structure
+- Table of contents generation with customizable depth levels
+- Content section grouping and categorization options
+- Export format flexibility (markdown, HTML, PDF, JSON)
+- Preview mode with real-time formatting updates
+- Responsive formatting optimization for different devices
+
+**Technical Requirements**:
+- Content structure engine within existing section-processor.ts architecture
+- Formatting rule engine with customizable templates
+- Dynamic content block system with reordering capabilities
+- Heading hierarchy optimizer with SEO best practices
+- Rich text formatting parser and renderer
+- Media placement and sizing algorithms
+- Table of contents generator with anchor links
+- Content export system with multiple format support
+- Real-time preview system with live formatting updates
+- Responsive design adaptation engine
+- Template inheritance and customization system
+- Performance optimization for structure processing (<200ms per operation)
+
+**Dependencies**:
+- Enhanced system prompt with E-E-A-T principles (Story 14-1)
+- Section templates system (Story 14-3)
+- Section-processor.ts service architecture
+- OpenRouter API integration for content generation
+- Research-optimizer.ts and context-manager.ts services
+- Next.js 16 and React 19 architecture
+- TypeScript strict mode compliance
+- UI component library for formatting controls
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Content structure system should maintain backward compatibility with existing articles
+- Formatting rules engine supports both global and article-specific customizations
+- Dynamic content blocks enable flexible article organization without breaking SEO structure
+- Export functionality preserves formatting and structure across all output formats
+- Real-time preview system uses efficient diff algorithms for instant updates
+- Performance monitoring ensures structure processing doesn't impact generation speed
+
 ## Story Context: 14-3-section-templates-system
 
 **Status**: ready-for-dev

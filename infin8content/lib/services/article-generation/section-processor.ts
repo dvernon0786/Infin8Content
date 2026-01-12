@@ -21,6 +21,12 @@ import {
   processTemplate,
   type TemplateContext
 } from './section-templates'
+import {
+  validateContentFormat,
+  applyFormatCorrections,
+  validateContentWithErrorHandling,
+  type FormatValidationResult
+} from './format-validator'
 
 // Enhanced SEO Strategy Functions for Story 14.2
 
@@ -34,7 +40,7 @@ function createKeywordPlacementStrategy(
   sectionType: string, 
   targetWordCount: number
 ): string {
-  const targetDensity = calculateTargetDensity(targetWordCount)
+  const targetDensity = calculateTargetDensity(targetWordCount, sectionType)
   const semanticList = semanticKeywords.split(', ')
   
   const strategies = {
@@ -236,26 +242,138 @@ function generateSearchIntentGuidance(keyword: string, sectionType: string): str
   return intent[sectionType as keyof typeof intent] || intent.all
 }
 
-// Enhanced SEO Helper Functions
-function calculateTargetDensity(wordCount: number): number {
-  // Aim for 0.5-1.5% density
-  const minDensity = Math.ceil(wordCount * 0.005)
-  const maxDensity = Math.floor(wordCount * 0.015)
-  return Math.floor((minDensity + maxDensity) / 2)
+// Enhanced SEO Helper Functions with Error Handling
+
+// Standard error handling pattern used across functions
+function safeExecute<T>(fn: () => T, fallback: T): T {
+  try {
+    return fn()
+  } catch (error) {
+    console.error(`[SectionProcessor] Function execution failed:`, error)
+    return fallback
+  }
+}
+
+function calculateTargetDensity(wordCount: number, contentType: string = 'general'): number {
+  return safeExecute(() => {
+    // Input validation
+    if (!wordCount || wordCount < 0 || !Number.isFinite(wordCount)) {
+      throw new Error(`Invalid wordCount: ${wordCount}. Must be a positive number.`)
+    }
+    
+    if (!contentType || typeof contentType !== 'string') {
+      throw new Error(`Invalid contentType: ${contentType}. Must be a string.`)
+    }
+    
+    // Enhanced density calculation based on content type and SEO best practices
+    // Primary keyword density: 1-2% for general content, 0.5-1.5% for specialized content
+    
+    let minDensity: number, maxDensity: number
+    
+    switch (contentType) {
+      case 'introduction':
+        // Higher density in introduction for immediate SEO impact
+        minDensity = Math.ceil(wordCount * 0.012) // 1.2%
+        maxDensity = Math.floor(wordCount * 0.020) // 2.0%
+        break
+      case 'conclusion':
+        // Moderate density for reinforcement
+        minDensity = Math.ceil(wordCount * 0.008) // 0.8%
+        maxDensity = Math.floor(wordCount * 0.015) // 1.5%
+        break
+      case 'h2':
+        // Optimal density for main sections
+        minDensity = Math.ceil(wordCount * 0.010) // 1.0%
+        maxDensity = Math.floor(wordCount * 0.018) // 1.8%
+        break
+      case 'h3':
+        // Lower density for subsections (focus on semantic keywords)
+        minDensity = Math.ceil(wordCount * 0.007) // 0.7%
+        maxDensity = Math.floor(wordCount * 0.012) // 1.2%
+        break
+      case 'faq':
+        // Natural density for Q&A format
+        minDensity = Math.ceil(wordCount * 0.008) // 0.8%
+        maxDensity = Math.floor(wordCount * 0.014) // 1.4%
+        break
+      default:
+        // Standard density for general content
+        minDensity = Math.ceil(wordCount * 0.010) // 1.0%
+        maxDensity = Math.floor(wordCount * 0.020) // 2.0%
+    }
+    
+    // Ensure minimum of 1 for very short content and reasonable maximum
+    minDensity = Math.max(1, minDensity)
+    maxDensity = Math.max(minDensity + 1, maxDensity)
+    
+    // Return the average for optimal balance
+    return Math.floor((minDensity + maxDensity) / 2)
+  }, Math.max(1, Math.floor(wordCount * 0.01))) // Fallback: 1% of word count, minimum 1
 }
 
 function generateSemanticKeywords(primaryKeyword: string): string {
-  // Extract root concepts and generate variations
-  const keywords = [
-    primaryKeyword,
-    primaryKeyword.replace(/best|top|how to/gi, '').trim(),
-    `${primaryKeyword} guide`,
-    `${primaryKeyword} tips`,
-    `${primaryKeyword} examples`,
-    `${primaryKeyword} strategies`,
-    `${primaryKeyword} methods`
-  ]
-  return keywords.slice(0, 5).join(', ')
+  return safeExecute(() => {
+    // Enhanced semantic keyword generation with LSI variations and contextual relevance
+    
+    // Validate input
+    if (!primaryKeyword || typeof primaryKeyword !== 'string' || primaryKeyword.trim().length === 0) {
+      return ''
+    }
+    
+    // Clean and normalize the primary keyword
+    const cleanKeyword = primaryKeyword.toLowerCase().trim()
+    
+    // Extract root concept (remove common modifiers)
+    const rootConcept = cleanKeyword
+      .replace(/^(best|top|how to|what is|why|guide|tutorial|tips|examples)/gi, '')
+      .replace(/^(the|a|an)\s+/gi, '')
+      .replace(/\s+(for|to|in|on|with|and|or)$/gi, '')
+      .trim()
+    
+    // Generate semantic variations based on keyword patterns
+    const semanticVariations = [
+      // Primary keyword (always include)
+      primaryKeyword,
+      
+      // Root concept variations
+      rootConcept ? `${rootConcept} strategies` : '',
+      rootConcept ? `${rootConcept} methods` : '',
+      rootConcept ? `${rootConcept} techniques` : '',
+      rootConcept ? `${rootConcept} approach` : '',
+      
+      // Action-oriented variations
+      cleanKeyword.includes('how to') ? `${cleanKeyword.replace('how to', '').trim()} guide` : '',
+      cleanKeyword.includes('best') ? `${cleanKeyword.replace('best', '').trim()} tips` : '',
+      cleanKeyword.includes('top') ? `${cleanKeyword.replace('top', '').trim()} examples` : '',
+      
+      // Contextual variations
+      `${primaryKeyword} best practices`,
+      `${primaryKeyword} implementation`,
+      `${primaryKeyword} optimization`,
+      
+      // Question-based variations (for FAQ content)
+      `what is ${rootConcept || primaryKeyword}`,
+      `how to implement ${rootConcept || primaryKeyword}`,
+      `${primaryKeyword} best practices`,
+      
+      // Long-tail variations
+      `${primaryKeyword} for beginners`,
+      `${primaryKeyword} advanced techniques`,
+      `${primaryKeyword} step by step`
+    ]
+    
+    // Filter out empty strings and duplicates
+    const uniqueKeywords = [...new Set(semanticVariations.filter(keyword => 
+      keyword && 
+      keyword.length > 3 && 
+      keyword !== primaryKeyword &&
+      !keyword.includes('undefined') &&
+      !keyword.includes('  ') // no double spaces
+    ))]
+    
+    // Return top 5-7 most relevant semantic keywords
+    return [primaryKeyword, ...uniqueKeywords.slice(0, 6)].join(', ')
+  }, primaryKeyword || '') // Fallback: return original keyword or empty string
 }
 
 // Story 4a.3 Helper Functions
@@ -374,52 +492,373 @@ async function trackApiCost(organizationId: string, service: string, operation: 
 }
 
 function getUserIntentSignals(keyword: string, sectionType: string): string {
-  const intentMap = {
-    informational: 'Readers want to learn, understand, or discover information',
-    transactional: 'Readers are ready to take action, purchase, or commit',
-    commercial: 'Readers are comparing options and evaluating choices',
-    navigational: 'Readers are looking for a specific resource or location',
-  }
-  
-  // Simple intent detection from keyword
-  const intent = keyword.match(/how to|what is|why|guide/i) ? 'informational' :
-                 keyword.match(/best|top|vs|compare/i) ? 'commercial' :
-                 keyword.match(/buy|price|cost|review/i) ? 'transactional' : 
-                 'informational'
-  
-  const intentStrategy = {
-    informational: 'Provide comprehensive explanations and step-by-step guidance',
-    transactional: 'Include clear calls-to-action and practical implementation steps',
-    commercial: 'Compare options, highlight pros/cons, and help decision-making',
-    navigational: 'Direct to specific resources with clear instructions'
-  }
-  
-  return `${intentMap[intent]}\nAddress this by: ${intentStrategy[intent]}`
+  return safeExecute(() => {
+    // Enhanced intent detection with multiple pattern matching and section-specific guidance
+    
+    // Validate inputs
+    if (!keyword || typeof keyword !== 'string' || keyword.trim().length === 0) {
+      return 'Readers want to learn, understand, or discover information\nCharacteristics: Seeking knowledge, explanations, tutorials, and comprehensive guides\nSection Strategy: Start with comprehensive context, establish expertise, and preview what readers will learn\nContent Focus: Educational value and comprehensive coverage'
+    }
+    
+    const intentMap = {
+      informational: {
+        description: 'Readers want to learn, understand, or discover information',
+        characteristics: 'Seeking knowledge, explanations, tutorials, and comprehensive guides'
+      },
+      transactional: {
+        description: 'Readers are ready to take action, purchase, or commit',
+        characteristics: 'Looking to buy, sign up, download, or take specific actions'
+      },
+      commercial: {
+        description: 'Readers are comparing options and evaluating choices',
+        characteristics: 'Researching products, services, or alternatives before making decisions'
+      },
+      navigational: {
+        description: 'Readers are looking for a specific resource or location',
+        characteristics: 'Trying to find specific websites, pages, or physical locations'
+      },
+      local: {
+        description: 'Readers seeking location-specific information or services',
+        characteristics: 'Looking for businesses, services, or information in specific geographic areas'
+      }
+    }
+    
+    // Enhanced intent detection with weighted pattern matching
+    const keywordLower = keyword.toLowerCase()
+    
+    // Informational patterns (highest priority for educational content)
+    const informationalPatterns = [
+      /how to|what is|why|guide|tutorial|learn|understand|explain|definition|meaning/i,
+      /step by step|instructions|ways to|methods for|techniques of/i,
+      /introduction to|basics of|fundamentals of|getting started with/i,
+      /for beginners|for dummies|explained simply|easy guide/i
+    ]
+    
+    // Transactional patterns
+    const transactionalPatterns = [
+      /buy|purchase|order|sign up|register|download|subscribe|join/i,
+      /get started|start now|begin today|take action|act now/i,
+      /free trial|demo|sample|example|template|checklist/i,
+      /price|cost|pricing|rates|fees|discount|deal|offer/i
+    ]
+    
+    // Commercial patterns
+    const commercialPatterns = [
+      /best|top|vs|versus|compare|review|rating|ranking|alternative/i,
+      /which|choose|select|pick|recommend|suggestion|advice/i,
+      /pros and cons|advantages|disadvantages|benefits|features/i,
+      /analysis|evaluation|assessment|comparison|test|audit/i
+    ]
+    
+    // Navigational patterns
+    const navigationalPatterns = [
+      /login|signin|access|enter|open|find|search|locate/i,
+      /website|page|url|link|address|contact|support|help/i,
+      /official|authentic|legitimate|real|actual/i
+    ]
+    
+    // Local patterns
+    const localPatterns = [
+      /near me|local|nearby|in [a-z]+|at [a-z]+|city|state|country/i,
+      /location|address|phone|hours|directions|map/i,
+      /services|business|store|shop|office|branch/i
+    ]
+    
+    // Calculate intent scores based on pattern matches
+    let intentScores = {
+      informational: 0,
+      transactional: 0,
+      commercial: 0,
+      navigational: 0,
+      local: 0
+    }
+    
+    // Score each intent type
+    informationalPatterns.forEach(pattern => {
+      if (pattern.test(keywordLower)) intentScores.informational += 2
+    })
+    
+    transactionalPatterns.forEach(pattern => {
+      if (pattern.test(keywordLower)) intentScores.transactional += 2
+    })
+    
+    commercialPatterns.forEach(pattern => {
+      if (pattern.test(keywordLower)) intentScores.commercial += 2
+    })
+    
+    navigationalPatterns.forEach(pattern => {
+      if (pattern.test(keywordLower)) intentScores.navigational += 2
+    })
+    
+    localPatterns.forEach(pattern => {
+      if (pattern.test(keywordLower)) intentScores.local += 2
+    })
+    
+    // Determine primary intent (highest score)
+    const primaryIntent = Object.keys(intentScores).reduce((a, b) => 
+      intentScores[a as keyof typeof intentScores] > intentScores[b as keyof typeof intentScores] ? a : b
+    ) as keyof typeof intentMap
+    
+    // Section-specific strategy adjustments
+    const sectionStrategies = {
+      introduction: {
+        informational: 'Start with comprehensive context, establish expertise, and preview what readers will learn',
+        transactional: 'Begin with clear value proposition and immediate action-oriented benefits',
+        commercial: 'Open with comparison framework and establish decision-making criteria',
+        navigational: 'Provide clear path to resource with immediate accessibility',
+        local: 'Establish geographic relevance and local context immediately'
+      },
+      h2: {
+        informational: 'Deliver detailed explanations with examples and step-by-step guidance',
+        transactional: 'Focus on implementation steps and practical application',
+        commercial: 'Provide detailed comparisons and evaluation frameworks',
+        navigational: 'Offer clear directions and resource accessibility',
+        local: 'Emphasize location-specific benefits and accessibility'
+      },
+      h3: {
+        informational: 'Provide specific details, examples, and deeper insights',
+        transactional: 'Detail specific actions and implementation tips',
+        commercial: 'Focus on specific features and comparative advantages',
+        navigational: 'Give precise instructions and resource details',
+        local: 'Highlight specific local features and benefits'
+      },
+      conclusion: {
+        informational: 'Summarize key learnings and provide next steps for continued education',
+        transactional: 'Reinforce action steps and provide clear conversion path',
+        commercial: 'Final recommendation summary and decision reinforcement',
+        navigational: 'Final resource direction and accessibility confirmation',
+        local: 'Reinforce local value and next steps for engagement'
+      },
+      faq: {
+        informational: 'Answer common questions with clear, educational explanations',
+        transactional: 'Address implementation and action-related questions',
+        commercial: 'Resolve comparison and decision-making questions',
+        navigational: 'Clarify access and resource questions',
+        local: 'Answer location-specific and service questions'
+      }
+    }
+    
+    const strategy = sectionStrategies[sectionType as keyof typeof sectionStrategies]?.[primaryIntent] || 
+                     sectionStrategies.h2[primaryIntent] // fallback to h2 strategy
+    
+    const intentInfo = intentMap[primaryIntent]
+    
+    return `${intentInfo.description}
+Characteristics: ${intentInfo.characteristics}
+Section Strategy: ${strategy}
+Content Focus: ${primaryIntent === 'informational' ? 'Educational value and comprehensive coverage' :
+                   primaryIntent === 'transactional' ? 'Action-oriented content and clear conversion paths' :
+                   primaryIntent === 'commercial' ? 'Comparative analysis and decision support' :
+                   primaryIntent === 'navigational' ? 'Clear direction and resource accessibility' :
+                   'Geographic relevance and local optimization'}`
+  }, 'Readers want to learn, understand, or discover information\nCharacteristics: Seeking knowledge, explanations, tutorials, and comprehensive guides\nSection Strategy: Start with comprehensive context, establish expertise, and preview what readers will learn\nContent Focus: Educational value and comprehensive coverage') // Fallback to informational intent
 }
 
 function getStyleGuidance(style: string, audience: string): string {
-  const styleMap: Record<string, string> = {
-    Professional: 'Use formal language, industry terminology, and authoritative tone. Cite sources frequently. Avoid casual expressions or humor.',
-    Conversational: 'Write as if speaking to a friend. Use "you" and "your." Include relatable examples. Keep sentences short and punchy.',
-    Technical: 'Use precise terminology. Include specifications, technical details, and in-depth explanations. Audience has domain expertise.',
-    Casual: 'Relaxed, friendly tone. Use contractions, colloquialisms. Focus on relatability over formality.',
-    Formal: 'Academic or business writing. No contractions. Objective, third-person perspective. Highly structured.',
-  }
-  
-  return styleMap[style] || styleMap.Professional
+  return safeExecute(() => {
+    // Validate inputs
+    if (!style || typeof style !== 'string' || style.trim().length === 0) {
+      style = 'Professional' // Default fallback
+    }
+    
+    const styleMap: Record<string, string> = {
+      Professional: 'Use formal language, industry terminology, and authoritative tone. Cite sources frequently. Avoid casual expressions or humor.',
+      Conversational: 'Write as if speaking to a friend. Use "you" and "your." Include relatable examples. Keep sentences short and punchy.',
+      Technical: 'Use precise terminology. Include specifications, technical details, and in-depth explanations. Audience has domain expertise.',
+      Casual: 'Relaxed, friendly tone. Use contractions, colloquialisms. Focus on relatability over formality.',
+      Formal: 'Academic or business writing. No contractions. Objective, third-person perspective. Highly structured.',
+    }
+    
+    return styleMap[style] || styleMap.Professional
+  }, 'Use formal language, industry terminology, and authoritative tone. Cite sources frequently. Avoid casual expressions or humor.') // Fallback to professional style
 }
 
 function formatResearchSources(sources: TavilySource[]): string {
-  return sources.slice(0, 10).map((source, index) => {
-    const excerpt = (source as any).content?.slice(0, 200) || 'No excerpt available'
-    const authority = source.url?.includes('.edu') ? '🎓 Academic' :
-                     source.url?.includes('.gov') ? '🏛️ Government' :
-                     '📰 Industry'
+  return safeExecute(() => {
+    // Validate inputs
+    if (!Array.isArray(sources) || sources.length === 0) {
+      return 'No research sources available.'
+    }
     
-    return `${index + 1}. [${source.title}](${source.url}) ${authority}
+    return sources.slice(0, 10).map((source, index) => {
+      // Validate source structure
+      if (!source || typeof source !== 'object') {
+        return `${index + 1}. Invalid source format`
+      }
+      
+      const excerpt = (source as any).content?.slice(0, 200) || 'No excerpt available'
+      const authority = source.url?.includes('.edu') ? '🎓 Academic' :
+                       source.url?.includes('.gov') ? '🏛️ Government' :
+                       '📰 Industry'
+      
+      return `${index + 1}. [${source.title || 'Untitled'}](${source.url || '#'}) ${authority}
    Excerpt: ${excerpt}...
    Relevance: ${(source as any).relevanceScore || (source as any).relevance_score || 'High'}`
-  }).join('\n\n')
+    }).join('\n\n')
+  }, 'No research sources available.') // Fallback for error cases
+}
+
+/**
+ * Calculate readability score based on Flesch-Kincaid Grade Level algorithm
+ * Returns grade level (1-20 scale) where 10-12 is optimal for general audience
+ */
+function calculateReadabilityScore(content: string): number {
+  return safeExecute(() => {
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+      return 12.0 // Default to Grade 12 for empty content
+    }
+
+    // Clean content: remove markdown, URLs, and extra whitespace
+    const cleanContent = content
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove markdown links
+      .replace(/https?:\/\/[^\s]+/g, '') // Remove URLs
+      .replace(/[#*_`~]/g, '') // Remove markdown formatting
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim()
+
+    if (cleanContent.length < 20) {
+      return 12.0 // Default for very short content
+    }
+
+    // Split into sentences and words
+    const sentences = cleanContent.split(/[.!?]+/).filter(s => s.trim().length > 0)
+    const words = cleanContent.split(/\s+/).filter(w => w.length > 0)
+    const syllables = words.reduce((total, word) => {
+      return total + countSyllables(word)
+    }, 0)
+
+    if (sentences.length === 0 || words.length === 0) {
+      return 12.0
+    }
+
+    // Flesch-Kincaid Grade Level formula
+    const avgWordsPerSentence = words.length / sentences.length
+    const avgSyllablesPerWord = syllables / words.length
+    
+    const score = 0.39 * avgWordsPerSentence + 11.8 * avgSyllablesPerWord - 15.59
+    
+    // Clamp to reasonable range (1-20)
+    return Math.max(1, Math.min(20, Math.round(score * 10) / 10))
+  }, 12.0) // Fallback to Grade 12
+}
+
+/**
+ * Count syllables in a word using common English rules
+ */
+function countSyllables(word: string): number {
+  if (!word || word.length === 0) return 0
+  
+  word = word.toLowerCase()
+  
+  // Remove silent 'e' at the end
+  if (word.endsWith('e') && word.length > 3) {
+    word = word.slice(0, -1)
+  }
+  
+  // Count vowel groups
+  const vowelGroups = word.match(/[aeiouy]+/g)
+  const count = vowelGroups ? vowelGroups.length : 0
+  
+  // Ensure at least 1 syllable for non-empty words
+  return Math.max(1, count)
+}
+
+/**
+ * Validate content structure follows proper H1-H3 hierarchy
+ * Returns validation result with specific issues found
+ */
+function validateContentStructure(content: string): {
+  isValid: boolean
+  issues: string[]
+  hierarchy: string[]
+} {
+  return safeExecute(() => {
+    if (!content || typeof content !== 'string') {
+      return {
+        isValid: false,
+        issues: ['Content is empty or invalid'],
+        hierarchy: []
+      }
+    }
+
+    const issues: string[] = []
+    const hierarchy: string[] = []
+    
+    // Extract all headings
+    const headingMatches = content.matchAll(/^(#{1,6})\s+(.+)$/gm)
+    const headings = Array.from(headingMatches)
+    
+    if (headings.length === 0) {
+      return {
+        isValid: false,
+        issues: ['No headings found - content needs structure'],
+        hierarchy: []
+      }
+    }
+
+    let lastLevel = 0
+    
+    for (const [fullMatch, hashes, title] of headings) {
+      const level = hashes.length
+      
+      // Check for skipped levels (e.g., H1 to H3 without H2)
+      if (level > lastLevel + 1 && lastLevel > 0) {
+        issues.push(`Skipped heading level: H${lastLevel} to H${level} in "${title.trim()}"`)
+      }
+      
+      // Check for multiple H1 headings (should only have one)
+      if (level === 1 && hierarchy.some(h => h.startsWith('H1'))) {
+        issues.push(`Multiple H1 headings found: "${title.trim()}"`)
+      }
+      
+      hierarchy.push(`H${level}: ${title.trim()}`)
+      lastLevel = level
+    }
+
+    // Check if content starts with H1 or H2 (proper structure)
+    const firstHeading = hierarchy[0]
+    if (!firstHeading?.startsWith('H1') && !firstHeading?.startsWith('H2')) {
+      issues.push('Content should start with H1 or H2 heading')
+    }
+
+    // Check for proper H2-H3 structure
+    const hasH2 = hierarchy.some(h => h.startsWith('H2'))
+    const hasH3 = hierarchy.some(h => h.startsWith('H3'))
+    
+    if (hasH3 && !hasH2) {
+      issues.push('H3 headings found but no H2 headings - improper hierarchy')
+    }
+
+    return {
+      isValid: issues.length === 0,
+      issues,
+      hierarchy
+    }
+  }, {
+    isValid: false,
+    issues: ['Structure validation failed'],
+    hierarchy: []
+  })
+}
+
+/**
+ * Performance monitoring utility for SEO helper functions
+ * Tracks execution time to verify <50ms performance requirement
+ */
+function measurePerformance<T>(fn: () => T, functionName: string): { result: T; executionTime: number } {
+  const startTime = performance.now()
+  const result = fn()
+  const endTime = performance.now()
+  const executionTime = Math.round((endTime - startTime) * 100) / 100 // Convert to ms with 2 decimal places
+  
+  // Log warning if exceeding 50ms threshold
+  if (executionTime > 50) {
+    console.warn(`[SectionProcessor] Performance: ${functionName} took ${executionTime}ms (exceeds 50ms target)`)
+  } else {
+    console.log(`[SectionProcessor] Performance: ${functionName} completed in ${executionTime}ms`)
+  }
+  
+  return { result, executionTime }
 }
 
 function getEnhancedSectionGuidance(
@@ -428,7 +867,7 @@ function getEnhancedSectionGuidance(
   keyword: string, 
   targetWordCount: number
 ): string {
-  const targetDensity = calculateTargetDensity(targetWordCount)
+  const targetDensity = calculateTargetDensity(targetWordCount, sectionType)
   const semanticKeywords = generateSemanticKeywords(keyword)
   
   switch (sectionType) {
@@ -671,6 +1110,11 @@ export interface Section {
     keyword_density?: number
     quality_passed: boolean
     quality_retry_count: number
+    content_structure?: {
+      is_valid: boolean
+      issues: string[]
+      hierarchy: string[]
+    }
   }
 }
 
@@ -880,14 +1324,48 @@ export async function processSection(
   // Count actual citations in final content
   const finalCitationsCount = countCitations(contentWithCitations)
 
+  // Calculate readability score for quality metrics
+  const readabilityScore = calculateReadabilityScore(contentWithCitations)
+  
+  // Validate content structure hierarchy
+  const structureValidation = validateContentStructure(contentWithCitations)
+
+  // NEW: Apply format validation and corrections (Story 14-5)
+  const formatValidationResult = validateContentWithErrorHandling(
+    contentWithCitations, 
+    sectionInfo.type, 
+    `section-${sectionIndex}`
+  )
+  
+  // Use the corrected content if format validation found issues
+  const finalContent = formatValidationResult.content
+  const formatValidation = formatValidationResult.validation
+
+  // Enhance quality metrics with readability, structure, and format data
+  const enhancedQualityMetrics = {
+    ...qualityResult.metrics,
+    readability_score: readabilityScore,
+    content_structure: {
+      is_valid: structureValidation.isValid,
+      issues: structureValidation.issues,
+      hierarchy: structureValidation.hierarchy
+    },
+    format_validation: {
+      is_valid: formatValidation.isValid,
+      issues: formatValidation.issues,
+      suggestions: formatValidation.suggestions,
+      processing_time: formatValidation.processingTime
+    }
+  }
+
   const section: Section = {
     section_type: sectionInfo.type,
     section_index: sectionIndex,
     h2_index: sectionInfo.h2Index,
     h3_index: sectionInfo.h3Index,
     title: sectionInfo.title,
-    content: contentWithCitations, // Content with citations integrated
-    word_count: contentWithCitations.split(/\s+/).filter(w => w.length > 0).length,
+    content: finalContent, // Use format-corrected content (Story 14-5)
+    word_count: finalContent.split(/\s+/).filter(w => w.length > 0).length,
     generated_at: new Date().toISOString(),
     research_sources: researchSources.map(source => ({
       title: source.title,
@@ -901,7 +1379,7 @@ export async function processSection(
     research_query: researchQueryUsed,
     tokens_used: generationResult.tokensUsed,
     model_used: generationResult.modelUsed,
-    quality_metrics: qualityResult.metrics
+    quality_metrics: enhancedQualityMetrics
   }
 
   // Update article with new section using batch optimization
@@ -1104,10 +1582,29 @@ async function generateSectionContent(
 }> {
   // Determine target word count based on section type
   const targetWordCount = getTargetWordCount(sectionInfo.type)
-  const targetDensity = calculateTargetDensity(targetWordCount)
-  const semanticKeywords = generateSemanticKeywords(keyword)
-  const intentSignals = getUserIntentSignals(keyword, sectionInfo.type)
-  const styleGuidance = getStyleGuidance(writingStyle, targetAudience)
+  
+  // Use performance monitoring for SEO helper functions
+  const densityResult = measurePerformance(() => 
+    calculateTargetDensity(targetWordCount, sectionInfo.type), 
+    'calculateTargetDensity'
+  )
+  const semanticResult = measurePerformance(() => 
+    generateSemanticKeywords(keyword), 
+    'generateSemanticKeywords'
+  )
+  const intentResult = measurePerformance(() => 
+    getUserIntentSignals(keyword, sectionInfo.type), 
+    'getUserIntentSignals'
+  )
+  const styleResult = measurePerformance(() => 
+    getStyleGuidance(writingStyle, targetAudience), 
+    'getStyleGuidance'
+  )
+  
+  const targetDensity = densityResult.result
+  const semanticKeywords = semanticResult.result
+  const intentSignals = intentResult.result
+  const styleGuidance = styleResult.result
   
   // Enhanced SEO-optimized system prompt
   const systemMessage = `You are an elite SEO content strategist and expert writer specializing in high-ranking, user-focused content that satisfies both search engines and human readers.
@@ -1430,6 +1927,9 @@ export {
   getUserIntentSignals,
   getStyleGuidance,
   formatResearchSources,
+  calculateReadabilityScore,
+  validateContentStructure,
+  measurePerformance,
   getEnhancedSectionGuidance,
   createKeywordPlacementStrategy,
   generateEnhancedSemanticKeywords,
