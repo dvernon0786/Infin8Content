@@ -233,3 +233,101 @@ You must fully embody this agent's persona and follow all activation instruction
 **Priority**: High
 **Story Points**: 8
 **Target Sprint**: Current sprint
+
+## Story Context: 14-2-enhanced-user-prompt-with-seo-strategy
+
+**Status**: ready-for-dev
+
+**Epic**: SEO Optimization Framework
+
+**User Story**: As a content creator, I want enhanced user prompts with integrated SEO strategy guidance so that I can provide clear, SEO-optimized instructions that result in higher-ranking content with better search visibility.
+
+**Acceptance Criteria**:
+- Enhanced user prompt interface with SEO strategy guidance embedded
+- Keyword targeting and density recommendations displayed in prompt
+- Search intent optimization suggestions for content type
+- Semantic keyword variations and LSI keyword recommendations
+- Content structure guidance based on SEO best practices
+- Readability level recommendations (Grade 10-12 target)
+- E-E-A-T principle reminders and guidance in prompts
+- Competitor analysis insights integrated into prompt suggestions
+- Content angle and unique value proposition guidance
+- Target word count recommendations by section type
+- Internal linking opportunities and suggestions
+- Call-to-action optimization guidance
+
+**Technical Requirements**:
+- Enhanced user prompt component in article generation interface
+- SEO strategy API integration for real-time suggestions
+- Keyword research integration from existing keyword data
+- Search intent classification and recommendations
+- Content template suggestions based on target keywords
+- Real-time SEO scoring for prompt inputs
+- Prompt optimization suggestions with impact indicators
+- Integration with existing section-processor.ts architecture
+- User preference storage for prompt customization
+- Performance requirements maintained (<2 second prompt loading)
+
+**Dependencies**:
+- Existing keyword research interface (Epic 3-1)
+- Enhanced system prompt with E-E-A-T principles (Story 14-1)
+- Section-processor.ts service architecture
+- OpenRouter API integration for content generation
+- Next.js 16 and React 19 architecture
+- TypeScript strict mode compliance
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+## Story Context: 14-3-section-templates-system
+
+**Status**: ready-for-dev
+
+**Epic**: Content Generation Enhancement
+
+**User Story**: As a content creator, I want a comprehensive section templates system so that I can generate consistently structured, SEO-optimized articles with appropriate word counts and formatting for each section type.
+
+**Acceptance Criteria**:
+- Section-specific templates with optimized word counts and structure
+- Introduction template: 300-400 words with SEO-optimized hook and thesis statement
+- H2 section templates: 500-700 words with topic authority building
+- H3 subsection templates: detailed explanations with depth and examples
+- Conclusion template: summary and call-to-action (200-300 words)
+- FAQ template: common user questions with snippet-optimized answers
+- Template validation system to ensure content quality standards
+- Dynamic template selection based on article type and target keywords
+- Template customization options for different content verticals
+- Performance optimization for template processing (<500ms per section)
+
+**Technical Requirements**:
+- Section template engine within existing section-processor.ts architecture
+- Template registry system for managing different section types
+- Template validation with word count and structure checks
+- Dynamic template selection based on content analysis
+- Template customization interface for content creators
+- Integration with existing SEO optimization functions
+- Template performance caching for faster generation
+- Template versioning and A/B testing capabilities
+- Template analytics and performance tracking
+- Multi-language template support for future expansion
+
+**Dependencies**:
+- Enhanced system prompt with E-E-A-T principles (Story 14-1)
+- Section-processor.ts service architecture
+- OpenRouter API integration for content generation
+- Research-optimizer.ts and context-manager.ts services
+- Next.js 16 and React 19 architecture
+- TypeScript strict mode compliance
+- SEO optimization framework (Epic 3-1)
+
+**Priority**: High
+**Story Points**: 5
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Templates should be modular and reusable across different content types
+- Each template includes specific structure guidelines and SEO checkpoints
+- Template system supports both predefined and custom templates
+- Integration with existing content generation workflow maintains backward compatibility
+- Template performance monitoring ensures generation speed requirements are met

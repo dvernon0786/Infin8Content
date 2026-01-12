@@ -16,6 +16,225 @@ import {
   clearContextCache,
   getContextStats 
 } from './context-manager'
+import { 
+  getSectionTemplate,
+  processTemplate,
+  type TemplateContext
+} from './section-templates'
+
+// Enhanced SEO Strategy Functions for Story 14.2
+
+/**
+ * Create keyword placement strategy algorithm
+ * Returns strategic placement recommendations for primary and secondary keywords
+ */
+function createKeywordPlacementStrategy(
+  keyword: string, 
+  semanticKeywords: string, 
+  sectionType: string, 
+  targetWordCount: number
+): string {
+  const targetDensity = calculateTargetDensity(targetWordCount)
+  const semanticList = semanticKeywords.split(', ')
+  
+  const strategies = {
+    introduction: `**Strategic Keyword Placement for Introduction:**
+- **Primary Keyword Placement:** Use "${keyword}" in first 50-100 words (1 occurrence)
+- **Semantic Integration:** Weave in ${semanticList.slice(0, 2).join(' or ')} naturally
+- **Hook Integration:** Consider opening with: "The Ultimate Guide to ${keyword}" or "${keyword}: What You Need to Know"
+- **Density Target:** ${targetDensity} total occurrences (aim for 1-2 in intro)`,
+
+    h2: `**Strategic Keyword Placement for H2 Section:**
+- **Primary Keyword Placement:** Include "${keyword}" or semantic variation in first sentence
+- **Semantic Integration:** Use ${semanticList.slice(0, 3).join(', ')} throughout section
+- **Heading Optimization:** Current heading should contain keyword or semantic variation
+- **Density Target:** ${targetDensity} total occurrences distributed evenly
+- **Long-tail Opportunities:** Create H3 subsections with semantic variations`,
+
+    h3: `**Strategic Keyword Placement for H3 Subsection:**
+- **Long-tail Focus:** Use semantic variations like ${semanticList.slice(1, 3).join(' or ')} in heading
+- **Contextual Placement:** Include "${keyword}" naturally when referencing main topic
+- **Density Target:** ${Math.ceil(targetDensity * 0.4)} occurrences (focused use)
+- **Semantic Depth:** Explore specific aspects of ${semanticList[0] || keyword}`,
+
+    conclusion: `**Strategic Keyword Placement for Conclusion:**
+- **Keyword Reinforcement:** Use "${keyword}" 1-2 times in summary context
+- **Semantic Summary:** Reference key concepts: ${semanticList.slice(0, 2).join(', ')}
+- **Final Integration:** End with memorable statement about ${keyword}
+- **Density Target:** ${Math.ceil(targetDensity * 0.3)} occurrences (reinforcement focus)`,
+
+    faq: `**Strategic Keyword Placement for FAQ:**
+- **Question Optimization:** Frame 2-3 questions using "${keyword}" and semantic variations
+- **Answer Integration:** Use semantic keywords naturally in answers
+- **Snippet Focus:** Structure for featured snippets with keyword-rich questions
+- **Density Target:** ${Math.ceil(targetDensity * 0.5)} occurrences across Q&A
+- **Semantic Questions:** "What are the best ${semanticList[0] || keyword} strategies?"`
+  }
+
+  return strategies[sectionType as keyof typeof strategies] || strategies.h2
+}
+
+/**
+ * Implement semantic keyword variation generator with enhanced logic
+ */
+function generateEnhancedSemanticKeywords(primaryKeyword: string, sectionType: string): string {
+  const baseKeywords = generateSemanticKeywords(primaryKeyword)
+  const baseList = baseKeywords.split(', ')
+  
+  // Section-specific semantic enhancements
+  const sectionEnhancements = {
+    introduction: [
+      `${primaryKeyword} overview`,
+      `${primaryKeyword} basics`,
+      `${primaryKeyword} fundamentals`,
+      `getting started with ${primaryKeyword}`,
+      `${primaryKeyword} introduction`
+    ],
+    h2: [
+      `${primaryKeyword} strategies`,
+      `${primaryKeyword} techniques`,
+      `${primaryKeyword} methods`,
+      `${primaryKeyword} best practices`,
+      `advanced ${primaryKeyword}`
+    ],
+    h3: [
+      `specific ${primaryKeyword}`,
+      `${primaryKeyword} details`,
+      `${primaryKeyword} implementation`,
+      `${primaryKeyword} examples`,
+      `${primaryKeyword} applications`
+    ],
+    conclusion: [
+      `${primaryKeyword} summary`,
+      `${primaryKeyword} key takeaways`,
+      `${primaryKeyword} final thoughts`,
+      `${primaryKeyword} recommendations`,
+      `${primaryKeyword} next steps`
+    ],
+    faq: [
+      `${primaryKeyword} questions`,
+      `${primaryKeyword} answers`,
+      `${primaryKeyword} problems`,
+      `${primaryKeyword} solutions`,
+      `${primaryKeyword} common issues`
+    ]
+  }
+
+  const enhancements = sectionEnhancements[sectionType as keyof typeof sectionEnhancements] || sectionEnhancements.h2
+  
+  // Combine base keywords with section-specific enhancements
+  const combinedKeywords = [...baseList, ...enhancements.slice(0, 3)]
+  
+  // Remove duplicates and limit to 8 keywords max
+  const uniqueKeywords = [...new Set(combinedKeywords)].slice(0, 8)
+  
+  return uniqueKeywords.join(', ')
+}
+
+/**
+ * Add target audience consideration logic
+ */
+function generateTargetAudienceGuidance(targetAudience: string, keyword: string, sectionType: string): string {
+  const audienceGuidance = {
+    'Small Business Owners': {
+      introduction: `Focus on practical, budget-friendly ${keyword} strategies that deliver measurable ROI. Emphasize time efficiency and cost-effectiveness.`,
+      h2: `Provide actionable ${keyword} implementations that small teams can execute with limited resources. Include specific tools and platforms suitable for small business budgets.`,
+      h3: `Detail specific ${keyword} tactics with clear step-by-step instructions. Address common small business challenges and constraints.`,
+      conclusion: `Summarize ${keyword} benefits specific to small business growth and competitive advantage. Provide clear next steps for immediate implementation.`,
+      faq: `Address small business-specific concerns about ${keyword} costs, time investment, and resource requirements.`
+    },
+    'General': {
+      introduction: `Make ${keyword} accessible to beginners while providing value for intermediate learners. Focus on universal principles and applications.`,
+      h2: `Balance comprehensive ${keyword} coverage with practical examples. Use relatable scenarios and clear explanations.`,
+      h3: `Explore specific ${keyword} aspects with detailed explanations. Use analogies and real-world examples for clarity.`,
+      conclusion: `Reinforce key ${keyword} concepts with memorable takeaways. Provide resources for continued learning.`,
+      faq: `Cover common ${keyword} questions from beginners to advanced users. Provide clear, actionable answers.`
+    },
+    'Marketing Professionals': {
+      introduction: `Assume existing knowledge and focus on advanced ${keyword} strategies and emerging trends. Emphasize competitive advantages and innovation.`,
+      h2: `Provide sophisticated ${keyword} techniques with industry insights. Include advanced metrics and optimization strategies.`,
+      h3: `Deep dive into technical ${keyword} aspects with expert-level analysis. Include case studies and performance data.`,
+      conclusion: `Synthesize advanced ${keyword} strategies with forward-looking insights. Discuss industry evolution and opportunities.`,
+      faq: `Address expert-level ${keyword} questions about optimization, scaling, and integration with existing strategies.`
+    }
+  }
+
+  const guidance = audienceGuidance[targetAudience as keyof typeof audienceGuidance] || audienceGuidance['General']
+  return guidance[sectionType as keyof typeof guidance] || guidance.h2
+}
+
+/**
+ * Build search intent signal integration
+ */
+function generateSearchIntentGuidance(keyword: string, sectionType: string): string {
+  // Enhanced intent detection
+  const intentType = keyword.match(/how to|what is|why|guide|tutorial/i) ? 'informational' :
+                   keyword.match(/best|top|vs|compare|review/i) ? 'commercial' :
+                   keyword.match(/buy|price|cost|hire|service/i) ? 'transactional' : 
+                   'informational'
+
+  const intentGuidance = {
+    informational: {
+      all: `**Informational Intent Strategy:**
+- **User Goal:** Learn comprehensive information about ${keyword}
+- **Content Approach:** Educational, thorough, and well-structured
+- **Key Elements:** Step-by-step guidance, clear explanations, practical examples
+- **Success Metrics:** User comprehension, bookmarking, sharing
+- **SEO Focus:** Answer user questions completely, establish topical authority`,
+
+      introduction: `Start with the fundamental question users have about ${keyword}. Provide immediate clarity on what they'll learn.`,
+
+      h2: `Structure content to progressively build knowledge about ${keyword}. Use clear headings and logical flow.`,
+
+      h3: `Focus on specific aspects users want to understand about ${keyword}. Provide detailed explanations and examples.`,
+
+      conclusion: `Summarize key learnings about ${keyword}. Provide resources for deeper understanding.`,
+
+      faq: `Anticipate and answer follow-up questions users have about ${keyword}. Structure for featured snippets.`
+    },
+
+    commercial: {
+      all: `**Commercial Intent Strategy:**
+- **User Goal:** Compare options and make informed decisions about ${keyword}
+- **Content Approach:** Comparative analysis, pros/cons, evaluation criteria
+- **Key Elements:** Feature comparisons, pricing insights, recommendations
+- **Success Metrics:** Decision confidence, option clarity, satisfaction
+- **SEO Focus:** Comparison keywords, decision factors, expert recommendations`,
+
+      introduction: `Frame ${keyword} as a solution to a problem. Establish comparison criteria early.`,
+
+      h2: `Provide detailed comparisons of ${keyword} options. Use structured formats for easy evaluation.`,
+
+      h3: `Deep dive into specific ${keyword} features or alternatives. Use comparison tables and checklists.`,
+
+      conclusion: `Summarize decision factors for ${keyword}. Provide clear recommendations based on user needs.`,
+
+      faq: `Address comparison questions about ${keyword}. Help users evaluate options based on their specific needs.`
+    },
+
+    transactional: {
+      all: `**Transactional Intent Strategy:**
+- **User Goal:** Take specific action related to ${keyword}
+- **Content Approach:** Action-oriented, conversion-focused, practical
+- **Key Elements:** Clear calls-to-action, implementation steps, resource links
+- **Success Metrics:** Conversion rates, action completion, user satisfaction
+- **SEO Focus:** Action keywords, implementation guides, resource optimization`,
+
+      introduction: `Establish immediate value proposition for ${keyword}. Create urgency and clear next steps.`,
+
+      h2: `Provide actionable ${keyword} implementation guidance. Include specific tools and resources.`,
+
+      h3: `Detail specific actions users can take with ${keyword}. Use step-by-step formats and checklists.`,
+
+      conclusion: `Reinforce action benefits and provide clear implementation timeline for ${keyword}.`,
+
+      faq: `Address implementation questions about ${keyword}. Remove barriers to action with clear answers.`
+    }
+  }
+
+  const intent = intentGuidance[intentType] || intentGuidance.informational
+  return intent[sectionType as keyof typeof intent] || intent.all
+}
 
 // Enhanced SEO Helper Functions
 function calculateTargetDensity(wordCount: number): number {
@@ -944,7 +1163,23 @@ Generate content that ranks well, engages readers deeply, and establishes topica
   // Enhanced section-specific guidance
   const sectionGuidance = getEnhancedSectionGuidance(sectionInfo.type, sectionInfo.title, keyword, targetWordCount)
   
-  // Build comprehensive user message with SEO optimization
+  // Get section template for structured content generation (Story 14.3)
+  const templateContext: TemplateContext = {
+    sectionType: sectionInfo.type as 'introduction' | 'h2' | 'h3' | 'conclusion' | 'faq',
+    keyword,
+    targetAudience,
+    contentType: 'blog_post' // Default content type
+  }
+  const sectionTemplate = getSectionTemplate(templateContext)
+  const processedTemplate = processTemplate(sectionTemplate, templateContext)
+  
+  // Generate enhanced SEO strategy components
+  const enhancedSemanticKeywords = generateEnhancedSemanticKeywords(keyword, sectionInfo.type)
+  const keywordPlacementStrategy = createKeywordPlacementStrategy(keyword, enhancedSemanticKeywords, sectionInfo.type, targetWordCount)
+  const targetAudienceGuidance = generateTargetAudienceGuidance(targetAudience, keyword, sectionInfo.type)
+  const searchIntentGuidance = generateSearchIntentGuidance(keyword, sectionInfo.type)
+
+  // Build comprehensive user message with enhanced SEO optimization
   const userMessageParts = [
     `**CONTENT BRIEFING**`,
     `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
@@ -957,22 +1192,18 @@ Generate content that ranks well, engages readers deeply, and establishes topica
     '',
     `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
     '',
-    `🎯 **SEO STRATEGY & KEYWORD TARGETING**`,
+    `🎯 **ENHANCED SEO STRATEGY & KEYWORD TARGETING**`,
     '',
     `**Primary Keyword:** "${keyword}"`,
-    `**Search Intent:** ${intentSignals.split('\n')[0]}`,
-    `**Competition Level:** Medium`,
+    `**Enhanced Semantic Keywords:** ${enhancedSemanticKeywords}`,
+    `**Search Intent Strategy:**`,
+    searchIntentGuidance,
     '',
-    `**Keyword Integration Strategy:**`,
-    `- Target Density: ${targetDensity} occurrences (0.5-1.5% density)`,
-    `- First mention: Within first 100 words`,
-    `- H2/H3 usage: Include primary or semantic variation in heading`,
-    `- Natural placement: Prioritize readability over exact matches`,
+    `**Strategic Keyword Placement:**`,
+    keywordPlacementStrategy,
     '',
-    `**Semantic Keywords to Include:** ${semanticKeywords}`,
-    '',
-    `**User Intent Signals:**`,
-    intentSignals,
+    `**Target Audience Alignment:**`,
+    targetAudienceGuidance,
     '',
     `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
     '',
@@ -1006,6 +1237,18 @@ Generate content that ranks well, engages readers deeply, and establishes topica
     '',
     sectionGuidance,
     '',
+    `📋 **STRUCTURED TEMPLATE GUIDANCE**`,
+    '',
+    `**Template Type:** ${sectionTemplate.type}`,
+    `**Target Word Count:** ${sectionTemplate.wordCount} words`,
+    `**SEO Rules:**`,
+    `- Keyword Placement: ${sectionTemplate.seoRules.keywordPlacement}`,
+    `- Density Target: ${sectionTemplate.seoRules.densityTarget}%`,
+    `- Hook Required: ${sectionTemplate.seoRules.hookRequired ? 'Yes' : 'No'}`,
+    '',
+    `**Template Structure Reference:**`,
+    processedTemplate,
+    '',
     `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
     '',
     `🎨 **WRITING STYLE & AUDIENCE**`,
@@ -1023,14 +1266,15 @@ Generate content that ranks well, engages readers deeply, and establishes topica
     '',
     `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
     '',
-    `✅ **QUALITY CHECKLIST**`,
+    `✅ **ENHANCED QUALITY CHECKLIST**`,
     '',
     `**SEO Optimization:**`,
-    `☐ Primary keyword appears ${targetDensity} times naturally`,
-    `☐ Keyword in first 100 words`,
-    `☐ Semantic keywords integrated throughout`,
-    `☐ Heading includes keyword or variation`,
-    `☐ Content matches search intent for "${keyword}"`,
+    `☐ Primary keyword "${keyword}" appears ${targetDensity} times naturally`,
+    `☐ Enhanced semantic keywords integrated: ${enhancedSemanticKeywords}`,
+    `☐ Strategic keyword placement implemented per section type`,
+    `☐ Search intent alignment: ${searchIntentGuidance.split('\n')[0]}`,
+    `☐ Target audience considerations addressed`,
+    `☐ Heading includes keyword or semantic variation`,
     '',
     `**Content Quality:**`,
     `☐ Word count: ${targetWordCount - 50} to ${targetWordCount + 50} words`,
@@ -1059,10 +1303,11 @@ Generate content that ranks well, engages readers deeply, and establishes topica
     '',
     `Create ${targetWordCount} words of comprehensive, SEO-optimized content that:`,
     `1. Ranks for "${keyword}" while genuinely helping readers`,
-    `2. Satisfies the ${intentSignals.split('\n')[0]} search intent completely`,
-    `3. Establishes topical authority through depth and citations`,
-    `4. Engages ${targetAudience} with ${writingStyle.toLowerCase()} writing`,
-    `5. Integrates seamlessly with previous content`,
+    `2. Implements enhanced SEO strategy with semantic keywords and strategic placement`,
+    `3. Satisfies search intent completely with audience-aligned content`,
+    `4. Establishes topical authority through depth and citations`,
+    `5. Engages ${targetAudience} with ${writingStyle.toLowerCase()} writing`,
+    `6. Integrates seamlessly with previous content`,
     '',
     `**Output Format:** Pure markdown with proper heading hierarchy (start with ## for H2 or ### for H3)`
   ]
@@ -1185,7 +1430,11 @@ export {
   getUserIntentSignals,
   getStyleGuidance,
   formatResearchSources,
-  getEnhancedSectionGuidance
+  getEnhancedSectionGuidance,
+  createKeywordPlacementStrategy,
+  generateEnhancedSemanticKeywords,
+  generateTargetAudienceGuidance,
+  generateSearchIntentGuidance
 }
 
 /**

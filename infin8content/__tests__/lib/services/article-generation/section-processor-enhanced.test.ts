@@ -1,6 +1,7 @@
 // Enhanced User Prompt SEO Strategy Tests
 // Story 14.2: Enhanced User Prompt with SEO Strategy
 
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   calculateTargetDensity,
   generateSemanticKeywords,
