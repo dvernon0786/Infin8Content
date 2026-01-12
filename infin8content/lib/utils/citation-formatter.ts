@@ -20,7 +20,11 @@ export function formatInTextCitation(source: TavilySource, context: string = 'Ac
   const title = source.title || 'Source'
   const url = source.url || '#'
   
-  return `${context} [${title}](${url}), `
+  // Clean up the title and URL to prevent broken markdown
+  const cleanTitle = title.replace(/[\[\]]/g, '').replace(/\n/g, ' ').trim()
+  const cleanUrl = url.replace(/[\[\]]/g, '').trim()
+  
+  return `${context} [${cleanTitle}](${cleanUrl}), `
 }
 
 /**
@@ -35,10 +39,15 @@ export function formatReference(source: TavilySource): string {
     ? new Date(source.published_date).getFullYear().toString()
     : ''
   
-  let reference = `- [${title}](${url})`
+  // Clean up the title and URL to prevent broken markdown
+  const cleanTitle = title.replace(/[\[\]]/g, '').replace(/\n/g, ' ').trim()
+  const cleanUrl = url.replace(/[\[\]]/g, '').trim()
+  const cleanAuthor = author.replace(/[\[\]]/g, '').trim()
   
-  if (author) {
-    reference += ` - ${author}`
+  let reference = `- [${cleanTitle}](${cleanUrl})`
+  
+  if (cleanAuthor) {
+    reference += ` - ${cleanAuthor}`
   }
   
   if (date) {
@@ -157,7 +166,7 @@ export function formatCitationsForMarkdown(
     }
     
     // Find sentence endings (., !, ?) but not in URLs or markdown links
-    const sentences = paragraph.split(/(?<=[.!?])\s+(?=[A-Z])/).filter(s => s.trim().length > 20)
+    const sentences = paragraph.split(/(?<=[.!?])\s+(?=[A-Z])|(?<=[.!?])\s+(?=[\n\r]|$)/).filter(s => s.trim().length > 20)
     
     if (sentences.length > 0) {
       // Insert citations at natural breaks (after 1st, 2nd, etc. sentences)
@@ -175,20 +184,31 @@ export function formatCitationsForMarkdown(
     }
   })
   
-  // If we didn't find enough insertion points, add them at paragraph breaks
+  // If we didn't find enough insertion points, add them at paragraph breaks or end of content
   if (insertionPoints.length < citationsToInclude.length) {
     paragraphs.forEach((paragraph, pIndex) => {
       if (insertionPoints.length >= citationsToInclude.length) return
       if (paragraph.trim().startsWith('#')) return
       
       // Insert at end of paragraph if it's substantial
-      if (paragraph.trim().length > 50) {
+      if (paragraph.trim().length > 10) {
         insertionPoints.push({
           paragraphIndex: pIndex,
           position: paragraph.length
         })
       }
     })
+    
+    // If still not enough points, add at the end of the last paragraph
+    if (insertionPoints.length < citationsToInclude.length && paragraphs.length > 0) {
+      const lastParagraphIndex = paragraphs.length - 1
+      if (!paragraphs[lastParagraphIndex].trim().startsWith('#')) {
+        insertionPoints.push({
+          paragraphIndex: lastParagraphIndex,
+          position: paragraphs[lastParagraphIndex].length
+        })
+      }
+    }
   }
   
   // Sort insertion points by position (reverse order to maintain indices when inserting)
@@ -209,12 +229,23 @@ export function formatCitationsForMarkdown(
       const before = paragraph.substring(0, point.position)
       const after = paragraph.substring(point.position)
       
-      // Insert citation naturally (with proper spacing)
+      // Insert citation naturally (with proper spacing and punctuation)
       const citationText = citation.trim()
-      // Remove trailing comma if citation already has one
-      const cleanCitation = citationText.endsWith(',') ? citationText : citationText + ','
+      // Remove trailing comma and add proper punctuation
+      let cleanCitation = citationText.replace(/,$/, '')
       
-      paragraphs[point.paragraphIndex] = before + (before.endsWith(' ') ? '' : ' ') + cleanCitation + ' ' + after.trim()
+      // Ensure proper spacing and punctuation
+      if (before.trim().endsWith('.')) {
+        // If sentence ends with period, add citation with comma
+        cleanCitation = ` ${cleanCitation},`
+      } else if (!before.trim().endsWith(' ')) {
+        // Add space before citation if needed
+        cleanCitation = ` ${cleanCitation},`
+      } else {
+        cleanCitation = `${cleanCitation},`
+      }
+      
+      paragraphs[point.paragraphIndex] = before + cleanCitation + ' ' + after.trim()
     }
   })
   
@@ -231,7 +262,13 @@ export function formatCitationsForMarkdown(
     // Check if content already has a References section
     if (!contentWithCitations.includes('## References')) {
       contentWithCitations += '\n\n## References\n\n'
-      contentWithCitations += referencesToInclude.join('\n')
+      // Ensure proper formatting for reference list
+      const formattedReferences = referencesToInclude.map(ref => {
+        // Clean up reference formatting
+        const cleanRef = ref.replace(/\s*-\s*/g, ' - ').replace(/\s*\(\s*/g, ' (').replace(/\s*\)\s*/g, ')')
+        return cleanRef
+      })
+      contentWithCitations += formattedReferences.join('\n')
     }
   }
   

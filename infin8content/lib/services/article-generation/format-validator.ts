@@ -562,33 +562,47 @@ export function applyFormatCorrections(
   // Apply paragraph length corrections
   const paragraphIssues = issues.filter(i => i.type === 'paragraph');
   if (paragraphIssues.length > 0) {
-    // Always apply some correction if there are paragraph issues
-    // Even if it's just one sentence, we can split it logically
-    const sentences = correctedContent.split(/[.!?]+/).filter(s => s.trim().length > 0);
-    
-    if (sentences.length >= 1) {
-      // For single long sentences, split them at logical points
-      if (sentences.length === 1 && correctedContent.length > 120) {
-        const words = correctedContent.split(' ');
-        const midPoint = Math.floor(words.length / 2);
-        const firstHalf = words.slice(0, midPoint).join(' ');
-        const secondHalf = words.slice(midPoint).join(' ');
-        correctedContent = `${firstHalf}.\n\n${secondHalf}.`;
-      } else if (sentences.length > 1) {
-        // For multiple sentences, group them into smaller paragraphs
-        const chunks = [];
-        for (let i = 0; i < sentences.length; i += 2) { // Split every 2 sentences
-          const chunk = sentences.slice(i, i + 2).join('. ').trim();
-          if (chunk) chunks.push(chunk);
-        }
-        // Ensure the content is different by adding explicit newlines
-        correctedContent = chunks.join('.\n\n');
-        // Add final period if missing
-        if (!correctedContent.endsWith('.')) {
-          correctedContent += '.';
+    // Always apply corrections for paragraph issues
+    const paragraphs = correctedContent.split(/\n\n+/);
+    const correctedParagraphs = paragraphs.map(paragraph => {
+      // Skip headings (lines starting with #)
+      if (paragraph.trim().startsWith('#')) {
+        return paragraph;
+      }
+      
+      // Check if paragraph needs correction (more than 4 sentences or 150 characters)
+      const sentences = paragraph.split(/[.!?]+/).filter(s => s.trim().length > 0);
+      if (sentences.length > 4 || paragraph.length > 150) {
+        // Split long paragraphs into smaller ones
+        if (sentences.length > 1) {
+          // Multiple sentences: split into 2-3 sentences each
+          const chunks = [];
+          for (let i = 0; i < sentences.length; i += 2) {
+            const chunk = sentences.slice(i, i + 2).join('. ').trim();
+            if (chunk) {
+              // Ensure chunk ends with a period
+              if (!chunk.endsWith('.')) {
+                chunks.push(chunk + '.');
+              } else {
+                chunks.push(chunk);
+              }
+            }
+          }
+          return chunks.join('\n\n');
+        } else {
+          // Single long sentence: split at logical points
+          const words = paragraph.split(' ');
+          const midPoint = Math.floor(words.length / 2);
+          const firstHalf = words.slice(0, midPoint).join(' ');
+          const secondHalf = words.slice(midPoint).join(' ');
+          return `${firstHalf}.\n\n${secondHalf}.`;
         }
       }
-    }
+      
+      return paragraph;
+    });
+    
+    correctedContent = correctedParagraphs.join('\n\n');
   }
 
   return correctedContent;
