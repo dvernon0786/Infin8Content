@@ -793,6 +793,68 @@ You must fully embody this agent's persona and follow all activation instruction
 - Competitor analysis provides context for content quality benchmarks
 - Mobile and page speed checks ensure technical SEO requirements are met
 
+## Story Context: 22-2-performance-metrics-dashboard
+
+**Status**: ready-for-dev
+
+**Epic**: Content Generation System Optimization
+
+**User Story**: As a content manager, I want a comprehensive performance metrics dashboard so that I can monitor article generation efficiency, track system performance, and identify optimization opportunities in real-time.
+
+**Acceptance Criteria**:
+- Real-time dashboard displaying key performance metrics for article generation
+- Generation speed metrics showing average time per article and per section
+- API usage tracking with cost analysis and budget monitoring
+- Success/failure rate visualization with trend analysis over time
+- Concurrent generation capacity monitoring and system load indicators
+- Quality score distribution and content performance analytics
+- Historical performance data with date range filtering capabilities
+- Performance alerts and notifications for threshold breaches
+- Export functionality for performance reports and analytics data
+- Mobile-responsive dashboard design for on-the-go monitoring
+- User role-based access to different metric levels and reports
+- Integration with existing monitoring and alerting systems
+
+**Technical Requirements**:
+- Dashboard UI components built with React and shadcn/ui framework
+- Real-time data visualization using Chart.js or similar charting library
+- WebSocket integration for live performance metric updates
+- Performance metrics API endpoint with efficient data aggregation
+- Time-series database integration for historical performance data
+- Real-time alerting system with configurable thresholds
+- Data export functionality with CSV/PDF format support
+- Responsive design implementation for mobile and desktop access
+- Authentication and authorization integration with existing user system
+- Performance optimization for dashboard loading (<2 seconds)
+- Caching system for frequently accessed metric data
+- Integration with existing cost tracking and monitoring systems
+
+**Dependencies**:
+- Real-time infrastructure from Story 15-1 (article status display)
+- Performance monitoring system integration
+- WebSocket infrastructure setup
+- Next.js 16 and React 19 architecture
+- TypeScript strict mode compliance
+- shadcn/ui component library
+- Existing cost tracking and API usage monitoring
+- User authentication and authorization system
+- Database for performance metrics storage
+- Chart visualization library integration
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Dashboard should provide actionable insights for performance optimization
+- Real-time updates enable immediate response to performance issues
+- Historical data tracking supports long-term performance analysis
+- Mobile design ensures accessibility for content managers on any device
+- Integration with existing systems maintains data consistency
+- Export functionality supports business reporting requirements
+- Role-based access ensures appropriate data visibility levels
+- Performance optimization ensures dashboard remains responsive under load
+
 ## Story Context: 20-4-smart-quality-retry-system
 
 **Status**: ready-for-dev
