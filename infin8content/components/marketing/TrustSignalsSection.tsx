@@ -26,7 +26,7 @@ export function TrustSignalsSection({
       name: "Sarah Chen",
       company: "TechCorp",
       role: "Content Director",
-      headshot: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face&auto=format",
+      headshot: "https://images.unsplash.com/photo-1494790108755-2616b332c1ca?w=400&h=400&fit=crop&crop=face&auto=format",
       quote: "Infin8Content transformed our content strategy. We're producing 10x more high-quality content while maintaining perfect brand consistency across all channels.",
       outcome: "10x faster content creation, 85% improvement in brand consistency"
     },
@@ -42,7 +42,7 @@ export function TrustSignalsSection({
       name: "Jamie Foster",
       company: "EnterpriseCo", 
       role: "Head of Content",
-      headshot: "https://images.unsplash.com/photo-1494790108755-2616b332c1ca?w=400&h=400&fit=crop&crop=face&auto=format",
+      headshot: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face&auto=format",
       quote: "The collaboration features are game-changing. Our global teams work seamlessly together, and the real-time progress tracking keeps everyone aligned.",
       outcome: "Seamless global collaboration, 40% faster project completion"
     },
@@ -75,7 +75,7 @@ export function TrustSignalsSection({
     },
     {
       name: "Apple",
-      logoUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726a?w=200&h=100&fit=crop&auto=format",
+      logoUrl: "https://images.unsplash.com/photo-1572024477694-6c3cfafe791e?w=200&h=100&fit=crop&auto=format",
       altText: "Apple store building"
     },
     {
@@ -110,7 +110,7 @@ export function TrustSignalsSection({
     },
     {
       name: "Adobe",
-      logoUrl: "https://images.unsplash.com/photo-1559028012-cdad1cb64c01?w=200&h=100&fit=crop&auto=format",
+      logoUrl: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=200&h=100&fit=crop&auto=format",
       altText: "Adobe office building"
     },
     {

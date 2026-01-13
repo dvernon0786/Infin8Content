@@ -85,21 +85,12 @@ export async function GET(request: Request) {
           citations_count,
           api_cost,
           error_message,
-          -- Story 22.1 enhanced fields - handle gracefully if not yet migrated
-          COALESCE(parallel_sections, '[]') as parallel_sections,
-          COALESCE(research_api_calls, 0) as research_api_calls,
-          COALESCE(cache_hit_rate, 0.0) as cache_hit_rate,
-          COALESCE(retry_attempts, 0) as retry_attempts,
-          estimated_completion,
-          COALESCE(performance_metrics, '{}') as performance_metrics,
-          COALESCE(research_phase, '{}') as research_phase,
-          COALESCE(context_management, '{}') as context_management,
           updated_at
         )
       `)
       .eq('org_id', currentUser.org_id)
       .in('status', statusFilter)
-      .order('updated_at', { ascending: false }) // Order by updated_at for real-time dashboard
+      .order('updated_at', { ascending: false })
       .limit(limit) as unknown as Promise<{ data: any[]; error: any }>)
 
     if (error) {
@@ -121,7 +112,7 @@ export async function GET(request: Request) {
         position: article.status === 'queued' 
           ? queuedArticles.findIndex(q => q.id === article.id) + 1 
           : undefined,
-        // Add enhanced progress data for Story 22.1 visualization
+        // Add progress data for visualization
         progress: progressData ? {
           status: progressData.status,
           progress_percentage: progressData.progress_percentage || 0,
@@ -133,15 +124,6 @@ export async function GET(request: Request) {
           citations_count: progressData.citations_count || 0,
           api_cost: progressData.api_cost || 0,
           error_message: progressData.error_message,
-          // Story 22.1 enhancements
-          parallel_sections: progressData.parallel_sections || [],
-          research_api_calls: progressData.research_api_calls || 0,
-          cache_hit_rate: progressData.cache_hit_rate || 0,
-          retry_attempts: progressData.retry_attempts || 0,
-          estimated_completion: progressData.estimated_completion,
-          performance_metrics: progressData.performance_metrics || {},
-          research_phase: progressData.research_phase || {},
-          context_management: progressData.context_management || {},
           updated_at: progressData.updated_at
         } : null,
         // Remove the raw article_progress data to clean up the response
