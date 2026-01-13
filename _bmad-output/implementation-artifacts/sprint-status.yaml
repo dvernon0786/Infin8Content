@@ -325,7 +325,7 @@ development_status:
   # Epic 23: Enhanced Dashboard Experience (HIGH - Sprint 2)
   epic-23: in-progress
   # Sprint 2 Priority - Multi-article management, activity feeds
-  23-1-multi-article-management-interface: ready-for-dev
+  23-1-multi-article-management-interface: review
   23-2-advanced-activity-feed: backlog
   epic-23-retrospective: optional
 

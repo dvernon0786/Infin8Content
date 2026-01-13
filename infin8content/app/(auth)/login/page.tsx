@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import styles from './login.module.css'
 
 function LoginPageContent() {
   const [email, setEmail] = useState('')
@@ -102,13 +103,21 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-        <h1 className="text-2xl font-bold text-center text-gray-900">Sign In</h1>
+    <div className={styles.container}>
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <div className={styles.logo}>
+            <span className={styles.logoText}>IC</span>
+          </div>
+          <h1 className={styles.title}>Sign In</h1>
+          <p className={styles.subtitle}>
+            Welcome back to Infin8Content
+          </p>
+        </div>
         
         {errors.form && (
           <div
-            className="mt-1 text-sm flex items-center gap-1 text-red-600 bg-red-50 p-3 rounded-md border border-red-200"
+            className={styles.formError}
             role="alert"
             aria-live="polite"
           >
@@ -116,9 +125,9 @@ function LoginPageContent() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-900">
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.formGroup}>
+            <label htmlFor="email" className={styles.label}>
               Email Address *
             </label>
             <input
@@ -128,20 +137,21 @@ function LoginPageContent() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onBlur={() => validateEmail(email)}
-              className="mt-1 block w-full px-3 py-3 text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={styles.input}
               required
               aria-invalid={errors.email ? 'true' : 'false'}
               aria-describedby={errors.email ? 'email-error' : undefined}
+              placeholder="Enter your email address"
             />
             {errors.email && (
-              <p id="email-error" className="mt-1 text-sm flex items-center gap-1 text-red-600">
+              <p id="email-error" className={styles.error}>
                 <span aria-hidden="true">⚠</span> {errors.email}
               </p>
             )}
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-900">
+          <div className={styles.formGroup}>
+            <label htmlFor="password" className={styles.label}>
               Password *
             </label>
             <input
@@ -151,42 +161,50 @@ function LoginPageContent() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onBlur={() => validatePassword(password)}
-              className="mt-1 block w-full px-3 py-3 text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={styles.input}
               required
               aria-invalid={errors.password ? 'true' : 'false'}
               aria-describedby={errors.password ? 'password-error' : undefined}
+              placeholder="Enter your password"
             />
             {errors.password && (
-              <p id="password-error" className="mt-1 text-sm flex items-center gap-1 text-red-600">
+              <p id="password-error" className={styles.error}>
                 <span aria-hidden="true">⚠</span> {errors.password}
               </p>
             )}
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="text-sm">
-              <Link href="/forgot-password" className="text-blue-600 hover:text-blue-500">
-                Forgot password?
-              </Link>
-            </div>
+          <div className={styles.forgotPassword}>
+            <Link href="/forgot-password" className={styles.forgotPasswordLink}>
+              Forgot password?
+            </Link>
           </div>
 
           <button
             type="submit"
             data-testid="login-button"
             disabled={isSubmitting}
-            className="w-full flex justify-center py-3 px-4 h-10 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className={styles.button}
           >
-            {isSubmitting ? 'Signing in...' : 'Sign In'}
+            {isSubmitting ? (
+              <>
+                <div className={styles.spinner}></div>
+                Signing in...
+              </>
+            ) : (
+              'Sign In'
+            )}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-600">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-blue-600 hover:text-blue-500">
-            Register
-          </Link>
-        </p>
+        <div className={styles.footer}>
+          <p className={styles.footerText}>
+            Don&apos;t have an account?{' '}
+            <Link href="/register" className={styles.link}>
+              Register
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   )
@@ -195,9 +213,9 @@ function LoginPageContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-          <h1 className="text-2xl font-bold text-center">Loading...</h1>
+      <div className={styles.container}>
+        <div className={styles.card}>
+          <h1 className={styles.title}>Loading...</h1>
         </div>
       </div>
     }>

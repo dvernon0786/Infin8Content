@@ -34,7 +34,7 @@ So that I can access the platform after completing payment.
 
 ## Tasks / Subtasks
 
-- [x] Task 1: Create registration page UI (AC: 1, 2, 3)
+- [x] Task 1: Create registration page UI (AC: 1, 2)
   - [x] Create `app/(auth)/register/page.tsx` route
   - [x] Implement registration form with email and password fields
   - [x] Add form validation (email format, password minimum 8 characters)
@@ -48,11 +48,16 @@ So that I can access the platform after completing payment.
   - [x] Create `app/api/auth/register/route.ts` API route
   - [x] Use Supabase server client from `lib/supabase/server.ts`
   - [x] Validate request body (email, password) using Zod schema
-  - [x] Call `supabase.auth.signUp()` with email and password
-  - [x] Handle duplicate email errors (return clear error message)
-  - [x] Handle validation errors (return appropriate error messages)
+  - [x] Create user in Supabase Auth with email and password
+  - [x] Create user record in `users` table with auth_user_id reference
+  - [x] Handle duplicate email errors with user-friendly messages
   - [x] Return success response with user data
 
+- [x] Task 3: Implement email verification flow (AC: 1)
+  - [x] Redirect to `/verify-email` page after successful registration
+  - [x] Pass email parameter to verification page
+  - [x] Store invitation token if present in registration flow
+  - [x] Handle email verification in separate story (Story 1.5)
 - [x] Task 3: Create database migration to link Auth and make org_id nullable (AC: 1)
   - [x] **CRITICAL FIRST STEP:** Create migration file: `supabase/migrations/YYYYMMDDHHMMSS_link_auth_users.sql`
   - [x] Make `org_id` nullable: `ALTER TABLE users ALTER COLUMN org_id DROP NOT NULL;` (REQUIRED - registration happens before organization creation)
@@ -93,6 +98,25 @@ So that I can access the platform after completing payment.
 
 - [x] Task 7: Add form submission and error handling (AC: 1, 2, 3)
   - [x] Implement form submission handler in registration page
+  - [x] Handle loading states and disable submit button during submission
+  - [x] Display success message and redirect to email verification page
+  - [x] Handle API errors and display user-friendly error messages
+  - [x] Handle network errors and display generic error message
+  - [x] Add form reset on successful submission
+
+- [x] Task 8: UX Design System Implementation (AC: 1, 2)
+  - [x] Create CSS module `register.module.css` with design system compliance
+  - [x] Implement brand colors: Primary Blue (#217CEB), Primary Purple (#4A42CC)
+  - [x] Apply typography hierarchy: H1 (36px), Body (16px), Labels (14px)
+  - [x] Add gradient background (#F4F4F6 → #E5E7EB) for visual depth
+  - [x] Style card with 12px border radius and enhanced shadows
+  - [x] Implement brand logo with gradient circle and "IC" initials
+  - [x] Add subtitle: "Join Infin8Content and start creating AI-powered content"
+  - [x] Style inputs with focus states using brand colors
+  - [x] Implement gradient primary button with hover effects
+  - [x] Add loading spinner animation for submit state
+  - [x] Style error messages with proper visual hierarchy
+  - [x] Ensure mobile responsiveness with touch-friendly interactions
   - [x] Call registration API route on form submit
   - [x] Handle API errors (display error messages to user)
   - [x] Show loading state during submission

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Suspense } from 'react'
+import styles from './register.module.css'
 
 function RegisterPageContent() {
   const router = useRouter()
@@ -87,12 +88,21 @@ function RegisterPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-        <h1 className="text-2xl font-bold text-center text-gray-900">Create Account</h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-900">
+    <div className={styles.container}>
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <div className={styles.logo}>
+            <span className={styles.logoText}>IC</span>
+          </div>
+          <h1 className={styles.title}>Create Account</h1>
+          <p className={styles.subtitle}>
+            Join Infin8Content and start creating AI-powered content
+          </p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.formGroup}>
+            <label htmlFor="email" className={styles.label}>
               Email Address *
             </label>
             <input
@@ -101,20 +111,21 @@ function RegisterPageContent() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onBlur={() => validateEmail(email)}
-              className="mt-1 block w-full px-3 py-3 text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={styles.input}
               required
               aria-invalid={errors.email ? 'true' : 'false'}
               aria-describedby={errors.email ? 'email-error' : undefined}
+              placeholder="Enter your email address"
             />
             {errors.email && (
-              <p id="email-error" className="mt-1 text-sm flex items-center gap-1 text-red-600">
+              <p id="email-error" className={styles.error}>
                 <span aria-hidden="true">⚠</span> {errors.email}
               </p>
             )}
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-900">
+          <div className={styles.formGroup}>
+            <label htmlFor="password" className={styles.label}>
               Password *
             </label>
             <input
@@ -123,21 +134,22 @@ function RegisterPageContent() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onBlur={() => validatePassword(password)}
-              className="mt-1 block w-full px-3 py-3 text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={styles.input}
               required
               minLength={8}
               aria-invalid={errors.password ? 'true' : 'false'}
               aria-describedby={errors.password ? 'password-error' : undefined}
+              placeholder="Create a strong password"
             />
             {errors.password && (
-              <p id="password-error" className="mt-1 text-sm flex items-center gap-1 text-red-600">
+              <p id="password-error" className={styles.error}>
                 <span aria-hidden="true">⚠</span> {errors.password}
               </p>
             )}
           </div>
 
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-900">
+          <div className={styles.formGroup}>
+            <label htmlFor="confirmPassword" className={styles.label}>
               Confirm Password *
             </label>
             <input
@@ -146,13 +158,14 @@ function RegisterPageContent() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               onBlur={() => validateConfirmPassword(confirmPassword)}
-              className="mt-1 block w-full px-3 py-3 text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={styles.input}
               required
               aria-invalid={errors.confirmPassword ? 'true' : 'false'}
               aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
+              placeholder="Confirm your password"
             />
             {errors.confirmPassword && (
-              <p id="confirmPassword-error" className="mt-1 text-sm flex items-center gap-1 text-red-600">
+              <p id="confirmPassword-error" className={styles.error}>
                 <span aria-hidden="true">⚠</span> {errors.confirmPassword}
               </p>
             )}
@@ -161,18 +174,27 @@ function RegisterPageContent() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full flex justify-center py-2.5 px-4 h-10 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className={styles.button}
           >
-            {isSubmitting ? 'Creating Account...' : 'Create Account'}
+            {isSubmitting ? (
+              <>
+                <div className={styles.spinner}></div>
+                Creating Account...
+              </>
+            ) : (
+              'Create Account'
+            )}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <Link href="/login" className="text-blue-600 hover:text-blue-500">
-            Sign in
-          </Link>
-        </p>
+        <div className={styles.footer}>
+          <p className={styles.footerText}>
+            Already have an account?{' '}
+            <Link href="/login" className={styles.link}>
+              Sign in
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   )
@@ -181,9 +203,9 @@ function RegisterPageContent() {
 export default function RegisterPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-          <h1 className="text-2xl font-bold text-center">Loading...</h1>
+      <div className={styles.container}>
+        <div className={styles.card}>
+          <h1 className={styles.title}>Loading...</h1>
         </div>
       </div>
     }>
