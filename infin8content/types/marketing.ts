@@ -43,3 +43,28 @@ export interface ValuePropositionProps {
     icon?: string;
   }>;
 }
+
+export interface ProblemSolutionCardProps {
+  problem: string;
+  solution: string;
+  benefit: string;
+  className?: string;
+}
+
+export interface ProductCapabilityCardProps {
+  iconName: string;
+  title: string;
+  description: string;
+  learnMoreLink?: string;
+  className?: string;
+}
+
+export interface ProblemSolutionSectionProps {
+  cards: ProblemSolutionCardProps[];
+  className?: string;
+}
+
+export interface ProductCapabilitiesSectionProps {
+  capabilities: ProductCapabilityCardProps[];
+  className?: string;
+}
