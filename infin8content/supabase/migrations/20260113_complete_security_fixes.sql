@@ -3,7 +3,8 @@
 -- Date: 2026-01-13
 -- Instructions: Apply this SQL manually to your Supabase database
 
--- Fix 1: Add search_path to sync_progress_status_to_article function
+-- Fix 1: Drop and recreate sync_progress_status_to_article function with search_path
+DROP FUNCTION IF EXISTS sync_progress_status_to_article();
 CREATE OR REPLACE FUNCTION sync_progress_status_to_article()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -66,7 +67,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- Fix 2: Add search_path to sync_progress_status_to_article_logged function
+-- Fix 2: Drop and recreate sync_progress_status_to_article_logged function with search_path
+DROP FUNCTION IF EXISTS sync_progress_status_to_article_logged();
 CREATE OR REPLACE FUNCTION sync_progress_status_to_article_logged()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -140,7 +142,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- Fix 3: Add search_path to cleanup_article_progress_sync function
+-- Fix 3: Drop and recreate cleanup_article_progress_sync function with search_path
+DROP FUNCTION IF EXISTS cleanup_article_progress_sync();
 CREATE OR REPLACE FUNCTION cleanup_article_progress_sync()
 RETURNS void AS $$
 BEGIN
@@ -161,7 +164,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- Fix 4: Add search_path to sync_article_status_to_progress function
+-- Fix 4: Drop and recreate sync_article_status_to_progress function with search_path
+DROP FUNCTION IF EXISTS sync_article_status_to_progress();
 CREATE OR REPLACE FUNCTION sync_article_status_to_progress()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -207,7 +211,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- Fix 5: Add search_path to sync_article_status_to_progress_logged function
+-- Fix 5: Drop and recreate sync_article_status_to_progress_logged function with search_path
+DROP FUNCTION IF EXISTS sync_article_status_to_progress_logged();
 CREATE OR REPLACE FUNCTION sync_article_status_to_progress_logged()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -264,7 +269,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- Fix 6: Add search_path to update_updated_at_column function
+-- Fix 6: Drop and recreate update_updated_at_column function with search_path
+DROP FUNCTION IF EXISTS update_updated_at_column();
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
