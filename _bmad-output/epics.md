@@ -12153,3 +12153,300 @@ So that **the product meets launch standards and serves all users effectively**.
 
 ---
 
+## Epic 29: Marketing & Homepage (HIGH - Pre-Launch)
+
+**Goal:** Create compelling marketing homepage with hero section, product capabilities, and trust signals to drive user acquisition and conversion.
+
+**FRs covered:** Marketing-specific requirements from UX Design Specification
+
+### Story 29.1: Homepage Hero Section & Value Proposition
+
+As a **marketing manager**, 
+I want **compelling hero section with clear value proposition**, 
+So that **visitors immediately understand what Infin8Content does and its benefits**.
+
+**Acceptance Criteria:**
+
+**Given** visitors land on the homepage
+**When** viewing the hero section
+**Then** headline clearly communicates the value proposition
+**And** subtext defines the problem and target audience
+
+**Given** users need to take action
+**When** viewing CTAs
+**Then** primary CTA button uses brand gradient (#217CEB → #4A42CC)
+**And** secondary ghost button provides alternative action
+
+**Given** visual communication is important
+**When** designing the hero
+**Then** product UI mock or abstract AI flow visual is displayed
+**And** visual aligns with brand colors and design system
+
+### Story 29.2: Problem → Solution & Product Capabilities
+
+As a **content creator**, 
+I want **clear explanation of how Infin8Content solves my problems**, 
+So that **I understand the specific benefits for my use case**.
+
+**Acceptance Criteria:**
+
+**Given** visitors need to understand the solution
+**When** viewing the problem → solution section
+**Then** 3-4 cards display problem statement, solution, and outcome/benefit
+**And** cards are arranged in horizontal layout
+
+**Given** users want to see capabilities
+**When** scrolling to product capabilities section
+**Then** grid of feature cards displays with icons (outlined, blue/purple)
+**And** each card has title + one-sentence explanation + "Learn more" link
+
+### Story 29.3: Trust Signals & Social Proof
+
+As a **potential customer**, 
+I want **evidence that Infin8Content is trustworthy and effective**, 
+So that **I feel confident signing up and using the platform**.
+
+**Acceptance Criteria:**
+
+**Given** trust is critical for conversion
+**When** viewing trust signals section
+**Then** metrics with context are displayed (e.g., "1,250+ articles generated")
+**And** testimonials show headshots + quotes from satisfied users
+
+**Given** credibility matters
+**When** viewing social proof
+**Then** client logos are displayed
+**And** security badges show compliance and certifications
+
+---
+
+## Epic 30: Design System Implementation (CRITICAL - Foundation)
+
+**Goal:** Implement comprehensive design system with CSS tokens, component library, and design guidelines for consistent UI/UX across the platform.
+
+**FRs covered:** Design system foundation from UX Design Specification
+
+### Story 30.1: CSS Design Tokens & Variables
+
+As a **frontend developer**, 
+I want **centralized design tokens for colors, spacing, and typography**, 
+So that **I can maintain design consistency and make global changes easily**.
+
+**Acceptance Criteria:**
+
+**Given** design consistency is required
+**When** implementing components
+**Then** all colors use CSS variables (--color-primary-blue, --color-primary-purple, etc.)
+**And** spacing uses standardized tokens (--spacing-xs through --spacing-4xl)
+
+**Given** typography needs consistency
+**When** building components
+**Then** font sizes use tokens (--font-h1, --font-h2, --font-body, etc.)
+**And** border radius uses tokens (--radius-sm through --radius-xl)
+
+**Given** brand gradient is important
+**When** styling primary actions
+**Then** gradient token is used (--gradient-brand: linear-gradient(90deg, #217CEB 0%, #4A42CC 100%))
+**And** gradient is applied left to right only
+
+### Story 30.2: Component Library & Patterns
+
+As a **UI engineer**, 
+I want **reusable component library following design specifications**, 
+So that **all UI elements are consistent and maintainable**.
+
+**Acceptance Criteria:**
+
+**Given** components need standardization
+**When** building UI elements
+**Then** button components support Primary, Secondary, Ghost, and Destructive variants
+**And** each variant has Default, Hover, Disabled, and Loading states
+
+**Given** progress tracking is needed
+**When** displaying generation progress
+**Then** progress indicators use brand gradient bar
+**And** section progress shows "Generating Section X: [Section Name]" text
+
+**Given** status communication is critical
+**When** displaying article status
+**Then** confidence badges show High (green), Medium (amber), Low (amber), Very Low (red)
+**And** article state badges show Draft (blue), In Review (amber), Approved (green), Published (green)
+
+### Story 30.3: Design Token Documentation & Compliance
+
+As a **design system maintainer**, 
+I want **comprehensive documentation of design tokens and component rules**, 
+So that **all team members follow the design system consistently**.
+
+**Acceptance Criteria:**
+
+**Given** consistency is mandatory
+**When** implementing components
+**Then** only design tokens are used (no hard-coded values)
+**And** semantic color usage is followed
+
+**Given** forbidden patterns exist
+**When** reviewing code
+**Then** no inline styles are present
+**And** no new colors outside token system are introduced
+
+**Given** component reusability matters
+**When** building features
+**Then** no one-off components are created
+**And** custom animations are not implemented (use standard transitions)
+
+---
+
+## Epic 31: Responsive Design & Mobile Experience (HIGH - Sprint 3-4)
+
+**Goal:** Implement responsive design with mobile-first approach, ensuring seamless experience across all breakpoints and devices.
+
+**FRs covered:** Responsive design requirements from UX Design Specification
+
+### Story 31.1: Responsive Breakpoints & Navigation
+
+As a **mobile user**, 
+I want **navigation that adapts to my screen size**, 
+So that **I can easily navigate the app on any device**.
+
+**Acceptance Criteria:**
+
+**Given** users access the app on different devices
+**When** viewing on mobile (< 640px)
+**Then** sidebar collapses to hamburger menu
+**And** notification bell moves to overflow menu
+
+**Given** tablet users need functionality
+**When** viewing on tablet (640px - 1024px)
+**Then** layout adapts with adjusted spacing and column widths
+**And** navigation remains accessible
+
+**Given** desktop users need full features
+**When** viewing on desktop (1024px+)
+**Then** full sidebar is visible with all navigation items
+**And** notification bell is in header
+
+### Story 31.2: Mobile Layout Adaptations
+
+As a **mobile user**, 
+I want **optimized layouts for mobile screens**, 
+So that **I can use all features effectively on my phone**.
+
+**Acceptance Criteria:**
+
+**Given** article creation on mobile
+**When** creating an article
+**Then** single column layout is used
+**And** sidebar stacks below main content
+
+**Given** dashboard on mobile
+**When** viewing dashboard
+**Then** card grid becomes single column
+**And** KPI cards stack vertically
+
+**Given** touch interaction is important
+**When** using mobile
+**Then** minimum 44px touch targets are enforced
+**And** larger tap areas are provided for mobile
+
+### Story 31.3: Mobile Performance & Touch Optimization
+
+As a **mobile user**, 
+I want **fast, responsive mobile experience**, 
+So that **I can use the app smoothly on slower connections**.
+
+**Acceptance Criteria:**
+
+**Given** mobile performance is critical
+**When** loading pages on mobile
+**Then** page load time is < 3 seconds on 4G
+**And** touch response time is < 200ms
+
+**Given** offline capability is needed
+**When** connection drops
+**Then** core functionality remains available offline
+**And** data syncs when reconnected
+
+**Given** gesture interaction is expected
+**When** using mobile
+**Then** gesture-friendly interactions are implemented
+**And** swipe navigation works smoothly
+
+---
+
+## Epic 32: Success Metrics & Analytics Implementation (MEDIUM - Sprint 4-5)
+
+**Goal:** Implement comprehensive success metrics tracking and analytics to measure UX effectiveness and user satisfaction.
+
+**FRs covered:** Success metrics from UX Design Specification
+
+### Story 32.1: User Experience Metrics Tracking
+
+As a **product manager**, 
+I want **track user experience metrics**, 
+So that **I can measure platform success and identify improvement areas**.
+
+**Acceptance Criteria:**
+
+**Given** task completion is important
+**When** tracking user behavior
+**Then** article creation completion rate is measured (target > 90%)
+**And** review workflow completion time is tracked (target < 5 minutes)
+
+**Given** collaboration adoption matters
+**When** monitoring feature usage
+**Then** team collaboration adoption is measured (target > 80%)
+**And** data is collected and reported weekly
+
+**Given** user satisfaction is critical
+**When** gathering feedback
+**Then** trust in AI output scores are collected (target > 4.0/5.0)
+**And** perceived value of collaboration features is measured (target > 4.2/5.0)
+
+### Story 32.2: Efficiency & Performance Metrics
+
+As a **system administrator**, 
+I want **track efficiency and performance metrics**, 
+So that **I can optimize the platform for user productivity**.
+
+**Acceptance Criteria:**
+
+**Given** efficiency matters
+**When** tracking user workflows
+**Then** time to first published article is measured (target < 15 minutes)
+**And** review cycle reduction is tracked vs manual process (target > 60%)
+
+**Given** performance is critical
+**When** monitoring system health
+**Then** dashboard load time is tracked (target < 2 seconds)
+**And** article creation page load is monitored (target < 3 seconds)
+
+**Given** real-time performance is important
+**When** measuring updates
+**Then** comment delivery latency is tracked (target < 1 second)
+**And** progress update frequency is monitored (3 seconds)
+
+### Story 32.3: Analytics Dashboard & Reporting
+
+As a **product analyst**, 
+I want **comprehensive analytics dashboard**, 
+So that **I can visualize success metrics and make data-driven decisions**.
+
+**Acceptance Criteria:**
+
+**Given** analytics visibility is needed
+**When** accessing analytics dashboard
+**Then** all UX success metrics are displayed with trends
+**And** technical performance metrics are visible
+
+**Given** reporting is important
+**When** generating reports
+**Then** weekly success metric reports can be generated
+**And** data can be exported for stakeholder presentations
+
+**Given** continuous improvement is needed
+**When** analyzing metrics
+**Then** insights identify areas for optimization
+**And** recommendations are provided for feature improvements
+
+---
