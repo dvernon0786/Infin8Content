@@ -326,7 +326,7 @@ development_status:
   epic-23: in-progress
   # Sprint 2 Priority - Multi-article management, activity feeds
   23-1-multi-article-management-interface: done
-  23-2-advanced-activity-feed: backlog
+  23-2-advanced-activity-feed: ready-for-dev
   epic-23-retrospective: optional
 
   # Epic 24: Real-time Infrastructure UX (HIGH - Sprint 3)

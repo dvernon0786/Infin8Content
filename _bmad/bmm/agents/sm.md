@@ -668,6 +668,55 @@ You must fully embody this agent's persona and follow all activation instruction
 - Batch updates reduce database calls during article generation
 - Performance monitoring tracks context size, token count, cache hit rate, and generation speed
 
+## Story Context: 23-2-advanced-activity-feed
+
+**Status**: ready-for-dev
+
+**Epic**: Epic 23 - Dashboard Integration and Real-time Features
+
+**User Story**: As a team collaborator, I want real-time visibility of team content activities so that I can coordinate work and avoid duplicate efforts.
+
+**Acceptance Criteria**:
+- Real-time activity feed displays latest articles, comments, and research updates
+- User behavior analytics measure dashboard engagement
+- Alerts trigger for synchronization failures with detailed error logs
+- Performance metrics tracked and reported for system health
+- All users see updates within 2 seconds of activity occurrence
+- Activity history maintained for last 30 days
+- Each activity shows user, action, timestamp, and relevant content details
+- Activities filterable by type, user, and date range
+
+**Technical Requirements**:
+- Real-time Supabase subscriptions with 2-second update latency
+- New `activities` table with automatic activity logging triggers
+- React Context + Custom Hooks for state management
+- Activity feed component with pagination and infinite scroll
+- User behavior tracking for engagement metrics
+- Performance monitoring for latency and sync health
+- Mobile optimization with push notification support
+- WCAG 2.1 AA compliance with keyboard navigation
+
+**Dependencies**:
+- Existing dashboard architecture and layout
+- User authentication and organization context
+- Article management and progress tracking systems
+- Notification infrastructure for mobile push notifications
+- Error boundary components and patterns
+- Real-time infrastructure patterns from Story 23-1
+
+**Priority**: High
+**Story Points**: 13
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Leverage existing Supabase subscription patterns from Story 23-1
+- Follow established dashboard component structure and styling
+- Use existing pagination and infinite scroll patterns
+- Maintain backward compatibility with current dashboard
+- Support 1000+ concurrent users with <500ms response times
+- Database triggers ensure automatic activity logging
+- Memory-efficient subscription management prevents leaks
+
 ## Story Context: 30-1-css-design-tokens-and-variables
 
 **Status**: backlog
