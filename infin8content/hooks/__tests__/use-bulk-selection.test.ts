@@ -53,7 +53,7 @@ const mockArticles: DashboardArticle[] = [
 ];
 
 describe('useBulkSelection', () => {
-  let onSelectionChange: ReturnType<typeof vi.fn>;
+  let onSelectionChange: any;
 
   beforeEach(() => {
     onSelectionChange = vi.fn();
