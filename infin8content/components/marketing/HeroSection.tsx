@@ -54,7 +54,7 @@ export function HeroSection({
   return (
     <>
       <StructuredData headline={headline} subtext={subtext} />
-      <section className="relative min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
+      <section className="relative min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-background-primary)' }}>
         <MarketingLayout>
           <div className="grid lg:grid-cols-2 gap-12 items-center" style={{ gap: 'var(--spacing-3xl)' }}>
             {/* Content Column */}
@@ -78,7 +78,7 @@ export function HeroSection({
                 <Button
                   asChild
                   size="lg"
-                  className="text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   style={{ 
                     background: 'var(--gradient-brand)',
                     padding: 'var(--spacing-md) var(--spacing-xl)',
@@ -95,8 +95,9 @@ export function HeroSection({
                   asChild
                   variant="outline"
                   size="lg"
-                  className="text-gray-700 dark:text-gray-300 font-semibold transition-all duration-200 focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="font-semibold transition-all duration-200 focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   style={{ 
+                    color: 'var(--color-text-primary)',
                     border: '2px solid',
                     borderColor: 'var(--color-border)',
                     padding: 'var(--spacing-md) var(--spacing-xl)',
@@ -120,7 +121,7 @@ export function HeroSection({
                   width={600}
                   height={400}
                   priority
-                  className="rounded-2xl shadow-2xl object-cover w-full h-auto"
+                  className="object-cover w-full h-auto"
                   style={{ borderRadius: 'var(--radius-xl)' }}
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
                 />
@@ -128,17 +129,17 @@ export function HeroSection({
                 <div 
                   className="absolute -top-4 -left-4 rounded-2xl opacity-20 blur-xl"
                   style={{
-                    width: '96px',
-                    height: '96px',
+                    width: 'var(--spacing-4xl)',
+                    height: 'var(--spacing-4xl)',
                     background: 'linear-gradient(135deg, var(--color-primary-blue), var(--color-primary-purple))'
                   }}
                 ></div>
                 <div 
                   className="absolute -bottom-4 -right-4 rounded-2xl opacity-20 blur-xl"
                   style={{
-                    width: '128px',
-                    height: '128px',
-                    background: 'linear-gradient(135deg, var(--color-primary-purple), #ec4899)'
+                    width: 'calc(var(--spacing-4xl) + var(--spacing-md))',
+                    height: 'calc(var(--spacing-4xl) + var(--spacing-md))',
+                    background: 'linear-gradient(135deg, var(--color-primary-purple), var(--color-error))'
                   }}
                 ></div>
               </div>
@@ -147,7 +148,9 @@ export function HeroSection({
         </MarketingLayout>
         
         {/* Background decoration */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/10 dark:to-black/10 pointer-events-none"></div>
+        <div className="absolute inset-0 pointer-events-none" style={{ 
+          background: 'linear-gradient(to bottom, transparent, transparent, rgba(255, 255, 255, 0.1))'
+        }}></div>
       </section>
     </>
   );

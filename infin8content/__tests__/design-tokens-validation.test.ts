@@ -112,7 +112,7 @@ describe('Design Tokens Validation', () => {
       expect(cssContent).toContain('/* Spacing */');
       expect(cssContent).toContain('/* Typography - UX Spec Fixed Sizes */');
       expect(cssContent).toContain('/* Font Weights */');
-      expect(cssContent).toContain('/* Border Radius - UX Spec Compliance */');
+      expect(cssContent).toContain('/* Border Radius - UX Spec Compliance Only */');
       expect(cssContent).toContain('/* Shadow System */');
     });
   });

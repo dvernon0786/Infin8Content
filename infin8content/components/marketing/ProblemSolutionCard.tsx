@@ -12,25 +12,25 @@ export function ProblemSolutionCard({
   return (
     <article 
       className={cn(
-        "bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border border-gray-100",
+        "transition-all duration-300 hover:shadow-xl hover:scale-[1.02]",
         className
       )}
       style={{
-        backgroundColor: 'var(--color-bg-surface)',
+        backgroundColor: 'var(--color-background-secondary)',
         borderRadius: 'var(--radius-lg)',
         padding: 'var(--spacing-lg)',
-        border: '1px solid var(--color-border)'
+        border: '1px solid var(--color-border)',
+        boxShadow: 'var(--shadow-lg)'
       }}
     >
       <div className="space-y-4" style={{ gap: 'var(--spacing-md)' }}>
         {/* Problem Statement */}
         <div className="space-y-2">
           <h3 
-            className="font-semibold text-red-600 text-sm uppercase tracking-wide"
             style={{
-              fontSize: 'var(--font-label, 14px)',
-              color: 'var(--color-error, #DC2626)',
-              fontWeight: 600,
+              fontSize: 'var(--font-label)',
+              color: 'var(--color-error)',
+              fontWeight: 'var(--font-weight-semibold)',
               textTransform: 'uppercase',
               letterSpacing: '0.05em'
             }}
@@ -52,11 +52,10 @@ export function ProblemSolutionCard({
         {/* Solution Description */}
         <div className="space-y-2">
           <h3 
-            className="font-semibold text-green-600 text-sm uppercase tracking-wide"
             style={{
-              fontSize: 'var(--font-label, 14px)',
-              color: 'var(--color-success, #059669)',
-              fontWeight: 600,
+              fontSize: 'var(--font-label)',
+              color: 'var(--color-success)',
+              fontWeight: 'var(--font-weight-semibold)',
               textTransform: 'uppercase',
               letterSpacing: '0.05em'
             }}
@@ -76,14 +75,13 @@ export function ProblemSolutionCard({
         </div>
 
         {/* Benefit/Outcome */}
-        <div className="space-y-2 pt-2 border-t border-gray-100" 
+        <div className="pt-2" 
           style={{ borderTop: '1px solid var(--color-border)' }}>
           <h3 
-            className="font-semibold text-blue-600 text-sm uppercase tracking-wide"
             style={{
               fontSize: 'var(--font-label)',
               color: 'var(--color-primary-blue)',
-              fontWeight: 600,
+              fontWeight: 'var(--font-weight-semibold)',
               textTransform: 'uppercase',
               letterSpacing: '0.05em'
             }}
@@ -91,11 +89,10 @@ export function ProblemSolutionCard({
             Benefit
           </h3>
           <p 
-            className="font-medium text-gray-900 leading-relaxed"
             style={{
               fontSize: 'var(--font-body)',
               color: 'var(--color-text-primary)',
-              fontWeight: 500,
+              fontWeight: 'var(--font-weight-medium)',
               lineHeight: 1.6
             }}
           >
