@@ -668,6 +668,59 @@ You must fully embody this agent's persona and follow all activation instruction
 - Batch updates reduce database calls during article generation
 - Performance monitoring tracks context size, token count, cache hit rate, and generation speed
 
+## Story Context: 29-1-homepage-hero-section-and-value-proposition
+
+**Status**: ready-for-dev
+
+**Epic**: Homepage and Marketing Enhancement
+
+**User Story**: As a potential customer visiting the Infin8Content homepage, I want to immediately understand the value proposition and key benefits through an engaging hero section so that I can quickly grasp how this AI-powered content generation platform will solve my content creation challenges and be motivated to sign up or learn more.
+
+**Acceptance Criteria**:
+- Compelling hero section with clear value proposition headline
+- Engaging subheading that communicates AI-powered content generation benefits
+- Key value propositions presented in scannable format (3-4 core benefits)
+- Strong call-to-action buttons for primary user journeys (Start Free Trial, View Demo, Pricing)
+- Professional, modern design that reflects AI/technology sophistication
+- Responsive layout optimized for desktop, tablet, and mobile devices
+- Loading performance optimization (hero content loads within 1 second)
+- Accessibility compliance with proper heading hierarchy and screen reader support
+- Social proof elements (customer count, testimonials, trust indicators)
+- Visual elements that reinforce the AI content generation concept
+
+**Technical Requirements**:
+- Hero section component built with existing design system (shadcn/ui + Tailwind CSS)
+- Responsive grid layout using Tailwind's responsive utilities
+- Optimized imagery and graphics for fast loading
+- Component integration with existing authentication flow for CTAs
+- A/B testing support for headline and CTA variations
+- SEO optimization with proper semantic HTML and meta tags
+- Analytics integration for hero section engagement tracking
+- Content management capabilities for hero copy updates
+- Integration with existing theme system for consistent branding
+- Performance monitoring for Core Web Vitals compliance
+
+**Dependencies**:
+- Next.js 16 App Router architecture
+- Existing component library (shadcn/ui)
+- Tailwind CSS styling system
+- Supabase authentication system
+- Current design tokens and brand guidelines
+- Analytics and monitoring infrastructure
+- Content management system for hero updates
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Hero section should be the first content users see above the fold
+- Value proposition should focus on time savings, content quality, and SEO benefits
+- Design should reflect the sophisticated AI technology behind the platform
+- Mobile-first approach with progressive enhancement for larger screens
+- Consider animation and micro-interactions for enhanced user engagement
+- Ensure hero section works seamlessly with existing navigation and authentication
+
 ## Story Context: 22-1-generation-progress-visualization
 
 **Status**: ready-for-dev

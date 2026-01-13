@@ -18,6 +18,7 @@ interface HeroSectionProps {
   };
   visualSrc: string;
   visualAlt: string;
+  webpSrc?: string; // Optional WebP version for UX spec compliance
 }
 
 const StructuredData = ({ headline, subtext }: { headline: string; subtext: string }) => (
@@ -48,20 +49,27 @@ export function HeroSection({
   secondaryCta,
   visualSrc,
   visualAlt,
+  webpSrc,
 }: HeroSectionProps) {
   return (
     <>
       <StructuredData headline={headline} subtext={subtext} />
-      <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
+      <section className="relative min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
         <MarketingLayout>
           <div className="grid lg:grid-cols-2 gap-12 items-center" style={{ gap: 'var(--spacing-3xl)' }}>
             {/* Content Column */}
             <div className="text-center lg:text-left space-y-8" style={{ paddingTop: 'var(--spacing-4xl)', paddingBottom: 'var(--spacing-4xl)' }}>
               <div className="space-y-6">
-                <h1 className="font-bold tracking-tight text-gray-900 dark:text-white leading-tight" style={{ fontSize: 'var(--font-h1)' }}>
+                <h1 className="font-semibold tracking-tight leading-tight" style={{ 
+                  fontSize: 'var(--font-h1)', 
+                  color: 'var(--color-text-primary)'
+                }}>
                   {headline}
                 </h1>
-                <h2 className="font-semibold text-gray-600 dark:text-gray-300 leading-relaxed" style={{ fontSize: 'var(--font-h2)' }}>
+                <h2 className="font-medium leading-relaxed" style={{ 
+                  fontSize: 'var(--font-h2)', 
+                  color: 'var(--color-text-muted)'
+                }}>
                   {subtext}
                 </h2>
               </div>

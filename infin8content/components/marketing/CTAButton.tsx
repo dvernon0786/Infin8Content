@@ -38,15 +38,20 @@ export function CTAButton({
   const variantStyles = variant === 'brand' 
     ? { background: 'var(--gradient-brand)', color: 'white' }
     : variant === 'ghost'
-    ? { border: '2px solid var(--color-border)', color: 'var(--color-foreground)' }
+    ? { border: '2px solid var(--color-primary-blue)', color: 'var(--color-primary-blue)' }
     : {};
+
+  const buttonStyles = {
+    ...variantStyles,
+    borderRadius: '10px' // UX spec: 10px for buttons
+  };
 
   if (asChild && 'asChild' in props) {
     const { asChild: _, ...buttonProps } = props;
     return (
       <Button 
         className={cn(ctaButtonVariants({ variant, size }), className)} 
-        style={variantStyles}
+        style={buttonStyles}
         asChild 
         {...buttonProps} 
       />
@@ -56,7 +61,7 @@ export function CTAButton({
   return (
     <Button
       className={cn(ctaButtonVariants({ variant, size }), className)}
-      style={variantStyles}
+      style={buttonStyles}
       {...props}
     />
   );

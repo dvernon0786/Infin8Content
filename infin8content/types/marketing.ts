@@ -13,6 +13,7 @@ export interface HeroSectionProps {
   };
   visualSrc: string;
   visualAlt: string;
+  webpSrc?: string; // Optional WebP version for UX spec compliance
 }
 
 export interface CTAButtonProps {
