@@ -33,7 +33,7 @@ const BulkAssignSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const body = await request.json();
     
     // Get user and organization
@@ -44,12 +44,12 @@ export async function POST(request: NextRequest) {
 
     // Get user's organization
     const { data: profile } = await supabase
-      .from('profiles')
-      .select('organization_id')
+      .from('users')
+      .select('org_id')
       .eq('id', user.id)
       .single();
 
-    if (!profile?.organization_id) {
+    if (!profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
@@ -57,15 +57,15 @@ export async function POST(request: NextRequest) {
     
     switch (operation) {
       case 'delete':
-        return handleBulkDelete(payload, supabase, profile.organization_id);
+        return handleBulkDelete(payload, supabase, profile.org_id);
       case 'export':
-        return handleBulkExport(payload, supabase, profile.organization_id);
+        return handleBulkExport(payload, supabase, profile.org_id);
       case 'archive':
-        return handleBulkArchive(payload, supabase, profile.organization_id);
+        return handleBulkArchive(payload, supabase, profile.org_id);
       case 'status_change':
-        return handleBulkStatusChange(payload, supabase, profile.organization_id);
+        return handleBulkStatusChange(payload, supabase, profile.org_id);
       case 'assign':
-        return handleBulkAssign(payload, supabase, profile.organization_id);
+        return handleBulkAssign(payload, supabase, profile.org_id);
       default:
         return NextResponse.json({ error: 'Invalid operation' }, { status: 400 });
     }
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleBulkDelete(payload: unknown, supabase: any, organizationId: string) {
+async function handleBulkDelete(payload: unknown, supabase: any, orgId: string) {
   const { articleIds } = BulkDeleteSchema.parse(payload);
   
   // Verify all articles belong to the organization
@@ -83,7 +83,7 @@ async function handleBulkDelete(payload: unknown, supabase: any, organizationId:
     .from('articles')
     .select('id')
     .in('id', articleIds)
-    .eq('organization_id', organizationId);
+    .eq('org_id', orgId);
 
   if (fetchError) {
     return NextResponse.json({ error: 'Failed to fetch articles' }, { status: 500 });
@@ -110,7 +110,7 @@ async function handleBulkDelete(payload: unknown, supabase: any, organizationId:
   });
 }
 
-async function handleBulkExport(payload: unknown, supabase: any, organizationId: string) {
+async function handleBulkExport(payload: unknown, supabase: any, orgId: string) {
   const { articleIds, format } = BulkExportSchema.parse(payload);
   
   // Fetch articles with their content
@@ -118,7 +118,7 @@ async function handleBulkExport(payload: unknown, supabase: any, organizationId:
     .from('articles')
     .select('*')
     .in('id', articleIds)
-    .eq('organization_id', organizationId);
+    .eq('org_id', orgId);
 
   if (fetchError) {
     return NextResponse.json({ error: 'Failed to fetch articles' }, { status: 500 });
@@ -135,7 +135,7 @@ async function handleBulkExport(payload: unknown, supabase: any, organizationId:
   }
 }
 
-async function handleBulkArchive(payload: unknown, supabase: any, organizationId: string) {
+async function handleBulkArchive(payload: unknown, supabase: any, orgId: string) {
   const { articleIds } = BulkArchiveSchema.parse(payload);
   
   // Verify articles belong to organization
@@ -143,7 +143,7 @@ async function handleBulkArchive(payload: unknown, supabase: any, organizationId
     .from('articles')
     .select('id')
     .in('id', articleIds)
-    .eq('organization_id', organizationId);
+    .eq('org_id', orgId);
 
   if (fetchError) {
     return NextResponse.json({ error: 'Failed to fetch articles' }, { status: 500 });
@@ -170,7 +170,7 @@ async function handleBulkArchive(payload: unknown, supabase: any, organizationId
   });
 }
 
-async function handleBulkStatusChange(payload: unknown, supabase: any, organizationId: string) {
+async function handleBulkStatusChange(payload: unknown, supabase: any, orgId: string) {
   const { articleIds, status } = BulkStatusChangeSchema.parse(payload);
   
   // Verify articles belong to organization
@@ -178,7 +178,7 @@ async function handleBulkStatusChange(payload: unknown, supabase: any, organizat
     .from('articles')
     .select('id')
     .in('id', articleIds)
-    .eq('organization_id', organizationId);
+    .eq('org_id', orgId);
 
   if (fetchError) {
     return NextResponse.json({ error: 'Failed to fetch articles' }, { status: 500 });
@@ -208,7 +208,7 @@ async function handleBulkStatusChange(payload: unknown, supabase: any, organizat
   });
 }
 
-async function handleBulkAssign(payload: unknown, supabase: any, organizationId: string) {
+async function handleBulkAssign(payload: unknown, supabase: any, orgId: string) {
   const { articleIds, assigneeId } = BulkAssignSchema.parse(payload);
   
   // Verify articles belong to organization
@@ -216,7 +216,7 @@ async function handleBulkAssign(payload: unknown, supabase: any, organizationId:
     .from('articles')
     .select('id')
     .in('id', articleIds)
-    .eq('organization_id', organizationId);
+    .eq('org_id', orgId);
 
   if (fetchError) {
     return NextResponse.json({ error: 'Failed to fetch articles' }, { status: 500 });
