@@ -6,10 +6,10 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Progress } from '../../components/ui/progress';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../components/ui/sheet';
 import { 
   Trash2, 
   Download, 
@@ -20,10 +20,10 @@ import {
   X,
   CheckCircle
 } from 'lucide-react';
-import { useBulkOperationProgress } from '@/hooks/use-bulk-selection';
-import { bulkOperationsService } from '@/lib/services/bulk-operations';
-import type { TeamMember } from '@/lib/services/bulk-operations';
-import type { DashboardArticle } from '@/lib/types/dashboard.types';
+import { useBulkOperationProgress } from '../../hooks/use-bulk-selection';
+import { bulkOperationsService } from '../../lib/services/bulk-operations';
+import type { TeamMember } from '../../lib/services/bulk-operations';
+import type { DashboardArticle } from '../../lib/types/dashboard.types';
 
 export interface MobileBulkActionsProps {
   selectedArticles: DashboardArticle[];

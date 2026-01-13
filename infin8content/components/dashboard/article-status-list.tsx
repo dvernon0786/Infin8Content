@@ -8,24 +8,24 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useRealtimeArticles } from '@/hooks/use-realtime-articles';
-import { useDashboardFilters } from '@/hooks/use-dashboard-filters';
-import { useArticleNavigation } from '@/hooks/use-article-navigation';
-import { useBulkSelection, useMobileBulkSelection } from '@/hooks/use-bulk-selection';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Checkbox } from '@/components/ui/checkbox';
-import { BulkActionsBar } from '@/components/dashboard/bulk-actions-bar';
-import { MobileBulkActions } from '@/components/dashboard/mobile-bulk-actions';
-import { VisualStatusIndicator } from '@/components/articles/visual-status-indicator';
-import { SearchInput } from '@/components/dashboard/search-input';
-import { FilterDropdown, QuickFilters } from '@/components/dashboard/filter-dropdown';
-import { SortDropdown } from '@/components/dashboard/sort-dropdown';
-import { ActiveFilters } from '@/components/dashboard/active-filters';
-import { FilterSummary } from '@/components/dashboard/active-filters';
-import { getStatusConfig, statusConfigs } from '@/lib/constants/status-configs';
+import { useRealtimeArticles } from '../../hooks/use-realtime-articles';
+import { useDashboardFilters } from '../../hooks/use-dashboard-filters';
+import { useArticleNavigation } from '../../hooks/use-article-navigation';
+import { useBulkSelection, useMobileBulkSelection } from '../../hooks/use-bulk-selection';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { Button } from '../../components/ui/button';
+import { Progress } from '../../components/ui/progress';
+import { Checkbox } from '../../components/ui/checkbox';
+import { BulkActionsBar } from './bulk-actions-bar';
+import { MobileBulkActions } from './mobile-bulk-actions';
+import { VisualStatusIndicator } from '../../components/articles/visual-status-indicator';
+import { SearchInput } from './search-input';
+import { FilterDropdown, QuickFilters } from './filter-dropdown';
+import { SortDropdown } from './sort-dropdown';
+import { ActiveFilters } from './active-filters';
+import { FilterSummary } from './active-filters';
+import { getStatusConfig, statusConfigs } from '../../lib/constants/status-configs';
 import { 
   Clock, 
   CheckCircle, 
@@ -43,8 +43,8 @@ import {
   Square
 } from 'lucide-react';
 import { DashboardErrorBoundary, useErrorHandler } from './error-boundary';
-import type { DashboardArticle, DashboardUpdateEvent } from '@/lib/supabase/realtime';
-import type { ArticleStatus } from '@/lib/types/dashboard.types';
+import type { DashboardArticle, DashboardUpdateEvent } from '../../lib/supabase/realtime';
+import type { ArticleStatus } from '../../lib/types/dashboard.types';
 
 interface ArticleStatusListProps {
   orgId: string;

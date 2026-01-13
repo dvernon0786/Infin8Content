@@ -6,9 +6,9 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Progress } from '../../components/ui/progress';
 import { 
   Trash2, 
   Download, 
@@ -27,7 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '../../components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,11 +37,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { useBulkOperationProgress } from '@/hooks/use-bulk-selection';
-import { bulkOperationsService } from '@/lib/services/bulk-operations';
-import type { TeamMember } from '@/lib/services/bulk-operations';
-import type { DashboardArticle } from '@/lib/types/dashboard.types';
+} from '../../components/ui/alert-dialog';
+import { useBulkOperationProgress } from '../../hooks/use-bulk-selection';
+import { bulkOperationsService } from '../../lib/services/bulk-operations';
+import type { TeamMember } from '../../lib/services/bulk-operations';
+import type { DashboardArticle } from '../../lib/types/dashboard.types';
 
 export interface BulkActionsBarProps {
   selectedArticles: DashboardArticle[];
