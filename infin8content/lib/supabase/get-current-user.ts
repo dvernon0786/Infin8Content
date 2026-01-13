@@ -61,10 +61,7 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
     user: {
       id: user.id,
       email: user.email || '',
-      firstName: (userRecord as any).first_name || null,
-      role: (userRecord as any).role || 'member',
-      orgId: (userRecord as any).org_id || null,
-    } as any,
+    },
     id: (userRecord as any).id,
     email: (userRecord as any).email,
     first_name: (userRecord as any).first_name,
