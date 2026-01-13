@@ -33,7 +33,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
     .select('id, title, keyword, status, target_word_count, writing_style, target_audience, created_at, updated_at, org_id')
     .eq('id', id)
     .eq('org_id', currentUser.org_id)
-    .single()
+    .maybeSingle()
 
   // Additional authorization verification
   if (error || !articleData) {
@@ -42,7 +42,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
       articleId: id, 
       userId: currentUser.id, 
       orgId: currentUser.org_id,
-      error: error?.message 
+      error: error?.message || 'Article not found'
     });
     
     return (
@@ -99,7 +99,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
         .select('sections')
         .eq('id', id)
         .eq('org_id', currentUser.org_id)
-        .single()
+        .maybeSingle()
       
       if (fetchError) {
         console.error('Failed to fetch article sections:', fetchError)
@@ -107,6 +107,10 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
       } else if (articleWithSections) {
         const typedData = articleWithSections as unknown as ArticleWithSections
         sections = typedData.sections || null
+      } else {
+        // Article not found when fetching sections
+        console.warn('Article not found when fetching sections:', { articleId: id })
+        sectionsError = 'Article not found'
       }
     } catch (error) {
       console.error('Error fetching sections:', error)
