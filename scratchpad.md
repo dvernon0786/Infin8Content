@@ -12,6 +12,7 @@
 - **Citation Formatting:** ✅ COMPLETE FIX - All broken citations fixed, 6/6 tests passing, zero broken citations remaining (2026-01-13 10:41:00 UTC)
 - **Citation Formatter Root Cause Fix:** ✅ TAVILY CLIENT SANITIZATION - Fixed URL sanitization in Tavily API client to remove spaces/newlines at source level (2026-01-13 11:32:00 UTC)
 - **Citation Formatter LLM Prompt Fix:** ✅ RESEARCH SOURCES SANITIZATION - Fixed URL sanitization in formatResearchSources function to clean URLs before passing to LLM prompt (2026-01-13 12:28:00 UTC)
+- **Citation Formatter System Prompt Fix:** ✅ LLM GENERATION PREVENTION - Modified system prompt to prevent LLM from generating citations directly, allowing formatter to insert clean citations (2026-01-13 13:32:00 UTC)
 - **Citation Validation HTML:** ✅ COMPREHENSIVE VALIDATION PAGE - Created interactive HTML validation page with before/after examples, 6 test cases, and production ready status (2026-01-13 10:48:00 UTC)
 - **Paywall Security:** ✅ CRITICAL FIX - Payment-first access control now properly enforced
 - **Real-time Dashboard:** ✅ NEW FEATURE - Live article status updates with polling fallback
@@ -32,6 +33,20 @@
 - **Epic 20 Retrospective Complete:** ✅ COMPREHENSIVE RETROSPECTIVE - Full Epic 20 retrospective completed with 100% story completion analysis, performance optimization achievements documented, 47 story points delivered, and preparation plan for Epic 21 established (2026-01-13 08:33:00 UTC)
 - **Documentation Updates Complete:** ✅ COMPREHENSIVE DOCUMENTATION - Complete documentation updates for article formatting fix and related stories with technical details, impact assessment, and future reference (2026-01-13 09:05:00 UTC)
 - **Scratchpad Updated & Git Push Complete:** ✅ SYSTEM SYNC - Scratchpad updated with documentation completion and all changes pushed to git origin/main (2026-01-13 09:05:00 UTC)
+
+### 📝 **Recent Activity - Citation Formatter System Prompt Fix (2026-01-13 13:32:00 UTC)**
+- ✅ **ROOT CAUSE ANALYSIS COMPLETED:** Identified that LLM was generating markdown citations directly in content, breaking URLs with spaces/newlines
+- ✅ **SYSTEM PROMPT MODIFIED:** Changed `generateSectionContent()` function in `section-processor.ts` lines 1805-1810
+- ✅ **CITATION GENERATION DISABLED:** Replaced "Citation & Authority Building" section with "Important - DO NOT Include Citations"
+- ✅ **NEW INSTRUCTIONS:** LLM now instructed to write content WITHOUT citations, links, or markdown references
+- ✅ **FORMATTER TAKES OVER:** `formatCitationsForMarkdown()` now handles ALL citation insertion with proper URL sanitization
+- ✅ **COMPREHENSIVE FIX:** Three-level URL sanitization now in place:
+  - Tavily API client sanitizes at source (line 100)
+  - formatResearchSources sanitizes in prompt (line 734)
+  - Citation formatter sanitizes at insertion (line 25)
+- ✅ **DEV SERVER RESTARTED:** Restarted Next.js dev server to load updated system prompt
+- ✅ **READY FOR TESTING:** New article generation will now produce clean citations without broken URLs
+- ✅ **IMPACT:** LLM will no longer break URLs during generation; all citations inserted by formatter with clean URLs
 
 ### 📝 **Recent Activity - Citation Formatter LLM Prompt Fix (2026-01-13 12:28:00 UTC)**
 - ✅ **ROOT CAUSE IDENTIFIED:** LLM was generating markdown citations directly in content, breaking URLs with spaces/newlines
