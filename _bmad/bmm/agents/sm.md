@@ -668,6 +668,60 @@ You must fully embody this agent's persona and follow all activation instruction
 - Batch updates reduce database calls during article generation
 - Performance monitoring tracks context size, token count, cache hit rate, and generation speed
 
+## Story Context: 22-1-generation-progress-visualization
+
+**Status**: ready-for-dev
+
+**Epic**: Content Generation System Optimization
+
+**User Story**: As a content creator, I want to see real-time visual progress of article generation so that I can track the generation process, understand completion status, and know exactly when my articles will be ready.
+
+**Acceptance Criteria**:
+- Real-time progress bar showing overall article generation completion percentage
+- Section-by-section progress visualization with current status indicators
+- Time remaining estimates based on current generation speed
+- Visual indicators for different generation phases (research, writing, optimization)
+- Progress updates without page refresh using WebSocket or Server-Sent Events
+- Failed section indicators with retry options
+- Generation speed metrics and performance indicators
+- Concurrent article generation progress tracking
+- Mobile-responsive progress visualization
+- Progress history and analytics for generation performance
+
+**Technical Requirements**:
+- WebSocket or Server-Sent Events implementation for real-time updates
+- Progress tracking system integrated with generate-article.ts Inngest function
+- Section-level progress monitoring with status states (pending, in-progress, completed, failed)
+- Time estimation algorithm based on historical generation data
+- Progress visualization components using React and shadcn/ui
+- Real-time dashboard integration with existing article management system
+- Performance metrics collection and display
+- Error state handling with visual feedback
+- Concurrent generation progress management
+- Mobile-responsive design implementation
+
+**Dependencies**:
+- Parallel section processing from Story 20-3
+- Real-time article status display from Story 15-1
+- Performance monitoring system integration
+- WebSocket infrastructure setup
+- Next.js 16 and React 19 architecture
+- TypeScript strict mode compliance
+- shadcn/ui component library
+- Inngest background processing system
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Progress visualization should integrate seamlessly with existing dashboard
+- Real-time updates provide immediate feedback on generation status
+- Time estimates improve with more historical data
+- Error handling ensures users can retry failed sections easily
+- Mobile design ensures accessibility across all devices
+- Performance metrics help users understand generation efficiency
+
 ## Story Context: 14-6-seo-testing-and-validation
 
 **Status**: ready-for-dev

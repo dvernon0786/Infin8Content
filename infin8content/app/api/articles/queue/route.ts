@@ -67,7 +67,36 @@ export async function GET(request: Request) {
     // TODO: Remove type assertion after running: supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts
     const { data: articles, error } = await (supabase
       .from('articles' as any)
-      .select('id, keyword, status, created_at, updated_at, title')
+      .select(`
+        id, 
+        keyword, 
+        status, 
+        created_at, 
+        updated_at, 
+        title,
+        article_progress (
+          status,
+          progress_percentage,
+          current_section,
+          total_sections,
+          current_stage,
+          estimated_time_remaining,
+          word_count,
+          citations_count,
+          api_cost,
+          error_message,
+          -- Story 22.1 enhanced fields - handle gracefully if not yet migrated
+          COALESCE(parallel_sections, '[]') as parallel_sections,
+          COALESCE(research_api_calls, 0) as research_api_calls,
+          COALESCE(cache_hit_rate, 0.0) as cache_hit_rate,
+          COALESCE(retry_attempts, 0) as retry_attempts,
+          estimated_completion,
+          COALESCE(performance_metrics, '{}') as performance_metrics,
+          COALESCE(research_phase, '{}') as research_phase,
+          COALESCE(context_management, '{}') as context_management,
+          updated_at
+        )
+      `)
       .eq('org_id', currentUser.org_id)
       .in('status', statusFilter)
       .order('updated_at', { ascending: false }) // Order by updated_at for real-time dashboard
@@ -83,12 +112,42 @@ export async function GET(request: Request) {
 
     // Add position numbers for queued articles (only count queued articles, exclude generating and completed)
     const queuedArticles = (articles || []).filter(a => a.status === 'queued')
-    const articlesWithPosition = (articles || []).map(article => ({
-      ...article,
-      position: article.status === 'queued' 
-        ? queuedArticles.findIndex(q => q.id === article.id) + 1 
-        : undefined,
-    }))
+    const articlesWithPosition = (articles || []).map(article => {
+      // Extract progress data from article_progress relationship
+      const progressData = article.article_progress?.[0] || null;
+      
+      return {
+        ...article,
+        position: article.status === 'queued' 
+          ? queuedArticles.findIndex(q => q.id === article.id) + 1 
+          : undefined,
+        // Add enhanced progress data for Story 22.1 visualization
+        progress: progressData ? {
+          status: progressData.status,
+          progress_percentage: progressData.progress_percentage || 0,
+          current_section: progressData.current_section || 1,
+          total_sections: progressData.total_sections || 1,
+          current_stage: progressData.current_stage || 'Processing',
+          estimated_time_remaining: progressData.estimated_time_remaining,
+          word_count: progressData.word_count || 0,
+          citations_count: progressData.citations_count || 0,
+          api_cost: progressData.api_cost || 0,
+          error_message: progressData.error_message,
+          // Story 22.1 enhancements
+          parallel_sections: progressData.parallel_sections || [],
+          research_api_calls: progressData.research_api_calls || 0,
+          cache_hit_rate: progressData.cache_hit_rate || 0,
+          retry_attempts: progressData.retry_attempts || 0,
+          estimated_completion: progressData.estimated_completion,
+          performance_metrics: progressData.performance_metrics || {},
+          research_phase: progressData.research_phase || {},
+          context_management: progressData.context_management || {},
+          updated_at: progressData.updated_at
+        } : null,
+        // Remove the raw article_progress data to clean up the response
+        article_progress: undefined
+      };
+    })
 
     console.log('📤 API returning', articlesWithPosition.length, 'articles:', articlesWithPosition.map(a => ({ id: a.id, status: a.status, title: a.title })));
 

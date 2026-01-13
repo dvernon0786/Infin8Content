@@ -316,9 +316,9 @@ development_status:
   # epic-21-retrospective: cancelled
 
   # Epic 22: Performance Optimization UX (CRITICAL - Sprint 1-2)
-  epic-22: backlog
+  epic-22: in-progress
   # Sprint 1-2 Priority - Visualize performance improvements, progress tracking
-  22-1-generation-progress-visualization: backlog
+  22-1-generation-progress-visualization: done
   22-2-performance-metrics-dashboard: backlog
   epic-22-retrospective: optional
 

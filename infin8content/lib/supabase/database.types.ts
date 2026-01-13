@@ -1,3 +1,11 @@
+/**
+ * Database types generated for Supabase
+ * Includes Story 22.1: Generation Progress Visualization enhancements
+ * 
+ * This file contains TypeScript definitions for all database tables and their relationships
+ * Updated with new fields from migration: 20260113_enhance_progress_tracking_for_story_22_1.sql
+ */
+
 export type Json =
   | string
   | number
@@ -6,478 +14,328 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
-      api_costs: {
+      [_ in never]: never
+    } & {
+      article_progress: {
         Row: {
           id: string
-          organization_id: string
-          service: string
-          operation: string
-          cost: number
-          created_at: string | null
+          article_id: string
+          org_id: string
+          status: 'queued' | 'researching' | 'generating' | 'completed' | 'failed'
+          progress_percentage: number
+          current_section: number
+          total_sections: number
+          current_stage: string
+          estimated_time_remaining: number | null
+          word_count: number
+          citations_count: number
+          api_cost: number
+          error_message: string | null
+          // Story 22.1 enhanced fields
+          parallel_sections: Json | null
+          research_api_calls: number
+          cache_hit_rate: number
+          retry_attempts: number
+          estimated_completion: string | null
+          performance_metrics: Json | null
+          research_phase: Json | null
+          context_management: Json | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
-          organization_id?: string
-          service?: string
-          operation?: string
-          cost?: number
-          created_at?: string | null
+          article_id: string
+          org_id: string
+          status?: 'queued' | 'researching' | 'generating' | 'completed' | 'failed'
+          progress_percentage?: number
+          current_section?: number
+          total_sections?: number
+          current_stage?: string
+          estimated_time_remaining?: number | null
+          word_count?: number
+          citations_count?: number
+          api_cost?: number
+          error_message?: string | null
+          // Story 22.1 enhanced fields
+          parallel_sections?: Json | null
+          research_api_calls?: number
+          cache_hit_rate?: number
+          retry_attempts?: number
+          estimated_completion?: string | null
+          performance_metrics?: Json | null
+          research_phase?: Json | null
+          context_management?: Json | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
-          organization_id?: string
-          service?: string
-          operation?: string
-          cost?: number
-          created_at?: string | null
+          article_id?: string
+          org_id?: string
+          status?: 'queued' | 'researching' | 'generating' | 'completed' | 'failed'
+          progress_percentage?: number
+          current_section?: number
+          total_sections?: number
+          current_stage?: string
+          estimated_time_remaining?: number | null
+          word_count?: number
+          citations_count?: number
+          api_cost?: number
+          error_message?: string | null
+          // Story 22.1 enhanced fields
+          parallel_sections?: Json | null
+          research_api_calls?: number
+          cache_hit_rate?: number
+          retry_attempts?: number
+          estimated_completion?: string | null
+          performance_metrics?: Json | null
+          research_phase?: Json | null
+          context_management?: Json | null
+          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'article_progress_article_id_fkey'
+            columns: ['article_id']
+            isOneToOne: true
+            referencedRelation: 'articles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'article_progress_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          }
+        ]
       }
       articles: {
         Row: {
           id: string
-          org_id: string
+          keyword: string
           title: string | null
-          keyword: string
-          status: string
-          target_word_count: number
-          writing_style: string | null
-          target_audience: string | null
-          custom_instructions: string | null
-          inngest_event_id: string | null
-          created_by: string | null
-          created_at: string | null
-          updated_at: string | null
-          outline: Json | null
-          sections: Json | null
-          current_section_index: number | null
-          generation_started_at: string | null
-          generation_completed_at: string | null
-          error_details: Json | null
-          outline_generation_duration_ms: number | null
-        }
-        Insert: {
-          id?: string
-          org_id?: string
-          title?: string | null
-          keyword?: string
-          status?: string
-          target_word_count?: number
-          writing_style?: string | null
-          target_audience?: string | null
-          custom_instructions?: string | null
-          inngest_event_id?: string | null
-          created_by?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-          outline?: Json | null
-          sections?: Json | null
-          current_section_index?: number | null
-          generation_started_at?: string | null
-          generation_completed_at?: string | null
-          error_details?: Json | null
-          outline_generation_duration_ms?: number | null
-        }
-        Update: {
-          id?: string
-          org_id?: string
-          title?: string | null
-          keyword?: string
-          status?: string
-          target_word_count?: number
-          writing_style?: string | null
-          target_audience?: string | null
-          custom_instructions?: string | null
-          inngest_event_id?: string | null
-          created_by?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-          outline?: Json | null
-          sections?: Json | null
-          current_section_index?: number | null
-          generation_started_at?: string | null
-          generation_completed_at?: string | null
-          error_details?: Json | null
-          outline_generation_duration_ms?: number | null
-        }
-        Relationships: []
-      }
-      audit_logs: {
-        Row: {
-          id: string
-          created_at: string | null
+          status: 'queued' | 'generating' | 'completed' | 'failed' | 'cancelled'
           org_id: string
-          user_id: string | null
-          action: string
-          details: Json | null
-          ip_address: string | null
-          user_agent: string | null
-        }
-        Insert: {
-          id?: string
-          created_at?: string | null
-          org_id?: string
-          user_id?: string | null
-          action?: string
-          details?: Json | null
-          ip_address?: string | null
-          user_agent?: string | null
-        }
-        Update: {
-          id?: string
-          created_at?: string | null
-          org_id?: string
-          user_id?: string | null
-          action?: string
-          details?: Json | null
-          ip_address?: string | null
-          user_agent?: string | null
-        }
-        Relationships: []
-      }
-      keyword_researches: {
-        Row: {
-          id: string
-          organization_id: string
           user_id: string
-          keyword: string
-          results: Json
-          api_cost: number
-          cached_until: string
-          created_at: string | null
-          updated_at: string | null
+          created_at: string
+          updated_at: string
+          content: string | null
+          outline: Json | null
+          metadata: Json | null
         }
         Insert: {
           id?: string
-          organization_id?: string
-          user_id?: string
-          keyword?: string
-          results?: Json
-          api_cost?: number
-          cached_until?: string
-          created_at?: string | null
-          updated_at?: string | null
+          keyword: string
+          title?: string | null
+          status?: 'queued' | 'generating' | 'completed' | 'failed' | 'cancelled'
+          org_id: string
+          user_id: string
+          created_at?: string
+          updated_at?: string
+          content?: string | null
+          outline?: Json | null
+          metadata?: Json | null
         }
         Update: {
           id?: string
-          organization_id?: string
-          user_id?: string
           keyword?: string
-          results?: Json
-          api_cost?: number
-          cached_until?: string
-          created_at?: string | null
-          updated_at?: string | null
+          title?: string | null
+          status?: 'queued' | 'generating' | 'completed' | 'failed' | 'cancelled'
+          org_id?: string
+          user_id?: string
+          updated_at?: string
+          content?: string | null
+          outline?: Json | null
+          metadata?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'articles_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'articles_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
       }
       organizations: {
         Row: {
           id: string
           name: string
-          plan: string
-          white_label_settings: Json | null
-          created_at: string | null
-          updated_at: string | null
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
-          payment_status: string | null
-          payment_confirmed_at: string | null
-          grace_period_started_at: string | null
-          suspended_at: string | null
-        }
-        Insert: {
-          id?: string
-          name?: string
-          plan?: string
-          white_label_settings?: Json | null
-          created_at?: string | null
-          updated_at?: string | null
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          payment_status?: string | null
-          payment_confirmed_at?: string | null
-          grace_period_started_at?: string | null
-          suspended_at?: string | null
-        }
-        Update: {
-          id?: string
-          name?: string
-          plan?: string
-          white_label_settings?: Json | null
-          created_at?: string | null
-          updated_at?: string | null
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          payment_status?: string | null
-          payment_confirmed_at?: string | null
-          grace_period_started_at?: string | null
-          suspended_at?: string | null
-        }
-        Relationships: []
-      }
-      otp_codes: {
-        Row: {
-          id: string
-          user_id: string
-          email: string
-          code: string
-          expires_at: string
-          verified_at: string | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          user_id?: string
-          email?: string
-          code?: string
-          expires_at?: string
-          verified_at?: string | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          email?: string
-          code?: string
-          expires_at?: string
-          verified_at?: string | null
-          created_at?: string | null
-        }
-        Relationships: []
-      }
-      serp_analyses: {
-        Row: {
-          id: string
-          organization_id: string
-          keyword: string
-          analysis_data: Json
-          cached_until: string
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          organization_id?: string
-          keyword?: string
-          analysis_data?: Json
-          cached_until?: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          organization_id?: string
-          keyword?: string
-          analysis_data?: Json
-          cached_until?: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      stripe_webhook_events: {
-        Row: {
-          id: string
-          stripe_event_id: string
-          event_type: string
-          organization_id: string | null
-          processed_at: string
+          plan: 'starter' | 'pro' | 'enterprise'
+          payment_status: 'active' | 'inactive' | 'suspended'
           created_at: string
+          updated_at: string
+          stripe_customer_id: string | null
         }
         Insert: {
           id?: string
-          stripe_event_id?: string
-          event_type?: string
-          organization_id?: string | null
-          processed_at?: string
+          name: string
+          plan?: 'starter' | 'pro' | 'enterprise'
+          payment_status?: 'active' | 'inactive' | 'suspended'
           created_at?: string
+          updated_at?: string
+          stripe_customer_id?: string | null
         }
         Update: {
           id?: string
-          stripe_event_id?: string
-          event_type?: string
-          organization_id?: string | null
-          processed_at?: string
-          created_at?: string
+          name?: string
+          plan?: 'starter' | 'pro' | 'enterprise'
+          payment_status?: 'active' | 'inactive' | 'suspended'
+          updated_at?: string
+          stripe_customer_id?: string | null
         }
-        Relationships: []
-      }
-      tavily_research_cache: {
-        Row: {
-          id: string
-          organization_id: string
-          research_query: string
-          research_results: Json
-          cached_until: string
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          organization_id?: string
-          research_query?: string
-          research_results?: Json
-          cached_until?: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          organization_id?: string
-          research_query?: string
-          research_results?: Json
-          cached_until?: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      team_invitations: {
-        Row: {
-          id: string
-          email: string
-          org_id: string
-          role: string
-          token: string
-          status: string
-          expires_at: string
-          accepted_at: string | null
-          created_by: string
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          email?: string
-          org_id?: string
-          role?: string
-          token?: string
-          status?: string
-          expires_at?: string
-          accepted_at?: string | null
-          created_by?: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          email?: string
-          org_id?: string
-          role?: string
-          token?: string
-          status?: string
-          expires_at?: string
-          accepted_at?: string | null
-          created_by?: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      usage_tracking: {
-        Row: {
-          id: string
-          organization_id: string
-          metric_type: string
-          usage_count: number
-          billing_period: string
-          last_updated: string | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          organization_id?: string
-          metric_type?: string
-          usage_count?: number
-          billing_period?: string
-          last_updated?: string | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          organization_id?: string
-          metric_type?: string
-          usage_count?: number
-          billing_period?: string
-          last_updated?: string | null
-          created_at?: string | null
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'organizations_pkey'
+            columns: ['id']
+            isOneToOne: true
+            referencedRelation: ''
+            referencedColumns: []
+          }
+        ]
       }
       users: {
         Row: {
           id: string
           email: string
           org_id: string | null
-          role: string
-          created_at: string | null
-          auth_user_id: string | null
-          otp_verified: boolean | null
-          first_name: string | null
-          updated_at: string | null
+          role: 'owner' | 'admin' | 'member'
+          created_at: string
+          updated_at: string
+          auth_user_id: string
         }
         Insert: {
           id?: string
-          email?: string
+          email: string
           org_id?: string | null
-          role?: string
-          created_at?: string | null
-          auth_user_id?: string | null
-          otp_verified?: boolean | null
-          first_name?: string | null
-          updated_at?: string | null
+          role?: 'owner' | 'admin' | 'member'
+          created_at?: string
+          updated_at?: string
+          auth_user_id: string
         }
         Update: {
           id?: string
           email?: string
           org_id?: string | null
-          role?: string
-          created_at?: string | null
-          auth_user_id?: string | null
-          otp_verified?: boolean | null
-          first_name?: string | null
-          updated_at?: string | null
+          role?: 'owner' | 'admin' | 'member'
+          updated_at?: string
+          auth_user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'users_auth_user_id_fkey'
+            columns: ['auth_user_id']
+            isOneToOne: true
+            referencedRelation: 'auth.users'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'users_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          }
+        ]
       }
     }
     Views: {
       [_ in never]: never
+    } & {
+      enhanced_article_progress: {
+        Row: {
+          // All article_progress columns plus calculated fields
+          id: string
+          article_id: string
+          org_id: string
+          status: 'queued' | 'researching' | 'generating' | 'completed' | 'failed'
+          progress_percentage: number
+          current_section: number
+          total_sections: number
+          current_stage: string
+          estimated_time_remaining: number | null
+          word_count: number
+          citations_count: number
+          api_cost: number
+          error_message: string | null
+          parallel_sections: Json | null
+          research_api_calls: number
+          cache_hit_rate: number
+          retry_attempts: number
+          estimated_completion: string | null
+          performance_metrics: Json | null
+          research_phase: Json | null
+          context_management: Json | null
+          created_at: string
+          updated_at: string
+          // Calculated fields from view
+          sections_completed_estimate: number
+          active_parallel_sections: number
+          performance_rating: 'excellent' | 'good' | 'fair' | 'needs_improvement'
+          epic20_optimized: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'article_progress_article_id_fkey'
+            columns: ['article_id']
+            isOneToOne: true
+            referencedRelation: 'articles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'article_progress_org_id_fkey'
+            columns: ['org_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          }
+        ]
+      }
     }
     Functions: {
-      cleanup_expired_invitations: {
+      [_ in never]: never
+    } & {
+      get_parallel_section_progress: {
         Args: {
-          [key: string]: never
+          article_uuid: string
         }
-        Returns: number
+        Returns: {
+          section_id: string
+          section_type: string
+          status: string
+          progress: number
+          start_time: string
+          estimated_completion: string | null
+          retry_count: number
+          word_count: number
+        }[]
       }
-      cleanup_expired_otp_codes: {
+      update_parallel_section_status: {
         Args: {
-          [key: string]: never
+          article_uuid: string
+          section_id: string
+          new_status: string
+          new_progress?: number
+          new_word_count?: number
         }
-        Returns: unknown
+        Returns: boolean
       }
-      get_auth_user_org_id: {
-        Args: {
-          [key: string]: never
-        }
-        Returns: string
-      }
-      get_invitation_by_token: {
-        Args: {
-          token_input?: string
-        }
-        Returns: Database['public']['Tables']['team_invitations']['Row'][]
-      }
-      update_updated_at_column: {
-        Args: {
-          [key: string]: never
-        }
-        Returns: unknown
+      update_performance_metrics: {
+        Args: Record<PropertyKey, never>
+        Returns: Record<PropertyKey, never>
       }
     }
     Enums: {
@@ -487,4 +345,57 @@ export type Database = {
       [_ in never]: never
     }
   }
+}
+
+/**
+ * Story 22.1: Generation Progress Visualization Types
+ * Enhanced types for progress visualization components
+ */
+
+export interface ParallelSection {
+  sectionId: string
+  sectionType: 'introduction' | 'h2' | 'h3' | 'conclusion' | 'faq'
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'retrying'
+  progress: number // 0-100
+  startTime: string
+  estimatedCompletion?: string
+  retryCount?: number
+  wordCount?: number
+}
+
+export interface PerformanceMetrics {
+  researchApiCalls: number
+  cacheHitRate: number
+  retryAttempts: number
+  totalApiCalls: number
+  estimatedTimeRemaining: number // seconds
+  costSavings: number // percentage
+  timeSavings: number // percentage
+}
+
+export interface ResearchPhase {
+  status: 'pending' | 'researching' | 'completed' | 'cached'
+  apiCallsMade: number
+  estimatedTotalCalls: number
+  cacheHitRate: number
+  keywords: string[]
+  sourcesFound: number
+}
+
+export interface ContextManagement {
+  tokensUsed: number
+  tokenLimit: number
+  cacheHits: number
+  sectionsSummarized: number
+  optimizationRate: number // percentage
+}
+
+/**
+ * Enhanced article progress with Story 22.1 fields
+ */
+export interface EnhancedArticleProgress extends Omit<Database['public']['Tables']['article_progress']['Row'], 'parallel_sections' | 'performance_metrics' | 'research_phase' | 'context_management'> {
+  parallelSections: ParallelSection[]
+  performanceMetrics: PerformanceMetrics
+  researchPhase: ResearchPhase
+  contextManagement: ContextManagement
 }
