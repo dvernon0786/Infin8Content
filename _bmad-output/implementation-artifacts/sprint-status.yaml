@@ -33,7 +33,7 @@
 # - SM typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
-generated: 2026-01-11
+generated: 2026-01-13
 project: Infin8Content
 project_key: infin8content
 tracking_system: file-system
@@ -363,3 +363,37 @@ development_status:
   28-1-user-onboarding-enhancement: backlog
   28-2-performance-and-accessibility-polish: backlog
   epic-28-retrospective: optional
+
+  # === NEW EPICS ADDED - Sprint Planning Integration ===
+  
+  # Epic 29: Marketing & Homepage (HIGH - Pre-Launch)
+  epic-29: backlog
+  # Pre-Launch Priority - Marketing foundation, conversion optimization
+  29-1-homepage-hero-section-and-value-proposition: backlog
+  29-2-problem-solution-and-product-capabilities: backlog
+  29-3-trust-signals-and-social-proof: backlog
+  epic-29-retrospective: optional
+
+  # Epic 30: Design System Implementation (CRITICAL - Foundation)
+  epic-30: backlog
+  # Critical Foundation - Design tokens, component library, documentation
+  30-1-css-design-tokens-and-variables: backlog
+  30-2-component-library-and-patterns: backlog
+  30-3-design-token-documentation-and-compliance: backlog
+  epic-30-retrospective: optional
+
+  # Epic 31: Responsive Design & Mobile Experience (HIGH - Sprint 3-4)
+  epic-31: backlog
+  # Sprint 3-4 Priority - Mobile-first responsive design, touch optimization
+  31-1-responsive-breakpoints-and-navigation: backlog
+  31-2-mobile-layout-adaptations: backlog
+  31-3-mobile-performance-and-touch-optimization: backlog
+  epic-31-retrospective: optional
+
+  # Epic 32: Success Metrics & Analytics Implementation (MEDIUM - Sprint 4-5)
+  epic-32: backlog
+  # Sprint 4-5 Priority - User metrics, performance tracking, analytics dashboard
+  32-1-user-experience-metrics-tracking: backlog
+  32-2-efficiency-and-performance-metrics: backlog
+  32-3-analytics-dashboard-and-reporting: backlog
+  epic-32-retrospective: optional
