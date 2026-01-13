@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent, useEffect } from 'react'
+import React, { useState, FormEvent, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
@@ -27,13 +27,14 @@ export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKey
   const [targetAudience, setTargetAudience] = useState('General')
   const [customInstructions, setCustomInstructions] = useState('')
   const [validationError, setValidationError] = useState<string | null>(null)
+  const customWordCountRef = useRef<HTMLInputElement>(null)
 
-  // Update keyword when initialKeyword prop changes (e.g., from URL params)
+  // Auto-focus custom word count input when custom option is selected
   useEffect(() => {
-    if (initialKeyword) {
-      setKeyword(initialKeyword)
+    if (isCustomWordCount && customWordCountRef.current) {
+      customWordCountRef.current.focus()
     }
-  }, [initialKeyword])
+  }, [isCustomWordCount])
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -113,10 +114,10 @@ export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKey
         <label className="text-sm font-medium">
           Article Length <span className="text-destructive">*</span>
         </label>
-        <div className="flex flex-col gap-3">
-          <div className="flex gap-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap gap-6">
             {[1500, 2000, 3000].map((count) => (
-              <label key={count} className="flex items-center gap-2 cursor-pointer">
+              <label key={count} className="flex items-center gap-3 cursor-pointer hover:bg-accent/50 p-2 rounded-md transition-colors">
                 <input
                   type="radio"
                   name="wordCount"
@@ -129,10 +130,10 @@ export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKey
                   disabled={isLoading}
                   className="h-4 w-4"
                 />
-                <span className="text-sm">{count.toLocaleString()} words</span>
+                <span className="text-sm font-medium">{count.toLocaleString()} words</span>
               </label>
             ))}
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-3 cursor-pointer hover:bg-accent/50 p-2 rounded-md transition-colors">
               <input
                 type="radio"
                 name="wordCount"
@@ -142,12 +143,17 @@ export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKey
                 disabled={isLoading}
                 className="h-4 w-4"
               />
-              <span className="text-sm">Custom</span>
+              <span className="text-sm font-medium">Custom</span>
             </label>
           </div>
           {isCustomWordCount && (
-            <div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="customWordCount" className="text-sm font-medium text-muted-foreground">
+                Custom Word Count
+              </label>
               <Input
+                id="customWordCount"
+                ref={customWordCountRef}
                 type="number"
                 placeholder="Enter word count (500-10,000)"
                 value={customWordCount}
@@ -158,8 +164,12 @@ export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKey
                 disabled={isLoading}
                 min={500}
                 max={10000}
-                className="w-full max-w-xs"
+                className="w-full"
+                data-testid="custom-word-count-input"
               />
+              <p className="text-xs text-muted-foreground">
+                Enter a value between 500 and 10,000 words
+              </p>
             </div>
           )}
         </div>
