@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -39,53 +39,37 @@ export const ActivityFilter: React.FC<ActivityFilterProps> = ({
   dateRange,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [tempSelectedTypes, setTempSelectedTypes] = useState<ActivityType[]>(selectedTypes);
-  const [tempSelectedUser, setTempSelectedUser] = useState<string | null>(selectedUser);
-  const [tempDateRange, setTempDateRange] = useState<{ start: string; end: string } | null>(dateRange);
-
-  // Sync with props
-  useEffect(() => {
-    setTempSelectedTypes(selectedTypes);
-    setTempSelectedUser(selectedUser);
-    setTempDateRange(dateRange);
-  }, [selectedTypes, selectedUser, dateRange]);
 
   const handleTypeToggle = (type: ActivityType) => {
-    const newTypes = tempSelectedTypes.includes(type)
-      ? tempSelectedTypes.filter(t => t !== type)
-      : [...tempSelectedTypes, type];
+    const newTypes = selectedTypes.includes(type)
+      ? selectedTypes.filter(t => t !== type)
+      : [...selectedTypes, type];
     
-    setTempSelectedTypes(newTypes);
     onTypeChange(newTypes);
   };
 
   const handleUserChange = (userId: string) => {
     const newUserId = userId === 'all' ? null : userId;
-    setTempSelectedUser(newUserId);
     onUserFilterChange(newUserId);
   };
 
   const handleDateRangeChange = (field: 'start' | 'end', value: string) => {
-    const newRange = tempDateRange || { start: '', end: '' };
+    const newRange = dateRange || { start: '', end: '' };
     const updatedRange = { ...newRange, [field]: value };
     
     // Only update if both dates are provided or both are empty
     if ((updatedRange.start && updatedRange.end) || (!updatedRange.start && !updatedRange.end)) {
-      setTempDateRange(updatedRange);
       onDateRangeChange(updatedRange.start && updatedRange.end ? updatedRange : null);
     }
   };
 
   const clearAllFilters = () => {
-    setTempSelectedTypes([]);
-    setTempSelectedUser(null);
-    setTempDateRange(null);
     onTypeChange([]);
     onUserFilterChange(null);
     onDateRangeChange(null);
   };
 
-  const hasActiveFilters = tempSelectedTypes.length > 0 || tempSelectedUser || tempDateRange;
+  const hasActiveFilters = selectedTypes.length > 0 || selectedUser || dateRange;
 
   return (
     <Card className="w-full">
@@ -96,7 +80,7 @@ export const ActivityFilter: React.FC<ActivityFilterProps> = ({
             Filters
             {hasActiveFilters && (
               <Badge variant="secondary" className="ml-2 text-xs">
-                {tempSelectedTypes.length + (tempSelectedUser ? 1 : 0) + (tempDateRange ? 1 : 0)} active
+                {selectedTypes.length + (selectedUser ? 1 : 0) + (dateRange ? 1 : 0)} active
               </Badge>
             )}
           </CardTitle>
@@ -138,7 +122,7 @@ export const ActivityFilter: React.FC<ActivityFilterProps> = ({
               {availableTypes.map(type => (
                 <Badge
                   key={type}
-                  variant={tempSelectedTypes.includes(type) ? "default" : "secondary"}
+                  variant={selectedTypes.includes(type) ? "default" : "secondary"}
                   className="cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => handleTypeToggle(type)}
                 >
@@ -155,7 +139,7 @@ export const ActivityFilter: React.FC<ActivityFilterProps> = ({
                 <User className="h-4 w-4 mr-1" />
                 User
               </label>
-              <Select value={tempSelectedUser || 'all'} onValueChange={handleUserChange}>
+              <Select value={selectedUser || 'all'} onValueChange={handleUserChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="All users" />
                 </SelectTrigger>
@@ -181,7 +165,7 @@ export const ActivityFilter: React.FC<ActivityFilterProps> = ({
               <Input
                 type="date"
                 placeholder="Start date"
-                value={tempDateRange?.start || ''}
+                value={dateRange?.start || ''}
                 onChange={(e) => handleDateRangeChange('start', e.target.value)}
                 className="flex-1"
               />
@@ -189,7 +173,7 @@ export const ActivityFilter: React.FC<ActivityFilterProps> = ({
               <Input
                 type="date"
                 placeholder="End date"
-                value={tempDateRange?.end || ''}
+                value={dateRange?.end || ''}
                 onChange={(e) => handleDateRangeChange('end', e.target.value)}
                 className="flex-1"
               />
@@ -204,7 +188,7 @@ export const ActivityFilter: React.FC<ActivityFilterProps> = ({
             <div className="pt-2 border-t">
               <div className="text-sm font-medium mb-2">Active Filters:</div>
               <div className="flex flex-wrap gap-1">
-                {tempSelectedTypes.map(type => (
+                {selectedTypes.map(type => (
                   <Badge key={type} variant="outline" className="text-xs">
                     {activityTypeLabels[type]}
                     <X 
@@ -213,22 +197,21 @@ export const ActivityFilter: React.FC<ActivityFilterProps> = ({
                     />
                   </Badge>
                 ))}
-                {tempSelectedUser && (
+                {selectedUser && (
                   <Badge variant="outline" className="text-xs">
-                    User: {availableUsers.find(u => u.id === tempSelectedUser)?.first_name || availableUsers.find(u => u.id === tempSelectedUser)?.email}
+                    User: {availableUsers.find(u => u.id === selectedUser)?.first_name || availableUsers.find(u => u.id === selectedUser)?.email}
                     <X 
                       className="h-3 w-3 ml-1 cursor-pointer" 
                       onClick={() => handleUserChange('all')}
                     />
                   </Badge>
                 )}
-                {tempDateRange && (
+                {dateRange && (
                   <Badge variant="outline" className="text-xs">
-                    {tempDateRange.start} to {tempDateRange.end}
+                    {dateRange.start} to {dateRange.end}
                     <X 
                       className="h-3 w-3 ml-1 cursor-pointer" 
                       onClick={() => {
-                        setTempDateRange(null);
                         onDateRangeChange(null);
                       }}
                     />
