@@ -11,13 +11,17 @@ import { useRouter } from 'next/navigation';
 import { useRealtimeArticles } from '@/hooks/use-realtime-articles';
 import { useDashboardFilters } from '@/hooks/use-dashboard-filters';
 import { useArticleNavigation } from '@/hooks/use-article-navigation';
+import { useBulkSelection, useMobileBulkSelection } from '@/hooks/use-bulk-selection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
+import { BulkActionsBar } from '@/components/dashboard/bulk-actions-bar';
+import { MobileBulkActions } from '@/components/dashboard/mobile-bulk-actions';
 import { VisualStatusIndicator } from '@/components/articles/visual-status-indicator';
 import { SearchInput } from '@/components/dashboard/search-input';
-import { FilterDropdown } from '@/components/dashboard/filter-dropdown';
+import { FilterDropdown, QuickFilters } from '@/components/dashboard/filter-dropdown';
 import { SortDropdown } from '@/components/dashboard/sort-dropdown';
 import { ActiveFilters } from '@/components/dashboard/active-filters';
 import { FilterSummary } from '@/components/dashboard/active-filters';
@@ -34,7 +38,9 @@ import {
   TrendingUp,
   Eye,
   Filter,
-  Search
+  Search,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { DashboardErrorBoundary, useErrorHandler } from './error-boundary';
 import type { DashboardArticle, DashboardUpdateEvent } from '@/lib/supabase/realtime';
@@ -47,6 +53,13 @@ interface ArticleStatusListProps {
   showProgress?: boolean;
   className?: string;
   enableSearchFilter?: boolean;
+  enableBulkSelection?: boolean;
+  onDelete?: (articleIds: string[]) => Promise<void>;
+  onExport?: (articleIds: string[], format: 'csv' | 'pdf') => Promise<void>;
+  onArchive?: (articleIds: string[]) => Promise<void>;
+  onChangeStatus?: (articleIds: string[], status: string) => Promise<void>;
+  onAssignToTeam?: (articleIds: string[], teamMemberId: string) => Promise<void>;
+  teamMembers?: Array<{ id: string; name: string; email: string }>;
 }
 
 
@@ -57,6 +70,13 @@ export function ArticleStatusList({
   showProgress = true,
   className = '',
   enableSearchFilter = true,
+  enableBulkSelection = true,
+  onDelete,
+  onExport,
+  onArchive,
+  onChangeStatus,
+  onAssignToTeam,
+  teamMembers = [],
 }: ArticleStatusListProps) {
   const router = useRouter();
   const [selectedArticle, setSelectedArticle] = useState<string | null>(null);
@@ -99,6 +119,18 @@ export function ArticleStatusList({
     const statuses = new Set(rawArticles.map(article => article.status));
     return Array.from(statuses).sort() as ArticleStatus[];
   }, [rawArticles]);
+
+  // Bulk selection hook (initialized after filteredArticles is available)
+  const bulkSelection = enableBulkSelection 
+    ? useMobileBulkSelection({
+        articles: filteredArticles,
+        onSelectionChange: (selectedIds) => {
+          console.log('Selection changed:', selectedIds.size, 'articles selected');
+        },
+        enableKeyboardShortcuts: true,
+        maxSelection: 100,
+      })
+    : null;
 
   // Apply maxItems limit to filtered results
   const displayArticles = useMemo(() => {
@@ -201,11 +233,35 @@ export function ArticleStatusList({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              {/* Select all checkbox */}
+              {bulkSelection && filteredArticles.length > 0 && (
+                <div className="mr-2">
+                  <Checkbox
+                    checked={bulkSelection.isAllSelected}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        bulkSelection.selectAll();
+                      } else {
+                        bulkSelection.clearSelection();
+                      }
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              )}
+              
               <FileText className="h-5 w-5" />
               Article Status
               <Badge variant="outline" className="text-xs">
                 {displayArticles.length}
               </Badge>
+              
+              {/* Selection indicator */}
+              {bulkSelection && bulkSelection.selectedCount > 0 && (
+                <Badge variant="secondary" className="text-xs ml-2">
+                  {bulkSelection.selectedCount} selected
+                </Badge>
+              )}
             </CardTitle>
             
             <div className="flex items-center gap-3">
@@ -266,6 +322,14 @@ export function ArticleStatusList({
                 </div>
               </div>
               
+              {/* Quick Filters */}
+              <QuickFilters
+                onFilterChange={filters.setFilters}
+                disabled={false}
+                selectedCount={bulkSelection?.selectedCount || 0}
+                onClearSelection={bulkSelection ? () => bulkSelection.clearSelection() : undefined}
+              />
+              
               {/* Active Filters */}
               <ActiveFilters
                 filters={filters.filters}
@@ -310,6 +374,40 @@ export function ArticleStatusList({
         )}
       </Card>
 
+      {/* Bulk Actions Bar */}
+      {bulkSelection && bulkSelection.selectedCount > 0 && (
+        <>
+          {/* Desktop Bulk Actions */}
+          <div className="hidden md:block">
+            <BulkActionsBar
+              selectedArticles={bulkSelection.getSelectedArticles()}
+              onClearSelection={() => bulkSelection.clearSelection()}
+              onDelete={onDelete}
+              onExport={onExport}
+              onArchive={onArchive}
+              onChangeStatus={onChangeStatus}
+              onAssignToTeam={onAssignToTeam}
+              teamMembers={teamMembers}
+              className="mb-4"
+            />
+          </div>
+          
+          {/* Mobile Bulk Actions */}
+          <div className="md:hidden">
+            <MobileBulkActions
+              selectedArticles={bulkSelection.getSelectedArticles()}
+              onClearSelection={() => bulkSelection.clearSelection()}
+              onDelete={onDelete}
+              onExport={onExport}
+              onArchive={onArchive}
+              onChangeStatus={onChangeStatus}
+              onAssignToTeam={onAssignToTeam}
+              teamMembers={teamMembers}
+            />
+          </div>
+        </>
+      )}
+
       {/* Articles list */}
       <div className="space-y-3">
         {filteredArticles.length === 0 ? (
@@ -329,17 +427,59 @@ export function ArticleStatusList({
           filteredArticles.map((article) => {
             const statusConfig = getStatusConfig(article.status);
             const isSelected = selectedArticle === article.id;
+            const isBulkSelected = bulkSelection?.isSelected(article.id) || false;
             
             return (
               <Card 
                 key={article.id} 
                 className={`transition-all duration-200 hover:shadow-md ${
                   isSelected ? 'ring-2 ring-blue-500' : ''
+                } ${
+                  isBulkSelected ? 'ring-2 ring-green-500 bg-green-50' : ''
                 }`}
-                onClick={() => setSelectedArticle(isSelected ? null : article.id)}
+                onClick={() => {
+                  if (bulkSelection && bulkSelection.isSelectionMode) {
+                    bulkSelection.toggleSelection(article.id);
+                  } else {
+                    setSelectedArticle(isSelected ? null : article.id);
+                  }
+                }}
+                onTouchStart={(e) => {
+                  if (bulkSelection) {
+                    bulkSelection.handleTouchStart(e);
+                  }
+                }}
+                onTouchMove={(e) => {
+                  if (bulkSelection) {
+                    bulkSelection.handleTouchMove(e);
+                  }
+                }}
+                onTouchEnd={(e) => {
+                  if (bulkSelection) {
+                    bulkSelection.handleTouchEnd(e, article.id);
+                  }
+                }}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
+                    {/* Bulk selection checkbox */}
+                    {bulkSelection && (
+                      <div className="mr-3 mt-1">
+                        <Checkbox
+                          checked={isBulkSelected}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              bulkSelection.toggleSelection(article.id);
+                            } else {
+                              bulkSelection.toggleSelection(article.id);
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          onTouchStart={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    )}
+                    
                     <div className="flex-1 min-w-0">
                       <h3 
                         ref={(el) => {

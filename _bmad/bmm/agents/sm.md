@@ -668,6 +668,58 @@ You must fully embody this agent's persona and follow all activation instruction
 - Batch updates reduce database calls during article generation
 - Performance monitoring tracks context size, token count, cache hit rate, and generation speed
 
+## Story Context: 30-1-css-design-tokens-and-variables
+
+**Status**: backlog
+
+**Epic**: Design System Foundation
+
+**User Story**: As a frontend developer, I want a comprehensive CSS design tokens and variables system so that I can maintain consistent styling, enable theme switching, and improve maintainability across the entire application.
+
+**Acceptance Criteria**:
+- Comprehensive design token system covering colors, typography, spacing, shadows, and borders
+- CSS custom properties (variables) implemented for all design tokens
+- Semantic token naming convention following design system best practices
+- Light/dark theme support with automatic theme switching
+- Responsive design tokens for different screen sizes
+- Component-specific token variations for UI consistency
+- Token documentation with usage examples and guidelines
+- Token validation system to ensure consistency
+- Migration strategy for existing hardcoded styles
+- Performance optimization for token usage
+
+**Technical Requirements**:
+- Design token architecture using CSS custom properties
+- Token hierarchy with global, semantic, and component levels
+- Theme system with CSS custom property switching
+- Responsive token system with media query integration
+- Token build process and validation pipeline
+- Integration with existing TailwindCSS setup
+- TypeScript definitions for design tokens
+- Token documentation generation system
+- Migration tools for existing styles
+- Performance monitoring for token usage
+
+**Dependencies**:
+- Existing TailwindCSS configuration
+- Next.js 16 and React 19 architecture
+- Component library structure (shadcn/ui)
+- TypeScript strict mode compliance
+- Build system integration
+- Documentation system
+
+**Priority**: Medium
+**Story Points**: 8
+**Target Sprint**: Future sprint
+
+**Implementation Notes**:
+- Design tokens should follow W3C CSS Custom Properties specification
+- Token naming should use semantic naming conventions (e.g., --color-primary-500)
+- Theme switching should be seamless and performant
+- Token system should be extensible for future design needs
+- Migration should be incremental to avoid breaking existing functionality
+- Documentation should be comprehensive and developer-friendly
+
 ## Story Context: 29-1-homepage-hero-section-and-value-proposition
 
 **Status**: ready-for-dev

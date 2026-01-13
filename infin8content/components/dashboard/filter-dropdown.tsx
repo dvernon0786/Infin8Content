@@ -428,9 +428,13 @@ function getActiveFilterCount(filters: FilterState): number {
 export function QuickFilters({
   onFilterChange,
   disabled = false,
+  selectedCount = 0,
+  onClearSelection,
 }: {
   onFilterChange: (filters: Partial<FilterState>) => void;
   disabled?: boolean;
+  selectedCount?: number;
+  onClearSelection?: () => void;
 }) {
   const quickFilters = [
     {
@@ -470,6 +474,19 @@ export function QuickFilters({
           {filter.label}
         </Button>
       ))}
+      
+      {/* Bulk selection clear button */}
+      {selectedCount > 0 && onClearSelection && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onClearSelection}
+          disabled={disabled}
+          className="text-xs bg-gray-100 text-gray-800 border-current"
+        >
+          Clear {selectedCount} selected
+        </Button>
+      )}
     </div>
   );
 }
