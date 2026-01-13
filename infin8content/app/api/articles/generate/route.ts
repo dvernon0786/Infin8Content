@@ -120,9 +120,10 @@ export async function POST(request: Request) {
       : undefined
 
     // Create article record in database with status "queued"
+    // Use service role client to bypass RLS for article creation
     // Type assertion needed until database types are regenerated after migration
     // TODO: Remove type assertion after running: supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts
-    const { data: article, error: insertError } = await (supabase
+    const { data: article, error: insertError } = await (supabaseAdmin
       .from('articles' as any)
       .insert({
         org_id: organizationId,
