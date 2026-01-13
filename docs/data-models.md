@@ -1,6 +1,6 @@
 # Data Models Documentation
 
-Generated: 2026-01-11  
+Generated: 2026-01-13 (Updated)  
 Project: Infin8Content  
 Database: Supabase (PostgreSQL)  
 Total Tables: 12

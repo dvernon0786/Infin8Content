@@ -304,12 +304,16 @@ development_status:
 
   # === UX DESIGN & DASHBOARD EXPERIENCE EPICS ===
   
-  # Epic 21: UX Dashboard Foundation & Data Synchronization (CRITICAL - Sprint 1)
-  epic-21: backlog
-  # Sprint 1 Critical - Fix vanishing articles, establish real-time foundation
-  21-1-data-cleanup-api-integration: backlog
-  21-2-basic-real-time-dashboard-updates: backlog
-  epic-21-retrospective: optional
+  # === CANCELLED EPICS (Redundant/Replaced) ===
+  
+  # Epic 21: UX Dashboard Foundation & Data Synchronization (CANCELLED - Redundant)
+  # CANCELLED: Completely redundant with Epic 15 (Real-time Dashboard Experience) which is DONE
+  # Epic 15 already delivered: data synchronization, real-time updates, dashboard API integration
+  # Re-implementing would cause regression and waste effort
+  # epic-21: cancelled
+  # 21-1-data-cleanup-api-integration: cancelled (already done in Epic 15)
+  # 21-2-basic-real-time-dashboard-updates: cancelled (already done in Epic 15)
+  # epic-21-retrospective: cancelled
 
   # Epic 22: Performance Optimization UX (CRITICAL - Sprint 1-2)
   epic-22: backlog

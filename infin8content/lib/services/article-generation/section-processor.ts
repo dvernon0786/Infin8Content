@@ -730,12 +730,15 @@ function formatResearchSources(sources: TavilySource[]): string {
         return `${index + 1}. Invalid source format`
       }
       
+      // Sanitize URL to prevent LLM from breaking it with spaces/newlines
+      const cleanUrl = (source.url || '#').replace(/\s+/g, '').replace(/\n/g, '')
+      
       const excerpt = (source as any).content?.slice(0, 200) || 'No excerpt available'
-      const authority = source.url?.includes('.edu') ? '🎓 Academic' :
-                       source.url?.includes('.gov') ? '🏛️ Government' :
+      const authority = cleanUrl?.includes('.edu') ? '🎓 Academic' :
+                       cleanUrl?.includes('.gov') ? '🏛️ Government' :
                        '📰 Industry'
       
-      return `${index + 1}. [${source.title || 'Untitled'}](${source.url || '#'}) ${authority}
+      return `${index + 1}. [${source.title || 'Untitled'}](${cleanUrl}) ${authority}
    Excerpt: ${excerpt}...
    Relevance: ${(source as any).relevanceScore || (source as any).relevance_score || 'High'}`
     }).join('\n\n')
@@ -1799,11 +1802,12 @@ async function generateSectionContent(
 - Include relevant statistics within the first 200 words of sections for authority
 - End sections with natural transitions to the next topic for flow
 
-**Citation & Authority Building:**
-- Integrate citations naturally: "According to [Source]," or "Research from [Source] shows..."
-- Distribute citations evenly (not clustered at beginning/end) for readability
-- Prioritize authoritative sources (.edu, .gov, industry leaders) for E-E-A-T
-- Use citations to support claims, not replace original analysis for expertise
+**Important - DO NOT Include Citations:**
+- Write content without any citations, links, or references
+- Do not use markdown links like [text](url)
+- Citations will be added automatically after generation
+- Focus only on writing high-quality, informative content
+- Reference credible sources in your writing but do not include URLs or markdown links
 
 **Semantic SEO Guidelines:**
 - Include LSI (Latent Semantic Indexing) keywords naturally throughout content

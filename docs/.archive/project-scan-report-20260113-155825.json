@@ -1,9 +1,9 @@
 {
   "workflow_version": "1.2.0",
   "timestamps": {
-    "started": "2026-01-13T15:58:00.000Z",
-    "last_updated": "2026-01-13T16:05:00.000Z",
-    "completed": "2026-01-13T16:05:00.000Z"
+    "started": "2026-01-11T10:47:00.000Z",
+    "last_updated": "2026-01-10T23:58:31.000Z",
+    "completed": "2026-01-10T23:58:39.000Z"
   },
   "mode": "full_rescan",
   "scan_level": "quick",
@@ -13,67 +13,67 @@
     {
       "step": "step_1",
       "status": "completed",
-      "timestamp": "2026-01-13T15:59:00.000Z",
+      "timestamp": "2026-01-10T23:49:04.000Z",
       "summary": "Classified as monolith with 1 part"
     },
     {
       "step": "step_2",
       "status": "completed",
-      "timestamp": "2026-01-13T16:00:00.000Z",
+      "timestamp": "2026-01-10T23:49:45.000Z",
       "summary": "Found 8 existing docs"
     },
     {
       "step": "step_3",
       "status": "completed",
-      "timestamp": "2026-01-13T16:01:00.000Z",
+      "timestamp": "2026-01-10T23:50:28.000Z",
       "summary": "Tech stack: Next.js 16.1.1"
     },
     {
       "step": "step_4",
       "status": "completed",
-      "timestamp": "2026-01-13T16:02:00.000Z",
+      "timestamp": "2026-01-10T23:51:44.000Z",
       "summary": "Conditional analysis complete, 3 files written"
     },
     {
       "step": "step_5",
       "status": "completed",
-      "timestamp": "2026-01-13T16:03:00.000Z",
+      "timestamp": "2026-01-10T23:52:14.000Z",
       "summary": "Source tree documented"
     },
     {
       "step": "step_6",
       "status": "completed",
-      "timestamp": "2026-01-13T16:04:00.000Z",
+      "timestamp": "2026-01-10T23:53:07.000Z",
       "summary": "Dev/deployment guides written"
     },
     {
       "step": "step_8",
       "status": "completed",
-      "timestamp": "2026-01-13T16:05:00.000Z",
+      "timestamp": "2026-01-10T23:56:50.000Z",
       "summary": "Architecture docs written for 1 parts"
     },
     {
       "step": "step_9",
       "status": "completed",
-      "timestamp": "2026-01-13T16:05:00.000Z",
+      "timestamp": "2026-01-10T23:57:16.000Z",
       "summary": "All supporting docs written"
     },
     {
       "step": "step_10",
       "status": "completed",
-      "timestamp": "2026-01-13T16:05:00.000Z",
+      "timestamp": "2026-01-10T23:58:09.000Z",
       "summary": "Master index generated"
     },
     {
       "step": "step_11",
       "status": "completed",
-      "timestamp": "2026-01-13T16:05:00.000Z",
+      "timestamp": "2026-01-10T23:58:31.000Z",
       "summary": "Validation and review complete"
     },
     {
       "step": "step_12",
       "status": "completed",
-      "timestamp": "2026-01-13T16:05:00.000Z",
+      "timestamp": "2026-01-10T23:58:39.000Z",
       "summary": "Workflow complete"
     }
   ],
@@ -147,16 +147,9 @@
       "files_generated": 8,
       "total_lines": "50,000+",
       "scan_mode": "quick",
-      "completion_time": "2026-01-13T16:05:00.000Z"
+      "completion_time": "2026-01-10T23:58:39.000Z"
     }
   },
-  "project_types": [
-    {
-      "part_id": "main",
-      "project_type_id": "web",
-      "display_name": "Infin8Content Web App"
-    }
-  ],
   "outputs_generated": [
     "project-scan-report.json",
     "api-contracts.md",
@@ -168,5 +161,12 @@
     "project-overview.md",
     "index.md"
   ],
-  "resume_instructions": "Workflow completed successfully"
+  "resume_instructions": "Starting from step 1",
+  "project_types": [
+    {
+      "part_id": "main",
+      "project_type_id": "web",
+      "display_name": "Infin8Content Web App"
+    }
+  ]
 }

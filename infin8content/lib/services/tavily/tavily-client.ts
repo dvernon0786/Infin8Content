@@ -97,7 +97,7 @@ export async function researchQuery(
       const sources: TavilySource[] = (data.results || [])
         .map((result: any) => ({
           title: result.title || '',
-          url: result.url || '',
+          url: (result.url || '').replace(/\s+/g, '').replace(/\n/g, ''),
           excerpt: result.content || '',
           published_date: result.published_date || null,
           author: result.author || null,
