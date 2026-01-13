@@ -5,7 +5,13 @@ import { HeroSection } from "@/components/marketing/HeroSection";
 // Mock Next.js Image component
 vi.mock("next/image", () => ({
   __esModule: true,
-  default: ({ alt, ...props }: any) => <img alt={alt} {...props} />,
+  default: ({ alt, priority, ...props }: any) => (
+    <img 
+      alt={alt} 
+      {...props} 
+      {...(priority && { priority: "true" })}
+    />
+  ),
 }));
 
 // Mock Next.js Link component
