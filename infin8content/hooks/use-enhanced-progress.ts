@@ -328,7 +328,7 @@ export function useEnhancedProgressDashboard(orgId: string, articleIds: string[]
           },
           async (payload) => {
             if (payload.new) {
-              const articleId = payload.new.article_id;
+              const articleId = (payload.new as any).article_id;
               if (articleIds.includes(articleId)) {
                 // Transform and update the specific article progress
                 setArticlesProgress(prev => {

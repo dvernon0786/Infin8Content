@@ -29,7 +29,7 @@ export default async function AcceptInvitationPage({ searchParams }: AcceptInvit
   // Validate invitation token
   // RPC function returns SETOF (array), so we need to handle it properly
   const { data: invitationData, error: invitationError } = await supabase.rpc(
-    'get_invitation_by_token',
+    'get_invitation_by_token' as any,
     { token_input: token }
   )
 

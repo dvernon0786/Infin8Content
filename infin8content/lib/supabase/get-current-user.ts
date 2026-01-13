@@ -47,11 +47,11 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
 
   // Query organization if org_id exists
   let organization: OrganizationRecord | null = null
-  if (userRecord.org_id) {
+  if ((userRecord as any).org_id) {
     const { data: orgData } = await supabase
       .from('organizations')
       .select('*')
-      .eq('id', userRecord.org_id)
+      .eq('id', (userRecord as any).org_id)
       .single()
 
     organization = orgData || null
@@ -60,14 +60,16 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
   return {
     user: {
       id: user.id,
-      email: user.email,
-    },
-    id: userRecord.id,
-    email: userRecord.email,
-    first_name: userRecord.first_name,
-    role: userRecord.role,
-    org_id: userRecord.org_id,
+      email: user.email || '',
+      firstName: (userRecord as any).first_name || null,
+      role: (userRecord as any).role || 'member',
+      orgId: (userRecord as any).org_id || null,
+    } as any,
+    id: (userRecord as any).id,
+    email: (userRecord as any).email,
+    first_name: (userRecord as any).first_name,
+    role: (userRecord as any).role,
+    org_id: (userRecord as any).org_id,
     organizations: organization,
   }
 })
-

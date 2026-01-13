@@ -43,7 +43,7 @@ export default async function KeywordResearchPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Badge variant={plan === 'pro' || plan === 'agency' ? 'default' : 'secondary'}>
+              <Badge variant={plan === 'pro' ? 'default' : 'secondary'}>
                 {plan.toUpperCase()}
               </Badge>
               <span className="text-sm text-muted-foreground">

@@ -35,7 +35,7 @@ export function checkGracePeriodExpired(gracePeriodStartedAt: Date | null): bool
  */
 export function getPaymentAccessStatus(org: Organization): 'active' | 'grace_period' | 'suspended' | 'pending_payment' {
   const paymentStatus = org.payment_status || 'pending_payment'
-  const gracePeriodStartedAt = org.grace_period_started_at ? new Date(org.grace_period_started_at) : null
+  const gracePeriodStartedAt = (org as any).grace_period_started_at ? new Date((org as any).grace_period_started_at) : null
 
   // Active payment - full access
   if (paymentStatus === 'active') {
@@ -43,7 +43,7 @@ export function getPaymentAccessStatus(org: Organization): 'active' | 'grace_per
   }
 
   // Past due - check if grace period expired
-  if (paymentStatus === 'past_due') {
+  if ((paymentStatus as any) === 'past_due') {
     // If grace period not started (null), account should be suspended
     // This handles edge cases where payment_status is 'past_due' but grace_period_started_at wasn't set
     if (!gracePeriodStartedAt) {
@@ -62,7 +62,7 @@ export function getPaymentAccessStatus(org: Organization): 'active' | 'grace_per
   }
 
   // Pending payment or canceled - no access
-  if (paymentStatus === 'pending_payment' || paymentStatus === 'canceled') {
+  if ((paymentStatus as any) === 'pending_payment' || (paymentStatus as any) === 'canceled') {
     return 'pending_payment'
   }
 

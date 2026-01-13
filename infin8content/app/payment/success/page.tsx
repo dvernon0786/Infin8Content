@@ -284,7 +284,7 @@ export default async function PaymentSuccessPage({
 
   // If payment is pending, show processing message
   // This handles race condition where webhook hasn't processed yet
-  if (paymentStatus === 'pending_payment') {
+  if ((paymentStatus as any) === 'pending_payment') {
     return <PaymentSuccessClient status="pending" />
   }
 

@@ -49,7 +49,7 @@ export default async function DashboardPage() {
             <CardTitle className="text-sm font-medium">
               Current Plan
             </CardTitle>
-            <Badge variant={plan === 'pro' || plan === 'agency' ? 'default' : 'secondary'}>
+            <Badge variant={plan === 'pro' ? 'default' : 'secondary'}>
               {plan.toUpperCase()}
             </Badge>
           </CardHeader>

@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     // Use database-level expiration check to avoid timezone issues and race conditions
     // RPC function returns SETOF (array), so we need to handle it properly
     const { data: invitationData, error: invitationError } = await supabase.rpc(
-      'get_invitation_by_token',
+      'get_invitation_by_token' as any,
       { token_input: token }
     )
 
@@ -128,11 +128,11 @@ export async function POST(request: Request) {
 
     // Update invitation: status = 'accepted', accepted_at = NOW()
     const { error: invitationUpdateError } = await supabase
-      .from('team_invitations')
+      .from('team_invitations' as any)
       .update({
-        status: 'accepted',
+        status: 'accepted' as any,
         accepted_at: new Date().toISOString(),
-      })
+      } as any)
       .eq('id', invitation.id)
 
     if (invitationUpdateError) {

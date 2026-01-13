@@ -41,7 +41,7 @@ export async function getAuditLogs(params: GetAuditLogsParams = {}): Promise<Get
 
     // Build query
     let query = supabase
-        .from('audit_logs')
+        .from('audit_logs' as any)
         .select('*', { count: 'exact' })
         .eq('org_id', currentUser.org_id)
         .order('created_at', { ascending: false })
@@ -71,7 +71,7 @@ export async function getAuditLogs(params: GetAuditLogsParams = {}): Promise<Get
     const totalPages = Math.ceil(totalCount / pageSize)
 
     return {
-        logs: (data as AuditLog[]) ?? [],
+        logs: (data as unknown as AuditLog[]) ?? [],
         totalCount,
         page,
         pageSize,
@@ -96,7 +96,7 @@ export async function exportAuditLogsAsCSV(params: GetAuditLogsParams = {}): Pro
 
     // Build query (no pagination for export)
     let query = supabase
-        .from('audit_logs')
+        .from('audit_logs' as any)
         .select('*')
         .eq('org_id', currentUser.org_id)
         .order('created_at', { ascending: false })
@@ -117,7 +117,7 @@ export async function exportAuditLogsAsCSV(params: GetAuditLogsParams = {}): Pro
         throw new Error('Failed to export audit logs')
     }
 
-    const logs = (data as AuditLog[]) ?? []
+    const logs = (data as unknown as AuditLog[]) ?? []
 
     // Convert to CSV with proper formatting
     // Headers match data column order exactly

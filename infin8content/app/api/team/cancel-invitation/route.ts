@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
     // Validate: Invitation exists and belongs to organization
     const { data: invitation, error: invitationError } = await supabase
-      .from('team_invitations')
+      .from('team_invitations' as any)
       .select('id')
       .eq('id', invitationId)
       .eq('org_id', currentUser.org_id)

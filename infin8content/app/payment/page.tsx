@@ -39,7 +39,8 @@ export default async function PaymentPage({
   
   // Pass suspended flag and suspension date to form component
   const isSuspended = params?.suspended === 'true'
-  const suspendedAt = currentUser?.organizations?.suspended_at || null
+  // Note: suspended_at is not in current schema, using updated_at as fallback
+  const suspendedAt = (currentUser?.organizations as any)?.suspended_at || currentUser?.organizations?.updated_at || null
   const redirectTo = validateRedirect(params?.redirect, '/dashboard')
   
   return <PaymentForm isSuspended={isSuspended} suspendedAt={suspendedAt} redirectTo={redirectTo} />

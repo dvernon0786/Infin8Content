@@ -48,8 +48,9 @@ export default async function SuspendedPage({
   const redirectTo = validateRedirect(params?.redirect, '/dashboard')
   
   // Get suspension date and grace period info from organization
-  const suspendedAt = currentUser?.organizations?.suspended_at || null
-  const gracePeriodStartedAt = currentUser?.organizations?.grace_period_started_at || null
+  // Note: Using updated_at as fallback since suspended_at and grace_period_started_at are not in current schema
+  const suspendedAt = currentUser?.organizations?.updated_at || null
+  const gracePeriodStartedAt = null // Not available in current schema
   
   return (
     <SuspensionMessage 

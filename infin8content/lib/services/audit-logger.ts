@@ -39,7 +39,7 @@ export async function logAction(params: CreateAuditLogParams): Promise<void> {
         const supabase = await createClient();
 
         const { error } = await supabase
-            .from('audit_logs')
+            .from('audit_logs' as any)
             .insert({
                 org_id: orgId,
                 user_id: userId ?? null,

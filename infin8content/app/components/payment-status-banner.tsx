@@ -27,8 +27,11 @@ export default function PaymentStatusBanner({ organization }: PaymentStatusBanne
   // Actual grace period enforcement happens server-side in middleware.
   // TODO: Consider fetching server-side calculated value for production to prevent client manipulation
   useEffect(() => {
-    if (organization.payment_status === 'past_due' && organization.grace_period_started_at) {
-      const gracePeriodStart = new Date(organization.grace_period_started_at).getTime()
+    // Note: 'past_due' is handled as 'suspended' in the current schema
+    // Note: grace_period_started_at is not in current schema, using updated_at as fallback
+    const gracePeriodStartedAt = (organization as any).grace_period_started_at || organization.updated_at
+    if ((organization.payment_status === 'suspended' || (organization.payment_status as any) === 'past_due') && gracePeriodStartedAt) {
+      const gracePeriodStart = new Date(gracePeriodStartedAt).getTime()
       const now = Date.now()
       const elapsed = now - gracePeriodStart
       const remaining = GRACE_PERIOD_DURATION_MS - elapsed
@@ -39,8 +42,10 @@ export default function PaymentStatusBanner({ organization }: PaymentStatusBanne
       } else {
         setGracePeriodDaysRemaining(0)
       }
+    } else {
+      setGracePeriodDaysRemaining(null)
     }
-  }, [organization.payment_status, organization.grace_period_started_at])
+  }, [organization.payment_status, organization.updated_at])
 
   const accessStatus = getPaymentAccessStatus(organization)
 

@@ -23,7 +23,7 @@ export async function checkOTPResendRateLimit(
 
   // Count recent OTP codes sent to this email in the last 10 minutes
   const { data: recentCodes, error } = await supabase
-    .from('otp_codes')
+    .from('otp_codes' as any)
     .select('created_at')
     .eq('email', email)
     .gte('created_at', windowStart.toISOString())
@@ -43,8 +43,8 @@ export async function checkOTPResendRateLimit(
   const attemptCount = recentCodes?.length || 0
   const allowed = attemptCount < MAX_ATTEMPTS
   const remaining = Math.max(0, MAX_ATTEMPTS - attemptCount)
-  const resetAt = recentCodes && recentCodes.length > 0 && recentCodes[0].created_at
-    ? new Date(new Date(recentCodes[0].created_at).getTime() + RATE_LIMIT_WINDOW_MS)
+  const resetAt = recentCodes && recentCodes.length > 0 && (recentCodes as any)[0].created_at
+    ? new Date(new Date((recentCodes as any)[0].created_at).getTime() + RATE_LIMIT_WINDOW_MS)
     : new Date(now.getTime() + RATE_LIMIT_WINDOW_MS)
 
   return {
