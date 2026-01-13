@@ -54,18 +54,21 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Log article creation
     IF TG_OP = 'INSERT' THEN
-        INSERT INTO activities (organization_id, user_id, article_id, activity_type, activity_data)
-        VALUES (
-            NEW.org_id,
-            NEW.created_by,
-            NEW.id,
-            'article_created',
-            jsonb_build_object(
-                'keyword', NEW.keyword,
-                'title', NEW.title,
-                'status', NEW.status
-            )
-        );
+        -- Only create activity if created_by is not null
+        IF NEW.created_by IS NOT NULL THEN
+            INSERT INTO activities (organization_id, user_id, article_id, activity_type, activity_data)
+            VALUES (
+                NEW.org_id,
+                NEW.created_by,
+                NEW.id,
+                'article_created',
+                jsonb_build_object(
+                    'keyword', NEW.keyword,
+                    'title', NEW.title,
+                    'status', NEW.status
+                )
+            );
+        END IF;
         RETURN NEW;
     END IF;
     

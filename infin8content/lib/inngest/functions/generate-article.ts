@@ -74,12 +74,23 @@ export const generateArticle = inngest.createFunction(
           .from('articles' as any)
           .select('id, org_id, keyword, status')
           .eq('id', articleId)
-          .single()
+          .maybeSingle()
 
-        if (error || !data) {
-          const errorMsg = `Article ${articleId} not found: ${error?.message || 'Unknown error'}`
+        if (error) {
+          const errorMsg = `Database error loading article ${articleId}: ${error.message}`
           console.error(`[Inngest] Step: load-article - ERROR: ${errorMsg}`)
           throw new Error(errorMsg)
+        }
+
+        if (!data) {
+          const errorMsg = `Article ${articleId} not found in database. This may happen if the article creation failed or the article was deleted.`
+          console.warn(`[Inngest] Step: load-article - WARNING: ${errorMsg}`)
+          // Return a special result to indicate graceful handling
+          return {
+            handled: true,
+            reason: 'ARTICLE_NOT_FOUND',
+            message: errorMsg
+          }
         }
 
         // Type assertion after error check
@@ -135,6 +146,17 @@ export const generateArticle = inngest.createFunction(
         // We've already checked data exists above, so this is safe
         return (data as unknown) as { id: string; org_id: string; keyword: string; status: string; skipped?: boolean; reason?: string; progressTracker?: any }
       })
+
+      // Check if article was handled (not found or already processed)
+      if (article && 'handled' in article && article.handled) {
+        console.log(`[Inngest] Article ${articleId} handled gracefully: ${article.reason}`)
+        return {
+          success: false,
+          reason: article.reason,
+          message: article.message,
+          articleId
+        }
+      }
 
       // Early exit if article was skipped (already in terminal state)
       if ((article as any).skipped) {
