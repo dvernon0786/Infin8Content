@@ -367,12 +367,12 @@ development_status:
   # === NEW EPICS ADDED - Sprint Planning Integration ===
   
   # Epic 29: Marketing & Homepage (HIGH - Pre-Launch)
-  epic-29: in-progress
+  epic-29: done
   # Pre-Launch Priority - Marketing foundation, conversion optimization
   29-1-homepage-hero-section-and-value-proposition: done
   29-2-problem-solution-and-product-capabilities: done
   29-3-trust-signals-and-social-proof: done
-  epic-29-retrospective: optional
+  epic-29-retrospective: done
 
   # Epic 30: Design System Implementation (CRITICAL - Foundation)
   epic-30: backlog
