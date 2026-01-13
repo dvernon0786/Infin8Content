@@ -1,6 +1,7 @@
 import { HeroSection } from "@/components/marketing/HeroSection";
 import { ProblemSolutionSection } from "@/components/marketing/ProblemSolutionSection";
 import { ProductCapabilitiesSection } from "@/components/marketing/ProductCapabilitiesSection";
+import { TrustSignalsSection } from "@/components/marketing/TrustSignalsSection";
 
 export default function Home() {
   // Problem-Solution content based on user personas
@@ -118,14 +119,16 @@ export default function Home() {
           href: "#demo",
           ariaLabel: "Watch a demo of Infin8Content"
         }}
-        visualSrc="/images/product-mockup.png"
+        visualSrc="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=600&fit=crop&auto=format"
         visualAlt="Infin8Content dashboard showing article generation interface with real-time progress tracking"
-        webpSrc="/images/product-mockup.webp"
+        webpSrc="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=600&fit=crop&auto=format"
       />
       
       <ProblemSolutionSection cards={problemSolutionCards} />
       
       <ProductCapabilitiesSection capabilities={productCapabilities} />
+      
+      <TrustSignalsSection />
     </div>
   );
 }

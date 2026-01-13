@@ -92,7 +92,6 @@ function TrustBadge({
           marginBottom: 'var(--spacing-sm)'
         }}
         sizes="(max-width: 768px) 60px, 80px"
-        priority={false}
       />
       
       {certification && (
