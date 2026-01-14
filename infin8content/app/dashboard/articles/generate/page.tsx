@@ -1,6 +1,7 @@
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { redirect } from 'next/navigation'
 import { ArticleGenerationPageClient } from './article-generation-client'
+import { LayoutDiagnostic } from '@/components/layout-diagnostic'
 
 export default async function ArticleGenerationPage() {
   const currentUser = await getCurrentUser()
@@ -9,5 +10,10 @@ export default async function ArticleGenerationPage() {
     redirect('/login')
   }
 
-  return <ArticleGenerationPageClient organizationId={currentUser.org_id} />
+  return (
+    <>
+      <LayoutDiagnostic />
+      <ArticleGenerationPageClient organizationId={currentUser.org_id} />
+    </>
+  )
 }

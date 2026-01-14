@@ -377,7 +377,7 @@ export function EnhancedArticleContentViewer({
           const isH3 = section.section_type === 'h3'
 
           return (
-            <div key={section.section_index} className="flex flex-col gap-4">
+            <div key={`${section.section_index}-${index}`} className="flex flex-col gap-4">
               {/* Section Header */}
               {!isH3 && (
                 <div className="flex items-start justify-between gap-4">

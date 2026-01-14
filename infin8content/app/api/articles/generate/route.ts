@@ -201,7 +201,7 @@ export async function POST(request: Request) {
       }
     } else if (insertError || !article) {
       console.error('Failed to create article record:', {
-        insertError,
+        insertError: JSON.stringify(insertError, null, 2),
         article,
         organizationId,
         userId,
@@ -213,7 +213,7 @@ export async function POST(request: Request) {
         }
       })
       return NextResponse.json(
-        { error: 'Failed to create article record', details: insertError?.message },
+        { error: 'Failed to create article record', details: JSON.stringify(insertError, null, 2) },
         { status: 500 }
       )
     }

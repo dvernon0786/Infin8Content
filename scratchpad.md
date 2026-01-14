@@ -143,6 +143,10 @@
 - **Testing Framework Ready:** ✅ COMPREHENSIVE TEST STRUCTURE - Created test file with structured test cases, stubbed pending test framework configuration for future implementation (2026-01-14 09:38:54 UTC)
 - **Story Status Updated:** ✅ READY FOR REVIEW - Story 23.2 status updated to "review" with all acceptance criteria implemented, comprehensive documentation, and production-ready code (2026-01-14 09:38:54 UTC)
 - **Git Push Complete:** ✅ SYSTEM SYNC - All Advanced Activity Feed implementation files committed and pushed to git origin/main with comprehensive commit message (2026-01-14 09:38:54 UTC)
+- **Layout Double Margin Fixed:** ✅ CRITICAL LAYOUT FIX - Fixed double margin issue in dashboard layout where main element was offset by 512px instead of 256px, removed redundant margin from SidebarInset component in components/ui/sidebar.tsx (2026-01-14 12:40:50 UTC)
+- **LayoutDiagnostic Added to All Pages:** ✅ COMPREHENSIVE DEBUGGING - Added LayoutDiagnostic component to all dashboard pages for layout debugging, will be removed before shipping (2026-01-14 12:40:50 UTC)
+- **Article Title Fallback Implemented:** ✅ ROBUST TITLE DISPLAY - Implemented fallback logic to generate article title from first section or keyword when database title is null, preventing "Article Generation" fallback display (2026-01-14 12:40:50 UTC)
+- **Scratchpad Updated & Git Push Complete:** ✅ SYSTEM SYNC - Scratchpad updated with layout fixes and diagnostic component additions, all changes pushed to git origin/main (2026-01-14 12:40:50 UTC)
 
 ### 📝 **Recent Activity - Create Epics and Stories Workflow Completion (2026-01-13 16:58:50 AEDT)**
 - ✅ **WORKFLOW COMPLETED:** Full Create Epics and Stories workflow successfully completed

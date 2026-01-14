@@ -25,9 +25,9 @@ export default async function DashboardLayout({
                         email={currentUser.email}
                         name={currentUser.first_name || currentUser.email.split('@')[0]}
                     />
-                    <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
+                    <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
                         {children}
-                    </main>
+                    </div>
                 </SidebarInset>
             </SidebarProvider>
         </PaymentGuard>

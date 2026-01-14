@@ -133,6 +133,10 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
+  /* Sidebar width variables */
+  --sidebar-width: 16rem;
+  --sidebar-width-icon: 3rem;
+  --sidebar-width-mobile: 18rem;
 }
 
 .dark {
