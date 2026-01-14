@@ -171,12 +171,12 @@ export const generateArticle = inngest.createFunction(
 
       // Step 2: Load keyword research data
       const keywordResearch = await step.run('load-keyword-research', async () => {
-        console.log(`[Inngest] Step: load-keyword-research - Loading research for keyword: ${article.keyword}`)
-        const cacheKey = article.keyword.toLowerCase().trim()
+        console.log(`[Inngest] Step: load-keyword-research - Loading research for keyword: ${(article as any).keyword}`)
+        const cacheKey = (article as any).keyword.toLowerCase().trim()
         const { data } = await supabase
           .from('keyword_researches' as any)
           .select('results')
-          .eq('organization_id', article.org_id)
+          .eq('organization_id', (article as any).org_id)
           .eq('keyword', cacheKey)
           .gt('cached_until', new Date().toISOString())
           .order('created_at', { ascending: false })
@@ -207,13 +207,13 @@ export const generateArticle = inngest.createFunction(
 
       // Step 3: Generate SERP analysis
       const serpAnalysis = await step.run('generate-serp-analysis', async () => {
-        console.log(`[Inngest] Step: generate-serp-analysis - Analyzing SERP for keyword: ${article.keyword}`)
+        console.log(`[Inngest] Step: generate-serp-analysis - Analyzing SERP for keyword: ${(article as any).keyword}`)
         
         // Update progress to researching
         await (article as any).progressTracker?.updateResearching('Analyzing search results and competitor content...')
         
         try {
-          const analysis = await analyzeSerpStructure(article.keyword, article.org_id)
+          const analysis = await analyzeSerpStructure((article as any).keyword, (article as any).org_id)
           console.log(`[Inngest] Step: generate-serp-analysis - Success: SERP analysis completed`)
           return analysis
         } catch (error) {
@@ -228,7 +228,7 @@ export const generateArticle = inngest.createFunction(
 
       // Step 4: Generate outline
       const outline = await step.run('generate-outline', async () => {
-        console.log(`[Inngest] Step: generate-outline - Generating outline for keyword: ${article.keyword}`)
+        console.log(`[Inngest] Step: generate-outline - Generating outline for keyword: ${(article as any).keyword}`)
         const startTime = Date.now()
         
         // Update progress to researching during outline generation
@@ -236,7 +236,7 @@ export const generateArticle = inngest.createFunction(
         
         try {
           const generatedOutline = await generateOutline(
-            article.keyword,
+            (article as any).keyword,
             keywordResearch,
             serpAnalysis
           )
@@ -260,7 +260,7 @@ export const generateArticle = inngest.createFunction(
           }
 
           // Create new progress tracker with correct section count
-          const newProgressTracker = createProgressTracker(articleId, article.org_id, totalSections)
+          const newProgressTracker = createProgressTracker(articleId, (article as any).org_id, totalSections)
           await newProgressTracker.initialize('Article structure generated, starting content creation...')
           
           // Update the article object to use the new progress tracker
@@ -306,9 +306,9 @@ export const generateArticle = inngest.createFunction(
           // Perform batch research once for the entire article using the generated outline
           const researchCache = await performBatchResearch(
             articleId,
-            article.keyword,
+            (article as any).keyword,
             outline,
-            article.org_id
+            (article as any).org_id
           )
           
           console.log(`[Inngest] Step: batch-research - Success: Research completed with ${researchCache.comprehensiveSources.length} comprehensive sources and ${researchCache.sectionSpecificSources.size} section-specific mappings`)
