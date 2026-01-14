@@ -1,12 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { LayoutDiagnostic } from "@/components/layout-diagnostic"
 
 export default function SettingsPage() {
   return (
     <>
-      <LayoutDiagnostic />
       <div className="flex flex-col gap-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>

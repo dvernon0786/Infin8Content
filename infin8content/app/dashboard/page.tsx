@@ -1,7 +1,6 @@
 import { getCurrentUser } from "@/lib/supabase/get-current-user"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { LayoutDiagnostic } from "@/components/layout-diagnostic"
 
 export default async function DashboardPage() {
   const currentUser = await getCurrentUser()
@@ -10,7 +9,6 @@ export default async function DashboardPage() {
     // Should be handled by middleware, but safe fallback
     return (
       <>
-        <LayoutDiagnostic />
         <div className="flex flex-col gap-6">
           <div className="text-center py-8">
             <p className="text-muted-foreground">Unable to load user data. Please try refreshing the page.</p>
@@ -31,7 +29,6 @@ export default async function DashboardPage() {
   if (!orgName) {
     return (
       <>
-        <LayoutDiagnostic />
         <div className="flex flex-col gap-6">
           <div className="text-center py-8">
             <p className="text-muted-foreground">Organization not found. Please contact support.</p>
@@ -43,7 +40,7 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <LayoutDiagnostic />
+      {/* Main Content */}
       <div className="flex flex-col gap-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>

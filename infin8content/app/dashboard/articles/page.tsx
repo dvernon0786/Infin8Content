@@ -4,7 +4,6 @@ import ArticlesClient from './articles-client'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { LayoutDiagnostic } from '@/components/layout-diagnostic'
 
 export default async function ArticlesPage() {
   const currentUser = await getCurrentUser()
@@ -15,7 +14,6 @@ export default async function ArticlesPage() {
 
   return (
     <>
-      <LayoutDiagnostic />
       <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
