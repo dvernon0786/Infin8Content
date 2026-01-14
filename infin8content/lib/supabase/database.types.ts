@@ -685,14 +685,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      update_parallel_section_status: {
-        Args: {
-          article_uuid?: string
-          section_id?: string
-          new_status?: string
-        }
-        Returns: boolean
-      }
       update_performance_metrics: {
         Args: {
           [key: string]: never
