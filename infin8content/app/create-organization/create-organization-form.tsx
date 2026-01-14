@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { LayoutDiagnostic } from '@/components/layout-diagnostic'
 
 export default function CreateOrganizationForm() {
   const [name, setName] = useState('')
@@ -52,15 +53,15 @@ export default function CreateOrganizationForm() {
 
   // Form UI - match Story 1.3/1.4 styling exactly
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-        <h1 className="text-2xl font-bold text-center text-gray-900">Create Organization</h1>
-        <p className="text-center text-gray-600 text-sm">
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb' }}>
+      <div style={{ maxWidth: '448px', width: '100%', padding: '32px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', margin: '0 16px' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', color: '#111827', marginBottom: '8px' }}>Create Organization</h1>
+        <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '14px', marginBottom: '32px' }}>
           Create your organization to get started with Infin8Content
         </p>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-900">
+            <label htmlFor="name" style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#111827', marginBottom: '8px' }}>
               Organization Name *
             </label>
             <input
@@ -68,8 +69,28 @@ export default function CreateOrganizationForm() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              onBlur={() => validateName(name)}
-              className="mt-1 block w-full px-3 py-3 text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              style={{ 
+                display: 'block', 
+                width: '100%', 
+                padding: '12px', 
+                fontSize: '16px', 
+                border: '1px solid #d1d5db', 
+                borderRadius: '6px',
+                boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                outline: 'none',
+                transition: 'border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out'
+              }}
+              onFocus={(e) => {
+                const target = e.target as HTMLInputElement
+                target.style.borderColor = '#3b82f6'
+                target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+              }}
+              onBlur={(e) => {
+                const target = e.target as HTMLInputElement
+                target.style.borderColor = '#d1d5db'
+                target.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                validateName(name)
+              }}
               required
               minLength={2}
               maxLength={100}
@@ -78,7 +99,7 @@ export default function CreateOrganizationForm() {
               aria-describedby={errors.name ? 'name-error' : undefined}
             />
             {errors.name && (
-              <p id="name-error" className="mt-1 text-sm flex items-center gap-1 text-red-600">
+              <p id="name-error" style={{ marginTop: '4px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '4px', color: '#dc2626' }}>
                 <span aria-hidden="true">⚠</span> {errors.name}
               </p>
             )}
@@ -87,12 +108,39 @@ export default function CreateOrganizationForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              padding: '12px 16px',
+              border: 'none',
+              borderRadius: '6px',
+              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: 'white',
+              backgroundColor: isSubmitting ? '#9ca3af' : '#3b82f6',
+              cursor: isSubmitting ? 'not-allowed' : 'pointer',
+              transition: 'background-color 0.15s ease-in-out'
+            }}
+            onMouseEnter={(e) => {
+              if (!isSubmitting) {
+                const target = e.target as HTMLButtonElement
+                target.style.backgroundColor = '#2563eb'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isSubmitting) {
+                const target = e.target as HTMLButtonElement
+                target.style.backgroundColor = '#3b82f6'
+              }
+            }}
           >
             {isSubmitting ? 'Creating Organization...' : 'Create Organization'}
           </button>
         </form>
       </div>
+      <LayoutDiagnostic />
     </div>
   )
 }

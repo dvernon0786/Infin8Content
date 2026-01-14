@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import PaymentSuccessClient from './payment-success-client'
 import { validateRedirect } from '@/lib/utils/validate-redirect'
+import { LayoutDiagnostic } from '@/components/layout-diagnostic'
 
 interface PaymentSuccessPageProps {
   searchParams: Promise<{ session_id?: string }>
@@ -26,12 +27,12 @@ export default async function PaymentSuccessPage({
   // Validate session_id
   if (!sessionId) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
-          <div className="mb-4">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', padding: '0 16px' }}>
+        <div style={{ maxWidth: '448px', width: '100%', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '32px', textAlign: 'center' }}>
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '48px', width: '48px', borderRadius: '50%', backgroundColor: '#fef2f2' }}>
               <svg
-                className="h-6 w-6 text-red-600"
+                style={{ height: '24px', width: '24px', color: '#dc2626' }}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -45,19 +46,20 @@ export default async function PaymentSuccessPage({
               </svg>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827', marginBottom: '8px' }}>
             Invalid Session
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p style={{ color: '#6b7280', marginBottom: '24px' }}>
             No payment session found. Please try again from the payment page.
           </p>
           <Link
             href="/payment"
-            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            style={{ display: 'inline-block', padding: '12px 24px', backgroundColor: '#3b82f6', color: 'white', borderRadius: '8px', textDecoration: 'none' }}
           >
             Go to Payment Page
           </Link>
         </div>
+        <LayoutDiagnostic />
       </div>
     )
   }
@@ -69,12 +71,12 @@ export default async function PaymentSuccessPage({
   } catch (error) {
     console.error('Failed to retrieve Stripe session:', error)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
-          <div className="mb-4">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', padding: '0 16px' }}>
+        <div style={{ maxWidth: '448px', width: '100%', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '32px', textAlign: 'center' }}>
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '48px', width: '48px', borderRadius: '50%', backgroundColor: '#fef2f2' }}>
               <svg
-                className="h-6 w-6 text-red-600"
+                style={{ height: '24px', width: '24px', color: '#dc2626' }}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -88,20 +90,21 @@ export default async function PaymentSuccessPage({
               </svg>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827', marginBottom: '8px' }}>
             Session Not Found
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p style={{ color: '#6b7280', marginBottom: '24px' }}>
             Unable to verify payment session. Please contact support if you
             completed a payment.
           </p>
           <Link
             href="/payment"
-            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            style={{ display: 'inline-block', padding: '12px 24px', backgroundColor: '#3b82f6', color: 'white', borderRadius: '8px', textDecoration: 'none' }}
           >
             Go to Payment Page
           </Link>
         </div>
+        <LayoutDiagnostic />
       </div>
     )
   }
@@ -260,6 +263,7 @@ export default async function PaymentSuccessPage({
             Refresh Page
           </button>
         </div>
+        <LayoutDiagnostic />
       </div>
     )
   }

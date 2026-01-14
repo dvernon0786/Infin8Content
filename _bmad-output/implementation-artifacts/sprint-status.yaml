@@ -329,6 +329,13 @@ development_status:
   23-2-advanced-activity-feed: ready-for-dev
   epic-23-retrospective: optional
 
+  # === CRISIS RESPONSE DOCUMENTATION ===
+  # CSS Specificity Crisis Resolution (January 14, 2026)
+  css-specificity-crisis-resolution: done
+  # Pages Fixed: verify-email, create-organization, payment/success
+  # Solution: Inline styles to bypass CSS specificity conflicts
+  # Tool: LayoutDiagnostic component for detection and validation
+
   # Epic 24: Real-time Infrastructure UX (HIGH - Sprint 3)
   epic-24: backlog
   # Sprint 3 Priority - Supabase real-time, celebration experience

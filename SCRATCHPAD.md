@@ -1,5 +1,60 @@
 # Infin8Content Development Scratchpad
 
+## 🚨 CSS Specificity Crisis Resolution (January 14, 2026)
+
+**Date**: 2026-01-15  
+**Status**: ✅ RESOLVED  
+**Priority**: CRITICAL  
+
+### Crisis Summary
+Critical CSS specificity regression affecting all authentication pages, causing container compression from 448px to 64px, making content unreadable.
+
+### Root Cause
+- **Issue**: Global CSS specificity conflicts overriding Tailwind utility classes
+- **Pattern**: `max-w-md` class overridden to `maxWidth: "16px"` instead of expected `448px`
+- **Impact**: All auth pages (verify-email, create-organization, payment/success) affected
+
+### Resolution Process
+1. **Detection**: LayoutDiagnostic component identified exact metrics
+2. **Analysis**: CSS specificity conflicts confirmed across auth pages
+3. **Implementation**: Replaced Tailwind classes with inline styles (highest specificity)
+4. **Validation**: LayoutDiagnostic confirmed proper rendering
+
+### Pages Fixed
+- ✅ **Verify-Email**: `/app/(auth)/verify-email/page.tsx` - Container restored to 448px
+- ✅ **Create-Organization**: `/app/create-organization/create-organization-form.tsx` - Form layout fixed
+- ✅ **Payment Success**: `/app/payment/success/page.tsx` - Error states restored
+
+### Technical Solution
+```jsx
+// Before (broken)
+<div className="max-w-md w-full">  // maxWidth: "16px"
+
+// After (fixed)
+<div style={{ maxWidth: '448px', width: '100%' }}>  // maxWidth: "448px"
+```
+
+### React Server Component Issue
+- **Problem**: Event handlers (`onMouseOver`, `onMouseOut`) in Server Components
+- **Error**: "Event handlers cannot be passed to Client Component props"
+- **Solution**: Removed event handlers, preserved styling
+- **Result**: 500 errors resolved, functionality maintained
+
+### Documentation Updates
+- ✅ **CSS Specificity Crisis Memory**: Comprehensive crisis documentation
+- ✅ **LayoutDiagnostic Tool Memory**: Enhanced with success stories
+- ✅ **Implementation Architecture**: Updated with CSS debugging framework
+- ✅ **Story Documentation**: Stories 23.1 & 23.2 updated with CSS considerations
+- ✅ **Sprint Status**: Crisis resolution tracking added
+
+### Prevention Strategy
+- **CSS Audit**: Review global CSS for specificity conflicts
+- **Layout Testing**: Verify utility classes after each update
+- **Diagnostic Integration**: Include LayoutDiagnostic in critical components
+- **Pattern Documentation**: Record CSS conflict solutions
+
+---
+
 ## Latest Implementation: Story 23.1 - Multi-article Management Interface
 
 **Date**: 2026-01-14  
@@ -118,6 +173,8 @@ Successfully implemented comprehensive multi-article management interface with b
 - Uses existing Supabase configuration
 
 ### Known Issues
+- ✅ **RESOLVED**: CSS specificity crisis affecting auth pages
+- ✅ **RESOLVED**: React Server Component event handler errors
 - Minor TypeScript lint errors in error handling (non-blocking)
 - Missing Radix UI alert-dialog dependency (workaround implemented)
 
@@ -126,9 +183,12 @@ Successfully implemented comprehensive multi-article management interface with b
 - Advanced filtering with bulk selection
 - Bulk operation scheduling
 - Enhanced mobile gestures
+- **CSS Architecture Review**: Evaluate utility class conflicts
 
 ---
 
-**Last Updated**: 2026-01-14 08:15 UTC  
+**Last Updated**: 2026-01-15 00:02 UTC  
+**Crisis Resolution Time**: ~2 hours  
 **Implementation Time**: ~4 hours  
-**Story Status**: COMPLETED
+**Story Status**: COMPLETED  
+**Crisis Status**: RESOLVED
