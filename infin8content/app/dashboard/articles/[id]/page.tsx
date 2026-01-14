@@ -30,7 +30,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
   // First, get basic article info with authorization check
   const { data: articleData, error } = await supabase
-    .from('articles' as any)
+    .from('articles')
     .select('id, title, keyword, status, target_word_count, writing_style, target_audience, created_at, updated_at, org_id')
     .eq('id', id)
     .eq('org_id', currentUser.org_id)
@@ -40,8 +40,8 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
     articleId: id,
     hasData: !!articleData,
     error: error?.message,
-    articleTitle: articleData?.title,
-    articleStatus: articleData?.status,
+    articleTitle: (articleData as any)?.title,
+    articleStatus: (articleData as any)?.status,
     allFields: articleData ? Object.keys(articleData) : [],
     allData: JSON.stringify(articleData, null, 2)
   })
@@ -118,8 +118,8 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
       
       console.log('[ArticleDetailPage] Sections fetch result:', {
         articleId: id,
-        hasSections: !!articleWithSections?.sections,
-        sectionCount: articleWithSections?.sections?.length || 0,
+        hasSections: !!(articleWithSections as any)?.sections,
+        sectionCount: (articleWithSections as any)?.sections?.length || 0,
         error: fetchError?.message
       })
 
