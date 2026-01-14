@@ -382,10 +382,10 @@ development_status:
   epic-29-retrospective: done
 
   # Epic 30: Design System Implementation (CRITICAL - Foundation)
-  epic-30: backlog
+  epic-30: in-progress
   # Critical Foundation - Design tokens, component library, documentation
   30-1-css-design-tokens-and-variables: done
-  30-2-component-library-and-patterns: backlog
+  30-2-component-library-and-patterns: review
   30-3-design-token-documentation-and-compliance: backlog
   epic-30-retrospective: optional
 
