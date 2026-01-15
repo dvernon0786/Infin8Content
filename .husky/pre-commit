@@ -1,0 +1,59 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Running design system compliance checks..."
+
+# Check for hard-coded colors
+echo "Checking for hard-coded colors..."
+if git diff --cached --name-only --diff-filter=ACM | xargs grep -l "#[0-9A-Fa-f]\{6\}" 2>/dev/null; then
+  echo "❌ Hard-coded colors found. Use design tokens instead."
+  echo "Run 'npm run fix:colors' to auto-fix where possible."
+  exit 1
+fi
+
+# Check for inline styles
+echo "Checking for inline styles..."
+if git diff --cached --name-only --diff-filter=ACM | xargs grep -l "style={" 2>/dev/null; then
+  echo "❌ Inline styles found. Use CSS classes or design tokens instead."
+  exit 1
+fi
+
+# Check for arbitrary spacing values
+echo "Checking for arbitrary spacing values..."
+if git diff --cached --name-only --diff-filter=ACM | xargs grep -l "padding: *[0-9]*px\|margin: *[0-9]*px" 2>/dev/null; then
+  echo "❌ Arbitrary spacing values found. Use spacing tokens instead."
+  exit 1
+fi
+
+# Check for arbitrary font sizes
+echo "Checking for arbitrary font sizes..."
+if git diff --cached --name-only --diff-filter=ACM | xargs grep -l "font-size: *[0-9]*px" 2>/dev/null; then
+  echo "❌ Arbitrary font sizes found. Use typography tokens instead."
+  exit 1
+fi
+
+# Run ESLint with design system rules
+echo "Running ESLint design system rules..."
+npm run lint:design-system
+if [ $? -ne 0 ]; then
+  echo "❌ ESLint design system rules failed."
+  exit 1
+fi
+
+# Run design token validation
+echo "Validating design token usage..."
+npm run validate:design-tokens
+if [ $? -ne 0 ]; then
+  echo "❌ Design token validation failed."
+  exit 1
+fi
+
+# Check for accessibility issues
+echo "Running accessibility checks..."
+npm run test:accessibility
+if [ $? -ne 0 ]; then
+  echo "❌ Accessibility checks failed."
+  exit 1
+fi
+
+echo "✅ All design system compliance checks passed!"

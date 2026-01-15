@@ -1,9 +1,14 @@
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
 
+// Polyfill process.env for browser environment
+if (typeof globalThis.process === 'undefined') {
+  globalThis.process = { env: {} } as any
+}
+
 // Set up environment variables for tests
-process.env.NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://test.supabase.co'
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'test-anon-key'
+globalThis.process.env.NEXT_PUBLIC_SUPABASE_URL = globalThis.process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://test.supabase.co'
+globalThis.process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = globalThis.process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'test-anon-key'
 
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
@@ -20,8 +25,8 @@ Object.defineProperty(window, 'matchMedia', {
     }),
 })
 
-// Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
+// Mock ResizeObserver - use globalThis for browser compatibility
+globalThis.ResizeObserver = class ResizeObserver {
     observe() { }
     unobserve() { }
     disconnect() { }

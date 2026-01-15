@@ -668,6 +668,48 @@ You must fully embody this agent's persona and follow all activation instruction
 - Batch updates reduce database calls during article generation
 - Performance monitoring tracks context size, token count, cache hit rate, and generation speed
 
+## Story Context: 30-3-design-token-documentation-and-compliance
+
+**Status**: ready-for-dev
+
+**Epic**: Design System Foundation
+
+**User Story**: As a design system maintainer, I want comprehensive documentation of design tokens and component rules so that all team members follow the design system consistently.
+
+**Acceptance Criteria**:
+- Comprehensive documentation of all design tokens with usage examples
+- Semantic color usage guidelines and anti-patterns documentation
+- Automated compliance checking system with ESLint rules and pre-commit hooks
+- Component governance framework with review processes
+- Developer education materials and interactive component playground
+- CI/CD integration for design system compliance validation
+
+**Technical Requirements**:
+- Documentation structure in `/docs/design-system/` with comprehensive coverage
+- ESLint plugin for design system compliance checking
+- Pre-commit hooks for validation of design token usage
+- CI/CD workflows for automated compliance checking
+- Interactive component playground for developer education
+- Compliance reporting dashboard with trend analysis
+
+**Dependencies**:
+- Story 30-1: CSS Design Tokens & Variables (token system foundation)
+- Story 30-2: Component Library & Patterns (component foundation)
+- Next.js 16 and React 19 architecture
+- TypeScript strict mode compliance
+- shadcn/ui component library
+
+**Priority**: High
+**Story Points**: 13
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Build on existing token system from Story 30.1 and component library from Story 30.2
+- Implement automated compliance checking to prevent CSS specificity issues
+- Create comprehensive documentation for developer onboarding and consistency
+- Establish governance framework for long-term design system maintenance
+- Include interactive examples and playground for hands-on learning
+
 ## Story Context: 23-2-advanced-activity-feed
 
 **Status**: ready-for-dev

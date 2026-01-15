@@ -1,0 +1,230 @@
+#!/usr/bin/env node
+
+/**
+ * Simple Design System Compliance Checker
+ * 
+ * Validates code for design system compliance without complex dependencies
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+// Simple file walking function
+function walkDir(dir, callback) {
+  const files = fs.readdirSync(dir);
+  files.forEach(file => {
+    const fullPath = path.join(dir, file);
+    const stat = fs.statSync(fullPath);
+    if (stat.isDirectory()) {
+      walkDir(fullPath, callback);
+    } else {
+      callback(fullPath);
+    }
+  });
+}
+
+// Check for violations in a file
+function checkFile(filePath) {
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const lines = content.split('\n');
+    const violations = [];
+
+    lines.forEach((line, index) => {
+      const lineNumber = index + 1;
+
+      // Check for hard-coded colors
+      const colorMatches = line.match(/#[0-9A-Fa-f]{6}/g);
+      if (colorMatches) {
+        colorMatches.forEach(color => {
+          violations.push({
+            type: 'hardcoded-color',
+            line: lineNumber,
+            message: `Hard-coded color found: ${color}`,
+            severity: 'error'
+          });
+        });
+      }
+
+      // Check for inline styles
+      if (line.includes('style={')) {
+        violations.push({
+          type: 'inline-style',
+          line: lineNumber,
+          message: 'Inline style found',
+          severity: 'error'
+        });
+      }
+
+      // Check for arbitrary spacing
+      const spacingMatches = line.match(/(padding|margin):\s*[0-9]+px/g);
+      if (spacingMatches) {
+        spacingMatches.forEach(spacing => {
+          violations.push({
+            type: 'arbitrary-spacing',
+            line: lineNumber,
+            message: `Arbitrary spacing found: ${spacing}`,
+            severity: 'warning'
+          });
+        });
+      }
+
+      // Check for arbitrary font sizes
+      const fontMatches = line.match(/font-size:\s*[0-9]+px/g);
+      if (fontMatches) {
+        fontMatches.forEach(font => {
+          violations.push({
+            type: 'arbitrary-font-size',
+            line: lineNumber,
+            message: `Arbitrary font size found: ${font}`,
+            severity: 'warning'
+          });
+        });
+      }
+    });
+
+    return violations;
+  } catch (error) {
+    console.error(`Error reading file ${filePath}:`, error.message);
+    return [];
+  }
+}
+
+// Main validation function
+function validateCompliance(dir) {
+  const results = {
+    totalFiles: 0,
+    compliantFiles: 0,
+    violations: [],
+    summary: {
+      byType: {},
+      bySeverity: { error: 0, warning: 0 }
+    }
+  };
+
+  walkDir(dir, (filePath) => {
+    // Only check relevant file types
+    const ext = path.extname(filePath);
+    if (!['.ts', '.tsx', '.js', '.jsx', '.css', '.scss'].includes(ext)) {
+      return;
+    }
+
+    // Skip node_modules and other ignored directories
+    if (filePath.includes('node_modules') || filePath.includes('.next')) {
+      return;
+    }
+
+    results.totalFiles++;
+    const violations = checkFile(filePath);
+    
+    if (violations.length === 0) {
+      results.compliantFiles++;
+    } else {
+      violations.forEach(v => {
+        v.file = filePath;
+        results.violations.push(v);
+        
+        // Update summary
+        results.summary.byType[v.type] = (results.summary.byType[v.type] || 0) + 1;
+        results.summary.bySeverity[v.severity]++;
+      });
+    }
+  });
+
+  return results;
+}
+
+// Generate report
+function generateReport(results) {
+  const score = results.totalFiles > 0 ? 
+    Math.round((results.compliantFiles / results.totalFiles) * 100) : 100;
+
+  const report = `
+# Design System Compliance Report
+
+**Generated:** ${new Date().toLocaleString()}
+**Overall Score:** ${score}%
+**Files:** ${results.compliantFiles}/${results.totalFiles} compliant
+
+## Summary
+- **Total Files:** ${results.totalFiles}
+- **Compliant Files:** ${results.compliantFiles}
+- **Non-Compliant Files:** ${results.totalFiles - results.compliantFiles}
+- **Total Violations:** ${results.violations.length}
+
+## Violations by Type
+${Object.entries(results.summary.byType).map(([type, count]) => 
+  `- **${type}:** ${count}`
+).join('\n')}
+
+## Violations by Severity
+- **Errors:** ${results.summary.bySeverity.error}
+- **Warnings:** ${results.summary.bySeverity.warning}
+
+## Detailed Violations
+${results.violations.slice(0, 20).map(v => 
+  `### ${v.type} - ${v.severity.toUpperCase()}
+- **File:** ${v.file}
+- **Line:** ${v.line}
+- **Message:** ${v.message}
+`).join('\n')}
+
+${results.violations.length > 20 ? `... and ${results.violations.length - 20} more violations` : ''}
+
+## Recommendations
+
+### High Priority (Errors)
+1. **Fix Hard-coded Colors:** Replace all hex colors with design tokens
+2. **Remove Inline Styles:** Use CSS classes or design tokens
+
+### Medium Priority (Warnings)
+1. **Standardize Spacing:** Replace arbitrary spacing with tokens
+2. **Consolidate Font Sizes:** Use typography scale
+
+---
+*Report generated by Design System Compliance Checker*
+  `.trim();
+
+  return { report, score };
+}
+
+// CLI interface
+function main() {
+  const args = process.argv.slice(2);
+  const dir = args[0] || 'src';
+  const outputPath = args[1] || 'reports/compliance-report.md';
+
+  console.log('🔍 Validating design system compliance...');
+  console.log(`Directory: ${dir}`);
+  
+  const results = validateCompliance(dir);
+  const { report, score } = generateReport(results);
+  
+  // Ensure output directory exists
+  const outputDir = path.dirname(outputPath);
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+  
+  fs.writeFileSync(outputPath, report);
+  
+  console.log(`\n📊 Compliance Results:`);
+  console.log(`- Overall Score: ${score}%`);
+  console.log(`- Files: ${results.compliantFiles}/${results.totalFiles} compliant`);
+  console.log(`- Violations: ${results.violations.length}`);
+  console.log(`- Report saved to: ${outputPath}`);
+  
+  // Exit with error code if score is below threshold
+  if (score < 80) {
+    console.log('\n❌ Compliance score below 80%. Please fix violations.');
+    process.exit(1);
+  } else {
+    console.log('\n✅ Compliance check passed!');
+  }
+}
+
+if (require.main === module) {
+  main();
+}
+
+module.exports = { validateCompliance, generateReport };
