@@ -143,16 +143,11 @@ export const MobileCard: React.FC<MobileCardProps> = ({
     className,
   ].filter(Boolean).join(' ');
 
-  const cardStyle = {
-    ...style,
-  };
-
   return (
     <div
       ref={cardRef}
       data-testid={testId}
       className={cardClasses}
-      style={cardStyle}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}

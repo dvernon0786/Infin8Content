@@ -288,11 +288,6 @@ export function MobileActivityFeed({
             {/* Activity Message */}
             <p
               className="text-gray-700 text-sm leading-relaxed"
-              style={{
-                fontSize: typography.body.fontSize,
-                fontWeight: typography.body.fontWeight,
-                lineHeight: typography.body.lineHeight,
-              }}
             >
               {activity.message}
             </p>

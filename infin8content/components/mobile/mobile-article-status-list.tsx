@@ -202,14 +202,8 @@ export function MobileArticleStatusList({
         data-testid={`article-item-${article.id}`}
         role="article"
         aria-label={`${article.title} by ${article.author}, ${article.status.replace('_', ' ')}`}
-        className="relative overflow-hidden"
+        className="relative overflow-hidden mb-2 min-h-[80px] p-4 bg-white rounded-lg shadow-sm"
         style={{
-          marginBottom: spacing.card.marginBottom,
-          minHeight: spacing.card.minHeight,
-          padding: spacing.card.padding,
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
           transform: `translateX(${swipeOffset}px)`,
           transition: swipeState.isDragging ? 'none' : 'transform 0.2s ease-out',
         }}
@@ -222,11 +216,9 @@ export function MobileArticleStatusList({
         {isSwiped && (
           <div
             data-testid={`swipe-actions-${article.id}`}
-            className="absolute inset-y-0 flex items-center px-4 pointer-events-none"
-            style={{
-              [swipeState.direction === 'right' ? 'left' : 'right']: 0,
-              backgroundColor: swipeState.direction === 'right' ? '#3b82f6' : '#ef4444',
-            }}
+            className={`absolute inset-y-0 flex items-center px-4 pointer-events-none ${
+              swipeState.direction === 'right' ? 'left-0 bg-blue-500' : 'right-0 bg-red-500'
+            }`}
           >
             {swipeState.direction === 'right' ? (
               <span data-testid={`edit-action-${article.id}`} className="text-white font-medium">
@@ -245,12 +237,7 @@ export function MobileArticleStatusList({
           {/* Title */}
           <h3
             data-testid="article-title"
-            className="font-semibold text-gray-900 truncate mb-1"
-            style={{
-              fontSize: typography.heading.fontSize,
-              fontWeight: typography.heading.fontWeight,
-              lineHeight: typography.heading.lineHeight,
-            }}
+            className="font-semibold text-gray-900 truncate mb-1 text-lg"
           >
             {article.title}
           </h3>
@@ -258,12 +245,7 @@ export function MobileArticleStatusList({
           {/* Meta information */}
           <div
             data-testid="article-meta"
-            className="flex items-center justify-between text-sm text-gray-600 mb-2"
-            style={{
-              fontSize: typography.caption.fontSize,
-              fontWeight: typography.caption.fontWeight,
-              lineHeight: typography.caption.lineHeight,
-            }}
+            className="flex items-center justify-between text-sm text-gray-600 mb-2 text-xs"
           >
             <span>{article.author}</span>
             <span>{formatDate(article.lastModified)}</span>
@@ -274,10 +256,6 @@ export function MobileArticleStatusList({
             <span
               data-testid={`status-${article.status}`}
               className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(article.status)}`}
-              style={{
-                fontSize: '12px',
-                fontWeight: '500',
-              }}
             >
               {article.status.replace('_', ' ')}
             </span>
@@ -297,11 +275,7 @@ export function MobileArticleStatusList({
                 e.stopPropagation();
                 onArticleEdit?.(article.id);
               }}
-              className="flex-1 text-center py-2 px-3 bg-blue-500 text-white rounded-md font-medium"
-              style={{
-                minHeight: touchOptimization.minTouchTarget.size,
-                margin: touchOptimization.spacing.small,
-              }}
+              className="flex-1 text-center py-2 px-3 bg-blue-500 text-white rounded-md font-medium min-h-[44px] mx-1"
             >
               Edit
             </button>
@@ -314,11 +288,7 @@ export function MobileArticleStatusList({
                 e.stopPropagation();
                 onArticleSelect?.(article);
               }}
-              className="flex-1 text-center py-2 px-3 bg-gray-100 text-gray-700 rounded-md font-medium"
-              style={{
-                minHeight: touchOptimization.minTouchTarget.size,
-                margin: touchOptimization.spacing.small,
-              }}
+              className="flex-1 text-center py-2 px-3 bg-gray-100 text-gray-700 rounded-md font-medium min-h-[44px] mx-1"
             >
               View
             </button>
@@ -347,14 +317,13 @@ export function MobileArticleStatusList({
     return (
       <div
         data-testid="loading-state"
-        className="flex flex-col items-center justify-center py-12"
-        style={{ padding: spacing.container.padding }}
+        className="flex flex-col items-center justify-center py-12 p-4"
       >
         <div
           data-testid="loading-spinner"
           className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"
         />
-        <p className="mt-4 text-gray-600" style={{ fontSize: typography.body.fontSize }}>
+        <p className="mt-4 text-gray-600 text-sm">
           Loading articles...
         </p>
       </div>
@@ -366,11 +335,10 @@ export function MobileArticleStatusList({
     return (
       <div
         data-testid="error-state"
-        className="flex flex-col items-center justify-center py-12"
-        style={{ padding: spacing.container.padding }}
+        className="flex flex-col items-center justify-center py-12 p-4"
       >
         <div className="text-red-500 text-lg mb-2">⚠️</div>
-        <p className="text-red-600 text-center" style={{ fontSize: typography.body.fontSize }}>
+        <p className="text-red-600 text-center text-sm">
           {error}
         </p>
       </div>
@@ -382,11 +350,10 @@ export function MobileArticleStatusList({
     return (
       <div
         data-testid="empty-state"
-        className="flex flex-col items-center justify-center py-12"
-        style={{ padding: spacing.container.padding }}
+        className="flex flex-col items-center justify-center py-12 p-4"
       >
         <div className="text-gray-400 text-lg mb-2">📄</div>
-        <p className="text-gray-600 text-center" style={{ fontSize: typography.body.fontSize }}>
+        <p className="text-gray-600 text-center text-sm">
           No articles found
         </p>
       </div>
@@ -398,29 +365,13 @@ export function MobileArticleStatusList({
       ref={listRef}
       data-testid="mobile-article-list"
       data-touch-optimized={touchOptimized ? 'true' : 'false'}
-      className={`mobile-article-list ${className}`}
+      className={`mobile-article-list flex flex-col p-4 w-full h-full overflow-y-auto touch-auto ${className}`}
       onScroll={handleScroll}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        padding: spacing.container.padding,
-        maxWidth: spacing.container.maxWidth,
-        width: '100%',
-        height: '100%',
-        overflowY: 'auto',
-        WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
-      }}
     >
       {/* List header */}
       <div className="mb-4">
         <h2
-          className="font-bold text-gray-900"
-          style={{
-            fontSize: typography.heading.fontSize,
-            fontWeight: typography.heading.fontWeight,
-            lineHeight: typography.heading.lineHeight,
-            marginBottom: typography.heading.marginBottom,
-          }}
+          className="font-bold text-gray-900 text-lg mb-2"
         >
           Articles ({articles.length})
         </h2>

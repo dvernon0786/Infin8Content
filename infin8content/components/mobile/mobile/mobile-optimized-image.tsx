@@ -163,44 +163,6 @@ export const MobileOptimizedImage: React.FC<MobileOptimizedImageProps> = ({
         </div>
       )}
 
-      <style jsx>{`
-        .mobile-optimized-image-container {
-          position: relative;
-          display: inline-block;
-        }
-
-        .mobile-image-loading-indicator {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          pointer-events: none;
-          z-index: 10;
-        }
-
-        .mobile-image-error-state {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          background-color: #f3f4f6;
-          color: #6b7280;
-          font-size: 12px;
-          text-align: center;
-          padding: 16px;
-        }
-
-        @media (max-width: 640px) {
-          .mobile-image-error-state {
-            font-size: 12px;
-          }
-        }
-      `}</style>
     </div>
   )
 }
