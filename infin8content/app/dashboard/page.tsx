@@ -10,8 +10,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MobileCard } from "@/components/mobile/mobile-card"
 import { useMobileLayout } from "@/hooks/use-mobile-layout"
-import { MobilePerformanceDashboard } from "../../../components/dashboard/mobile-performance-dashboard"
-import { SwipeNavigation } from "../../../components/dashboard/swipe-navigation"
+import { MobilePerformanceDashboard } from "@/components/dashboard/mobile-performance-dashboard"
+import { SwipeNavigation } from "@/components/dashboard/swipe-navigation"
 
 export default async function DashboardPage() {
   const currentUser = await getCurrentUser()

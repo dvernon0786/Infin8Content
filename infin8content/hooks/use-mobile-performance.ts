@@ -1,5 +1,7 @@
+"use client"
+
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useMobileLayout } from '../infin8content/hooks/use-mobile-layout'
+import { useMobileLayout } from './use-mobile-layout'
 import { mobilePerformanceMonitor, PerformanceMetrics } from '../lib/mobile/performance-monitor'
 import { networkOptimizer } from '../lib/mobile/network-optimizer'
 import { touchOptimizer } from '../lib/mobile/touch-optimizer'
