@@ -76,18 +76,26 @@ jobs:
         
         # Check for inline styles (with critical layout exceptions)
         STYLE_VIOLATIONS=0
-        if grep -r "style={" --include="*.tsx" --include="*.ts" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude="*.test.*" --exclude="*.spec.*" --exclude-dir=components/marketing --exclude-dir=stories --exclude-dir=components/ui --exclude-dir=components/custom --exclude-dir=components/articles --exclude-dir=components/layout-diagnostic.tsx infin8content/ 2>/dev/null; then
-          echo "⚠️ Inline styles found - checking for exceptions..."
-          
-          CRITICAL_STYLES=$(grep -r "style={" --include="*.tsx" --include="*.ts" infin8content/ | grep -E "(verify-email|create-organization|payment/success)" || true)
-          NON_CRITICAL_STYLES=$(grep -r "style={" --include="*.tsx" --include="*.ts" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude="*.test.*" --exclude="*.spec.*" --exclude-dir=components/marketing --exclude-dir=stories --exclude-dir=components/ui --exclude-dir=components/custom --exclude-dir=components/articles --exclude-dir=components/layout-diagnostic.tsx infin8content/ | grep -v -E "(verify-email|create-organization|payment/success)" || true)
-          
-          if [ -n "$NON_CRITICAL_STYLES" ]; then
-            echo "❌ Inline styles found in non-critical files:"
-            echo "$NON_CRITICAL_STYLES"
-            STYLE_VIOLATIONS=1
+        # Find files with inline styles, excluding specific directories
+        FILES_WITH_INLINE_STYLES=$(find infin8content/ -name "*.tsx" -o -name "*.ts" | grep -v __tests__ | grep -v tests | grep -v node_modules | grep -v components/marketing | grep -v stories | grep -v components/ui | grep -v components/custom | grep -v components/articles | grep -v components/layout-diagnostic.tsx)
+        
+        if [ -n "$FILES_WITH_INLINE_STYLES" ]; then
+          INLINE_STYLES_FOUND=$(grep -l "style={" $FILES_WITH_INLINE_STYLES 2>/dev/null || true)
+          if [ -n "$INLINE_STYLES_FOUND" ]; then
+            echo "⚠️ Inline styles found - checking for exceptions..."
+            
+            CRITICAL_STYLES=$(echo "$INLINE_STYLES_FOUND" | grep -E "(verify-email|create-organization|payment/success)" || true)
+            NON_CRITICAL_STYLES=$(echo "$INLINE_STYLES_FOUND" | grep -v -E "(verify-email|create-organization|payment/success)" || true)
+            
+            if [ -n "$NON_CRITICAL_STYLES" ]; then
+              echo "❌ Inline styles found in non-critical files:"
+              echo "$NON_CRITICAL_STYLES"
+              STYLE_VIOLATIONS=1
+            else
+              echo "✅ Only critical layout inline styles found (allowed)"
+            fi
           else
-            echo "✅ Only critical layout inline styles found (allowed)"
+            echo "✅ No inline styles found"
           fi
         else
           echo "✅ No inline styles found"
