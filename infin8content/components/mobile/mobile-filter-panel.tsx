@@ -56,16 +56,6 @@ const MOBILE_SPACING = {
     margin: 8,
     borderRadius: 8,
   },
-  control: {
-    minHeight: 44,
-    padding: 12,
-    margin: 4,
-  },
-  button: {
-    height: 48,
-    padding: 12,
-    margin: 8,
-  },
 };
 
 export const MobileFilterPanel: React.FC<MobileFilterPanelProps> = ({
@@ -183,10 +173,7 @@ export const MobileFilterPanel: React.FC<MobileFilterPanelProps> = ({
         return (
           <div
             data-testid={`filter-checkbox-${filterKey}`}
-            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors"
-            style={{
-              minHeight: MOBILE_SPACING.control.minHeight,
-            }}
+            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors min-h-[44px]"
             onClick={() => handleFilterChange(group.id, option.id, !value)}
           >
             <div
@@ -214,10 +201,7 @@ export const MobileFilterPanel: React.FC<MobileFilterPanelProps> = ({
         return (
           <div
             data-testid={`filter-radio-${filterKey}`}
-            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors"
-            style={{
-              minHeight: MOBILE_SPACING.control.minHeight,
-            }}
+            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors min-h-[44px]"
             onClick={() => handleFilterChange(group.id, option.id, option.value)}
           >
             <div
@@ -239,10 +223,7 @@ export const MobileFilterPanel: React.FC<MobileFilterPanelProps> = ({
         return (
           <div
             data-testid={`filter-toggle-${filterKey}`}
-            className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
-            style={{
-              minHeight: MOBILE_SPACING.control.minHeight,
-            }}
+            className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors min-h-[44px]"
           >
             <span className="text-sm font-medium text-gray-700">{option.label}</span>
             <button
@@ -265,10 +246,7 @@ export const MobileFilterPanel: React.FC<MobileFilterPanelProps> = ({
         return (
           <div
             data-testid={`filter-select-${filterKey}`}
-            className="p-3"
-            style={{
-              minHeight: MOBILE_SPACING.control.minHeight,
-            }}
+            className="p-3 min-h-[44px]"
           >
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {option.label}
@@ -293,10 +271,7 @@ export const MobileFilterPanel: React.FC<MobileFilterPanelProps> = ({
         return (
           <div
             data-testid={`filter-range-${filterKey}`}
-            className="p-3"
-            style={{
-              minHeight: MOBILE_SPACING.control.minHeight,
-            }}
+            className="p-3 min-h-[44px]"
           >
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-gray-700">
@@ -332,10 +307,7 @@ export const MobileFilterPanel: React.FC<MobileFilterPanelProps> = ({
       <div
         key={group.id}
         data-testid={`filter-group-${group.id}`}
-        className="bg-white rounded-lg border border-gray-200 overflow-hidden"
-        style={{
-          margin: MOBILE_SPACING.group.margin,
-        }}
+        className="bg-white rounded-lg border border-gray-200 overflow-hidden m-2"
       >
         {/* Group Header */}
         <div
@@ -389,23 +361,18 @@ export const MobileFilterPanel: React.FC<MobileFilterPanelProps> = ({
     const isActive = Object.entries(quickFilter.filters).every(
       ([key, value]) => filters[key] === value
     );
-
     return (
       <button
         key={quickFilter.id}
         data-testid={`quick-filter-${quickFilter.id}`}
-        className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+        className={`px-4 py-2 rounded-md font-medium transition-all min-h-[48px] ${
           isActive
             ? 'bg-blue-500 text-white'
             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
         }`}
-        style={{
-          minHeight: MOBILE_SPACING.button.height,
-        }}
         onClick={() => applyQuickFilter(quickFilter.id)}
       >
-        {quickFilter.icon && <span className="text-base">{quickFilter.icon}</span>}
-        <span>{quickFilter.label}</span>
+        {quickFilter.label}
       </button>
     );
   }, [filters, applyQuickFilter]);
@@ -447,20 +414,14 @@ export const MobileFilterPanel: React.FC<MobileFilterPanelProps> = ({
         <div className="flex space-x-3">
           <button
             data-testid="filter-apply"
-            className="flex-1 bg-blue-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-600 transition-colors"
-            style={{
-              minHeight: MOBILE_SPACING.button.height,
-            }}
+            className="flex-1 bg-blue-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-600 transition-colors min-h-[48px]"
             onClick={() => setIsPanelOpen(false)}
           >
             Apply Filters
           </button>
           <button
             data-testid="filter-clear"
-            className="px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-            style={{
-              minHeight: MOBILE_SPACING.button.height,
-            }}
+            className="px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors min-h-[48px]"
             onClick={clearAllFilters}
           >
             Clear
@@ -480,10 +441,7 @@ export const MobileFilterPanel: React.FC<MobileFilterPanelProps> = ({
       {/* Toggle Button */}
       <button
         data-testid="filter-panel-toggle"
-        className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-        style={{
-          minHeight: MOBILE_SPACING.button.height,
-        }}
+        className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-shadow min-h-[48px]"
         onClick={() => setIsPanelOpen(true)}
       >
         <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -146,18 +146,11 @@ export const TouchTarget: React.FC<TouchTargetProps> = ({
     className,
   ].filter(Boolean).join(' ');
 
-  const targetStyle = {
-    minWidth: targetSize,
-    minHeight: targetSize,
-    ...style,
-  };
-
   return (
     <div
       ref={targetRef}
       data-testid={testId}
-      className={targetClasses}
-      style={targetStyle}
+      className={`${targetClasses} min-w-[${targetSize}px] min-h-[${targetSize}px]`}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
