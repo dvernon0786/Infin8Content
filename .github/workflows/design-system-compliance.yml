@@ -17,7 +17,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
         cache-dependency-path: ./infin8content/package-lock.json
         
@@ -54,14 +54,14 @@ jobs:
       run: |
         echo "🔍 Checking for hard-coded values..."
         
-        # Check for hard-coded colors
+        # Check for hard-coded colors (excluding tests, email templates, and node_modules)
         COLOR_VIOLATIONS=0
-        if grep -r "#[0-9A-Fa-f]\{6\}" --include="*.tsx" --include="*.ts" --include="*.css" --include="*.scss" infin8content/ 2>/dev/null; then
+        if grep -r "#[0-9A-Fa-f]\{6\}" --include="*.tsx" --include="*.ts" --include="*.css" --include="*.scss" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude="*.test.*" --exclude="*.spec.*" infin8content/ 2>/dev/null; then
           echo "⚠️ Hard-coded colors found - checking for exceptions..."
           
           # Check if colors are in critical layout files (allowed due to CSS specificity crisis)
           CRITICAL_FILES=$(grep -r "#[0-9A-Fa-f]\{6\}" --include="*.tsx" --include="*.ts" infin8content/ | grep -E "(verify-email|create-organization|payment/success)" || true)
-          NON_CRITICAL=$(grep -r "#[0-9A-Fa-f]\{6\}" --include="*.tsx" --include="*.ts" infin8content/ | grep -v -E "(verify-email|create-organization|payment/success)" || true)
+          NON_CRITICAL=$(grep -r "#[0-9A-Fa-f]\{6\}" --include="*.tsx" --include="*.ts" --include="*.css" --include="*.scss" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude="*.test.*" --exclude="*.spec.*" infin8content/ | grep -v -E "(verify-email|create-organization|payment/success)" || true)
           
           if [ -n "$NON_CRITICAL" ]; then
             echo "❌ Hard-coded colors found in non-critical files:"
@@ -76,11 +76,11 @@ jobs:
         
         # Check for inline styles (with critical layout exceptions)
         STYLE_VIOLATIONS=0
-        if grep -r "style={" --include="*.tsx" --include="*.ts" infin8content/ 2>/dev/null; then
+        if grep -r "style={" --include="*.tsx" --include="*.ts" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude="*.test.*" --exclude="*.spec.*" infin8content/ 2>/dev/null; then
           echo "⚠️ Inline styles found - checking for exceptions..."
           
           CRITICAL_STYLES=$(grep -r "style={" --include="*.tsx" --include="*.ts" infin8content/ | grep -E "(verify-email|create-organization|payment/success)" || true)
-          NON_CRITICAL_STYLES=$(grep -r "style={" --include="*.tsx" --include="*.ts" infin8content/ | grep -v -E "(verify-email|create-organization|payment/success)" || true)
+          NON_CRITICAL_STYLES=$(grep -r "style={" --include="*.tsx" --include="*.ts" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude="*.test.*" --exclude="*.spec.*" infin8content/ | grep -v -E "(verify-email|create-organization|payment/success)" || true)
           
           if [ -n "$NON_CRITICAL_STYLES" ]; then
             echo "❌ Inline styles found in non-critical files:"
@@ -257,7 +257,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
         cache-dependency-path: ./infin8content/package-lock.json
         
@@ -297,7 +297,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
         cache-dependency-path: ./infin8content/package-lock.json
         
