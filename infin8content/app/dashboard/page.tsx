@@ -8,6 +8,8 @@ import { redirect } from "next/navigation"
 import { PaymentGuard } from "@/components/guards/payment-guard"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { MobileCard } from "@/components/mobile/mobile-card"
+import { useMobileLayout } from "@/hooks/use-mobile-layout"
 
 export default async function DashboardPage() {
   const currentUser = await getCurrentUser()
@@ -56,8 +58,10 @@ export default async function DashboardPage() {
           </p>
         </div>
 
+        {/* Mobile-Optimized Dashboard Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
+          {/* Desktop Card */}
+          <Card className="hidden md:block">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Current Plan
@@ -73,6 +77,52 @@ export default async function DashboardPage() {
               </p>
             </CardContent>
           </Card>
+
+          {/* Mobile Card */}
+          <MobileCard
+            title="Current Plan"
+            subtitle={orgName}
+            description={`Status: ${status}`}
+            badge={plan.toUpperCase()}
+            badgeColor={plan === 'pro' ? 'blue' : 'gray'}
+            className="md:hidden"
+            testId="mobile-plan-card"
+          >
+            <div className="text-2xl font-bold">{orgName}</div>
+          </MobileCard>
+        </div>
+
+        {/* Additional Mobile-Optimized Content */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {/* Quick Actions Card */}
+          <Card className="hidden md:block">
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">
+                Quick Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Create new article</p>
+                <p className="text-sm text-muted-foreground">View analytics</p>
+                <p className="text-sm text-muted-foreground">Manage settings</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <MobileCard
+            title="Quick Actions"
+            badge="3"
+            badgeColor="blue"
+            className="md:hidden"
+            testId="mobile-quick-actions-card"
+          >
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Create new article</p>
+              <p className="text-sm text-muted-foreground">View analytics</p>
+              <p className="text-sm text-muted-foreground">Manage settings</p>
+            </div>
+          </MobileCard>
         </div>
       </div>
       

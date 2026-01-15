@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { LayoutDiagnostic } from '@/components/layout-diagnostic'
+import { TouchTarget } from '@/components/mobile/touch-target'
 
 export default async function ArticlesPage() {
   const currentUser = await getCurrentUser()
@@ -24,12 +25,23 @@ export default async function ArticlesPage() {
               Manage and track your article generation progress
             </p>
           </div>
-          <Link href="/dashboard/articles/generate">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Generate Article
-            </Button>
-          </Link>
+          {/* Mobile-Optimized Button */}
+          <div className="hidden sm:block">
+            <Link href="/dashboard/articles/generate">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Generate Article
+              </Button>
+            </Link>
+          </div>
+          <div className="sm:hidden">
+            <Link href="/dashboard/articles/generate">
+              <TouchTarget size="large" variant="primary" className="w-full">
+                <Plus className="h-5 w-5 mr-2" />
+                Generate Article
+              </TouchTarget>
+            </Link>
+          </div>
         </div>
 
         {/* Search and Filters - Client Component */}

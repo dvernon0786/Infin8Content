@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { MobileCard } from "@/components/mobile/mobile-card"
 
 export default function PublishPage() {
   return (
@@ -12,7 +13,8 @@ export default function PublishPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {/* Desktop Layout */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 hidden md:grid">
         <Card className="md:col-span-2 lg:col-span-2">
           <CardHeader>
             <CardTitle>Coming Soon</CardTitle>
@@ -51,6 +53,45 @@ export default function PublishPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Mobile Layout */}
+      <div className="grid gap-4 md:hidden">
+        <MobileCard
+          title="Coming Soon"
+          subtitle="Publishing functionality"
+          description="This section will include CMS connections, publishing queue, and publishing history."
+          badge="Soon"
+          badgeColor="yellow"
+          testId="mobile-coming-soon-card"
+        >
+          <p className="text-sm text-muted-foreground">
+            Publishing functionality is currently under development
+          </p>
+        </MobileCard>
+        
+        <MobileCard
+          title="Quick Stats"
+          subtitle="Publishing overview"
+          badge="0"
+          badgeColor="gray"
+          testId="mobile-stats-card"
+        >
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-sm">Published</span>
+              <span className="text-sm font-medium">0</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm">In Queue</span>
+              <span className="text-sm font-medium">0</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm">Drafts</span>
+              <span className="text-sm font-medium">0</span>
+            </div>
+          </div>
+        </MobileCard>
       </div>
     </div>
   )
