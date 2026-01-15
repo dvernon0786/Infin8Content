@@ -8,7 +8,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react'
-import { useMobileLayout } from '../infin8content/hooks/use-mobile-layout'
+import { useMobileLayout } from '../../hooks/use-mobile-layout'
 
 interface OptimizedImageProps {
   src: string
