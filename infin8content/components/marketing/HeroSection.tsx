@@ -52,7 +52,7 @@ export function HeroSection({
   webpSrc,
 }: HeroSectionProps) {
   return (
-    <>
+    <div>
       <StructuredData headline={headline} subtext={subtext} />
       <section className="relative min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-background-primary)' }}>
         <MarketingLayout>
@@ -75,40 +75,38 @@ export function HeroSection({
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start" style={{ gap: 'var(--spacing-md)' }}>
-                <Button
-                  asChild
-                  size="lg"
-                  className="shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                  style={{ 
-                    background: 'var(--gradient-brand)',
-                    padding: 'var(--spacing-md) var(--spacing-xl)',
-                    borderRadius: 'var(--radius-lg)'
-                  }}
-                  aria-label={primaryCta.ariaLabel}
-                >
-                  <Link href={primaryCta.href}>
+                <Link href={primaryCta.href}>
+                  <div
+                    className="shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 cursor-pointer"
+                    style={{ 
+                      background: 'var(--gradient-brand)',
+                      padding: 'var(--spacing-md) var(--spacing-xl)',
+                      borderRadius: 'var(--radius-lg)',
+                      color: 'white',
+                      textAlign: 'center'
+                    }}
+                    aria-label={primaryCta.ariaLabel}
+                  >
                     {primaryCta.text}
-                  </Link>
-                </Button>
+                  </div>
+                </Link>
                 
-                <Button
-                  asChild
-                  variant="outline"
-                  size="lg"
-                  className="font-semibold transition-all duration-200 focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                  style={{ 
-                    color: 'var(--color-text-primary)',
-                    border: '2px solid',
-                    borderColor: 'var(--color-border)',
-                    padding: 'var(--spacing-md) var(--spacing-xl)',
-                    borderRadius: 'var(--radius-lg)'
-                  }}
-                  aria-label={secondaryCta.ariaLabel}
-                >
-                  <Link href={secondaryCta.href}>
+                <Link href={secondaryCta.href}>
+                  <div
+                    className="font-semibold transition-all duration-200 cursor-pointer"
+                    style={{ 
+                      color: 'var(--color-text-primary)',
+                      border: '2px solid',
+                      borderColor: 'var(--color-border)',
+                      padding: 'var(--spacing-md) var(--spacing-xl)',
+                      borderRadius: 'var(--radius-lg)',
+                      textAlign: 'center'
+                    }}
+                    aria-label={secondaryCta.ariaLabel}
+                  >
                     {secondaryCta.text}
-                  </Link>
-                </Button>
+                  </div>
+                </Link>
               </div>
             </div>
             
@@ -152,6 +150,6 @@ export function HeroSection({
           background: 'linear-gradient(to bottom, transparent, transparent, rgba(255, 255, 255, 0.1))'
         }}></div>
       </section>
-    </>
+    </div>
   );
 }

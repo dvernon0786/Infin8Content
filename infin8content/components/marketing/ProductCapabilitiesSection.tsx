@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@/lib/utils";
 import { MarketingLayout } from "./MarketingLayout";
 import { ProductCapabilityCard } from "./ProductCapabilityCard";
