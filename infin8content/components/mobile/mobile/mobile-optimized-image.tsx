@@ -8,7 +8,7 @@
 "use client"
 
 import React, { useState } from 'react'
-import { OptimizedImage } from '../../../../components/ui/optimized-image'
+import { OptimizedImage } from '../../ui/optimized-image'
 import { useMobilePerformance } from '../../../hooks/use-mobile-performance'
 import { useMobileLayout } from '../../../hooks/use-mobile-layout'
 
@@ -58,7 +58,9 @@ export const MobileOptimizedImage: React.FC<MobileOptimizedImageProps> = ({
 
   // Get mobile-optimized quality and loading strategy
   const mobileQuality = quality || getImageQuality()
-  const mobileLoading = loading || (priority ? 'eager' : getLoadingStrategy())
+  const networkLoadingStrategy = getLoadingStrategy()
+  const mobileLoading = loading || (priority ? 'eager' : 
+    (networkLoadingStrategy === 'progressive' ? 'lazy' : networkLoadingStrategy))
 
   // Touch interaction handlers
   const handleTouchStart = () => {
