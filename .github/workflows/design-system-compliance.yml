@@ -21,6 +21,7 @@ jobs:
         cache: 'npm'
         
     - name: Install dependencies
+      working-directory: ./infin8content
       run: npm ci
       
     - name: Run ESLint with design system rules
@@ -259,12 +260,15 @@ jobs:
         cache: 'npm'
         
     - name: Install dependencies
+      working-directory: ./infin8content
       run: npm ci
       
     - name: Build application
+      working-directory: ./infin8content
       run: npm run build
       
     - name: Run visual regression tests
+      working-directory: ./infin8content
       run: |
         echo "🔍 Running visual regression tests..."
         if npm run test:visual 2>/dev/null; then
@@ -295,9 +299,11 @@ jobs:
         cache: 'npm'
         
     - name: Install dependencies
+      working-directory: ./infin8content
       run: npm ci
       
     - name: Build application
+      working-directory: ./infin8content
       run: npm run build
       
     - name: Run Lighthouse CI
