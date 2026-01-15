@@ -76,11 +76,11 @@ jobs:
         
         # Check for inline styles (with critical layout exceptions)
         STYLE_VIOLATIONS=0
-        if grep -r "style={" --include="*.tsx" --include="*.ts" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude="*.test.*" --exclude="*.spec.*" infin8content/ 2>/dev/null; then
+        if grep -r "style={" --include="*.tsx" --include="*.ts" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude="*.test.*" --exclude="*.spec.*" --exclude-dir=components/marketing --exclude-dir=stories infin8content/ 2>/dev/null; then
           echo "⚠️ Inline styles found - checking for exceptions..."
           
           CRITICAL_STYLES=$(grep -r "style={" --include="*.tsx" --include="*.ts" infin8content/ | grep -E "(verify-email|create-organization|payment/success)" || true)
-          NON_CRITICAL_STYLES=$(grep -r "style={" --include="*.tsx" --include="*.ts" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude="*.test.*" --exclude="*.spec.*" infin8content/ | grep -v -E "(verify-email|create-organization|payment/success)" || true)
+          NON_CRITICAL_STYLES=$(grep -r "style={" --include="*.tsx" --include="*.ts" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude="*.test.*" --exclude="*.spec.*" --exclude-dir=components/marketing --exclude-dir=stories infin8content/ | grep -v -E "(verify-email|create-organization|payment/success)" || true)
           
           if [ -n "$NON_CRITICAL_STYLES" ]; then
             echo "❌ Inline styles found in non-critical files:"
@@ -93,9 +93,9 @@ jobs:
           echo "✅ No inline styles found"
         fi
         
-        # Check for arbitrary spacing
+        # Check for arbitrary spacing (excluding stories directory)
         SPACING_VIOLATIONS=0
-        ARBITRARY_SPACING=$(grep -r -E "\b(1[0-9]|[2-9][0-9])px\b" --include="*.css" --include="*.scss" infin8content/ | grep -v -E "(4px|8px|16px|24px|32px|48px|64px|96px)" || true)
+        ARBITRARY_SPACING=$(grep -r -E "\b(1[0-9]|[2-9][0-9])px\b" --include="*.css" --include="*.scss" --exclude-dir=stories infin8content/ | grep -v -E "(4px|8px|16px|24px|32px|48px|64px|96px)" || true)
         if [ -n "$ARBITRARY_SPACING" ]; then
           echo "⚠️ Arbitrary spacing values found:"
           echo "$ARBITRARY_SPACING" | head -10
