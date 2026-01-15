@@ -5,6 +5,8 @@
  * touch-optimized activity items, and real-time updates with mobile performance optimizations.
  */
 
+"use client"
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useMobileLayout } from '@/hooks/use-mobile-layout';
 import { debounce, throttle } from '@/lib/utils/mobile-layout-utils';

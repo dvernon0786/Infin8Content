@@ -5,6 +5,8 @@
  * swipe gestures, and condensed information display.
  */
 
+"use client"
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useMobileLayout } from '@/hooks/use-mobile-layout';
 import { debounce, throttle } from '@/lib/utils/mobile-layout-utils';

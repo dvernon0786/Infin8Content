@@ -5,6 +5,8 @@
  * touch optimization, and performance optimizations for mobile devices.
  */
 
+"use client"
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   getMobileLayoutConfig,

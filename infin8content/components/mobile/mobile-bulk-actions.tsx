@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useMobileLayout } from '@/hooks/use-mobile-layout';
 
