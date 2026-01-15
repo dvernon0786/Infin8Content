@@ -56,19 +56,26 @@ jobs:
         
         # Check for hard-coded colors (excluding tests, email templates, node_modules, legitimate files, app directory, and component libraries)
         COLOR_VIOLATIONS=0
-        if grep -r "#[0-9A-Fa-f]\{6\}" --include="*.tsx" --include="*.ts" --include="*.css" --include="*.scss" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude-dir=stories --exclude-dir=lib/services --exclude-dir=app --exclude-dir=components/lib --exclude-dir=components/custom --exclude-dir=components/ui --exclude-dir=components/dashboard --exclude="*.test.*" --exclude="*.spec.*" infin8content/ 2>/dev/null; then
-          echo "⚠️ Hard-coded colors found - checking for exceptions..."
-          
-          # Check if colors are in critical layout files (allowed due to CSS specificity crisis)
-          CRITICAL_FILES=$(grep -r "#[0-9A-Fa-f]\{6\}" --include="*.tsx" --include="*.ts" infin8content/ | grep -E "(verify-email|create-organization|payment/success)" || true)
-          NON_CRITICAL=$(grep -r "#[0-9A-Fa-f]\{6\}" --include="*.tsx" --include="*.ts" --include="*.css" --include="*.scss" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude-dir=stories --exclude-dir=lib/services --exclude-dir=app --exclude-dir=components/lib --exclude-dir=components/custom --exclude-dir=components/ui --exclude-dir=components/dashboard --exclude="*.test.*" --exclude="*.spec.*" infin8content/ | grep -v -E "(verify-email|create-organization|payment/success)" || true)
-          
-          if [ -n "$NON_CRITICAL" ]; then
-            echo "❌ Hard-coded colors found in non-critical files:"
-            echo "$NON_CRITICAL"
-            COLOR_VIOLATIONS=1
+        # Use find command for better directory exclusion
+        COLOR_FILES=$(find infin8content/ -name "*.tsx" -o -name "*.ts" -o -name "*.css" -o -name "*.scss" | grep -v __tests__ | grep -v tests | grep -v node_modules | grep -v stories | grep -v lib/services | grep -v app | grep -v components/lib | grep -v components/custom | grep -v components/ui | grep -v components/dashboard | grep -v "*.test.*" | grep -v "*.spec.*")
+        
+        if [ -n "$COLOR_FILES" ]; then
+          COLORS_FOUND=$(grep -l "#[0-9A-Fa-f]\{6\}" $COLOR_FILES 2>/dev/null || true)
+          if [ -n "$COLORS_FOUND" ]; then
+            echo "⚠️ Hard-coded colors found - checking for exceptions..."
+            
+            CRITICAL_FILES=$(echo "$COLORS_FOUND" | grep -E "(verify-email|create-organization|payment/success)" || true)
+            NON_CRITICAL=$(echo "$COLORS_FOUND" | grep -v -E "(verify-email|create-organization|payment/success)" || true)
+            
+            if [ -n "$NON_CRITICAL" ]; then
+              echo "❌ Hard-coded colors found in non-critical files:"
+              echo "$NON_CRITICAL"
+              COLOR_VIOLATIONS=1
+            else
+              echo "✅ Only critical layout hard-coded colors found (allowed)"
+            fi
           else
-            echo "✅ Only critical layout hard-coded colors found (allowed)"
+            echo "✅ No hard-coded colors found"
           fi
         else
           echo "✅ No hard-coded colors found"
