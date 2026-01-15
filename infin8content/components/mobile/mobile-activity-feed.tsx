@@ -114,19 +114,19 @@ export function MobileActivityFeed({
   const getActivityTypeInfo = useCallback((type: Activity['type']) => {
     switch (type) {
       case 'article_created':
-        return { icon: '📝', color: '#3b82f6', bgColor: '#dbeafe' };
+        return { icon: '📝', className: 'bg-blue-100 text-blue-800' };
       case 'article_published':
-        return { icon: '🚀', color: '#10b981', bgColor: '#d1fae5' };
+        return { icon: '🚀', className: 'bg-green-100 text-green-800' };
       case 'article_updated':
-        return { icon: '✏️', color: '#f59e0b', bgColor: '#fef3c7' };
+        return { icon: '✏️', className: 'bg-yellow-100 text-yellow-800' };
       case 'comment_added':
-        return { icon: '💬', color: '#8b5cf6', bgColor: '#ede9fe' };
+        return { icon: '💬', className: 'bg-purple-100 text-purple-800' };
       case 'user_joined':
-        return { icon: '👋', color: '#06b6d4', bgColor: '#cffafe' };
+        return { icon: '👋', className: 'bg-cyan-100 text-cyan-800' };
       case 'organization_created':
-        return { icon: '🏢', color: '#ef4444', bgColor: '#fee2e2' };
+        return { icon: '🏢', className: 'bg-red-100 text-red-800' };
       default:
-        return { icon: '📌', color: '#6b7280', bgColor: '#f3f4f6' };
+        return { icon: '📌', className: 'bg-gray-100 text-gray-800' };
     }
   }, []);
 
@@ -232,12 +232,7 @@ export function MobileActivityFeed({
         role="article"
         tabIndex={0}
         aria-label={`${activity.user?.name || 'Unknown User'} ${activity.message}`}
-        className="relative bg-white rounded-lg shadow-sm border border-gray-200 p-4 transition-all duration-200 hover:shadow-md"
-        style={{
-          marginBottom: spacing.card.marginBottom,
-          minHeight: spacing.list.itemHeight,
-          padding: spacing.card.padding,
-        }}
+        className="relative bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-2 min-h-[60px] transition-all duration-200 hover:shadow-md"
         onClick={() => onActivityClick?.(activity)}
         onTouchStart={(e) => {
           // Add touch feedback
@@ -253,12 +248,6 @@ export function MobileActivityFeed({
           <div
             className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden"
             data-testid={`activity-avatar-${activity.id}`}
-            style={{
-              width: '40px',
-              height: '40px',
-              minWidth: '40px',
-              minHeight: '40px',
-            }}
           >
             {activity.user?.avatar ? (
               <img
@@ -285,20 +274,12 @@ export function MobileActivityFeed({
             <div className="flex items-center justify-between mb-1">
               <span
                 className="font-medium text-gray-900 truncate"
-                style={{
-                  fontSize: typography.body.fontSize,
-                  fontWeight: typography.body.fontWeight,
-                }}
               >
                 {activity.user?.name || 'Unknown User'}
               </span>
               <span
                 className="text-xs text-gray-500"
                 data-testid={`activity-timestamp-${activity.id}`}
-                style={{
-                  fontSize: typography.caption.fontSize,
-                  fontWeight: typography.caption.fontWeight,
-                }}
               >
                 {formatTimestamp(activity.timestamp)}
               </span>
@@ -311,7 +292,6 @@ export function MobileActivityFeed({
                 fontSize: typography.body.fontSize,
                 fontWeight: typography.body.fontWeight,
                 lineHeight: typography.body.lineHeight,
-                marginBottom: typography.body.marginBottom,
               }}
             >
               {activity.message}
@@ -320,14 +300,8 @@ export function MobileActivityFeed({
             {/* Activity Type Badge */}
             <div className="flex items-center mt-2">
               <span
-                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${typeInfo.className}`}
                 data-testid={`activity-type-${activity.type}`}
-                style={{
-                  backgroundColor: typeInfo.bgColor,
-                  color: typeInfo.color,
-                  fontSize: '12px',
-                  fontWeight: '500',
-                }}
               >
                 <span className="mr-1">{typeInfo.icon}</span>
                 {activity.type.replace('_', ' ')}
@@ -352,14 +326,13 @@ export function MobileActivityFeed({
     return (
       <div
         data-testid="loading-state"
-        className="flex flex-col items-center justify-center py-12"
-        style={{ padding: spacing.container.padding }}
+        className="flex flex-col items-center justify-center py-12 p-4"
       >
         <div
           data-testid="loading-spinner"
           className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"
         />
-        <p className="mt-4 text-gray-600" style={{ fontSize: typography.body.fontSize }}>
+        <p className="mt-4 text-gray-600 text-sm">
           Loading activities...
         </p>
       </div>
@@ -371,11 +344,10 @@ export function MobileActivityFeed({
     return (
       <div
         data-testid="empty-state"
-        className="flex flex-col items-center justify-center py-12"
-        style={{ padding: spacing.container.padding }}
+        className="flex flex-col items-center justify-center py-12 p-4"
       >
         <div className="text-gray-400 text-lg mb-2">📭</div>
-        <p className="text-gray-600 text-center" style={{ fontSize: typography.body.fontSize }}>
+        <p className="text-gray-600 text-center text-sm">
           No recent activity
         </p>
       </div>
@@ -386,31 +358,20 @@ export function MobileActivityFeed({
     <div
       ref={feedRef}
       data-testid="mobile-activity-feed"
-      className={`mobile-activity-feed ${className}`}
+      className={`mobile-activity-feed flex flex-col p-4 w-full h-full overflow-y-auto touch-auto relative ${className}`}
       onScroll={handleScroll}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        padding: spacing.container.padding,
-        width: '100%',
-        height: '100%',
-        overflowY: 'auto',
-        WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
-        position: 'relative',
-      }}
     >
       {/* Pull-to-refresh indicator */}
       {pullToRefresh.isPulling && (
         <div
           data-testid="refresh-indicator"
-          className="absolute top-0 left-0 right-0 flex items-center justify-center bg-white border-b border-gray-200 z-10"
+          className="absolute top-0 left-0 right-0 flex items-center justify-center bg-white border-b border-gray-200 z-10 transition-transform duration-200 ease-out"
           style={{
             height: `${Math.max(40, pullToRefresh.pullDistance)}px`,
             transform: `translateY(-${Math.max(0, pullToRefresh.pullDistance - 40)}px)`,
-            transition: 'transform 0.2s ease-out',
           }}
         >
           {pullToRefresh.isRefreshing ? (
