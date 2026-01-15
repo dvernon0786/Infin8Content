@@ -344,8 +344,11 @@ jobs:
         echo "🔍 Running performance checks..."
         npm install -g @lhci/cli@0.12.x
         
+        # Remove any existing lighthouserc files
+        rm -f lighthouserc.json .lighthouserc.json lighthouserci.json
+        
         # Create lighthouserci configuration for static build with minimal assertions
-        cat > lighthouserci.json << EOF
+        cat > lighthouserci.json << 'EOF'
         {
           "ci": {
             "collect": {
@@ -358,91 +361,12 @@ jobs:
                 "categories:accessibility": ["off"],
                 "categories:best-practices": ["off"],
                 "categories:seo": ["off"],
-                "color-contrast": ["off"],
-                "csp-xss": ["off"],
-                "errors-in-console": ["off"],
-                "heading-order": ["off"],
                 "installable-manifest": ["off"],
                 "maskable-icon": ["off"],
                 "meta-description": ["off"],
                 "service-worker": ["off"],
                 "splash-screen": ["off"],
-                "themed-omnibox": ["off"],
-                "tap-targets": ["off"],
-                "alt-text": ["off"],
-                "aria-allowed-attr": ["off"],
-                "aria-hidden-body": ["off"],
-                "aria-input-field-name": ["off"],
-                "aria-required-attr": ["off"],
-                "aria-required-children": ["off"],
-                "aria-required-parent": ["off"],
-                "aria-roles": ["off"],
-                "aria-valid-attr-value": ["off"],
-                "aria-valid-attr": ["off"],
-                "button-name": ["off"],
-                "bypass": ["off"],
-                "definition-list": ["off"],
-                "dlitem": ["off"],
-                "document-title": ["off"],
-                "form-field-multiple-labels": ["off"],
-                "frame-title": ["off"],
-                "heading-level": ["off"],
-                "html-has-lang": ["off"],
-                "image-alt": ["off"],
-                "image-redundant-alt": ["off"],
-                "input-button-name": ["off"],
-                "input-image-alt": ["off"],
-                "label-title-only": ["off"],
-                "link-name": ["off"],
-                "list": ["off"],
-                "listitem": ["off"],
-                "meta-viewport": ["off"],
-                "object-alt": ["off"],
-                "role-img-alt": ["off"],
-                "scope-attr-valid": ["off"],
-                "target-size": ["off"],
-                "td-headers-attr": ["off"],
-                "th-has-data-cells": ["off"],
-                "valid-lang": ["off"],
-                "video-caption": ["off"],
-                "video-description": ["off"],
-                "doctype": ["off"],
-                "charset": ["off"],
-                "viewport": ["off"],
-                "is-crawlable": ["off"],
-                "robots-txt": ["off"],
-                "sitemap": ["off"],
-                "plugins": ["off"],
-                "uses-http2": ["off"],
-                "uses-passive-event-listeners": ["off"],
-                "no-vulnerable-libraries": ["off"],
-                "js-libraries": ["off"],
-                "deprecations": ["off"],
-                "errors-in-console": ["off"],
-                "inspector-issues": ["off"],
-                "third-party-cookies": ["off"],
-                "lcp-lazy-loaded": ["off"],
-                "cls": ["off"],
-                "fid": ["off"],
-                "ttfb": ["off"],
-                "network-requests": ["off"],
-                "total-byte-weight": ["off"],
-                "unused-css-rules": ["off"],
-                "unused-javascript": ["off"],
-                "modern-image-formats": ["off"],
-                "uses-webp-images": ["off"],
-                "uses-text-compression": ["off"],
-                "uses-responsive-images": ["off"],
-                "efficient-animated-content": ["off"],
-                "preload-fonts": ["off"],
-                "uses-rel-preconnect": ["off"],
-                "font-display": ["off"],
-                "time-to-interactive": ["off"],
-                "speed-index": ["off"],
-                "estimated-input-latency": ["off"],
-                "total-blocking-time": ["off"],
-                "cumulative-layout-shift": ["off"],
-                "largest-contentful-paint": ["off"]
+                "themed-omnibox": ["off"]
               }
             },
             "upload": {
@@ -452,6 +376,11 @@ jobs:
         }
         EOF
         
+        # Verify configuration
+        echo "🔍 Lighthouse CI Configuration:"
+        cat lighthouserci.json
+        
+        echo "🔍 Running Lighthouse CI..."
         lhci autorun
         
     - name: Upload Lighthouse results
