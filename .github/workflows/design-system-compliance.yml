@@ -19,6 +19,7 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
+        cache-dependency-path: ./infin8content/package-lock.json
         
     - name: Install dependencies
       working-directory: ./infin8content
@@ -258,6 +259,7 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
+        cache-dependency-path: ./infin8content/package-lock.json
         
     - name: Install dependencies
       working-directory: ./infin8content
@@ -297,6 +299,7 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
+        cache-dependency-path: ./infin8content/package-lock.json
         
     - name: Install dependencies
       working-directory: ./infin8content
