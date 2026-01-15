@@ -8,8 +8,9 @@
 "use client"
 
 import React, { useState } from 'react'
-import { OptimizedImage } from '../ui/optimized-image'
-import { useMobilePerformance } from '../../hooks/use-mobile-performance'
+import { OptimizedImage } from '../../../../components/ui/optimized-image'
+import { useMobilePerformance } from '../../../hooks/use-mobile-performance'
+import { useMobileLayout } from '../../../hooks/use-mobile-layout'
 
 interface MobileOptimizedImageProps {
   src: string
@@ -50,7 +51,8 @@ export const MobileOptimizedImage: React.FC<MobileOptimizedImageProps> = ({
   showLoadingIndicator = true,
   fallbackComponent
 }) => {
-  const { isMobile, getImageQuality, getLoadingStrategy } = useMobilePerformance()
+  const { getImageQuality, getLoadingStrategy } = useMobilePerformance()
+  const { isMobile } = useMobileLayout()
   const [isTouched, setIsTouched] = useState(false)
   const [imageError, setImageError] = useState(false)
 
