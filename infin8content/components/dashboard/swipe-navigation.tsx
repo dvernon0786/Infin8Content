@@ -127,9 +127,14 @@ export const SwipeNavigation: React.FC<SwipeNavigationProps> = ({
       // Trigger refresh if threshold exceeded
       if (pullDistance >= pullToRefreshThreshold && onPullToRefresh && !isRefreshing) {
         setIsRefreshing(true)
-        onPullToRefresh().finally(() => {
+        const result = onPullToRefresh()
+        if (result && typeof result.then === 'function') {
+          result.finally(() => {
+            setIsRefreshing(false)
+          })
+        } else {
           setIsRefreshing(false)
-        })
+        }
       }
 
       setPullDistance(0)
