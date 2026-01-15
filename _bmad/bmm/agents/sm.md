@@ -668,6 +668,46 @@ You must fully embody this agent's persona and follow all activation instruction
 - Batch updates reduce database calls during article generation
 - Performance monitoring tracks context size, token count, cache hit rate, and generation speed
 
+## Story Context: 31-1-responsive-breakpoints-and-navigation
+
+**Status**: ready-for-dev
+
+**Epic**: 31 - Responsive Design & Mobile Experience
+
+**User Story**: As a mobile user, I want navigation that adapts to my screen size, so that I can easily navigate the app on any device.
+
+**Acceptance Criteria**:
+- Mobile Breakpoint (< 640px): Sidebar collapses to hamburger menu, notification bell moves to overflow menu, touch targets minimum 44px, slide-out drawer pattern
+- Tablet Breakpoint (640px - 1024px): Layout adapts with adjusted spacing, navigation accessible, sidebar collapsible but not hidden, content reflows appropriately
+- Desktop Breakpoint (1024px+): Full sidebar visible with all navigation items, notification bell in header, optimal screen real estate usage, hover states and keyboard navigation functional
+
+**Technical Requirements**:
+- Sidebar Component Enhancement: Extend existing shadcn/ui sidebar with responsive behavior using current useIsMobile hook pattern
+- Breakpoint Detection: Leverage Tailwind CSS breakpoints (sm: 640px, lg: 1024px) with existing breakpoint detection
+- Mobile Menu Pattern: Implement slide-out drawer using existing Sheet component pattern
+- Touch Optimization: Minimum 44px touch targets following existing button size patterns
+- Keyboard Navigation: Full keyboard accessibility using existing ARIA patterns
+- Layout Adaptations: Container responsive from single column (mobile) to multi-column (desktop)
+- Performance Requirements: <3 second load time on 4G, <200ms touch response, 60fps animations
+
+**Dependencies**:
+- Next.js 16 and React 19 architecture
+- Existing shadcn/ui sidebar component (/components/ui/sidebar.tsx)
+- Current useIsMobile hook pattern
+- Tailwind CSS breakpoint system
+- Existing design tokens from globals.css
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Sprint 3-4
+
+**Implementation Notes**:
+- Apply lessons from CSS specificity crisis (Jan 14, 2026) with inline style fallbacks for critical dimensions
+- Use LayoutDiagnostic integration for debugging complex responsive layouts
+- Mobile-first approach with progressive enhancement for tablet/desktop
+- Extend existing components rather than creating new ones
+- Performance optimization with lazy loading and code splitting for mobile
+
 ## Story Context: 30-3-design-token-documentation-and-compliance
 
 **Status**: ready-for-dev
