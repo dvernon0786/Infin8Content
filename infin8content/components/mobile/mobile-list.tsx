@@ -40,22 +40,6 @@ export interface MobileListProps {
 
 // Mobile-specific constants
 const MOBILE_TOUCH_TARGET_SIZE = 44; // iOS HIG minimum
-const MOBILE_SPACING = {
-  list: {
-    padding: 8,
-    gap: 4,
-  },
-  item: {
-    minHeight: 64,
-    padding: 12,
-    borderRadius: 8,
-    margin: 4,
-  },
-  empty: {
-    padding: 32,
-    minHeight: 200,
-  },
-};
 
 const BADGE_COLORS = {
   blue: 'bg-blue-100 text-blue-800',
@@ -204,19 +188,11 @@ export const MobileList: React.FC<MobileListProps> = ({
       <div
         key={itemKey}
         data-testid={`list-item-${item.id}`}
-        className={`bg-white rounded-lg border transition-all duration-200 ${
-          isSelected
-            ? 'border-blue-500 shadow-md'
-            : 'border-gray-200 shadow-sm'
-        } ${item.disabled ? 'opacity-50' : ''} ${
+        className={`relative bg-white border border-gray-200 rounded-lg p-3 m-1 min-h-[64px] transition-all duration-200 ${
+          item.disabled ? 'opacity-50' : ''
+        } ${
           (onItemPress || onItemLongPress) ? 'active:scale-95 cursor-pointer' : ''
         }`}
-        style={{
-          minHeight: MOBILE_SPACING.item.minHeight,
-          padding: MOBILE_SPACING.item.padding,
-          margin: MOBILE_SPACING.item.margin,
-          borderRadius: MOBILE_SPACING.item.borderRadius,
-        }}
         onTouchStart={(e) => handleTouchStart(e, item.id)}
         onTouchMove={handleTouchMove}
         onTouchEnd={(e) => handleTouchEnd(e, item.id)}
@@ -307,11 +283,7 @@ export const MobileList: React.FC<MobileListProps> = ({
     return (
       <div
         data-testid={`${testId}-empty`}
-        className="flex flex-col items-center justify-center text-center"
-        style={{
-          padding: MOBILE_SPACING.empty.padding,
-          minHeight: MOBILE_SPACING.empty.minHeight,
-        }}
+        className="flex flex-col items-center justify-center text-center p-8 min-h-[200px]"
       >
         <div className="text-4xl mb-4">{emptyIcon}</div>
         <p className="text-gray-500 text-sm">{emptyMessage}</p>
@@ -324,11 +296,7 @@ export const MobileList: React.FC<MobileListProps> = ({
     return (
       <div
         data-testid={`${testId}-loading`}
-        className="flex items-center justify-center"
-        style={{
-          padding: MOBILE_SPACING.empty.padding,
-          minHeight: MOBILE_SPACING.empty.minHeight,
-        }}
+        className="flex items-center justify-center p-8 min-h-[200px]"
       >
         <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
@@ -339,12 +307,7 @@ export const MobileList: React.FC<MobileListProps> = ({
     <div
       ref={listRef}
       data-testid={testId}
-      className={`space-y-2 ${className}`}
-      style={{
-        padding: MOBILE_SPACING.list.padding,
-        gap: MOBILE_SPACING.list.gap,
-        ...style,
-      }}
+      className={`space-y-1 p-2 ${className}`}
     >
       {items.map((item, index) => {
         if (renderItem) {

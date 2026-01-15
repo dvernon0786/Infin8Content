@@ -35,22 +35,6 @@ interface MobileBulkActionsProps {
 
 // Mobile-specific constants
 const MOBILE_TOUCH_TARGET_SIZE = 44; // iOS HIG minimum
-const MOBILE_SPACING = {
-  item: {
-    padding: 16,
-    margin: 8,
-    minHeight: 72,
-  },
-  actionBar: {
-    height: 64,
-    padding: 12,
-  },
-  checkbox: {
-    size: 24,
-    margin: 12,
-  },
-};
-
 // Touch gesture thresholds
 const GESTURE_THRESHOLDS = {
   swipeMinDistance: 30,
@@ -254,17 +238,11 @@ export const MobileBulkActions: React.FC<MobileBulkActionsProps> = ({
   const renderCheckbox = useCallback((itemId: string, isSelected: boolean, disabled: boolean) => (
     <div
       data-testid={`bulk-checkbox-${itemId}`}
-      className={`flex items-center justify-center rounded border-2 transition-all duration-200 ${
+      className={`w-6 h-6 min-w-[24px] rounded border-2 transition-colors ${
         isSelected
           ? 'bg-blue-500 border-blue-500'
           : 'bg-white border-gray-300'
       } ${disabled ? 'opacity-50' : ''}`}
-      style={{
-        width: MOBILE_SPACING.checkbox.size,
-        height: MOBILE_SPACING.checkbox.size,
-        minWidth: MOBILE_SPACING.checkbox.size,
-        minHeight: MOBILE_SPACING.checkbox.size,
-      }}
     >
       {isSelected && (
         <svg
@@ -290,12 +268,7 @@ export const MobileBulkActions: React.FC<MobileBulkActionsProps> = ({
     return (
       <div
         data-testid="bulk-action-bar"
-        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg"
-        style={{
-          height: MOBILE_SPACING.actionBar.height,
-          padding: MOBILE_SPACING.actionBar.padding,
-          zIndex: 50,
-        }}
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg h-16 p-3 z-50"
       >
         <div className="flex items-center justify-between h-full">
           <div className="flex items-center space-x-3">
@@ -318,17 +291,11 @@ export const MobileBulkActions: React.FC<MobileBulkActionsProps> = ({
                 <button
                   key={action.id}
                   data-testid={`bulk-action-${action.id}`}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isDisabled
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : isConfirming
+                  className={`px-4 py-2 rounded-md font-medium transition-all min-h-[44px] min-w-[44px] ${
+                    confirmingAction === action.id
                       ? 'bg-red-500 text-white'
                       : 'bg-blue-500 text-white hover:bg-blue-600 active:scale-95'
                   }`}
-                  style={{
-                    minHeight: MOBILE_TOUCH_TARGET_SIZE,
-                    minWidth: MOBILE_TOUCH_TARGET_SIZE,
-                  }}
                   disabled={isDisabled}
                   onClick={() => handleActionPress(action)}
                 >
@@ -352,14 +319,9 @@ export const MobileBulkActions: React.FC<MobileBulkActionsProps> = ({
       <div
         key={item.id}
         data-testid={`bulk-item-${item.id}`}
-        className={`relative bg-white rounded-lg border border-gray-200 transition-all duration-200 ${
+        className={`relative bg-white rounded-lg border border-gray-200 transition-all duration-200 p-4 m-2 min-h-[72px] ${
           isSelected ? 'border-blue-500 shadow-md' : 'shadow-sm'
         } ${touchState.itemId === item.id && touchState.isLongPressing ? 'scale-95' : ''}`}
-        style={{
-          padding: MOBILE_SPACING.item.padding,
-          margin: MOBILE_SPACING.item.margin,
-          minHeight: MOBILE_SPACING.item.minHeight,
-        }}
         onTouchStart={(e) => handleTouchStart(e, item.id)}
         onTouchMove={handleTouchMove}
         onTouchEnd={(e) => handleTouchEnd(e, item.id)}
@@ -378,7 +340,7 @@ export const MobileBulkActions: React.FC<MobileBulkActionsProps> = ({
                 e.stopPropagation();
                 toggleItemSelection(item.id);
               }}
-              style={{ margin: MOBILE_SPACING.checkbox.margin }}
+              className="flex items-center justify-center m-3"
             >
               {renderCheckbox(item.id, isSelected, item.disabled || false)}
             </div>
@@ -417,11 +379,7 @@ export const MobileBulkActions: React.FC<MobileBulkActionsProps> = ({
     <div
       ref={containerRef}
       data-testid="mobile-bulk-actions"
-      className={`relative ${className}`}
-      style={{
-        paddingBottom: isSelectionMode ? MOBILE_SPACING.actionBar.height : 0,
-        ...style,
-      }}
+      className={`relative pb-16 ${className}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
