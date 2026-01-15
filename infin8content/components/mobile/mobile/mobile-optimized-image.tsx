@@ -102,14 +102,9 @@ export const MobileOptimizedImage: React.FC<MobileOptimizedImageProps> = ({
 
   return (
     <div 
-      className={`mobile-optimized-image-container ${className}`}
+      className={`mobile-optimized-image-container relative inline-block touch-manipulation ${className}`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      style={{
-        position: 'relative',
-        display: 'inline-block',
-        touchAction: 'manipulation'
-      }}
     >
       <OptimizedImage
         src={src}

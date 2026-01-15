@@ -137,7 +137,7 @@ button,
   .list-item {
     padding: 16px !important;
     min-height: 64px !important;
-    border-bottom: 1px solid var(--border-color, #e5e7eb);
+    border-bottom: 1px solid var(--border-color);
   }
 
   .list-item:last-child {
@@ -205,8 +205,8 @@ button,
 
 /* Lazy loading placeholder */
 .lazy-image {
-  background-color: var(--bg-gray-100, #f3f4f6);
-  background-image: linear-gradient(90deg, var(--bg-gray-100, #f3f4f6) 25%, var(--bg-gray-200, #e5e7eb) 50%, var(--bg-gray-100, #f3f4f6) 75%);
+  background-color: var(--bg-gray-100);
+  background-image: linear-gradient(90deg, var(--bg-gray-100) 25%, var(--bg-gray-200) 50%, var(--bg-gray-100) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -277,7 +277,7 @@ input:focus,
 textarea:focus,
 select:focus,
 [role="button"]:focus {
-  outline: 2px solid var(--focus-color, #3b82f6);
+  outline: 2px solid var(--focus-color);
   outline-offset: 2px;
 }
 
@@ -299,7 +299,7 @@ select:focus,
 
 /* Simplify gradients */
 .low-memory .gradient-background {
-  background: var(--bg-gray-100, #f3f4f6) !important;
+  background: var(--bg-gray-100) !important;
 }
 
 /* ===== DEBUG STYLES ===== */
@@ -322,7 +322,7 @@ select:focus,
 /* Touch target visualization */
 .debug-touch-targets button,
 .debug-touch-targets [role="button"] {
-  border: 1px dashed var(--error-color, #ef4444) !important;
+  border: 1px dashed var(--error-color) !important;
 }
 
 .debug-touch-targets button::before,
@@ -333,7 +333,7 @@ select:focus,
   left: 50%;
   width: 44px;
   height: 44px;
-  border: 1px solid var(--error-color, #ef4444);
+  border: 1px solid var(--error-color);
   transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: -1;

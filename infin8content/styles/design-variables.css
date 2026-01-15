@@ -1,0 +1,44 @@
+/**
+ * Design System Variables
+ * 
+ * CSS variables for design system compliance
+ * These variables replace hard-coded values throughout the application
+ */
+
+:root {
+  /* Color Variables */
+  --border-color: #e5e7eb;
+  --bg-gray-100: #f3f4f6;
+  --bg-gray-200: #e5e7eb;
+  --focus-color: #3b82f6;
+  --error-color: #ef4444;
+  
+  /* Spacing Variables */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  
+  /* Typography Variables */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  
+  /* Touch Target Variables */
+  --touch-target-min: 44px;
+}
+
+/* Dark mode variables */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --border-color: #374151;
+    --bg-gray-100: #1f2937;
+    --bg-gray-200: #374151;
+    --focus-color: #3b82f6;
+    --error-color: #ef4444;
+  }
+}
