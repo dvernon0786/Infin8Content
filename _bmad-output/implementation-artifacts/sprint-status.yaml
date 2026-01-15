@@ -392,8 +392,8 @@ development_status:
   # Epic 31: Responsive Design & Mobile Experience (HIGH - Sprint 3-4)
   epic-31: in-progress
   # Sprint 3-4 Priority - Mobile-first responsive design, touch optimization
-  31-1-responsive-breakpoints-and-navigation: ready-for-dev
-  31-2-mobile-layout-adaptations: backlog
+  31-1-responsive-breakpoints-and-navigation: done
+  31-2-mobile-layout-adaptations: in-progress
   31-3-mobile-performance-and-touch-optimization: backlog
   epic-31-retrospective: optional
 

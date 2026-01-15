@@ -708,6 +708,52 @@ You must fully embody this agent's persona and follow all activation instruction
 - Extend existing components rather than creating new ones
 - Performance optimization with lazy loading and code splitting for mobile
 
+## Story Context: 31-2-mobile-layout-adaptations
+
+**Status**: ready-for-dev
+
+**Epic**: 31 - Responsive Design & Mobile Experience
+
+**User Story**: As a mobile user, I want content layouts that adapt seamlessly to my screen size, so that I can read, interact with, and manage content efficiently on any device.
+
+**Acceptance Criteria**:
+- Mobile Content Layout: Single-column layout with optimal reading width (320px-375px), touch-friendly spacing, swipeable cards for article lists, pull-to-refresh functionality
+- Tablet Content Layout: Two-column layout for article lists, adaptive content width (640px-768px), enhanced touch targets, gesture-based navigation
+- Desktop Content Layout: Multi-column grid layouts, hover states and tooltips, keyboard shortcuts, drag-and-drop functionality
+- Content Component Adaptations: Article cards resize appropriately, text remains readable at all sizes, images scale responsively, forms adapt to touch/keyboard input
+- Dashboard Adaptations: Compact mobile dashboard with essential actions, tablet dashboard with expanded controls, desktop dashboard with full functionality
+
+**Technical Requirements**:
+- Responsive Grid System: Extend existing CSS Grid layouts with responsive breakpoints using Tailwind's grid system
+- Component Adaptation Engine: Create HOC or hook system for responsive component behavior
+- Touch Interaction System: Implement swipe gestures, touch feedback, and mobile-specific interactions
+- Content Optimization: Responsive typography scaling, image optimization, lazy loading for mobile
+- Layout State Management: Store and restore layout preferences across devices
+- Performance Requirements: <2 second content load on mobile, <100ms layout transitions, 60fps animations
+- Accessibility: WCAG 2.1 AA compliance across all device types, touch accessibility, screen reader optimization
+
+**Dependencies**:
+- Story 31-1 (Responsive Breakpoints and Navigation) for breakpoint system
+- Next.js 16 and React 19 architecture
+- Existing shadcn/ui component library
+- Current responsive design patterns in globals.css
+- LayoutDiagnostic tool for CSS debugging
+- Performance monitoring system
+
+**Priority**: High
+**Story Points**: 13
+**Target Sprint**: Sprint 3-4
+
+**Implementation Notes**:
+- Apply CSS specificity crisis lessons with inline style protection for critical layout dimensions
+- Use LayoutDiagnostic extensively for complex responsive layout debugging
+- Mobile-first development approach with progressive enhancement
+- Leverage existing component patterns and extend rather than replace
+- Implement comprehensive testing across all viewport sizes
+- Consider offline functionality for mobile users
+- Optimize for touch interactions with proper feedback mechanisms
+- Ensure content readability and accessibility at all screen sizes
+
 ## Story Context: 30-3-design-token-documentation-and-compliance
 
 **Status**: ready-for-dev

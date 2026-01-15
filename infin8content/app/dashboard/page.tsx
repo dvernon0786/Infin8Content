@@ -1,4 +1,11 @@
 import { getCurrentUser } from "@/lib/supabase/get-current-user"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { SidebarNavigation } from "@/components/dashboard/sidebar-navigation"
+import { TopNavigation } from "@/components/dashboard/top-navigation"
+import { ResponsiveLayoutProvider } from "@/components/dashboard/responsive-layout-provider"
+import { LayoutDiagnostic } from "@/components/layout-diagnostic"
+import { redirect } from "next/navigation"
+import { PaymentGuard } from "@/components/guards/payment-guard"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
@@ -68,6 +75,9 @@ export default async function DashboardPage() {
           </Card>
         </div>
       </div>
+      
+      {/* LayoutDiagnostic for ongoing monitoring */}
+      <LayoutDiagnostic />
     </>
   )
 }

@@ -33,6 +33,7 @@ export default defineConfig({
   reporter: [
     ['html'],
     ['junit', { outputFile: 'test-results/junit.xml' }],
+    ['json', { outputFile: 'test-results/results.json' }],
     ['list'],
   ],
   
@@ -63,15 +64,73 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-    // Uncomment to test on other browsers
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+    {
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'Mobile Safari',
+      use: { ...devices['iPhone 12'] },
+    },
+    {
+      name: 'iPad',
+      use: { ...devices['iPad Pro'] },
+    },
+    // Visual Regression Testing Project
+    {
+      name: 'visual-regression',
+      testMatch: '**/layout-regression.spec.ts',
+      use: {
+        // Disable animations for consistent screenshots
+        launchOptions: {
+          args: [
+            '--disable-animations',
+            '--disable-transitions',
+            '--disable-gpu',
+            '--disable-software-rasterizer'
+          ]
+        },
+        // Ensure consistent viewport
+        viewport: { width: 1280, height: 720 },
+        // Longer timeout for visual comparisons
+        actionTimeout: 10000,
+      },
+      dependencies: ['chromium']
+    },
+    // Responsive Testing Project
+    {
+      name: 'responsive-testing',
+      testMatch: '**/responsive.spec.ts',
+      use: {
+        viewport: { width: 1280, height: 720 },
+        actionTimeout: 10000,
+      },
+      dependencies: ['chromium', 'Mobile Chrome', 'iPad']
+    },
+    // Accessibility Testing Project
+    {
+      name: 'accessibility-testing',
+      testMatch: '**/accessibility.spec.ts',
+      use: {
+        // Enable accessibility testing
+        launchOptions: {
+          args: [
+            '--force-prefers-reduced-motion', // Test with reduced motion
+            '--force-color-profile=srgb' // Consistent color profile
+          ]
+        },
+        actionTimeout: 10000,
+      },
+      dependencies: ['chromium']
+    }
   ],
 
   // Run your local dev server before starting the tests

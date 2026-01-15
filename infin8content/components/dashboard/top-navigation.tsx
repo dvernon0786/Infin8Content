@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, User, Plus } from "lucide-react"
+import { LogOut, User, Plus, Bell, Search, MoreHorizontal } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
@@ -15,6 +15,10 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import { useResponsiveNavigation } from "@/hooks/use-responsive-navigation"
 
 interface TopNavigationProps {
     email: string
@@ -26,6 +30,9 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
     const pathname = usePathname()
     const router = useRouter()
     const [isLoggingOut, setIsLoggingOut] = useState(false)
+    const [searchOpen, setSearchOpen] = useState(false)
+    const [overflowOpen, setOverflowOpen] = useState(false)
+    const { isMobile, isTablet, isDesktop } = useResponsiveNavigation()
     
     const initials = name
         ? name
@@ -67,60 +74,241 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
         }
     }
 
-    return (
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-            <SidebarTrigger className="-ml-1 md:hidden" aria-label="Toggle sidebar menu" />
-            <Link 
-                href="/dashboard" 
-                className="flex items-center gap-2 font-semibold text-lg hover:opacity-80 transition-opacity"
-                aria-label="Infin8Content - Go to dashboard"
-            >
-                <span className="hidden md:inline">Infin8Content</span>
-                <span className="md:hidden">I8C</span>
-            </Link>
-            <div className="flex-1" />
-            {showCreateButton && (
-                <Button asChild className="gap-2">
-                    <Link href="/dashboard/articles/generate">
-                        <Plus className="h-4 w-4" />
-                        <span className="hidden sm:inline">Create Article</span>
-                        <span className="sm:hidden">Create</span>
-                    </Link>
-                </Button>
+    // Mobile-optimized brand display
+    const brandDisplay = (
+        <Link 
+            href="/dashboard" 
+            className={cn(
+                "flex items-center gap-2 font-semibold hover:opacity-80 transition-opacity",
+                isMobile ? "text-base" : "text-lg"
             )}
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full" suppressHydrationWarning>
-                        <Avatar className="h-8 w-8">
-                            <AvatarImage src={avatarUrl} alt={name || email} />
-                            <AvatarFallback>{initials}</AvatarFallback>
-                        </Avatar>
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount suppressHydrationWarning>
-                    <DropdownMenuLabel className="font-normal">
-                        <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium leading-none">{name || "User"}</p>
-                            <p className="text-xs leading-none text-muted-foreground">
-                                {email}
-                            </p>
-                        </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                        onClick={handleLogout}
-                        disabled={isLoggingOut}
-                        className="cursor-pointer"
+            aria-label="Infin8Content - Go to dashboard"
+        >
+            <span className={cn(
+                isMobile && "sm:hidden" // Hide on small mobile
+            )}>
+                {isMobile ? "I8C" : "Infin8Content"}
+            </span>
+            {isTablet && !isMobile && (
+                <span className="hidden sm:inline">Infin8Content</span>
+            )}
+        </Link>
+    )
+
+    // Mobile search toggle
+    const mobileSearch = (
+        <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSearchOpen(!searchOpen)}
+            className="md:hidden"
+            aria-label="Toggle search"
+        >
+            <Search className="h-4 w-4" />
+        </Button>
+    )
+
+    // Responsive search input
+    const searchInput = (
+        <div className={cn(
+            "relative transition-all duration-200",
+            isMobile && searchOpen ? "w-full" : isMobile ? "w-0 overflow-hidden" : "w-auto",
+            isTablet && "max-w-xs"
+        )}>
+            <Search className={cn(
+                "absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground",
+                "h-4 w-4"
+            )} />
+            <Input
+                placeholder={isMobile ? "Search..." : "Search articles..."}
+                className={cn(
+                    "pl-10",
+                    isMobile && "h-10",
+                    isTablet && "h-9 text-sm"
+                )}
+            />
+        </div>
+    )
+
+    // Mobile overflow menu with notifications
+    const mobileOverflowMenu = (
+        <DropdownMenu open={overflowOpen} onOpenChange={setOverflowOpen}>
+            <DropdownMenuTrigger asChild>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                        "relative",
+                        isMobile && "h-10 w-10", // Larger touch target on mobile
+                        "h-8 w-8"
+                    )}
+                    aria-label="More options"
+                >
+                    <MoreHorizontal className={cn(
+                        isMobile && "h-5 w-5",
+                        "h-4 w-4"
+                    )} />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem className="cursor-pointer">
+                    <Bell className="mr-2 h-4 w-4" />
+                    <span>Notifications</span>
+                    <Badge variant="secondary" className="ml-auto">
+                        3
+                    </Badge>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    className="cursor-pointer"
+                >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
+
+    // Responsive create button
+    const createButton = showCreateButton && (
+        <Button 
+            asChild 
+            className={cn(
+                "gap-2 transition-all duration-200",
+                isMobile && "h-10 px-3", // Larger on mobile
+                "h-9"
+            )}
+        >
+            <Link href="/dashboard/articles/generate">
+                <Plus className={cn(
+                    isMobile && "h-5 w-5",
+                    "h-4 w-4"
+                )} />
+                <span className={cn(
+                    isMobile && "hidden sm:inline", // Hide text on small mobile
+                    isTablet && "hidden lg:inline", // Hide on tablet
+                    "inline"
+                )}>
+                    Create Article
+                </span>
+                {isMobile && (
+                    <span className="sm:hidden">Create</span>
+                )}
+            </Link>
+        </Button>
+    )
+
+    return (
+        <header className={cn(
+            "flex shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear",
+            "group-has-data-[collapsible=icon]/sidebar-wrapper:h-12",
+            isMobile ? "h-16 px-3" : "h-16 px-4"
+        )}>
+            {/* Hamburger menu - only visible on mobile */}
+            <SidebarTrigger 
+                className={cn(
+                    "-ml-1",
+                    isMobile ? "flex" : "md:hidden"
+                )} 
+                aria-label="Toggle sidebar menu" 
+            />
+
+            {/* Brand display */}
+            {brandDisplay}
+
+            {/* Mobile search toggle */}
+            {mobileSearch}
+
+            {/* Search input - responsive width */}
+            {searchInput}
+
+            <div className="flex-1" />
+
+            {/* Right side actions */}
+            <div className={cn(
+                "flex items-center gap-2",
+                isMobile && "gap-1" // Tighter spacing on mobile
+            )}>
+                {/* Notification bell - hidden on mobile (moved to overflow), shown on tablet+ */}
+                {!isMobile && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="relative h-8 w-8"
+                        aria-label="View notifications"
                     >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+                        <Bell className="h-4 w-4" />
+                        <Badge 
+                            variant="destructive" 
+                            className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs"
+                        >
+                            3
+                        </Badge>
+                    </Button>
+                )}
+
+                {/* Mobile overflow menu */}
+                {isMobile && mobileOverflowMenu}
+
+                {/* Create button */}
+                {createButton}
+
+                {/* User menu - hidden on mobile (moved to overflow) */}
+                {!isMobile && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button 
+                                variant="ghost" 
+                                className="relative rounded-full h-8 w-8" 
+                                suppressHydrationWarning
+                            >
+                                <Avatar className="h-8 w-8">
+                                    <AvatarImage src={avatarUrl} alt={name || email} />
+                                    <AvatarFallback className="text-sm">
+                                        {initials}
+                                    </AvatarFallback>
+                                </Avatar>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent 
+                            className="w-56" 
+                            align="end" 
+                            forceMount 
+                            suppressHydrationWarning
+                        >
+                            <DropdownMenuLabel className="font-normal">
+                                <div className="flex flex-col space-y-1">
+                                    <p className="text-sm font-medium leading-none">
+                                        {name || "User"}
+                                    </p>
+                                    <p className="text-xs leading-none text-muted-foreground">
+                                        {email}
+                                    </p>
+                                </div>
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="cursor-pointer">
+                                <User className="mr-2 h-4 w-4" />
+                                <span>Profile</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                                onClick={handleLogout}
+                                disabled={isLoggingOut}
+                                className="cursor-pointer"
+                            >
+                                <LogOut className="mr-2 h-4 w-4" />
+                                <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
+            </div>
         </header>
     )
 }
