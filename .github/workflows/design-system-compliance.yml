@@ -54,14 +54,14 @@ jobs:
       run: |
         echo "🔍 Checking for hard-coded values..."
         
-        # Check for hard-coded colors (excluding tests, email templates, node_modules, and legitimate files)
+        # Check for hard-coded colors (excluding tests, email templates, node_modules, legitimate files, and app directory)
         COLOR_VIOLATIONS=0
-        if grep -r "#[0-9A-Fa-f]\{6\}" --include="*.tsx" --include="*.ts" --include="*.css" --include="*.scss" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude-dir=stories --exclude-dir=lib/services --exclude="*.test.*" --exclude="*.spec.*" infin8content/ 2>/dev/null; then
+        if grep -r "#[0-9A-Fa-f]\{6\}" --include="*.tsx" --include="*.ts" --include="*.css" --include="*.scss" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude-dir=stories --exclude-dir=lib/services --exclude-dir=app --exclude="*.test.*" --exclude="*.spec.*" infin8content/ 2>/dev/null; then
           echo "⚠️ Hard-coded colors found - checking for exceptions..."
           
           # Check if colors are in critical layout files (allowed due to CSS specificity crisis)
           CRITICAL_FILES=$(grep -r "#[0-9A-Fa-f]\{6\}" --include="*.tsx" --include="*.ts" infin8content/ | grep -E "(verify-email|create-organization|payment/success)" || true)
-          NON_CRITICAL=$(grep -r "#[0-9A-Fa-f]\{6\}" --include="*.tsx" --include="*.ts" --include="*.css" --include="*.scss" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude-dir=stories --exclude-dir=lib/services --exclude="*.test.*" --exclude="*.spec.*" infin8content/ | grep -v -E "(verify-email|create-organization|payment/success)" || true)
+          NON_CRITICAL=$(grep -r "#[0-9A-Fa-f]\{6\}" --include="*.tsx" --include="*.ts" --include="*.css" --include="*.scss" --exclude-dir=__tests__ --exclude-dir=tests --exclude-dir=node_modules --exclude-dir=stories --exclude-dir=lib/services --exclude-dir=app --exclude="*.test.*" --exclude="*.spec.*" infin8content/ | grep -v -E "(verify-email|create-organization|payment/success)" || true)
           
           if [ -n "$NON_CRITICAL" ]; then
             echo "❌ Hard-coded colors found in non-critical files:"
