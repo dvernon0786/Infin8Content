@@ -754,6 +754,62 @@ You must fully embody this agent's persona and follow all activation instruction
 - Optimize for touch interactions with proper feedback mechanisms
 - Ensure content readability and accessibility at all screen sizes
 
+## Story Context: 31-3-mobile-performance-and-touch-optimization
+
+**Status**: ready-for-dev
+
+**Epic**: 31 - Responsive Design & Mobile Experience
+
+**User Story**: As a mobile user, I want optimized performance and touch interactions so that the app responds quickly to my actions and feels smooth and responsive on my mobile device.
+
+**Acceptance Criteria**:
+- Touch response time under 100ms for all interactive elements
+- 60fps animations and transitions on mobile devices
+- Optimized asset loading with lazy loading for images and components
+- Touch feedback with visual and haptic responses
+- Gesture support for swipe, pinch, and long-press interactions
+- Mobile-specific performance optimizations (reduced JavaScript bundle, optimized images)
+- Offline functionality for core features with service worker implementation
+- Battery usage optimization to minimize power consumption
+- Network-aware performance adaptation (4G, 3G, WiFi optimization)
+- Memory management to prevent crashes on low-end devices
+
+**Technical Requirements**:
+- Performance monitoring with Core Web Vitals tracking (LCP, FID, CLS)
+- Touch event optimization with proper event handling and debouncing
+- Gesture recognition system for mobile-specific interactions
+- Lazy loading implementation for images, components, and routes
+- Service worker for offline functionality and caching
+- Bundle optimization with code splitting for mobile
+- Image optimization with responsive images and WebP format
+- Memory leak prevention and monitoring
+- Network performance adaptation with quality switching
+- Battery API integration for power-aware performance
+
+**Dependencies**:
+- Story 31-1 (Responsive Breakpoints and Navigation) for mobile layout foundation
+- Story 31-2 (Mobile Layout Adaptations) for responsive component behavior
+- Next.js 16 and React 19 architecture
+- Existing performance monitoring system
+- shadcn/ui component library with mobile optimizations
+- Touch gesture library integration
+- Service worker implementation
+- Image optimization pipeline
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Sprint 3-4
+
+**Implementation Notes**:
+- Apply CSS specificity crisis lessons with inline style protection for critical mobile layouts
+- Use LayoutDiagnostic for mobile-specific layout debugging and performance analysis
+- Mobile-first development approach with progressive enhancement
+- Implement comprehensive touch testing across different device types and screen sizes
+- Consider offline functionality as a key mobile performance feature
+- Optimize for battery life and network conditions
+- Ensure accessibility standards are maintained on mobile devices
+- Test performance on low-end devices and slower network connections
+
 ## Story Context: 30-3-design-token-documentation-and-compliance
 
 **Status**: ready-for-dev
