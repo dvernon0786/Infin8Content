@@ -26,25 +26,6 @@ export interface MobileCardProps {
 
 // Mobile-specific constants
 const MOBILE_TOUCH_TARGET_SIZE = 44; // iOS HIG minimum
-const MOBILE_SPACING = {
-  card: {
-    padding: 16,
-    margin: 8,
-    borderRadius: 12,
-    shadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-  },
-  image: {
-    height: 120,
-    borderRadius: 8,
-  },
-  content: {
-    padding: 12,
-  },
-  actions: {
-    padding: 12,
-    gap: 8,
-  },
-};
 
 const BADGE_COLORS = {
   blue: 'bg-blue-100 text-blue-800',
@@ -151,20 +132,18 @@ export const MobileCard: React.FC<MobileCardProps> = ({
   }, []);
 
   const cardClasses = [
-    'bg-white rounded-lg shadow-sm transition-all duration-200',
-    selected && 'ring-2 ring-blue-500 shadow-md',
+    'bg-white',
+    'p-4',
+    'm-2',
+    'rounded-lg',
+    'shadow-md',
+    isMobile && 'min-h-[44px]',
     disabled && 'opacity-50',
-    loading && 'animate-pulse',
-    (onPress || onLongPress) && 'active:scale-95 cursor-pointer',
+    selected && 'ring-2 ring-blue-500',
     className,
   ].filter(Boolean).join(' ');
 
   const cardStyle = {
-    padding: MOBILE_SPACING.card.padding,
-    margin: MOBILE_SPACING.card.margin,
-    borderRadius: MOBILE_SPACING.card.borderRadius,
-    boxShadow: MOBILE_SPACING.card.shadow,
-    minHeight: isMobile ? MOBILE_TOUCH_TARGET_SIZE : 'auto',
     ...style,
   };
 
@@ -191,12 +170,11 @@ export const MobileCard: React.FC<MobileCardProps> = ({
 
       {/* Image */}
       {image && (
-        <div className="relative overflow-hidden" style={{ borderRadius: MOBILE_SPACING.image.borderRadius }}>
+        <div className="relative overflow-hidden rounded-lg">
           <img
             src={image}
             alt={imageAlt || title || 'Card image'}
-            className="w-full object-cover"
-            style={{ height: MOBILE_SPACING.image.height }}
+            className="w-full object-cover h-30"
             loading="lazy"
           />
           {badge && (
@@ -210,7 +188,7 @@ export const MobileCard: React.FC<MobileCardProps> = ({
       )}
 
       {/* Content */}
-      <div style={{ padding: MOBILE_SPACING.content.padding }}>
+      <div className="p-3">
         {/* Title */}
         {title && (
           <h3 className="text-base font-semibold text-gray-900 mb-1 line-clamp-2">
@@ -242,13 +220,7 @@ export const MobileCard: React.FC<MobileCardProps> = ({
 
       {/* Actions */}
       {actions && (
-        <div 
-          className="flex items-center justify-end"
-          style={{ 
-            padding: MOBILE_SPACING.actions.padding,
-            gap: MOBILE_SPACING.actions.gap,
-          }}
-        >
+        <div className="flex items-center justify-end p-3 gap-2">
           {actions}
         </div>
       )}

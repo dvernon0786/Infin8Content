@@ -133,13 +133,9 @@ export const MobileOptimizedImage: React.FC<MobileOptimizedImageProps> = ({
       {/* Mobile touch feedback overlay */}
       {enableTouchInteraction && isMobile && (
         <div 
-          className={`absolute inset-0 pointer-events-none transition-opacity duration-150 ${
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-150 bg-black/10 rounded-inherit ${
             isTouched ? 'opacity-20' : 'opacity-0'
           }`}
-          style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.1)',
-            borderRadius: 'inherit'
-          }}
         />
       )}
 
@@ -147,15 +143,7 @@ export const MobileOptimizedImage: React.FC<MobileOptimizedImageProps> = ({
       {showLoadingIndicator && isMobile && !imageError && (
         <div className="mobile-image-loading-indicator">
           <div 
-            className="animate-spin rounded-full border-2 border-gray-300 border-t-blue-500"
-            style={{
-              width: '20px',
-              height: '20px',
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)'
-            }}
+            className="animate-spin rounded-full border-2 border-gray-300 border-t-blue-500 w-5 h-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
           />
         </div>
       )}
@@ -163,38 +151,12 @@ export const MobileOptimizedImage: React.FC<MobileOptimizedImageProps> = ({
       {/* Error state with retry for mobile */}
       {imageError && !fallbackComponent && (
         <div 
-          className="mobile-image-error-state"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: '#f3f4f6',
-            color: '#6b7280',
-            fontSize: isMobile ? '12px' : '14px',
-            textAlign: 'center',
-            padding: '16px'
-          }}
+          className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 text-gray-500 text-center p-4"
         >
-          <div style={{ marginBottom: '8px' }}>Failed to load image</div>
+          <div className="mb-2">Failed to load image</div>
           <button 
             onClick={handleRetry}
-            style={{
-              padding: '6px 12px',
-              fontSize: '11px',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              minWidth: '44px',
-              minHeight: '44px'
-            }}
+            className="px-3 py-1.5 text-xs bg-blue-500 text-white border-0 rounded cursor-pointer min-w-[44px] min-h-[44px]"
           >
             Retry
           </button>
