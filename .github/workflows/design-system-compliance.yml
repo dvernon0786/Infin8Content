@@ -93,9 +93,9 @@ jobs:
           echo "✅ No inline styles found"
         fi
         
-        # Check for arbitrary spacing (excluding stories directory and legitimate CSS values)
+        # Check for arbitrary spacing (excluding stories directory, app directory, and node_modules)
         SPACING_VIOLATIONS=0
-        ARBITRARY_SPACING=$(grep -r -E "\b(1[0-9]|[2-9][0-9])px\b" --include="*.css" --include="*.scss" --exclude-dir=stories --exclude-dir=app infin8content/ | grep -v -E "(4px|8px|16px|24px|32px|48px|64px|96px|12px|20px|10px|36px|22px|13px)" || true)
+        ARBITRARY_SPACING=$(find infin8content/ -name "*.css" -o -name "*.scss" | grep -v node_modules | grep -v stories | grep -v app | xargs grep -l -E "\b(1[0-9]|[2-9][0-9])px\b" 2>/dev/null | xargs grep -h -E "\b(1[0-9]|[2-9][0-9])px\b" | grep -v -E "(4px|8px|16px|24px|32px|48px|64px|96px|12px|20px|10px|36px|22px|13px)" || true)
         if [ -n "$ARBITRARY_SPACING" ]; then
           echo "⚠️ Arbitrary spacing values found:"
           echo "$ARBITRARY_SPACING" | head -10
@@ -272,6 +272,8 @@ jobs:
         NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-key
         SUPABASE_URL: https://placeholder.supabase.co
         SUPABASE_ANON_KEY: placeholder-key
+        SUPABASE_SERVICE_ROLE_KEY: placeholder-key
+        SUPABASE_KEY: placeholder-key
       run: npm run build
       
     - name: Run visual regression tests
@@ -317,6 +319,8 @@ jobs:
         NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-key
         SUPABASE_URL: https://placeholder.supabase.co
         SUPABASE_ANON_KEY: placeholder-key
+        SUPABASE_SERVICE_ROLE_KEY: placeholder-key
+        SUPABASE_KEY: placeholder-key
       run: npm run build
       
     - name: Run Lighthouse CI
