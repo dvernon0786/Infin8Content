@@ -668,6 +668,69 @@ You must fully embody this agent's persona and follow all activation instruction
 - Batch updates reduce database calls during article generation
 - Performance monitoring tracks context size, token count, cache hit rate, and generation speed
 
+## Story Context: 32-2-efficiency-and-performance-metrics
+
+**Status**: ready-for-dev
+
+**Epic**: 32 - Analytics and Performance Monitoring
+
+**User Story**: As a system administrator, I want comprehensive efficiency and performance metrics for the content generation system so that I can monitor system health, identify bottlenecks, optimize resource usage, and ensure reliable service delivery.
+
+**Acceptance Criteria**:
+- Real-time system performance metrics collection for article generation pipeline
+- API usage efficiency tracking with cost optimization insights
+- Generation speed metrics per section and per article with trend analysis
+- Resource utilization monitoring (CPU, memory, database connections)
+- Error rate tracking with detailed failure categorization and root cause analysis
+- Concurrent capacity monitoring with system load indicators and scaling recommendations
+- Cache hit rate optimization for research data and context management
+- Token usage efficiency metrics with cost per article analysis
+- Database query performance monitoring with slow query identification
+- WebSocket connection health and real-time update latency tracking
+- Mobile performance metrics including touch response times and rendering performance
+- System health dashboard with alerting for threshold breaches
+- Historical performance data with capacity planning insights
+
+**Technical Requirements**:
+- Performance monitoring service extending existing performance-monitor.ts patterns
+- Real-time metrics collection via WebSocket and Server-Sent Events
+- Time-series database integration for historical performance data
+- API endpoint for performance metrics with efficient data aggregation
+- Alerting system with configurable thresholds and notification channels
+- Performance analytics dashboard with responsive design
+- Integration with existing cost tracking and API usage monitoring
+- Mobile performance monitoring extending existing mobile/performance-monitor.ts
+- Database performance monitoring with query analysis and optimization recommendations
+- Cache performance tracking for research and context management systems
+- Resource utilization monitoring for system capacity planning
+- Error tracking and categorization system with detailed analytics
+
+**Dependencies**:
+- Story 32-1 (User Experience Metrics Tracking) for metrics foundation patterns
+- Existing performance monitoring infrastructure (performance-monitor.ts)
+- Mobile performance monitoring patterns (mobile/performance-monitor.ts)
+- Real-time infrastructure from Story 15-1 (article status display)
+- Cost tracking and API usage monitoring systems
+- Next.js 16 and React 19 architecture
+- TypeScript strict mode compliance
+- Supabase database for metrics storage
+- WebSocket infrastructure for real-time updates
+
+**Priority**: High
+**Story Points**: 13
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Build on existing performance monitoring patterns from performance-monitor.ts
+- Extend mobile performance monitoring from mobile/performance-monitor.ts
+- Integrate with existing cost tracking and API usage systems
+- Use real-time infrastructure patterns from article status display
+- Ensure multi-tenant isolation for all performance metrics
+- Follow existing dashboard patterns for performance visualization
+- Implement comprehensive error tracking and categorization
+- Provide actionable insights for system optimization
+- Support capacity planning with historical trend analysis
+
 ## Story Context: 31-1-responsive-breakpoints-and-navigation
 
 **Status**: ready-for-dev
