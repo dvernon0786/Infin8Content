@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     // Fetch historical data for trend analysis
     const { data: uxMetrics, error: uxError } = await supabase
-      .from('user_experience_metrics')
+      .from('ux_metrics_weekly_rollups')
       .select('*')
       .eq('organization_id', orgId)
       .gte('recorded_at', startDate.toISOString())

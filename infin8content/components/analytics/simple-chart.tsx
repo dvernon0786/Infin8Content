@@ -6,7 +6,7 @@
 'use client'
 
 import React from 'react'
-import './chart-styles.css'
+import './chart-design-system.css'
 
 interface SimpleLineChartProps {
   data: Array<{ timestamp: string; value: number }>

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     // Fetch current metrics
     const { data: currentUXMetrics, error: currentUXError } = await supabase
-      .from('user_experience_metrics')
+      .from('ux_metrics_weekly_rollups')
       .select('*')
       .eq('organization_id', orgId)
       .order('recorded_at', { ascending: false })
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     startDate.setDate(startDate.getDate() - 90) // Last 90 days
 
     const { data: historicalUXMetrics, error: historicalUXError } = await supabase
-      .from('user_experience_metrics')
+      .from('ux_metrics_weekly_rollups')
       .select('*')
       .eq('organization_id', orgId)
       .gte('recorded_at', startDate.toISOString())

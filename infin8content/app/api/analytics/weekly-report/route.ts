@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch current week UX metrics
     const { data: currentUXMetrics, error: currentUXError } = await supabase
-      .from('user_experience_metrics')
+      .from('ux_metrics_weekly_rollups')
       .select('*')
       .eq('organization_id', orgId)
       .gte('recorded_at', weekStart.toISOString())
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch previous week UX metrics for comparison
     const { data: previousUXMetrics, error: previousUXError } = await supabase
-      .from('user_experience_metrics')
+      .from('ux_metrics_weekly_rollups')
       .select('*')
       .eq('organization_id', orgId)
       .gte('recorded_at', previousWeekStart.toISOString())
