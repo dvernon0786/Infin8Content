@@ -120,6 +120,17 @@ export function SimpleBarChart({ data, width = 400, height = 200, color = 'var(-
     return 'bar-width-40' // fallback
   }
 
+  // Get bar color class based on color prop
+  const getBarColorClass = (colorValue: string) => {
+    if (colorValue === 'var(--color-primary)') return 'bar-color-primary'
+    if (colorValue === 'var(--color-success)') return 'bar-color-success'
+    if (colorValue === 'var(--color-warning)') return 'bar-color-warning'
+    if (colorValue === 'var(--color-danger)') return 'bar-color-danger'
+    if (colorValue === 'var(--color-info)') return 'bar-color-info'
+    if (colorValue === 'var(--color-secondary)') return 'bar-color-secondary'
+    return 'bar-color-primary' // fallback
+  }
+
   if (!data || data.length === 0) {
     return (
       <div className={`${getContainerClass(width, height)} flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50`}>
@@ -131,6 +142,7 @@ export function SimpleBarChart({ data, width = 400, height = 200, color = 'var(-
   const maxValue = Math.max(...data.map(d => d.value))
   const barWidth = Math.max(20, Math.floor((width - 40) / data.length - 10))
   const barWidthClass = getBarWidthClass(barWidth)
+  const barColorClass = getBarColorClass(color)
 
   return (
     <div className={`${getContainerClass(width, height)} relative border border-gray-200 rounded-lg bg-white p-4`}>
@@ -142,10 +154,9 @@ export function SimpleBarChart({ data, width = 400, height = 200, color = 'var(-
             return (
               <div key={index} className="flex flex-col items-center">
                 <div
-                  className={`${barWidthClass} bar-dynamic`}
+                  className={`${barWidthClass} ${barColorClass} bar-height-dynamic`}
                   style={{
                     height: `${barHeight}px`,
-                    backgroundColor: color,
                     borderRadius: '4px 4px 0 0'
                   }}
                 />

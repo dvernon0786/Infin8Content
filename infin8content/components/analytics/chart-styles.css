@@ -40,6 +40,41 @@
   width: 60px;
 }
 
+/* Dynamic bar height styles - for calculated heights */
+.bar-height-dynamic {
+  /* Height will be set via inline style for dynamic calculations */
+  transition: all 0.2s ease;
+}
+
+.bar-height-dynamic:hover {
+  opacity: 0.8;
+}
+
+/* Bar color styles */
+.bar-color-primary {
+  background-color: var(--color-primary);
+}
+
+.bar-color-success {
+  background-color: var(--color-success);
+}
+
+.bar-color-warning {
+  background-color: var(--color-warning);
+}
+
+.bar-color-danger {
+  background-color: var(--color-danger);
+}
+
+.bar-color-info {
+  background-color: var(--color-info);
+}
+
+.bar-color-secondary {
+  background-color: var(--color-secondary);
+}
+
 /* Progress bar styles */
 .progress-bar-0 { width: 0%; }
 .progress-bar-10 { width: 10%; }
