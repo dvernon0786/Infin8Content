@@ -154,10 +154,9 @@ export function SimpleBarChart({ data, width = 400, height = 200, color = 'var(-
             return (
               <div key={index} className="flex flex-col items-center">
                 <div
-                  className={`${barWidthClass} ${barColorClass} bar-height-dynamic`}
+                  className={`${barWidthClass} ${barColorClass} bar-height-dynamic bar-border-radius-top`}
                   style={{
-                    height: `${barHeight}px`,
-                    borderRadius: '4px 4px 0 0'
+                    height: `${barHeight}px`
                   }}
                 />
                 <span className="text-xs text-gray-600 mt-2 text-center">

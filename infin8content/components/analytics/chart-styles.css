@@ -50,6 +50,11 @@
   opacity: 0.8;
 }
 
+/* Bar border radius styles */
+.bar-border-radius-top {
+  border-radius: 4px 4px 0 0;
+}
+
 /* Bar color styles */
 .bar-color-primary {
   background-color: var(--color-primary);
