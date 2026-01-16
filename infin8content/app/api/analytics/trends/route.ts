@@ -239,7 +239,7 @@ function calculateProjection(values: number[], direction: string, strength: stri
 
 // Detect anomalies in the data
 function detectAnomalies(uxMetrics: any[], performanceMetrics: any[], selectedMetrics: any) {
-  const anomalies = []
+  const anomalies: any[] = []
   
   // Combine all metrics for analysis
   const allMetrics = [...uxMetrics, ...performanceMetrics]
@@ -254,12 +254,12 @@ function detectAnomalies(uxMetrics: any[], performanceMetrics: any[], selectedMe
   }, {})
   
   // Check each metric type for anomalies
-  Object.entries(groupedMetrics).forEach(([metricType, metrics]) => {
+  Object.entries(groupedMetrics).forEach(([metricType, metrics]: any) => {
     if (!selectedMetrics[metricType]) return
     
-    const values = metrics.map(m => m.metric_value)
-    const mean = values.reduce((sum, val) => sum + val, 0) / values.length
-    const standardDeviation = Math.sqrt(values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length)
+    const values = metrics.map((m: any) => m.metric_value)
+    const mean = values.reduce((sum: number, val: number) => sum + val, 0) / values.length
+    const standardDeviation = Math.sqrt(values.reduce((sum: number, val: number) => sum + Math.pow(val - mean, 2), 0) / values.length)
     
     // Look for values that are more than 2 standard deviations from mean
     metrics.forEach((metric: any, index: number) => {
@@ -290,7 +290,7 @@ function detectAnomalies(uxMetrics: any[], performanceMetrics: any[], selectedMe
 
 // Calculate correlations between metrics
 function calculateCorrelations(uxMetrics: any[], performanceMetrics: any[], selectedMetrics: any) {
-  const correlations = []
+  const correlations: any[] = []
   
   // Create time-aligned dataset
   const timeSeriesData = alignTimeSeriesData(uxMetrics, performanceMetrics)
