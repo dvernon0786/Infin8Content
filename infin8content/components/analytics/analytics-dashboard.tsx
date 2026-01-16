@@ -91,7 +91,6 @@ export function AnalyticsDashboard({
 
   // Real-time subscription handler
   const handleRealtimeUpdate = useCallback((payload: any) => {
-    console.log('Real-time analytics update received:', payload)
     fetchAnalyticsData()
   }, [])
 
@@ -122,7 +121,6 @@ export function AnalyticsDashboard({
         handleRealtimeUpdate
       )
       .subscribe((status: any) => {
-        console.log('Analytics real-time subscription status:', status)
         setRealtimeConnected(status === 'SUBSCRIBED')
       })
 
@@ -152,7 +150,6 @@ export function AnalyticsDashboard({
       setLastRefresh(new Date())
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
-      console.error('Analytics data fetch error:', err)
     } finally {
       setLoading(false)
       setIsRefreshing(false)

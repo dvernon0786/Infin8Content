@@ -191,7 +191,7 @@ export function RecommendationEngine({ orgId, className = '' }: RecommendationEn
       // Refresh recommendations
       fetchRecommendations()
     } catch (err) {
-      console.error('Implementation error:', err)
+      // Implementation error handled silently
     }
   }
 
@@ -216,7 +216,7 @@ export function RecommendationEngine({ orgId, className = '' }: RecommendationEn
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
     } catch (err) {
-      console.error('Export error:', err)
+      // Export error handled silently
     }
   }
 
