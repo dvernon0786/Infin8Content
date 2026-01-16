@@ -57,7 +57,10 @@ export class TouchOptimizer {
       missedTouches: 0
     }
 
-    this.initializeTouchHandling()
+    // SSR safety check - only initialize touch handling on client side
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      this.initializeTouchHandling()
+    }
   }
 
   /**

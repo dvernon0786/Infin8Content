@@ -49,6 +49,11 @@ export class MobilePerformanceMonitor {
   startMonitoring(): void {
     if (this.isMonitoring) return
     
+    // SSR safety check - only run on client side
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return
+    }
+    
     this.isMonitoring = true
     this.measureInitialMetrics()
     this.setupEventListeners()
@@ -325,6 +330,11 @@ export class MobilePerformanceMonitor {
    * Cleanup event listeners
    */
   private cleanupEventListeners(): void {
+    // SSR safety check - only run on client side
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return
+    }
+    
     document.removeEventListener('touchstart', this.handleTouchStart)
     document.removeEventListener('visibilitychange', this.handleVisibilityChange)
   }
@@ -354,6 +364,11 @@ export class MobilePerformanceMonitor {
    * Handle visibility change
    */
   private handleVisibilityChange = (): void => {
+    // SSR safety check - only run on client side
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return
+    }
+    
     if (document.hidden) {
       // Page is hidden, pause monitoring
       this.stopMonitoring()
