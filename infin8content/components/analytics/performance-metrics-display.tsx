@@ -148,10 +148,8 @@ export function PerformanceMetricsDisplay({
   // Prepare data for charts
   const lineChartData = useMemo(() => {
     return historicalData.map((point, index) => ({
-      time: new Date(point.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      'Dashboard Load': point.dashboard_load_time,
-      'Article Creation': point.article_creation_time,
-      'Comment Latency': point.comment_latency
+      timestamp: new Date(point.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      value: point.dashboard_load_time // Use dashboard load time as the primary metric
     }))
   }, [historicalData])
 
