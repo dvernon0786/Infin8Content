@@ -1,0 +1,49 @@
+/* Chart container styles for design system compliance */
+.chart-container-400-200 {
+  width: 400px;
+  height: 200px;
+}
+
+.chart-container-400-300 {
+  width: 400px;
+  height: 300px;
+}
+
+.chart-container-200-200 {
+  width: 200px;
+  height: 200px;
+}
+
+.chart-container-600-300 {
+  width: 600px;
+  height: 300px;
+}
+
+/* Bar chart specific styles */
+.bar-width-40 {
+  width: 40px;
+}
+
+.bar-width-50 {
+  width: 50px;
+}
+
+.bar-width-60 {
+  width: 60px;
+}
+
+/* Common chart dimensions */
+.chart-small {
+  width: 200px;
+  height: 200px;
+}
+
+.chart-medium {
+  width: 400px;
+  height: 300px;
+}
+
+.chart-large {
+  width: 600px;
+  height: 400px;
+}

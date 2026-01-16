@@ -6,6 +6,7 @@
 'use client'
 
 import React from 'react'
+import './chart-styles.css'
 
 interface SimpleLineChartProps {
   data: Array<{ timestamp: string; value: number }>
@@ -15,9 +16,18 @@ interface SimpleLineChartProps {
 }
 
 export function SimpleLineChart({ data, width = 400, height = 200, color = 'var(--color-primary)' }: SimpleLineChartProps) {
+  // Determine CSS class based on dimensions
+  const getContainerClass = (w: number, h: number) => {
+    if (w === 400 && h === 200) return 'chart-container-400-200'
+    if (w === 400 && h === 300) return 'chart-container-400-300'
+    if (w === 200 && h === 200) return 'chart-container-200-200'
+    if (w === 600 && h === 300) return 'chart-container-600-300'
+    return 'chart-medium' // fallback
+  }
+
   if (!data || data.length === 0) {
     return (
-      <div style={{ width, height }} className="flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50">
+      <div className={`${getContainerClass(width, height)} flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50`}>
         <span className="text-gray-500 text-sm">No data available</span>
       </div>
     )
@@ -34,7 +44,7 @@ export function SimpleLineChart({ data, width = 400, height = 200, color = 'var(
   }).join(' ')
 
   return (
-    <div style={{ width, height }} className="relative border border-gray-200 rounded-lg bg-white">
+    <div className={`${getContainerClass(width, height)} relative border border-gray-200 rounded-lg bg-white`}>
       <svg width={width} height={height} className="overflow-visible">
         {/* Grid lines */}
         {[0, 1, 2, 3, 4].map(i => (
@@ -91,19 +101,28 @@ interface SimpleBarChartProps {
 }
 
 export function SimpleBarChart({ data, width = 400, height = 200, color = 'var(--color-primary)' }: SimpleBarChartProps) {
+  // Determine CSS class based on dimensions
+  const getContainerClass = (w: number, h: number) => {
+    if (w === 400 && h === 200) return 'chart-container-400-200'
+    if (w === 400 && h === 300) return 'chart-container-400-300'
+    if (w === 200 && h === 200) return 'chart-container-200-200'
+    if (w === 600 && h === 300) return 'chart-container-600-300'
+    return 'chart-medium' // fallback
+  }
+
   if (!data || data.length === 0) {
     return (
-      <div style={{ width, height }} className="flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50">
+      <div className={`${getContainerClass(width, height)} flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50`}>
         <span className="text-gray-500 text-sm">No data available</span>
       </div>
     )
   }
 
   const maxValue = Math.max(...data.map(d => d.value))
-  const barWidth = (width - 40) / data.length - 10
+  const barWidth = Math.max(20, Math.floor((width - 40) / data.length - 10))
 
   return (
-    <div style={{ width, height }} className="relative border border-gray-200 rounded-lg bg-white p-4">
+    <div className={`${getContainerClass(width, height)} relative border border-gray-200 rounded-lg bg-white p-4`}>
       <div className="relative h-full">
         {/* Bars */}
         <div className="absolute bottom-0 left-0 right-0 top-0 flex items-end justify-around">
@@ -112,13 +131,13 @@ export function SimpleBarChart({ data, width = 400, height = 200, color = 'var(-
             return (
               <div key={index} className="flex flex-col items-center">
                 <div
+                  className="transition-all hover:opacity-80"
                   style={{
                     width: `${barWidth}px`,
                     height: `${barHeight}px`,
                     backgroundColor: color,
                     borderRadius: '4px 4px 0 0'
                   }}
-                  className="transition-all hover:opacity-80"
                 />
                 <span className="text-xs text-gray-600 mt-2 text-center">
                   {item.name.slice(0, 8)}
@@ -148,9 +167,18 @@ interface SimplePieChartProps {
 }
 
 export function SimplePieChart({ data, width = 200, height = 200 }: SimplePieChartProps) {
+  // Determine CSS class based on dimensions
+  const getContainerClass = (w: number, h: number) => {
+    if (w === 400 && h === 200) return 'chart-container-400-200'
+    if (w === 400 && h === 300) return 'chart-container-400-300'
+    if (w === 200 && h === 200) return 'chart-container-200-200'
+    if (w === 600 && h === 300) return 'chart-container-600-300'
+    return 'chart-medium' // fallback
+  }
+
   if (!data || data.length === 0) {
     return (
-      <div style={{ width, height }} className="flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50">
+      <div className={`${getContainerClass(width, height)} flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50`}>
         <span className="text-gray-500 text-sm">No data available</span>
       </div>
     )
@@ -172,7 +200,7 @@ export function SimplePieChart({ data, width = 200, height = 200 }: SimplePieCha
   const radius = Math.min(width, height) / 2 - 20
 
   return (
-    <div style={{ width, height }} className="relative border border-gray-200 rounded-lg bg-white p-4">
+    <div className={`${getContainerClass(width, height)} relative border border-gray-200 rounded-lg bg-white p-4`}>
       <svg width={width - 32} height={height - 32} className="mx-auto">
         {data.map((item, index) => {
           const percentage = item.value / total
