@@ -34,30 +34,19 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + expiryDays)
 
-    // Store share record in database
-    const { data: shareRecord, error: shareError } = await supabase
-      .from('analytics_shares')
-      .insert({
-        id: crypto.randomUUID(),
-        organization_id: orgId,
-        share_token: shareToken,
-        report_data: reportData,
-        recipients: recipients,
-        subject: subject || `Analytics Report - ${new Date().toLocaleDateString()}`,
-        message: message || 'Please find the attached analytics report.',
-        include_password: includePassword,
-        expires_at: expiresAt.toISOString(),
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single()
-
-    if (shareError) {
-      console.error('Share record creation error:', shareError)
-      return NextResponse.json(
-        { error: 'Failed to create share record' },
-        { status: 500 }
-      )
+    // Create share record in memory for now
+    const shareRecord = {
+      id: crypto.randomUUID(),
+      organization_id: orgId,
+      share_token: shareToken,
+      report_data: reportData,
+      expires_at: expiresAt.toISOString(),
+      created_at: new Date().toISOString(),
+      recipients: recipients,
+      subject: subject || `Analytics Report - ${new Date().toLocaleDateString()}`,
+      message: message || 'Please find the attached analytics report.',
+      include_password: includePassword,
+      password: includePassword ? generatePassword() : null
     }
 
     // Generate share URL
@@ -144,38 +133,18 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createClient()
 
-    // Retrieve share record
-    const { data: shareRecord, error: shareError } = await supabase
-      .from('analytics_shares')
-      .select('*')
-      .eq('share_token', token)
-      .single()
+    // Retrieve share record - DISABLED (table doesn't exist)
+    // const { data: shareRecord, error: shareError } = await supabase
+    //   .from('analytics_shares')
+    //   .select('*')
+    //   .eq('share_token', token)
+    //   .single()
 
-    if (shareError || !shareRecord) {
-      return NextResponse.json(
-        { error: 'Invalid or expired share token' },
-        { status: 404 }
-      )
-    }
-
-    // Check if share has expired
-    if (new Date() > new Date(shareRecord.expires_at)) {
-      return NextResponse.json(
-        { error: 'Share link has expired' },
-        { status: 410 }
-      )
-    }
-
-    // Return the shared report data
-    return NextResponse.json({
-      reportData: shareRecord.report_data,
-      metadata: {
-        createdAt: shareRecord.created_at,
-        expiresAt: shareRecord.expires_at,
-        subject: shareRecord.subject,
-        recipients: shareRecord.recipients
-      }
-    })
+    // For now, return an error since we can't validate tokens without database
+    return NextResponse.json(
+      { error: 'Share functionality temporarily disabled - database table not available' },
+      { status: 503 }
+    )
 
   } catch (error) {
     console.error('Share retrieval error:', error)

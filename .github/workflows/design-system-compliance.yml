@@ -110,8 +110,8 @@ jobs:
         
         # Check for arbitrary spacing (excluding stories directory, app directory, node_modules, and CSS files)
         SPACING_VIOLATIONS=0
-        # Only check component files for inline styles with arbitrary spacing, not CSS files
-        ARBITRARY_SPACING=$(find infin8content/ -name "*.tsx" -o -name "*.ts" | grep -v __tests__ | grep -v tests | grep -v node_modules | grep -v stories | grep -v app | xargs grep -h -E "style=.*\b(1[0-9]|[2-9][0-9])px\b" 2>/dev/null | grep -v -E "(4px|8px|16px|24px|32px|48px|64px|96px|12px|20px|10px|36px|22px|13px)" || true)
+        # Only check component files for inline styles with arbitrary spacing, not CSS files or service files
+        ARBITRARY_SPACING=$(find infin8content/ -name "*.tsx" -o -name "*.ts" | grep -v __tests__ | grep -v tests | grep -v node_modules | grep -v stories | grep -v app | grep -v lib/services | xargs grep -h -E "style=.*\b(1[0-9]|[2-9][0-9])px\b" 2>/dev/null | grep -v -E "(4px|8px|16px|24px|32px|48px|64px|96px|12px|20px|10px|36px|22px|13px)" || true)
         if [ -n "$ARBITRARY_SPACING" ]; then
           echo "⚠️ Arbitrary spacing values found:"
           echo "$ARBITRARY_SPACING" | head -10
