@@ -87,14 +87,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Generate secure share token
-function generateShareToken(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  let token = ''
-  for (let i = 0; i < 32; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length))
+// Helper function to generate random password
+function generatePassword(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
+  let password = ''
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length))
   }
-  return token
+  return password
+}
+
+// Helper function to generate share token
+function generateShareToken(): string {
+  return crypto.randomUUID().replace(/-/g, '')
 }
 
 // Send share emails (placeholder implementation)
