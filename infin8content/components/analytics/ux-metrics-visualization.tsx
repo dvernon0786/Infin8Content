@@ -27,21 +27,7 @@ import {
   CheckCircle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart as RePieChart,
-  Pie,
-  Cell
-} from 'recharts'
+import { SimplePieChart, SimpleLineChart } from './simple-chart'
 
 // Types
 export interface UXMetrics {

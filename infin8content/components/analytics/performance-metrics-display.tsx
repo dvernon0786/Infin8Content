@@ -29,20 +29,8 @@ import {
   Gauge
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar
-} from 'recharts'
+
+import { SimpleLineChart, SimpleBarChart } from './simple-chart'
 
 // Types
 export interface PerformanceMetrics {
@@ -385,33 +373,7 @@ export function PerformanceMetricsDisplay({
           </CardHeader>
           <CardContent>
             {historicalData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={lineChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="time" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="Dashboard Load" 
-                    stroke={PERFORMANCE_COLORS.dashboard_load_time} 
-                    strokeWidth={2} 
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="Article Creation" 
-                    stroke={PERFORMANCE_COLORS.article_creation_time} 
-                    strokeWidth={2} 
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="Comment Latency" 
-                    stroke={PERFORMANCE_COLORS.comment_latency} 
-                    strokeWidth={2} 
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              <SimpleLineChart data={lineChartData} height={300} />
             ) : (
               <div className="h-64 flex items-center justify-center text-gray-500">
                 No historical data available
@@ -430,39 +392,7 @@ export function PerformanceMetricsDisplay({
           </CardHeader>
           <CardContent>
             {historicalData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={areaChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="timestamp" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Area 
-                    type="monotone" 
-                    dataKey="dashboard_load_time" 
-                    stackId="1"
-                    stroke={PERFORMANCE_COLORS.dashboard_load_time} 
-                    fill={PERFORMANCE_COLORS.dashboard_load_time}
-                    fillOpacity={0.6}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="article_creation_time" 
-                    stackId="1"
-                    stroke={PERFORMANCE_COLORS.article_creation_time} 
-                    fill={PERFORMANCE_COLORS.article_creation_time}
-                    fillOpacity={0.6}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="comment_latency" 
-                    stackId="1"
-                    stroke={PERFORMANCE_COLORS.comment_latency} 
-                    fill={PERFORMANCE_COLORS.comment_latency}
-                    fillOpacity={0.6}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <SimpleLineChart data={areaChartData} height={300} color="#10b981" />
             ) : (
               <div className="h-64 flex items-center justify-center text-gray-500">
                 No historical data available
@@ -483,17 +413,7 @@ export function PerformanceMetricsDisplay({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={barChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="current" fill="#3b82f6" name="Current" />
-                <Bar dataKey="target" fill="#10b981" name="Target" />
-              </BarChart>
-            </ResponsiveContainer>
+            <SimpleBarChart data={barChartData} height={300} />
           </CardContent>
         </Card>
 
