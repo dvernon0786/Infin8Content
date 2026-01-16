@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { orgId, confidenceThreshold, minImpactLevel, maxEffortLevel } = requestSchema.parse(body)
 
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Fetch current metrics
     const { data: currentUXMetrics, error: currentUXError } = await supabase
@@ -616,7 +616,7 @@ export async function POST_IMPLEMENT(request: NextRequest) {
     const body = await request.json()
     const { orgId, recommendationId } = body
     
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Mark recommendation as implemented
     const { error } = await supabase

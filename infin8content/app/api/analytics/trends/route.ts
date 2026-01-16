@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
         break
     }
 
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Fetch historical data for trend analysis
     const { data: uxMetrics, error: uxError } = await supabase

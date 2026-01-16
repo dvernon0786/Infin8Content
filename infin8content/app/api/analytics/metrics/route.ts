@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       timeRange: searchParams.get('timeRange') || '7d'
     })
 
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Calculate date range based on timeRange
     const endDate = new Date()

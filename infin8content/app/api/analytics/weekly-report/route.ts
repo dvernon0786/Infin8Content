@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     const previousWeekStart = subWeeks(weekStart, 1)
     const previousWeekEnd = subWeeks(weekEnd, 1)
 
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Fetch current week UX metrics
     const { data: currentUXMetrics, error: currentUXError } = await supabase

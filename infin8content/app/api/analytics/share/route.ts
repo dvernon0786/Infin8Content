@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { reportData, orgId, recipients, subject, message, includePassword, expiryDays } = requestSchema.parse(body)
 
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Generate share token
     const shareToken = generateShareToken()
@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Retrieve share record
     const { data: shareRecord, error: shareError } = await supabase
