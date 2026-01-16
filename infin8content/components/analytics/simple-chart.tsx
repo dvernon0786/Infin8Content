@@ -120,7 +120,26 @@ export function SimpleBarChart({ data, width = 400, height = 200, color = 'var(-
     return 'bar-width-40' // fallback
   }
 
-  // Get bar color class based on color prop
+  // Get bar height class based on calculated height
+  const getBarHeightClass = (calculatedHeight: number) => {
+    const roundedHeight = Math.round(calculatedHeight / 10) * 10
+    if (roundedHeight <= 10) return 'bar-height-10'
+    if (roundedHeight <= 20) return 'bar-height-20'
+    if (roundedHeight <= 30) return 'bar-height-30'
+    if (roundedHeight <= 40) return 'bar-height-40'
+    if (roundedHeight <= 50) return 'bar-height-50'
+    if (roundedHeight <= 60) return 'bar-height-60'
+    if (roundedHeight <= 70) return 'bar-height-70'
+    if (roundedHeight <= 80) return 'bar-height-80'
+    if (roundedHeight <= 90) return 'bar-height-90'
+    if (roundedHeight <= 100) return 'bar-height-100'
+    if (roundedHeight <= 110) return 'bar-height-110'
+    if (roundedHeight <= 120) return 'bar-height-120'
+    if (roundedHeight <= 130) return 'bar-height-130'
+    if (roundedHeight <= 140) return 'bar-height-140'
+    if (roundedHeight <= 150) return 'bar-height-150'
+    return 'bar-height-40' // fallback
+  }
   const getBarColorClass = (colorValue: string) => {
     if (colorValue === 'var(--color-primary)') return 'bar-color-primary'
     if (colorValue === 'var(--color-success)') return 'bar-color-success'
@@ -151,13 +170,11 @@ export function SimpleBarChart({ data, width = 400, height = 200, color = 'var(-
         <div className="absolute bottom-0 left-0 right-0 top-0 flex items-end justify-around">
           {data.map((item, index) => {
             const barHeight = (item.value / maxValue) * (height - 40)
+            const barHeightClass = getBarHeightClass(barHeight)
             return (
               <div key={index} className="flex flex-col items-center">
                 <div
-                  className={`${barWidthClass} ${barColorClass} bar-height-dynamic bar-border-radius-top`}
-                  style={{
-                    height: `${barHeight}px`
-                  }}
+                  className={`${barWidthClass} ${barColorClass} ${barHeightClass} bar-border-radius-top`}
                 />
                 <span className="text-xs text-gray-600 mt-2 text-center">
                   {item.name.slice(0, 8)}

@@ -157,7 +157,7 @@ function generateRecommendations(
     return acc
   }, {})
 
-  Object.entries(perfMetrics).forEach(([metricType, metrics]) => {
+  Object.entries(perfMetrics).forEach(([metricType, metrics]: any) => {
     const latestMetric = metrics[metrics.length - 1]
     if (!latestMetric) return
 
@@ -203,7 +203,7 @@ function generateRecommendations(
     return acc
   }, {})
 
-  Object.entries(uxMetrics).forEach(([metricType, metrics]) => {
+  Object.entries(uxMetrics).forEach(([metricType, metrics]: any) => {
     const latestMetric = metrics[metrics.length - 1]
     if (!latestMetric) return
 
