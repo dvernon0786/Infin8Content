@@ -94,7 +94,7 @@ function generateCSV(data: any, selectedMetrics: any, format: string, dateRange:
     rows.push(['Metric', 'Current Value', 'Target', 'Trend'])
     
     Object.entries(data.uxMetrics).forEach(([key, metric]: any) => {
-      const metricName = key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+      const metricName = key.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
       const unit = getMetricUnit(key)
       rows.push([
         metricName,
@@ -112,7 +112,7 @@ function generateCSV(data: any, selectedMetrics: any, format: string, dateRange:
     rows.push(['Metric', 'Current Value', 'Target', 'Trend'])
     
     Object.entries(data.performanceMetrics).forEach(([key, metric]: any) => {
-      const metricName = key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+      const metricName = key.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
       rows.push([
         metricName,
         `${metric.value}s`,

@@ -20,6 +20,14 @@
 }
 
 /* Bar chart specific styles */
+.bar-width-20 {
+  width: 20px;
+}
+
+.bar-width-30 {
+  width: 30px;
+}
+
 .bar-width-40 {
   width: 40px;
 }
@@ -46,4 +54,38 @@
 .chart-large {
   width: 600px;
   height: 400px;
+}
+
+/* Dynamic bar styles */
+.bar-dynamic {
+  transition: all 0.2s ease;
+}
+
+.bar-dynamic:hover {
+  opacity: 0.8;
+}
+
+/* Legend color styles */
+.legend-color-primary {
+  background-color: var(--color-primary);
+}
+
+.legend-color-success {
+  background-color: var(--color-success);
+}
+
+.legend-color-warning {
+  background-color: var(--color-warning);
+}
+
+.legend-color-danger {
+  background-color: var(--color-danger);
+}
+
+.legend-color-info {
+  background-color: var(--color-info);
+}
+
+.legend-color-secondary {
+  background-color: var(--color-secondary);
 }

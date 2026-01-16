@@ -110,6 +110,16 @@ export function SimpleBarChart({ data, width = 400, height = 200, color = 'var(-
     return 'chart-medium' // fallback
   }
 
+  // Get bar width class based on calculated width
+  const getBarWidthClass = (calculatedWidth: number) => {
+    if (calculatedWidth <= 20) return 'bar-width-20'
+    if (calculatedWidth <= 30) return 'bar-width-30'
+    if (calculatedWidth <= 40) return 'bar-width-40'
+    if (calculatedWidth <= 50) return 'bar-width-50'
+    if (calculatedWidth <= 60) return 'bar-width-60'
+    return 'bar-width-40' // fallback
+  }
+
   if (!data || data.length === 0) {
     return (
       <div className={`${getContainerClass(width, height)} flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50`}>
@@ -120,6 +130,7 @@ export function SimpleBarChart({ data, width = 400, height = 200, color = 'var(-
 
   const maxValue = Math.max(...data.map(d => d.value))
   const barWidth = Math.max(20, Math.floor((width - 40) / data.length - 10))
+  const barWidthClass = getBarWidthClass(barWidth)
 
   return (
     <div className={`${getContainerClass(width, height)} relative border border-gray-200 rounded-lg bg-white p-4`}>
@@ -131,9 +142,8 @@ export function SimpleBarChart({ data, width = 400, height = 200, color = 'var(-
             return (
               <div key={index} className="flex flex-col items-center">
                 <div
-                  className="transition-all hover:opacity-80"
+                  className={`${barWidthClass} bar-dynamic`}
                   style={{
-                    width: `${barWidth}px`,
                     height: `${barHeight}px`,
                     backgroundColor: color,
                     borderRadius: '4px 4px 0 0'
@@ -193,6 +203,18 @@ export function SimplePieChart({ data, width = 200, height = 200 }: SimplePieCha
     'var(--color-info)', 
     'var(--color-secondary)'
   ]
+  // Get legend color class based on index
+  const getLegendColorClass = (index: number) => {
+    const colorClasses = [
+      'legend-color-primary',
+      'legend-color-success', 
+      'legend-color-warning',
+      'legend-color-danger',
+      'legend-color-info',
+      'legend-color-secondary'
+    ]
+    return colorClasses[index % colorClasses.length]
+  }
   
   let currentAngle = 0
   const centerX = width / 2
@@ -242,10 +264,7 @@ export function SimplePieChart({ data, width = 200, height = 200 }: SimplePieCha
         {data.map((item, index) => (
           <div key={index} className="flex items-center justify-between text-xs">
             <div className="flex items-center">
-              <div
-                style={{ backgroundColor: colors[index % colors.length] }}
-                className="w-3 h-3 rounded-sm mr-2"
-              />
+              <div className={`w-3 h-3 rounded-sm mr-2 ${getLegendColorClass(index)}`} />
               <span className="text-gray-600">{item.name}</span>
             </div>
             <span className="text-gray-700 font-medium">
