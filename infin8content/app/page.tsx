@@ -125,6 +125,16 @@ export default function Home() {
         visualAlt="Infin8Content dashboard showing article generation interface with real-time progress tracking"
         webpSrc="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=600&fit=crop&auto=format"
       />
+      
+      <ProblemSolutionSection 
+        cards={problemSolutionCards}
+      />
+      
+      <ProductCapabilitiesSection 
+        capabilities={productCapabilities}
+      />
+      
+      <TrustSignalsSection />
     </div>
   );
 }
