@@ -165,21 +165,15 @@ export function PerformanceMetricsDisplay({
     return [
       { 
         name: 'Dashboard Load', 
-        current: currentMetrics.dashboard_load_time.value, 
-        target: currentMetrics.dashboard_load_time.target,
-        unit: 's'
+        value: currentMetrics.dashboard_load_time.value
       },
       { 
         name: 'Article Creation', 
-        current: currentMetrics.article_creation_time.value, 
-        target: currentMetrics.article_creation_time.target,
-        unit: 's'
+        value: currentMetrics.article_creation_time.value
       },
       { 
         name: 'Comment Latency', 
-        current: currentMetrics.comment_latency.value, 
-        target: currentMetrics.comment_latency.target,
-        unit: 's'
+        value: currentMetrics.comment_latency.value
       }
     ]
   }, [currentMetrics])
