@@ -10,7 +10,37 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
-import { format, startOfWeek, endOfWeek, subWeeks, addWeeks } from 'date-fns'
+
+// Native JavaScript date utility functions
+function formatDate(date: Date): string {
+  return date.toISOString().split('T')[0]
+}
+
+function startOfWeek(date: Date): Date {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1) // Adjust for Sunday
+  return new Date(d.setDate(diff))
+}
+
+function endOfWeek(date: Date): Date {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = d.getDate() - day + (day === 0 ? 0 : 7) // Adjust for Sunday
+  return new Date(d.setDate(diff))
+}
+
+function subWeeks(date: Date, weeks: number): Date {
+  const d = new Date(date)
+  d.setDate(d.getDate() - (weeks * 7))
+  return d
+}
+
+function addWeeks(date: Date, weeks: number): Date {
+  const d = new Date(date)
+  d.setDate(d.getDate() + (weeks * 7))
+  return d
+}
 
 // Query parameter schema
 const querySchema = z.object({
@@ -130,7 +160,7 @@ export async function GET(request: NextRequest) {
     const reportData = {
       weekNumber: weekNum,
       year: yearNum,
-      period: `${format(weekStart, 'yyyy-MM-dd')} to ${format(weekEnd, 'yyyy-MM-dd')}`,
+      period: `${formatDate(weekStart)} to ${formatDate(weekEnd)}`,
       uxMetrics: processedUXMetrics,
       performanceMetrics: processedPerfMetrics,
       insights,

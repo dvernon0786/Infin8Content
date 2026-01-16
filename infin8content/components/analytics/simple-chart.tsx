@@ -14,7 +14,7 @@ interface SimpleLineChartProps {
   color?: string
 }
 
-export function SimpleLineChart({ data, width = 400, height = 200, color = '#3b82f6' }: SimpleLineChartProps) {
+export function SimpleLineChart({ data, width = 400, height = 200, color = 'var(--color-primary)' }: SimpleLineChartProps) {
   if (!data || data.length === 0) {
     return (
       <div style={{ width, height }} className="flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50">
@@ -44,7 +44,7 @@ export function SimpleLineChart({ data, width = 400, height = 200, color = '#3b8
             y1={(height / 4) * i}
             x2={width}
             y2={(height / 4) * i}
-            stroke="#e5e7eb"
+            stroke="var(--color-border)"
             strokeWidth="1"
           />
         ))}
@@ -90,7 +90,7 @@ interface SimpleBarChartProps {
   color?: string
 }
 
-export function SimpleBarChart({ data, width = 400, height = 200, color = '#3b82f6' }: SimpleBarChartProps) {
+export function SimpleBarChart({ data, width = 400, height = 200, color = 'var(--color-primary)' }: SimpleBarChartProps) {
   if (!data || data.length === 0) {
     return (
       <div style={{ width, height }} className="flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50">
@@ -157,7 +157,14 @@ export function SimplePieChart({ data, width = 200, height = 200 }: SimplePieCha
   }
 
   const total = data.reduce((sum, item) => sum + item.value, 0)
-  const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
+  const colors = [
+    'var(--color-primary)', 
+    'var(--color-success)', 
+    'var(--color-warning)', 
+    'var(--color-danger)', 
+    'var(--color-info)', 
+    'var(--color-secondary)'
+  ]
   
   let currentAngle = 0
   const centerX = width / 2

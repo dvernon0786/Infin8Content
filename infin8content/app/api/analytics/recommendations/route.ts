@@ -353,18 +353,6 @@ function generateUXAction(metricType: string, current: number, target: number): 
   }
 }
 
-function generateExpectedImprovement(metricType: string, current: number, target: number): string {
-  const improvement = ((target - current) / target) * 100
-  
-  if (metricType.includes('rate') || metricType.includes('adoption')) {
-    return `${improvement.toFixed(1)}% increase in ${metricType.replace(/_/g, ' ')}`
-  } else if (metricType.includes('score')) {
-    return `${improvement.toFixed(1)} point increase in ${metricType.replace(/_/g, ' ')}`
-  } else {
-    return `${improvement.toFixed(1)}% improvement in ${metricType.replace(/_/g, ' ')}`
-  }
-}
-
 // Generate growth recommendations based on trends
 function generateGrowthRecommendations(
   historicalUXMetrics: any[],
