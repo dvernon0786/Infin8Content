@@ -61,32 +61,32 @@ ALTER TABLE analytics_shares ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view recommendations for their organization" ON recommendations
   FOR SELECT USING (
     organization_id IN (
-      SELECT organization_id FROM organization_members 
-      WHERE user_id = auth.uid()
+      SELECT org_id FROM users 
+      WHERE auth_user_id = auth.uid()
     )
   );
 
 CREATE POLICY "Users can insert recommendations for their organization" ON recommendations
   FOR INSERT WITH CHECK (
     organization_id IN (
-      SELECT organization_id FROM organization_members 
-      WHERE user_id = auth.uid()
+      SELECT org_id FROM users 
+      WHERE auth_user_id = auth.uid()
     )
   );
 
 CREATE POLICY "Users can update recommendations for their organization" ON recommendations
   FOR UPDATE USING (
     organization_id IN (
-      SELECT organization_id FROM organization_members 
-      WHERE user_id = auth.uid()
+      SELECT org_id FROM users 
+      WHERE auth_user_id = auth.uid()
     )
   );
 
 CREATE POLICY "Users can delete recommendations for their organization" ON recommendations
   FOR DELETE USING (
     organization_id IN (
-      SELECT organization_id FROM organization_members 
-      WHERE user_id = auth.uid()
+      SELECT org_id FROM users 
+      WHERE auth_user_id = auth.uid()
     )
   );
 
@@ -94,16 +94,32 @@ CREATE POLICY "Users can delete recommendations for their organization" ON recom
 CREATE POLICY "Users can view shares for their organization" ON analytics_shares
   FOR SELECT USING (
     organization_id IN (
-      SELECT organization_id FROM organization_members 
-      WHERE user_id = auth.uid()
+      SELECT org_id FROM users 
+      WHERE auth_user_id = auth.uid()
     )
   );
 
 CREATE POLICY "Users can create shares for their organization" ON analytics_shares
   FOR INSERT WITH CHECK (
     organization_id IN (
-      SELECT organization_id FROM organization_members 
-      WHERE user_id = auth.uid()
+      SELECT org_id FROM users 
+      WHERE auth_user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can update shares for their organization" ON analytics_shares
+  FOR UPDATE USING (
+    organization_id IN (
+      SELECT org_id FROM users 
+      WHERE auth_user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete shares for their organization" ON analytics_shares
+  FOR DELETE USING (
+    organization_id IN (
+      SELECT org_id FROM users 
+      WHERE auth_user_id = auth.uid()
     )
   );
 
