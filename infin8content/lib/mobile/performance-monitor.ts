@@ -245,6 +245,8 @@ export class MobilePerformanceMonitor {
    * Setup performance observers
    */
   private setupPerformanceObservers(): void {
+    // SSR safety check - only run on client side
+    if (typeof window === 'undefined') return
     if (!('PerformanceObserver' in window)) return
 
     // Long task observer

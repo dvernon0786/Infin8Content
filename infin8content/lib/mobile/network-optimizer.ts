@@ -172,7 +172,9 @@ export class NetworkOptimizer {
     
     // This is a placeholder - in a real implementation, you would
     // integrate with your image CDN/service (e.g., Cloudinary, Imgix)
-    const url = new URL(originalUrl, window.location.origin)
+    // SSR safety check - use fallback origin on server
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://localhost:3000'
+    const url = new URL(originalUrl, origin)
     
     switch (imageQuality) {
       case 'low':
@@ -261,14 +263,16 @@ export class NetworkOptimizer {
       })
     }
 
-    // Listen for online/offline events
-    window.addEventListener('online', () => {
-      this.updateNetworkInfo()
-    })
+    // Listen for online/offline events - SSR safety check
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => {
+        this.updateNetworkInfo()
+      })
 
-    window.addEventListener('offline', () => {
-      this.updateNetworkInfo()
-    })
+      window.addEventListener('offline', () => {
+        this.updateNetworkInfo()
+      })
+    }
   }
 
   /**

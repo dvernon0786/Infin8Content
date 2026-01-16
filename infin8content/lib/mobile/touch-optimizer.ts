@@ -134,6 +134,9 @@ export class TouchOptimizer {
   enhanceTouchTarget(element: Element): void {
     if (this.validateTouchTarget(element)) return
 
+    // SSR safety check - only run on client side
+    if (typeof window === 'undefined') return
+    
     const computedStyle = window.getComputedStyle(element)
     const currentPadding = {
       top: parseFloat(computedStyle.paddingTop) || 0,
@@ -213,6 +216,8 @@ export class TouchOptimizer {
     let isPulling = false
 
     const handleTouchStart = (e: TouchEvent) => {
+      // SSR safety check - only run on client side
+      if (typeof window === 'undefined') return
       if (window.scrollY === 0) {
         startY = e.touches[0].clientY
         isPulling = true
@@ -225,7 +230,8 @@ export class TouchOptimizer {
       const currentY = e.touches[0].clientY
       pullDistance = currentY - startY
 
-      if (pullDistance > 0 && window.scrollY === 0) {
+      // SSR safety check - only run on client side
+      if (typeof window !== 'undefined' && pullDistance > 0 && window.scrollY === 0) {
         e.preventDefault()
         
         // Add visual feedback
@@ -278,10 +284,12 @@ export class TouchOptimizer {
       y: e.touches[0].clientY
     }
 
-    // Start long press timer
-    this.longPressTimer = window.setTimeout(() => {
-      this.handleLongPress(e.target as Element)
-    }, this.config.longPressDelay)
+    // Start long press timer - SSR safety check
+    if (typeof window !== 'undefined') {
+      this.longPressTimer = window.setTimeout(() => {
+        this.handleLongPress(e.target as Element)
+      }, this.config.longPressDelay)
+    }
   }
 
   /**
