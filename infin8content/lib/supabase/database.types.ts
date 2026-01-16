@@ -363,6 +363,75 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          id: string
+          auth_user_id: string
+          email: string
+          first_name: string | null
+          role: string
+          org_id: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          auth_user_id?: string
+          email?: string
+          first_name?: string | null
+          role?: string
+          org_id?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          auth_user_id?: string
+          email?: string
+          first_name?: string | null
+          role?: string
+          org_id?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      performance_metrics: {
+        Row: {
+          id: string
+          metric_type: string
+          metric_value: number
+          target_value: number | null
+          user_id: string | null
+          article_id: string | null
+          session_id: string | null
+          metadata: Json | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          metric_type?: string
+          metric_value?: number
+          target_value?: number | null
+          user_id?: string | null
+          article_id?: string | null
+          session_id?: string | null
+          metadata?: Json | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          metric_type?: string
+          metric_value?: number
+          target_value?: number | null
+          user_id?: string | null
+          article_id?: string | null
+          session_id?: string | null
+          metadata?: Json | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
       serp_analyses: {
         Row: {
           id: string
@@ -612,42 +681,6 @@ export type Database = {
           week_start?: string
           metrics?: Json | null
           created_at?: string | null
-        }
-        Relationships: []
-      }
-      users: {
-        Row: {
-          id: string
-          email: string
-          org_id: string | null
-          role: string
-          created_at: string | null
-          auth_user_id: string | null
-          otp_verified: boolean | null
-          first_name: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          email?: string
-          org_id?: string | null
-          role?: string
-          created_at?: string | null
-          auth_user_id?: string | null
-          otp_verified?: boolean | null
-          first_name?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          email?: string
-          org_id?: string | null
-          role?: string
-          created_at?: string | null
-          auth_user_id?: string | null
-          otp_verified?: boolean | null
-          first_name?: string | null
-          updated_at?: string | null
         }
         Relationships: []
       }
