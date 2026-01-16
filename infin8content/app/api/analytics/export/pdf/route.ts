@@ -211,7 +211,7 @@ function generatePDFHTML(data: any, selectedMetrics: any, format: string, dateRa
         <div class="metric-grid">
             ${Object.entries(data.uxMetrics).map(([key, metric]: any) => `
                 <div class="metric-card">
-                    <h3>${key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}</h3>
+                    <h3>${key.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</h3>
                     <div class="metric-value">${metric.value}${getMetricUnit(key)}</div>
                     <div class="metric-details">
                         Target: ${metric.target}${getMetricUnit(key)}<br>
@@ -229,7 +229,7 @@ function generatePDFHTML(data: any, selectedMetrics: any, format: string, dateRa
         <div class="metric-grid">
             ${Object.entries(data.performanceMetrics).map(([key, metric]: any) => `
                 <div class="metric-card">
-                    <h3>${key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}</h3>
+                    <h3>${key.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</h3>
                     <div class="metric-value">${metric.value}s</div>
                     <div class="metric-details">
                         Target: ${metric.target}s<br>

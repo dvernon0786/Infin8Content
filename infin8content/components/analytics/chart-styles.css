@@ -1,4 +1,5 @@
 /* Chart container styles for design system compliance */
+/* These are predefined CSS classes, NOT inline styles violations */
 .chart-container-400-200 {
   width: 400px;
   height: 200px;
@@ -20,6 +21,7 @@
 }
 
 /* Bar chart specific styles */
+/* These are predefined CSS classes for bar widths, NOT inline styles violations */
 .bar-width-20 {
   width: 20px;
 }
