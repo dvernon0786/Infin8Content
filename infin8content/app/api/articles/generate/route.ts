@@ -3,6 +3,7 @@ import { validateSupabaseEnv } from '@/lib/supabase/env'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { inngest } from '@/lib/inngest/client'
 import { sanitizeText } from '@/lib/utils/sanitize-text'
+import { emitUXMetricsEvent } from '@/lib/services/ux-metrics'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 
@@ -145,6 +146,14 @@ export async function POST(request: Request) {
         // Create a mock article object for the rest of the function
         const mockArticle = { id: articleId }
         
+        await emitUXMetricsEvent({
+          orgId: organizationId,
+          userId,
+          eventName: 'article_create_flow.STARTED',
+          flowInstanceId: mockArticle.id,
+          articleId: mockArticle.id,
+        })
+
         // Queue article generation via Inngest
         console.log(`[Article Generation] Sending Inngest event for article ${mockArticle.id}`)
         let inngestEventId: string | null = null
@@ -217,6 +226,14 @@ export async function POST(request: Request) {
         { status: 500 }
       )
     }
+
+    await emitUXMetricsEvent({
+      orgId: organizationId,
+      userId,
+      eventName: 'article_create_flow.STARTED',
+      flowInstanceId: article.id,
+      articleId: article.id,
+    })
 
     // Queue article generation via Inngest
     console.log(`[Article Generation] Sending Inngest event for article ${article.id}`)
@@ -299,7 +316,7 @@ export async function POST(request: Request) {
       status: 'queued',
       message: 'Article generation started',
     })
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
       const firstError = error.issues?.[0]
       return NextResponse.json(

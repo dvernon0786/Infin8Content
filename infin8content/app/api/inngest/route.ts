@@ -1,6 +1,7 @@
 import { serve } from 'inngest/next'
 import { generateArticle } from '@/lib/inngest/functions/generate-article'
 import { cleanupStuckArticles } from '@/lib/inngest/functions/cleanup-stuck-articles'
+import { uxMetricsRollup } from '@/lib/inngest/functions/ux-metrics-rollup'
 import { inngest } from '@/lib/inngest/client'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -28,7 +29,7 @@ console.log('[Inngest API] Registering functions:', {
   isDevelopment,
   hasEventKey: !!eventKey,
   hasSigningKey: !!signingKey,
-  functionIds: ['article/generate', 'articles/cleanup-stuck'],
+  functionIds: ['article/generate', 'articles/cleanup-stuck', 'ux-metrics/weekly-rollup'],
 })
 
 // Create handlers - allow local dev without env vars
@@ -36,7 +37,7 @@ const handlers = useInngestServe
   ? serve({
       client: inngest,
       signingKey: signingKey || undefined, // Optional for local dev
-      functions: [generateArticle, cleanupStuckArticles],
+      functions: [generateArticle, cleanupStuckArticles, uxMetricsRollup],
       // Disable signature validation temporarily for debugging
       // TODO: Remove this in production
       ...(isDevelopment && {

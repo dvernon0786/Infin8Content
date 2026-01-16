@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createClient } from '@/lib/supabase/server'
 import { sendTeamInvitationAcceptedEmail } from '@/lib/services/team-notifications'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { emitUXMetricsEvent } from '@/lib/services/ux-metrics'
 import { AuditAction } from '@/types/audit'
 
 const acceptInvitationSchema = z.object({
@@ -140,6 +141,17 @@ export async function POST(request: Request) {
       // Don't fail the request, invitation is already processed
     }
 
+    await emitUXMetricsEvent({
+      orgId: invitation.org_id,
+      userId: existingUser.id,
+      eventName: 'collaboration_interaction.INVITE_ACCEPTED',
+      payload: {
+        invitationId: invitation.id,
+        role: invitation.role,
+        invitedEmail: invitation.email,
+      },
+    })
+
     // Get organization owner email for notification
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
@@ -196,7 +208,7 @@ export async function POST(request: Request) {
       success: true,
       redirectUrl: '/dashboard',
     })
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
       const firstError = error.issues?.[0]
       return NextResponse.json(

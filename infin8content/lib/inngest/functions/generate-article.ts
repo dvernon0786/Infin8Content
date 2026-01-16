@@ -7,6 +7,7 @@ import { createProgressTracker } from '@/lib/services/progress-tracking'
 import { performBatchResearch, clearResearchCache } from '@/lib/services/article-generation/research-optimizer'
 import { clearContextCache } from '@/lib/services/article-generation/context-manager'
 import { performanceMonitor } from '@/lib/services/article-generation/performance-monitor'
+import { emitUXMetricsEvent } from '@/lib/services/ux-metrics'
 import type { Section } from '@/lib/services/article-generation/section-processor'
 
 /**
@@ -45,7 +46,7 @@ export const generateArticle = inngest.createFunction(
     // The cleanup job will catch any articles that get stuck due to unexpected failures.
   },
   { event: 'article/generate' },
-  async ({ event, step }) => {
+  async ({ event, step }: any) => {
     // Log function invocation immediately
     console.log(`[Inngest] Function invoked - Event received:`, {
       eventName: event.name,
@@ -649,6 +650,14 @@ export const generateArticle = inngest.createFunction(
           console.error(`[Inngest] Step: complete-article - ERROR: ${errorMsg}`)
           throw new Error(errorMsg)
         }
+
+        await emitUXMetricsEvent({
+          orgId: (article as any).org_id,
+          userId: null,
+          eventName: 'article_create_flow.COMPLETED',
+          flowInstanceId: articleId,
+          articleId,
+        })
 
         console.log(`[Inngest] Step: complete-article - Success: Article ${articleId} marked as completed`)
         console.log(`[Inngest] Step: complete-article - Final stats: ${sectionStats.totalWordCount} words, ${sectionStats.totalCitations} citations, $${sectionStats.totalApiCost.toFixed(2)} cost`)
