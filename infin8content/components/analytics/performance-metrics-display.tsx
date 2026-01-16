@@ -26,7 +26,8 @@ import {
   Cpu,
   HardDrive,
   Wifi,
-  Gauge
+  Gauge,
+  BarChart3
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
