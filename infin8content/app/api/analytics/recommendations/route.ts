@@ -610,39 +610,41 @@ function calculateRecommendationSummary(recommendations: any[]): any {
   return summary
 }
 
-// Implementation tracking endpoint
-export async function POST_IMPLEMENT(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { orgId, recommendationId } = body
-    
-    const supabase = await createClient()
-    
-    // Mark recommendation as implemented
-    const { error } = await supabase
-      .from('recommendations')
-      .update({ 
-        implemented: true, 
-        implementationDate: new Date().toISOString() 
-      })
-      .eq('id', recommendationId)
-      .eq('organization_id', orgId)
-    
-    if (error) {
-      console.error('Implementation tracking error:', error)
-      return NextResponse.json(
-        { error: 'Failed to mark recommendation as implemented' },
-        { status: 500 }
-      )
-    }
-    
-    return NextResponse.json({ success: true })
-    
-  } catch (error) {
-    console.error('Implementation tracking error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
+// Implementation tracking endpoint - DISABLED (recommendations table doesn't exist)
+// export async function POST_IMPLEMENT(request: NextRequest) {
+//   try {
+//     const body = await request.json()
+//     const { orgId, recommendationId } = body
+//     
+//     const supabase = await createClient()
+//     
+//     // Mark recommendation as implemented
+//     const { error } = await supabase
+//       .from('recommendations')
+//       .update({ 
+//         implemented: true, 
+//         implementationDate: new Date().toISOString() 
+//       })
+//       .eq('id', recommendationId)
+//       .eq('organization_id', orgId)
+//     
+//     if (error) {
+//       console.error('Implementation tracking error:', error)
+//       return NextResponse.json(
+//         { error: 'Failed to update recommendation status' },
+//         { status: 500 }
+//       )
+//     }
+//
+//     return NextResponse.json({
+//       success: true,
+//       message: 'Recommendation marked as implemented'
+//     })
+//   } catch (error) {
+//     console.error('Implementation tracking error:', error)
+//     return NextResponse.json(
+//       { error: 'Internal server error' },
+//       { status: 500 }
+//     )
+//   }
+// }

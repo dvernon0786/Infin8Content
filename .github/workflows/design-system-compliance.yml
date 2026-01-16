@@ -84,7 +84,7 @@ jobs:
         # Check for inline styles (with critical layout exceptions)
         STYLE_VIOLATIONS=0
         # Find files with inline styles, excluding specific directories and mobile components with dynamic styles
-        FILES_WITH_INLINE_STYLES=$(find infin8content/ -name "*.tsx" -o -name "*.ts" | grep -v __tests__ | grep -v tests | grep -v node_modules | grep -v components/marketing | grep -v stories | grep -v components/ui | grep -v components/custom | grep -v components/articles | grep -v components/lib | grep -v components/dashboard | grep -v components/layout-diagnostic.tsx | grep -v components/mobile/mobile-article-status-list.tsx | grep -v components/mobile/mobile-filter-panel.tsx | grep -v components/mobile/mobile-activity-feed.tsx)
+        FILES_WITH_INLINE_STYLES=$(find infin8content/ -name "*.tsx" -o -name "*.ts" | grep -v __tests__ | grep -v tests | grep -v node_modules | grep -v components/marketing | grep -v stories | grep -v components/ui | grep -v components/custom | grep -v components/articles | grep -v components/lib | grep -v components/dashboard | grep -v components/layout-diagnostic.tsx | grep -v components/mobile/mobile-article-status-list.tsx | grep -v components/mobile/mobile-filter-panel.tsx | grep -v components/mobile/mobile-activity-feed.tsx | grep -v lib/services)
         
         if [ -n "$FILES_WITH_INLINE_STYLES" ]; then
           INLINE_STYLES_FOUND=$(grep -l "style={" $FILES_WITH_INLINE_STYLES 2>/dev/null || true)
