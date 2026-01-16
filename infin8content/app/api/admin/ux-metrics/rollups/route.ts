@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Json } from '@/lib/supabase/database.types'
 
 /**
  * GET /api/admin/ux-metrics/rollups
@@ -63,12 +64,21 @@ export async function GET(request: Request) {
     const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '12', 10), 1), 52) // 1-52 weeks (1 year)
 
     // Fetch weekly rollups for the organization
-    const { data: rollups, error: rollupsError } = await supabase
-      .from('ux_metrics_weekly_rollups')
+    const { data: rollups, error: rollupsError } = await (supabase
+      .from('ux_metrics_weekly_rollups' as any)
       .select('*')
       .eq('org_id', profile.org_id)
       .order('week_start', { ascending: false })
-      .limit(limit)
+      .limit(limit) as unknown as Promise<{
+        data: Array<{
+          id: string
+          org_id: string
+          week_start: string
+          metrics: Json
+          created_at: string
+        }> | null
+        error: any
+      }>)
 
     if (rollupsError) {
       console.error('Failed to fetch UX metrics rollups:', rollupsError)

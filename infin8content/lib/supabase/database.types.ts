@@ -558,6 +558,63 @@ export type Database = {
         }
         Relationships: []
       }
+      ux_metrics_events: {
+        Row: {
+          id: string
+          org_id: string
+          user_id: string | null
+          event_name: string
+          flow_instance_id: string | null
+          article_id: string | null
+          payload: Json | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          org_id?: string
+          user_id?: string | null
+          event_name?: string
+          flow_instance_id?: string | null
+          article_id?: string | null
+          payload?: Json | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          user_id?: string | null
+          event_name?: string
+          flow_instance_id?: string | null
+          article_id?: string | null
+          payload?: Json | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      ux_metrics_weekly_rollups: {
+        Row: {
+          id: string
+          org_id: string
+          week_start: string
+          metrics: Json | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          org_id?: string
+          week_start?: string
+          metrics?: Json | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          week_start?: string
+          metrics?: Json | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           id: string
