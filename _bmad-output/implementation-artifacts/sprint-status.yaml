@@ -402,5 +402,5 @@ development_status:
   # Sprint 4-5 Priority - User metrics, performance tracking, analytics dashboard
   32-1-user-experience-metrics-tracking: done
   32-2-efficiency-and-performance-metrics: review
-  32-3-analytics-dashboard-and-reporting: backlog
+  32-3-analytics-dashboard-and-reporting: ready-for-dev
   epic-32-retrospective: optional

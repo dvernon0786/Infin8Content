@@ -1374,6 +1374,69 @@ You must fully embody this agent's persona and follow all activation instruction
 - Role-based access ensures appropriate data visibility levels
 - Performance optimization ensures dashboard remains responsive under load
 
+## Story Context: 32-3-analytics-dashboard-and-reporting
+
+**Status**: ready-for-dev
+
+**Epic**: 32 - Analytics and Performance Monitoring
+
+**User Story**: As a business administrator, I want a comprehensive analytics dashboard and reporting system so that I can track content performance, user engagement, system utilization, and business metrics to make data-driven decisions and demonstrate ROI.
+
+**Acceptance Criteria**:
+- Comprehensive analytics dashboard with real-time data visualization and key performance indicators
+- Content performance analytics tracking article views, engagement rates, and SEO rankings
+- User behavior analytics showing session duration, bounce rates, and conversion funnels
+- System utilization metrics displaying API usage, generation statistics, and resource consumption
+- Business intelligence reporting with revenue tracking, cost analysis, and ROI calculations
+- Customizable date range filtering with comparative analysis (period-over-period, year-over-year)
+- Exportable reports in multiple formats (PDF, CSV, Excel) with scheduled delivery options
+- Interactive data visualizations with drill-down capabilities and detailed insights
+- Alert and notification system for critical metric thresholds and anomalies
+- Role-based access control with different dashboard views for different user types
+- Mobile-responsive analytics interface for on-the-go monitoring
+- Historical data retention with trend analysis and predictive insights
+
+**Technical Requirements**:
+- Analytics dashboard UI built with React and shadcn/ui components
+- Data visualization library integration (Chart.js or Recharts) for interactive charts
+- Real-time data aggregation service with efficient query optimization
+- Time-series database integration for historical analytics data storage
+- Analytics API endpoints with proper authentication and authorization
+- Report generation engine with template-based report creation
+- Export service with format conversion and scheduled delivery capabilities
+- Alert system with configurable thresholds and notification channels
+- Data caching layer for improved dashboard performance
+- Integration with existing performance monitoring and cost tracking systems
+- Mobile-responsive design with touch-optimized interactions
+- Accessibility compliance with WCAG 2.1 AA standards
+
+**Dependencies**:
+- Story 32-1 (User Experience Metrics Tracking) for analytics foundation
+- Story 32-2 (Efficiency and Performance Metrics) for system performance data
+- Existing performance monitoring infrastructure (performance-monitor.ts)
+- Cost tracking and API usage monitoring systems
+- Next.js 16 and React 19 architecture
+- TypeScript strict mode compliance
+- Supabase database for analytics data storage
+- Real-time infrastructure from Story 15-1 (article status display)
+- User authentication and authorization system
+
+**Priority**: High
+**Story Points**: 13
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Build on existing performance monitoring patterns from Story 32-2
+- Extend user experience tracking from Story 32-1 for comprehensive analytics
+- Integrate with existing cost tracking and API usage systems
+- Use real-time infrastructure patterns from article status display
+- Ensure data privacy and compliance with analytics collection
+- Implement efficient data aggregation for dashboard performance
+- Provide actionable insights with clear visual representations
+- Support both real-time and historical data analysis
+- Design for scalability with growing data volumes
+- Include comprehensive error handling and data validation
+
 ## Story Context: 20-4-smart-quality-retry-system
 
 **Status**: ready-for-dev
