@@ -146,7 +146,7 @@ function generateRecommendations(
   minImpactLevel: string,
   maxEffortLevel: string
 ): any[] {
-  const recommendations = []
+  const recommendations: any[] = []
 
   // Analyze performance metrics
   const perfMetrics = currentPerfMetrics.reduce((acc: any, metric) => {
@@ -359,7 +359,7 @@ function generateGrowthRecommendations(
   historicalPerfMetrics: any[],
   confidenceThreshold: number
 ): any[] {
-  const recommendations = []
+  const recommendations: any[] = []
 
   // Look for declining trends
   const decliningMetrics = findDecliningMetrics(historicalUXMetrics, historicalPerfMetrics)
@@ -391,7 +391,7 @@ function generateMaintenanceRecommendations(
   currentPerfMetrics: any[],
   confidenceThreshold: number
 ): any[] {
-  const recommendations = []
+  const recommendations: any[] = []
 
   // Look for stable but could be improved metrics
   const stableMetrics = findStableButImprovable(currentUXMetrics, currentPerfMetrics)
@@ -419,7 +419,7 @@ function generateMaintenanceRecommendations(
 
 // Find metrics with declining trends
 function findDecliningMetrics(historicalUXMetrics: any[], historicalPerfMetrics: any[]): any[] {
-  const decliningMetrics = []
+  const decliningMetrics: any[] = []
   
   // Check UX metrics for declining trends
   const uxMetricTypes = ['completion_rate', 'collaboration_adoption', 'trust_score', 'perceived_value']
@@ -471,7 +471,7 @@ function findDecliningMetrics(historicalUXMetrics: any[], historicalPerfMetrics:
 
 // Find stable but improvable metrics
 function findStableButImprovable(currentUXMetrics: any[], currentPerfMetrics: any[]): any[] {
-  const stableMetrics = []
+  const stableMetrics: any[] = []
   
   // Check UX metrics
   const uxMetricTypes = ['completion_rate', 'collaboration_adoption', 'trust_score', 'perceived_value']
