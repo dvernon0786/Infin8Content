@@ -55,12 +55,12 @@ interface PerformanceMetricsDisplayProps {
 }
 
 const PERFORMANCE_COLORS = {
-  optimal: '#10b981',
-  warning: '#f59e0b',
-  critical: '#ef4444',
-  dashboard_load_time: '#3b82f6',
-  article_creation_time: '#8b5cf6',
-  comment_latency: '#06b6d4'
+  optimal: 'var(--color-success)',
+  warning: 'var(--color-warning)',
+  critical: 'var(--color-danger)',
+  dashboard_load_time: 'var(--color-primary)',
+  article_creation_time: 'var(--color-info)',
+  comment_latency: 'var(--color-cyan)'
 }
 
 export function PerformanceMetricsDisplay({
@@ -392,7 +392,7 @@ export function PerformanceMetricsDisplay({
           </CardHeader>
           <CardContent>
             {historicalData.length > 0 ? (
-              <SimpleLineChart data={areaChartData} height={300} color="#10b981" />
+              <SimpleLineChart data={areaChartData} height={300} color="var(--color-success)" />
             ) : (
               <div className="h-64 flex items-center justify-center text-gray-500">
                 No historical data available

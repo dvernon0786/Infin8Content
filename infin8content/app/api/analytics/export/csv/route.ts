@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const { analyticsData, orgId, format, selectedMetrics, dateRange } = requestSchema.parse(body)
 
     // Generate CSV content
-    const csvContent = generateCSV(analyticsData, selectedMetrics, format, dateRange)
+    const csvContent = generateCSV(analyticsData, selectedMetrics, format || 'standard', dateRange)
 
     // Create response headers for CSV download
     const headers = new Headers()

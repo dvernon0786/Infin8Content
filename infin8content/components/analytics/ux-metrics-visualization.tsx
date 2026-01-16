@@ -53,7 +53,7 @@ interface UXMetricsVisualizationProps {
   className?: string
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042']
+const COLORS = ['var(--color-primary)', 'var(--color-success)', 'var(--color-warning)', 'var(--color-danger)']
 
 export function UXMetricsVisualization({
   currentMetrics,
@@ -288,10 +288,10 @@ export function UXMetricsVisualization({
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="Completion Rate" stroke="#0088FE" strokeWidth={2} />
-                  <Line type="monotone" dataKey="Collaboration Adoption" stroke="#00C49F" strokeWidth={2} />
-                  <Line type="monotone" dataKey="Trust Score" stroke="#FFBB28" strokeWidth={2} />
-                  <Line type="monotone" dataKey="Perceived Value" stroke="#FF8042" strokeWidth={2} />
+                  <Line type="monotone" dataKey="Completion Rate" stroke="var(--color-primary)" strokeWidth={2} />
+                  <Line type="monotone" dataKey="Collaboration Adoption" stroke="var(--color-success)" strokeWidth={2} />
+                  <Line type="monotone" dataKey="Trust Score" stroke="var(--color-warning)" strokeWidth={2} />
+                  <Line type="monotone" dataKey="Perceived Value" stroke="var(--color-danger)" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
@@ -318,8 +318,8 @@ export function UXMetricsVisualization({
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="current" fill="#0088FE" name="Current" />
-                <Bar dataKey="target" fill="#00C49F" name="Target" />
+                <Bar dataKey="current" fill="var(--color-primary)" name="Current" />
+                <Bar dataKey="target" fill="var(--color-success)" name="Target" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -346,7 +346,7 @@ export function UXMetricsVisualization({
                   labelLine={false}
                   label={({ name, value }) => `${name}: ${value.toFixed(1)}`}
                   outerRadius={80}
-                  fill="#8884d8"
+                  fill="var(--color-info)"
                   dataKey="value"
                 >
                   {pieChartData.map((entry, index) => (

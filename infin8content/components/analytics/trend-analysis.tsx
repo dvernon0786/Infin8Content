@@ -517,8 +517,8 @@ export function TrendAnalysis({ orgId, className = '' }: TrendAnalysisProps) {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Area type="monotone" dataKey="ux" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="performance" stroke="#10b981" fill="#10b981" fillOpacity={0.6} />
+                <Area type="monotone" dataKey="ux" stroke="var(--color-primary)" fill="var(--color-primary)" fillOpacity={0.6} />
+                <Area type="monotone" dataKey="performance" stroke="var(--color-success)" fill="var(--color-success)" fillOpacity={0.6} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
