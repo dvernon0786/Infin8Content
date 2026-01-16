@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const { analyticsData, orgId, format, selectedMetrics, dateRange } = requestSchema.parse(body)
 
     // Generate PDF content (HTML string)
-    const htmlContent = generatePDFHTML(analyticsData, selectedMetrics, format, dateRange, orgId)
+    const htmlContent = generatePDFHTML(analyticsData, selectedMetrics, format || 'standard', dateRange, orgId)
 
     // In a real implementation, you would use a PDF library like Puppeteer or jsPDF
     // For now, we'll return the HTML as a placeholder

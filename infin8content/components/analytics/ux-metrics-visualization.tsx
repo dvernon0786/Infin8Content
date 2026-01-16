@@ -55,6 +55,13 @@ interface UXMetricsVisualizationProps {
 
 const COLORS = ['var(--color-primary)', 'var(--color-success)', 'var(--color-warning)', 'var(--color-danger)']
 
+// Helper function to get progress bar class based on percentage
+const getProgressBarClass = (percentage: number) => {
+  const cappedPercentage = Math.min(Math.max(0, percentage), 100)
+  const roundedPercentage = Math.round(cappedPercentage / 10) * 10
+  return `progress-bar-${roundedPercentage}`
+}
+
 export function UXMetricsVisualization({
   currentMetrics,
   historicalData,
@@ -256,11 +263,11 @@ export function UXMetricsVisualization({
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
                     className={cn(
-                      'h-2 rounded-full',
+                      'h-2 rounded-full transition-all duration-300',
                       metric.value >= metric.target ? 'bg-green-500' : 
-                      metric.value >= metric.target * 0.8 ? 'bg-yellow-500' : 'bg-red-500'
+                      metric.value >= metric.target * 0.8 ? 'bg-yellow-500' : 'bg-red-500',
+                      getProgressBarClass((metric.value / metric.target) * 100)
                     )}
-                    style={{ width: `${Math.min((metric.value / metric.target) * 100, 100)}%` }}
                   ></div>
                 </div>
               </div>

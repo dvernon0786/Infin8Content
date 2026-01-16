@@ -63,6 +63,13 @@ const PERFORMANCE_COLORS = {
   comment_latency: 'var(--color-cyan)'
 }
 
+// Helper function to get progress bar class based on percentage
+const getProgressBarClass = (percentage: number) => {
+  const cappedPercentage = Math.min(Math.max(0, percentage), 150)
+  const roundedPercentage = Math.round(cappedPercentage / 10) * 10
+  return `progress-bar-${roundedPercentage}`
+}
+
 export function PerformanceMetricsDisplay({
   currentMetrics,
   historicalData,
@@ -345,9 +352,9 @@ export function PerformanceMetricsDisplay({
                     className={cn(
                       'h-2 rounded-full transition-all duration-300',
                       metric.value <= metric.target ? 'bg-green-500' : 
-                      metric.value <= metric.target * 1.2 ? 'bg-yellow-500' : 'bg-red-500'
+                      metric.value <= metric.target * 1.2 ? 'bg-yellow-500' : 'bg-red-500',
+                      getProgressBarClass((metric.value / metric.target) * 100)
                     )}
-                    style={{ width: `${Math.min((metric.value / metric.target) * 100, 150)}%` }}
                   ></div>
                 </div>
                 <div className="text-xs text-gray-500">
