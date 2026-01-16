@@ -334,7 +334,10 @@ export function RealTimeMonitor({
               <span className="font-medium">Dashboard Load Time</span>
             </div>
             <Badge className={cn('text-xs', getStatusIndicator(metrics.dashboardLoadTime.status).color)}>
-              <getStatusIndicator(metrics.dashboardLoadTime.status).icon className="h-3 w-3 mr-1" />
+              {(() => {
+                const Icon = getStatusIndicator(metrics.dashboardLoadTime.status).icon
+                return <Icon className="h-3 w-3 mr-1" />
+              })()}
               {metrics.dashboardLoadTime.status}
             </Badge>
           </div>
@@ -364,7 +367,10 @@ export function RealTimeMonitor({
               <span className="font-medium">Article Creation Time</span>
             </div>
             <Badge className={cn('text-xs', getStatusIndicator(metrics.articleCreationPerformance.status).color)}>
-              <getStatusIndicator(metrics.articleCreationPerformance.status).icon className="h-3 w-3 mr-1" />
+              {(() => {
+                const Icon = getStatusIndicator(metrics.articleCreationPerformance.status).icon
+                return <Icon className="h-3 w-3 mr-1" />
+              })()}
               {metrics.articleCreationPerformance.status}
             </Badge>
           </div>
@@ -394,7 +400,10 @@ export function RealTimeMonitor({
               <span className="font-medium">Comment Delivery Latency</span>
             </div>
             <Badge className={cn('text-xs', getStatusIndicator(metrics.commentDeliveryLatency.status).color)}>
-              <getStatusIndicator(metrics.commentDeliveryLatency.status).icon className="h-3 w-3 mr-1" />
+              {(() => {
+                const Icon = getStatusIndicator(metrics.commentDeliveryLatency.status).icon
+                return <Icon className="h-3 w-3 mr-1" />
+              })()}
               {metrics.commentDeliveryLatency.status}
             </Badge>
           </div>
@@ -424,7 +433,10 @@ export function RealTimeMonitor({
               <span className="font-medium">Progress Update Frequency</span>
             </div>
             <Badge className={cn('text-xs', getStatusIndicator(metrics.progressUpdateFrequency.status).color)}>
-              <getStatusIndicator(metrics.progressUpdateFrequency.status).icon className="h-3 w-3 mr-1" />
+              {(() => {
+                const Icon = getStatusIndicator(metrics.progressUpdateFrequency.status).icon
+                return <Icon className="h-3 w-3 mr-1" />
+              })()}
               {metrics.progressUpdateFrequency.status}
             </Badge>
           </div>
