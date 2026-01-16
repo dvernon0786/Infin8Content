@@ -255,8 +255,8 @@ export class NetworkOptimizer {
     // Get initial network info
     this.updateNetworkInfo()
 
-    // Listen for network changes
-    if ('connection' in navigator) {
+    // Listen for network changes - SSR safety check
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && 'connection' in navigator) {
       const connection = (navigator as any).connection
       connection.addEventListener('change', () => {
         this.updateNetworkInfo()
@@ -291,6 +291,11 @@ export class NetworkOptimizer {
    * Get connection information from browser APIs
    */
   private getConnectionInfo(): NetworkInfo | null {
+    // SSR safety check - only run on client side
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      return null
+    }
+    
     const connection = (navigator as any).connection || 
                      (navigator as any).mozConnection || 
                      (navigator as any).webkitConnection

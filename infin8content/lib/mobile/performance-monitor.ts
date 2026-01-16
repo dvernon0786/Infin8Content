@@ -205,6 +205,11 @@ export class MobilePerformanceMonitor {
    * Get network speed
    */
   private getNetworkSpeed(): string {
+    // SSR safety check - only run on client side
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      return 'unknown'
+    }
+    
     const connection = (navigator as any).connection || 
                      (navigator as any).mozConnection || 
                      (navigator as any).webkitConnection
@@ -218,6 +223,11 @@ export class MobilePerformanceMonitor {
    * Get device performance classification
    */
   private getDevicePerformance(): 'high' | 'medium' | 'low' {
+    // SSR safety check - only run on client side
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      return 'medium' // Default fallback for server-side
+    }
+    
     const hardwareConcurrency = navigator.hardwareConcurrency || 4
     const memory = this.getMemoryUsage()
     const networkSpeed = this.getNetworkSpeed()
