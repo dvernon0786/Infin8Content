@@ -156,9 +156,7 @@ export function PerformanceMetricsDisplay({
   const areaChartData = useMemo(() => {
     return historicalData.map(point => ({
       timestamp: new Date(point.timestamp).toLocaleTimeString(),
-      dashboard_load_time: point.dashboard_load_time * 100, // Scale for better visualization
-      article_creation_time: point.article_creation_time * 100,
-      comment_latency: point.comment_latency * 100
+      value: point.dashboard_load_time * 100 // Use dashboard load time as the primary metric, scaled for visualization
     }))
   }, [historicalData])
 
