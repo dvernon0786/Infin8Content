@@ -432,6 +432,113 @@ export const config = {
 - Performance metrics
 - Business KPIs
 
+## Realtime & Polling Architecture (Authoritative)
+
+### Design Invariants
+
+**These invariants are non-negotiable and must be enforced by all developers and CI systems.**
+
+- **Supabase Realtime is treated as a signal channel only**, never a data source.
+- **All realtime events trigger database reconciliation via API fetch**.
+- **UI state is never patched directly from realtime payloads**.
+- **Polling is a fallback transport**, activated only by connectivity state.
+- **Polling logic must not depend on article count, status, or content**.
+- **The database is the single source of truth**.
+- **Hooks must be mounted under stable parents**; diagnostic components must not affect lifecycle.
+
+### Why Multi-Table Realtime Events Caused ID Mismatch
+
+The original architecture attempted to use realtime as a data transport, which created several critical issues:
+
+1. **Race Conditions**: Multi-table events (articles, organizations, users) arrived out of order
+2. **ID Mismatch**: Realtime payloads contained stale or mismatched UUID references
+3. **State Corruption**: Incremental state patches created inconsistent UI states
+4. **Event Loss**: Network interruptions caused missed realtime events
+
+### Why Reconciliation is the Chosen Strategy
+
+**Database reconciliation** was selected as the authoritative pattern because:
+
+1. **Single Source of Truth**: The database always contains the current state
+2. **Idempotent Operations**: Reconciliation fetches can be called repeatedly without side effects
+3. **Consistency**: All UI components derive state from the same authoritative source
+4. **Resilience**: Network interruptions don't corrupt local state
+5. **Simplicity**: No complex conflict resolution or state merging logic
+
+### Realtime Signal Pattern
+
+```typescript
+// ✅ CORRECT: Realtime as signal only
+supabase.channel('articles')
+  .on('postgres_changes', (event) => {
+    // Only trigger reconciliation - never use event.payload
+    triggerReconciliation()
+  })
+
+// ❌ FORBIDDEN: Realtime as data source
+supabase.channel('articles')
+  .on('postgres_changes', (event) => {
+    // Never patch state directly from realtime
+    setArticles(prev => [...prev, event.payload])
+  })
+```
+
+### Polling Fallback Pattern
+
+```typescript
+// ✅ CORRECT: Connectivity-based polling
+const [isOnline, setIsOnline] = useState(true)
+
+useEffect(() => {
+  const polling = setInterval(() => {
+    if (!isOnline) {
+      triggerReconciliation()
+    }
+  }, 120000) // 2-minute fallback only
+
+  return () => clearInterval(polling)
+}, [isOnline])
+
+// ❌ FORBIDDEN: Data-aware polling
+useEffect(() => {
+  const polling = setInterval(() => {
+    if (articles.length === 0) { // Never gate on data state
+      fetchArticles()
+    }
+  }, 5000)
+  return () => clearInterval(polling)
+}, [articles.length])
+```
+
+### Hook Lifecycle Requirements
+
+**Stateful hooks must live under stable layout boundaries:**
+
+```typescript
+// ✅ CORRECT: Stable parent component
+function DashboardLayout({ children }) {
+  return (
+    <div className="dashboard-layout">
+      <Sidebar />
+      <main>{children}</main>
+    </div>
+  )
+}
+
+function ArticlesPage() {
+  // Stateful hook lives under stable layout
+  const { articles, refresh } = useArticlesRealtime()
+  return <ArticleList articles={articles} />
+}
+
+// ❌ FORBIDDEN: Diagnostic components affecting lifecycle
+function DebugPanel() {
+  // Never place stateful hooks in diagnostic components
+  const debug = useDebugRealtime() // This breaks business logic
+  return <div>Debug: {debug.status}</div>
+}
+```
+
 ---
 
-*This architecture documentation provides a comprehensive overview of the Infin8Content system design and implementation patterns.*
+*This architecture documentation provides a comprehensive overview of the Infin8Content system design and implementation patterns. The Realtime & Polling Architecture section is authoritative and must be enforced by CI systems to prevent regressions.*

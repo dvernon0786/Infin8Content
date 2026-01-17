@@ -625,6 +625,179 @@ npm i -g vercel
 vercel --prod
 ```
 
+## Realtime & Polling Development Rules
+
+**These rules are enforceable policy and must be followed by all developers.**
+
+### Realtime Usage Rules
+
+- **Realtime subscriptions must never mutate application state directly.**
+- **Realtime handlers may only trigger reconciliation fetches.**
+- **Realtime payloads must never be used as data sources.**
+- **All realtime events must result in database API calls.**
+
+```typescript
+// ✅ CORRECT: Realtime triggers reconciliation
+supabase.channel('articles')
+  .on('postgres_changes', (event) => {
+    // Only signal - never use payload
+    refreshArticles() // Triggers API fetch
+  })
+
+// ❌ FORBIDDEN: Direct state mutation
+supabase.channel('articles')
+  .on('postgres_changes', (event) => {
+    // Never mutate state from realtime
+    setArticles(prev => [...prev, event.payload]) // VIOLATION
+  })
+```
+
+### Polling Usage Rules
+
+- **Polling must be controlled by connectivity, not data presence.**
+- **Polling intervals must not depend on article count, status, or content.**
+- **Polling is a fallback transport only, not a primary data source.**
+- **Polling must be idempotent and safe to call repeatedly.**
+
+```typescript
+// ✅ CORRECT: Connectivity-based polling
+useEffect(() => {
+  const polling = setInterval(() => {
+    if (!navigator.onLine) {
+      refreshArticles() // Fallback only when offline
+    }
+  }, 120000) // 2-minute interval
+
+  return () => clearInterval(polling)
+}, []) // No data dependencies
+
+// ❌ FORBIDDEN: Data-aware polling
+useEffect(() => {
+  const polling = setInterval(() => {
+    if (articles.length === 0) { // Never gate on data state
+      fetchArticles()
+    }
+  }, 5000)
+  return () => clearInterval(polling)
+}, [articles.length]) // VIOLATION: Data dependency
+```
+
+### Hook Responsibilities
+
+- **Stateful hooks must live under stable layout components.**
+- **Hooks must not depend on volatile component state.**
+- **Custom hooks must document their lifecycle requirements.**
+- **Diagnostic components must not contain stateful hooks.**
+
+```typescript
+// ✅ CORRECT: Stable hook placement
+function ArticlesPage() {
+  // Hook lives under stable layout
+  const { articles, loading, error, refresh } = useArticlesRealtime()
+  
+  if (loading) return <LoadingSpinner />
+  if (error) return <ErrorMessage error={error} />
+  
+  return <ArticleList articles={articles} />
+}
+
+// ✅ CORRECT: Safe diagnostic hook
+function useDebugDisplay() {
+  // Pure display logic - no side effects
+  const metrics = useSelector(state => state.debug.metrics)
+  return { metrics }
+}
+
+// ❌ FORBIDDEN: Stateful diagnostic hook
+function useDebugRealtime() {
+  // Never in diagnostic components
+  const [debug, setDebug] = useState({})
+  
+  useEffect(() => {
+    // VIOLATION: Stateful logic in diagnostic context
+    const subscription = supabase.channel('debug')
+      .on('postgres_changes', (payload) => {
+        setDebug(payload) // Direct mutation
+      })
+      .subscribe()
+    
+    return () => subscription.unsubscribe()
+  }, [])
+  
+  return debug
+}
+```
+
+### Reconciliation Pattern Requirements
+
+- **All state updates must come from API responses.**
+- **Reconciliation endpoints must be idempotent.**
+- **Local state must be replaced, not merged.**
+- **Optimistic updates are forbidden.**
+
+```typescript
+// ✅ CORRECT: Full reconciliation
+async function refreshArticles() {
+  try {
+    const response = await fetch('/api/articles/queue') // Reconciliation endpoint
+    const articles = await response.json()
+    
+    // Replace entire state - never merge
+    setArticles(articles)
+  } catch (error) {
+    console.error('Reconciliation failed:', error)
+  }
+}
+
+// ❌ FORBIDDEN: Incremental updates
+function handleRealtimeEvent(event) {
+  // VIOLATION: Never patch from realtime
+  setArticles(prev => {
+    if (event.type === 'INSERT') {
+      return [...prev, event.payload] // Incremental patch
+    }
+    return prev
+  })
+}
+```
+
+### Enforcement and Violations
+
+**Automatic Violations (CI will catch):**
+- Direct state mutation from realtime payloads
+- Polling dependencies on data state
+- Stateful hooks in diagnostic components
+- Missing reconciliation calls after realtime events
+
+**Manual Review Required:**
+- Hook placement in component tree
+- Reconciliation endpoint usage
+- Polling interval justification
+- Custom hook lifecycle documentation
+
+### Architectural Review Process
+
+**Any deviation from these rules requires:**
+
+1. **Architecture Review**: Must be approved by senior architect
+2. **Impact Assessment**: Document why deviation is necessary
+3. **Mitigation Strategy**: How regressions will be prevented
+4. **Test Coverage**: Comprehensive tests for the deviation
+5. **Documentation**: Updated documentation with rationale
+
+### Code Review Checklist
+
+**Reviewers must verify:**
+
+- [ ] Realtime handlers only call reconciliation functions
+- [ ] Polling logic is connectivity-based only
+- [ ] No data dependencies in polling effects
+- [ ] Stateful hooks are under stable layouts
+- [ ] Diagnostic components are pure display
+- [ ] Reconciliation endpoints are used correctly
+- [ ] No optimistic updates or incremental patches
+- [ ] All state updates come from API responses
+
 ---
 
-*This development guide provides comprehensive instructions for contributing to the Infin8Content project.*
+*This development guide provides comprehensive instructions for contributing to the Infin8Content project. The Realtime & Polling Development Rules section is enforceable policy and must be followed to prevent architectural regressions.*

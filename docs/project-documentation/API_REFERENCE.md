@@ -242,6 +242,102 @@ Delete article.
 }
 ```
 
+### Reconciliation Endpoints
+
+#### GET /api/articles/queue
+**Authoritative reconciliation endpoint for articles data.**
+
+This endpoint is the **single source of truth** for article state reconciliation and is safe to call repeatedly.
+
+**Purpose:**
+- Primary data source for all article state updates
+- Idempotent refresh mechanism for realtime event handling
+- Fallback data source for polling mechanisms
+- Authoritative state resolution for conflicts
+
+**Query Parameters:**
+- `organization_id` (string, optional): Filter by organization
+- `status` (string, optional): Filter by status (`draft`, `published`, `archived`)
+- `limit` (number, optional): Maximum items to return (default: 50)
+
+**Response:**
+```json
+{
+  "articles": [
+    {
+      "id": "uuid",
+      "title": "Article Title",
+      "content": "Article content...",
+      "status": "published",
+      "author_id": "uuid",
+      "organization_id": "uuid",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z",
+      "author": {
+        "id": "uuid",
+        "name": "John Doe",
+        "email": "john@example.com"
+      }
+    }
+  ],
+  "meta": {
+    "total": 25,
+    "page": 1,
+    "limit": 50,
+    "has_more": false
+  }
+}
+```
+
+**Key Characteristics:**
+- **Idempotent**: Safe to call multiple times without side effects
+- **Authoritative**: Returns current database state, not cached or partial data
+- **Complete**: Full article objects with all necessary relationships
+- **Consistent**: Same data structure regardless of trigger (realtime, polling, manual)
+- **Performant**: Optimized for frequent calls with proper database indexing
+
+**Usage Patterns:**
+
+```typescript
+// ✅ CORRECT: Realtime reconciliation
+supabase.channel('articles')
+  .on('postgres_changes', (event) => {
+    // Trigger authoritative refresh
+    refreshArticlesFromQueue()
+  })
+
+// ✅ CORRECT: Polling fallback
+useEffect(() => {
+  const polling = setInterval(() => {
+    if (!navigator.onLine) {
+      refreshArticlesFromQueue() // Idempotent fallback
+    }
+  }, 120000)
+  return () => clearInterval(polling)
+}, [])
+
+// ✅ CORRECT: Manual refresh
+async function refreshArticlesFromQueue() {
+  const response = await fetch('/api/articles/queue')
+  const data = await response.json()
+  setArticles(data.articles) // Replace entire state
+}
+```
+
+**Why This Endpoint is Authoritative:**
+
+1. **Database Direct**: Queries database directly, no caches or intermediaries
+2. **Full Reconciliation**: Returns complete state, not incremental changes
+3. **Conflict Resolution**: Resolves any state inconsistencies automatically
+4. **Realtime Integration**: Designed specifically for realtime event handling
+5. **Polling Safety**: Optimized for frequent polling without performance impact
+
+**Important Notes:**
+- This endpoint should be used for all state updates, never individual article endpoints
+- Realtime payloads must trigger calls to this endpoint, never direct state updates
+- Polling mechanisms should use this endpoint as their fallback data source
+- Client-side state should always be replaced, never merged with queue response data
+
 ### Organizations Endpoints
 
 #### GET /api/organizations

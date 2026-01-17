@@ -355,6 +355,110 @@ export const ArticleCard = React.memo(({ article, onEdit, onDelete }) => {
 - Icon optimization with lucide-react
 - CSS purging with Tailwind
 
+## Component Lifecycle Rules
+
+**These lifecycle rules are non-negotiable and must be enforced by all developers.**
+
+### Stable Layout Boundaries
+
+- **Stateful hooks (realtime, polling, subscriptions) must live under stable layout boundaries.**
+- **Diagnostic or monitoring components must never be siblings of stateful business components.**
+- **Any component that sets intervals, listeners, or observers is considered lifecycle-impacting.**
+
+### Why This Matters
+
+The hard-won lesson from production issues is that **diagnostic components can break hooks**:
+
+1. **Hook Placement is Architectural**: Hook lifecycle depends on component tree stability
+2. **Diagnostic Components are Volatile**: Debug/monitoring components may be conditionally rendered
+3. **Sibling Dependencies**: Components sharing a parent can affect each other's lifecycle
+4. **State Corruption**: Unstable parents cause hooks to remount unpredictably
+
+### Correct Patterns
+
+```typescript
+// ✅ CORRECT: Stable layout with stateful business components
+function DashboardLayout({ children }) {
+  return (
+    <div className="dashboard-layout">
+      <Sidebar />
+      <main className="main-content">
+        {children} {/* Business components live here */}
+      </main>
+    </div>
+  )
+}
+
+function ArticlesPage() {
+  // ✅ Stateful hook under stable layout
+  const { articles, refresh } = useArticlesRealtime()
+  return <ArticleList articles={articles} />
+}
+
+// ✅ CORRECT: Diagnostic components are separate
+function DebugOverlay() {
+  // ✅ No stateful hooks - only display
+  const debugInfo = useDebugDisplay() // Pure display logic only
+  return <div className="debug-overlay">{debugInfo}</div>
+}
+```
+
+### Forbidden Patterns
+
+```typescript
+// ❌ FORBIDDEN: Diagnostic components with stateful hooks
+function DebugPanel() {
+  // ❌ Never place stateful hooks in diagnostic components
+  const debug = useDebugRealtime() // This breaks business logic lifecycle
+  const [metrics, setMetrics] = useState({})
+  
+  useEffect(() => {
+    // ❌ Never set intervals in diagnostic components
+    const interval = setInterval(() => {
+      setMetrics(fetchMetrics())
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [])
+  
+  return <div>Debug: {debug.status}</div>
+}
+
+// ❌ FORBIDDEN: Stateful components as volatile siblings
+function Parent() {
+  const [showDebug, setShowDebug] = useState(false)
+  
+  return (
+    <div>
+      {showDebug && <DebugPanel />} {/* ❌ Breaks ArticlesPage lifecycle */}
+      <ArticlesPage /> {/* ❌ Hook remounts when DebugPanel toggles */}
+    </div>
+  )
+}
+```
+
+### Lifecycle-Impacting Component Detection
+
+**Components are lifecycle-impacting if they:**
+
+- Use `useEffect` with intervals or listeners
+- Create Supabase realtime subscriptions
+- Set up WebSocket connections
+- Use `useState` with complex initialization
+- Implement custom hooks with side effects
+
+**Safe Diagnostic Components:**
+
+- Pure display components (no hooks or only `useMemo`/`useCallback`)
+- Components that only receive props and render JSX
+- Components using `React.memo` for performance optimization
+
+### Enforcement Strategy
+
+1. **Code Review**: All stateful hooks must be under stable layout components
+2. **Lint Rules**: ESLint rules to detect lifecycle-impacting diagnostic components
+3. **Component Testing**: Tests verify hook stability across component tree changes
+4. **Documentation**: All lifecycle-impacting components must be documented
+
 ---
 
-*This component catalog provides a comprehensive overview of all reusable components in the Infin8Content application.*
+*This component catalog provides a comprehensive overview of all reusable components in the Infin8Content application. The Component Lifecycle Rules section is authoritative and must be enforced to prevent hook lifecycle regressions.*

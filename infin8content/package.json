@@ -10,6 +10,8 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
+    "test:contracts": "vitest run __tests__/contracts",
+    "test:integration": "vitest run __tests__/integration",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
@@ -18,6 +20,7 @@
     "test:responsive": "playwright test --project=responsive-testing",
     "test:accessibility": "playwright test --project=accessibility-testing",
     "test:layout-regression": "npm run test:visual && npm run test:responsive",
+    "test:ts-001": "npm run test:contracts && npm run test:integration",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
