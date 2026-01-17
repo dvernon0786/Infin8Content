@@ -26,7 +26,7 @@ export function TrustSignalsSection({
       name: "Sarah Chen",
       company: "TechCorp",
       role: "Content Director",
-      headshot: "https://images.unsplash.com/photo-1494790108755-2616b332c1ca?w=400&h=400&fit=crop&crop=face&auto=format",
+      headshot: "/images/testimonials/sarah-chen-new.jpg",
       quote: "Infin8Content transformed our content strategy. We're producing 10x more high-quality content while maintaining perfect brand consistency across all channels.",
       outcome: "10x faster content creation, 85% improvement in brand consistency"
     },
@@ -34,7 +34,7 @@ export function TrustSignalsSection({
       name: "Marcus Johnson", 
       company: "Digital Minds",
       role: "Marketing Manager",
-      headshot: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format",
+      headshot: "/images/testimonials/marcus-johnson-new.jpg",
       quote: "The AI-powered SEO optimization is incredible. Our organic traffic increased by 300% in just 3 months, and our team spends less time on content creation.",
       outcome: "300% organic traffic growth, 60% time savings"
     },
@@ -42,7 +42,7 @@ export function TrustSignalsSection({
       name: "Jamie Foster",
       company: "EnterpriseCo", 
       role: "Head of Content",
-      headshot: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face&auto=format",
+      headshot: "/images/testimonials/jamie-foster-new.jpg",
       quote: "The collaboration features are game-changing. Our global teams work seamlessly together, and the real-time progress tracking keeps everyone aligned.",
       outcome: "Seamless global collaboration, 40% faster project completion"
     },
@@ -50,7 +50,7 @@ export function TrustSignalsSection({
       name: "Alex Rivera",
       company: "StartupHub",
       role: "Founder & CEO",
-      headshot: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face&auto=format", 
+      headshot: "/images/testimonials/alex-rivera-new.jpg", 
       quote: "As a startup, we needed to scale content quickly without hiring a large team. Infin8Content gave us enterprise-level content production at a fraction of the cost.",
       outcome: "75% cost reduction, enterprise-level content quality"
     }
@@ -60,17 +60,17 @@ export function TrustSignalsSection({
   const clientLogos: ClientLogoProps[] = [
     {
       name: "Microsoft",
-      logoUrl: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=200&h=100&fit=crop&auto=format",
+      logoUrl: "/images/clients/microsoft-new.svg",
       altText: "Microsoft office building"
     },
     {
       name: "Google",
-      logoUrl: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=200&h=100&fit=crop&auto=format",
+      logoUrl: "/images/clients/google-new.svg",
       altText: "Google campus building"
     },
     {
       name: "Amazon",
-      logoUrl: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=200&h=100&fit=crop&auto=format",
+      logoUrl: "/images/clients/amazon-new.svg",
       altText: "Amazon office building"
     },
     {
@@ -148,31 +148,31 @@ export function TrustSignalsSection({
   const trustBadges: TrustBadgeProps[] = [
     {
       name: "SSL Certificate",
-      imageUrl: "https://images.unsplash.com/photo-1558494949-ef010cbff31e?w=160&h=160&fit=crop&auto=format",
+      imageUrl: "/images/badges/ssl-new.svg",
       altText: "SSL Security Certificate",
       certification: "256-bit Encryption"
     },
     {
       name: "PCI DSS",
-      imageUrl: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=160&h=160&fit=crop&auto=format",
+      imageUrl: "/images/badges/pci-dss-new.svg",
       altText: "PCI DSS Compliant",
       certification: "Level 1 Certified"
     },
     {
       name: "GDPR",
-      imageUrl: "https://images.unsplash.com/photo-1554469384-e58e166748aa?w=160&h=160&fit=crop&auto=format",
+      imageUrl: "/images/badges/gdpr-new.svg",
       altText: "GDPR Compliant",
       certification: "EU Data Protection"
     },
     {
       name: "SOC 2",
-      imageUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=160&h=160&fit=crop&auto=format",
+      imageUrl: "/images/badges/soc2-new.svg",
       altText: "SOC 2 Type II",
       certification: "Security & Availability"
     },
     {
       name: "AWS Partner",
-      imageUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=160&h=160&fit=crop&auto=format",
+      imageUrl: "/images/badges/aws-new.svg",
       altText: "AWS Partner Network",
       certification: "Advanced Tier"
     }

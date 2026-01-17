@@ -121,9 +121,9 @@ export default function Home() {
           href: "#demo",
           ariaLabel: "Watch a demo of Infin8Content"
         }}
-        visualSrc="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=600&fit=crop&auto=format"
+        visualSrc="/images/hero-dashboard-new.png"
         visualAlt="Infin8Content dashboard showing article generation interface with real-time progress tracking"
-        webpSrc="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=600&fit=crop&auto=format"
+        webpSrc="/images/hero-dashboard-new.png"
       />
       
       <ProblemSolutionSection 

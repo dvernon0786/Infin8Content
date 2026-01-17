@@ -1,0 +1,5 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="80" cy="80" r="70" fill="#EF4444"/>
+<path d="M50 80L70 100L110 60" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="80" y="130" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle">SOC 2</text>
+</svg>

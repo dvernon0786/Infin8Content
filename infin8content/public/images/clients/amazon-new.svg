@@ -1,0 +1,5 @@
+<svg width="200" height="100" viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="10" y="30" width="180" height="40" fill="#FF9900" rx="5"/>
+<path d="M30 50C30 50 50 40 100 50C150 60 170 50 170 50" stroke="white" stroke-width="3" fill="none"/>
+<text x="100" y="55" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">Amazon</text>
+</svg>

@@ -1,0 +1,8 @@
+<svg width="200" height="100" viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="10" y="25" width="80" height="50" fill="#F25022"/>
+<rect x="110" y="25" width="80" height="50" fill="#7FBA00"/>
+<rect x="10" y="25" width="80" height="50" fill="#00A4EF"/>
+<rect x="110" y="25" width="80" height="50" fill="#FFB900"/>
+<text x="50" y="55" font-family="Arial, sans-serif" font-size="12" fill="white" text-anchor="middle">MS</text>
+<text x="150" y="55" font-family="Arial, sans-serif" font-size="12" fill="white" text-anchor="middle">365</text>
+</svg>
