@@ -78,13 +78,34 @@ export async function POST(request: Request) {
 
     // TEMPORARY: Bypass authentication for testing
     // TODO: Re-enable authentication after testing
-    const organizationId = 'e657f06e-772c-4d5c-b3ee-2fcb94463212' // Hardcoded org ID for testing
-    const userId = null // Set to null to avoid foreign key constraint
-    const plan = 'starter'
-
+    
     // Get service role client for admin operations (usage tracking)
     const supabaseAdmin = createServiceRoleClient()
     
+    // Get a valid organization ID from database instead of hardcoded
+    let organizationId = 'e657f06e-772c-4d5c-b3ee-2fcb94463212' // Fallback
+    
+    try {
+      // Try to get a valid organization from database
+      const { data: orgs, error } = await (supabaseAdmin
+        .from('organizations' as any)
+        .select('id')
+        .limit(1)
+        .single() as any)
+      
+      if (!error && orgs?.id) {
+        organizationId = orgs.id
+        console.log('[Article Generation] Using valid organization ID:', organizationId)
+      } else {
+        console.warn('[Article Generation] No organizations found, using fallback ID:', error)
+      }
+    } catch (error) {
+      console.warn('[Article Generation] Error fetching organization, using fallback ID:', error)
+    }
+    
+    const userId = null // Set to null to avoid foreign key constraint
+    const plan = 'starter'
+
     // Get regular client for RLS-protected operations (article creation)
     const supabase = await createClient()
 
