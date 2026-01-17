@@ -264,22 +264,28 @@ export class MobilePerformanceMonitor {
     if (typeof window === 'undefined') return
     if (!('PerformanceObserver' in window)) return
 
-    // Long task observer
+    // Long task observer - check browser support first
     try {
-      const longTaskObserver = new PerformanceObserver((list) => {
-        const entries = list.getEntries()
-        entries.forEach(entry => {
-          if (entry.entryType === 'long-task') {
-            console.warn('Long task detected:', {
-              duration: entry.duration,
-              startTime: entry.startTime
-            })
-          }
+      // Check if 'long-task' entry type is supported
+      if (PerformanceObserver.supportedEntryTypes && 
+          PerformanceObserver.supportedEntryTypes.includes('long-task')) {
+        const longTaskObserver = new PerformanceObserver((list) => {
+          const entries = list.getEntries()
+          entries.forEach(entry => {
+            if (entry.entryType === 'long-task') {
+              console.warn('Long task detected:', {
+                duration: entry.duration,
+                startTime: entry.startTime
+              })
+            }
+          })
         })
-      })
 
-      longTaskObserver.observe({ entryTypes: ['long-task'] })
-      this.observers.push(longTaskObserver)
+        longTaskObserver.observe({ entryTypes: ['long-task'] })
+        this.observers.push(longTaskObserver)
+      } else {
+        console.warn('Long task observation not supported in this browser')
+      }
     } catch (e) {
       console.warn('Long task observation not supported')
     }

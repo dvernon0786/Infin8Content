@@ -173,6 +173,7 @@ export class ArticleProgressRealtime {
       }
       
       const error = new Error(`Failed to reconnect dashboard after ${this.maxReconnectAttempts} attempts`);
+      progressLogger.error('Dashboard reconnection failed:', error.message);
       onError?.(error);
       return;
     }
@@ -184,6 +185,8 @@ export class ArticleProgressRealtime {
 
     setTimeout(() => {
       try {
+        // Reset connection state before retrying
+        this.isDashboardConnected = false;
         this.subscribeToDashboardUpdates(orgId, onDashboardUpdate, onError, onConnectionChange);
       } catch (error) {
         progressLogger.error('Dashboard reconnection failed:', error);

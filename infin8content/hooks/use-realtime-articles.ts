@@ -210,6 +210,12 @@ export function useRealtimeArticles({
       return;
     }
     
+    // Don't start polling if we have no articles (reduces unnecessary API calls)
+    if (articles.length === 0 && !lastUpdated) {
+      console.log('📡 No articles to poll, skipping');
+      return;
+    }
+    
     console.log('🚀 Starting polling with interval:', pollingInterval);
     
     pollingTimeoutRef.current = setInterval(async () => {
@@ -220,7 +226,7 @@ export function useRealtimeArticles({
         console.error('Polling error:', error);
       }
     }, pollingInterval);
-  }, [fetchArticles, pollingInterval]);
+  }, [fetchArticles, pollingInterval, articles.length, lastUpdated]);
 
   const stopPolling = useCallback(() => {
     if (pollingTimeoutRef.current) {
@@ -311,12 +317,17 @@ export function useRealtimeArticles({
     console.log('🔧 Initializing hook for orgId:', orgId);
     isInitializedRef.current = true;
 
-    // Start polling immediately if enabled (as a reliable fallback)
-    if (enablePolling && !isPollingMode) {
-      console.log('🚀 Starting polling immediately as fallback');
-      setIsPollingMode(true);
-      startPolling();
-    }
+    // Initial fetch first, then start polling if needed
+    fetchArticles().then(() => {
+      // Only start polling after initial fetch if we have articles
+      if (enablePolling && !isPollingMode && articles.length > 0) {
+        console.log('🚀 Starting polling after initial fetch');
+        setIsPollingMode(true);
+        startPolling();
+      }
+    }).catch(() => {
+      // Error is handled in fetchArticles function
+    });
 
     // Also try real-time subscription
     articleProgressRealtime.subscribeToDashboardUpdates(
@@ -325,11 +336,6 @@ export function useRealtimeArticles({
       handleError,
       handleConnectionChange
     );
-
-    // Initial fetch
-    fetchArticles().catch(() => {
-      // Error is handled in fetchArticles function
-    });
 
     // Cleanup on unmount
     return () => {

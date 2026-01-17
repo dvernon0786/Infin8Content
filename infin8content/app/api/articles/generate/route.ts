@@ -65,11 +65,16 @@ const PLAN_LIMITS: Record<string, number | null> = {
  * Authorization: User must belong to an organization
  */
 export async function POST(request: Request) {
+  console.log('[Article Generation] API route called')
+  
   try {
     validateSupabaseEnv()
     
     const body = await request.json()
+    console.log('[Article Generation] Request body parsed:', { keyword: body.keyword, targetWordCount: body.targetWordCount })
+    
     const parsed = articleGenerationSchema.parse(body)
+    console.log('[Article Generation] Request validated successfully')
 
     // TEMPORARY: Bypass authentication for testing
     // TODO: Re-enable authentication after testing
@@ -317,6 +322,13 @@ export async function POST(request: Request) {
       message: 'Article generation started',
     })
   } catch (error: any) {
+    console.error('[Article Generation] Error occurred:', {
+      error: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+      details: error?.details
+    })
+    
     if (error instanceof z.ZodError) {
       const firstError = error.issues?.[0]
       return NextResponse.json(
@@ -324,15 +336,37 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    
-    // Log error with context for debugging
-    console.error('Article generation error:', {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    })
-    
+
+    // Handle JSON parsing errors
+    if (error instanceof SyntaxError && error.message.includes('JSON')) {
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      )
+    }
+
+    // Handle database connection errors
+    if (error?.code === 'PGRST' || error?.message?.includes('supabase')) {
+      return NextResponse.json(
+        { error: 'Database connection error', details: 'Please try again later' },
+        { status: 503 }
+      )
+    }
+
+    // Handle Inngest errors
+    if (error?.message?.includes('inngest')) {
+      return NextResponse.json(
+        { error: 'Service temporarily unavailable', details: 'Article generation queue is temporarily down' },
+        { status: 503 }
+      )
+    }
+
+    // Generic error
     return NextResponse.json(
-      { error: 'Article generation failed. Please try again.' },
+      { 
+        error: 'Internal server error', 
+        details: process.env.NODE_ENV === 'development' ? error?.message : 'Something went wrong'
+      },
       { status: 500 }
     )
   }
