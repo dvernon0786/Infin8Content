@@ -84,14 +84,12 @@ export async function POST(request: Request) {
     
     // Get current user's organization ID to ensure articles belong to the user's org
     let organizationId = '039754b3-c797-45b3-b1b5-ad4acab980c0' // Valid fallback ID from database
-    let userId = null // Default to null for safety
     
     try {
       // Get the current user to use their organization ID
       const currentUser = await getCurrentUser()
       if (currentUser?.org_id) {
         organizationId = currentUser.org_id
-        userId = currentUser.id // Use actual user ID
         console.log('[Article Generation] Using current user organization ID:', organizationId)
       } else {
         // Fallback to getting any valid organization from database
@@ -111,6 +109,8 @@ export async function POST(request: Request) {
     } catch (error) {
       console.warn('[Article Generation] Error getting user organization, using fallback ID:', error)
     }
+    
+    const userId = null // Revert to null to avoid foreign key constraint issues
     const plan = 'starter'
 
     // Get regular client for RLS-protected operations (article creation)
