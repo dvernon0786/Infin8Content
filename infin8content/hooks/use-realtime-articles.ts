@@ -221,11 +221,6 @@ export function useRealtimeArticles({
       return;
     }
     
-    // Don't start polling if we have no articles (reduces unnecessary API calls)
-    if (articles.length === 0 && !lastUpdated) {
-      console.log('📡 No articles to poll, skipping');
-      return;
-    }
     
     console.log('🚀 Starting polling with interval:', pollingInterval);
     
@@ -237,7 +232,7 @@ export function useRealtimeArticles({
         console.error('Polling error:', error);
       }
     }, pollingInterval);
-  }, [fetchArticles, pollingInterval, articles.length, lastUpdated]);
+  }, [fetchArticles, pollingInterval]);
 
   const stopPolling = useCallback(() => {
     if (pollingTimeoutRef.current) {
