@@ -352,7 +352,7 @@ export function useRealtimeArticles({
       }
       fetchInProgressRef.current = false;
     };
-  }, [orgId, handleDashboardUpdate, handleError, handleConnectionChange]);
+  }, [orgId]); // Only depend on orgId, not functions
 
   return {
     articles,
