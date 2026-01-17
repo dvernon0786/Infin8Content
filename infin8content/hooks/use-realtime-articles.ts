@@ -322,9 +322,9 @@ export function useRealtimeArticles({
     isInitializedRef.current = true;
 
     // Initial fetch first, then start polling if needed
-    fetchArticles().then(() => {
+    fetchArticles().then((fetchedArticles) => {
       // Only start polling after initial fetch if we have articles
-      if (enablePolling && !isPollingMode && articles.length > 0) {
+      if (enablePolling && !isPollingMode && fetchedArticles.length > 0) {
         console.log('🚀 Starting polling after initial fetch');
         setIsPollingMode(true);
         startPolling();
