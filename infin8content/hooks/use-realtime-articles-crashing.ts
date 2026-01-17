@@ -1,7 +1,7 @@
 /**
  * React hook for real-time dashboard article updates
  * Story 15.1: Real-time Article Status Display
- * STABLE VERSION - Rate limited and crash-proof
+ * FIXED VERSION - Uses reconciliation instead of patching
  */
 
 'use client';
@@ -56,25 +56,13 @@ export function useRealtimeArticles({
     averageLatency: 0,
     lastUpdateTimestamp: 0,
   });
-  const fetchInProgressRef = useRef(false);
-  const lastFetchTimeRef = useRef(0);
 
-  // Fetch articles from API with rate limiting
+  // Fetch articles from API
   const fetchArticles = useCallback(async (since?: string) => {
     if (!orgId) {
       console.warn('🔥 fetchArticles called without orgId');
       return [];
     }
-
-    // Rate limiting to prevent browser crash
-    const now = Date.now();
-    if (fetchInProgressRef.current || (now - lastFetchTimeRef.current < 500)) {
-      console.log('🚨 Rate limiting fetch - request in progress or too soon');
-      return articles;
-    }
-
-    fetchInProgressRef.current = true;
-    lastFetchTimeRef.current = now;
 
     try {
       console.log('📡 Fetching articles for orgId:', orgId);
@@ -183,12 +171,10 @@ export function useRealtimeArticles({
       setError(error);
       onError?.(error);
       throw error;
-    } finally {
-      fetchInProgressRef.current = false;
     }
   }, [orgId, onError, articles.length]);
 
-  // Handle dashboard updates from real-time subscription with rate limiting
+  // Handle dashboard updates from real-time subscription
   const handleDashboardUpdate = useCallback((event: DashboardUpdateEvent) => {
     console.log('🛰️ Realtime signal received → refetching articles', {
       type: event.type,
@@ -198,22 +184,13 @@ export function useRealtimeArticles({
     
     // ⚠️ Do NOT patch articles state directly from realtime payloads.
     // Multiple tables emit events. Always reconcile with DB.
-    
-    // Rate limiting to prevent browser crash
-    const now = Date.now();
-    if (performanceMetricsRef.current.lastUpdateTimestamp && 
-        now - performanceMetricsRef.current.lastUpdateTimestamp < 1000) {
-      console.warn('🚨 Rate limiting realtime fetch - too many events');
-      return;
-    }
-    
     fetchArticles();
     
     // Still emit event for other listeners
     onDashboardUpdate?.(event);
   }, [fetchArticles, onDashboardUpdate]);
 
-  // Polling functions with debouncing
+  // Polling functions
   const startPolling = useCallback(() => {
     // Prevent starting polling if it's already running
     if (pollingTimeoutRef.current) {
@@ -285,12 +262,8 @@ export function useRealtimeArticles({
     onError?.(error);
   }, [onError]);
 
-  // Refresh function with debouncing
+  // Refresh function
   const refresh = useCallback(() => {
-    if (fetchInProgressRef.current) {
-      console.log('🔄 Refresh already in progress, skipping');
-      return;
-    }
     console.log('🔄 Manual refresh triggered');
     return fetchArticles();
   }, [fetchArticles]);
@@ -306,7 +279,7 @@ export function useRealtimeArticles({
     // Re-initialize will happen in useEffect
   }, [stopPolling]);
 
-  // Initialize real-time subscription with cleanup
+  // Initialize real-time subscription
   useEffect(() => {
     if (!orgId) {
       return;
@@ -350,7 +323,6 @@ export function useRealtimeArticles({
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
-      fetchInProgressRef.current = false;
     };
   }, [orgId, handleDashboardUpdate, handleError, handleConnectionChange]);
 
