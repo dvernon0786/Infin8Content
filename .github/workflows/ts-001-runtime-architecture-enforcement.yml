@@ -55,7 +55,7 @@ jobs:
           cd infin8content
           npm ci
           
-      - name: TS-001: NO_REALTIME_STATE_MUTATION
+      - name: "TS-001: NO_REALTIME_STATE_MUTATION"
         run: |
           echo "🔍 Checking for realtime state mutations..."
           realtime_files=$(find infin8content/hooks -name "*realtime*" -o -name "*use-*" 2>/dev/null || true)
@@ -68,7 +68,7 @@ jobs:
           fi
           echo "✅ NO_REALTIME_STATE_MUTATION: Passed"
           
-      - name: TS-001: NO_DATA_AWARE_POLLING
+      - name: "TS-001: NO_DATA_AWARE_POLLING"
         run: |
           echo "🔍 Checking for data-aware polling..."
           polling_files=$(find infin8content/hooks -name "*polling*" -o -name "*use-*" 2>/dev/null || true)
@@ -81,7 +81,7 @@ jobs:
           fi
           echo "✅ NO_DATA_AWARE_POLLING: Passed"
           
-      - name: TS-001: NO_STATEFUL_DIAGNOSTICS
+      - name: "TS-001: NO_STATEFUL_DIAGNOSTICS"
         run: |
           echo "🔍 Checking for stateful diagnostic components..."
           diagnostic_files=$(find infin8content/components -name "*debug*" -o -name "*diagnostic*" -name "*.tsx" 2>/dev/null || true)
@@ -94,7 +94,7 @@ jobs:
           fi
           echo "✅ NO_STATEFUL_DIAGNOSTICS: Passed"
           
-      - name: TS-001: REALTIME_RECONCILIATION_REQUIRED
+      - name: "TS-001: REALTIME_RECONCILIATION_REQUIRED"
         run: |
           echo "🔍 Checking for realtime reconciliation markers..."
           realtime_files=$(find infin8content/hooks infin8content/components -name "*.ts" -o -name "*.tsx" | xargs grep -l "supabase\.channel.*on" 2>/dev/null || true)
@@ -109,21 +109,21 @@ jobs:
           done
           echo "✅ REALTIME_RECONCILIATION_REQUIRED: Passed"
           
-      - name: TS-001: Contract Tests
+      - name: "TS-001: Contract Tests"
         run: |
           echo "🧪 Running contract tests..."
           cd infin8content
           npm run test:contracts || echo "⚠️  TS-001: Contract tests not fully implemented - TODO warnings in test output"
           echo "✅ Contract Tests: Non-blocking execution complete"
           
-      - name: TS-001: Integration Tests
+      - name: "TS-001: Integration Tests"
         run: |
           echo "🧪 Running integration tests..."
           cd infin8content
           npm run test:integration || echo "⚠️  TS-001: Integration tests not fully implemented - TODO warnings in test output"
           echo "✅ Integration Tests: Non-blocking execution complete"
           
-      - name: TS-001: Architecture Compliance Report
+      - name: "TS-001: Architecture Compliance Report"
         run: |
           echo "📊 TS-001 Architecture Compliance Report"
           echo "=========================================="
