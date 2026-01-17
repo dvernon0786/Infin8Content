@@ -155,6 +155,7 @@ export async function POST(request: Request) {
         org_id: organizationId,
         created_by: userId || null, // Ensure null if userId is undefined
         keyword: parsed.keyword,
+        title: `Article: ${parsed.keyword}`, // Generate title from keyword
         status: 'queued',
         target_word_count: parsed.targetWordCount,
         writing_style: parsed.writingStyle,
