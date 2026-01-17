@@ -1,7 +1,6 @@
 /**
  * React hook for real-time dashboard article updates
  * Story 15.1: Real-time Article Status Display
- * FIXED VERSION - Uses reconciliation instead of patching
  */
 
 'use client';
@@ -35,7 +34,7 @@ export function useRealtimeArticles({
   onDashboardUpdate,
   onError,
   onConnectionChange,
-  pollingInterval = 120000, // 2 minutes
+  pollingInterval = 120000, // 2 minutes default (articles take >2 mins to complete)
   enablePolling = true,
 }: UseRealtimeArticlesOptions): UseRealtimeArticlesReturn {
   const [articles, setArticles] = useState<DashboardArticle[]>([]);
@@ -44,12 +43,13 @@ export function useRealtimeArticles({
   const [isPollingMode, setIsPollingMode] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-
-  // Refs for cleanup and performance tracking
+  
   const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isInitializedRef = useRef(false);
   const lastPollRef = useRef<string | null>(null);
+  const isInitializedRef = useRef<boolean>(false);
+  
+  // Performance monitoring
   const performanceMetricsRef = useRef({
     updateCount: 0,
     totalLatency: 0,
@@ -60,92 +60,76 @@ export function useRealtimeArticles({
   // Fetch articles from API
   const fetchArticles = useCallback(async (since?: string) => {
     if (!orgId) {
-      console.warn('🔥 fetchArticles called without orgId');
-      return [];
+      console.warn('⚠️ No orgId available, skipping fetch');
+      return null;
     }
-
+    
     try {
       console.log('📡 Fetching articles for orgId:', orgId);
+      const params = new URLSearchParams({
+        orgId,
+        limit: '50',
+      });
       
-      const url = since 
-        ? `/api/articles/queue?orgId=${orgId}&limit=50&since=${since}`
-        : `/api/articles/queue?orgId=${orgId}&limit=50`;
-      
-      console.log('📡 Fetching articles from:', url);
+      if (since) {
+        params.append('since', since);
+      }
 
-      const response = await fetch(url);
+      console.log('📡 Fetching articles from:', `/api/articles/queue?${params}`);
+      
+      const response = await fetch(`/api/articles/queue?${params}`);
+      
+      console.log('📡 Response status:', response.status);
       
       if (!response.ok) {
+        console.error('❌ API Response error:', response.status, response.statusText);
         throw new Error(`Failed to fetch articles: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('📡 Response status:', response.status);
       
-      // Transform API response to DashboardArticle format
-      const transformedArticles: DashboardArticle[] = data.map((article: any) => ({
-        id: article.id,
-        keyword: article.keyword,
-        title: article.title,
-        status: article.status,
-        created_at: article.created_at,
-        updated_at: article.updated_at,
-        target_word_count: article.target_word_count,
-        writing_style: article.writing_style,
-        target_audience: article.target_audience,
-        custom_instructions: article.custom_instructions,
-        inngest_event_id: article.inngest_event_id,
-        created_by: article.created_by,
-        outline: article.outline,
-        sections: article.sections,
-        current_section_index: article.current_section_index,
-        generation_started_at: article.generation_started_at,
-        generation_completed_at: article.generation_completed_at,
-        error_details: article.error_details,
-        outline_generation_duration_ms: article.outline_generation_duration_ms,
-      }));
-
-      console.log('🔄 fetchArticles called with data:', transformedArticles.length, 'articles');
-      console.log('📊 Current state has:', articles.length, 'articles');
-
-      // Update state with new articles
       setArticles(prevArticles => {
-        const newArticles = since ? [...prevArticles] : [];
+        console.log('🔄 fetchArticles called with data:', data.articles.length, 'articles');
+        console.log('📊 Current state has:', prevArticles.length, 'articles');
         
-        if (since) {
-          // Incremental update for polling
-          transformedArticles.forEach((newArticle: DashboardArticle) => {
-            const existingIndex = newArticles.findIndex(a => a.id === newArticle.id);
-            if (existingIndex >= 0) {
-              newArticles[existingIndex] = newArticle;
-              console.log('🔄 Updated article:', newArticle.id);
-            } else {
-              newArticles.unshift(newArticle);
-              console.log('➕ Adding new article:', newArticle.id);
-            }
-          });
-        } else {
-          // Full replace for initial fetch
-          transformedArticles.forEach((article: DashboardArticle) => {
-            console.log('➕ Adding new article:', article.id);
-          });
-          return transformedArticles;
-        }
+        // Create a map of existing articles for quick lookup
+        const existingMap = new Map(prevArticles.map(a => [a.id, a]));
         
-        console.log('✅ Final result has:', newArticles.length, 'articles');
-        return newArticles;
+        // Update existing articles and add new ones
+        const updatedArticles = data.articles.map((fetchedArticle: DashboardArticle) => {
+          const existing = existingMap.get(fetchedArticle.id);
+          if (existing) {
+            console.log('🔄 Updating existing article:', fetchedArticle.id, 'from', existing.status, 'to', fetchedArticle.status);
+            // Update existing article with new data
+            return {
+              ...existing,
+              ...fetchedArticle,
+              // Preserve progress if it exists in the existing article but not in fetched data
+              progress: fetchedArticle.progress || existing.progress
+            };
+          }
+          console.log('➕ Adding new article:', fetchedArticle.id);
+          // Return new article as-is
+          return fetchedArticle;
+        });
+        
+        // Add any existing articles that weren't in the fetch response (for articles that might be filtered out)
+        const fetchedIds = new Set(data.articles.map((a: DashboardArticle) => a.id));
+        const remainingArticles = prevArticles.filter(a => !fetchedIds.has(a.id));
+        
+        // Combine and sort by updated_at desc, keep only 50 most recent
+        const result = [...updatedArticles, ...remainingArticles]
+          .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+          .slice(0, 50);
+          
+        console.log('✅ Final result has:', result.length, 'articles');
+        return result;
       });
-
-      // Update last poll timestamp for incremental updates
-      if (since) {
-        lastPollRef.current = since;
-      } else {
-        setLastUpdated(new Date().toISOString());
-      }
-
+      
+      setLastUpdated(new Date().toISOString());
       setError(null);
       
-      return transformedArticles;
+      return data;
     } catch (err) {
       const error = err as Error;
       console.error('🔥 Fetch error details:', {
@@ -158,23 +142,65 @@ export function useRealtimeArticles({
       onError?.(error);
       throw error;
     }
-  }, [orgId, onError, articles.length]);
+  }, [orgId, onError]);
 
   // Handle dashboard updates from real-time subscription
   const handleDashboardUpdate = useCallback((event: DashboardUpdateEvent) => {
-    console.log('🛰️ Realtime signal received → refetching articles', {
-      type: event.type,
-      articleId: event.articleId,
-      status: event.status
+    onDashboardUpdate?.(event);
+    
+    // Track performance metrics
+    const now = Date.now();
+    const eventTime = new Date(event.timestamp).getTime();
+    const latency = now - eventTime;
+    
+    const metrics = performanceMetricsRef.current;
+    metrics.updateCount++;
+    metrics.totalLatency += latency;
+    metrics.averageLatency = metrics.totalLatency / metrics.updateCount;
+    metrics.lastUpdateTimestamp = now;
+    
+    // Log performance warnings
+    if (latency > 2000) { // > 2 seconds
+      console.warn(`High latency detected: ${latency}ms for article ${event.articleId}`);
+    }
+    
+    // Update local articles state based on the event
+    setArticles(prevArticles => {
+      const updatedArticles = [...prevArticles];
+      const articleIndex = updatedArticles.findIndex(a => a.id === event.articleId);
+      
+      if (articleIndex >= 0) {
+        // Update existing article
+        updatedArticles[articleIndex] = {
+          ...updatedArticles[articleIndex],
+          status: event.status,
+          updated_at: event.timestamp,
+          ...event.metadata,
+        };
+      } else {
+        // Add new article if it's not in the list
+        if (event.metadata && typeof event.metadata === 'object') {
+          const metadata = event.metadata as Record<string, unknown>;
+          const newArticle: DashboardArticle = {
+            id: event.articleId,
+            keyword: (metadata.keyword as string) || '',
+            title: (metadata.title as string) || '',
+            status: event.status,
+            created_at: event.timestamp,
+            updated_at: event.timestamp,
+          };
+          updatedArticles.unshift(newArticle);
+        }
+      }
+      
+      // Sort by updated_at desc and keep only 50 most recent
+      return updatedArticles
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+        .slice(0, 50);
     });
     
-    // ⚠️ Do NOT patch articles state directly from realtime payloads.
-    // Multiple tables emit events. Always reconcile with DB.
-    fetchArticles();
-    
-    // Still emit event for other listeners
-    onDashboardUpdate?.(event);
-  }, [fetchArticles, onDashboardUpdate]);
+    setLastUpdated(event.timestamp);
+  }, [onDashboardUpdate]);
 
   // Polling functions
   const startPolling = useCallback(() => {
@@ -242,28 +268,39 @@ export function useRealtimeArticles({
   }, [enablePolling, isPollingMode, onConnectionChange, startPolling, stopPolling]);
 
   // Handle errors
-  const handleError = useCallback((error: Error) => {
-    console.error('🔥 Realtime error:', error);
-    setError(error);
-    onError?.(error);
-  }, [onError]);
+  const handleError = useCallback((err: Error) => {
+    setError(err);
+    onError?.(err);
+    
+    // Start polling on connection errors if enabled
+    if (enablePolling && !isPollingMode) {
+      setIsPollingMode(true);
+      startPolling();
+    }
+  }, [enablePolling, isPollingMode, onError]);
 
-  // Refresh function
+  // Manual refresh
   const refresh = useCallback(() => {
-    console.log('🔄 Manual refresh triggered');
     return fetchArticles();
   }, [fetchArticles]);
 
-  // Reconnect function
+  // Manual reconnect
   const reconnect = useCallback(() => {
-    console.log('🔄 Manual reconnect triggered');
-    articleProgressRealtime.unsubscribeFromDashboard();
-    setIsPollingMode(false);
-    stopPolling();
-    isInitializedRef.current = false;
+    // Clear any existing timeouts
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
     
-    // Re-initialize will happen in useEffect
-  }, [stopPolling]);
+    // Force reconnection by unsubscribing and resubscribing
+    articleProgressRealtime.unsubscribeFromDashboard();
+    articleProgressRealtime.subscribeToDashboardUpdates(
+      orgId,
+      handleDashboardUpdate,
+      handleError,
+      handleConnectionChange
+    );
+  }, [orgId, handleDashboardUpdate, handleError, handleConnectionChange]);
 
   // Initialize real-time subscription
   useEffect(() => {
@@ -310,7 +347,14 @@ export function useRealtimeArticles({
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [orgId, handleDashboardUpdate, handleError, handleConnectionChange]);
+  }, [orgId]); // Only depend on orgId, not on functions that change every render
+
+  // Update polling reference when articles change
+  useEffect(() => {
+    if (lastUpdated) {
+      lastPollRef.current = lastUpdated;
+    }
+  }, [lastUpdated]);
 
   return {
     articles,
