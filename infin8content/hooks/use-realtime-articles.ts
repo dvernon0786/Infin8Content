@@ -81,6 +81,13 @@ export function useRealtimeArticles({
 
       const data = await response.json();
       console.log('📡 Response status:', response.status);
+      console.log('📡 Raw response data:', data);
+      
+      // Defensive: Ensure data is an array
+      if (!Array.isArray(data)) {
+        console.error('🔥 Expected array from API, received:', typeof data, data);
+        throw new Error(`API returned non-array data: ${typeof data}`);
+      }
       
       // Transform API response to DashboardArticle format
       const transformedArticles: DashboardArticle[] = data.map((article: any) => ({
