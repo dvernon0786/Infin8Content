@@ -10,6 +10,9 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     name: Build & Test
+    defaults:
+      run:
+        working-directory: ./infin8content
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,26 +22,24 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
+          cache-dependency-path: infin8content/package-lock.json
           
       - name: Install dependencies
-        run: |
-          cd infin8content
-          npm ci
+        run: npm ci
           
       - name: Run TypeScript compilation
-        run: |
-          cd infin8content
-          npm run build
+        run: npm run build
           
       - name: Run unit tests
-        run: |
-          cd infin8content
-          npm run test:run
+        run: npm run test:run
 
   ts-001-architecture-enforcement:
     runs-on: ubuntu-latest
     name: TS-001 Architecture Compliance
     needs: build-and-test
+    defaults:
+      run:
+        working-directory: ./infin8content
     
     steps:
       - name: Checkout code
@@ -49,16 +50,15 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
+          cache-dependency-path: infin8content/package-lock.json
           
       - name: Install dependencies
-        run: |
-          cd infin8content
-          npm ci
+        run: npm ci
           
       - name: "TS-001: NO_REALTIME_STATE_MUTATION"
         run: |
           echo "🔍 Checking for realtime state mutations..."
-          realtime_files=$(find infin8content/hooks -name "*realtime*" -o -name "*use-*" 2>/dev/null || true)
+          realtime_files=$(find hooks -name "*realtime*" -o -name "*use-*" 2>/dev/null || true)
           if [ -n "$realtime_files" ]; then
             if grep -r "setArticles.*event\.payload" $realtime_files --include="*.ts" --include="*.tsx" 2>/dev/null; then
               echo "❌ TS-001 VIOLATION: Direct state mutation from realtime payload"
@@ -71,7 +71,7 @@ jobs:
       - name: "TS-001: NO_DATA_AWARE_POLLING"
         run: |
           echo "🔍 Checking for data-aware polling..."
-          polling_files=$(find infin8content/hooks -name "*polling*" -o -name "*use-*" 2>/dev/null || true)
+          polling_files=$(find hooks -name "*polling*" -o -name "*use-*" 2>/dev/null || true)
           if [ -n "$polling_files" ]; then
             if grep -r "useEffect.*articles\.length.*setInterval" $polling_files --include="*.ts" --include="*.tsx" 2>/dev/null; then
               echo "❌ TS-001 VIOLATION: Polling depends on data state"
@@ -84,7 +84,7 @@ jobs:
       - name: "TS-001: NO_STATEFUL_DIAGNOSTICS"
         run: |
           echo "🔍 Checking for stateful diagnostic components..."
-          diagnostic_files=$(find infin8content/components -name "*debug*" -o -name "*diagnostic*" -name "*.tsx" 2>/dev/null || true)
+          diagnostic_files=$(find components -name "*debug*" -o -name "*diagnostic*" -name "*.tsx" 2>/dev/null || true)
           if [ -n "$diagnostic_files" ]; then
             if grep -l "useEffect\|useState" $diagnostic_files 2>/dev/null; then
               echo "❌ TS-001 VIOLATION: Diagnostic components contain stateful hooks"
@@ -97,7 +97,7 @@ jobs:
       - name: "TS-001: REALTIME_RECONCILIATION_REQUIRED"
         run: |
           echo "🔍 Checking for realtime reconciliation markers..."
-          realtime_files=$(find infin8content/hooks infin8content/components -name "*.ts" -o -name "*.tsx" | xargs grep -l "supabase\.channel.*on" 2>/dev/null || true)
+          realtime_files=$(find hooks components -name "*.ts" -o -name "*.tsx" | xargs grep -l "supabase\.channel.*on" 2>/dev/null || true)
           
           for file in $realtime_files; do
             if ! grep -q "// TS-001: realtime-signal.*reconcile-with-db" "$file"; then
@@ -112,14 +112,12 @@ jobs:
       - name: "TS-001: Contract Tests"
         run: |
           echo "🧪 Running contract tests..."
-          cd infin8content
           npm run test:contracts || echo "⚠️  TS-001: Contract tests not fully implemented - TODO warnings in test output"
           echo "✅ Contract Tests: Non-blocking execution complete"
           
       - name: "TS-001: Integration Tests"
         run: |
           echo "🧪 Running integration tests..."
-          cd infin8content
           npm run test:integration || echo "⚠️  TS-001: Integration tests not fully implemented - TODO warnings in test output"
           echo "✅ Integration Tests: Non-blocking execution complete"
           
