@@ -89,8 +89,8 @@ export function ArticleGenerationPageClient({ organizationId }: ArticleGeneratio
         return
       }
 
-      // Success - redirect to article detail page
-      router.push(`/dashboard/articles/${result.articleId}`)
+      // Success - redirect to articles dashboard to see progress
+      router.push('/dashboard/articles')
     } catch (err) {
       console.error('Article generation error:', err)
       setError('An unexpected error occurred. Please try again.')
