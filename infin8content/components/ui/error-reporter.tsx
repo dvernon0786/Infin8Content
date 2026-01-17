@@ -118,9 +118,9 @@ export function ErrorReporter({
         userDescription: formData.userDescription!,
         severity: formData.severity!,
         category: formData.category!,
-        userAgent: formData.userAgent,
-        url: formData.url,
-        timestamp: formData.timestamp,
+        userAgent: formData.userAgent || '',
+        url: formData.url || '',
+        timestamp: formData.timestamp || '',
         consent: formData.consent
       };
 

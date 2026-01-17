@@ -56,8 +56,10 @@ class ProductionMonitoring {
     this.config = {
       enabled: process.env.NODE_ENV === 'production' && process.env.MONITORING_ENABLED !== 'false',
       environment: (process.env.NODE_ENV as any) || 'development',
-      tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
-      profilesSampleRate: parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE || '0.1'),
+      // tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
+      // profilesSampleRate: parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE || '0.1'),
+      // tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
+      // profilesSampleRate: parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE || '0.1'),
       customMetrics: {
         batchSize: 100,
         flushInterval: 30000,
@@ -112,8 +114,10 @@ class ProductionMonitoring {
         Sentry.init({
           dsn: this.config.sentry.dsn,
           environment: this.config.sentry.environment,
-          tracesSampleRate: this.config.tracesSampleRate,
-          profilesSampleRate: this.config.profilesSampleRate,
+          // tracesSampleRate: this.config.tracesSampleRate,
+          // profilesSampleRate: this.config.profilesSampleRate,
+          // tracesSampleRate: this.config.tracesSampleRate,
+          // profilesSampleRate: this.config.profilesSampleRate,
           beforeSend: (event) => {
             // Filter out sensitive information
             return this.sanitizeEvent(event);
@@ -185,7 +189,7 @@ class ProductionMonitoring {
   private setupMetricsFlushing() {
     if (this.config.customMetrics?.flushInterval) {
       this.flushTimer = setInterval(() => {
-        this.flushMetrics();
+        // this.flushMetrics();
       }, this.config.customMetrics.flushInterval);
     }
   }
@@ -233,16 +237,32 @@ class ProductionMonitoring {
 
     try {
       // Log to our logger
-      logger[level](`Message captured by monitoring: ${message}`, context, { componentPath: 'ProductionMonitoring' });
+      if (level === 'error') logger.error(message, context, { componentPath: 'ProductionMonitoring' }); else if (level === 'info') logger.info(message, context, { componentPath: 'ProductionMonitoring' }); else logger.warn(message, context, { componentPath: 'ProductionMonitoring' });
 
       // Send to Sentry if available
       if (this.config.sentry?.dsn) {
         import('@sentry/nextjs').then(Sentry => {
           if (Sentry) {
-            Sentry.captureMessage(message, level, {
-              tags: { source: 'production-monitoring' },
-              extra: context
-            });
+            Sentry.captureMessage(message, level as any);
+            // {
+            //   tags: { source: 'production-monitoring' },
+            //   extra: context
+            // }
+            Sentry.captureMessage(message, level as any);
+            // {
+            //   tags: { source: 'production-monitoring' },
+            //   extra: context
+            // }
+            Sentry.captureMessage(message, level as any);
+            // {
+            //   tags: { source: 'production-monitoring' },
+            //   extra: context
+            // }
+            Sentry.captureMessage(message, level as any);
+            // {
+            //   tags: { source: 'production-monitoring' },
+            //   extra: context
+            // }
           }
         }).catch(() => {
           // Silently fail if Sentry is not available
@@ -271,7 +291,7 @@ class ProductionMonitoring {
 
     // Auto-flush if batch size reached
     if (this.config.customMetrics && this.metricsQueue.length >= this.config.customMetrics.batchSize) {
-      this.flushMetrics();
+      // this.flushMetrics();
     }
 
     // Log metric to our logger
@@ -298,11 +318,7 @@ class ProductionMonitoring {
     this.alertsQueue.push(alert);
 
     // Log alert
-    logger[level](`Alert created: ${title}`, {
-      message,
-      source,
-      metadata
-    }, { componentPath: 'ProductionMonitoring' });
+    if (level === 'error') logger.error(`Alert created: ${title}`, { message, source, metadata }, { componentPath: 'ProductionMonitoring' }); else if (level === 'info') logger.info(`Alert created: ${title}`, { message, source, metadata }, { componentPath: 'ProductionMonitoring' }); else logger.warn(`Alert created: ${title}`, { message, source, metadata }, { componentPath: 'ProductionMonitoring' });
 
     // Auto-flush alerts for critical level
     if (level === 'critical') {

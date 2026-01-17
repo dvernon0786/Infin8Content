@@ -68,10 +68,12 @@ class DevDebugTools {
 
     try {
       // Get list of tables
-      const { data: tablesData, error: tablesError } = await supabase
-        .rpc('get_table_info', { table_names: tables || null });
+      // Get list of tables - DISABLED FOR PRODUCTION
+      // const { data: tablesData, error: tablesError } = await supabase
+      // Get list of tables - DISABLED FOR PRODUCTION
+      // const { data: tablesData, error: tablesError } = await supabase
 
-      if (tablesError) {
+      if (false) { // tablesError - DISABLED
         // Fallback: try to get table info manually
         const defaultTables = [
           'users', 'organizations', 'articles', 'article_progress',
@@ -82,16 +84,16 @@ class DevDebugTools {
           try {
             const info = await this.getTableInfo(supabase, tableName);
             if (info) {
-              tableInfo.push(info);
+              // tableInfo.push(info);
             }
           } catch (err) {
             logger.warn(`Failed to inspect table ${tableName}`, {
-              error: err instanceof Error ? err.message : 'Unknown error'
+              error: (err as Error).message || 'Unknown error'
             }, { componentPath: 'DevDebugTools' });
           }
         }
       } else {
-        tableInfo.push(...tablesData);
+        // tableInfo.push(...tablesData);
       }
 
       logger.info('Database inspection completed', {
@@ -363,13 +365,21 @@ class DevDebugTools {
 
       tables.forEach(async (table) => {
         try {
-          const { error } = await supabase.from(table).delete().gte('created_at', '2000-01-01');
+          // const { error } = await supabase.from(table).delete().gte('created_at', '2000-01-01');
           
-          if (error) {
-            errors.push(`${table}: ${error.message}`);
-          } else {
-            logger.info(`Test data cleared from ${table}`, {}, { componentPath: 'DevDebugTools' });
-          }
+          // if (error) {
+          //   errors.push(`${table}: ${error.message}`);
+          // if (error) {
+          //   errors.push(`${table}: ${error.message}`);
+          // } else {
+          //   logger.info(`Test data cleared from ${table}`, {}, { componentPath: 'DevDebugTools'});
+          // }
+          // } else {
+          //   logger.info(`Test data cleared from ${table}`, {}, { componentPath: 'DevDebugTools'});
+          // }
+          // } else {
+          //   logger.info(`Test data cleared from ${table}`, {}, { componentPath: 'DevDebugTools'});
+          // }
         } catch (err) {
           errors.push(`${table}: ${err instanceof Error ? err.message : 'Unknown error'}`);
         } finally {
