@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { MobileCard } from "@/components/mobile/mobile-card"
 import { useMobileLayout } from "@/hooks/use-mobile-layout"
 import { MobilePerformanceDashboard } from "@/components/dashboard/mobile-performance-dashboard"
-import { SwipeNavigation } from "@/components/dashboard/swipe-navigation"
+import { SwipeNavigationWrapper } from "@/components/dashboard/swipe-navigation-wrapper"
 
 export default async function DashboardPage() {
   const currentUser = await getCurrentUser()
@@ -50,13 +50,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <SwipeNavigation
-      onPullToRefresh={() => window.location.reload()}
-      onSwipeLeft={() => console.log('Swipe left - navigate to next section')}
-      onSwipeRight={() => console.log('Swipe right - navigate to previous section')}
-      enablePullToRefresh={true}
-      enableSwipeNavigation={true}
-    >
+    <>
       {/* Main Content */}
       <div className="flex flex-col gap-6">
         <div>
@@ -139,6 +133,6 @@ export default async function DashboardPage() {
       
       {/* LayoutDiagnostic for ongoing monitoring */}
       <LayoutDiagnostic />
-    </SwipeNavigation>
+    </>
   )
 }

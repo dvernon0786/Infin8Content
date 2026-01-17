@@ -30,6 +30,8 @@ Thumbs.db
 # Logs
 logs/
 *.log
+# Allow debug API logs
+!app/api/admin/debug/logs/
 
 # Runtime data
 pids/
@@ -47,3 +49,4 @@ temp/
 # BMAD output (keep structure, ignore content)
 _bmad-output/*
 !_bmad-output/.gitkeep
+!_bmad-output/**/tech-spec-*.md
