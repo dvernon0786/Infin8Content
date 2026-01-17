@@ -4,7 +4,6 @@ import ArticlesClient from './articles-client'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { LayoutDiagnostic } from '@/components/layout-diagnostic'
 import { TouchTarget } from '@/components/mobile/touch-target'
 
 export default async function ArticlesPage() {
@@ -47,8 +46,6 @@ export default async function ArticlesPage() {
         {/* Search and Filters - Client Component */}
         <ArticlesClient orgId={currentUser.org_id} />
         
-        {/* LayoutDiagnostic for ongoing monitoring */}
-        <LayoutDiagnostic />
       </div>
     </>
   )
