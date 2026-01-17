@@ -57,7 +57,7 @@ function VerifyOTPContent() {
       setSuccess(true)
       const redirectUrl = invitationToken
         ? `/accept-invitation?token=${invitationToken}` 
-        : '/'
+        : '/create-organization'
       setTimeout(() => {
         router.push(redirectUrl)
         if (invitationToken) {
