@@ -3,14 +3,13 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { SidebarNavigation } from "@/components/dashboard/sidebar-navigation"
 import { TopNavigation } from "@/components/dashboard/top-navigation"
 import { ResponsiveLayoutProvider } from "@/components/dashboard/responsive-layout-provider"
-import { LayoutDiagnostic } from "@/components/layout-diagnostic"
 import { redirect } from "next/navigation"
 import { PaymentGuard } from "@/components/guards/payment-guard"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MobileCard } from "@/components/mobile/mobile-card"
 import { useMobileLayout } from "@/hooks/use-mobile-layout"
-import { MobilePerformanceDashboard } from "@/components/dashboard/mobile-performance-dashboard"
+import { ContentPerformanceDashboard } from "@/components/dashboard/content-performance-dashboard"
 import { SwipeNavigationWrapper } from "@/components/dashboard/swipe-navigation-wrapper"
 
 export default async function DashboardPage() {
@@ -94,8 +93,8 @@ export default async function DashboardPage() {
           </MobileCard>
         </div>
 
-        {/* Mobile Performance Dashboard */}
-        <MobilePerformanceDashboard />
+        {/* Content Performance Dashboard */}
+        <ContentPerformanceDashboard />
 
         {/* Additional Mobile-Optimized Content */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -130,9 +129,6 @@ export default async function DashboardPage() {
           </MobileCard>
         </div>
       </div>
-      
-      {/* LayoutDiagnostic for ongoing monitoring */}
-      <LayoutDiagnostic />
     </>
   )
 }

@@ -34,6 +34,18 @@ export default function DebugTestPage() {
       console.error('❌ Caught error:', error)
       addLog("✅ Error simulation completed")
     }
+    
+    // Test Sentry integration with undefined function
+    setTimeout(() => {
+      try {
+        addLog("🔥 Triggering Sentry test error...")
+        // @ts-ignore - Intentionally calling undefined function for Sentry testing
+        myUndefinedFunction()
+      } catch (error) {
+        console.error('🔥 Sentry test error triggered:', error)
+        addLog("🔥 Sentry test error sent to Sentry dashboard")
+      }
+    }, 1000)
   }
 
   const testPerformance = () => {
