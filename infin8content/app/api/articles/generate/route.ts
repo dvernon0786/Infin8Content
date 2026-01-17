@@ -82,25 +82,32 @@ export async function POST(request: Request) {
     // Get service role client for admin operations (usage tracking)
     const supabaseAdmin = createServiceRoleClient()
     
-    // Get a valid organization ID from database instead of hardcoded
+    // Get current user's organization ID to ensure articles belong to the user's org
     let organizationId = '039754b3-c797-45b3-b1b5-ad4acab980c0' // Valid fallback ID from database
     
     try {
-      // Try to get a valid organization from database
-      const { data: orgs, error } = await (supabaseAdmin
-        .from('organizations' as any)
-        .select('id')
-        .limit(1)
-        .single() as any)
-      
-      if (!error && orgs?.id) {
-        organizationId = orgs.id
-        console.log('[Article Generation] Using valid organization ID:', organizationId)
+      // Get the current user to use their organization ID
+      const currentUser = await getCurrentUser()
+      if (currentUser?.org_id) {
+        organizationId = currentUser.org_id
+        console.log('[Article Generation] Using current user organization ID:', organizationId)
       } else {
-        console.warn('[Article Generation] No organizations found, using fallback ID:', error)
+        // Fallback to getting any valid organization from database
+        const { data: orgs, error } = await (supabaseAdmin
+          .from('organizations' as any)
+          .select('id')
+          .limit(1)
+          .single() as any)
+        
+        if (!error && orgs?.id) {
+          organizationId = orgs.id
+          console.log('[Article Generation] Using fallback organization ID:', organizationId)
+        } else {
+          console.warn('[Article Generation] No organizations found, using default fallback ID:', error)
+        }
       }
     } catch (error) {
-      console.warn('[Article Generation] Error fetching organization, using fallback ID:', error)
+      console.warn('[Article Generation] Error getting user organization, using fallback ID:', error)
     }
     
     const userId = null // Set to null to avoid foreign key constraint
