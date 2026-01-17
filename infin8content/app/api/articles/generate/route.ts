@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     const supabaseAdmin = createServiceRoleClient()
     
     // Get a valid organization ID from database instead of hardcoded
-    let organizationId = 'e657f06e-772c-4d5c-b3ee-2fcb94463212' // Fallback
+    let organizationId = '039754b3-c797-45b3-b1b5-ad4acab980c0' // Valid fallback ID from database
     
     try {
       // Try to get a valid organization from database

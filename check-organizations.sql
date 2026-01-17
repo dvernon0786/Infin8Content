@@ -1,9 +1,8 @@
--- Check what organizations exist in the database
+-- Check what organizations exist in the database (basic columns only)
 SELECT 
     id,
     name,
-    created_at,
-    status
+    created_at
 FROM organizations 
 ORDER BY created_at DESC;
 
@@ -23,3 +22,9 @@ SELECT
 FROM organizations 
 ORDER BY created_at DESC 
 LIMIT 1;
+
+-- Check table structure to see all available columns
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns 
+WHERE table_name = 'organizations'
+ORDER BY ordinal_position;
