@@ -83,14 +83,21 @@ export function useRealtimeArticles({
       console.log('📡 Response status:', response.status);
       console.log('📡 Raw response data:', data);
       
+      // Handle wrapped API response: { articles: [...], total: N, includeCompleted: boolean }
+      let articlesArray = data;
+      if (data && typeof data === 'object' && 'articles' in data) {
+        articlesArray = data.articles;
+        console.log('📡 Extracted articles array from wrapped response:', articlesArray.length, 'articles');
+      }
+      
       // Defensive: Ensure data is an array
-      if (!Array.isArray(data)) {
-        console.error('🔥 Expected array from API, received:', typeof data, data);
-        throw new Error(`API returned non-array data: ${typeof data}`);
+      if (!Array.isArray(articlesArray)) {
+        console.error('🔥 Expected array from API, received:', typeof articlesArray, articlesArray);
+        throw new Error(`API returned non-array data: ${typeof articlesArray}`);
       }
       
       // Transform API response to DashboardArticle format
-      const transformedArticles: DashboardArticle[] = data.map((article: any) => ({
+      const transformedArticles: DashboardArticle[] = articlesArray.map((article: any) => ({
         id: article.id,
         keyword: article.keyword,
         title: article.title,
