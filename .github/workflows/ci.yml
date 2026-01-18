@@ -36,3 +36,9 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: placeholder-service-key
           SUPABASE_KEY: placeholder-key
         run: npm run build
+
+  ci-gate:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - run: echo "CI passed"

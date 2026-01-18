@@ -209,3 +209,9 @@ jobs:
             repo: context.repo.repo,
             body: comment
           });
+          
+  design-system-gate:
+    runs-on: ubuntu-latest
+    needs: design-system-check
+    steps:
+      - run: echo "Design system passed"
