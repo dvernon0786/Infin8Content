@@ -350,7 +350,7 @@ export class SectionArchitect {
         title: topic.title,
         type: 'h3',
         order: i + 1,
-        estimatedWordCount: Math.floor(parentTopic.estimatedWordCount / subsectionCount),
+        estimatedWordCount: Math.floor((parentTopic.estimatedWordCount || 500) / subsectionCount),
         keywords: topic.keywords,
         researchFocus: topic.researchFocus,
         parentSection: `h2-${parentOrder}`,
