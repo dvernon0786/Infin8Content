@@ -39,7 +39,7 @@ export interface ContentFlow {
 }
 
 export interface FlowElement {
-  type: 'hook' | 'context' | 'main_point' | 'support' | 'example' | 'data' | 'conclusion';
+  type: 'hook' | 'context' | 'main_point' | 'support' | 'example' | 'data' | 'conclusion' | 'summary' | 'call_to_action';
   order: number;
   description: string;
   estimatedWords: number;
@@ -525,7 +525,7 @@ export class ContentPlanner {
     const examples: string[] = [];
     const citations: string[] = [];
     
-    sections.forEach(section => {
+    sections.forEach((section: any) => {
       // Add section keywords to topics
       if (section.keywords) {
         secondaryTopics.push(...section.keywords);
