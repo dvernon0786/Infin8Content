@@ -277,7 +277,7 @@ export class SourceRanker {
     
     sources.forEach(source => {
       const category = this.categorizeSource(source);
-      categories[category].push(source);
+      (categories as any)[category].push(source);
     });
     
     // Take balanced selection from each category
@@ -291,7 +291,7 @@ export class SourceRanker {
     return balancedSources.slice(0, sources.length);
   }
 
-  private categorizeSource(source: Source): keyof typeof categories {
+  private categorizeSource(source: Source): 'academic' | 'news' | 'blog' | 'commercial' | 'other' {
     const domain = source.domain?.toLowerCase() || '';
     
     if (domain.includes('.edu') || domain.includes('.gov') || domain.includes('wikipedia')) {
