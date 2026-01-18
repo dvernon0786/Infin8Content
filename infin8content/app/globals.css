@@ -52,6 +52,29 @@
   --color-primary-purple: #4A42CC;
   --gradient-brand: linear-gradient(90deg, #217CEB 0%, #4A42CC 100%);
   
+  /* === BRAND COLORS === */
+  --brand-electric-blue: #217CEB;
+  --brand-infinite-purple: #4A42CC;
+
+  /* === UI COLORS === */
+  --ui-charcoal: #2C2C2E;
+  --ui-light-gray: #F4F4F6;
+
+  /* === TEXT === */
+  --text-primary: #2C2C2E;
+  --text-inverse: #FFFFFF;
+  --text-muted: rgba(44, 44, 46, 0.7);
+
+  /* === GRADIENT (CANONICAL) === */
+  --brand-gradient: linear-gradient(
+    to right,
+    #217CEB,
+    #4A42CC
+  );
+
+  /* === RADIUS === */
+  --radius-md: 0.5rem;
+  
   /* UX Spec Required Colors */
   --color-text-primary: #2C2C2E;
   --color-text-secondary: #6B7280;
