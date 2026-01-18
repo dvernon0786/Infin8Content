@@ -203,11 +203,16 @@ jobs:
       run: |
         echo "🚀 Validating SM enforcement performance..."
         
-        # Check build success
-        if [ -d ".next" ]; then
+        # Check build success (look in infin8content directory)
+        if [ -d "infin8content/.next" ]; then
           echo "✅ Build successful"
         else
-          echo "❌ Build failed"
+          echo "❌ Build failed - checking build directory..."
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+          echo "Infin8content directory:"
+          ls -la infin8content/ 2>/dev/null || echo "infin8content directory not found"
           exit 1
         fi
         

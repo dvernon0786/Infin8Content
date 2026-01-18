@@ -312,7 +312,7 @@ jobs:
       if: failure()
       with:
         name: visual-regression
-        path: visual-regression/
+        path: infin8content/visual-regression/
         retention-days: 7
 
   performance-check:
@@ -382,5 +382,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: lighthouse-results
-        path: .lighthouseci/
+        path: infin8content/.lighthouseci/
         retention-days: 30
