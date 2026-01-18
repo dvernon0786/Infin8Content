@@ -54,14 +54,14 @@ export class ResearchCache {
     this.memoryCache.set(key, entry);
 
     // Store in database cache
-    await researchService.setCache(key, data, 'research', ttl);
+    await researchService.setCache(key, data as Record<string, any>, 'research', ttl);
   }
 
   async get<T>(key: string): Promise<T | null> {
     // Check memory cache first
     const memoryEntry = this.memoryCache.get(key);
     if (memoryEntry && new Date(memoryEntry.expires_at) > new Date()) {
-      return memoryEntry.data;
+      return memoryEntry.data as T;
     }
 
     // Check database cache
@@ -69,12 +69,13 @@ export class ResearchCache {
     if (dbData) {
       // Update memory cache
       const entry: CacheEntry<T> = {
-        data: dbData,
+        data: dbData as T,
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         created_at: new Date().toISOString()
       };
+      
       this.memoryCache.set(key, entry);
-      return dbData;
+      return entry.data;
     }
 
     return null;
