@@ -361,8 +361,8 @@ export class BatchResearchOptimizer {
   }
 
   async clearExpiredCache(): Promise<void> {
-    await researchCache.clearExpiredCache();
-    await this.cacheManager.cleanupExpiredEntries();
+    await (researchCache as any).clearExpiredCache();
+    await (this.cacheManager as any).cleanupExpired();
   }
 
   async optimizeResearchQueries(
