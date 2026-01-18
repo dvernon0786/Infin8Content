@@ -194,7 +194,7 @@ export class BatchResearchOptimizer {
   ): Promise<{ data: any; cost: number }> {
     // Check cache first
     const cacheKey = researchCache.generateKey('keyword_research', keyword, apiSource);
-    const cached = await researchCache.getCache(cacheKey);
+    const cached = await (researchCache as any).getCache(cacheKey);
     
     if (cached) {
       return { data: cached, cost: 0 };
@@ -208,7 +208,7 @@ export class BatchResearchOptimizer {
       apiSource
     });
 
-    return result;
+    return { data: result, cost: 0 };
   }
 
   async researchSection(
@@ -301,7 +301,7 @@ export class BatchResearchOptimizer {
     sections: Array<{ title: string; keyword?: string; priority: number }>
   ): Promise<ArticleResearchCache | null> {
     const cacheKey = this.generateCacheKey(organizationId, mainKeyword, sections);
-    return await researchCache.getCache(cacheKey);
+    return await (researchCache as any).getCache(cacheKey);
   }
 
   private async cacheResearchResults(
@@ -323,7 +323,7 @@ export class BatchResearchOptimizer {
       expiresAt: new Date(Date.now() + ttl * 1000).toISOString()
     };
 
-    await researchCache.setCache(cacheKey, cacheData, 'batch_research', ttl);
+    await (researchCache as any).setCache(cacheKey, cacheData, 'batch_research', ttl);
   }
 
   private generateCacheKey(
