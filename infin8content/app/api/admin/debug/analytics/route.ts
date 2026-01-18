@@ -59,7 +59,7 @@ async function requireAdminAuth(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    if (profileError || !profile || !['admin', 'super_admin'].includes(profile.role)) {
+    if (profileError || !profile || !['admin', 'super_admin'].includes((profile as any)?.role)) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 

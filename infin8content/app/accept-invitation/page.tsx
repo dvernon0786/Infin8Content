@@ -119,17 +119,17 @@ export default async function AcceptInvitationPage({ searchParams }: AcceptInvit
     .eq('id', invitation.org_id)
     .single()
 
-  const organizationName = organization?.name || 'the organization'
+  const organizationName = (organization as any)?.name || 'the organization'
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8">
       <div className="max-w-md mx-auto px-4">
         <AcceptInvitationClient
           invitation={{
-            email: invitation.email,
-            role: invitation.role,
+            email: (invitation as any)?.email || '',
+            role: (invitation as any)?.role || 'member',
             organizationName,
-            inviterName: inviter?.email || 'the organization owner',
+            inviterName: (inviter as any)?.email || 'the organization owner',
             token,
           }}
           isAuthenticated={!!currentUser}

@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     }
 
     // Validate: User doesn't already belong to this organization
-    if (existingUser.org_id === invitation.org_id) {
+    if ((existingUser as any).org_id === (invitation as any).org_id) {
       return NextResponse.json(
         { error: 'User already belongs to this organization' },
         { status: 400 }
@@ -114,10 +114,10 @@ export async function POST(request: Request) {
     const { error: updateError } = await supabase
       .from('users')
       .update({
-        org_id: invitation.org_id,
-        role: invitation.role,
+        org_id: (invitation as any).org_id,
+        role: (invitation as any).role,
       })
-      .eq('id', existingUser.id)
+      .eq('id', (existingUser as any).id)
 
     if (updateError) {
       console.error('Failed to update user organization:', updateError)
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
         status: 'accepted' as any,
         accepted_at: new Date().toISOString(),
       } as any)
-      .eq('id', invitation.id)
+      .eq('id', (invitation as any).id)
 
     if (invitationUpdateError) {
       console.error('Failed to update invitation status:', invitationUpdateError)
@@ -142,13 +142,13 @@ export async function POST(request: Request) {
     }
 
     await emitUXMetricsEvent({
-      orgId: invitation.org_id,
-      userId: existingUser.id,
+      orgId: (invitation as any).org_id,
+      userId: (existingUser as any).id,
       eventName: 'collaboration_interaction.INVITE_ACCEPTED',
       payload: {
-        invitationId: invitation.id,
-        role: invitation.role,
-        invitedEmail: invitation.email,
+        invitationId: (invitation as any).id,
+        role: (invitation as any).role,
+        invitedEmail: (invitation as any).email,
       },
     })
 
@@ -156,7 +156,7 @@ export async function POST(request: Request) {
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .select('name')
-      .eq('id', invitation.org_id)
+      .eq('id', (invitation as any).org_id)
       .single()
 
     if (orgError) {
@@ -167,7 +167,7 @@ export async function POST(request: Request) {
     const { data: owner, error: ownerError } = await supabase
       .from('users')
       .select('email')
-      .eq('id', invitation.created_by)
+      .eq('id', (invitation as any).created_by)
       .single()
 
     if (ownerError) {
@@ -176,13 +176,13 @@ export async function POST(request: Request) {
     }
 
     // Send notification email to organization owner (non-blocking)
-    if (owner?.email && organization?.name) {
+    if ((owner as any)?.email && (organization as any)?.name) {
       try {
         await sendTeamInvitationAcceptedEmail({
-          to: owner.email,
-          memberName: existingUser.email,
-          memberEmail: existingUser.email,
-          organizationName: organization.name,
+          to: (owner as any).email,
+          memberName: (existingUser as any).email,
+          memberEmail: (existingUser as any).email,
+          organizationName: (organization as any).name,
         })
       } catch (emailError) {
         console.error('Failed to send invitation accepted email:', emailError)
@@ -192,13 +192,13 @@ export async function POST(request: Request) {
 
     // Log audit event for compliance
     logActionAsync({
-      orgId: invitation.org_id,
-      userId: existingUser.id,
+      orgId: (invitation as any).org_id,
+      userId: (existingUser as any).id,
       action: AuditAction.TEAM_INVITATION_ACCEPTED,
       details: {
-        invitationId: invitation.id,
-        role: invitation.role,
-        memberEmail: existingUser.email,
+        invitationId: (invitation as any).id,
+        role: (invitation as any).role,
+        memberEmail: (existingUser as any).email,
       },
       ipAddress: extractIpAddress(request.headers),
       userAgent: extractUserAgent(request.headers),

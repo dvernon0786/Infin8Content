@@ -294,7 +294,7 @@ export async function middleware(request: NextRequest) {
                     error: userQueryError.message,
                     timestamp: new Date().toISOString(),
                   });
-                } else if (user?.email) {
+                } else if ((user as any)?.email) {
                   // Verify the update succeeded by checking suspended_at was actually set
                   // This provides additional idempotency protection
                   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
@@ -314,20 +314,20 @@ export async function middleware(request: NextRequest) {
                     if (timeDiff < 10000) {
                       // Suspension was just set - send email (10 second window for safety)
                       await sendSuspensionEmail({
-                        to: user.email,
+                        to: (user as any).email,
                         userName: undefined, // users table doesn't have name column
                         suspensionDate: new Date(suspendedAt),
                       });
                       console.log('Suspension email sent successfully:', {
                         orgId: userRecord.org_id,
-                        email: user.email,
+                        email: (user as any).email,
                         timestamp: new Date().toISOString(),
                       });
                     } else {
                       // Suspension timestamp doesn't match - another request likely updated it
                       console.log('Suspension email skipped (suspension timestamp mismatch):', {
                         orgId: userRecord.org_id,
-                        email: user.email,
+                        email: (user as any).email,
                         expectedSuspendedAt: suspendedAt,
                         actualSuspendedAt: updatedOrg.suspended_at,
                         timestamp: new Date().toISOString(),
@@ -337,7 +337,7 @@ export async function middleware(request: NextRequest) {
                     // Suspension wasn't set - update may have failed or been overwritten
                     console.warn('Suspension email skipped (suspended_at not set):', {
                       orgId: userRecord.org_id,
-                      email: user.email,
+                      email: (user as any).email,
                       timestamp: new Date().toISOString(),
                     });
                   }

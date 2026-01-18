@@ -52,7 +52,7 @@ export async function GET(request: Request) {
     }
 
     // Only owners can access UX metrics
-    if (profile.role !== 'owner') {
+    if ((profile as any)?.role !== 'owner') {
       return NextResponse.json(
         { error: 'Insufficient permissions. Only organization owners can access UX metrics.' },
         { status: 403 }
@@ -67,7 +67,7 @@ export async function GET(request: Request) {
     const { data: rollups, error: rollupsError } = await (supabase
       .from('ux_metrics_weekly_rollups' as any)
       .select('*')
-      .eq('org_id', profile.org_id)
+      .eq('org_id', (profile as any)?.org_id)
       .order('week_start', { ascending: false })
       .limit(limit) as unknown as Promise<{
         data: Array<{
