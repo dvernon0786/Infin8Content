@@ -303,41 +303,86 @@
     <template-output file="{default_output_file}">
     story_completion_status</template-output>
 
-    <!-- CRITICAL: Set status to ready-for-dev -->
-    <action>Set story Status to: "ready-for-dev"</action>
-    <action>Add completion note: "Ultimate
-    context engine analysis completed - comprehensive developer guide created"</action>
+    <!-- 🚨 CRITICAL: SM VALIDATION BEFORE READY-FOR-DEV -->
+    <action>Set story Status to: "validation"</action>
+    <action>Add note: "Awaiting SM canonical template validation and contract compliance check"</action>
   </step>
 
   <step n="6" goal="Update sprint status and finalize">
     <invoke-task>Validate against checklist at {installed_path}/checklist.md using _bmad/core/tasks/validate-workflow.xml</invoke-task>
     <action>Save story document unconditionally</action>
 
-    <!-- Update sprint status -->
-    <check if="sprint status file exists">
-      <action>Update {{sprint_status}}</action>
-      <action>Load the FULL file and read all development_status entries</action>
-      <action>Find development_status key matching {{story_key}}</action>
-      <action>Verify current status is "backlog" (expected previous state)</action>
-      <action>Update development_status[{{story_key}}] = "ready-for-dev"</action>
-      <action>Save file, preserving ALL comments and structure including STATUS DEFINITIONS</action>
+    <!-- 🚨 CRITICAL: SM VALIDATION STEP -->
+    <action>Initiate SM canonical template validation</action>
+    <action>Load canonical story template requirements:</action>
+    <action>- Story Classification (Producer/Aggregator/Consumer + Epic + Tier)</action>
+    <action>- Business Intent (1 sentence, no implementation)</action>
+    <action>- Contracts Required (checkbox validation)</action>
+    <action>- Contracts Modified (None or explicit list)</action>
+    <action>- Contracts Guaranteed (4 checkboxes)</action>
+    <action>- Producer Dependency Check (epic status)</action>
+    <action>- Blocking Decision (binary with reason)</action>
+    
+    <!-- Contract Compliance Validation -->
+    <action>Validate contract compliance:</action>
+    <action>- UI Boundary Rule (no UI event emission)</action>
+    <action>- Analytics Emission Constraint (terminal states only)</action>
+    <action>- Terminal State Semantics</action>
+    <action>- Producer dependency completion</action>
+    <action>- Tier correctness</action>
+    
+    <!-- Blocking Decision Logic -->
+    <check if="any template section missing or unclear">
+      <action>Set development_status[{{story_key}}] = "blocked"</action>
+      <action>Add blocking reason: "Canonical template non-compliance"</action>
+      <action>Save file with BLOCKED status</action>
+      <output>🚫 STORY BLOCKED - Template non-compliance detected</output>
+      <action>HALT - Cannot proceed without SM validation</action>
     </check>
+    
+    <check if="any contract violation detected">
+      <action>Set development_status[{{story_key}}] = "blocked"</action>
+      <action>Add blocking reason: "Contract violation - requires correction"</action>
+      <action>Save file with BLOCKED status</action>
+      <output>🚫 STORY BLOCKED - Contract violation detected</output>
+      <action>HALT - Cannot proceed without contract compliance</action>
+    </check>
+    
+    <check if="producer dependencies not completed">
+      <action>Set development_status[{{story_key}}] = "blocked"</action>
+      <action>Add blocking reason: "Producer epic(s) not completed"</action>
+      <action>Save file with BLOCKED status</action>
+      <output>🚫 STORY BLOCKED - Producer dependencies not met</output>
+      <action>HALT - Cannot proceed until producers complete</action>
+    </check>
+    
+    <!-- SM Explicit Approval Required -->
+    <action>Set development_status[{{story_key}}] = "validation"</action>
+    <action>Add note: "Awaiting explicit SM approval for ready-for-dev"</action>
+    <action>Save file, preserving ALL comments and structure including STATUS DEFINITIONS</action>
 
     <action>Report completion</action>
-    <output>**🎯 ULTIMATE BMad Method STORY CONTEXT CREATED, {user_name}!**
+    <output>**🎯 STORY CONTEXT CREATED - AWAITING SM VALIDATION, {user_name}!**
 
       **Story Details:**
       - Story ID: {{story_id}}
       - Story Key: {{story_key}}
       - File: {{story_file}}
-      - Status: ready-for-dev
+      - Status: validation
+
+      **SM Validation Required:**
+      - Canonical template compliance check
+      - Contract compliance validation
+      - Producer dependency verification
+      - Explicit SM approval needed
 
       **Next Steps:**
-      1. Review the comprehensive story in {{story_file}}
-      2. Run dev agents `dev-story` for optimized implementation
-      3. Run `code-review` when complete (auto-marks done)
+      1. SM agent must validate canonical template compliance
+      2. SM agent must verify contract compliance
+      3. Only after SM approval can story become ready-for-dev
+      4. No development until SM explicitly approves
 
-      **The developer now has everything needed for flawless implementation!**
+      **Story is BLOCKED from development until SM validation complete!**
     </output>
   </step>
 
