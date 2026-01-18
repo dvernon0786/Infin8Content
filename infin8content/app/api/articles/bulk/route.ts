@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    if (!profile?.org_id) {
+    if (!((profile as any)?.org_id)) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
@@ -57,15 +57,15 @@ export async function POST(request: NextRequest) {
     
     switch (operation) {
       case 'delete':
-        return handleBulkDelete(payload, supabase, profile.org_id);
+        return handleBulkDelete(payload, supabase, ((profile as any)?.org_id))
       case 'export':
-        return handleBulkExport(payload, supabase, profile.org_id);
+        return handleBulkExport(payload, supabase, ((profile as any)?.org_id))
       case 'archive':
-        return handleBulkArchive(payload, supabase, profile.org_id);
+        return handleBulkArchive(payload, supabase, ((profile as any)?.org_id))
       case 'status_change':
-        return handleBulkStatusChange(payload, supabase, profile.org_id);
+        return handleBulkStatusChange(payload, supabase, ((profile as any)?.org_id))
       case 'assign':
-        return handleBulkAssign(payload, supabase, profile.org_id);
+        return handleBulkAssign(payload, supabase, ((profile as any)?.org_id))
       default:
         return NextResponse.json({ error: 'Invalid operation' }, { status: 400 });
     }
