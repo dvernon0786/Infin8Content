@@ -268,7 +268,7 @@ export default async function PaymentSuccessPage({
     )
   }
 
-  const paymentStatus = organization.payment_status
+  const paymentStatus = (organization as any).payment_status
 
   // If payment is active, show success and redirect
   if (paymentStatus === 'active') {
@@ -279,7 +279,7 @@ export default async function PaymentSuccessPage({
     return (
       <PaymentSuccessClient
         status="active"
-        plan={organization.plan || session.metadata?.plan}
+        plan={(organization as any).plan || session.metadata?.plan}
         redirectTo={redirectTo}
         isReactivation={isReactivation}
       />
