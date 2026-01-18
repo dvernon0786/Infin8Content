@@ -1,0 +1,192 @@
+name: SM Validation
+
+on:
+  push:
+    branches: [ sm-* ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  sm-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: ./infin8content/package-lock.json
+        
+    - name: Install dependencies
+      working-directory: ./infin8content
+      run: npm ci
+      
+    - name: Validate SM Documentation Presence
+      run: |
+        echo "🔍 Validating SM enforcement documentation presence..."
+        
+        # Check for SM classification in story files
+        SM_FILES=$(find . -name "*sm*" -o -name "*story*" | head -10)
+        if [ -n "$SM_FILES" ]; then
+          echo "✅ SM enforcement files found:"
+          echo "$SM_FILES"
+        else
+          echo "⚠️ No SM enforcement files found"
+        fi
+        
+        # Validate SM patterns documentation exists
+        if [ -f "sm-enforcement-results-documentation.md" ]; then
+          echo "✅ SM results documentation found"
+        else
+          echo "⚠️ SM results documentation missing"
+        fi
+        
+        # Check for scratchpad with SM content
+        if [ -f "scratchpad.md" ]; then
+          echo "✅ Scratchpad documentation found"
+          if grep -q "SM enforcement" scratchpad.md 2>/dev/null; then
+            echo "✅ SM enforcement content found in scratchpad"
+          else
+            echo "⚠️ SM enforcement content not found in scratchpad"
+          fi
+        else
+          echo "⚠️ Scratchpad documentation missing"
+        fi
+        
+    - name: Validate Business Documentation
+      run: |
+        echo "📊 Validating business documentation presence..."
+        
+        # Check for business metrics documentation
+        if [ -f "sm-enforcement-long-term-success-metrics.md" ]; then
+          echo "✅ Business metrics documentation found"
+        else
+          echo "⚠️ Business metrics documentation missing"
+        fi
+        
+        # Check for knowledge transfer documentation
+        if [ -f "sm-enforcement-knowledge-transfer.md" ]; then
+          echo "✅ Knowledge transfer documentation found"
+        else
+          echo "⚠️ Knowledge transfer documentation missing"
+        fi
+        
+        # Check for maintenance documentation
+        if [ -f "sm-enforcement-maintenance-schedule.md" ]; then
+          echo "✅ Maintenance documentation found"
+        else
+          echo "⚠️ Maintenance documentation missing"
+        fi
+        
+    - name: Validate Platform Documentation
+      run: |
+        echo "🔐 Validating platform documentation..."
+        
+        # Check for implementation documentation
+        if [ -f "sm-enforcement-implementation.md" ]; then
+          echo "✅ Implementation documentation found"
+        else
+          echo "⚠️ Implementation documentation missing"
+        fi
+        
+        # Check for pattern documentation
+        if [ -f "sm-pattern-refinement-production-usage.md" ]; then
+          echo "✅ Pattern documentation found"
+        else
+          echo "⚠️ Pattern documentation missing"
+        fi
+        
+        # Check for guardrail documentation
+        if [ -f "sm-guardrail-production-monitoring.md" ]; then
+          echo "✅ Guardrail documentation found"
+        else
+          echo "⚠️ Guardrail documentation missing"
+        fi
+        
+    - name: Generate SM Evidence Report
+      run: |
+        echo "📊 Generating SM enforcement evidence report..."
+        
+        mkdir -p reports
+        
+        # Count SM-related files
+        SM_DOC_COUNT=$(find . -name "*sm*" -type f | wc -l)
+        STORY_DOC_COUNT=$(find . -name "*story*" -type f | wc -l)
+        
+        # Generate evidence report (NO FABRICATED METRICS)
+        cat > reports/sm-evidence-report.json << EOF
+        {
+          "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+          "evidence": {
+            "smFilesFound": $SM_DOC_COUNT,
+            "storyFilesFound": $STORY_DOC_COUNT,
+            "documentationPresent": {
+              "smResults": $(test -f "sm-enforcement-results-documentation.md" && echo "true" || echo "false"),
+              "businessMetrics": $(test -f "sm-enforcement-long-term-success-metrics.md" && echo "true" || echo "false"),
+              "knowledgeTransfer": $(test -f "sm-enforcement-knowledge-transfer.md" && echo "true" || echo "false"),
+              "maintenance": $(test -f "sm-enforcement-maintenance-schedule.md" && echo "true" || echo "false"),
+              "implementation": $(test -f "sm-enforcement-implementation.md" && echo "true" || echo "false"),
+              "patterns": $(test -f "sm-pattern-refinement-production-usage.md" && echo "true" || echo "false"),
+              "guardrails": $(test -f "sm-guardrail-production-monitoring.md" && echo "true" || echo "false"),
+              "scratchpad": $(test -f "scratchpad.md" && echo "true" || echo "false")
+            }
+          },
+          "status": "evidence_collected"
+        }
+        EOF
+        
+        echo "✅ SM evidence report generated"
+        
+    - name: Upload SM Evidence Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: sm-evidence-report
+        path: reports/
+        retention-days: 30
+        
+    - name: Comment PR with Evidence Results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('reports/sm-evidence-report.json', 'utf8'));
+          
+          const comment = `
+          ## 🔐 SM Enforcement Evidence Report
+          
+          **Status:** Evidence Collected
+          **SM Files Found:** ${report.evidence.smFilesFound}
+          **Story Files Found:** ${report.evidence.storyFilesFound}
+          
+          ### 📋 Documentation Evidence
+          ${Object.entries(report.evidence.documentationPresent).map(([doc, present]) => 
+            `- **${doc}:** ${present ? '✅ Found' : '❌ Missing'}`
+          ).join('\n')}
+          
+          ### 📊 Summary
+          This report validates the presence of SM enforcement documentation and evidence.
+          No fabricated metrics are included - only evidence collection.
+          
+          ### 🔗 Resources
+          - 📖 [SM Enforcement Documentation](/sm-enforcement-results-documentation.md)
+          - 🎯 [Scratchpad](/scratchpad.md)
+          
+          [View detailed report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });

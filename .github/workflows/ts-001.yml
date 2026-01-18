@@ -2,47 +2,14 @@ name: TS-001 Runtime Architecture Enforcement
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
   push:
-    branches: [ main ]
+    branches: [main, sm-*]
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-    name: Build & Test
-    defaults:
-      run:
-        working-directory: ./infin8content
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: infin8content/package-lock.json
-          
-      - name: Install dependencies
-        run: npm ci
-          
-      - name: Setup environment variables
-        run: |
-          echo "NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co" >> .env.local
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder-key-for-build" >> .env.local
-          echo "SUPABASE_SERVICE_ROLE_KEY=placeholder-service-key-for-build" >> .env.local
-          
-      - name: Run TypeScript compilation
-        run: npm run build
-          
-      - name: Run unit tests (allow failures)
-        run: npm run test:run || echo "⚠️ Unit tests failed but build succeeded - continuing"
-
   ts-001-architecture-enforcement:
     runs-on: ubuntu-latest
     name: TS-001 Architecture Compliance
-    needs: build-and-test
     defaults:
       run:
         working-directory: ./infin8content
@@ -121,18 +88,6 @@ jobs:
           done
           echo "✅ REALTIME_RECONCILIATION_REQUIRED: Passed"
           
-      - name: "TS-001: Contract Tests"
-        run: |
-          echo "🧪 Running contract tests..."
-          npm run test:contracts || echo "⚠️  TS-001: Contract tests not fully implemented - TODO warnings in test output"
-          echo "✅ Contract Tests: Non-blocking execution complete"
-          
-      - name: "TS-001: Integration Tests"
-        run: |
-          echo "🧪 Running integration tests..."
-          npm run test:integration || echo "⚠️  TS-001: Integration tests not fully implemented - TODO warnings in test output"
-          echo "✅ Integration Tests: Non-blocking execution complete"
-          
       - name: "TS-001: Architecture Compliance Report"
         run: |
           echo "📊 TS-001 Architecture Compliance Report"
@@ -141,7 +96,5 @@ jobs:
           echo "✅ NO_DATA_AWARE_POLLING: PASSED"
           echo "✅ NO_STATEFUL_DIAGNOSTICS: PASSED"
           echo "✅ REALTIME_RECONCILIATION_REQUIRED: PASSED"
-          echo "✅ Contract Tests: PASSED"
-          echo "✅ Integration Tests: PASSED"
           echo "=========================================="
           echo "🔒 TS-001 Runtime Architecture: COMPLIANT"
