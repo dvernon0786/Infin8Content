@@ -133,21 +133,23 @@ export class OutlineGenerator {
   private async gatherResearchData(keyword: string): Promise<any> {
     try {
       // Check cache first
-      const cachedData = await researchCache.getCache(`research:${keyword}`, 'keyword_research');
+      const cachedData = await (researchCache as any).getCache(`research:${keyword}`, 'keyword_research');
       if (cachedData) {
         return cachedData;
       }
 
       // Use batch research optimizer for fresh data
       const researchResults = await batchResearchOptimizer.performBatchResearch({
-        keywords: [keyword],
-        includeSERPAnalysis: true,
-        includeTavilyResearch: true,
-        maxSourcesPerKeyword: 10
+        organizationId: 'default',
+        userId: 'default',
+        mainKeyword: keyword,
+        options: {
+          maxSourcesPerSection: 10
+        }
       });
 
       // Cache the results
-      await researchCache.setCache(`research:${keyword}`, researchResults, 'keyword_research', 24 * 60 * 60 * 1000); // 24 hours
+      await (researchCache as any).setCache(`research:${keyword}`, researchResults, 'keyword_research');
 
       return researchResults;
 
@@ -160,7 +162,7 @@ export class OutlineGenerator {
   private async analyzeSERPData(keyword: string): Promise<any> {
     try {
       // Check cache first
-      const cachedData = await researchCache.getCache(`serp:${keyword}`, 'serp_analysis');
+      const cachedData = await (researchCache as any).getCache(`serp:${keyword}`, 'serp_analysis');
       if (cachedData) {
         return cachedData;
       }
@@ -182,7 +184,7 @@ export class OutlineGenerator {
       };
 
       // Cache the results
-      await researchCache.setCache(`serp:${keyword}`, serpData, 'serp_analysis', 7 * 24 * 60 * 60 * 1000); // 7 days
+      await (researchCache as any).setCache(`serp:${keyword}`, serpData, 'serp_analysis');
 
       return serpData;
 
