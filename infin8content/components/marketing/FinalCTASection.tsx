@@ -4,7 +4,7 @@ export default function FinalCTASection() {
   return (
     <section
       className="relative py-32 px-6 text-white"
-      style={{ backgroundColor: "#2C2C2E" }}
+      style={{ backgroundColor: "var(--ui-charcoal)" }}
     >
       <div className="max-w-3xl mx-auto text-center space-y-8">
         <h2 className="text-3xl sm:text-4xl font-semibold">

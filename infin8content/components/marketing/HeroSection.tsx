@@ -4,7 +4,7 @@ export default function HeroSection() {
   return (
     <section
       className="relative py-32 px-6 text-white"
-      style={{ backgroundColor: "#2C2C2E" }}
+      style={{ backgroundColor: "var(--ui-charcoal)" }}
     >
       <div className="max-w-4xl mx-auto text-center space-y-8">
         <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight">
