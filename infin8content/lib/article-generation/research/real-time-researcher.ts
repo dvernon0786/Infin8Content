@@ -2,7 +2,7 @@
 // Story 4A-3: Real-Time Research Per Section (Tavily Integration)
 // Tier-1 Producer story for article generation infrastructure
 
-import { tavilyClient } from '@/lib/research/tavily-client';
+import { TavilyClient } from '@/lib/research/tavily-client';
 import { researchCache } from '@/lib/research/research-cache';
 import { apiCostTracker } from '@/lib/research/api-cost-tracker';
 
@@ -69,12 +69,12 @@ export interface Citation {
 }
 
 export class RealTimeResearcher {
-  private tavilyClient: typeof tavilyClient;
-  private researchCache: typeof researchCache;
-  private apiCostTracker: typeof apiCostTracker;
+  private tavilyClient: TavilyClient;
+  private researchCache: any;
+  private apiCostTracker: any;
 
   constructor() {
-    this.tavilyClient = tavilyClient;
+    this.tavilyClient = new TavilyClient();
     this.researchCache = researchCache;
     this.apiCostTracker = apiCostTracker;
   }
@@ -183,7 +183,7 @@ export class RealTimeResearcher {
   private async checkCache(query: ResearchQuery): Promise<ResearchResult | null> {
     try {
       const cacheKey = this.generateCacheKey(query);
-      const cachedData = await this.researchCache.getCache(cacheKey, 'section_research');
+      const cachedData = await (this.researchCache as any).getCache(`research:${cacheKey}`, 'section_research');
       
       if (cachedData) {
         return cachedData as ResearchResult;
@@ -217,7 +217,7 @@ export class RealTimeResearcher {
     
     try {
       // Call Tavily API
-      const tavilyResult = await this.tavilyClient.search(query.query, {
+      const tavilyResult = await this.tavilyClient.searchWithAdvancedOptions(query.query, {
         max_results: query.maxResults,
         include_raw_content: query.includeRawContent,
         include_domains: [],
@@ -344,13 +344,13 @@ export class RealTimeResearcher {
     // Extract from title
     if (result.title) {
       const titleWords = result.title.toLowerCase().split(' ');
-      topics.push(...titleWords.filter(word => word.length > 3));
+      topics.push(...titleWords.filter((word: any) => word.length > 3));
     }
     
     // Extract from content (simplified)
     if (result.content) {
       const contentWords = result.content.toLowerCase().split(' ');
-      const commonWords = contentWords.filter(word => word.length > 4);
+      const commonWords = contentWords.filter((word: any) => word.length > 4);
       topics.push(...commonWords.slice(0, 10));
     }
     
@@ -582,7 +582,7 @@ export class RealTimeResearcher {
   private async cacheResults(query: ResearchQuery, result: ResearchResult): Promise<void> {
     try {
       const cacheKey = this.generateCacheKey(query);
-      await this.researchCache.setCache(cacheKey, result, 'section_research', 24 * 60 * 60 * 1000); // 24 hours
+      await (this.researchCache as any).setCache(`research:${cacheKey}`, result, 'section_research', 24 * 60 * 60 * 1000); // 24 hours
     } catch (error) {
       console.warn('Failed to cache results:', error);
     }
@@ -610,7 +610,7 @@ export class RealTimeResearcher {
   async clearSectionCache(sectionId: string): Promise<void> {
     // Clear cache for specific section
     try {
-      await this.researchCache.clearExpiredCache('section_research');
+      await (this.researchCache as any).clearExpiredCache('section_research');
     } catch (error) {
       console.warn('Failed to clear section cache:', error);
     }
