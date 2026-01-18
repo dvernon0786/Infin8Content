@@ -486,7 +486,13 @@ export class SectionResearcher {
       // Update article section with research data
       await this.articleService.updateArticleSection(sectionId, {
         research_data: result.researchData,
-        citations: result.citations,
+        citations: result.citations.map(citation => ({
+          url: citation.source.url,
+          title: citation.source.title,
+          author: citation.source.author || undefined,
+          publication_date: citation.source.publishDate || undefined,
+          excerpt: citation.context
+        })),
         status: 'completed'
       });
       
@@ -572,7 +578,7 @@ export class SectionResearcher {
           // Reset section status
           await this.articleService.updateArticleSection(section.id, {
             status: 'pending',
-            error_message: null,
+            error_message: undefined,
             retry_count: section.retry_count + 1
           });
           
