@@ -81,7 +81,7 @@ export class CacheManager {
     this.stats.totalSize += size;
     
     // Also store in research cache for persistence
-    await researchCache.setCache(key, data, 'batch_research', ttl || this.config.maxAge / 1000);
+    await (researchCache as any).setCache(key, data, 'batch_research', ttl || this.config.maxAge / 1000);
   }
 
   async get<T>(key: string): Promise<T | null> {
@@ -166,7 +166,7 @@ export class CacheManager {
     }
     
     // Also cleanup research cache
-    await researchCache.clearExpiredCache();
+    await (researchCache as any).clearExpiredCache();
   }
 
   private async evictLeastRecentlyUsed(): Promise<void> {
@@ -351,9 +351,9 @@ export class CacheManager {
     ];
     
     for (const key of commonKeys) {
-      const data = await researchCache.getCache(key);
-      if (data) {
-        await this.set(key, data, this.config.maxAge / 1000);
+      const cached = await (researchCache as any).getCache(key);
+      if (cached) {
+        await this.set(key, cached, this.config.maxAge / 1000);
       }
     }
   }
@@ -441,11 +441,12 @@ export class CacheManager {
   }
 
   async warmupByAccessCount(): Promise<void> {
-    const entries = Array.from(this.cache.entries())
-      .sort((a, b) => b[1].accessCount - a[1].accessCount)
-      .slice(0, Math.min(10, entries.length));
+    const sortedEntries = Array.from(this.cache.entries())
+      .sort((a, b) => b[1].accessCount - a[1].accessCount);
     
-    for (const [key, entry] of entries) {
+    const topEntries = sortedEntries.slice(0, Math.min(10, sortedEntries.length));
+    
+    for (const [key, entry] of topEntries) {
       // Refresh TTL for frequently accessed entries
       const ttl = (entry.expiresAt.getTime() - Date.now()) / 1000;
       if (ttl > 0) {
