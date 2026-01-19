@@ -1,4 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Infin8Content
+
+AI-powered content creation platform for modern marketing teams.
+
+## 🎨 UX Design System
+
+This project features a comprehensive UX design system implemented in January 2026, including:
+
+- **Typography**: Poppins Bold (headlines) + Lato Regular (body)
+- **Color Palette**: Full brand spectrum (blue, purple, neutral)
+- **Design Tokens**: CSS variables for consistent styling
+- **Responsive Design**: Mobile-first approach with breakpoints
+- **Accessibility**: WCAG AA compliance with focus states and contrast
+
+### Landing Page Architecture
+
+The landing page is built with modular components:
+
+```
+components/marketing/
+├── Navigation.tsx          # Navigation with dropdowns
+├── HeroSection.tsx         # 60/40 layout with gradient mesh
+├── StatsBar.tsx           # Social proof with 4 stat cards
+├── ProblemSection.tsx     # 3-column pain point cards
+├── FeatureShowcase.tsx    # 6 feature cards with gradients
+├── HowItWorks.tsx         # 3-step horizontal flow
+├── Testimonials.tsx       # Customer testimonials
+├── FAQ.tsx               # Accordion-style FAQ
+├── FinalCTA.tsx          # Gradient CTA with animations
+├── Footer.tsx            # 4-column footer with social links
+└── LandingPage.tsx       # Main wrapper component
+```
 
 ## Getting Started
 
@@ -18,7 +49,9 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project uses Google Fonts for typography optimization:
+- **Poppins Bold** (700 weight) for headlines
+- **Lato Regular** (400 weight) for body text
 
 ## Stripe Setup (Payment Integration)
 

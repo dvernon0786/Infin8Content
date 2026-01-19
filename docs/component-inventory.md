@@ -1,9 +1,9 @@
 # UI Component Inventory
 
-Generated: 2026-01-13 (Updated)  
+Generated: 2026-01-19 (Updated)  
 Project: Infin8Content  
 Framework: Next.js 16.1.1 with TypeScript  
-Total Components: 28
+Total Components: 37 (+9 UX Landing Page Components)
 
 ---
 
@@ -174,6 +174,87 @@ Reusable design system components based on Radix UI primitives.
 **Props:** `children`, `user`  
 **Features:** Suspension status check, payment prompts
 
+### Marketing Components (`/components/marketing`)
+
+**NEW: UX Landing Page Components (January 2026)**
+
+#### Navigation
+**Path:** `/components/marketing/Navigation.tsx`  
+**Purpose:** Main navigation with dropdown menus  
+**Props:** None (static content)  
+**Features:** Mobile menu toggle, dropdown navigation, logo with fallback
+**Design:** Responsive layout, hover effects, accessibility focus states
+
+#### Hero Section
+**Path:** `/components/marketing/HeroSection.tsx`  
+**Purpose:** Main hero section with 60/40 layout  
+**Props:** None (static content)  
+**Features:** Gradient mesh background, dashboard preview, dual CTAs
+**Design:** Responsive typography, trust indicators, hover animations
+
+#### Stats Bar
+**Path:** `/components/marketing/StatsBar.tsx`  
+**Purpose:** Social proof statistics display  
+**Props:** None (static data)  
+**Features:** 4 stat cards with icons, animated hover effects
+**Design:** 2x2 grid mobile, 4-column desktop, responsive typography
+
+#### Problem Section
+**Path:** `/components/marketing/ProblemSection.tsx`  
+**Purpose:** Pain points presentation  
+**Props:** None (static content)  
+**Features:** 3-column cards, hover lift effects, pain point icons
+**Design:** Card layout, red accent colors, smooth transitions
+
+#### Feature Showcase
+**Path:** `/components/marketing/FeatureShowcase.tsx`  
+**Purpose:** Feature highlights display  
+**Props:** None (static content)  
+**Features:** 6 feature cards, gradient borders, benefit badges
+**Design:** 3x2 grid, hover states, gradient text effects
+
+#### How It Works
+**Path:** `/components/marketing/HowItWorks.tsx`  
+**Purpose:** Process explanation  
+**Props:** None (static content)  
+**Features:** 3-step horizontal flow, connecting lines, step badges
+**Design:** Desktop horizontal, mobile vertical, smooth animations
+
+#### Testimonials
+**Path:** `/components/marketing/Testimonials.tsx`  
+**Purpose:** Customer testimonials  
+**Props:** None (static content)  
+**Features:** Quote marks, avatar circles, metric badges, star ratings
+**Design:** Card layout, hover effects, author information
+
+#### FAQ
+**Path:** `/components/marketing/FAQ.tsx`  
+**Purpose:** Frequently asked questions  
+**Props:** None (static content)  
+**Features:** Accordion style, smooth expand/collapse, rotating chevrons
+**Design:** Interactive elements, focus management, accessibility
+
+#### Final CTA
+**Path:** `/components/marketing/FinalCTA.tsx`  
+**Purpose:** Final call-to-action section  
+**Props:** None (static content)  
+**Features:** Gradient background, animated elements, trust badges
+**Design:** Vibrant gradient, pulse animations, large CTA button
+
+#### Footer
+**Path:** `/components/marketing/Footer.tsx`  
+**Purpose:** Site footer with links  
+**Props:** None (static content)  
+**Features:** 4-column layout, social links, legal links
+**Design:** Responsive columns, social icon animations, hover effects
+
+#### Landing Page
+**Path:** `/components/marketing/LandingPage.tsx`  
+**Purpose:** Main landing page wrapper  
+**Props:** None  
+**Features:** Imports and renders all marketing sections
+**Design:** Sequential component rendering, consistent spacing
+
 ### App Components (`/app/components`)
 
 #### Payment Status Banner
@@ -190,7 +271,40 @@ Reusable design system components based on Radix UI primitives.
 
 ## Design System
 
-### Color Palette
+### UX Design System (January 2026 Update)
+
+#### Typography System
+- **Headings:** Poppins Bold (700 weight)
+- **Body:** Lato Regular (400 weight)
+- **Responsive:** clamp() functions for fluid scaling
+- **Implementation:** Google Fonts integration
+
+#### Color Palette
+- **Brand Electric Blue:** `#217CEB`
+- **Brand Infinite Purple:** `#4A42CC`
+- **Brand Deep Charcoal:** `#2C2C2E`
+- **Brand Soft Light Gray:** `#F4F4F6`
+- **Brand White:** `#FFFFFF`
+- **Spectrums:** Blue (50-900), Purple (50-900), Neutral (50-900)
+
+#### Gradient System
+- **Brand Gradient:** `linear-gradient(to right, #217CEB, #4A42CC)`
+- **Vibrant Gradient:** `linear-gradient(135deg, #217CEB 0%, #4A42CC 50%, #332D85 100%)`
+- **Mesh Gradient:** `radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 0.12) 0px, transparent 50%)`
+
+#### Shadow System
+- **Brand Shadow:** `0 10px 25px rgba(33, 124, 235, 0.15)`
+- **Purple Shadow:** `0 10px 25px rgba(74, 66, 204, 0.15)`
+- **Scale:** sm, md, lg, xl with consistent blur and spread
+
+#### Spacing System
+- **Scale:** xs (8px), sm (12px), md (16px), lg (24px), xl (32px), 2xl (48px), 3xl (64px), 4xl (80px)
+- **Section Padding:** 5rem 0 (desktop), 3rem 0 (mobile)
+- **Usage:** CSS variables with semantic naming
+
+### Legacy Design System
+
+#### Color Palette (Legacy)
 - **Primary:** Blue-600 (`#2563eb`)
 - **Secondary:** Gray-600 (`#4b5563`)
 - **Success:** Green-600 (`#059669`)
@@ -198,16 +312,11 @@ Reusable design system components based on Radix UI primitives.
 - **Error:** Red-600 (`#dc2626`)
 - **Neutral:** Gray-50 to Gray-900 scale
 
-### Typography Scale
+#### Typography Scale (Legacy)
 - **Headings:** Inter font, weights 600-700
 - **Body:** Inter font, weight 400
 - **Small:** Inter font, weight 400, size 14px
 - **Caption:** Inter font, weight 400, size 12px
-
-### Spacing System
-- **Base Unit:** 4px (0.25rem)
-- **Scale:** 4, 8, 12, 16, 20, 24, 32, 40, 48, 64px
-- **Usage:** Consistent spacing using Tailwind classes
 
 ### Component Patterns
 
@@ -321,3 +430,5 @@ Reusable design system components based on Radix UI primitives.
 ---
 
 *This documentation was generated as part of the BMad Method document-project workflow on 2026-01-11.*
+
+**Major Update**: January 19, 2026 - Added 9 new UX landing page components with complete design system overhaul. See [UX Landing Page Design System](./ux-landing-page-design-system.md) for detailed implementation documentation.
