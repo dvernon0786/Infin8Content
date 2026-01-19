@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Poppins, Lato } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,21 +12,23 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const poppins = Geist({
+const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
-  weight: "700",
+  weight: ["700"],
+  display: "swap",
 });
 
-const lato = Geist({
+const lato = Lato({
   variable: "--font-lato",
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Infin8Content",
-  description: "AI-powered content generation platform",
+  title: "Infin8Content - AI-Powered Content Creation Platform",
+  description: "Create content that converts without the chaos. AI-powered platform for marketing teams.",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "16x16", type: "image/x-icon" },
