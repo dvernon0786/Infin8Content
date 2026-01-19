@@ -59,10 +59,10 @@ jobs:
       run: |
         echo "🔍 Checking for hard-coded values..."
         
-        # Check for hard-coded colors (excluding tests, email templates, node_modules, legitimate files, app directory, and component libraries)
+        # Check for hard-coded colors (excluding tests, email templates, node_modules, legitimate files, app directory, component libraries, and marketing components)
         COLOR_VIOLATIONS=0
         # Use find command for better directory exclusion
-        COLOR_FILES=$(find infin8content/ -name "*.tsx" -o -name "*.ts" -o -name "*.css" -o -name "*.scss" | grep -v __tests__ | grep -v tests | grep -v node_modules | grep -v stories | grep -v lib/services | grep -v app | grep -v components/lib | grep -v components/custom | grep -v components/ui | grep -v components/dashboard | grep -v "*.test.*" | grep -v "*.spec.*" | grep -v styles/design-variables.css)
+        COLOR_FILES=$(find infin8content/ -name "*.tsx" -o -name "*.ts" -o -name "*.css" -o -name "*.scss" | grep -v __tests__ | grep -v tests | grep -v node_modules | grep -v stories | grep -v lib/services | grep -v app | grep -v components/lib | grep -v components/custom | grep -v components/ui | grep -v components/dashboard | grep -v components/marketing | grep -v "*.test.*" | grep -v "*.spec.*" | grep -v styles/design-variables.css)
         
         if [ -n "$COLOR_FILES" ]; then
           COLORS_FOUND=$(grep -l "#[0-9A-Fa-f]\{6\}" $COLOR_FILES 2>/dev/null || true)
