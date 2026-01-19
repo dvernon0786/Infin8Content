@@ -4,7 +4,7 @@
 
 The Infin8Content Design System is a comprehensive set of guidelines, components, and tools that ensure visual consistency, brand coherence, and development efficiency across all products and platforms.
 
-**🎉 January 2026 Update**: Complete UX redesign implementation with modern design tokens, typography system, and responsive landing page components.
+**🎉 January 2026 Update**: Complete UX redesign implementation with modern design tokens, typography system, and responsive landing page components. Font imports corrected for proper Poppins and Lato typography.
 
 ## Getting Started
 
@@ -175,6 +175,13 @@ docs/design-system/
 - **FAQ**: Common questions and solutions
 
 ## Version History
+
+### v2.0.1 (January 20, 2026) - **Font Import Fix**
+- 🔧 Corrected Poppins and Lato font imports in layout.tsx
+- ⚡ Added display: swap for improved font loading performance
+- 📝 Enhanced metadata with better title and description
+- 📚 Added LandingPage-REFERENCE.tsx for component reference
+- 🎯 Typography system now properly implemented with correct fonts
 
 ### v2.0.0 (January 19, 2026) - **UX Design System Overhaul**
 - 🎨 Complete typography system (Poppins Bold + Lato Regular)

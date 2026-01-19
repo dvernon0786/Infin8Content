@@ -1,9 +1,9 @@
 # UI Component Inventory
 
-Generated: 2026-01-19 (Updated)  
+Generated: 2026-01-20 (Updated)  
 Project: Infin8Content  
 Framework: Next.js 16.1.1 with TypeScript  
-Total Components: 37 (+9 UX Landing Page Components)
+Total Components: 39 (+9 UX Landing Page Components + 1 Reference + 1 Pricing)
 
 ---
 
@@ -254,6 +254,22 @@ Reusable design system components based on Radix UI primitives.
 **Props:** None  
 **Features:** Imports and renders all marketing sections
 **Design:** Sequential component rendering, consistent spacing
+
+#### Landing Page Reference
+**Path:** `/components/marketing/LandingPage-REFERENCE.tsx`  
+**Purpose:** Combined reference file with all landing page components  
+**Props:** None  
+**Features:** All 10 marketing components in single file for reference
+**Design:** Complete component code with inline styles for easy reference
+**Usage:** Development reference, component structure documentation
+
+#### Pricing Section
+**Path:** `/components/marketing/PricingSection.tsx`  
+**Purpose:** Interactive pricing plans with billing toggle  
+**Props:** None  
+**Features:** Monthly/annual toggle, 3-tier pricing (Starter/Pro/Enterprise), plan selection, savings display
+**Design:** 40/60 split layout, dark gradient pricing card, interactive plan selection
+**Usage:** Landing page pricing section, conversion optimization
 
 ### App Components (`/app/components`)
 
