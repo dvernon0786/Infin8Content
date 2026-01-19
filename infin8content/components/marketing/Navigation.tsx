@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState } from 'react';
 import { ChevronDown, Menu, X } from 'lucide-react';
 
@@ -27,25 +29,6 @@ const Navigation = () => {
                 height: '41px',
                 borderRadius: '6px',
                 objectFit: 'contain'
-              }}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                const fallback = document.createElement('div');
-                fallback.style.cssText = `
-                  width: 192px; 
-                  height: 41px; 
-                  border-radius: 6px; 
-                  background: linear-gradient(to right, #217CEB, #4A42CC);
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  color: #FFFFFF;
-                  font-weight: bold;
-                  font-size: 0.9rem;
-                `;
-                fallback.textContent = 'I8 Infin8Content';
-                target.parentNode?.appendChild(fallback);
               }}
             />
           </div>
@@ -86,10 +69,10 @@ const Navigation = () => {
                   onMouseEnter={() => setFeaturesOpen(true)}
                   onMouseLeave={() => setFeaturesOpen(false)}
                 >
-                  <a href="#" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>AI Article Generator</a>
-                  <a href="#" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Brand Voice Engine</a>
-                  <a href="#" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Research Assistant</a>
-                  <a href="#" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>SEO Optimization</a>
+                  <a href="/features/ai-article-generator" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>AI Article Generator</a>
+                  <a href="/features/brand-voice-engine" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Brand Voice Engine</a>
+                  <a href="/features/research-assistant" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Research Assistant</a>
+                  <a href="/features/seo-optimization" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>SEO Optimization</a>
                 </div>
               )}
             </div>
@@ -128,10 +111,10 @@ const Navigation = () => {
                   onMouseEnter={() => setSolutionsOpen(true)}
                   onMouseLeave={() => setSolutionsOpen(false)}
                 >
-                  <a href="#" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Content Marketing</a>
-                  <a href="#" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>SEO Teams</a>
-                  <a href="#" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Agencies</a>
-                  <a href="#" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Enterprise</a>
+                  <a href="/solutions/content-marketing" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Content Marketing</a>
+                  <a href="/solutions/seo-teams" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>SEO Teams</a>
+                  <a href="/solutions/agencies" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Agencies</a>
+                  <a href="/solutions/enterprise" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Enterprise</a>
                 </div>
               )}
             </div>
@@ -170,10 +153,10 @@ const Navigation = () => {
                   onMouseEnter={() => setResourcesOpen(true)}
                   onMouseLeave={() => setResourcesOpen(false)}
                 >
-                  <a href="#" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Documentation</a>
-                  <a href="#" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Blog</a>
-                  <a href="#" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Support</a>
-                  <a href="#" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Community</a>
+                  <a href="/resources/documentation" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Documentation</a>
+                  <a href="/resources/blog" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Blog</a>
+                  <a href="/resources/support" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Support</a>
+                  <a href="/resources/community" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Community</a>
                 </div>
               )}
             </div>
