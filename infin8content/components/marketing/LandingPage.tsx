@@ -4,6 +4,7 @@ import StatsBar from './StatsBar';
 import ProblemSection from './ProblemSection';
 import FeatureShowcase from './FeatureShowcase';
 import HowItWorks from './HowItWorks';
+import PricingSection from './PricingSection';
 import Testimonials from './Testimonials';
 import FAQ from './FAQ';
 import FinalCTA from './FinalCTA';
@@ -18,6 +19,7 @@ export default function LandingPage() {
       <ProblemSection />
       <FeatureShowcase />
       <HowItWorks />
+      <PricingSection />
       <Testimonials />
       <FAQ />
       <FinalCTA />
