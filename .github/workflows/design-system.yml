@@ -2,9 +2,9 @@ name: Design System Compliance
 
 on:
   pull_request:
-    branches: [main]
+    branches: [test-main-all]
   push:
-    branches: [main, sm-*]
+    branches: [test-main-all, sm-*]
 
 permissions:
   contents: read

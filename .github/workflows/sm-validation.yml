@@ -4,7 +4,7 @@ on:
   push:
     branches: [ sm-* ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ test-main-all, develop ]
 
 permissions:
   contents: read
