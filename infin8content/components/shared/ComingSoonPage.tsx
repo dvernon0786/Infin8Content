@@ -14,51 +14,17 @@ const ComingSoonPage = ({
   showCTA = false 
 }: ComingSoonPageProps) => {
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      padding: '2rem',
-      backgroundColor: '#f8fafc'
-    }}>
-      <div style={{ 
-        textAlign: 'center', 
-        maxWidth: '600px',
-        padding: '3rem',
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-      }}>
-        <h1 style={{ 
-          fontSize: '2.5rem', 
-          fontWeight: 'bold', 
-          color: '#1a202c',
-          marginBottom: '1rem'
-        }}>
+    <div className="min-h-screen flex items-center justify-center p-8 bg-gray-50">
+      <div className="text-center max-w-md p-12 bg-white rounded-xl shadow-lg">
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">
           {title}
         </h1>
-        <p style={{ 
-          fontSize: '1.125rem', 
-          color: '#4a5568',
-          marginBottom: '2rem',
-          lineHeight: '1.6'
-        }}>
+        <p className="text-lg text-gray-600 mb-8 leading-relaxed">
           {description}
         </p>
         {showCTA && (
           <div>
-            <button style={{
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              padding: '0.75rem 2rem',
-              borderRadius: '6px',
-              border: 'none',
-              fontSize: '1rem',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}>
+            <button className="bg-blue-500 text-white px-8 py-3 rounded-md text-base font-medium hover:bg-blue-600 transition-colors duration-200">
               Get Notified
             </button>
           </div>
