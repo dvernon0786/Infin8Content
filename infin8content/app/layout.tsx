@@ -27,6 +27,13 @@ const lato = Geist({
 export const metadata: Metadata = {
   title: "Infin8Content",
   description: "AI-powered content generation platform",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "16x16", type: "image/x-icon" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

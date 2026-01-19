@@ -1,4 +1,5 @@
 import { Github, Twitter, Linkedin, Mail } from 'lucide-react';
+import Logo from '@/components/shared/Logo';
 
 const Footer = () => {
   return (
@@ -10,25 +11,11 @@ const Footer = () => {
             <img 
               src="/infin8content-logo.png" 
               alt="Infin8Content Logo"
-              className="w-44 h-10 rounded-md object-contain"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                const fallback = document.createElement('div');
-                fallback.style.cssText = `
-                  width: 176px; 
-                  height: 40px; 
-                  border-radius: 6px; 
-                  background: linear-gradient(to right, #217CEB, #4A42CC);
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  color: #FFFFFF;
-                  font-weight: bold;
-                  font-size: 0.875rem;
-                `;
-                fallback.textContent = 'I8 Infin8Content';
-                target.parentNode?.appendChild(fallback);
+              style={{ 
+                width: '176px', 
+                height: '40px',
+                borderRadius: '6px',
+                objectFit: 'contain'
               }}
             />
           </div>
@@ -46,22 +33,22 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/features/ai-article-generator" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   AI Article Generator
                 </a>
               </li>
               <li>
-                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/features/brand-voice-engine" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   Brand Voice Engine
                 </a>
               </li>
               <li>
-                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/features/research-assistant" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   Research Assistant
                 </a>
               </li>
               <li>
-                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/features/seo-optimization" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   SEO Optimization
                 </a>
               </li>
@@ -75,22 +62,22 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/solutions/content-marketing" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   Marketing Teams
                 </a>
               </li>
               <li>
-                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/solutions/content-marketing" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   Content Writers
                 </a>
               </li>
               <li>
-                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
-                  SEO Specialists
+                <a href="/solutions/seo-teams" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  SEO Teams
                 </a>
               </li>
               <li>
-                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/solutions/agencies" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   Agencies
                 </a>
               </li>
@@ -104,22 +91,22 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/resources/documentation" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   Documentation
                 </a>
               </li>
               <li>
-                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/resources/blog" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   Blog
                 </a>
               </li>
               <li>
-                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/resources/tutorials" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   Tutorials
                 </a>
               </li>
               <li>
-                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/resources/support" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   Support
                 </a>
               </li>
@@ -133,22 +120,22 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/about" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   About
                 </a>
               </li>
               <li>
-                <a href="#pricing" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/pricing" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   Pricing
                 </a>
               </li>
               <li>
-                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/contact" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   Contact
                 </a>
               </li>
               <li>
-                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/careers" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   Careers
                 </a>
               </li>
@@ -200,13 +187,13 @@ const Footer = () => {
 
             {/* Legal Links */}
             <div className="flex gap-6">
-              <a href="#" className="text-small text-neutral-500 hover:text-blue-400 transition-colors duration-300">
+              <a href="/privacy" className="text-small text-neutral-500 hover:text-blue-400 transition-colors duration-300">
                 Privacy
               </a>
-              <a href="#" className="text-small text-neutral-500 hover:text-blue-400 transition-colors duration-300">
+              <a href="/terms" className="text-small text-neutral-500 hover:text-blue-400 transition-colors duration-300">
                 Terms
               </a>
-              <a href="#" className="text-small text-neutral-500 hover:text-blue-400 transition-colors duration-300">
+              <a href="/security" className="text-small text-neutral-500 hover:text-blue-400 transition-colors duration-300">
                 Security
               </a>
             </div>
