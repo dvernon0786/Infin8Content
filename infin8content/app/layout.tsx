@@ -12,6 +12,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const poppins = Geist({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: "700",
+});
+
+const lato = Geist({
+  variable: "--font-lato",
+  subsets: ["latin"],
+  weight: "400",
+});
+
 export const metadata: Metadata = {
   title: "Infin8Content",
   description: "AI-powered content generation platform",
@@ -25,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${lato.variable} antialiased`}
         suppressHydrationWarning={true}
       >
         {children}
