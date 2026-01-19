@@ -2,9 +2,9 @@ name: Visual Regression
 
 on:
   pull_request:
-    branches: [main]
+    branches: [test-main-all]
   push:
-    branches: [main]
+    branches: [test-main-all]
 
 jobs:
   visual-regression:

@@ -1,0 +1,220 @@
+import { Github, Twitter, Linkedin, Mail } from 'lucide-react';
+
+const Footer = () => {
+  return (
+    <footer className="bg-neutral-900 text-neutral-300 pt-16 pb-8 border-t border-neutral-800">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        {/* Logo & Tagline */}
+        <div className="flex flex-col items-center mb-12">
+          <div className="flex items-center gap-4 mb-4">
+            <img 
+              src="/infin8content-logo.png" 
+              alt="Infin8Content Logo"
+              className="w-44 h-10 rounded-md object-contain"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const fallback = document.createElement('div');
+                fallback.style.cssText = `
+                  width: 176px; 
+                  height: 40px; 
+                  border-radius: 6px; 
+                  background: linear-gradient(to right, #217CEB, #4A42CC);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  color: #FFFFFF;
+                  font-weight: bold;
+                  font-size: 0.875rem;
+                `;
+                fallback.textContent = 'I8 Infin8Content';
+                target.parentNode?.appendChild(fallback);
+              }}
+            />
+          </div>
+          <p className="text-small text-neutral-400 text-center max-w-md">
+            AI-powered content creation platform for modern marketing teams
+          </p>
+        </div>
+
+        {/* Footer Columns */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+          {/* Product Column */}
+          <div>
+            <h4 className="font-poppins font-semibold text-white mb-4 text-sm uppercase tracking-wider">
+              Product
+            </h4>
+            <ul className="space-y-2">
+              <li>
+                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  AI Article Generator
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  Brand Voice Engine
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  Research Assistant
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  SEO Optimization
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Solutions Column */}
+          <div>
+            <h4 className="font-poppins font-semibold text-white mb-4 text-sm uppercase tracking-wider">
+              Solutions
+            </h4>
+            <ul className="space-y-2">
+              <li>
+                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  Marketing Teams
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  Content Writers
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  SEO Specialists
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  Agencies
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Resources Column */}
+          <div>
+            <h4 className="font-poppins font-semibold text-white mb-4 text-sm uppercase tracking-wider">
+              Resources
+            </h4>
+            <ul className="space-y-2">
+              <li>
+                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  Documentation
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  Blog
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  Tutorials
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  Support
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Company Column */}
+          <div>
+            <h4 className="font-poppins font-semibold text-white mb-4 text-sm uppercase tracking-wider">
+              Company
+            </h4>
+            <ul className="space-y-2">
+              <li>
+                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  About
+                </a>
+              </li>
+              <li>
+                <a href="#pricing" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  Pricing
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  Contact
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  Careers
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Social Links & Bottom Bar */}
+        <div className="border-t border-neutral-800 pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            {/* Copyright */}
+            <div className="flex items-center gap-4">
+              <span className="text-small text-neutral-500">
+                © 2026 Infin8Content. All rights reserved.
+              </span>
+            </div>
+
+            {/* Social Links */}
+            <div className="flex items-center gap-4">
+              <a 
+                href="#" 
+                className="w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center text-neutral-300 hover:bg-gradient-brand hover:text-white hover:scale-110 transition-all duration-300"
+                aria-label="GitHub"
+              >
+                <Github className="w-5 h-5" />
+              </a>
+              <a 
+                href="#" 
+                className="w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center text-neutral-300 hover:bg-gradient-brand hover:text-white hover:scale-110 transition-all duration-300"
+                aria-label="Twitter"
+              >
+                <Twitter className="w-5 h-5" />
+              </a>
+              <a 
+                href="#" 
+                className="w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center text-neutral-300 hover:bg-gradient-brand hover:text-white hover:scale-110 transition-all duration-300"
+                aria-label="LinkedIn"
+              >
+                <Linkedin className="w-5 h-5" />
+              </a>
+              <a 
+                href="#" 
+                className="w-10 h-10 bg-neutral-800 rounded-full flex items-center justify-center text-neutral-300 hover:bg-gradient-brand hover:text-white hover:scale-110 transition-all duration-300"
+                aria-label="Email"
+              >
+                <Mail className="w-5 h-5" />
+              </a>
+            </div>
+
+            {/* Legal Links */}
+            <div className="flex gap-6">
+              <a href="#" className="text-small text-neutral-500 hover:text-blue-400 transition-colors duration-300">
+                Privacy
+              </a>
+              <a href="#" className="text-small text-neutral-500 hover:text-blue-400 transition-colors duration-300">
+                Terms
+              </a>
+              <a href="#" className="text-small text-neutral-500 hover:text-blue-400 transition-colors duration-300">
+                Security
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;

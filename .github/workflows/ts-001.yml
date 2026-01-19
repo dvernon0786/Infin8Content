@@ -2,9 +2,9 @@ name: TS-001 Runtime Architecture Enforcement
 
 on:
   pull_request:
-    branches: [main]
+    branches: [test-main-all]
   push:
-    branches: [main, sm-*]
+    branches: [test-main-all, sm-*]
 
 jobs:
   ts-001-architecture-enforcement:
