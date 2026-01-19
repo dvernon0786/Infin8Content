@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { ChevronDown, Menu, X } from 'lucide-react';
-import Logo from '@/components/shared/Logo';
 
 const Navigation = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

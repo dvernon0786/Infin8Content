@@ -1,5 +1,4 @@
 import { Github, Twitter, Linkedin, Mail } from 'lucide-react';
-import Logo from '@/components/shared/Logo';
 
 const Footer = () => {
   return (
