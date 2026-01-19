@@ -23,7 +23,9 @@ jobs:
         
     - name: Install dependencies
       working-directory: ./infin8content
-      run: npm ci
+      run: npm ci --ignore-scripts
+      env:
+        npm_config_ignore_scripts: true
       
     - name: Build application
       working-directory: ./infin8content
