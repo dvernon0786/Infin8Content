@@ -168,3 +168,184 @@
 .link:hover {
   text-decoration: underline;
 }
+
+/* NEW: Page Layout Classes */
+.page {
+  min-height: 100vh;
+  background: #F4F4F6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.layout {
+  width: 100%;
+  max-width: 1200px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: 1fr 1fr;
+    max-width: 1000px;
+  }
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.right {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* NEW: Wrapper Classes */
+.signupCardWrapper {
+  position: relative;
+  padding: 1px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #217CEB, #4A42CC);
+}
+
+/* GLOBAL SELECTOR - TARGETS EXISTING .card INSIDE WRAPPER */
+.signupCardWrapper :global(.card) {
+  background-color: #0B1220;
+  background-image:
+    radial-gradient(at 90% 40%, rgba(74,66,204,0.25), transparent 70%),
+    radial-gradient(at 10% 80%, rgba(33,124,235,0.2), transparent 70%);
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* NEW: Brand Logo Classes */
+.brandLogo {
+  height: 32px;
+  width: auto;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .brandLogo {
+    height: 24px;
+    margin-bottom: 12px;
+  }
+}
+
+.secure {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 12px;
+  color: #737373;
+  margin-bottom: 12px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #217CEB;
+}
+
+/* NEW: Trust Section Classes */
+.proof {
+  max-width: 448px;
+  padding: 2rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.avatars {
+  display: flex;
+  margin-left: -0.5rem;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid white;
+  margin-left: -0.5rem;
+  background: linear-gradient(135deg, #217CEB, #4A42CC);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.stars {
+  color: #fbbf24;
+  font-size: 18px;
+  margin-bottom: 0.25rem;
+}
+
+.trusted {
+  color: #374151;
+  font-size: 14px;
+}
+
+.quote {
+  color: #4B5563;
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+}
+
+.author {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.authorAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #217CEB, #4A42CC);
+}
+
+.authorName {
+  color: #1F2937;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.authorRole {
+  color: #6B7280;
+  font-size: 14px;
+}
+
+.logos {
+  display: flex;
+  gap: 2rem;
+  font-size: 16px;
+  font-weight: 600;
+  color: #6B7280;
+  opacity: 0.8;
+}
