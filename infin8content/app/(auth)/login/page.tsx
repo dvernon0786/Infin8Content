@@ -124,14 +124,7 @@ function LoginPageContent() {
 
               {/* Card */}
               <div
-                className="relative h-full overflow-hidden rounded-2xl ring-1 ring-white/10 shadow-inner transition-all duration-300 hover:-translate-y-0.5 hover:ring-[#217CEB]/40 hover:shadow-[0_10px_40px_-10px_rgba(33,124,235,0.35)]"
-                style={{
-                  backgroundColor: '#0B1220',
-                  backgroundImage: `
-                    radial-gradient(at 90% 40%, rgba(74,66,204,0.25), transparent 70%),
-                    radial-gradient(at 10% 80%, rgba(33,124,235,0.2), transparent 70%)
-                  `
-                }}
+                className={`${styles.loginCard} relative h-full overflow-hidden rounded-2xl ring-1 ring-white/10 shadow-inner transition-all duration-300 hover:-translate-y-0.5 hover:ring-[#217CEB]/40 hover:shadow-[0_10px_40px_-10px_rgba(33,124,235,0.35)]`}
               >
                 <div className="relative p-6 sm:p-8 lg:p-10 flex flex-col h-full">
 

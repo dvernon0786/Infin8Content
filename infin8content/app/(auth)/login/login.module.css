@@ -143,6 +143,14 @@
   }
 }
 
+/* Login Card Styles */
+.loginCard {
+  background-color: #0B1220;
+  background-image: 
+    radial-gradient(at 90% 40%, rgba(74,66,204,0.25), transparent 70%),
+    radial-gradient(at 10% 80%, rgba(33,124,235,0.2), transparent 70%);
+}
+
 /* Legacy styles (keep for form elements) */
 .container {
   min-height: 100vh;
