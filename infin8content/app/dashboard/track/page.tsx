@@ -66,7 +66,6 @@ export default function TrackPage() {
           subtitle="Analytics and tracking"
           description="This section will include analytics dashboard, revenue attribution, and ranking performance tracking."
           badge="Soon"
-          badgeColor="yellow"
           testId="mobile-analytics-coming-soon-card"
         >
           <p className="text-sm text-muted-foreground">
@@ -78,7 +77,6 @@ export default function TrackPage() {
           title="Performance Overview"
           subtitle="Key metrics at a glance"
           badge="4"
-          badgeColor="blue"
           testId="mobile-performance-card"
         >
           <div className="space-y-2">
