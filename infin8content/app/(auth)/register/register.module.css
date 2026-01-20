@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #F4F4F6 0%, #E5E7EB 100%);
+  background: transparent;
 }
 
 .card {
@@ -221,7 +221,7 @@
 }
 
 /* GLOBAL SELECTOR - TARGETS EXISTING .card INSIDE WRAPPER */
-.signupCardWrapper :global(.card) {
+.signupCardWrapper > :global(.card) {
   background-color: #0B1220 !important;
   background-image:
     radial-gradient(at 90% 40%, rgba(74,66,204,0.25), transparent 70%),
@@ -264,10 +264,9 @@
 /* NEW: Trust Section Classes */
 .proof {
   max-width: 448px;
-  padding: 2rem;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .rating {
@@ -304,13 +303,13 @@
 }
 
 .trusted {
-  color: #d1d5db;
+  color: #6B7280;
   font-size: 14px;
 }
 
 .quote {
-  color: #e5e7eb;
-  font-size: 18px;
+  color: #374151;
+  font-size: 16px;
   line-height: 1.6;
   margin-bottom: 1.5rem;
   font-style: italic;
@@ -337,7 +336,7 @@
 }
 
 .authorRole {
-  color: #9ca3af;
+  color: #6B7280;
   font-size: 14px;
 }
 
@@ -346,17 +345,18 @@
   gap: 2rem;
   font-size: 16px;
   font-weight: 600;
-  color: #9ca3af;
+  color: #6B7280;
   opacity: 0.8;
 }
 
 /* DARK THEME TEXT OVERRIDES - PARITY WITH LOGIN */
-.signupCardWrapper :global(.card) :global(.title) {
+.signupCardWrapper > :global(.card) :global(.title) {
   color: white !important;
+  font-family: var(--font-poppins);
 }
 
-.signupCardWrapper :global(.card) :global(.subtitle) {
-  color: #a3a3a3 !important;
+.signupCardWrapper > :global(.card) :global(.subtitle) {
+  color: #A3A3A3 !important;
 }
 
 .signupCardWrapper :global(.card) :global(.label) {
@@ -371,7 +371,22 @@
   color: #217CEB !important;
 }
 
+/* LEFT-ALIGN HEADER - CRITICAL PARITY FIX */
+.signupCardWrapper > :global(.card) :global(.header) {
+  text-align: left !important;
+}
+
 /* INPUT STYLES FOR DARK THEME */
+.signupCardWrapper :global(input) {
+  background-color: rgba(255,255,255,0.08) !important;
+  color: #ffffff !important;
+}
+
+.signupCardWrapper :global(input:-webkit-autofill) {
+  -webkit-text-fill-color: #ffffff !important;
+  box-shadow: 0 0 0px 1000px #0B1220 inset !important;
+}
+
 .signupCardWrapper :global(.card) :global(.input) {
   background-color: rgba(255, 255, 255, 0.1) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
