@@ -15,6 +15,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 4rem;
+  align-items: center;
 }
 
 @media (min-width: 1024px) {
@@ -150,6 +151,12 @@
   background-image: 
     radial-gradient(at 90% 40%, rgba(74,66,204,0.25), transparent 70%),
     radial-gradient(at 10% 80%, rgba(33,124,235,0.2), transparent 70%);
+}
+
+/* AUTH CARD WIDTH LOCK — CRITICAL */
+.authCard {
+  width: 100%;
+  max-width: 420px;
 }
 
 /* Form Styles - SHARED WITH LOGIN */

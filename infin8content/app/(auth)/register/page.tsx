@@ -108,7 +108,7 @@ function RegisterPageContent() {
               <div className="absolute inset-0 rounded-2xl p-px bg-gradient-to-b from-[#217CEB]/40 via-[#4A42CC]/50 to-neutral-900/60" />
 
               {/* Card */}
-              <div className={`${styles.loginCard} relative rounded-2xl ring-1 ring-white/10 shadow-inner`}>
+              <div className={`${styles.loginCard} ${styles.authCard} relative rounded-2xl ring-1 ring-white/10 shadow-inner`}>
                 <div className="relative p-6 sm:p-8 lg:p-10 flex flex-col">
 
                   {/* Header */}
