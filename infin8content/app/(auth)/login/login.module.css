@@ -1,5 +1,157 @@
 /* Login Page Styles - Infin8Content Design System */
 
+/* Page wrapper */
+.page {
+  min-height: 100vh;
+  background: #F4F4F6;
+  font-family: var(--font-lato);
+}
+
+/* Two-column layout */
+.layout {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4rem;
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+  }
+}
+
+/* LEFT */
+.left {
+  display: flex;
+  justify-content: center;
+}
+
+/* RIGHT */
+.right {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .right {
+    display: block;
+  }
+}
+
+.proof {
+  max-width: 460px;
+}
+
+/* Rating */
+.rating {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.avatars {
+  display: flex;
+  margin-right: 0.5rem;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #217CEB, #4A42CC);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  margin-left: -8px;
+}
+
+.stars {
+  color: #F59E0B;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.trusted {
+  font-size: 14px;
+  color: #525252;
+}
+
+/* Quote */
+.quote {
+  font-family: var(--font-poppins);
+  font-size: 28px;
+  line-height: 1.3;
+  color: #171717;
+  margin-bottom: 2rem;
+}
+
+/* Author */
+.author {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 3rem;
+}
+
+.authorAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: #D4D4D8;
+}
+
+.authorName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #171717;
+}
+
+.authorRole {
+  font-size: 14px;
+  color: #525252;
+}
+
+/* Logos */
+.logos {
+  display: flex;
+  gap: 2rem;
+  font-size: 16px;
+  font-weight: 600;
+  color: #737373;
+  opacity: 0.8;
+}
+
+/* Brand Logo */
+.brandLogo {
+  height: 32px;
+  width: auto;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .brandLogo {
+    height: 24px;
+    margin-bottom: 12px;
+  }
+}
+
+/* Login Card Styles */
+.loginCard {
+  background-color: #0B1220;
+  background-image: 
+    radial-gradient(at 90% 40%, rgba(74,66,204,0.25), transparent 70%),
+    radial-gradient(at 10% 80%, rgba(33,124,235,0.2), transparent 70%);
+}
+
+/* Legacy styles (keep for form elements) */
 .container {
   min-height: 100vh;
   display: flex;
