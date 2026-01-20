@@ -102,7 +102,7 @@ export const ContentPerformanceDashboard: React.FC = () => {
     <MobileCard>
       <CardHeader>
         <CardTitle className="text-lg flex items-center justify-between">
-          Content Performance
+          Production overview
           <div className="flex items-center gap-2">
             <Badge 
               variant={metrics.seoScoreImprovement >= 10 ? "default" : "secondary"}
@@ -114,15 +114,22 @@ export const ContentPerformanceDashboard: React.FC = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4">
+        <p className="text-sm text-muted-foreground mb-3">
+          Your content engine is{" "}
+          {metrics.articlesCompleted > 0
+            ? "active"
+            : "just getting started"}.
+        </p>
+        
         <div className="grid grid-cols-2 gap-4">
           {/* Articles Status */}
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600">{metrics.articlesInProgress}</div>
-            <p className="text-xs text-muted-foreground">In Progress</p>
+            <p className="text-xs text-muted-foreground">Articles in progress</p>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">{metrics.articlesCompleted}</div>
-            <p className="text-xs text-muted-foreground">Completed</p>
+            <p className="text-xs text-muted-foreground">Articles completed</p>
           </div>
           
           {/* Words Written */}
@@ -136,7 +143,7 @@ export const ContentPerformanceDashboard: React.FC = () => {
             <div className={`text-2xl font-bold text-${getSpeedColor(metrics.averageGenerationTime)}-600`}>
               {metrics.averageGenerationTime}m
             </div>
-            <p className="text-xs text-muted-foreground">Avg Generation</p>
+            <p className="text-xs text-muted-foreground">Avg time per article</p>
           </div>
           
           {/* SEO Improvement */}

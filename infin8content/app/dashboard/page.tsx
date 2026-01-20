@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { MobileCard } from "@/components/mobile/mobile-card"
 import { useMobileLayout } from "@/hooks/use-mobile-layout"
 import { ContentPerformanceDashboard } from "@/components/dashboard/content-performance-dashboard"
-import { SwipeNavigationWrapper } from "@/components/dashboard/swipe-navigation-wrapper"
+import { QuickActions } from "@/components/dashboard/quick-actions"
 
 export default async function DashboardPage() {
   const currentUser = await getCurrentUser()
@@ -34,6 +34,33 @@ export default async function DashboardPage() {
   const plan = currentUser.organizations?.plan || "starter"
   const status = currentUser.organizations?.payment_status?.replace('_', ' ') || "active"
 
+  // Primary CTA logic
+  const articles = currentUser.organizations?.articles || []
+
+  interface Article {
+    status: string
+    updated_at: string
+    id: string
+  }
+
+  const latestActiveArticle = articles
+    .filter((a: Article) => a.status !== "published")
+    .sort(
+      (a: Article, b: Article) =>
+        new Date(b.updated_at).getTime() -
+        new Date(a.updated_at).getTime()
+    )[0]
+
+  const primaryCTA = latestActiveArticle
+    ? {
+        label: "Continue Article",
+        href: `/dashboard/articles/${latestActiveArticle.id}/edit`,
+      }
+    : {
+        label: "Create New Article",
+        href: "/dashboard/articles/generate",
+      }
+
   // If no organization, user shouldn't be here (middleware should redirect)
   // But handle gracefully for edge cases
   if (!orgName) {
@@ -53,10 +80,36 @@ export default async function DashboardPage() {
       {/* Main Content */}
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Let's keep your content moving
+          </h1>
           <p className="text-muted-foreground">
-            Welcome back, {firstName}
+            Pick up where you left off or start a new article
           </p>
+        </div>
+
+        {/* Primary CTA */}
+        <div className="flex items-center gap-3">
+          <a
+            href={primaryCTA.href}
+            className="
+              inline-flex items-center justify-center
+              rounded-md px-6 py-3
+              text-sm font-medium
+              bg-primary text-primary-foreground
+              hover:bg-primary/90
+              transition-colors
+            "
+          >
+            {primaryCTA.label}
+          </a>
+
+          {latestActiveArticle && (
+            <span className="text-sm text-muted-foreground">
+              Last updated{" "}
+              {new Date(latestActiveArticle.updated_at).toLocaleDateString()}
+            </span>
+          )}
         </div>
 
         {/* Mobile-Optimized Dashboard Cards */}
@@ -94,7 +147,16 @@ export default async function DashboardPage() {
         </div>
 
         {/* Content Performance Dashboard */}
-        <ContentPerformanceDashboard />
+        <div className="flex flex-col gap-2">
+          <h2 className="text-lg font-semibold">
+            Content momentum
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            How your content production is trending
+          </p>
+
+          <ContentPerformanceDashboard />
+        </div>
 
         {/* Additional Mobile-Optimized Content */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -106,11 +168,7 @@ export default async function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Create new article</p>
-                <p className="text-sm text-muted-foreground">View analytics</p>
-                <p className="text-sm text-muted-foreground">Manage settings</p>
-              </div>
+              <QuickActions />
             </CardContent>
           </Card>
 
@@ -121,11 +179,7 @@ export default async function DashboardPage() {
             className="md:hidden"
             testId="mobile-quick-actions-card"
           >
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Create new article</p>
-              <p className="text-sm text-muted-foreground">View analytics</p>
-              <p className="text-sm text-muted-foreground">Manage settings</p>
-            </div>
+            <QuickActions />
           </MobileCard>
         </div>
       </div>

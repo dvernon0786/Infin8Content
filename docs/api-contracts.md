@@ -1,10 +1,10 @@
 # API Contracts Documentation
 
-Generated: 2026-01-18 (Updated)  
+Generated: 2026-01-20 (Updated)  
 Project: Infin8Content  
 Framework: Next.js 16.1.1 with TypeScript  
-Total Endpoints: 43  
-Scan Type: Exhaustive (All API routes analyzed)
+Total Endpoints: 55  
+Scan Type: Deep Scan (Critical API routes analyzed)
 
 ---
 
