@@ -7,7 +7,6 @@ import {
     PenTool,
     Search,
     Settings,
-    Bell,
     Menu,
     X,
 } from "lucide-react"
@@ -34,14 +33,14 @@ import { responsiveCSSVars } from "@/lib/utils/responsive-breakpoints"
 
 const items = [
     {
-        title: "Research",
-        url: "/dashboard/research",
-        icon: Search,
-    },
-    {
         title: "Write",
         url: "/dashboard/write",
         icon: PenTool,
+    },
+    {
+        title: "Research",
+        url: "/dashboard/research",
+        icon: Search,
     },
     {
         title: "Publish",
@@ -113,7 +112,7 @@ export function SidebarNavigation() {
                         "transition-opacity duration-200",
                         isMobile && "sr-only" // Hide label on mobile for cleaner look
                     )}>
-                        Application
+                        Production
                     </SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
@@ -161,24 +160,6 @@ export function SidebarNavigation() {
                     </SidebarGroupContent>
                 </SidebarGroup>
 
-                {/* Mobile-specific notification section */}
-                {isMobile && (
-                    <SidebarGroup>
-                        <SidebarGroupContent>
-                            <SidebarMenu>
-                                <SidebarMenuItem>
-                                    <SidebarMenuButton className="min-h-[44px] py-3" style={{ minHeight: '44px' }}> // Critical touch target fallback
-                                        <Bell className="h-5 w-5 shrink-0" />
-                                        <span className="text-sm font-medium">Notifications</span>
-                                        <Badge variant="secondary" className="ml-auto">
-                                            3
-                                        </Badge>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            </SidebarMenu>
-                        </SidebarGroupContent>
-                    </SidebarGroup>
-                )}
             </SidebarContent>
         </Sidebar>
     )
