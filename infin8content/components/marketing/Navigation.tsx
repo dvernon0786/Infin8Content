@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { ChevronDown, Menu, X } from 'lucide-react';
 
 const Navigation = () => {
@@ -20,18 +21,20 @@ const Navigation = () => {
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1rem 1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <img 
-              src="/infin8content-logo.png" 
-              alt="Infin8Content Logo"
-              style={{ 
-                width: '192px', 
-                height: '41px',
-                borderRadius: '6px',
-                objectFit: 'contain'
-              }}
-            />
-          </div>
+          <Link href="/" aria-label="Go to homepage">
+            <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+              <img 
+                src="/infin8content-logo.png" 
+                alt="Infin8Content Logo"
+                style={{ 
+                  width: '192px', 
+                  height: '41px',
+                  borderRadius: '6px',
+                  objectFit: 'contain'
+                }}
+              />
+            </div>
+          </Link>
 
           {/* Desktop Menu */}
           <div style={{ alignItems: 'center', gap: '2rem' }} className="hidden md:flex">
@@ -173,7 +176,8 @@ const Navigation = () => {
               )}
             </div>
 
-            <button 
+            <a 
+              href="/register"
               style={{
                 background: 'linear-gradient(to right, #217CEB, #4A42CC)',
                 color: '#FFFFFF',
@@ -182,11 +186,13 @@ const Navigation = () => {
                 border: 'none',
                 cursor: 'pointer',
                 fontWeight: 'bold',
-                fontSize: '1rem'
+                fontSize: '1rem',
+                textDecoration: 'none',
+                display: 'inline-block'
               }}
             >
               Get Started
-            </button>
+            </a>
           </div>
 
           {/* Mobile Menu Button */}
@@ -221,7 +227,8 @@ const Navigation = () => {
               <a href="#" style={{ color: '#2C2C2E', textDecoration: 'none', padding: '0.5rem 0' }}>Features</a>
               <a href="#" style={{ color: '#2C2C2E', textDecoration: 'none', padding: '0.5rem 0' }}>Solutions</a>
               <a href="#" style={{ color: '#2C2C2E', textDecoration: 'none', padding: '0.5rem 0' }}>Resources</a>
-              <button 
+              <a 
+                href="/register"
                 style={{
                   background: 'linear-gradient(to right, #217CEB, #4A42CC)',
                   color: '#FFFFFF',
@@ -231,11 +238,14 @@ const Navigation = () => {
                   cursor: 'pointer',
                   fontWeight: 'bold',
                   fontSize: '1rem',
-                  width: '100%'
+                  width: '100%',
+                  textDecoration: 'none',
+                  display: 'inline-block',
+                  textAlign: 'center'
                 }}
               >
                 Get Started
-              </button>
+              </a>
             </div>
           </div>
         )}
