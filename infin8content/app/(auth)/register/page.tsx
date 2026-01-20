@@ -95,8 +95,8 @@ function RegisterPageContent() {
 
         {/* LEFT — REGISTER CARD */}
         <div className={styles.left}>
-          <section className="relative font-lato w-full">
-            <div className="relative">
+          <section className="order-1 lg:order-2 relative font-lato">
+            <div className="group relative w-full h-full">
 
               {/* Animated background blur */}
               <div className="absolute inset-0 rounded-2xl overflow-hidden">
@@ -108,8 +108,10 @@ function RegisterPageContent() {
               <div className="absolute inset-0 rounded-2xl p-px bg-gradient-to-b from-[#217CEB]/40 via-[#4A42CC]/50 to-neutral-900/60" />
 
               {/* Card */}
-              <div className={`${styles.loginCard} ${styles.authCard} relative rounded-2xl ring-1 ring-white/10 shadow-inner`}>
-                <div className="relative p-6 sm:p-8 lg:p-10 flex flex-col">
+              <div
+                className={`${styles.loginCard} ${styles.authCard} relative h-full overflow-hidden rounded-2xl ring-1 ring-white/10 shadow-inner transition-all duration-300 hover:-translate-y-0.5 hover:ring-[#217CEB]/40 hover:shadow-[0_10px_40px_-10px_rgba(33,124,235,0.35)]`}
+              >
+                <div className="relative p-6 sm:p-8 lg:p-10 flex flex-col h-full">
 
                   {/* Header */}
                   <div className="mb-8">
@@ -301,10 +303,10 @@ export default function RegisterPage() {
       <div className={styles.page}>
         <div className={styles.layout}>
           <div className={styles.left}>
-            <section className="relative font-lato w-full">
-              <div className="relative">
-                <div className={`${styles.loginCard} relative rounded-2xl ring-1 ring-white/10 shadow-inner`}>
-                  <div className="relative p-6 sm:p-8 lg:p-10 flex flex-col">
+            <section className="order-1 lg:order-2 relative font-lato">
+              <div className="group relative w-full h-full">
+                <div className={`${styles.loginCard} ${styles.authCard} relative h-full overflow-hidden rounded-2xl ring-1 ring-white/10 shadow-inner`}>
+                  <div className="relative p-6 sm:p-8 lg:p-10 flex flex-col h-full">
                     <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white font-poppins">
                       Loading...
                     </h2>
