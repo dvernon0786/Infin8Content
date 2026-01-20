@@ -109,7 +109,7 @@ export function SidebarNavigation() {
             <SidebarContent>
                 <SidebarGroup>
                     <SidebarGroupLabel className={cn(
-                        "transition-opacity duration-200",
+                        "font-poppins text-h5 text-neutral-900 transition-opacity duration-200",
                         isMobile && "sr-only" // Hide label on mobile for cleaner look
                     )}>
                         Production
@@ -125,7 +125,7 @@ export function SidebarNavigation() {
                                             // Touch-optimized sizing for mobile
                                             isMobile && "min-h-[44px] py-3",
                                             // Smooth transitions
-                                            "transition-all duration-200"
+                                            "transition-all duration-200 font-lato text-body text-neutral-600"
                                         )}
                                         style={isMobile ? { minHeight: '44px' } : undefined} // Critical touch target fallback
                                     >
@@ -147,8 +147,8 @@ export function SidebarNavigation() {
                                                 )} 
                                             />
                                             <span className={cn(
-                                                "truncate",
-                                                isMobile && "text-sm font-medium" // Adjust text size for mobile
+                                                "truncate font-lato text-body text-neutral-700",
+                                                isMobile && "text-body font-medium" // Adjust text size for mobile
                                             )}>
                                                 {item.title}
                                             </span>

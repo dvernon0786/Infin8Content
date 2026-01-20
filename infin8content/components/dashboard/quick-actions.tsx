@@ -7,21 +7,21 @@ export const QuickActions = () => {
     <div className="space-y-2">
       <button
         onClick={() => redirect("/dashboard/articles/generate")}
-        className="text-sm text-primary hover:underline"
+        className="font-lato text-body text-neutral-600 hover:text-[--brand-electric-blue] transition-colors"
       >
         Create new article
       </button>
 
       <button
         onClick={() => redirect("/dashboard/track")}
-        className="text-sm text-primary hover:underline"
+        className="font-lato text-body text-neutral-600 hover:text-[--brand-electric-blue] transition-colors"
       >
         View analytics
       </button>
 
       <button
         onClick={() => redirect("/dashboard/settings")}
-        className="text-sm text-primary hover:underline"
+        className="font-lato text-body text-neutral-600 hover:text-[--brand-electric-blue] transition-colors"
       >
         Manage settings
       </button>
