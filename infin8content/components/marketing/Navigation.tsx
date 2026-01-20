@@ -35,6 +35,18 @@ const Navigation = () => {
 
           {/* Desktop Menu */}
           <div style={{ alignItems: 'center', gap: '2rem' }} className="hidden md:flex">
+            <a 
+              href="/pricing" 
+              style={{ 
+                color: '#2C2C2E', 
+                textDecoration: 'none', 
+                fontSize: '1rem',
+                fontWeight: '500'
+              }}
+            >
+              Pricing
+            </a>
+
             <div style={{ position: 'relative' }}>
               <button 
                 style={{ 
@@ -205,6 +217,7 @@ const Navigation = () => {
             padding: '1rem'
           }} className="md:hidden">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <a href="/pricing" style={{ color: '#2C2C2E', textDecoration: 'none', padding: '0.5rem 0' }}>Pricing</a>
               <a href="#" style={{ color: '#2C2C2E', textDecoration: 'none', padding: '0.5rem 0' }}>Features</a>
               <a href="#" style={{ color: '#2C2C2E', textDecoration: 'none', padding: '0.5rem 0' }}>Solutions</a>
               <a href="#" style={{ color: '#2C2C2E', textDecoration: 'none', padding: '0.5rem 0' }}>Resources</a>

@@ -176,16 +176,36 @@ docs/design-system/
 
 ## Version History
 
-### v2.0.1 (January 20, 2026) - **Font Import Fix**
-- 🔧 Corrected Poppins and Lato font imports in layout.tsx
-- ⚡ Added display: swap for improved font loading performance
-- 📝 Enhanced metadata with better title and description
-- 📚 Added LandingPage-REFERENCE.tsx for component reference
-- 🎯 Typography system now properly implemented with correct fonts
+### v2.0.2 (January 20, 2026) - Production-Grade Pricing System
+- **Complete pricing page system** with 8 specialized components
+- **Architecture**: Modular component structure in `/pricing/` directory
+- **Features**: 
+  - PricingHero with billing toggle
+  - PricingPlans with 3-tier structure
+  - PricingComparisonRow (self-serve vs managed decision)
+  - BespokeAIContentService (premium $2,000/mo offering)
+  - PricingComparison table
+  - Testimonials section (social proof)
+  - PricingFAQ for common objections
+  - FinalCTA section (final conversion)
+  - Sticky upgrade bars (desktop/mobile)
+- **Design**: Clean SaaS pricing experience with brand consistency
+- **Mobile Optimization**: Responsive with sticky conversion elements
+- **Conversion Funnel**: Complete 10-section pricing journey
+- **Impact**: Professional pricing page ready for production with premium offerings
 
-### v2.0.0 (January 19, 2026) - **UX Design System Overhaul**
+### v2.0.1 (January 20, 2026) - Font Import Fix
+- **Issue**: Poppins and Lato fonts incorrectly imported using Geist
+- **Fix**: Updated font imports to use dedicated font functions
+- **Changes**: 
+  - Corrected font imports in `app/layout.tsx`
+  - Added proper font weights and display settings
+  - Updated metadata title and description
+- **Impact**: Typography system now displays correctly across all pages
+
+### v2.0.0 (January 19, 2026) - UX Design System Overhaul
 - 🎨 Complete typography system (Poppins Bold + Lato Regular)
-- 🌈 Full color palette with brand spectrums (blue, purple, neutral)
+- 🌈 Full color palette with neutral tones and brand gradients
 - ✨ Comprehensive gradient system (brand, vibrant, mesh)
 - 📱 Responsive design tokens with mobile-first approach
 - 🎯 Landing page component library (9 modular sections)
