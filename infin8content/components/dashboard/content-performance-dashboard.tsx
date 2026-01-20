@@ -87,7 +87,7 @@ export const ContentPerformanceDashboard: React.FC = () => {
   return (
     <MobileCard>
       <CardHeader>
-        <CardTitle className="text-lg flex items-center justify-between">
+        <CardTitle className="font-poppins text-h4 text-neutral-900 flex items-center justify-between">
           Production overview
           <div className="flex items-center gap-2">
             <Badge 
@@ -100,7 +100,7 @@ export const ContentPerformanceDashboard: React.FC = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4">
-        <p className="text-sm text-muted-foreground mb-3">
+        <p className="font-lato text-body text-neutral-600 mb-3">
           Your content engine is{" "}
           {metrics.articlesCompleted > 0
             ? "active"
@@ -110,50 +110,50 @@ export const ContentPerformanceDashboard: React.FC = () => {
         <div className="grid grid-cols-2 gap-4">
           {/* Articles Status */}
           <div className="text-center">
-            <div className="text-2xl font-bold">{metrics.articlesInProgress}</div>
-            <p className="text-xs text-muted-foreground">Articles in progress</p>
+            <div className="font-poppins text-h3 text-neutral-900">{metrics.articlesInProgress}</div>
+            <p className="font-lato text-small text-neutral-500">Articles in progress</p>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold">{metrics.articlesCompleted}</div>
-            <p className="text-xs text-muted-foreground">Articles completed</p>
+            <div className="font-poppins text-h3 text-neutral-900">{metrics.articlesCompleted}</div>
+            <p className="font-lato text-small text-neutral-500">Articles completed</p>
           </div>
           
           {/* Words Written */}
           <div className="text-center">
-            <div className="text-2xl font-bold">{(metrics.wordsWrittenToday / 1000).toFixed(1)}k</div>
-            <p className="text-xs text-muted-foreground">Words written today</p>
+            <div className="font-poppins text-h3 text-neutral-900">{(metrics.wordsWrittenToday / 1000).toFixed(1)}k</div>
+            <p className="font-lato text-small text-neutral-500">Words written today</p>
           </div>
           
           {/* Generation Speed */}
           <div className="text-center">
-            <div className="text-2xl font-bold">{metrics.averageGenerationTime}m</div>
-            <p className="text-xs text-muted-foreground">Avg time per article</p>
+            <div className="font-poppins text-h3 text-neutral-900">{metrics.averageGenerationTime}m</div>
+            <p className="font-lato text-small text-neutral-500">Avg time per article</p>
           </div>
           
           {/* SEO Improvement */}
           <div className="text-center">
-            <div className="text-2xl font-bold">+{metrics.seoScoreImprovement}%</div>
-            <p className="text-xs text-muted-foreground">SEO improvement</p>
+            <div className="font-poppins text-h3 text-neutral-900">+{metrics.seoScoreImprovement}%</div>
+            <p className="font-lato text-small text-neutral-500">SEO improvement</p>
           </div>
           
           {/* Content Performance */}
           <div className="text-center">
-            <div className="text-2xl font-bold">{metrics.contentViews}</div>
-            <p className="text-xs text-muted-foreground">Content views</p>
+            <div className="font-poppins text-h3 text-neutral-900">{metrics.contentViews}</div>
+            <p className="font-lato text-small text-neutral-500">Content views</p>
           </div>
         </div>
         
         {/* Engagement Rate */}
         <div className="mt-4 pt-4 border-t">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Engagement Rate</span>
-            <span className="text-sm font-medium">
+            <span className="font-lato text-body text-neutral-600">Engagement Rate</span>
+            <span className="font-lato text-body font-medium text-neutral-900">
               {((metrics.contentEngagements / metrics.contentViews) * 100).toFixed(1)}%
             </span>
           </div>
-          <div className="w-full bg-muted rounded-full h-2 mt-1">
+          <div className="w-full bg-neutral-200 rounded-full h-2 mt-1">
             <div 
-              className="bg-primary h-2 rounded-full transition-all"
+              className="bg-[--brand-electric-blue] h-2 rounded-full transition-all"
               style={{ width: `${(metrics.contentEngagements / metrics.contentViews) * 100}%` }}
             />
           </div>

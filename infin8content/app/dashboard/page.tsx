@@ -80,10 +80,10 @@ export default async function DashboardPage() {
       {/* Main Content */}
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="font-poppins text-h3-sm md:text-h3 text-neutral-900">
             Let's keep your content moving
           </h1>
-          <p className="text-muted-foreground">
+          <p className="font-lato text-body text-neutral-600">
             Pick up where you left off or start a new article
           </p>
         </div>
@@ -96,8 +96,8 @@ export default async function DashboardPage() {
               inline-flex items-center justify-center
               rounded-md px-6 py-3
               text-sm font-medium
-              bg-primary text-primary-foreground
-              hover:bg-primary/90
+              bg-[--brand-electric-blue] text-white
+              hover:bg-[--brand-electric-blue]/90
               transition-colors
             "
           >
@@ -105,7 +105,7 @@ export default async function DashboardPage() {
           </a>
 
           {latestActiveArticle && (
-            <span className="text-sm text-muted-foreground">
+            <span className="font-lato text-small text-neutral-500">
               Last updated{" "}
               {new Date(latestActiveArticle.updated_at).toLocaleDateString()}
             </span>
@@ -115,9 +115,9 @@ export default async function DashboardPage() {
         {/* Mobile-Optimized Dashboard Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {/* Desktop Card */}
-          <Card className="hidden md:block">
+          <Card className="hidden md:block bg-white border-neutral-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="font-lato text-small font-medium text-neutral-900">
                 Current Plan
               </CardTitle>
               <Badge variant={plan === 'pro' ? 'default' : 'secondary'}>
@@ -125,8 +125,8 @@ export default async function DashboardPage() {
               </Badge>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{orgName}</div>
-              <p className="text-xs text-muted-foreground capitalize">
+              <div className="font-poppins text-h3 text-neutral-900">{orgName}</div>
+              <p className="font-lato text-small text-neutral-500 capitalize">
                 Status: {status}
               </p>
             </CardContent>
@@ -142,16 +142,16 @@ export default async function DashboardPage() {
             className="md:hidden"
             testId="mobile-plan-card"
           >
-            <div className="text-2xl font-bold">{orgName}</div>
+            <div className="font-poppins text-h3 text-neutral-900">{orgName}</div>
           </MobileCard>
         </div>
 
         {/* Content Performance Dashboard */}
         <div className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">
+          <h2 className="font-poppins text-h4 text-neutral-900">
             Content momentum
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="font-lato text-body text-neutral-600">
             How your content production is trending
           </p>
 
@@ -161,9 +161,9 @@ export default async function DashboardPage() {
         {/* Additional Mobile-Optimized Content */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {/* Quick Actions Card */}
-          <Card className="hidden md:block">
+          <Card className="hidden md:block bg-white border-neutral-200">
             <CardHeader>
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="font-lato text-small font-medium text-neutral-900">
                 Quick Actions
               </CardTitle>
             </CardHeader>
