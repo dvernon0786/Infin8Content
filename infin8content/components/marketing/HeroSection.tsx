@@ -18,12 +18,12 @@ const HeroSection = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start mb-12">
-              <button className="btn-primary focus-ring">
+              <a href="/register" className="btn-primary focus-ring">
                 Get Started
-              </button>
-              <button className="btn-secondary focus-ring">
+              </a>
+              <a href="/pricing" className="btn-secondary focus-ring">
                 See Pricing
-              </button>
+              </a>
             </div>
 
             {/* Trust Indicators */}

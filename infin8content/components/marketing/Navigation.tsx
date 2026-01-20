@@ -173,7 +173,8 @@ const Navigation = () => {
               )}
             </div>
 
-            <button 
+            <a 
+              href="/register"
               style={{
                 background: 'linear-gradient(to right, #217CEB, #4A42CC)',
                 color: '#FFFFFF',
@@ -182,11 +183,13 @@ const Navigation = () => {
                 border: 'none',
                 cursor: 'pointer',
                 fontWeight: 'bold',
-                fontSize: '1rem'
+                fontSize: '1rem',
+                textDecoration: 'none',
+                display: 'inline-block'
               }}
             >
               Get Started
-            </button>
+            </a>
           </div>
 
           {/* Mobile Menu Button */}
@@ -221,7 +224,8 @@ const Navigation = () => {
               <a href="#" style={{ color: '#2C2C2E', textDecoration: 'none', padding: '0.5rem 0' }}>Features</a>
               <a href="#" style={{ color: '#2C2C2E', textDecoration: 'none', padding: '0.5rem 0' }}>Solutions</a>
               <a href="#" style={{ color: '#2C2C2E', textDecoration: 'none', padding: '0.5rem 0' }}>Resources</a>
-              <button 
+              <a 
+                href="/register"
                 style={{
                   background: 'linear-gradient(to right, #217CEB, #4A42CC)',
                   color: '#FFFFFF',
@@ -231,11 +235,14 @@ const Navigation = () => {
                   cursor: 'pointer',
                   fontWeight: 'bold',
                   fontSize: '1rem',
-                  width: '100%'
+                  width: '100%',
+                  textDecoration: 'none',
+                  display: 'inline-block',
+                  textAlign: 'center'
                 }}
               >
                 Get Started
-              </button>
+              </a>
             </div>
           </div>
         )}

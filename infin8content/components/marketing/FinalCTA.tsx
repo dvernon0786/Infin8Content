@@ -16,9 +16,9 @@ const FinalCTA = () => {
           Join 10,000+ content teams creating better content, faster.
         </p>
 
-        <button className="btn-primary bg-white text-neutral-900 hover:scale-105 focus-ring mb-8 text-lg px-8 py-4 shadow-xl">
+        <a href="/register" className="btn-primary bg-white text-neutral-900 hover:scale-105 focus-ring mb-8 text-lg px-8 py-4 shadow-xl">
           Get Started Now
-        </button>
+        </a>
 
         {/* Trust Badges */}
         <div className="flex flex-wrap justify-center gap-6 mb-8">
