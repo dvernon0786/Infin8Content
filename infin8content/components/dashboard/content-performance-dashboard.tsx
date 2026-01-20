@@ -8,10 +8,8 @@
 "use client"
 
 import React, { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { MobileCard } from '@/components/mobile/mobile-card'
 
 interface ContentMetrics {
@@ -26,7 +24,6 @@ interface ContentMetrics {
 }
 
 export const ContentPerformanceDashboard: React.FC = () => {
-  const router = useRouter()
   const [metrics, setMetrics] = useState<ContentMetrics>({
     articlesInProgress: 0,
     articlesCompleted: 0,
@@ -73,17 +70,6 @@ export const ContentPerformanceDashboard: React.FC = () => {
     return () => clearInterval(interval)
   }, [])
 
-  const getPerformanceColor = (score: number): string => {
-    if (score >= 80) return 'green'
-    if (score >= 60) return 'yellow'
-    return 'red'
-  }
-
-  const getSpeedColor = (time: number): string => {
-    if (time <= 2) return 'green'
-    if (time <= 3) return 'yellow'
-    return 'orange'
-  }
 
   if (isLoading) {
     return (
@@ -124,40 +110,36 @@ export const ContentPerformanceDashboard: React.FC = () => {
         <div className="grid grid-cols-2 gap-4">
           {/* Articles Status */}
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{metrics.articlesInProgress}</div>
+            <div className="text-2xl font-bold">{metrics.articlesInProgress}</div>
             <p className="text-xs text-muted-foreground">Articles in progress</p>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{metrics.articlesCompleted}</div>
+            <div className="text-2xl font-bold">{metrics.articlesCompleted}</div>
             <p className="text-xs text-muted-foreground">Articles completed</p>
           </div>
           
           {/* Words Written */}
           <div className="text-center">
             <div className="text-2xl font-bold">{(metrics.wordsWrittenToday / 1000).toFixed(1)}k</div>
-            <p className="text-xs text-muted-foreground">Words Today</p>
+            <p className="text-xs text-muted-foreground">Words written today</p>
           </div>
           
           {/* Generation Speed */}
           <div className="text-center">
-            <div className={`text-2xl font-bold text-${getSpeedColor(metrics.averageGenerationTime)}-600`}>
-              {metrics.averageGenerationTime}m
-            </div>
+            <div className="text-2xl font-bold">{metrics.averageGenerationTime}m</div>
             <p className="text-xs text-muted-foreground">Avg time per article</p>
           </div>
           
           {/* SEO Improvement */}
           <div className="text-center">
-            <div className={`text-2xl font-bold text-${getPerformanceColor(metrics.seoScoreImprovement)}-600`}>
-              +{metrics.seoScoreImprovement}%
-            </div>
-            <p className="text-xs text-muted-foreground">SEO Score</p>
+            <div className="text-2xl font-bold">+{metrics.seoScoreImprovement}%</div>
+            <p className="text-xs text-muted-foreground">SEO improvement</p>
           </div>
           
           {/* Content Performance */}
           <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">{metrics.contentViews}</div>
-            <p className="text-xs text-muted-foreground">Views</p>
+            <div className="text-2xl font-bold">{metrics.contentViews}</div>
+            <p className="text-xs text-muted-foreground">Content views</p>
           </div>
         </div>
         
@@ -169,31 +151,12 @@ export const ContentPerformanceDashboard: React.FC = () => {
               {((metrics.contentEngagements / metrics.contentViews) * 100).toFixed(1)}%
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+          <div className="w-full bg-muted rounded-full h-2 mt-1">
             <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              className="bg-primary h-2 rounded-full transition-all"
               style={{ width: `${(metrics.contentEngagements / metrics.contentViews) * 100}%` }}
             />
           </div>
-        </div>
-        
-        {/* Quick Actions */}
-        <div className="mt-4 flex gap-2">
-          <Button 
-            size="sm" 
-            className="flex-1"
-            onClick={() => router.push('/dashboard/articles/generate')}
-          >
-            New Article
-          </Button>
-          <Button 
-            size="sm" 
-            variant="outline" 
-            className="flex-1"
-            onClick={() => router.push('/analytics')}
-          >
-            View Analytics
-          </Button>
         </div>
       </CardContent>
     </MobileCard>
