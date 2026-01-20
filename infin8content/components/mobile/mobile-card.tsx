@@ -12,7 +12,6 @@ export interface MobileCardProps {
   image?: string;
   imageAlt?: string;
   badge?: string;
-  badgeColor?: 'blue' | 'green' | 'yellow' | 'red' | 'gray';
   actions?: React.ReactNode;
   onPress?: () => void;
   onLongPress?: () => void;
@@ -27,13 +26,6 @@ export interface MobileCardProps {
 // Mobile-specific constants
 const MOBILE_TOUCH_TARGET_SIZE = 44; // iOS HIG minimum
 
-const BADGE_COLORS = {
-  blue: 'bg-blue-100 text-blue-800',
-  green: 'bg-green-100 text-green-800',
-  yellow: 'bg-yellow-100 text-yellow-800',
-  red: 'bg-red-100 text-red-800',
-  gray: 'bg-gray-100 text-gray-800',
-} as const;
 
 export const MobileCard: React.FC<MobileCardProps> = ({
   children,
@@ -43,7 +35,6 @@ export const MobileCard: React.FC<MobileCardProps> = ({
   image,
   imageAlt,
   badge,
-  badgeColor = 'blue',
   actions,
   onPress,
   onLongPress,
@@ -132,16 +123,16 @@ export const MobileCard: React.FC<MobileCardProps> = ({
   }, []);
 
   const cardClasses = [
-    'bg-white',
+    'bg-white border border-neutral-200',
     'p-4',
     'm-2',
     'rounded-lg',
-    'shadow-md',
+    'shadow-sm',
     isMobile && 'min-h-[44px]',
     disabled && 'opacity-50',
-    selected && 'ring-2 ring-blue-500',
+    selected && 'ring-1 ring-[--brand-electric-blue]/40',
     className,
-  ].filter(Boolean).join(' ');
+  ].filter(Boolean).join(' ');;
 
   return (
     <div
@@ -159,7 +150,7 @@ export const MobileCard: React.FC<MobileCardProps> = ({
       {/* Loading State */}
       {loading && (
         <div className="absolute inset-0 bg-white bg-opacity-75 rounded-lg flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-neutral-300 border-t-[--brand-electric-blue] rounded-full animate-spin" />
         </div>
       )}
 
@@ -173,9 +164,7 @@ export const MobileCard: React.FC<MobileCardProps> = ({
             loading="lazy"
           />
           {badge && (
-            <div
-              className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${BADGE_COLORS[badgeColor]}`}
-            >
+            <div className="absolute top-2 right-2 bg-neutral-200 text-neutral-700 px-2 py-1 rounded-full text-xs font-lato">
               {badge}
             </div>
           )}
@@ -186,21 +175,21 @@ export const MobileCard: React.FC<MobileCardProps> = ({
       <div className="p-3">
         {/* Title */}
         {title && (
-          <h3 className="text-base font-semibold text-gray-900 mb-1 line-clamp-2">
+          <h3 className="font-poppins text-neutral-900 text-base font-semibold mb-1 line-clamp-2">
             {title}
           </h3>
         )}
 
         {/* Subtitle */}
         {subtitle && (
-          <p className="text-sm text-gray-600 mb-2 line-clamp-1">
+          <p className="font-lato text-neutral-600 text-sm mb-2 line-clamp-1">
             {subtitle}
           </p>
         )}
 
         {/* Description */}
         {description && (
-          <p className="text-sm text-gray-500 mb-3 line-clamp-3">
+          <p className="font-lato text-neutral-500 text-sm mb-3 line-clamp-3">
             {description}
           </p>
         )}
@@ -222,7 +211,7 @@ export const MobileCard: React.FC<MobileCardProps> = ({
 
       {/* Selected Indicator */}
       {selected && (
-        <div className="absolute top-2 right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+        <div className="absolute top-2 right-2 w-6 h-6 bg-[--brand-electric-blue] rounded-full flex items-center justify-center">
           <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
             <path
               fillRule="evenodd"

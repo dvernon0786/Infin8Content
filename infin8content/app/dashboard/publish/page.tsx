@@ -62,7 +62,6 @@ export default function PublishPage() {
           subtitle="Publishing functionality"
           description="This section will include CMS connections, publishing queue, and publishing history."
           badge="Soon"
-          badgeColor="yellow"
           testId="mobile-coming-soon-card"
         >
           <p className="text-sm text-muted-foreground">
@@ -74,7 +73,6 @@ export default function PublishPage() {
           title="Quick Stats"
           subtitle="Publishing overview"
           badge="0"
-          badgeColor="gray"
           testId="mobile-stats-card"
         >
           <div className="space-y-2">

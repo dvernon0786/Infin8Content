@@ -62,10 +62,12 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
           <div className="mx-auto max-w-5xl">
             <Card className="border-destructive">
               <CardHeader>
-                <CardTitle className="text-destructive">Access Denied</CardTitle>
+                <CardTitle className="font-poppins text-neutral-900 text-h3-desktop">
+                  Access Denied
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="font-lato text-neutral-600 text-body">
                   You don't have permission to access this article or it doesn't exist.
                 </p>
                 {error && (
@@ -76,7 +78,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                 <div className="mt-4">
                   <Link
                     href="/dashboard/articles"
-                    className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
+                    className="inline-flex items-center gap-2 font-lato text-neutral-600 hover:text-[--brand-electric-blue]"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Back to Articles
@@ -171,7 +173,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
             <div className="md:hidden">
               <Link
                 href="/dashboard/articles"
-                className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-3 py-2"
+                className="inline-flex items-center gap-2 font-lato text-neutral-600 hover:text-[--brand-electric-blue] focus:outline-none focus:ring-2 focus:ring-[--brand-electric-blue]/50 focus:ring-offset-2 rounded px-3 py-2"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Articles
@@ -179,16 +181,16 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
             </div>
 
             <div className="space-y-4">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">
+              <h1 className="font-poppins text-neutral-900 text-h2-desktop">
                 {article.title || 'Article Generation'}
               </h1>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <p className="text-sm sm:text-base text-muted-foreground">
+                <p className="font-lato text-neutral-600 text-body">
                   Article ID: {article.id}
                 </p>
                 <Link
                   href="/dashboard/articles"
-                  className="hidden md:inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-4 py-2 border border-blue-200 hover:bg-blue-50 transition-colors"
+                  className="hidden md:inline-flex items-center gap-2 font-lato text-neutral-600 hover:text-[--brand-electric-blue] focus:outline-none focus:ring-2 focus:ring-[--brand-electric-blue]/50 focus:ring-offset-2 rounded px-4 py-2 border border-neutral-200 hover:bg-neutral-50 transition-colors"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Back to Articles
@@ -203,7 +205,9 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
             <Card>
               <CardHeader>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <CardTitle className="text-lg sm:text-xl">Article Status</CardTitle>
+                  <CardTitle className="font-poppins text-neutral-900 text-h3-desktop">
+                    Article status
+                  </CardTitle>
                   <ArticleStatusMonitor 
                     articleId={article.id} 
                     initialStatus={article.status}
@@ -213,27 +217,35 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <p className="text-sm font-medium">Keyword</p>
-                    <p className="text-sm text-muted-foreground mt-1">{article.keyword}</p>
+                    <p className="font-lato text-neutral-900 text-small font-medium">
+                      Keyword
+                    </p>
+                    <p className="font-lato text-neutral-600 text-small mt-1">{article.keyword}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">Target Word Count</p>
-                    <p className="text-sm text-muted-foreground mt-1">{article.target_word_count?.toLocaleString()} words</p>
+                    <p className="font-lato text-neutral-900 text-small font-medium">
+                      Target Word Count
+                    </p>
+                    <p className="font-lato text-neutral-600 text-small mt-1">{article.target_word_count?.toLocaleString()} words</p>
                   </div>
                   {article.writing_style && (
                     <div>
-                      <p className="text-sm font-medium">Writing Style</p>
-                      <p className="text-sm text-muted-foreground mt-1">{article.writing_style}</p>
+                      <p className="font-lato text-neutral-900 text-small font-medium">
+                        Writing Style
+                      </p>
+                      <p className="font-lato text-neutral-600 text-small mt-1">{article.writing_style}</p>
                     </div>
                   )}
                   {article.target_audience && (
                     <div>
-                      <p className="text-sm font-medium">Target Audience</p>
-                      <p className="text-sm text-muted-foreground mt-1">{article.target_audience}</p>
+                      <p className="font-lato text-neutral-900 text-small font-medium">
+                        Target Audience
+                      </p>
+                      <p className="font-lato text-neutral-600 text-small mt-1">{article.target_audience}</p>
                     </div>
                   )}
                   {isLoading && (
-                    <div className="col-span-full flex items-center gap-2 text-sm text-muted-foreground mt-4">
+                    <div className="col-span-full flex items-center gap-2 font-lato text-neutral-600 text-small mt-4">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span>Article generation in progress...</span>
                     </div>
@@ -248,10 +260,10 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                   <Card className="border-destructive">
                     <CardContent className="pt-6">
                       <div className="text-center py-8">
-                        <h3 className="text-lg font-semibold text-destructive mb-2">
+                        <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">
                           Content Loading Error
                         </h3>
-                        <p className="text-muted-foreground">
+                        <p className="font-lato text-neutral-600 text-body">
                           Unable to load article content. Please try refreshing the page.
                         </p>
                       </div>
@@ -262,7 +274,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                 {sectionsError && (
                   <Card className="border-destructive">
                     <CardContent className="pt-6">
-                      <p className="text-sm text-destructive text-center py-4">
+                      <p className="font-lato text-neutral-600 text-body text-center py-4">
                         Failed to load article content: {sectionsError}
                       </p>
                     </CardContent>
@@ -271,7 +283,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                 
                 {!sectionsError && sections && sections.length > 0 && (
                   <div className="space-y-4">
-                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Article Content</h2>
+                    <h2 className="font-poppins text-neutral-900 text-h3-desktop">Article content</h2>
                     <Card>
                       <CardContent className="p-6">
                         <EnhancedArticleContentViewer 
@@ -290,7 +302,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                 {!sectionsError && (!sections || sections.length === 0) && (
                   <Card>
                     <CardContent className="pt-6">
-                      <p className="text-sm text-muted-foreground text-center py-8">
+                      <p className="font-lato text-neutral-600 text-body text-center py-8">
                         Article generation completed, but no content sections were found.
                       </p>
                     </CardContent>
