@@ -186,7 +186,7 @@ function RegisterPageContent() {
                       <label className={styles.label}>Confirm password</label>
                       <div className="relative">
                         <input
-                          className={`${styles.input} pr-10`}
+                          className={`${styles.input} ${styles.confirmPasswordInput} pr-10`}
                           type={showConfirmPassword ? 'text' : 'password'}
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
