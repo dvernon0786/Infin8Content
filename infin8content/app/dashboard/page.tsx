@@ -138,7 +138,6 @@ export default async function DashboardPage() {
             subtitle={orgName}
             description={`Status: ${status}`}
             badge={plan.toUpperCase()}
-            badgeColor={plan === 'pro' ? 'blue' : 'gray'}
             className="md:hidden"
             testId="mobile-plan-card"
           >
@@ -175,7 +174,6 @@ export default async function DashboardPage() {
           <MobileCard
             title="Quick Actions"
             badge="3"
-            badgeColor="blue"
             className="md:hidden"
             testId="mobile-quick-actions-card"
           >
