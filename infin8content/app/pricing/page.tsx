@@ -18,7 +18,7 @@ export default function PricingPage() {
   const [billing, setBilling] = useState<"monthly" | "annual">("annual");
 
   return (
-    <div style={{ backgroundColor: "#F4F4F6", minHeight: "100vh" }}>
+    <div className="bg-neutral-100 min-h-screen">
       <Navigation />
       <PricingHero billing={billing} setBilling={setBilling} />
       <PricingPlans billing={billing} />
