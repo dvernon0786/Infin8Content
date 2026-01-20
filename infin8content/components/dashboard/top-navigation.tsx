@@ -74,26 +74,6 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
         }
     }
 
-    // Mobile-optimized brand display
-    const brandDisplay = (
-        <Link 
-            href="/dashboard" 
-            className={cn(
-                "flex items-center gap-2 font-semibold hover:opacity-80 transition-opacity",
-                isMobile ? "text-base" : "text-lg"
-            )}
-            aria-label="Infin8Content - Go to dashboard"
-        >
-            <span className={cn(
-                isMobile && "sm:hidden" // Hide on small mobile
-            )}>
-                {isMobile ? "I8C" : "Infin8Content"}
-            </span>
-            {isTablet && !isMobile && (
-                <span className="hidden sm:inline">Infin8Content</span>
-            )}
-        </Link>
-    )
 
     // Mobile search toggle
     const mobileSearch = (
@@ -116,13 +96,13 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
             isTablet && "max-w-xs"
         )}>
             <Search className={cn(
-                "absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground",
+                "absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-600",
                 "h-4 w-4"
             )} />
             <Input
                 placeholder={isMobile ? "Search..." : "Search articles..."}
                 className={cn(
-                    "pl-10",
+                    "pl-10 font-lato text-neutral-600 placeholder:text-neutral-500",
                     isMobile && "h-10",
                     isTablet && "h-9 text-sm"
                 )}
@@ -151,24 +131,24 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem className="cursor-pointer">
-                    <Bell className="mr-2 h-4 w-4" />
+                <DropdownMenuItem className="cursor-pointer font-lato text-neutral-600">
+                    <Bell className="mr-2 h-4 w-4 text-neutral-600" />
                     <span>Notifications</span>
-                    <Badge variant="secondary" className="ml-auto">
+                    <Badge variant="secondary" className="ml-auto bg-neutral-200 text-neutral-700">
                         3
                     </Badge>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
+                <DropdownMenuItem className="cursor-pointer font-lato text-neutral-600">
+                    <User className="mr-2 h-4 w-4 text-neutral-600" />
                     <span>Profile</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                     onClick={handleLogout}
                     disabled={isLoggingOut}
-                    className="cursor-pointer"
+                    className="cursor-pointer font-lato text-neutral-600"
                 >
-                    <LogOut className="mr-2 h-4 w-4" />
+                    <LogOut className="mr-2 h-4 w-4 text-neutral-600" />
                     <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
                 </DropdownMenuItem>
             </DropdownMenuContent>
@@ -178,9 +158,10 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
     // Responsive create button
     const createButton = showCreateButton && (
         <Button 
+            variant="ghost"
             asChild 
             className={cn(
-                "gap-2 transition-all duration-200",
+                "gap-2 transition-all duration-200 font-lato text-neutral-600 hover:text-[--brand-electric-blue]",
                 isMobile && "h-10 px-3", // Larger on mobile
                 "h-9"
             )}
@@ -219,8 +200,6 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
                 aria-label="Toggle sidebar menu" 
             />
 
-            {/* Brand display */}
-            {brandDisplay}
 
             {/* Mobile search toggle */}
             {mobileSearch}
@@ -240,13 +219,12 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="relative h-8 w-8"
+                        className="relative h-8 w-8 text-neutral-600 hover:text-[--brand-electric-blue]"
                         aria-label="View notifications"
                     >
                         <Bell className="h-4 w-4" />
                         <Badge 
-                            variant="destructive" 
-                            className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs"
+                            className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-neutral-200 text-neutral-700"
                         >
                             3
                         </Badge>
@@ -284,25 +262,25 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
                         >
                             <DropdownMenuLabel className="font-normal">
                                 <div className="flex flex-col space-y-1">
-                                    <p className="text-sm font-medium leading-none">
+                                    <p className="font-lato text-body font-medium text-neutral-900 leading-none">
                                         {name || "User"}
                                     </p>
-                                    <p className="text-xs leading-none text-muted-foreground">
+                                    <p className="font-lato text-small leading-none text-neutral-500">
                                         {email}
                                     </p>
                                 </div>
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="cursor-pointer">
-                                <User className="mr-2 h-4 w-4" />
+                            <DropdownMenuItem className="cursor-pointer font-lato text-neutral-600">
+                                <User className="mr-2 h-4 w-4 text-neutral-600" />
                                 <span>Profile</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                                 onClick={handleLogout}
                                 disabled={isLoggingOut}
-                                className="cursor-pointer"
+                                className="cursor-pointer font-lato text-neutral-600"
                             >
-                                <LogOut className="mr-2 h-4 w-4" />
+                                <LogOut className="mr-2 h-4 w-4 text-neutral-600" />
                                 <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
                             </DropdownMenuItem>
                         </DropdownMenuContent>

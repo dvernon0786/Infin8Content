@@ -10,6 +10,7 @@ import {
     Menu,
     X,
 } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -89,11 +90,18 @@ export function SidebarNavigation() {
         </SidebarHeader>
     )
 
-    // Desktop/tablet header with full branding
+    // Desktop/tablet header with logo
     const desktopHeader = (
         <SidebarHeader>
             <div className="flex items-center gap-2 p-2">
-                <span className="font-semibold text-lg">Infin8Content</span>
+                <Image
+                    src="/infin8content-logo.png"
+                    alt="Infin8Content"
+                    height={28}
+                    width={131}
+                    priority
+                    className="object-contain"
+                />
                 {isTablet && (
                     <Badge variant="secondary" className="text-xs">
                         Tablet
