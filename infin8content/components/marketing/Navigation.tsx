@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { ChevronDown, Menu, X } from 'lucide-react';
 
 const Navigation = () => {
@@ -20,18 +21,20 @@ const Navigation = () => {
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1rem 1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <img 
-              src="/infin8content-logo.png" 
-              alt="Infin8Content Logo"
-              style={{ 
-                width: '192px', 
-                height: '41px',
-                borderRadius: '6px',
-                objectFit: 'contain'
-              }}
-            />
-          </div>
+          <Link href="/" aria-label="Go to homepage">
+            <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+              <img 
+                src="/infin8content-logo.png" 
+                alt="Infin8Content Logo"
+                style={{ 
+                  width: '192px', 
+                  height: '41px',
+                  borderRadius: '6px',
+                  objectFit: 'contain'
+                }}
+              />
+            </div>
+          </Link>
 
           {/* Desktop Menu */}
           <div style={{ alignItems: 'center', gap: '2rem' }} className="hidden md:flex">

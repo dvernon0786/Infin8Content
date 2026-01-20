@@ -1,4 +1,5 @@
 import { Github, Twitter, Linkedin, Mail } from 'lucide-react';
+import Link from 'next/link';
 
 const Footer = () => {
   return (
@@ -6,7 +7,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Logo & Tagline */}
         <div className="flex flex-col items-center mb-12">
-          <div className="flex items-center gap-4 mb-4">
+          <Link href="/" aria-label="Go to homepage" className="flex items-center gap-4 mb-4 cursor-pointer">
             <img 
               src="/infin8content-logo.png" 
               alt="Infin8Content Logo"
@@ -17,7 +18,7 @@ const Footer = () => {
                 objectFit: 'contain'
               }}
             />
-          </div>
+          </Link>
           <p className="text-small text-neutral-400 text-center max-w-md">
             AI-powered content creation platform for modern marketing teams
           </p>
