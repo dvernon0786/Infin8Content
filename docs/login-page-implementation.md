@@ -2,12 +2,14 @@
 
 **Date**: January 20, 2026  
 **Status**: ✅ Complete  
-**Version**: v2.0.3  
+**Version**: v3.0.0  
 **Files**: `/app/(auth)/login/page.tsx`, `/app/(auth)/login/login.module.css`
 
 ## Overview
 
-The Infin8Content login page has been completely redesigned from a basic white card to a modern, branded experience that builds trust while maintaining zero risk to authentication functionality.
+The Infin8Content login page serves as the **canonical reference** for the ONE auth card system. It features a modern, branded experience with animated backgrounds, gradient borders, and enterprise-grade visual design while maintaining zero risk to authentication functionality.
+
+**Key Achievement**: This page establishes the structural foundation that all other auth pages (Register, etc.) must mirror exactly for perfect visual parity.
 
 ## 🎯 Design Philosophy
 
@@ -90,10 +92,16 @@ const [showPassword, setShowPassword] = useState(false)
 #### Layout Classes
 ```css
 .page          /* Page wrapper with background */
-.layout        /* Two-column grid layout */
+.layout        /* Two-column grid layout with align-items: center */
 .left          /* Login card column */
 .right         /* Trust section column */
 .proof         /* Trust section container */
+```
+
+#### Critical Auth Card Classes
+```css
+.loginCard     /* Dark theme card with gradient background */
+.authCard      /* Width lock: max-width: 420px */
 ```
 
 #### Trust Section Classes
@@ -118,6 +126,9 @@ const [showPassword, setShowPassword] = useState(false)
 - **Secondary**: #4A42CC (Infinite Purple)
 - **Background**: #F4F4F6 (Soft Light Gray)
 - **Card**: #0B1220 (Dark Theme)
+- **Input Background**: #EFF6FF (Light Blue - matches Chrome credential UI)
+- **Label Text**: #E5E7EB (Light Gray)
+- **Placeholder Text**: #9CA3AF (Neutral Gray)
 
 ### Typography
 - **Headings**: Poppins font family
@@ -125,8 +136,10 @@ const [showPassword, setShowPassword] = useState(false)
 - **Consistent**: Matches design system standards
 
 ### Responsive Design
-- **Desktop**: 32px logo, 16px spacing, 2-column layout
-- **Mobile**: 24px logo, 12px spacing, single column
+- **Desktop**: 32px logo, 40px card padding, 2-column layout
+- **Tablet**: 28px logo, 32px card padding, 2-column layout
+- **Mobile**: 24px logo, 24px card padding, single column
+- **Card Width**: 420px max-width (industry standard)
 - **Breakpoint**: 1024px for layout changes
 
 ## 🔒 Security & Authentication
@@ -288,3 +301,29 @@ const [showPassword, setShowPassword] = useState(false)
 **User Testing**: ✅ Approved  
 
 The login page now provides a modern, secure, and accessible authentication experience that reinforces the Infin8Content brand while maintaining zero risk to existing authentication functionality.
+
+## 🔗 Related Documentation
+
+- **Complete Auth System**: `/docs/auth-pages-ux-redesign-complete.md` - Full implementation details for both Login and Register pages
+- **Register Page**: See `/docs/auth-pages-ux-redesign-complete.md` for Register page implementation that mirrors this structure
+- **Design System**: `/docs/design-system/README.md` - Complete design system documentation
+- **Component Inventory**: `/docs/component-inventory.md` - All available components
+
+## 📋 ONE Auth Card System
+
+This login page establishes the **canonical structure** that all auth pages must follow:
+
+### Required Structure (Copy Exactly)
+1. Use the exact JSX hierarchy shown in this document
+2. Apply both CSS classes: `${styles.loginCard} ${styles.authCard}`
+3. Follow the responsive pattern: `p-6 sm:p-8 lg:p-10`
+4. Use shared input styling: `${styles.input}` class
+5. Maintain the same section/div structure
+
+### Critical Classes
+- `.authCard` - **Required** for width locking (420px max)
+- `.loginCard` - **Required** for dark theme styling
+- `.layout` - **Required** with `align-items: center`
+
+### Future Auth Pages
+Any new auth page should copy the structure from this login page exactly to maintain perfect visual parity.
