@@ -217,18 +217,18 @@
   position: relative;
   padding: 1px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #217CEB, #4A42CC);
+  background: linear-gradient(135deg, #6b7280, #374151);
 }
 
 /* GLOBAL SELECTOR - TARGETS EXISTING .card INSIDE WRAPPER */
 .signupCardWrapper :global(.card) {
-  background-color: #0B1220;
+  background-color: #0B1220 !important;
   background-image:
     radial-gradient(at 90% 40%, rgba(74,66,204,0.25), transparent 70%),
-    radial-gradient(at 10% 80%, rgba(33,124,235,0.2), transparent 70%);
-  border-radius: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    radial-gradient(at 10% 80%, rgba(33,124,235,0.2), transparent 70%) !important;
+  border-radius: 15px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3) !important;
 }
 
 /* NEW: Brand Logo Classes */
@@ -288,7 +288,7 @@
   border-radius: 50%;
   border: 2px solid white;
   margin-left: -0.5rem;
-  background: linear-gradient(135deg, #217CEB, #4A42CC);
+  background: linear-gradient(135deg, #6b7280, #374151);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -304,12 +304,12 @@
 }
 
 .trusted {
-  color: #374151;
+  color: #d1d5db;
   font-size: 14px;
 }
 
 .quote {
-  color: #4B5563;
+  color: #e5e7eb;
   font-size: 18px;
   line-height: 1.6;
   margin-bottom: 1.5rem;
@@ -327,17 +327,17 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #217CEB, #4A42CC);
+  background: linear-gradient(135deg, #6b7280, #374151);
 }
 
 .authorName {
-  color: #1F2937;
+  color: white;
   font-weight: 600;
   margin-bottom: 0.25rem;
 }
 
 .authorRole {
-  color: #6B7280;
+  color: #9ca3af;
   font-size: 14px;
 }
 
@@ -346,6 +346,43 @@
   gap: 2rem;
   font-size: 16px;
   font-weight: 600;
-  color: #6B7280;
+  color: #9ca3af;
   opacity: 0.8;
+}
+
+/* DARK THEME TEXT OVERRIDES - PARITY WITH LOGIN */
+.signupCardWrapper :global(.card) :global(.title) {
+  color: white !important;
+}
+
+.signupCardWrapper :global(.card) :global(.subtitle) {
+  color: #a3a3a3 !important;
+}
+
+.signupCardWrapper :global(.card) :global(.label) {
+  color: #e5e7eb !important;
+}
+
+.signupCardWrapper :global(.card) :global(.footerText) {
+  color: #737373 !important;
+}
+
+.signupCardWrapper :global(.card) :global(.link) {
+  color: #217CEB !important;
+}
+
+/* INPUT STYLES FOR DARK THEME */
+.signupCardWrapper :global(.card) :global(.input) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+
+.signupCardWrapper :global(.card) :global(.input)::placeholder {
+  color: #9ca3af !important;
+}
+
+.signupCardWrapper :global(.card) :global(.input):focus {
+  border-color: #217CEB !important;
+  box-shadow: 0 0 0 3px rgba(33, 124, 235, 0.1) !important;
 }
