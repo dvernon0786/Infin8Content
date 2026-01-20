@@ -97,14 +97,8 @@ function RegisterPageContent() {
         <div className={styles.left}>
           <div className={styles.signupCardWrapper}>
             <div className={styles.container}>
-              <div className={styles.card} style={{
-                backgroundColor: '#0B1220 !important',
-                backgroundImage: 'radial-gradient(at 90% 40%, rgba(74,66,204,0.25), transparent 70%), radial-gradient(at 10% 80%, rgba(33,124,235,0.2), transparent 70%) !important',
-                borderRadius: '15px !important',
-                border: '1px solid rgba(255, 255, 255, 0.1) !important',
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3) !important'
-              }}>
-                <div className={styles.header} style={{ textAlign: 'left' as any }}>
+              <div className={`${styles.card} ${styles.darkCard}`}>
+                <div className={`${styles.header} ${styles.leftAlignedHeader}`}>
                   {/* Brand Logo */}
                   <img
                     src="/infin8content-logo.png"
@@ -123,8 +117,8 @@ function RegisterPageContent() {
                     <span className={styles.logoText}>IC</span>
                   </div>
                   
-                  <h1 className={styles.title} style={{ color: 'white !important', fontFamily: 'var(--font-poppins) !important' }}>Create Account</h1>
-                  <p className={styles.subtitle} style={{ color: '#A3A3A3 !important' }}>
+                  <h1 className={`${styles.title} ${styles.whiteTitle}`}>Create Account</h1>
+                  <p className={`${styles.subtitle} ${styles.graySubtitle}`}>
                     Join Infin8Content and start creating AI-powered content
                   </p>
                 </div>
@@ -140,12 +134,7 @@ function RegisterPageContent() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onBlur={() => validateEmail(email)}
-              className={styles.input}
-              style={{
-                backgroundColor: 'rgba(255,255,255,0.08) !important',
-                color: '#ffffff !important',
-                border: '1px solid rgba(255, 255, 255, 0.2) !important'
-              }}
+              className={`${styles.input} ${styles.darkInput}`}
               required
               aria-invalid={errors.email ? 'true' : 'false'}
               aria-describedby={errors.email ? 'email-error' : undefined}
@@ -169,12 +158,7 @@ function RegisterPageContent() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onBlur={() => validatePassword(password)}
-                className={`${styles.input} pr-10`}
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.08) !important',
-                  color: '#ffffff !important',
-                  border: '1px solid rgba(255, 255, 255, 0.2) !important'
-                }}
+                className={`${styles.input} ${styles.darkInput} pr-10`}
                 required
                 minLength={8}
                 aria-invalid={errors.password ? 'true' : 'false'}
@@ -208,12 +192,7 @@ function RegisterPageContent() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 onBlur={() => validateConfirmPassword(confirmPassword)}
-                className={`${styles.input} pr-10`}
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.08) !important',
-                  color: '#ffffff !important',
-                  border: '1px solid rgba(255, 255, 255, 0.2) !important'
-                }}
+                className={`${styles.input} ${styles.darkInput} pr-10`}
                 required
                 aria-invalid={errors.confirmPassword ? 'true' : 'false'}
                 aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
@@ -252,9 +231,9 @@ function RegisterPageContent() {
         </form>
 
         <div className={styles.footer}>
-          <p className={styles.footerText} style={{ color: '#737373 !important' }}>
+          <p className={`${styles.footerText} ${styles.grayFooterText}`}>
             Already have an account?{' '}
-            <Link href="/login" className={styles.link} style={{ color: '#217CEB !important' }}>
+            <Link href="/login" className={`${styles.link} ${styles.primaryLink}`}>
               Sign in
             </Link>
           </p>
