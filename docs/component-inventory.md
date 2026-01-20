@@ -184,15 +184,17 @@ Reusable design system components based on Radix UI primitives.
 **Path:** `/components/marketing/Navigation.tsx`  
 **Purpose:** Main navigation with dropdown menus  
 **Props:** None (static content)  
-**Features:** Mobile menu toggle, dropdown navigation, logo with fallback
+**Features:** Mobile menu toggle, dropdown navigation, logo with homepage redirect, functional CTAs
 **Design:** Responsive layout, hover effects, accessibility focus states
+**Recent Updates**: Logo click behavior implemented (redirects to homepage), CTA buttons fixed (redirect to /register)
 
 #### Hero Section
 **Path:** `/components/marketing/HeroSection.tsx`  
 **Purpose:** Main hero section with 60/40 layout  
 **Props:** None (static content)  
-**Features:** Gradient mesh background, dashboard preview, dual CTAs
+**Features:** Gradient mesh background, dashboard preview, functional CTAs
 **Design:** Responsive typography, trust indicators, hover animations
+**Recent Updates**: CTA buttons fixed (Get Started → /register, See Pricing → /pricing)
 
 #### Stats Bar
 **Path:** `/components/marketing/StatsBar.tsx`  
@@ -240,15 +242,17 @@ Reusable design system components based on Radix UI primitives.
 **Path:** `/components/marketing/FinalCTA.tsx`  
 **Purpose:** Final call-to-action section  
 **Props:** None (static content)  
-**Features:** Gradient background, animated elements, trust badges
+**Features:** Gradient background, animated elements, properly aligned trust badges
+**Recent Updates**: Visual hierarchy restructured, CTA isolation improved, trust badges de-emphasized, functional CTA (redirects to /register)
 **Design:** Vibrant gradient, pulse animations, large CTA button
 
 #### Footer
 **Path:** `/components/marketing/Footer.tsx`  
 **Purpose:** Site footer with links  
 **Props:** None (static content)  
-**Features:** 4-column layout, social links, legal links
+**Features:** 4-column layout, social links, legal links, clickable logo
 **Design:** Responsive columns, social icon animations, hover effects
+**Recent Updates**: Logo click behavior implemented (redirects to homepage)
 
 #### Landing Page
 **Path:** `/components/marketing/LandingPage.tsx`  
