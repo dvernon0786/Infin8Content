@@ -12,34 +12,39 @@ const FinalCTA = () => {
         <h2 className="text-h1-responsive text-white mb-6">
           Ready to Scale Your Content? Get Started Today.
         </h2>
-        <p className="text-large text-white/90 mb-8 max-w-2xl mx-auto">
+
+        <p className="text-large text-white/90 mb-10 max-w-2xl mx-auto">
           Join 10,000+ content teams creating better content, faster.
         </p>
 
-        <a href="/register" className="btn-primary bg-white text-neutral-900 hover:scale-105 focus-ring mb-8 text-lg px-8 py-4 shadow-xl">
+        {/* Primary CTA */}
+        <a
+          href="/register"
+          className="btn-primary bg-white text-neutral-900 hover:scale-105 focus-ring text-lg px-8 py-4 shadow-xl mb-12 md:mb-14 inline-block"
+        >
           Get Started Now
         </a>
 
-        {/* Trust Badges */}
-        <div className="flex flex-wrap justify-center gap-6 mb-8">
-          <div className="flex items-center gap-2 text-white/80 text-small">
-            <span className="text-xl">💳</span>
+        {/* Trust Signals */}
+        <div className="flex flex-wrap justify-center gap-6 mb-12">
+          <div className="flex items-center gap-2 text-white/60 text-sm">
+            <span className="text-base">💳</span>
             <span>Secure payment via Stripe</span>
           </div>
-          <div className="flex items-center gap-2 text-white/80 text-small">
-            <span className="text-xl">🔒</span>
+          <div className="flex items-center gap-2 text-white/60 text-sm">
+            <span className="text-base">🔒</span>
             <span>Cancel anytime</span>
           </div>
-          <div className="flex items-center gap-2 text-white/80 text-small">
-            <span className="text-xl">⚡</span>
+          <div className="flex items-center gap-2 text-white/60 text-sm">
+            <span className="text-base">⚡</span>
             <span>Instant access</span>
           </div>
         </div>
 
-        {/* Bonus Incentive */}
+        {/* Bonus Incentive (Lowest Priority) */}
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/20 text-green-300 rounded-lg border border-green-400/30">
-          <span className="text-lg">🎁</span>
-          <span className="text-small font-medium">
+          <span className="text-base">🎁</span>
+          <span className="text-sm font-medium">
             Annual plans save up to 33% • Switch or cancel anytime
           </span>
         </div>
