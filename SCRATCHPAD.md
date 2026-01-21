@@ -1,12 +1,39 @@
 # Infin8Content Development Scratchpad
 
+## 🚨 RELEASE GOVERNANCE RULE (NON-NEGOTIABLE)
+
+**No UI bugs are investigated unless `main` is confirmed up to date with integration branch.**
+
+### 🎯 **MANDATORY VERIFICATION BEFORE UI DEBUGGING:**
+1. **Check main branch**: `git checkout main && git pull origin main` 
+2. **Verify integration**: Confirm main contains latest test-main-all commits
+3. **Clean rebuild**: `rm -rf .next node_modules && npm install && npm run dev` 
+4. **Only then**: Investigate UI issues
+
+### 📋 **LESSONS LEARNED:**
+- UI bugs that survive multiple "fixes" are often not UI bugs
+- If behavior differs between environments, check branch topology first
+- A working fix in a non-production branch = not a fix
+- Release governance issues manifest as UI problems
+
+### 🔒 **ENFORCED MERGE PROTOCOL:**
+```
+feature → test-main-all → main
+```
+- ❌ No feature → main merges
+- ❌ No feature → feature merges  
+- ❌ No parallel integration branches
+- ✅ Single integration path only
+
+---
+
 ## 🎯 Dashboard Fixes Complete - COMPILATION (January 21, 2026)
 
 **Date**: 2026-01-21T18:48:00+11:00  
 **Status**: ✅ COMPLETED  
 **Priority**: HIGH  
 **Implementation**: Complete dashboard system fixes including button canonicalization and brand alignment  
-**Scope**: Full dashboard production readiness with robust UI systems  
+**Scope**: Full dashboard production readiness with robust UI systems
 
 ---
 
