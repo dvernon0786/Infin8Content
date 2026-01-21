@@ -1,6 +1,7 @@
 name: Design System Compliance
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [test-main-all]
   push:

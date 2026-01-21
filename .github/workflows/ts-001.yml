@@ -1,6 +1,7 @@
 name: TS-001 Runtime Architecture Enforcement
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [test-main-all]
   push:
