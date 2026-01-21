@@ -6,6 +6,52 @@ This changelog tracks all modifications made to the dashboard system during the 
 
 ## Version History
 
+### v2.2.0 - Button System Canonicalization Complete
+**Date**: January 21, 2026  
+**Scope**: Complete resolution of invisible button issue and establishment of canonical button system
+
+#### Root Cause Resolution
+- **Tailwind JIT Purge Issue**: Fixed invisible buttons caused by Tailwind purging arbitrary CSS variable classes
+- **Color Token Inconsistency**: Unified hover states to use single primary color token
+- **Custom Utility Failures**: Replaced non-working custom hover utilities with standard Tailwind syntax
+
+#### Core System Changes
+- **CSS Variable Structure**: Established canonical `--color-primary-blue` and `--color-primary-purple` in `:root` 
+- **Explicit Utilities**: Added `bg-primary-blue`, `bg-primary-purple` utilities to bypass Tailwind purge
+- **Tailwind Color Extension**: Added `primary` color token to `tailwind.config.ts` for hover states
+- **Button Component**: Removed `default` variant, set `primary` as default, updated all variants
+
+#### Files Modified
+1. **System Files**:
+   - `app/globals.css` - Added canonical utilities and CSS variables
+   - `tailwind.config.ts` - Added primary color token
+   - `components/ui/button.tsx` - Normalized button component
+   - `components/mobile/touch-target.tsx` - Mobile button alignment
+
+2. **Dashboard Pages**:
+   - `app/dashboard/articles/page.tsx` - Generate Article buttons
+   - `app/dashboard/research/page.tsx` - Start Research button  
+   - `app/dashboard/settings/page.tsx` - Management buttons
+   - `app/dashboard/research/keywords/keyword-research-client.tsx` - Utility buttons
+
+3. **Component Files**:
+   - `app/dashboard/articles/articles-client.tsx` - Filter and generate buttons
+   - `components/dashboard/virtualized-article-list.tsx` - Interactive elements
+   - `components/articles/progress-tracker.tsx` - Reconnect button
+   - `components/lib/component-styles.ts` - Library styles
+
+#### Technical Implementation
+- **No Arbitrary Values**: Eliminated all `bg-[--color-primary-blue]` usage
+- **Standard Hover Syntax**: Replaced custom utilities with `hover:text-primary` 
+- **Canonical Backgrounds**: All primary buttons use `bg-primary-blue` 
+- **Consistent Hover States**: All utility buttons use `hover:text-primary` 
+
+#### Impact
+- **Fixed**: All invisible buttons now display correctly
+- **Unified**: Single hover color (`#217CEB`) across all interactive elements
+- **Robust**: System immune to Tailwind JIT purge issues
+- **Canonical**: Established maintainable button system standards
+
 ### v2.1.0 - Articles Domain Brand Alignment Complete
 **Date**: January 21, 2026  
 **Scope**: Complete Articles domain brand alignment and production compliance
