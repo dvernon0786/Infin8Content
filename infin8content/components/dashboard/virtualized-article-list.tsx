@@ -95,8 +95,8 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
     <div style={style}>
       <Card 
         className={cn(
-          'mx-2 transition-all duration-200 hover:shadow-md cursor-pointer',
-          isSelected && 'ring-2 ring-blue-500'
+          'mx-2 cursor-pointer transition-colors hover:bg-neutral-50',
+          isSelected && 'ring-2 ring-[--brand-electric-blue]'
         )}
         onClick={() => data.onArticleSelect(isSelected ? '' : article.id)}
       >
@@ -105,8 +105,8 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
             <div className="flex-1 min-w-0">
               <h3 
                 className={cn(
-                  'font-medium text-gray-900 truncate',
-                  article.status === 'completed' && 'cursor-pointer hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded'
+                  'font-poppins text-neutral-900 text-small font-semibold truncate',
+                  article.status === 'completed' && 'cursor-pointer hover:text-[--brand-electric-blue] focus:outline-none focus:ring-2 focus:ring-[--brand-electric-blue]/50 focus:ring-offset-2 rounded'
                 )}
                 title={article.status === 'completed' ? 'Click to view completed article' : undefined}
                 role={article.status === 'completed' ? 'button' : undefined}
@@ -143,7 +143,7 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
               >
                 {article.title || article.keyword}
               </h3>
-              <p className="text-sm text-gray-500 truncate">
+              <p className="font-lato text-neutral-500 text-small truncate">
                 {article.keyword}
               </p>
             </div>
@@ -178,7 +178,7 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
           )}
           
           {/* Article metadata */}
-          <div className="flex items-center justify-between text-xs text-gray-500">
+          <div className="flex items-center justify-between font-lato text-small text-neutral-500">
             <div className="flex items-center gap-4">
               <span>Created {formatTimeAgo(article.created_at || '')}</span>
               <span>Updated {formatTimeAgo(article.updated_at || '')}</span>
@@ -188,25 +188,25 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
+                className="flex items-center gap-1 font-lato text-neutral-500"
                 onClick={(e) => {
                   e.stopPropagation();
                   // View functionality would be implemented here
                 }}
               >
-                <Eye className="h-3 w-3" />
-                View
+                <Eye className="h-3 w-3 text-neutral-500" />
+                <span className="text-neutral-500">View</span>
               </Button>
             )}
           </div>
           
           {/* Error display */}
           {article.status === 'failed' && article.progress?.error_message && (
-            <Card className="border-red-200 bg-red-50 mt-3">
+            <Card className="border-neutral-200 bg-neutral-50 mt-3">
               <CardContent className="p-3">
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
-                  <div className="text-sm text-red-800">
+                  <AlertCircle className="h-4 w-4 text-neutral-600 mt-0.5" />
+                  <div className="font-lato text-neutral-600 text-small">
                     {article.progress.error_message}
                   </div>
                 </div>
@@ -425,9 +425,9 @@ const cleanedItemData = safeItemData;
     return (
       <div className={cn('flex items-center justify-center h-64', className)}>
         <div className="text-center">
-          <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No articles found</h3>
-          <p className="text-gray-500">
+          <FileText className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
+          <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">No articles found</h3>
+          <p className="font-lato text-neutral-600 text-body">
             Try adjusting your search or filters to find articles.
           </p>
         </div>
@@ -458,9 +458,9 @@ const cleanedItemData = safeItemData;
       {safeArticles.length === 0 ? (
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No articles found</h3>
-            <p className="text-gray-500">Try adjusting your search or filters to find articles.</p>
+            <FileText className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
+            <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">No articles found</h3>
+            <p className="font-lato text-neutral-600 text-body">Try adjusting your search or filters to find articles.</p>
           </div>
         </div>
       ) : (
@@ -479,7 +479,7 @@ const cleanedItemData = safeItemData;
       
       {/* Performance info for development */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="text-xs text-gray-500 mt-2 text-center">
+        <div className="text-xs font-lato text-neutral-500 mt-2 text-center">
           Rendered {safeArticles.length} articles • {itemHeight}px height
         </div>
       )}

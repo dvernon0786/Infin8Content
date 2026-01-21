@@ -6,6 +6,59 @@ This changelog tracks all modifications made to the dashboard system during the 
 
 ## Version History
 
+### v2.1.0 - Articles Domain Brand Alignment Complete
+**Date**: January 21, 2026  
+**Scope**: Complete Articles domain brand alignment and production compliance
+
+#### Articles Pages
+- **Articles List Page** (`/app/dashboard/articles/page.tsx`):
+  - Header typography: `font-poppins text-neutral-900 text-h2-desktop`
+  - Description: `font-lato text-neutral-600 text-body`
+  - Primary CTA: Electric Blue with `font-lato`
+  - Mobile CTA: Visual parity with desktop
+  - Layout structure preserved
+
+- **Article Detail Page** (`/app/dashboard/articles/[id]/page.tsx`):
+  - Main title: `font-poppins text-neutral-900 text-h2-desktop`
+  - All headings: Poppins with semantic sizing
+  - Body text: `font-lato text-neutral-600 text-body`
+  - Back navigation: Neutral with Electric Blue hover
+  - Error states: Calm, neutral styling
+  - Card titles: Brand-compliant typography
+  - Field labels/values: Explicit font and color
+
+#### Articles Components
+- **Articles Client** (`/app/dashboard/articles/articles-client.tsx`):
+  - Error state: `font-poppins text-neutral-900 text-h3-desktop`
+  - Loading state: `font-lato text-neutral-600 text-small`
+  - Results summary: `font-lato text-neutral-600 text-small`
+  - Empty states: Brand-compliant typography and colors
+  - Generate button: Demoted to ghost variant
+  - Icons: Neutral color scheme (`text-neutral-600`)
+
+- **Virtualized Article List** (`/components/dashboard/virtualized-article-list.tsx`):
+  - Article titles: `font-poppins text-neutral-900 text-small font-semibold`
+  - Keywords: `font-lato text-neutral-500 text-small`
+  - Metadata: `font-lato text-small text-neutral-500`
+  - View button: Neutral styling, informational only
+  - Card container: Removed shadow escalation, subtle background hover
+  - Selection: `ring-[--brand-electric-blue]` brand token
+  - Error display: Neutral colors and typography
+  - Empty states: Brand-consistent styling
+
+- **Article Status Monitor** (`/components/articles/article-status-monitor.tsx`):
+  - Badge: Neutral styling `bg-neutral-100 border-neutral-200`
+  - Badge text: `font-lato text-small text-neutral-700`
+  - Status text: `font-lato text-small` explicit
+  - Icons: Neutral colors (`text-neutral-500`, `text-neutral-600`)
+  - Live updates: Neutral typography and colors
+  - No semantic badge variants
+
+#### Real-time Connection Fixes
+- **Error State Handling**: Fixed error display logic to distinguish between connection errors and article loading
+- **Connection Stability**: Improved error handling and fallback behavior
+- **User Experience**: Calm error messaging with neutral colors
+
 ### v2.0.0 - Production Command Center Implementation
 **Date**: January 21, 2026  
 **Scope**: Complete dashboard transformation for production workflow efficiency and brand compliance
