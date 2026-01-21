@@ -233,7 +233,7 @@ export function MobileBulkActions({
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button
-                variant="default"
+                variant="primary"
                 size="sm"
                 disabled={bulkProgress.isRunning || isProcessing}
                 className="bg-blue-600 hover:bg-blue-700"
