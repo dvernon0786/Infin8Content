@@ -1,6 +1,5 @@
 # Infin8Content Development Scratchpad
 
-<<<<<<< HEAD
 ## 🚨 RELEASE GOVERNANCE RULE (NON-NEGOTIABLE)
 
 **No UI bugs are investigated unless `main` is confirmed up to date with integration branch.**
