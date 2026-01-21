@@ -239,11 +239,11 @@ export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKey
       </div>
 
       {/* Submit Button */}
-      <Button 
-        type="submit" 
+      <Button
+        type="submit"
         disabled={isLoading || !keyword.trim()}
         data-testid="generate-button"
-        className="w-full sm:w-auto"
+        className="w-full sm:w-auto font-lato"
       >
         {isLoading ? (
           <>

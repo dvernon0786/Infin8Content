@@ -145,8 +145,6 @@
   --radius-4xl: 28px;
   --radius-full: 9999px;
   /* Brand Design System Tokens */
-  --color-primary-blue: #217CEB;
-  --color-primary-purple: #4A42CC;
   --gradient-brand: linear-gradient(90deg, #217CEB 0%, #4A42CC 100%);
   
   /* === BRAND COLORS === */
@@ -263,6 +261,10 @@
   --sidebar-width: 16rem;
   --sidebar-width-icon: 3rem;
   --sidebar-width-mobile: 18rem;
+  
+  /* Canonical Button System Variables */
+  --color-primary-blue: #217CEB;
+  --color-primary-purple: #4A42CC;
 }
 
 .dark {
@@ -527,5 +529,24 @@
     .text-h3-responsive {
       font-size: var(--text-h3-desktop);
     }
+  }
+}
+
+/* Canonical Button System Utilities - Bypass Tailwind arbitrary values */
+@layer utilities {
+  .bg-primary-blue {
+    background-color: var(--color-primary-blue);
+  }
+  
+  .bg-primary-purple {
+    background-color: var(--color-primary-purple);
+  }
+  
+  .hover\:bg-primary-blue\/90:hover {
+    background-color: rgb(33 124 235 / 0.9);
+  }
+  
+  .hover\:bg-primary-purple\/90:hover {
+    background-color: rgb(74 66 204 / 0.9);
   }
 }

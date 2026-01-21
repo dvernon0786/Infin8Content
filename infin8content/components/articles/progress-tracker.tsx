@@ -123,7 +123,7 @@ function ProgressTrackerInner({ articleId, className }: ProgressTrackerProps) {
             {connectionStatus === 'disconnected' && (
               <button
                 onClick={reconnect}
-                className="text-xs text-blue-600 hover:text-blue-800 underline"
+                className="text-xs font-lato text-neutral-600 hover:text-primary underline"
               >
                 Reconnect
               </button>

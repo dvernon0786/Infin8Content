@@ -42,7 +42,7 @@ interface FilterSectionProps {
 function FilterSection({ title, icon, children }: FilterSectionProps) {
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700">
+      <div className="flex items-center gap-2 px-3 py-2 text-sm font-lato text-neutral-700">
         {icon}
         {title}
       </div>
@@ -173,12 +173,12 @@ export function FilterDropdown({
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             disabled={disabled}
             className={cn(
-              'flex items-center gap-2',
-              activeFilterCount > 0 && 'border-blue-500 bg-blue-50'
+              'flex items-center gap-2 font-lato text-neutral-600 hover:text-[--color-primary-blue]',
+              activeFilterCount > 0 && 'border-neutral-200 bg-neutral-100'
             )}
           >
             <Filter className="h-4 w-4" />
@@ -195,7 +195,7 @@ export function FilterDropdown({
         <DropdownMenuContent className="w-80 max-h-96 overflow-y-auto" align="start">
           {/* Header with actions */}
           <div className="flex items-center justify-between p-3 border-b">
-            <DropdownMenuLabel className="text-sm font-medium">
+            <DropdownMenuLabel className="text-sm font-lato text-neutral-900">
               Filter Articles
             </DropdownMenuLabel>
             <div className="flex items-center gap-1">
@@ -203,15 +203,15 @@ export function FilterDropdown({
                 variant="ghost"
                 size="sm"
                 onClick={handleReset}
-                className="text-xs h-6 px-2"
+                className="text-xs h-6 px-2 font-lato text-neutral-600 hover:text-[--color-primary-blue]"
               >
                 Reset All
               </Button>
               <Button
-                variant="default"
+                variant="ghost"
                 size="sm"
                 onClick={handleApply}
-                className="text-xs h-6 px-2"
+                className="text-xs h-6 px-2 font-lato text-neutral-600 hover:text-[--color-primary-blue]"
               >
                 Apply
               </Button>
@@ -254,7 +254,7 @@ export function FilterDropdown({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDateRangePreset(key as keyof typeof DATE_RANGE_PRESETS)}
-                    className="text-xs justify-start h-7"
+                    className="text-xs justify-start h-7 font-lato text-neutral-600 hover:text-[--color-primary-blue]"
                   >
                     {preset.label}
                   </Button>
@@ -262,7 +262,7 @@ export function FilterDropdown({
               </div>
               
               {/* Custom date range */}
-              <div className="flex items-center gap-2 text-xs text-gray-500">
+              <div className="flex items-center gap-2 text-xs font-lato text-neutral-500">
                 <span>Custom:</span>
                 <input
                   type="date"
@@ -300,7 +300,7 @@ export function FilterDropdown({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleWordCountPreset(key as keyof typeof WORD_COUNT_PRESETS)}
-                    className="text-xs justify-start h-7 w-full"
+                    className="text-xs justify-start h-7 w-full font-lato text-neutral-600 hover:text-[--color-primary-blue]"
                   >
                     {preset.label}
                   </Button>
@@ -308,7 +308,7 @@ export function FilterDropdown({
               </div>
               
               {/* Custom word count range */}
-              <div className="flex items-center gap-2 text-xs text-gray-500">
+              <div className="flex items-center gap-2 text-xs font-lato text-neutral-500">
                 <span>Custom:</span>
                 <input
                   type="number"
@@ -348,19 +348,19 @@ export function FilterDropdown({
           {/* Active Filters Summary */}
           {activeFilterCount > 0 && (
             <div className="p-3 border-t">
-              <div className="text-xs font-medium text-gray-700 mb-2">Active Filters:</div>
+              <div className="text-xs font-lato text-neutral-700 mb-2">Active Filters:</div>
               <div className="flex flex-wrap gap-1">
                 {/* Status badges */}
                 {tempFilters.status.map((status) => (
                   <Badge
                     key={status}
                     variant="secondary"
-                    className="text-xs flex items-center gap-1"
+                    className="text-xs flex items-center gap-1 bg-neutral-100 text-neutral-700 border border-neutral-200"
                   >
                     {status}
                     <button
                       onClick={() => handleStatusChange(status, false)}
-                      className="ml-1 hover:text-red-500"
+                      className="ml-1 text-neutral-500 hover:text-[--color-primary-blue]"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -376,7 +376,7 @@ export function FilterDropdown({
                     Date Range
                     <button
                       onClick={() => handleClearFilterType('dateRange')}
-                      className="ml-1 hover:text-red-500"
+                      className="ml-1 text-neutral-500 hover:text-[--color-primary-blue]"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -392,7 +392,7 @@ export function FilterDropdown({
                     Word Count
                     <button
                       onClick={() => handleClearFilterType('wordCountRange')}
-                      className="ml-1 hover:text-red-500"
+                      className="ml-1 text-neutral-500 hover:text-[--color-primary-blue]"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -461,15 +461,15 @@ export function QuickFilters({
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-sm text-gray-500">Quick filters:</span>
+      <span className="text-sm font-lato text-neutral-500">Quick filters:</span>
       {quickFilters.map((filter, index) => (
         <Button
           key={index}
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => onFilterChange(filter.filters)}
           disabled={disabled}
-          className={cn('text-xs', filter.color, 'border-current')}
+          className={cn('text-xs font-lato text-neutral-600 hover:text-[--color-primary-blue] border-neutral-200')}
         >
           {filter.label}
         </Button>
@@ -478,11 +478,11 @@ export function QuickFilters({
       {/* Bulk selection clear button */}
       {selectedCount > 0 && onClearSelection && (
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={onClearSelection}
           disabled={disabled}
-          className="text-xs bg-gray-100 text-gray-800 border-current"
+          className="text-xs font-lato text-neutral-600 hover:text-[--color-primary-blue] bg-neutral-100 border-neutral-200"
         >
           Clear {selectedCount} selected
         </Button>

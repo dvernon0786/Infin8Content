@@ -155,7 +155,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
               <p className="font-lato text-neutral-600 text-body mb-4">
                 Try adjusting your search or filters to find articles.
               </p>
-              <Button variant="outline" className="font-lato text-neutral-600 hover:text-[--brand-electric-blue]" onClick={clearAll}>
+<Button variant="outline" className="font-lato text-neutral-600 hover:text-primary" onClick={clearAll}>
                 Clear all filters
               </Button>
             </div>
@@ -173,7 +173,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
               <Link href="/dashboard/articles/generate">
                 <Button
                   variant="ghost"
-                  className="font-lato text-neutral-600 hover:text-[--brand-electric-blue]"
+                  className="font-lato text-neutral-600 hover:text-primary"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Generate article

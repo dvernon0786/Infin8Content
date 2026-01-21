@@ -16,7 +16,7 @@ This changelog tracks all modifications made to the dashboard system during the 
 - **Custom Utility Failures**: Replaced non-working custom hover utilities with standard Tailwind syntax
 
 #### Core System Changes
-- **CSS Variable Structure**: Established canonical `--color-primary-blue` and `--color-primary-purple` in `:root` 
+- **CSS Variable Structure**: Established canonical `--color-primary-blue` and `--color-primary-purple` in `:root`
 - **Explicit Utilities**: Added `bg-primary-blue`, `bg-primary-purple` utilities to bypass Tailwind purge
 - **Tailwind Color Extension**: Added `primary` color token to `tailwind.config.ts` for hover states
 - **Button Component**: Removed `default` variant, set `primary` as default, updated all variants
@@ -42,9 +42,15 @@ This changelog tracks all modifications made to the dashboard system during the 
 
 #### Technical Implementation
 - **No Arbitrary Values**: Eliminated all `bg-[--color-primary-blue]` usage
+<<<<<<< HEAD
 - **Standard Hover Syntax**: Replaced custom utilities with `hover:text-primary` 
 - **Canonical Backgrounds**: All primary buttons use `bg-primary-blue` 
 - **Consistent Hover States**: All utility buttons use `hover:text-primary` 
+=======
+- **Standard Hover Syntax**: Replaced custom utilities with `hover:text-primary`
+- **Canonical Backgrounds**: All primary buttons use `bg-primary-blue`
+- **Consistent Hover States**: All utility buttons use `hover:text-primary`
+>>>>>>> origin/test-main-all
 
 #### Impact
 - **Fixed**: All invisible buttons now display correctly
