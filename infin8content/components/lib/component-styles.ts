@@ -55,8 +55,8 @@ export const articleStates = {
 }
 
 export const buttonVariants = {
-  primary: 'bg-[--color-primary-blue] text-white hover:bg-[--color-primary-blue]/90',
-  secondary: 'bg-[--color-primary-purple] text-white hover:bg-[--color-primary-purple]/90',
+  primary: 'bg-primary-blue text-white hover:bg-primary-blue/90',
+  secondary: 'bg-primary-purple text-white hover:bg-primary-purple/90',
   ghost: 'hover:bg-accent hover:text-accent-foreground',
   destructive: 'bg-[--color-error] text-white hover:bg-[--color-error]/90',
 }

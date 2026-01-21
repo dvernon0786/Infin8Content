@@ -129,7 +129,11 @@ export function KeywordResearchPageClient() {
                   <span className="text-sm font-medium">Current Usage: </span>
                   <span className="text-sm">{usageInfo.current} / {usageInfo.limit}</span>
                 </div>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="font-lato text-neutral-600 hover:text-primary border-neutral-200"
+                >
                   Upgrade Plan
                 </Button>
               </div>
@@ -142,12 +146,16 @@ export function KeywordResearchPageClient() {
       {error && !usageInfo && (
         <Card className="border-destructive">
           <CardHeader>
-            <CardTitle className="text-destructive">Error</CardTitle>
+            <CardTitle className="font-poppins text-neutral-900 text-h3-desktop">Error</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">{error}</p>
-              <Button onClick={handleRetry} variant="outline">
+              <p className="font-lato text-neutral-600 text-small">{error}</p>
+              <Button 
+                onClick={handleRetry} 
+                variant="outline"
+                className="font-lato text-neutral-600 hover-text-primary-blue border-neutral-200"
+              >
                 Retry
               </Button>
             </div>
@@ -164,14 +172,14 @@ export function KeywordResearchPageClient() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Ready to create an article?</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="font-lato text-small font-medium text-neutral-900">Ready to create an article?</p>
+                <p className="font-lato text-neutral-600 text-small">
                   Use "{lastResearchedKeyword}" as your article keyword
                 </p>
               </div>
               <Button 
                 onClick={() => router.push(`/dashboard/articles/generate?keyword=${encodeURIComponent(lastResearchedKeyword)}`)}
-                className="gap-2"
+                className="gap-2 bg-primary-blue text-white font-lato hover:bg-primary-blue/90"
               >
                 <Plus className="h-4 w-4" />
                 Create Article

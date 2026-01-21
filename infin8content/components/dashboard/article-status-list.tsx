@@ -272,7 +272,7 @@ export function ArticleStatusList({
                 size="sm"
                 onClick={refresh}
                 disabled={connectionStatus === 'reconnecting'}
-                className="flex items-center gap-2"
+                className="font-lato text-neutral-600 hover:text-[--brand-electric-blue] flex items-center gap-2"
               >
                 <RefreshCw className={`h-4 w-4 ${connectionStatus === 'reconnecting' ? 'animate-spin' : ''}`} />
                 Refresh
@@ -283,7 +283,7 @@ export function ArticleStatusList({
                   variant="outline"
                   size="sm"
                   onClick={reconnect}
-                  className="flex items-center gap-2"
+                  className="font-lato text-neutral-600 hover:text-[--brand-electric-blue] flex items-center gap-2"
                 >
                   <Wifi className="h-4 w-4" />
                   Reconnect
@@ -581,7 +581,7 @@ export function ArticleStatusList({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
+                        className="flex items-center gap-1 font-lato text-neutral-600 hover:text-[--brand-electric-blue]"
                         onClick={(e) => {
                           e.stopPropagation();
                           // Navigate to article or show details
@@ -657,7 +657,7 @@ export function ArticleStatusList({
       {/* Load more indicator */}
       {filteredArticles.length >= maxItems && rawArticles.length > maxItems && (
         <div className="text-center">
-          <Button variant="outline" onClick={() => {}}>
+          <Button variant="outline" onClick={() => {}} className="font-lato text-neutral-600 hover:text-[--brand-electric-blue]">
             Load more articles
           </Button>
         </div>

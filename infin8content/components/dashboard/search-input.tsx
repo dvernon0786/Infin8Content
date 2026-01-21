@@ -192,7 +192,7 @@ export function SearchInput({
     <div className={cn('relative', className)} ref={suggestionsRef}>
       {/* Search input with icon and clear button */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-500 hover:text-[--color-primary-blue]" />
         
         <Input
           ref={inputRef}
@@ -205,8 +205,9 @@ export function SearchInput({
           placeholder={placeholder}
           disabled={disabled}
           className={cn(
-            'pl-10 pr-20',
-            isFocused && 'ring-2 ring-blue-500 ring-offset-2',
+            'pl-10 pr-20 font-lato text-neutral-600 placeholder:text-neutral-500',
+            'border-neutral-200',
+            isFocused && 'ring-2 ring-[--brand-electric-blue]/50 ring-offset-2',
             disabled && 'opacity-50 cursor-not-allowed'
           )}
           aria-label="Search articles"
@@ -218,7 +219,7 @@ export function SearchInput({
         
         {/* Loading indicator */}
         {isLoading && (
-          <Loader2 className="absolute right-12 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-500 animate-spin" />
+          <Loader2 className="absolute right-12 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-600 animate-spin" />
         )}
         
         {/* Clear button */}
@@ -227,7 +228,7 @@ export function SearchInput({
             variant="ghost"
             size="sm"
             onClick={handleClear}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-neutral-100 font-lato text-neutral-600"
             aria-label="Clear search"
           >
             <X className="h-4 w-4" />
@@ -237,11 +238,11 @@ export function SearchInput({
 
       {/* Dropdown for suggestions and history */}
       {showDropdown && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-neutral-200 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
           {/* Search suggestions */}
           {showSuggestions && suggestions.length > 0 && (
             <div className="p-2">
-              <div className="flex items-center gap-2 px-3 py-2 text-xs text-gray-500 font-medium">
+              <div className="flex items-center gap-2 px-3 py-2 text-xs font-lato text-neutral-500">
                 <TrendingUp className="h-3 w-3" />
                 Suggestions
               </div>
@@ -250,11 +251,11 @@ export function SearchInput({
                   key={index}
                   data-suggestion-item="true"
                   onClick={() => handleSuggestionClick(suggestion)}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded-md flex items-center gap-2 transition-colors"
+                  className="w-full text-left px-3 py-2 text-sm font-lato text-neutral-600 hover:bg-neutral-100 rounded-md flex items-center gap-2 transition-colors"
                   role="option"
                   aria-selected={false}
                 >
-                  <Search className="h-3 w-3 text-gray-400" />
+                  <Search className="h-3 w-3 text-neutral-500" />
                   <span className="truncate">{suggestion}</span>
                 </button>
               ))}
@@ -265,7 +266,7 @@ export function SearchInput({
           {showHistory && history.length > 0 && (
             <div className="p-2">
               <div className="flex items-center justify-between px-3 py-2">
-                <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
+                <div className="flex items-center gap-2 text-xs font-lato text-neutral-500">
                   <Clock className="h-3 w-3" />
                   Recent Searches
                 </div>
@@ -273,7 +274,7 @@ export function SearchInput({
                   variant="ghost"
                   size="sm"
                   onClick={handleClearHistory}
-                  className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700"
+                  className="h-6 px-2 text-xs font-lato text-neutral-500 hover:text-[--color-primary-blue]"
                 >
                   Clear All
                 </Button>
@@ -281,16 +282,16 @@ export function SearchInput({
               {history.map((historyItem, index) => (
                 <div
                   key={index}
-                  className="flex items-center group hover:bg-gray-100 rounded-md transition-colors"
+                  className="flex items-center group hover:bg-neutral-100 rounded-md transition-colors"
                 >
                   <button
                     data-suggestion-item="true"
                     onClick={() => handleHistoryClick(historyItem)}
-                    className="flex-1 text-left px-3 py-2 text-sm flex items-center gap-2"
+                    className="flex-1 text-left px-3 py-2 text-sm font-lato text-neutral-600 flex items-center gap-2"
                     role="option"
                     aria-selected={false}
                   >
-                    <Clock className="h-3 w-3 text-gray-400" />
+                    <Clock className="h-3 w-3 text-neutral-500" />
                     <span className="truncate">{historyItem}</span>
                   </button>
                   <Button
@@ -309,14 +310,14 @@ export function SearchInput({
 
           {/* No results */}
           {showSuggestions && suggestions.length === 0 && hasValue && (
-            <div className="p-4 text-center text-sm text-gray-500">
+            <div className="p-4 text-center text-sm font-lato text-neutral-500">
               No suggestions found
             </div>
           )}
 
           {/* Empty history */}
           {showHistory && history.length === 0 && (
-            <div className="p-4 text-center text-sm text-gray-500">
+            <div className="p-4 text-center text-sm font-lato text-neutral-500">
               No recent searches
             </div>
           )}
@@ -329,7 +330,7 @@ export function SearchInput({
       </div>
 
       {/* Keyboard shortcut hint */}
-      <div className="absolute -bottom-6 left-0 text-xs text-gray-500 flex items-center gap-1">
+      <div className="absolute -bottom-6 left-0 text-xs font-lato text-neutral-500 flex items-center gap-1">
         <Keyboard className="h-3 w-3" />
         Press / to focus, ESC to close
       </div>
@@ -372,7 +373,7 @@ export function AdvancedSearchInput({
           variant="ghost"
           size="sm"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="text-xs text-gray-500 hover:text-gray-700"
+          className="text-xs font-lato text-neutral-500 hover:text-[--color-primary-blue]"
         >
           Advanced Search
         </Button>
@@ -386,8 +387,8 @@ export function AdvancedSearchInput({
 
       {/* Advanced search help */}
       {showAdvanced && (
-        <div className="p-3 bg-gray-50 rounded-md text-sm text-gray-600 space-y-1">
-          <p className="font-medium">Advanced Search Tips:</p>
+        <div className="p-3 bg-neutral-50 rounded-md text-sm font-lato text-neutral-600 space-y-1">
+          <p className="font-lato text-small font-medium text-neutral-900">Advanced Search Tips:</p>
           <ul className="space-y-1 text-xs">
             <li>• Use + before a word to require it (e.g., +marketing)</li>
             <li>• Use - before a word to exclude it (e.g., -draft)</li>

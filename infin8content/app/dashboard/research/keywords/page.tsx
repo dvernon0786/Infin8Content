@@ -12,7 +12,7 @@ export default async function KeywordResearchPage() {
     return (
       <div className="flex flex-col gap-6">
         <div className="text-center py-8">
-          <p className="text-muted-foreground">Authentication required. Please log in.</p>
+          <p className="font-lato hover:text-[--color-primary-blue] text-neutral-600 text-body">Authentication required. Please log in.</p>
         </div>
       </div>
     )
@@ -29,8 +29,8 @@ export default async function KeywordResearchPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Keyword Research</h1>
-        <p className="text-muted-foreground">
+        <h1 className="font-poppins text-neutral-900 text-h2-desktop">Keyword Research</h1>
+        <p className="font-lato hover:text-[--color-primary-blue] text-neutral-600 text-body">
           Research keywords with search volume, difficulty, and trend data
         </p>
       </div>
@@ -39,14 +39,14 @@ export default async function KeywordResearchPage() {
       {limit !== null && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Usage Limits</CardTitle>
+            <CardTitle className="font-lato text-small font-medium text-neutral-900">Usage Limits</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Badge variant={plan === 'pro' ? 'default' : 'secondary'}>
+              <Badge variant={plan === 'pro' ? 'default' : 'secondary'} className="bg-neutral-100 text-neutral-700 border border-neutral-200">
                 {plan.toUpperCase()}
               </Badge>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm font-lato text-neutral-600">
                 {limit} keyword researches per month
               </span>
             </div>

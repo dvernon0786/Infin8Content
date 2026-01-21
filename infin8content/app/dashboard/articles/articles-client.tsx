@@ -153,7 +153,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
               <p className="text-muted-foreground mb-4">
                 Try adjusting your search or filters to find articles.
               </p>
-              <Button variant="outline" onClick={clearAll}>
+<Button variant="outline" className="font-lato text-neutral-600 hover:text-primary" onClick={clearAll}>
                 Clear all filters
               </Button>
             </div>
@@ -169,7 +169,10 @@ function ArticlesClient({ orgId }: { orgId: string }) {
                 Get started by generating your first article.
               </p>
               <Link href="/dashboard/articles/generate">
-                <Button>
+                <Button
+                  variant="ghost"
+                  className="font-lato text-neutral-600 hover:text-primary"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Generate Article
                 </Button>

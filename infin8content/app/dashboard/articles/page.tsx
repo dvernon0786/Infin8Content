@@ -31,9 +31,9 @@ export default async function ArticlesPage() {
             <Link href="/dashboard/articles/generate">
               <Button
                 className="
-                  bg-[--color-primary-blue]
+                  bg-primary-blue
                   text-white
-                  hover:bg-[--color-primary-blue]/90
+                  hover:bg-primary-blue/90
                   font-lato
                 "
               >
@@ -48,8 +48,9 @@ export default async function ArticlesPage() {
                 size="large"
                 className="
                   w-full
-                  bg-[--color-primary-blue]
+                  bg-primary-blue
                   text-white
+                  hover:bg-primary-blue/90
                   font-lato
                 "
               >

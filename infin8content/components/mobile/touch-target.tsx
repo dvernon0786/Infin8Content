@@ -29,10 +29,10 @@ const MOBILE_TOUCH_TARGETS = {
 } as const;
 
 const VARIANTS = {
-  primary: 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700',
-  secondary: 'bg-gray-500 text-white hover:bg-gray-600 active:bg-gray-700',
-  outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 active:bg-gray-100',
-  ghost: 'text-gray-700 hover:bg-gray-100 active:bg-gray-200',
+  primary: 'bg-primary-blue text-white hover:bg-primary-blue/90 active:bg-primary-blue/95 font-lato',
+  secondary: 'bg-primary-purple text-white hover:bg-primary-purple/90 active:bg-primary-purple/95 font-lato',
+  outline: 'border border-neutral-200 text-neutral-600 hover:bg-neutral-50 active:bg-neutral-100 font-lato',
+  ghost: 'text-neutral-600 hover:bg-neutral-50 active:bg-neutral-100 font-lato',
 } as const;
 
 export const TouchTarget: React.FC<TouchTargetProps> = ({
