@@ -175,7 +175,7 @@ export function EnhancedArticleContentViewer({
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-sm text-muted-foreground text-center py-8">
+          <p className="font-lato text-neutral-600 text-body text-center py-8">
             No content available yet. Article is still being generated.
           </p>
         </CardContent>
@@ -192,53 +192,53 @@ export function EnhancedArticleContentViewer({
       {seoData.score && seoData.score.overallScore && !isNaN(seoData.score.overallScore) && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 font-poppins text-neutral-900 text-h3-desktop">
+              <BarChart3 className="h-5 w-5 text-neutral-600" />
               SEO Analysis Summary
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className={`text-2xl font-bold ${
-                  seoData.score.overallScore >= 80 ? 'text-green-600' :
-                  seoData.score.overallScore >= 60 ? 'text-yellow-600' : 'text-red-600'
+              <div className="text-center p-4 bg-neutral-100 rounded-lg border border-neutral-200">
+                <div className={`text-2xl font-bold font-lato ${
+                  seoData.score.overallScore >= 80 ? 'text-neutral-700' :
+                  seoData.score.overallScore >= 60 ? 'text-neutral-700' : 'text-neutral-700'
                 }`}>
                   {Math.round(seoData.score.overallScore)}
                 </div>
-                <div className="text-sm text-blue-600">Overall Score</div>
+                <div className="text-sm font-lato text-neutral-600">Overall Score</div>
               </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">
+              <div className="text-center p-4 bg-neutral-100 rounded-lg border border-neutral-200">
+                <div className="text-2xl font-bold font-lato text-neutral-700">
                   {seoData.validation?.passed ? 'PASS' : 'FAIL'}
                 </div>
-                <div className="text-sm text-green-600">Validation Status</div>
+                <div className="text-sm font-lato text-neutral-600">Validation Status</div>
               </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">
+              <div className="text-center p-4 bg-neutral-100 rounded-lg border border-neutral-200">
+                <div className="text-2xl font-bold font-lato text-neutral-700">
                   {seoData.recommendations.length}
                 </div>
-                <div className="text-sm text-purple-600">Recommendations</div>
+                <div className="text-sm font-lato text-neutral-600">Recommendations</div>
               </div>
             </div>
             
             {/* Action Buttons */}
             <div className="flex gap-2 mt-4">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => setShowSEOAnalysis(!showSEOAnalysis)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 font-lato text-neutral-600 hover:text-[--color-primary-blue]"
               >
                 <Target className="h-4 w-4" />
                 {showSEOAnalysis ? 'Hide' : 'Show'} SEO Analysis
                 {showSEOAnalysis ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => setShowReports(!showReports)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 font-lato text-neutral-600 hover:text-[--color-primary-blue]"
               >
                 <BarChart3 className="h-4 w-4" />
                 {showReports ? 'Hide' : 'Show'} Reports
@@ -253,8 +253,8 @@ export function EnhancedArticleContentViewer({
       {showSEOAnalysis && seoData.score && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 font-poppins text-neutral-900 text-h3-desktop">
+              <Target className="h-5 w-5 text-neutral-600" />
               Detailed SEO Analysis
             </CardTitle>
           </CardHeader>
@@ -269,55 +269,55 @@ export function EnhancedArticleContentViewer({
             {/* Validation Results */}
             {seoData.validation && (
               <div>
-                <h4 className="font-medium mb-4 flex items-center gap-2">
+                <h4 className="font-poppins text-neutral-900 text-h3-mobile mb-4 flex items-center gap-2">
                   {seoData.validation.passed ? (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <CheckCircle className="h-5 w-5 text-neutral-600" />
                   ) : (
-                    <AlertTriangle className="h-5 w-5 text-red-500" />
+                    <AlertTriangle className="h-5 w-5 text-neutral-600" />
                   )}
                   Validation Results
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   <div className="text-center">
-                    <div className="text-lg font-bold text-green-600">
+                    <div className="text-lg font-bold font-lato text-neutral-700">
                       {seoData.validation.metrics.passedRules}
                     </div>
-                    <div className="text-sm text-gray-600">Passed</div>
+                    <div className="text-sm font-lato text-neutral-600">Passed</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-bold text-red-600">
+                    <div className="text-lg font-bold font-lato text-neutral-700">
                       {seoData.validation.metrics.failedRules}
                     </div>
-                    <div className="text-sm text-gray-600">Failed</div>
+                    <div className="text-sm font-lato text-neutral-600">Failed</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-bold text-yellow-600">
+                    <div className="text-lg font-bold font-lato text-neutral-700">
                       {seoData.validation.metrics.warningCount}
                     </div>
-                    <div className="text-sm text-gray-600">Warnings</div>
+                    <div className="text-sm font-lato text-neutral-600">Warnings</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-bold text-blue-600">
+                    <div className="text-lg font-bold font-lato text-neutral-700">
                       {seoData.validation.metrics.errorCount}
                     </div>
-                    <div className="text-sm text-gray-600">Errors</div>
+                    <div className="text-sm font-lato text-neutral-600">Errors</div>
                   </div>
                 </div>
                 
                 {/* Issues Summary */}
                 {seoData.validation.issues.length > 0 && (
                   <div className="space-y-2">
-                    <h5 className="font-medium">Issues Found:</h5>
+                    <h5 className="font-poppins text-neutral-900 text-h3-mobile">Issues Found:</h5>
                     {seoData.validation.issues.slice(0, 5).map((issue: any, index: number) => (
-                      <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                        <Badge variant={issue.type === 'error' ? 'destructive' : 'secondary'}>
+                      <div key={index} className="flex items-center gap-2 p-2 bg-neutral-50 rounded">
+                        <Badge className="bg-neutral-100 text-neutral-700 border border-neutral-200">
                           {issue.type}
                         </Badge>
-                        <span className="text-sm">{issue.message}</span>
+                        <span className="text-sm font-lato text-neutral-600">{issue.message}</span>
                       </div>
                     ))}
                     {seoData.validation.issues.length > 5 && (
-                      <div className="text-sm text-gray-500 text-center">
+                      <div className="text-sm font-lato text-neutral-500 text-center">
                         ... and {seoData.validation.issues.length - 5} more issues
                       </div>
                     )}
@@ -329,27 +329,27 @@ export function EnhancedArticleContentViewer({
             {/* Recommendations */}
             {seoData.recommendations.length > 0 && (
               <div>
-                <h4 className="font-medium mb-4 flex items-center gap-2">
-                  <Target className="h-5 w-5" />
+                <h4 className="font-poppins text-neutral-900 text-h3-mobile mb-4 flex items-center gap-2">
+                  <Target className="h-5 w-5 text-neutral-600" />
                   Recommendations ({seoData.recommendations.length})
                 </h4>
                 <div className="space-y-3">
                   {seoData.recommendations.slice(0, 10).map((rec: any, index: number) => (
-                    <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded">
-                      <Badge variant={rec.priority === 'critical' ? 'destructive' : 'secondary'}>
+                    <div key={index} className="flex items-center gap-2 p-3 bg-neutral-50 rounded">
+                      <Badge className="bg-neutral-100 text-neutral-700 border border-neutral-200">
                         {rec.priority}
                       </Badge>
                       <div className="flex-1">
-                        <div className="font-medium text-sm">{rec.title}</div>
-                        <div className="text-xs text-gray-600">{rec.description}</div>
+                        <div className="font-lato text-small font-medium text-neutral-900">{rec.title}</div>
+                        <div className="text-xs font-lato text-neutral-600">{rec.description}</div>
                       </div>
-                      <Badge variant="outline" className="text-xs">
+                      <Badge className="bg-neutral-100 text-neutral-700 border border-neutral-200 text-xs">
                         {rec.type}
                       </Badge>
                     </div>
                   ))}
                   {seoData.recommendations.length > 10 && (
-                    <div className="text-sm text-gray-500 text-center">
+                    <div className="text-sm font-lato text-neutral-500 text-center">
                       ... and {seoData.recommendations.length - 10} more recommendations
                     </div>
                   )}
@@ -382,13 +382,13 @@ export function EnhancedArticleContentViewer({
               {!isH3 && (
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <h2 className="text-2xl font-bold tracking-tight mb-2">
+                    <h2 className="font-poppins text-neutral-900 text-h2-desktop mb-2">
                       {section.title}
                     </h2>
                   </div>
                   <div className="flex items-center gap-2">
                     {section.quality_metrics?.quality_passed && (
-                      <Badge variant="default" className="text-xs">
+                      <Badge className="bg-neutral-100 text-neutral-700 border border-neutral-200 text-xs">
                         Quality Passed
                       </Badge>
                     )}
@@ -397,7 +397,7 @@ export function EnhancedArticleContentViewer({
               )}
 
               {isH3 && (
-                <h3 className="text-xl font-semibold tracking-tight mt-4 mb-2">
+                <h3 className="font-poppins text-neutral-900 text-h3-mobile mt-4 mb-2">
                   {section.title}
                 </h3>
               )}
@@ -405,7 +405,7 @@ export function EnhancedArticleContentViewer({
               {/* Section Content */}
               <Card>
                 <CardContent className="pt-6">
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <div className="prose prose-sm max-w-none dark:prose-invert font-lato text-neutral-700 text-body prose-neutral">
                     <MarkdownErrorBoundary>
                       <MarkdownRenderer content={section.content} />
                     </MarkdownErrorBoundary>
@@ -415,30 +415,30 @@ export function EnhancedArticleContentViewer({
 
               {/* Section SEO Insights */}
               {seoData.score && (
-                <Card className="bg-muted/30">
+                <Card className="bg-neutral-50 border-neutral-200">
                   <CardContent className="pt-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Target className="h-4 w-4 text-blue-500" />
-                      <span className="text-sm font-medium">SEO Insights</span>
+                      <Target className="h-4 w-4 text-neutral-600" />
+                      <span className="text-sm font-lato text-neutral-900">SEO Insights</span>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                       <div>
-                        <span className="font-medium">Words: </span>
-                        <span className="text-muted-foreground">{section.word_count || 0}</span>
+                        <span className="font-lato text-small font-medium text-neutral-900">Words: </span>
+                        <span className="font-lato text-small text-neutral-600">{section.word_count || 0}</span>
                       </div>
                       <div>
-                        <span className="font-medium">Readability: </span>
-                        <span className="text-muted-foreground">
+                        <span className="font-lato text-small font-medium text-neutral-900">Readability: </span>
+                        <span className="font-lato text-small text-neutral-600">
                           {section.quality_metrics?.readability_score?.toFixed(1) || 'N/A'}
                         </span>
                       </div>
                       <div>
-                        <span className="font-medium">Citations: </span>
-                        <span className="text-muted-foreground">{section.citations_included || 0}</span>
+                        <span className="font-lato text-small font-medium text-neutral-900">Citations: </span>
+                        <span className="font-lato text-small text-neutral-600">{section.citations_included || 0}</span>
                       </div>
                       <div>
-                        <span className="font-medium">Model: </span>
-                        <span className="text-muted-foreground text-xs">
+                        <span className="font-lato text-small font-medium text-neutral-900">Model: </span>
+                        <span className="font-lato text-small text-neutral-600 text-xs">
                           {section.model_used || 'N/A'}
                         </span>
                       </div>
@@ -449,10 +449,10 @@ export function EnhancedArticleContentViewer({
 
               {/* Research Sources */}
               {section.research_sources && section.research_sources.length > 0 && (
-                <Card className="bg-muted/50">
+                <Card className="bg-neutral-50 border-neutral-200">
                   <CardContent className="pt-4">
-                    <p className="font-medium text-sm mb-2 flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
+                    <p className="font-lato text-small font-medium text-neutral-900 mb-2 flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-neutral-600" />
                       Research Sources ({section.research_sources.length})
                     </p>
                     <ul className="space-y-1 text-sm">
@@ -465,22 +465,22 @@ export function EnhancedArticleContentViewer({
                                 href={source.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-primary hover:underline inline-flex items-center gap-1"
+                                className="text-neutral-600 hover:text-[--color-primary-blue] underline inline-flex items-center gap-1"
                               >
                                 {source.title}
                                 <ExternalLink className="h-3 w-3" />
                               </a>
                             ) : (
-                              <span className="text-muted-foreground inline-flex items-center gap-1">
+                              <span className="font-lato text-small text-neutral-600 inline-flex items-center gap-1">
                                 {source.title}
-                                <span className="text-xs">(Invalid URL)</span>
+                                <span className="text-xs text-neutral-500">(Invalid URL)</span>
                               </span>
                             )}
                           </li>
                         )
                       })}
                       {section.research_sources.length > 5 && (
-                        <li className="text-muted-foreground text-xs">
+                        <li className="font-lato text-small text-neutral-500">
                           +{section.research_sources.length - 5} more sources
                         </li>
                       )}
@@ -500,8 +500,8 @@ export function EnhancedArticleContentViewer({
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-sm text-muted-foreground">Analyzing SEO...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-600 mx-auto mb-4"></div>
+              <p className="font-lato text-neutral-600 text-body">Analyzing SEO...</p>
             </div>
           </CardContent>
         </Card>
@@ -547,7 +547,7 @@ function MarkdownRenderer({ content }: { content: string }) {
           const urlValid = isValidUrl(url)
           
           if (!urlValid) {
-            return <span className="text-muted-foreground">{children}</span>
+            return <span className="font-lato text-small text-neutral-600">{children}</span>
           }
           
           return (
@@ -555,7 +555,7 @@ function MarkdownRenderer({ content }: { content: string }) {
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:underline inline-flex items-center gap-1"
+              className="text-neutral-600 hover:text-[--color-primary-blue] underline inline-flex items-center gap-1"
               {...props}
             >
               {children}
@@ -565,18 +565,18 @@ function MarkdownRenderer({ content }: { content: string }) {
         },
         // Custom heading components
         h2: ({ children, ...props }: { children?: React.ReactNode }) => (
-          <h2 className="text-2xl font-bold mt-8 mb-4 first:mt-0" {...props}>
+          <h2 className="font-poppins text-neutral-900 text-h2-desktop mt-8 mb-4 first:mt-0" {...props}>
             {children}
           </h2>
         ),
         h3: ({ children, ...props }: { children?: React.ReactNode }) => (
-          <h3 className="text-xl font-semibold mt-6 mb-3" {...props}>
+          <h3 className="font-poppins text-neutral-900 text-h3-mobile mt-6 mb-3" {...props}>
             {children}
           </h3>
         ),
         // Custom paragraph
         p: ({ children, ...props }: { children?: React.ReactNode }) => (
-          <p className="mb-4 leading-relaxed" {...props}>
+          <p className="mb-4 leading-relaxed font-lato text-neutral-700 text-body" {...props}>
             {children}
           </p>
         ),
@@ -601,11 +601,11 @@ function MarkdownRenderer({ content }: { content: string }) {
         code: ({ className, children, ...props }: { className?: string; children?: React.ReactNode }) => {
           const isInline = !className
           return isInline ? (
-            <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+            <code className="bg-neutral-100 px-1.5 py-0.5 rounded text-sm font-mono text-neutral-700" {...props}>
               {children}
             </code>
           ) : (
-            <code className="block bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono" {...props}>
+            <code className="block bg-neutral-100 p-4 rounded-lg overflow-x-auto text-sm font-mono text-neutral-700" {...props}>
               {children}
             </code>
           )

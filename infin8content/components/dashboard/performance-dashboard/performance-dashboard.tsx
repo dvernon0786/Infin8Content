@@ -266,7 +266,7 @@ export function PerformanceDashboard({
           <Button 
             onClick={() => fetchMetrics()} 
             variant="outline" 
-            className="mt-4 border-red-300 text-red-700 hover:bg-red-100"
+            className="mt-4 font-lato text-neutral-600 hover:text-[--color-primary-blue]"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Retry
@@ -342,6 +342,7 @@ export function PerformanceDashboard({
             size="sm" 
             onClick={handleManualRefresh}
             disabled={isRefreshing}
+            className="font-lato text-neutral-600 hover:text-[--color-primary-blue]"
           >
             <RefreshCw className={cn('h-4 w-4 mr-2', isRefreshing && 'animate-spin')} />
             Refresh

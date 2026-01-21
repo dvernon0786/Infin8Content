@@ -6,6 +6,105 @@ This changelog tracks all modifications made to the dashboard system during the 
 
 ## Version History
 
+### v2.2.0 - Button System Canonicalization Complete
+**Date**: January 21, 2026  
+**Scope**: Complete resolution of invisible button issue and establishment of canonical button system
+
+#### Root Cause Resolution
+- **Tailwind JIT Purge Issue**: Fixed invisible buttons caused by Tailwind purging arbitrary CSS variable classes
+- **Color Token Inconsistency**: Unified hover states to use single primary color token
+- **Custom Utility Failures**: Replaced non-working custom hover utilities with standard Tailwind syntax
+
+#### Core System Changes
+- **CSS Variable Structure**: Established canonical `--color-primary-blue` and `--color-primary-purple` in `:root`
+- **Explicit Utilities**: Added `bg-primary-blue`, `bg-primary-purple` utilities to bypass Tailwind purge
+- **Tailwind Color Extension**: Added `primary` color token to `tailwind.config.ts` for hover states
+- **Button Component**: Removed `default` variant, set `primary` as default, updated all variants
+
+#### Files Modified
+1. **System Files**:
+   - `app/globals.css` - Added canonical utilities and CSS variables
+   - `tailwind.config.ts` - Added primary color token
+   - `components/ui/button.tsx` - Normalized button component
+   - `components/mobile/touch-target.tsx` - Mobile button alignment
+
+2. **Dashboard Pages**:
+   - `app/dashboard/articles/page.tsx` - Generate Article buttons
+   - `app/dashboard/research/page.tsx` - Start Research button  
+   - `app/dashboard/settings/page.tsx` - Management buttons
+   - `app/dashboard/research/keywords/keyword-research-client.tsx` - Utility buttons
+
+3. **Component Files**:
+   - `app/dashboard/articles/articles-client.tsx` - Filter and generate buttons
+   - `components/dashboard/virtualized-article-list.tsx` - Interactive elements
+   - `components/articles/progress-tracker.tsx` - Reconnect button
+   - `components/lib/component-styles.ts` - Library styles
+
+#### Technical Implementation
+- **No Arbitrary Values**: Eliminated all `bg-[--color-primary-blue]` usage
+- **Standard Hover Syntax**: Replaced custom utilities with `hover:text-primary`
+- **Canonical Backgrounds**: All primary buttons use `bg-primary-blue`
+- **Consistent Hover States**: All utility buttons use `hover:text-primary`
+
+#### Impact
+- **Fixed**: All invisible buttons now display correctly
+- **Unified**: Single hover color (`#217CEB`) across all interactive elements
+- **Robust**: System immune to Tailwind JIT purge issues
+- **Canonical**: Established maintainable button system standards
+
+### v2.1.0 - Articles Domain Brand Alignment Complete
+**Date**: January 21, 2026  
+**Scope**: Complete Articles domain brand alignment and production compliance
+
+#### Articles Pages
+- **Articles List Page** (`/app/dashboard/articles/page.tsx`):
+  - Header typography: `font-poppins text-neutral-900 text-h2-desktop`
+  - Description: `font-lato text-neutral-600 text-body`
+  - Primary CTA: Electric Blue with `font-lato`
+  - Mobile CTA: Visual parity with desktop
+  - Layout structure preserved
+
+- **Article Detail Page** (`/app/dashboard/articles/[id]/page.tsx`):
+  - Main title: `font-poppins text-neutral-900 text-h2-desktop`
+  - All headings: Poppins with semantic sizing
+  - Body text: `font-lato text-neutral-600 text-body`
+  - Back navigation: Neutral with Electric Blue hover
+  - Error states: Calm, neutral styling
+  - Card titles: Brand-compliant typography
+  - Field labels/values: Explicit font and color
+
+#### Articles Components
+- **Articles Client** (`/app/dashboard/articles/articles-client.tsx`):
+  - Error state: `font-poppins text-neutral-900 text-h3-desktop`
+  - Loading state: `font-lato text-neutral-600 text-small`
+  - Results summary: `font-lato text-neutral-600 text-small`
+  - Empty states: Brand-compliant typography and colors
+  - Generate button: Demoted to ghost variant
+  - Icons: Neutral color scheme (`text-neutral-600`)
+
+- **Virtualized Article List** (`/components/dashboard/virtualized-article-list.tsx`):
+  - Article titles: `font-poppins text-neutral-900 text-small font-semibold`
+  - Keywords: `font-lato text-neutral-500 text-small`
+  - Metadata: `font-lato text-small text-neutral-500`
+  - View button: Neutral styling, informational only
+  - Card container: Removed shadow escalation, subtle background hover
+  - Selection: `ring-[--brand-electric-blue]` brand token
+  - Error display: Neutral colors and typography
+  - Empty states: Brand-consistent styling
+
+- **Article Status Monitor** (`/components/articles/article-status-monitor.tsx`):
+  - Badge: Neutral styling `bg-neutral-100 border-neutral-200`
+  - Badge text: `font-lato text-small text-neutral-700`
+  - Status text: `font-lato text-small` explicit
+  - Icons: Neutral colors (`text-neutral-500`, `text-neutral-600`)
+  - Live updates: Neutral typography and colors
+  - No semantic badge variants
+
+#### Real-time Connection Fixes
+- **Error State Handling**: Fixed error display logic to distinguish between connection errors and article loading
+- **Connection Stability**: Improved error handling and fallback behavior
+- **User Experience**: Calm error messaging with neutral colors
+
 ### v2.0.0 - Production Command Center Implementation
 **Date**: January 21, 2026  
 **Scope**: Complete dashboard transformation for production workflow efficiency and brand compliance

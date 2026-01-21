@@ -57,9 +57,9 @@ export function SortDropdown({
   const getDirectionIndicator = (sortBy: SortOption) => {
     const direction = getSortDirection(sortBy);
     return direction === 'asc' ? (
-      <ArrowUp className="h-3 w-3 text-green-600" />
+      <ArrowUp className="h-3 w-3 text-neutral-600" />
     ) : (
-      <ArrowDown className="h-3 w-3 text-blue-600" />
+      <ArrowDown className="h-3 w-3 text-neutral-600" />
     );
   };
 
@@ -68,12 +68,12 @@ export function SortDropdown({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             disabled={disabled}
             className={cn(
-              'flex items-center gap-2',
-              value && 'border-blue-500 bg-blue-50'
+              'flex items-center gap-2 font-lato text-neutral-600 hover:text-[--color-primary-blue]',
+              value && 'border-neutral-200 bg-neutral-100'
             )}
           >
             <ArrowUpDown className="h-4 w-4" />
@@ -88,7 +88,7 @@ export function SortDropdown({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent className="w-56" align="start">
-          <DropdownMenuLabel className="text-sm font-medium">
+          <DropdownMenuLabel className="text-sm font-lato text-neutral-900">
             Sort Articles
           </DropdownMenuLabel>
 
@@ -101,19 +101,19 @@ export function SortDropdown({
                 onClick={() => onChange(option.value)}
                 className={cn(
                   'flex items-center justify-between cursor-pointer',
-                  isSelected && 'bg-blue-50 text-blue-700'
+                  isSelected && 'bg-neutral-100 text-neutral-700'
                 )}
               >
                 <div className="flex items-center gap-2">
                   {getSortIcon(option)}
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium">{option.label}</span>
-                    <span className="text-xs text-gray-500">{option.description}</span>
+                    <span className="text-sm font-lato text-neutral-900">{option.label}</span>
+                    <span className="text-xs font-lato text-neutral-500">{option.description}</span>
                   </div>
                 </div>
                 
                 {isSelected && (
-                  <Check className="h-4 w-4 text-blue-600" />
+                  <Check className="h-4 w-4 text-neutral-600" />
                 )}
               </DropdownMenuItem>
             );

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSS Variables Debug</title>
+    <link rel="stylesheet" href="/_next/static/css/app/layout.css">
+</head>
+<body>
+    <h1>CSS Variables Debug</h1>
+    <div id="results"></div>
+    
+    <script>
+        // Test CSS variable resolution
+        const rootStyle = getComputedStyle(document.documentElement);
+        const primaryBlue = rootStyle.getPropertyValue('--color-primary-blue').trim();
+        const primaryPurple = rootStyle.getPropertyValue('--color-primary-purple').trim();
+        
+        document.getElementById('results').innerHTML = `
+            <h2>CSS Variables at Runtime:</h2>
+            <p><strong>--color-primary-blue:</strong> "${primaryBlue}"</p>
+            <p><strong>--color-primary-purple:</strong> "${primaryPurple}"</p>
+            <p><strong>Expected:</strong> #217CEB and #4A42CC</p>
+            
+            <h2>Test Button:</h2>
+            <button style="background-color: var(--color-primary-blue); color: white; padding: 10px 20px; border: none;">
+                Test Button with CSS Variable
+            </button>
+        `;
+    </script>
+</body>
+</html>

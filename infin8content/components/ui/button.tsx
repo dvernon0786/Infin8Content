@@ -12,9 +12,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        primary: "bg-[--color-primary-blue] text-white hover:bg-[--color-primary-blue]/90 focus-visible:ring-[--color-primary-blue]/20",
-        secondary: "bg-[--color-primary-purple] text-white hover:bg-[--color-primary-purple]/90 focus-visible:ring-[--color-primary-purple]/20",
+        primary:
+          "bg-primary-blue text-white hover:bg-primary-blue/90",
+        secondary:
+          "bg-primary-purple text-white hover:bg-primary-purple/90",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
@@ -39,7 +40,7 @@ const buttonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "primary",
       size: "default",
       state: "default",
     },
@@ -54,7 +55,7 @@ interface ButtonProps extends React.ComponentProps<"button">,
 
 function Button({
   className,
-  variant = "default",
+  variant = "primary",
   size = "default",
   state = "default",
   asChild = false,

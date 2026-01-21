@@ -96,8 +96,8 @@ export default async function DashboardPage() {
               inline-flex items-center justify-center
               rounded-md px-6 py-3
               text-sm font-medium
-              bg-[--brand-electric-blue] text-white
-              hover:bg-[--brand-electric-blue]/90
+              bg-primary-blue text-white
+              hover:bg-primary-blue/90
               transition-colors
             "
           >

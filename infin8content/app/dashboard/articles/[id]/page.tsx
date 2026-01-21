@@ -78,7 +78,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                 <div className="mt-4">
                   <Link
                     href="/dashboard/articles"
-                    className="inline-flex items-center gap-2 font-lato text-neutral-600 hover:text-[--brand-electric-blue]"
+                    className="inline-flex items-center gap-2 font-lato text-neutral-600 hover:text-[--color-primary-blue]"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Back to Articles
@@ -173,7 +173,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
             <div className="md:hidden">
               <Link
                 href="/dashboard/articles"
-                className="inline-flex items-center gap-2 font-lato text-neutral-600 hover:text-[--brand-electric-blue] focus:outline-none focus:ring-2 focus:ring-[--brand-electric-blue]/50 focus:ring-offset-2 rounded px-3 py-2"
+                className="inline-flex items-center gap-2 font-lato text-neutral-600 hover:text-[--color-primary-blue] focus:outline-none focus:ring-2 focus:ring-[--brand-electric-blue]/50 focus:ring-offset-2 rounded px-3 py-2"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Articles
@@ -190,7 +190,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                 </p>
                 <Link
                   href="/dashboard/articles"
-                  className="hidden md:inline-flex items-center gap-2 font-lato text-neutral-600 hover:text-[--brand-electric-blue] focus:outline-none focus:ring-2 focus:ring-[--brand-electric-blue]/50 focus:ring-offset-2 rounded px-4 py-2 border border-neutral-200 hover:bg-neutral-50 transition-colors"
+                  className="hidden md:inline-flex items-center gap-2 font-lato text-neutral-600 hover:text-[--color-primary-blue] focus:outline-none focus:ring-2 focus:ring-[--brand-electric-blue]/50 focus:ring-offset-2 rounded px-4 py-2 border border-neutral-200 hover:bg-neutral-50 transition-colors"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Back to Articles

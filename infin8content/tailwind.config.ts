@@ -12,6 +12,9 @@ const config: Config = {
         brandPurple: "var(--brand-infinite-purple)",
         charcoal: "var(--ui-charcoal)",
         lightGray: "var(--ui-light-gray)",
+        primary: {
+          DEFAULT: "var(--color-primary-blue)",
+        },
       },
       backgroundImage: {
         brandGradient: "var(--brand-gradient)",

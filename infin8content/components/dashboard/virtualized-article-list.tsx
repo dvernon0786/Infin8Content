@@ -105,8 +105,8 @@ function ArticleItem({ index, style, data }: ArticleItemProps) {
             <div className="flex-1 min-w-0">
               <h3 
                 className={cn(
-                  'font-medium text-gray-900 truncate',
-                  article.status === 'completed' && 'cursor-pointer hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded'
+                  'font-poppins text-neutral-900 text-small font-semibold truncate',
+                  article.status === 'completed' && 'cursor-pointer hover:text-primary focus:outline-none focus:ring-2 focus:ring-[--brand-electric-blue]/50 focus:ring-offset-2 rounded'
                 )}
                 title={article.status === 'completed' ? 'Click to view completed article' : undefined}
                 role={article.status === 'completed' ? 'button' : undefined}
