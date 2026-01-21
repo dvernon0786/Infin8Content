@@ -196,7 +196,7 @@ export function SortToggleButtons({
       {quickSortOptions.map((option) => (
         <Button
           key={option.value}
-          variant={value === option.value ? 'default' : 'ghost'}
+          variant={value === option.value ? 'primary' : 'ghost'}
           size="sm"
           onClick={() => onChange(option.value)}
           disabled={disabled}
