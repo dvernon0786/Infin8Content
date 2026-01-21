@@ -42,9 +42,15 @@ This changelog tracks all modifications made to the dashboard system during the 
 
 #### Technical Implementation
 - **No Arbitrary Values**: Eliminated all `bg-[--color-primary-blue]` usage
+<<<<<<< HEAD
+- **Standard Hover Syntax**: Replaced custom utilities with `hover:text-primary` 
+- **Canonical Backgrounds**: All primary buttons use `bg-primary-blue` 
+- **Consistent Hover States**: All utility buttons use `hover:text-primary` 
+=======
 - **Standard Hover Syntax**: Replaced custom utilities with `hover:text-primary`
 - **Canonical Backgrounds**: All primary buttons use `bg-primary-blue`
 - **Consistent Hover States**: All utility buttons use `hover:text-primary`
+>>>>>>> origin/test-main-all
 
 #### Impact
 - **Fixed**: All invisible buttons now display correctly

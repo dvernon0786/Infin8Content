@@ -59,11 +59,11 @@ function ArticlesClient({ orgId }: { orgId: string }) {
       <Card className="border-destructive">
         <CardContent className="pt-6">
           <div className="text-center py-8">
-            <FileText className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-destructive mb-2">
-              Error Loading Articles
+            <FileText className="h-12 w-12 text-neutral-600 mx-auto mb-4" />
+            <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">
+              Unable to load articles
             </h3>
-            <p className="text-muted-foreground">
+            <p className="font-lato text-neutral-600">
               {error.message || 'Unable to load articles. Please try refreshing the page.'}
             </p>
           </div>
@@ -77,8 +77,10 @@ function ArticlesClient({ orgId }: { orgId: string }) {
       <Card>
         <CardContent className="pt-6">
           <div className="text-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading articles...</p>
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-neutral-600" />
+            <p className="font-lato text-neutral-600 text-small">
+              Loading articles…
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -123,7 +125,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
 
       {/* Results Summary */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-        <div className="text-sm text-muted-foreground">
+        <div className="font-lato text-neutral-600 text-small">
           {filteredArticles.length === 0 
             ? 'No articles found'
             : filteredArticles.length === 1
@@ -136,7 +138,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
         </div>
         
         {process.env.NODE_ENV === 'development' && (
-          <div className="text-xs text-muted-foreground">
+          <div className="font-lato text-neutral-500 text-xs">
             Search: {metrics.searchTime?.toFixed(1)}ms | 
             Filter: {metrics.filterTime?.toFixed(1)}ms
           </div>
@@ -148,9 +150,9 @@ function ArticlesClient({ orgId }: { orgId: string }) {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No articles found</h3>
-              <p className="text-muted-foreground mb-4">
+              <FileText className="h-12 w-12 text-neutral-600 mx-auto mb-4" />
+              <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">No articles found</h3>
+              <p className="font-lato text-neutral-600 text-body mb-4">
                 Try adjusting your search or filters to find articles.
               </p>
 <Button variant="outline" className="font-lato text-neutral-600 hover:text-primary" onClick={clearAll}>
@@ -163,10 +165,10 @@ function ArticlesClient({ orgId }: { orgId: string }) {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No articles yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Get started by generating your first article.
+              <FileText className="h-12 w-12 text-neutral-600 mx-auto mb-4" />
+              <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">No articles yet</h3>
+              <p className="font-lato text-neutral-600 text-body mb-4">
+                Generate your first article to begin content production.
               </p>
               <Link href="/dashboard/articles/generate">
                 <Button
@@ -174,7 +176,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
                   className="font-lato text-neutral-600 hover:text-primary"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Generate Article
+                  Generate article
                 </Button>
               </Link>
             </div>
@@ -225,11 +227,11 @@ function ArticlesClient({ orgId }: { orgId: string }) {
       <Card className="border-destructive">
         <CardContent className="pt-6">
           <div className="text-center py-8">
-            <FileText className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-destructive mb-2">
+            <FileText className="h-12 w-12 text-neutral-600 mx-auto mb-4" />
+            <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">
               Component Error
             </h3>
-            <p className="text-muted-foreground">
+            <p className="font-lato text-neutral-600">
               An unexpected error occurred. Please refresh the page.
             </p>
           </div>

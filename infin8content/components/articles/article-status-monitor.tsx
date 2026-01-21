@@ -21,11 +21,11 @@ const statusColors: Record<string, 'default' | 'secondary' | 'destructive'> = {
 }
 
 const statusIcons: Record<string, React.ReactNode> = {
-  queued: <Clock className="h-4 w-4" />,
-  generating: <Loader2 className="h-4 w-4 animate-spin" />,
-  completed: <CheckCircle className="h-4 w-4" />,
-  failed: <XCircle className="h-4 w-4" />,
-  cancelled: <XCircle className="h-4 w-4" />,
+  queued: <Clock className="h-4 w-4 text-neutral-500" />,
+  generating: <Loader2 className="h-4 w-4 animate-spin text-neutral-600" />,
+  completed: <CheckCircle className="h-4 w-4 text-neutral-600" />,
+  failed: <XCircle className="h-4 w-4 text-neutral-600" />,
+  cancelled: <XCircle className="h-4 w-4 text-neutral-600" />,
 }
 
 export function ArticleStatusMonitor({ 
@@ -171,19 +171,21 @@ export function ArticleStatusMonitor({
 
   return (
     <div className="flex items-center gap-2">
-      <Badge variant={statusColors[status] || 'secondary'} className="flex items-center gap-1">
+      <Badge className="flex items-center gap-1 font-lato text-small text-neutral-700 bg-neutral-100 border border-neutral-200">
         {statusIcons[status]}
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        <span className="capitalize font-lato text-small">
+          {status}
+        </span>
       </Badge>
       {isSubscribed && (status === 'queued' || status === 'generating') && (
-        <span className="text-xs text-muted-foreground flex items-center gap-1">
-          <Loader2 className="h-3 w-3 animate-spin" />
+        <span className="font-lato text-small text-neutral-500 flex items-center gap-1">
+          <Loader2 className="h-3 w-3 animate-spin text-neutral-500" />
           Live updates active
         </span>
       )}
       {!isSubscribed && (status === 'queued' || status === 'generating') && (
-        <span className="text-xs text-muted-foreground flex items-center gap-1">
-          <Loader2 className="h-3 w-3 animate-spin" />
+        <span className="font-lato text-small text-neutral-500 flex items-center gap-1">
+          <Loader2 className="h-3 w-3 animate-spin text-neutral-500" />
           Polling for updates
         </span>
       )}
