@@ -21,7 +21,7 @@ export default defineConfig({
     },
     // Add TypeScript configuration for tests
     typecheck: {
-      tsconfig: './tsconfig.json'
+      tsconfig: './tsconfig.test.json'
     }
   },
   resolve: {

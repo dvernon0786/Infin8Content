@@ -7,7 +7,7 @@ import { ArticleQueueStatus } from '@/components/articles/article-queue-status'
 import { ArticleContentViewer } from '@/components/articles/article-content-viewer'
 import { EnhancedArticleContentViewer } from '@/components/articles/enhanced-article-content-viewer'
 import { ArticleStatusMonitor } from '@/components/articles/article-status-monitor'
-import { LayoutDiagnostic } from '@/components/layout-diagnostic'
+import { PublishToWordPressButton } from '@/components/articles/publish-to-wordpress-button'
 import ArticleErrorBoundary from './article-error-boundary'
 import { redirect } from 'next/navigation'
 import { Loader2, ArrowLeft } from 'lucide-react'
@@ -56,8 +56,6 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
     });
     
     return (
-      <>
-        <LayoutDiagnostic />
         <div className="w-full min-h-screen p-4 sm:p-6 lg:p-8">
           <div className="mx-auto max-w-5xl">
             <Card className="border-destructive">
@@ -88,7 +86,6 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
             </Card>
           </div>
         </div>
-      </>
     )
   }
 
@@ -149,6 +146,10 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
   const isLoading = article.status === 'queued' || article.status === 'generating'
 
+  // Compute WordPress publishing eligibility server-side
+  const isPublishEnabled = process.env.WORDPRESS_PUBLISH_ENABLED === 'true';
+  const canPublish = isPublishEnabled && article.status === 'completed';
+
   console.log('[ArticleDetailPage] Rendering with state:', {
     articleTitle: article.title,
     articleStatus: article.status,
@@ -160,8 +161,6 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
   return (
     <ArticleErrorBoundary>
-      <LayoutDiagnostic />
-      
       <div className="w-full min-h-screen p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-col gap-6">
@@ -254,23 +253,30 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
               </CardContent>
             </Card>
 
-            {article.status === 'completed' && (
-              <ArticleErrorBoundary
-                fallback={
-                  <Card className="border-destructive">
-                    <CardContent className="pt-6">
-                      <div className="text-center py-8">
-                        <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">
-                          Content Loading Error
-                        </h3>
-                        <p className="font-lato text-neutral-600 text-body">
-                          Unable to load article content. Please try refreshing the page.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                }
-              >
+            {/* WordPress Publish Button - Only show if enabled and article completed */}
+            {canPublish && (
+              <PublishToWordPressButton 
+                articleId={article.id} 
+                articleStatus={article.status}
+              />
+            )}
+
+            <ArticleErrorBoundary
+            fallback={
+              <Card className="border-destructive">
+                <CardContent className="pt-6">
+                  <div className="text-center py-8">
+                    <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">
+                      Content Loading Error
+                    </h3>
+                    <p className="font-lato text-neutral-600 text-body">
+                      Unable to load article content. Please try refreshing the page.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            }
+          >
                 {sectionsError && (
                   <Card className="border-destructive">
                     <CardContent className="pt-6">
@@ -309,7 +315,6 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                   </Card>
                 )}
               </ArticleErrorBoundary>
-            )}
           </div>
         </div>
       </div>

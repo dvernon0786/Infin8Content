@@ -92,11 +92,11 @@ development_status:
   4-10-generated-content-editing-tools: backlog
   epic-4-retrospective: optional
 
-  # === SHIPPING SPINE EPICS (BMAD v6) ===
+  # === BACKLOG EPICS (Full Platform Scope) ===
   
-  # Epic 5: Publishing & Distribution (IN PROGRESS - Shipping Spine)
-  epic-5: in-progress
-  5-1-publish-articles-to-wordpress-one-click-publish: review
+  # Epic 5: Publishing & Distribution (BACKLOG)
+  epic-5: backlog
+  5-1-publish-articles-to-wordpress-one-click-publish: backlog
   5-2-automatic-google-search-console-indexing: backlog
   5-3-track-indexing-status-for-submitted-urls: backlog
   5-4-schedule-publishing-dates-and-times: backlog
