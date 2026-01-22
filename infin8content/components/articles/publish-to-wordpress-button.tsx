@@ -108,7 +108,7 @@ export function PublishToWordPressButton({ articleId, articleStatus, className }
                 disabled={isLoading}
                 variant="outline"
                 size="sm"
-                className="mt-3 border-red-300 text-red-700 hover:bg-red-100"
+                className="mt-3"
               >
                 {isLoading ? (
                   <>
@@ -142,7 +142,6 @@ export function PublishToWordPressButton({ articleId, articleStatus, className }
           <Button 
             onClick={handlePublish}
             disabled={isLoading}
-            className="bg-[--color-primary-blue] hover:bg-[--color-primary-blue-dark] text-white"
             size="lg"
           >
             {isLoading ? (
