@@ -143,6 +143,12 @@ export function useRealtimeArticles({
           transformedArticles.forEach((newArticle: DashboardArticle) => {
             const existingIndex = newArticles.findIndex(a => a.id === newArticle.id);
             if (existingIndex >= 0) {
+              const existingArticle = newArticles[existingIndex];
+              // Don't overwrite completed status with stale data
+              if (existingArticle.status === 'completed' && newArticle.status !== 'completed') {
+                console.log('🔄 Preserving completed status for article:', newArticle.id);
+                return; // Skip overwrite
+              }
               newArticles[existingIndex] = newArticle;
               console.log('🔄 Updated article:', newArticle.id);
             } else {

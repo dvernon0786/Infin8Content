@@ -2,6 +2,15 @@
  * Supabase realtime subscription handlers for article progress and dashboard updates
  * Story 4a.6: Real-Time Progress Tracking and Updates
  * Story 15.1: Real-time Article Status Display
+ * 
+ * IMPORTANT:
+ * Realtime is best-effort only.
+ * Polling is the guaranteed fallback.
+ * 
+ * Realtime failures must NEVER:
+ * - throw
+ * - crash the UI
+ * - block article creation
  */
 
 import { createClient } from './client';
@@ -31,7 +40,8 @@ export class ArticleProgressRealtime {
   private supabase;
   private subscription: any = null;
   private dashboardSubscription: any = null;
-  private reconnectAttempts = 0;
+  private dashboardReconnectAttempts = 0;
+  private articleReconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000; // Start with 1 second
   private isConnected = false;
@@ -144,6 +154,8 @@ export class ArticleProgressRealtime {
         
         if (status === 'SUBSCRIBED') {
           this.isDashboardConnected = true;
+          this.dashboardReconnectAttempts = 0;
+          this.reconnectDelay = 1000;
           onConnectionChange?.(true);
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           this.isDashboardConnected = false;
@@ -164,24 +176,23 @@ export class ArticleProgressRealtime {
     onError?: (error: Error) => void,
     onConnectionChange?: (connected: boolean) => void
   ) {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+    if (this.dashboardReconnectAttempts >= this.maxReconnectAttempts) {
       // Gracefully handle max reconnection attempts in both dev and production
       progressLogger.log(`Max reconnection attempts reached, switching to polling fallback`);
       onConnectionChange?.(false);
       
-      // Only show error in development, not production
-      if (process.env.NODE_ENV === 'development') {
-        const error = new Error(`Failed to reconnect dashboard after ${this.maxReconnectAttempts} attempts`);
-        progressLogger.error('Dashboard reconnection failed:', error.message);
-        onError?.(error);
-      }
+      // DO NOT propagate error upward - Dashboard must remain usable
+      progressLogger.warn(
+        'Realtime disabled after max retries. Polling fallback active.',
+        { orgId }
+      );
       return;
     }
 
-    this.reconnectAttempts++;
-    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+    this.dashboardReconnectAttempts++;
+    const delay = this.reconnectDelay * Math.pow(2, this.dashboardReconnectAttempts - 1);
 
-    progressLogger.log(`Attempting dashboard reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`);
+    progressLogger.log(`Attempting dashboard reconnection ${this.dashboardReconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`);
 
     setTimeout(() => {
       try {
@@ -233,7 +244,7 @@ export class ArticleProgressRealtime {
         
         if (status === 'SUBSCRIBED') {
           this.isConnected = true;
-          this.reconnectAttempts = 0;
+          this.articleReconnectAttempts = 0;
           this.reconnectDelay = 1000;
           onConnectionChange?.(true);
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
@@ -255,16 +266,16 @@ export class ArticleProgressRealtime {
     onError?: (error: Error) => void,
     onConnectionChange?: (connected: boolean) => void
   ) {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+    if (this.articleReconnectAttempts >= this.maxReconnectAttempts) {
       const error = new Error(`Failed to reconnect after ${this.maxReconnectAttempts} attempts`);
       onError?.(error);
       return;
     }
 
-    this.reconnectAttempts++;
-    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+    this.articleReconnectAttempts++;
+    const delay = this.reconnectDelay * Math.pow(2, this.articleReconnectAttempts - 1);
 
-    progressLogger.log(`Attempting reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`);
+    progressLogger.log(`Attempting reconnection ${this.articleReconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`);
 
     setTimeout(() => {
       try {
@@ -323,7 +334,7 @@ export class ArticleProgressRealtime {
    */
   getConnectionStatus(): 'connected' | 'disconnected' | 'reconnecting' {
     if (this.isConnected) return 'connected';
-    if (this.reconnectAttempts > 0) return 'reconnecting';
+    if (this.articleReconnectAttempts > 0) return 'reconnecting';
     return 'disconnected';
   }
 
@@ -332,7 +343,7 @@ export class ArticleProgressRealtime {
    */
   getDashboardConnectionStatus(): 'connected' | 'disconnected' | 'reconnecting' {
     if (this.isDashboardConnected) return 'connected';
-    if (this.reconnectAttempts > 0) return 'reconnecting';
+    if (this.dashboardReconnectAttempts > 0) return 'reconnecting';
     return 'disconnected';
   }
 }
