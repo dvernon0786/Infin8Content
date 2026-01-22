@@ -3,7 +3,8 @@
 // POST /api/articles/publish
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server'
+import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { WordPressAdapter, WordPressPostRequest } from '@/lib/services/wordpress-adapter';
 import { getPublishReference, createPublishReference } from '@/lib/supabase/publish-references';
 
@@ -15,14 +16,6 @@ const WORDPRESS_DEFAULT_SITE_URL = process.env.WORDPRESS_DEFAULT_SITE_URL;
 const WORDPRESS_DEFAULT_USERNAME = process.env.WORDPRESS_DEFAULT_USERNAME;
 const WORDPRESS_DEFAULT_APPLICATION_PASSWORD = process.env.WORDPRESS_DEFAULT_APPLICATION_PASSWORD;
 
-// Supabase client - lazy initialise to avoid import-time crashes
-function getSupabaseClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
-
 export async function POST(request: NextRequest) {
   try {
     // Check feature flag
@@ -33,11 +26,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user session
-    const supabase = getSupabaseClient();
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError || !session) {
+    // Get current user using existing pattern
+    const currentUser = await getCurrentUser()
+    if (!currentUser) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -55,12 +46,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Create Supabase client for RLS-protected operations
+    const supabase = await createClient()
+
     // Check if article exists and user has access
-    const { data: article, error: articleError } = await supabase
-      .from('articles')
-      .select('id, title, content, status, org_id')
+    const { data: article, error: articleError } = await (supabase
+      .from('articles' as any)
+      .select('id, title, status, org_id, sections')
       .eq('id', articleId)
-      .single();
+      .single() as any);
 
     if (articleError || !article) {
       return NextResponse.json(
@@ -70,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user can access this article (RLS handles this, but double-check)
-    if (article.org_id !== session.user.app_metadata.org_id) {
+    if ((article as any).org_id !== currentUser.org_id) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -78,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if article is completed (AC: Eligibility)
-    if (article.status !== 'completed') {
+    if ((article as any).status !== 'completed') {
       return NextResponse.json(
         { error: 'Article must be completed before publishing' },
         { status: 400 }
@@ -115,10 +109,36 @@ export async function POST(request: NextRequest) {
     // Create WordPress adapter
     const wordpressAdapter = new WordPressAdapter(wordpressCredentials);
 
+    // Build content from sections (articles stores content in JSON sections array)
+    let content = ''
+
+    try {
+      const sections = Array.isArray((article as any).sections)
+        ? (article as any).sections
+        : JSON.parse((article as any).sections || '[]')
+
+      content = sections
+        .map((s: any) => s?.content)
+        .filter(Boolean)
+        .join('\n\n')
+    } catch (e) {
+      return NextResponse.json(
+        { error: 'Failed to parse article content' },
+        { status: 500 }
+      )
+    }
+
+    if (!content) {
+      return NextResponse.json(
+        { error: 'Article has no content to publish' },
+        { status: 400 }
+      )
+    }
+
     // Prepare WordPress post data (exact contract)
     const postData: WordPressPostRequest = {
-      title: article.title || 'Untitled Article',
-      content: article.content || '',
+      title: (article as any).title || 'Untitled Article',
+      content,
       status: 'publish',
     };
 
