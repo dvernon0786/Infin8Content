@@ -1,1 +1,151 @@
-{"workflow_version": "1.2.0", "timestamps": {"started": "2026-01-21T22:47:00+11:00", "last_updated": "2026-01-21T23:15:00+11:00", "completed": "2026-01-21T23:15:00+11:00"}, "mode": "full_rescan", "scan_level": "deep", "project_root": "/home/dghost/Infin8Content", "output_folder": "/home/dghost/Infin8Content/docs", "completed_steps": [{"step": "step_1", "status": "completed", "timestamp": "2026-01-21T22:49:00+11:00", "summary": "Classified as monorepo with 3 parts"}, {"step": "step_2", "status": "completed", "timestamp": "2026-01-21T22:55:00+11:00", "summary": "Found 15 existing docs"}, {"step": "step_3", "status": "completed", "timestamp": "2026-01-21T22:56:00+11:00", "summary": "Tech stack: Next.js 16.1.1, React 19.2.3, TypeScript"}, {"step": "step_4", "status": "completed", "timestamp": "2026-01-21T22:58:00+11:00", "summary": "Conditional analysis complete, 2 files written"}, {"step": "step_5", "status": "completed", "timestamp": "2026-01-21T22:59:00+11:00", "summary": "Source tree documented"}, {"step": "step_6", "status": "completed", "timestamp": "2026-01-21T23:11:00+11:00", "summary": "Dev setup and deployment guides written"}, {"step": "step_7", "status": "completed", "timestamp": "2026-01-21T23:12:00+11:00", "summary": "Integration architecture documented"}, {"step": "step_8", "status": "completed", "timestamp": "2026-01-21T23:13:00+11:00", "summary": "Architecture docs written for infin8content"}, {"step": "step_9", "status": "completed", "timestamp": "2026-01-21T23:14:00+11:00", "summary": "All supporting docs written"}, {"step": "step_10", "status": "completed", "timestamp": "2026-01-21T23:14:00+11:00", "summary": "Master index generated and updated"}, {"step": "step_11", "status": "completed", "timestamp": "2026-01-21T23:15:00+11:00", "summary": "Validation complete - no incomplete items"}], "current_step": "completed", "findings": {"project_classification": {"repository_type": "monorepo", "parts_count": 3, "primary_tech": "Next.js"}, "existing_docs_count": 15, "technology_stack": {"infin8content": {"framework": "Next.js 16.1.1", "language": "TypeScript", "ui": "React 19.2.3", "styling": "Tailwind CSS 4", "database": "Supabase", "payment": "Stripe", "testing": "Vitest + Playwright"}, "tools": {"type": "ESLint Plugin", "language": "JavaScript", "testing": "Jest"}, "_bmad": {"type": "Workflow Framework"}}}, "project_types": [{"part_id": "infin8content", "project_type_id": "web", "display_name": "Web Application"}, {"part_id": "tools", "project_type_id": "library", "display_name": "Development Utilities"}, {"part_id": "_bmad", "project_type_id": "framework", "display_name": "BMad Framework"}], "outputs_generated": ["project-scan-report.json", "api-contracts.md", "data-models.md", "source-tree-analysis.md", "integration-architecture.md", "architecture-infin8content.md", "development-guide-infin8content.md", "component-inventory-infin8content.md", "index.md"], "validation": {"incomplete_docs": [], "all_links_valid": true, "file_sizes": {"architecture-infin8content.md": 388, "integration-architecture.md": 229, "development-guide-infin8content.md": 577, "component-inventory-infin8content.md": 307}}, "resume_instructions": "Workflow completed successfully"}
+{
+  "workflow_version": "1.2.0",
+  "timestamps": {
+    "started": "2026-01-23T09:44:00+11:00",
+    "last_updated": "2026-01-23T09:55:00+11:00",
+    "completed": "2026-01-23T09:55:00+11:00"
+  },
+  "mode": "full_rescan",
+  "scan_level": "deep",
+  "project_root": "/home/dghost/Infin8Content",
+  "output_folder": "/home/dghost/Infin8Content/docs",
+  "completed_steps": [
+    {
+      "step": "step_1",
+      "status": "completed",
+      "timestamp": "2026-01-23T09:45:00+11:00",
+      "summary": "Classified as monorepo with 3 parts"
+    },
+    {
+      "step": "step_2",
+      "status": "completed",
+      "timestamp": "2026-01-23T09:46:00+11:00",
+      "summary": "Found 15 existing docs"
+    },
+    {
+      "step": "step_3",
+      "status": "completed",
+      "timestamp": "2026-01-23T09:47:00+11:00",
+      "summary": "Tech stack: Next.js 16.1.1, React 19.2.3, TypeScript"
+    },
+    {
+      "step": "step_4",
+      "status": "completed",
+      "timestamp": "2026-01-23T09:48:00+11:00",
+      "summary": "Conditional analysis complete, 2 files written"
+    },
+    {
+      "step": "step_5",
+      "status": "completed",
+      "timestamp": "2026-01-23T09:49:00+11:00",
+      "summary": "Source tree documented"
+    },
+    {
+      "step": "step_6",
+      "status": "completed",
+      "timestamp": "2026-01-23T09:50:00+11:00",
+      "summary": "Dev setup and deployment guides written"
+    },
+    {
+      "step": "step_7",
+      "status": "completed",
+      "timestamp": "2026-01-23T09:51:00+11:00",
+      "summary": "Integration architecture documented"
+    },
+    {
+      "step": "step_8",
+      "status": "completed",
+      "timestamp": "2026-01-23T09:52:00+11:00",
+      "summary": "Architecture docs written for infin8content"
+    },
+    {
+      "step": "step_9",
+      "status": "completed",
+      "timestamp": "2026-01-23T09:53:00+11:00",
+      "summary": "All supporting docs written"
+    },
+    {
+      "step": "step_10",
+      "status": "completed",
+      "timestamp": "2026-01-23T09:54:00+11:00",
+      "summary": "Master index generated"
+    },
+    {
+      "step": "step_11",
+      "status": "completed",
+      "timestamp": "2026-01-23T09:55:00+11:00",
+      "summary": "Validation complete - no incomplete items"
+    }
+  ],
+  "current_step": "completed",
+  "findings": {
+    "project_classification": {
+      "repository_type": "monorepo",
+      "parts_count": 3,
+      "primary_tech": "Next.js"
+    },
+    "existing_docs_count": 15,
+    "technology_stack": {
+      "infin8content": {
+        "framework": "Next.js 16.1.1",
+        "language": "TypeScript",
+        "ui": "React 19.2.3",
+        "styling": "Tailwind CSS 4",
+        "database": "Supabase",
+        "payment": "Stripe",
+        "testing": "Vitest + Playwright"
+      },
+      "tools": {
+        "type": "ESLint Plugin",
+        "language": "JavaScript",
+        "testing": "Jest"
+      },
+      "_bmad": {
+        "type": "Workflow Framework"
+      }
+    }
+  },
+  "outputs_generated": [
+    "project-scan-report.json",
+    "api-contracts.md",
+    "data-models.md",
+    "source-tree-analysis.md",
+    "development-guide-infin8content-updated.md",
+    "integration-architecture-updated.md",
+    "architecture-infin8content-updated.md",
+    "component-inventory-infin8content-updated.md",
+    "index-updated.md"
+  ],
+  "resume_instructions": "Starting from step 1",
+  "project_types": [
+    {
+      "part_id": "infin8content",
+      "project_type_id": "web",
+      "display_name": "Web Application"
+    },
+    {
+      "part_id": "tools",
+      "project_type_id": "library",
+      "display_name": "Development Utilities"
+    },
+    {
+      "part_id": "_bmad",
+      "project_type_id": "framework",
+      "display_name": "BMad Framework"
+    }
+  ],
+  "validation": {
+    "incomplete_docs": [],
+    "all_links_valid": true,
+    "file_sizes": {
+      "api-contracts.md": 8,
+      "data-models.md": 12,
+      "source-tree-analysis.md": 10,
+      "development-guide-infin8content-updated.md": 15,
+      "integration-architecture-updated.md": 12,
+      "architecture-infin8content-updated.md": 20,
+      "component-inventory-infin8content-updated.md": 18,
+      "index-updated.md": 15
+    }
+  }
+}

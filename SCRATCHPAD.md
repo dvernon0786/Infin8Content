@@ -3238,8 +3238,40 @@ try {
 
 ---
 
-**Last Updated**: 2026-01-15 10:42 PM AEDT  
+**Last Updated**: 2026-01-23 9:25 AM AEDT  
 **Epic 31 Status**: ✅ Design System Compliance COMPLETE  
+**Story 5-1 Status**: ✅ WordPress Publishing - CLOSED (FORMALLY)  
+**Sprint Status**: ✅ Updated to `done` in accessible-artifacts/sprint-status.yaml  
+
+### 🎯 **Story 5-1 Final Verification**
+
+#### **Production Evidence Confirmed**
+- ✅ **Live Article**: https://mirrorloop.us/article-salesforce-sales-cloud-implementation-guide/
+- ✅ **Database Record**: `publish_references` row with `external_id = 9`
+- ✅ **Idempotency**: Re-publish returns existing URL with `alreadyPublished: true`
+
+#### **All Acceptance Criteria Met**
+- ✅ **Feature Flag Gated**: `WORDPRESS_PUBLISH_ENABLED` server-side control
+- ✅ **Completed-Only Publish**: `article.status === 'completed'` validation
+- ✅ **Auth Aligned**: SSR client + `getCurrentUser()` pattern
+- ✅ **WordPress REST API**: Successful post creation with live URL
+- ✅ **Application Password Auth**: WordPress authentication working
+- ✅ **Idempotency Enforced**: Database unique constraint prevents duplicates
+- ✅ **No Duplicate Posts**: Single publish reference per article
+- ✅ **Safe Retry Behavior**: Returns existing content on re-publish
+
+#### **Security & Architecture Preserved**
+- ✅ **No Auth Bypasses**: All authentication follows established patterns
+- ✅ **No Middleware Hacks**: Clean API route exclusion from middleware
+- ✅ **No UI Band-Aids**: Server-side validation maintained
+- ✅ **Minimal Diffs**: Only necessary changes applied
+
+#### **Sprint Status Update**
+- ✅ **Status Changed**: `review` → `done` in `accessible-artifacts/sprint-status.yaml`
+- ✅ **Official Recognition**: Story 5-1 now formally marked complete in project tracking
+- ✅ **Production Ready**: Ready for deployment and customer use
+
+**Story 5-1 is COMPLETE, VERIFIED, PRODUCTION-READY, and OFFICIALLY TRACKED as DONE.**  
 **Components Fixed**: 9/9 mobile components fully compliant  
 **Build Status**: ✅ Ready for Vercel deployment  
 **Production Ready**: ✅ Mobile experience system with complete design system compliance

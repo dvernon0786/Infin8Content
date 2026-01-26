@@ -4,6 +4,8 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { inngest } from '@/lib/inngest/client'
 import { sanitizeText } from '@/lib/utils/sanitize-text'
 import { emitUXMetricsEvent } from '@/lib/services/ux-metrics'
+import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { AuditAction } from '@/types/audit'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 
@@ -76,42 +78,21 @@ export async function POST(request: Request) {
     const parsed = articleGenerationSchema.parse(body)
     console.log('[Article Generation] Request validated successfully')
 
-    // TEMPORARY: Bypass authentication for testing
-    // TODO: Re-enable authentication after testing
-    
+    // Authenticate user
+    const currentUser = await getCurrentUser()
+    if (!currentUser || !currentUser.org_id) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    const organizationId = currentUser.org_id
+    const userId = currentUser.id
+    const plan = currentUser.organizations?.plan || 'starter'
+
     // Get service role client for admin operations (usage tracking)
     const supabaseAdmin = createServiceRoleClient()
-    
-    // Get current user's organization ID to ensure articles belong to the user's org
-    let organizationId = '039754b3-c797-45b3-b1b5-ad4acab980c0' // Valid fallback ID from database
-    
-    try {
-      // Get the current user to use their organization ID
-      const currentUser = await getCurrentUser()
-      if (currentUser?.org_id) {
-        organizationId = currentUser.org_id
-        console.log('[Article Generation] Using current user organization ID:', organizationId)
-      } else {
-        // Fallback to getting any valid organization from database
-        const { data: orgs, error } = await (supabaseAdmin
-          .from('organizations' as any)
-          .select('id')
-          .limit(1)
-          .single() as any)
-        
-        if (!error && orgs?.id) {
-          organizationId = orgs.id
-          console.log('[Article Generation] Using fallback organization ID:', organizationId)
-        } else {
-          console.warn('[Article Generation] No organizations found, using default fallback ID:', error)
-        }
-      }
-    } catch (error) {
-      console.warn('[Article Generation] Error getting user organization, using fallback ID:', error)
-    }
-    
-    const userId = null // Revert to null to avoid foreign key constraint issues
-    const plan = 'starter'
 
     // Get regular client for RLS-protected operations (article creation)
     const supabase = await createClient()
@@ -119,10 +100,23 @@ export async function POST(request: Request) {
     // Check usage limits before creating article record
     const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM format
     
-    // Skip usage tracking for now to avoid database schema issues
-    // TODO: Re-enable usage tracking after database migration
-    const currentUsage = 0
-    const limit = PLAN_LIMITS[plan] || null
+    // Query current usage for this month
+    const { data: usageData, error: usageError } = await (supabaseAdmin
+      .from('usage_tracking' as any)
+      .select('usage_count')
+      .eq('organization_id', organizationId)
+      .eq('metric_type', 'article_generation')
+      .eq('billing_period', currentMonth)
+      .single() as unknown as Promise<{ data: { usage_count: number } | null; error: any }>)
+
+    // Handle error: PGRST116 means no row found (first article of month)
+    if (usageError && usageError.code !== 'PGRST116') {
+      console.error('[Article Generation] Failed to check usage limits:', usageError)
+      // Don't fail request - usage tracking is not critical
+    }
+
+    const currentUsage = usageData?.usage_count || 0
+    const limit = PLAN_LIMITS[plan]
 
     // Check if limit exceeded (skip check if unlimited)
     if (limit !== null && currentUsage >= limit) {
@@ -165,84 +159,7 @@ export async function POST(request: Request) {
       .select('id')
       .single() as unknown as Promise<{ data: { id: string } | null; error: any }>)
 
-    // Check if the error is related to the activity trigger (null user_id constraint)
-    // If so, the article was created successfully but the trigger failed
-    if (insertError && insertError?.message?.includes('null value in column "user_id" of relation "activities"')) {
-      console.log('[Article Generation] Article created successfully but activity trigger failed (expected for testing)')
-      // Extract article ID from the error details if possible
-      const articleIdMatch = insertError?.details?.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i)
-      const articleId = articleIdMatch ? articleIdMatch[1] : null
-      
-      if (articleId) {
-        // Continue with Inngest event sending even though activity logging failed
-        console.log(`[Article Generation] Continuing with Inngest event for article ${articleId}`)
-        
-        // Create a mock article object for the rest of the function
-        const mockArticle = { id: articleId }
-        
-        await emitUXMetricsEvent({
-          orgId: organizationId,
-          userId,
-          eventName: 'article_create_flow.STARTED',
-          flowInstanceId: mockArticle.id,
-          articleId: mockArticle.id,
-        })
-
-        // Queue article generation via Inngest
-        console.log(`[Article Generation] Sending Inngest event for article ${mockArticle.id}`)
-        let inngestEventId: string | null = null
-        
-        try {
-          const result = await inngest.send({
-            name: 'article/generate',
-            data: {
-              articleId: mockArticle.id,
-            },
-          })
-          
-          inngestEventId = result.ids?.[0] || null
-          console.log(`[Article Generation] Inngest event sent successfully. Event ID: ${inngestEventId}`)
-        } catch (inngestError) {
-          const errorMsg = inngestError instanceof Error ? inngestError.message : String(inngestError)
-          console.error(`[Article Generation] Failed to send Inngest event for article ${mockArticle.id}:`, {
-            error: errorMsg,
-            stack: inngestError instanceof Error ? inngestError.stack : undefined,
-          })
-          
-          // Update article status to failed if Inngest event fails
-          await supabaseAdmin
-            .from('articles' as any)
-            .update({
-              status: 'failed',
-              error_details: {
-                error_message: `Failed to queue article generation: ${errorMsg}`,
-                failed_at: new Date().toISOString(),
-                inngest_error: true
-              }
-            })
-            .eq('id', mockArticle.id)
-          
-          return NextResponse.json(
-            { error: 'Failed to queue article generation', details: errorMsg },
-            { status: 500 }
-          )
-        }
-
-        // Return success response
-        return NextResponse.json({
-          success: true,
-          articleId: mockArticle.id,
-          status: 'queued',
-          message: 'Article queued for generation',
-          inngestEventId,
-        })
-      } else {
-        return NextResponse.json(
-          { error: 'Failed to create article record', details: 'Could not extract article ID from trigger error' },
-          { status: 500 }
-        )
-      }
-    } else if (insertError || !article) {
+    if (insertError || !article) {
       console.error('Failed to create article record:', {
         insertError: JSON.stringify(insertError, null, 2),
         article,
@@ -260,6 +177,22 @@ export async function POST(request: Request) {
         { status: 500 }
       )
     }
+
+    // Log audit event for article creation
+    logActionAsync({
+      orgId: organizationId,
+      userId: userId,
+      action: 'article.generation.started',
+      details: {
+        articleId: article.id,
+        keyword: parsed.keyword,
+        targetWordCount: parsed.targetWordCount,
+        writingStyle: parsed.writingStyle,
+        targetAudience: parsed.targetAudience,
+      },
+      ipAddress: extractIpAddress(request.headers),
+      userAgent: extractUserAgent(request.headers),
+    })
 
     await emitUXMetricsEvent({
       orgId: organizationId,

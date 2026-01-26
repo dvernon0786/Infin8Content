@@ -28,6 +28,11 @@ export const AuditAction = {
     // Data actions
     DATA_EXPORT_REQUESTED: 'data.export.requested',
     ACCOUNT_DELETION_REQUESTED: 'account.deletion.requested',
+
+    // Article actions
+    ARTICLE_GENERATION_STARTED: 'article.generation.started',
+    ARTICLE_GENERATION_COMPLETED: 'article.generation.completed',
+    ARTICLE_GENERATION_FAILED: 'article.generation.failed',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];
