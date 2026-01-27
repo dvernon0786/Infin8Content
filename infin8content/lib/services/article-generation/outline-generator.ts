@@ -2,6 +2,7 @@
 // Story 4a.2: Section-by-Section Architecture and Outline Generation
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { validateOutline } from './outline-schema'
 
 /**
  * Outline structure matching the database schema
@@ -72,12 +73,15 @@ export async function generateOutline(
   // For now, generate outline based on SERP analysis and keyword research
   const outline = await generateOutlineWithLLM(keyword, keywordResearch, serpAnalysis)
 
+  // Validate outline against schema (enforces contract)
+  const validatedOutline = validateOutline(outline)
+
   const duration = Date.now() - startTime
   if (duration > 20000) {
     console.warn(`⚠️ Outline generation took ${duration}ms (exceeds 20s NFR-P1 threshold)`)
   }
 
-  return outline
+  return validatedOutline
 }
 
 /**
