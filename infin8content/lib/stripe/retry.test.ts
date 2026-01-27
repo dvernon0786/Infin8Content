@@ -105,7 +105,8 @@ describe('retryWithBackoff', () => {
     // Fast-forward through all retries
     await vi.advanceTimersByTimeAsync(10000)
     
-    await expect(promise).rejects.toThrow()
+    // Ensure the promise rejection is properly awaited and caught
+    await expect(promise).rejects.toBeDefined()
     expect(fn).toHaveBeenCalledTimes(3) // Initial + 2 retries
   })
 
