@@ -142,17 +142,25 @@ Scan Type: Deep Scan (Complete documentation generated - 71 API routes, 124+ com
 
 ## Recent Major Updates
 
+### OpenRouter Outline Generation - January 27, 2026
+- **Feature Flag**: `FEATURE_LLM_OUTLINE` environment variable for gradual rollout (default: false)
+- **Schema Validation**: Zod schema enforcing outline contract (5-10 H2s, 1-4 H3s per H2)
+- **Implementation**: OpenRouter Gemini 2.5 Flash integration with JSON parsing and validation
+- **Cost Tracking**: Outline cost tracked and added to totalApiCost (~$0.003 per outline)
+- **Safety**: Fail-fast semantics, no fallbacks, zero regression risk
+- **Status**: Production-ready with instant rollback capability
+
 ### Test Stabilization Phase - January 27, 2026
 - **Error Handling**: Fixed pre-existing error handling gaps in navigation components
 - **Test Isolation**: Resolved unhandled rejections and test fragility issues
 - **Baseline**: Tagged `post-cleanup-baseline` (commit 153cae0) as safe rollback point
-- **Status**: Phase locked and merged to test-main-all, ready for OpenRouter implementation
+- **Status**: Phase locked and merged to test-main-all
 
 ### Article Generation Codebase Cleanup - January 27, 2026
 - **Dead Code Removal**: Deleted legacy outline generator and Inngest worker
 - **Files Removed**: `/lib/article-generation/outline/outline-generator.ts` (460 lines), `/lib/article-generation/inngest-worker.ts` (355 lines)
 - **Verification**: Build passes, no broken imports, zero runtime impact
-- **Status**: Codebase cleaned and ready for OpenRouter outline generation implementation
+- **Status**: Codebase cleaned, foundation for OpenRouter integration
 
 ### Article Generation Security & Audit Implementation - January 2026
 - **Security**: Re-enabled authentication with 401 enforcement

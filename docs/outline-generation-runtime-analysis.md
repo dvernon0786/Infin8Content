@@ -427,10 +427,28 @@ If implementing OpenRouter outline generation:
    - Resolved test isolation issues and unhandled rejections
    - Tagged `post-cleanup-baseline` as safe rollback point
    - Phase locked and merged to test-main-all
-3. **Add feature flag:** Implement environment variable for gradual rollout
-4. **Add cost tracking:** Include outline generation cost in usage tracking
-5. **Add monitoring:** Log outline generation latency and errors separately
-6. **Add tests:** Unit tests for new OpenRouter outline implementation
+3. ✅ **Add feature flag:** COMPLETED (2026-01-27)
+   - Implemented `FEATURE_LLM_OUTLINE` environment variable
+   - Default: false (uses placeholder, safe)
+   - Instant rollback capability via env var
+4. ✅ **Add schema validation:** COMPLETED (2026-01-27)
+   - Created Zod schema enforcing outline contract
+   - Validation on both placeholder and AI paths
+   - Fail-fast semantics for invalid output
+5. ✅ **Design OpenRouter prompt:** COMPLETED (2026-01-27)
+   - System prompt emphasizes JSON-only output
+   - Schema definition in prompt for clarity
+   - Validation rules explicit (5-10 H2s, 1-4 H3s per H2)
+   - Boring, reliable prompt design
+6. ✅ **Implement OpenRouter outline generation:** COMPLETED (2026-01-27)
+   - LLM path calls generateContent() with prompts
+   - JSON parsing and schema validation
+   - Cost tracking: tokens * 0.000002
+   - Fail-fast on parse or validation errors
+   - No fallback to placeholder
+7. **Add cost tracking:** Include outline generation cost in usage tracking (next phase)
+8. **Add monitoring:** Log outline generation latency and errors separately (next phase)
+9. **Add tests:** Unit tests for new OpenRouter outline implementation (next phase)
 
 ### Implementation Safety Checklist
 
