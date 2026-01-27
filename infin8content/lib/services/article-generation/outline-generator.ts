@@ -53,6 +53,17 @@ export interface SerpAnalysis {
 }
 
 /**
+ * Feature flag for LLM-based outline generation
+ * 
+ * When enabled, uses OpenRouter to generate contextual outlines.
+ * When disabled, uses placeholder logic for backward compatibility.
+ * 
+ * Default: false (uses placeholder)
+ * Set FEATURE_LLM_OUTLINE=true to enable AI outline generation
+ */
+const useLLMOutline = process.env.FEATURE_LLM_OUTLINE === 'true'
+
+/**
  * Generate article outline based on keyword research and SERP analysis
  * 
  * @param keyword - The target keyword for the article
@@ -61,6 +72,10 @@ export interface SerpAnalysis {
  * @returns Generated outline structure
  * 
  * Performance: Must complete in < 20 seconds (NFR-P1 breakdown)
+ * 
+ * Behavior:
+ * - FEATURE_LLM_OUTLINE=false: Uses placeholder logic (default, safe)
+ * - FEATURE_LLM_OUTLINE=true: Uses OpenRouter AI (when implemented)
  */
 export async function generateOutline(
   keyword: string,
@@ -69,11 +84,22 @@ export async function generateOutline(
 ): Promise<Outline> {
   const startTime = Date.now()
 
-  // PLACEHOLDER: Replace with OpenRouter API call in Story 4a-5
-  // For now, generate outline based on SERP analysis and keyword research
-  const outline = await generateOutlineWithLLM(keyword, keywordResearch, serpAnalysis)
+  // Route to appropriate implementation based on feature flag
+  let outline: Outline
+
+  if (useLLMOutline) {
+    // LLM-based outline generation (Story 4a-5)
+    // TODO: Implement OpenRouter call here
+    outline = await generatePlaceholderOutline(keyword, keywordResearch, serpAnalysis)
+    console.log(`[Outline] Using LLM-based generation (FEATURE_LLM_OUTLINE=true)`)
+  } else {
+    // Placeholder outline generation (current default)
+    outline = await generatePlaceholderOutline(keyword, keywordResearch, serpAnalysis)
+    console.log(`[Outline] Using placeholder generation (FEATURE_LLM_OUTLINE=false)`)
+  }
 
   // Validate outline against schema (enforces contract)
+  // This validation is mandatory for both paths
   const validatedOutline = validateOutline(outline)
 
   const duration = Date.now() - startTime
@@ -85,12 +111,12 @@ export async function generateOutline(
 }
 
 /**
- * Generate outline using LLM (placeholder for Story 4a-5)
+ * Generate outline using placeholder logic
  * 
- * TODO: Replace with actual OpenRouter API call in Story 4a-5
- * This placeholder must match the future API interface exactly
+ * This is the default implementation used when FEATURE_LLM_OUTLINE=false.
+ * Generates mock outline structure matching expected format.
  */
-async function generateOutlineWithLLM(
+async function generatePlaceholderOutline(
   keyword: string,
   keywordResearch: KeywordResearchData | null,
   serpAnalysis: SerpAnalysis
