@@ -142,6 +142,12 @@ Scan Type: Deep Scan (Complete documentation generated - 71 API routes, 124+ com
 
 ## Recent Major Updates
 
+### Article Generation Codebase Cleanup - January 27, 2026
+- **Dead Code Removal**: Deleted legacy outline generator and Inngest worker
+- **Files Removed**: `/lib/article-generation/outline/outline-generator.ts` (460 lines), `/lib/article-generation/inngest-worker.ts` (355 lines)
+- **Verification**: Build passes, no broken imports, zero runtime impact
+- **Status**: Codebase cleaned and ready for OpenRouter outline generation implementation
+
 ### Article Generation Security & Audit Implementation - January 2026
 - **Security**: Re-enabled authentication with 401 enforcement
 - **Usage Tracking**: Plan-based usage limits (Starter: 10, Pro: 50, Agency: unlimited)

@@ -27,6 +27,59 @@ feature → test-main-all → main
 
 ---
 
+## 🎯 Article Generation Codebase Cleanup - COMPLETE (January 27, 2026)
+
+**Date**: 2026-01-27T13:41:00+11:00  
+**Status**: ✅ COMPLETED  
+**Priority**: HIGH  
+**Implementation**: Dead code removal and codebase cleanup  
+**Scope**: Removed legacy outline generator and Inngest worker files
+
+### 🎯 Dead Code Removal Summary
+
+Successfully removed confirmed dead code from the article generation pipeline, cleaning the codebase and preparing for OpenRouter outline generation implementation.
+
+### 📁 Files Deleted
+
+1. **`lib/article-generation/outline/outline-generator.ts`** (460 lines)
+   - Legacy class-based `OutlineGenerator` implementation
+   - Imported only by unused `inngest-worker.ts`
+   - Not executed in production or staging
+
+2. **`lib/article-generation/inngest-worker.ts`** (355 lines)
+   - Legacy Inngest worker file
+   - Replaced by active `lib/inngest/functions/generate-article.ts`
+   - Not registered or executed
+
+### ✅ Verification Results
+
+- ✅ **Build passes**: Next.js compilation successful, no errors
+- ✅ **No broken imports**: Grep search confirms zero references to deleted files
+- ✅ **Inngest functions registered correctly**: 3 functions active (article/generate, articles/cleanup-stuck, ux-metrics/weekly-rollup)
+- ✅ **Zero runtime impact**: Deletion causes no behavior change
+
+### 📊 Impact
+
+- **Codebase**: 815 lines of dead code removed
+- **Complexity**: Reduced confusion from multiple implementations
+- **Readiness**: Clean foundation for OpenRouter outline generation
+
+### 📚 Documentation Updated
+
+- **Runtime Analysis**: Section 3 marked as ✅ RESOLVED with completion date
+- **Project Index**: Added new "Article Generation Codebase Cleanup" section to Recent Major Updates
+- **Recommendations**: Marked dead code removal as COMPLETED
+
+### 🎉 Next Phase Ready
+
+Codebase is now clean and ready for:
+1. Add feature flag for gradual OpenRouter rollout
+2. Implement OpenRouter outline generation
+3. Add cost tracking for outline generation
+4. Add monitoring and logging
+
+---
+
 ## 🎯 WordPress Publishing + Realtime Stability - COMPLETE (January 22, 2026)
 
 **Date**: 2026-01-22T12:01:00+11:00  
