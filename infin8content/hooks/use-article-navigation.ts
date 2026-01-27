@@ -57,7 +57,7 @@ export function useArticleNavigation(options: UseArticleNavigationOptions = {}) 
         elementToFocus.focus();
       }
       
-      throw err;
+      // Don't re-throw - let caller handle via error state
     }
   }, [navigationState.isNavigating, router, options]);
 
