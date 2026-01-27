@@ -2,6 +2,9 @@
 // Story 4a.2: Section-by-Section Architecture and Outline Generation
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { validateOutline } from './outline-schema'
+import { getOutlinePrompts } from './outline-prompts'
+import { generateContent, type OpenRouterMessage } from '@/lib/services/openrouter/openrouter-client'
 
 /**
  * Outline structure matching the database schema
@@ -52,6 +55,17 @@ export interface SerpAnalysis {
 }
 
 /**
+ * Feature flag for LLM-based outline generation
+ * 
+ * When enabled, uses OpenRouter to generate contextual outlines.
+ * When disabled, uses placeholder logic for backward compatibility.
+ * 
+ * Default: false (uses placeholder)
+ * Set FEATURE_LLM_OUTLINE=true to enable AI outline generation
+ */
+const useLLMOutline = process.env.FEATURE_LLM_OUTLINE === 'true'
+
+/**
  * Generate article outline based on keyword research and SERP analysis
  * 
  * @param keyword - The target keyword for the article
@@ -60,33 +74,90 @@ export interface SerpAnalysis {
  * @returns Generated outline structure
  * 
  * Performance: Must complete in < 20 seconds (NFR-P1 breakdown)
+ * 
+ * Behavior:
+ * - FEATURE_LLM_OUTLINE=false: Uses placeholder logic (default, safe)
+ * - FEATURE_LLM_OUTLINE=true: Uses OpenRouter AI (when implemented)
  */
 export async function generateOutline(
   keyword: string,
   keywordResearch: KeywordResearchData | null,
   serpAnalysis: SerpAnalysis
-): Promise<Outline> {
+): Promise<{ outline: Outline; cost: number; tokensUsed: number }> {
   const startTime = Date.now()
 
-  // PLACEHOLDER: Replace with OpenRouter API call in Story 4a-5
-  // For now, generate outline based on SERP analysis and keyword research
-  const outline = await generateOutlineWithLLM(keyword, keywordResearch, serpAnalysis)
+  // Route to appropriate implementation based on feature flag
+  let outline: Outline
+  let outlineCost = 0
+  let tokensUsed = 0
+
+  if (useLLMOutline) {
+    // LLM-based outline generation (Story 4a-5)
+    console.log(`[Outline] Using LLM-based generation (FEATURE_LLM_OUTLINE=true)`)
+
+    try {
+      const { system, user } = getOutlinePrompts(
+        keyword,
+        keywordResearch,
+        serpAnalysis
+      )
+
+      const messages: OpenRouterMessage[] = [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ]
+
+      const result = await generateContent(messages, {
+        maxTokens: 1500,
+      })
+
+      // Parse JSON response
+      const parsed = JSON.parse(result.content)
+
+      // Validate against schema (enforces contract)
+      outline = validateOutline(parsed)
+
+      // Track cost and tokens
+      outlineCost = result.tokensUsed * 0.000002 // Approximate cost per token
+      tokensUsed = result.tokensUsed
+
+      console.log(`[Outline] LLM generation complete: ${tokensUsed} tokens, $${outlineCost.toFixed(4)} cost, model: ${result.modelUsed}`)
+    } catch (error) {
+      // Fail fast - no fallback to placeholder
+      console.error(`[Outline] LLM generation failed:`, error)
+      throw error
+    }
+  } else {
+    // Placeholder outline generation (current default)
+    console.log(`[Outline] Using placeholder generation (FEATURE_LLM_OUTLINE=false)`)
+
+    outline = await generatePlaceholderOutline(keyword, keywordResearch, serpAnalysis)
+
+    // Validate outline against schema (enforces contract)
+    outline = validateOutline(outline)
+
+    console.log(`[Outline] Placeholder generation complete`)
+  }
 
   const duration = Date.now() - startTime
   if (duration > 20000) {
     console.warn(`⚠️ Outline generation took ${duration}ms (exceeds 20s NFR-P1 threshold)`)
   }
 
-  return outline
+  return {
+    outline,
+    cost: outlineCost,
+    tokensUsed,
+  }
 }
 
 /**
- * Generate outline using LLM (placeholder for Story 4a-5)
+ * Generate outline using placeholder logic
  * 
- * TODO: Replace with actual OpenRouter API call in Story 4a-5
- * This placeholder must match the future API interface exactly
+ * This is the default implementation used when FEATURE_LLM_OUTLINE=false.
+ * Generates mock outline structure matching expected format.
  */
-async function generateOutlineWithLLM(
+async function generatePlaceholderOutline(
   keyword: string,
   keywordResearch: KeywordResearchData | null,
   serpAnalysis: SerpAnalysis
