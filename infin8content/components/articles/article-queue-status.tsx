@@ -51,13 +51,21 @@ export function ArticleQueueStatus({
   });
 
   // Navigation handler using shared hook
-  const handleViewArticle = (articleId: string) => {
-    navigation.navigateToArticle(articleId);
+  const handleViewArticle = async (articleId: string) => {
+    try {
+      await navigation.navigateToArticle(articleId);
+    } catch (error) {
+      console.error('Failed to navigate to article:', error);
+    }
   };
 
   // Keyboard navigation handler using shared hook
-  const handleViewKeyDown = (articleId: string, e: React.KeyboardEvent) => {
-    navigation.handleKeyDown(articleId, e);
+  const handleViewKeyDown = async (articleId: string, e: React.KeyboardEvent) => {
+    try {
+      await navigation.handleKeyDown(articleId, e);
+    } catch (error) {
+      console.error('Failed to navigate via keyboard:', error);
+    }
   };
 
   const {
