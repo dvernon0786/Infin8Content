@@ -422,10 +422,15 @@ If implementing OpenRouter outline generation:
    - Deleted `/lib/article-generation/outline/outline-generator.ts`
    - Deleted `/lib/article-generation/inngest-worker.ts`
    - Verified: Build passes, no broken imports
-2. **Add feature flag:** Implement environment variable for gradual rollout
-3. **Add cost tracking:** Include outline generation cost in usage tracking
-4. **Add monitoring:** Log outline generation latency and errors separately
-5. **Add tests:** Unit tests for new OpenRouter outline implementation
+2. ✅ **Test stabilization:** COMPLETED (2026-01-27)
+   - Fixed pre-existing error handling gaps in navigation components
+   - Resolved test isolation issues and unhandled rejections
+   - Tagged `post-cleanup-baseline` as safe rollback point
+   - Phase locked and merged to test-main-all
+3. **Add feature flag:** Implement environment variable for gradual rollout
+4. **Add cost tracking:** Include outline generation cost in usage tracking
+5. **Add monitoring:** Log outline generation latency and errors separately
+6. **Add tests:** Unit tests for new OpenRouter outline implementation
 
 ### Implementation Safety Checklist
 

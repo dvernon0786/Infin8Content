@@ -80,6 +80,130 @@ Codebase is now clean and ready for:
 
 ---
 
+## 🎯 Test Stabilization Phase - COMPLETE (January 27, 2026)
+
+**Date**: 2026-01-27T17:00:00+11:00  
+**Status**: ✅ COMPLETED AND LOCKED  
+**Priority**: HIGH  
+**Implementation**: Error handling fixes and test stabilization  
+**Scope**: Address pre-existing test failures exposed during cleanup
+
+### 🎯 Test Stabilization Summary
+
+Successfully identified and fixed pre-existing error handling gaps in navigation components and tests. The dead code removal had **zero impact** on test failures - all issues were pre-existing fragility in error handling patterns.
+
+### 🔍 Root Cause Analysis
+
+**What Happened:**
+- Dead code removal exposed pre-existing error handling gaps
+- 102 test files failed with 487 failing tests initially
+- One unhandled rejection cascaded through test runner
+- Tests were correct - components and hook were wrong
+
+**Key Findings:**
+- ✅ Dead code removal had ZERO impact on failures
+- ❌ Navigation components threw errors without catching them
+- ❌ Stripe retry test had real unhandled rejection edge
+- ❌ One unhandled rejection destabilized entire test suite
+
+### 🛠️ Fixes Applied
+
+#### 1. Navigation Component Error Handling
+**File**: `components/articles/article-queue-status.tsx`
+```typescript
+// BEFORE - No error handling
+const handleViewArticle = (articleId: string) => {
+  navigation.navigateToArticle(articleId);  // Could throw!
+};
+
+// AFTER - Proper error handling
+const handleViewArticle = async (articleId: string) => {
+  try {
+    await navigation.navigateToArticle(articleId);
+  } catch (error) {
+    console.error('Failed to navigate to article:', error);
+  }
+};
+```
+
+#### 2. Navigation Hook Error Handling
+**File**: `hooks/use-article-navigation.ts`
+```typescript
+// BEFORE - Re-throws error
+catch (error) {
+  setNavigationState({ isNavigating: false, error: err });
+  options.onError?.(err, 'navigateToArticle');
+  throw err;  // Propagates to caller
+}
+
+// AFTER - Stores error, doesn't re-throw
+catch (error) {
+  setNavigationState({ isNavigating: false, error: err });
+  options.onError?.(err, 'navigateToArticle');
+  // Don't re-throw - let caller handle via error state
+}
+```
+
+#### 3. Stripe Retry Test Error Handling
+**File**: `lib/stripe/retry.test.ts`
+- Fixed promise rejection handling with fake timers
+- Properly catch and verify rejection to prevent unhandled rejection warnings
+
+### ✅ Verification Results
+
+- ✅ **Dead code removal verified safe**: Deleted files not imported by failing tests
+- ✅ **Error handling improved**: Components now catch async errors properly
+- ✅ **Test isolation fixed**: Pre-existing fragility addressed at root cause
+- ✅ **Baseline established**: Safe rollback point for future work
+
+### 📊 Impact
+
+- **Architecture**: Zero regressions, pure error handling improvements
+- **Robustness**: Reduced future blast radius from async operations
+- **Testing**: Better test isolation and error handling patterns
+- **Foundation**: Clean baseline for OpenRouter outline generation
+
+### 📚 Documentation Created
+
+- **`docs/test-stabilization-fixes.md`**: Detailed technical analysis of fixes
+- **`docs/test-stabilization-complete.md`**: Comprehensive completion summary
+- **Memory**: Test stabilization phase locked in persistent database
+
+### 🏷️ Baseline Tagged
+
+- **Tag**: `post-cleanup-baseline` (commit 153cae0)
+- **Purpose**: Safe rollback point before outline changes
+- **Status**: Pushed to remote, ready for reference
+
+### 🔄 Merge History
+
+**PR #35**: "fix: stabilize test suite - stripe retry and navigation error handling"
+- State: MERGED (2026-01-27T05:53:11Z)
+- Commits: 4 commits with full history preserved
+- Branch: `feature/test-stabilization-fixes` (deleted after merge)
+
+**Current test-main-all HEAD**: `8dfa450` (Merge pull request #36)
+
+### 🔒 Phase Locked
+
+**NO MORE CHANGES TO THIS WORK:**
+- ❌ No revisit dead code cleanup
+- ❌ No refactor retry logic further  
+- ❌ No touch navigation UX unless explicitly required
+- ❌ No blend outline work into this PR
+
+**This chapter is closed. Moving forward only.**
+
+### 🎉 Next Phase Ready
+
+Stabilization complete. Ready to proceed with:
+1. OpenRouter outline generation implementation
+2. Feature flag for gradual rollout
+3. Cost tracking for outline generation
+4. Monitoring and logging
+
+---
+
 ## 🎯 WordPress Publishing + Realtime Stability - COMPLETE (January 22, 2026)
 
 **Date**: 2026-01-22T12:01:00+11:00  

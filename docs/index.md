@@ -142,6 +142,12 @@ Scan Type: Deep Scan (Complete documentation generated - 71 API routes, 124+ com
 
 ## Recent Major Updates
 
+### Test Stabilization Phase - January 27, 2026
+- **Error Handling**: Fixed pre-existing error handling gaps in navigation components
+- **Test Isolation**: Resolved unhandled rejections and test fragility issues
+- **Baseline**: Tagged `post-cleanup-baseline` (commit 153cae0) as safe rollback point
+- **Status**: Phase locked and merged to test-main-all, ready for OpenRouter implementation
+
 ### Article Generation Codebase Cleanup - January 27, 2026
 - **Dead Code Removal**: Deleted legacy outline generator and Inngest worker
 - **Files Removed**: `/lib/article-generation/outline/outline-generator.ts` (460 lines), `/lib/article-generation/inngest-worker.ts` (355 lines)
