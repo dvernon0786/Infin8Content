@@ -3,6 +3,8 @@
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { validateOutline } from './outline-schema'
+import { getOutlinePrompts } from './outline-prompts'
+import { generateContent, type OpenRouterMessage } from '@/lib/services/openrouter/openrouter-client'
 
 /**
  * Outline structure matching the database schema
@@ -81,33 +83,72 @@ export async function generateOutline(
   keyword: string,
   keywordResearch: KeywordResearchData | null,
   serpAnalysis: SerpAnalysis
-): Promise<Outline> {
+): Promise<{ outline: Outline; cost: number; tokensUsed: number }> {
   const startTime = Date.now()
 
   // Route to appropriate implementation based on feature flag
   let outline: Outline
+  let outlineCost = 0
+  let tokensUsed = 0
 
   if (useLLMOutline) {
     // LLM-based outline generation (Story 4a-5)
-    // TODO: Implement OpenRouter call here
-    outline = await generatePlaceholderOutline(keyword, keywordResearch, serpAnalysis)
     console.log(`[Outline] Using LLM-based generation (FEATURE_LLM_OUTLINE=true)`)
+
+    try {
+      const { system, user } = getOutlinePrompts(
+        keyword,
+        keywordResearch,
+        serpAnalysis
+      )
+
+      const messages: OpenRouterMessage[] = [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ]
+
+      const result = await generateContent(messages, {
+        maxTokens: 1500,
+      })
+
+      // Parse JSON response
+      const parsed = JSON.parse(result.content)
+
+      // Validate against schema (enforces contract)
+      outline = validateOutline(parsed)
+
+      // Track cost and tokens
+      outlineCost = result.tokensUsed * 0.000002 // Approximate cost per token
+      tokensUsed = result.tokensUsed
+
+      console.log(`[Outline] LLM generation complete: ${tokensUsed} tokens, $${outlineCost.toFixed(4)} cost, model: ${result.modelUsed}`)
+    } catch (error) {
+      // Fail fast - no fallback to placeholder
+      console.error(`[Outline] LLM generation failed:`, error)
+      throw error
+    }
   } else {
     // Placeholder outline generation (current default)
-    outline = await generatePlaceholderOutline(keyword, keywordResearch, serpAnalysis)
     console.log(`[Outline] Using placeholder generation (FEATURE_LLM_OUTLINE=false)`)
-  }
 
-  // Validate outline against schema (enforces contract)
-  // This validation is mandatory for both paths
-  const validatedOutline = validateOutline(outline)
+    outline = await generatePlaceholderOutline(keyword, keywordResearch, serpAnalysis)
+
+    // Validate outline against schema (enforces contract)
+    outline = validateOutline(outline)
+
+    console.log(`[Outline] Placeholder generation complete`)
+  }
 
   const duration = Date.now() - startTime
   if (duration > 20000) {
     console.warn(`⚠️ Outline generation took ${duration}ms (exceeds 20s NFR-P1 threshold)`)
   }
 
-  return validatedOutline
+  return {
+    outline,
+    cost: outlineCost,
+    tokensUsed,
+  }
 }
 
 /**
