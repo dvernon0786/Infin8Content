@@ -33,6 +33,11 @@ export const AuditAction = {
     ARTICLE_GENERATION_STARTED: 'article.generation.started',
     ARTICLE_GENERATION_COMPLETED: 'article.generation.completed',
     ARTICLE_GENERATION_FAILED: 'article.generation.failed',
+
+    // Intent workflow actions
+    INTENT_WORKFLOW_CREATED: 'intent.workflow.created',
+    INTENT_WORKFLOW_UPDATED: 'intent.workflow.updated',
+    INTENT_WORKFLOW_DELETED: 'intent.workflow.deleted',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];
