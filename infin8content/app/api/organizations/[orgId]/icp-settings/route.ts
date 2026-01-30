@@ -91,9 +91,11 @@ const updateICPSchema = z.object({
  */
 export async function PUT(
   request: Request,
-  { params }: { params: { orgId: string } }
+  { params }: { params: Promise<{ orgId: string }> }
 ) {
   try {
+    // Await params since Next.js 16.1.1 wraps them in Promise
+    const { orgId } = await params
     // Get current authenticated user
     const currentUser = await getCurrentUser()
     if (!currentUser || !currentUser.org_id) {
@@ -112,7 +114,7 @@ export async function PUT(
     }
 
     // Verify user belongs to the target organization
-    const targetOrgId = params.orgId
+    const targetOrgId = orgId
     if (targetOrgId !== currentUser.org_id) {
       return NextResponse.json(
         { error: 'Cannot configure ICP settings for other organizations' },
@@ -333,21 +335,15 @@ export async function PUT(
  * - organization_id: string (UUID)
  * - target_industries: string[]
  * - buyer_roles: string[]
- * - pain_points: string[]
- * - value_proposition: string
- * - created_at: string (ISO timestamp)
- * - updated_at: string (ISO timestamp)
- * 
- * Response (Error):
- * - 401: Authentication required
- * - 404: ICP settings not found
- * - 500: Server error
  */
 export async function GET(
   request: Request,
-  { params }: { params: { orgId: string } }
+  { params }: { params: Promise<{ orgId: string }> }
 ) {
   try {
+    // Await params since Next.js 16.1.1 wraps them in Promise
+    const { orgId } = await params
+
     // Get current authenticated user
     const currentUser = await getCurrentUser()
     if (!currentUser || !currentUser.org_id) {
@@ -358,7 +354,7 @@ export async function GET(
     }
 
     // Verify user belongs to the target organization
-    const targetOrgId = params.orgId
+    const targetOrgId = orgId
     if (targetOrgId !== currentUser.org_id) {
       return NextResponse.json(
         { error: 'Cannot access ICP settings for other organizations' },
