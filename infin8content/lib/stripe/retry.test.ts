@@ -105,7 +105,14 @@ describe('retryWithBackoff', () => {
     // Fast-forward through all retries
     await vi.advanceTimersByTimeAsync(10000)
     
-    await expect(promise).rejects.toThrow()
+    // Properly catch the rejection to prevent unhandled rejection
+    try {
+      await promise
+      expect.fail('Should have thrown')
+    } catch (error: any) {
+      expect(error.code).toBe('ECONNRESET')
+    }
+    
     expect(fn).toHaveBeenCalledTimes(3) // Initial + 2 retries
   })
 

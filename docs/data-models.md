@@ -1,313 +1,301 @@
-# Data Models Documentation
+# Data Models - Infin8Content
 
-Generated: 2026-01-13 (Updated)  
-Project: Infin8Content  
+Generated: 2026-01-23 (Deep Scan Update)  
 Database: Supabase (PostgreSQL)  
-Total Tables: 12
+Migration Strategy: Versioned SQL migrations
 
----
+## Overview
 
-## Database Overview
-
-Infin8Content uses Supabase (PostgreSQL) with Row Level Security (RLS) enabled for multi-tenant architecture. All tables include organization isolation and comprehensive audit trails.
+Infin8Content uses a multi-tenant PostgreSQL database with Row Level Security (RLS) policies to ensure data isolation between organizations. The schema supports user management, content generation, payment processing, and analytics.
 
 ## Core Tables
 
 ### organizations
 
-Multi-tenant organization management with subscription-based features.
+Multi-tenant organization table with plan-based feature gating.
 
-**Columns:**
-- `id` (uuid, primary_key) - Unique organization identifier
-- `name` (text) - Organization display name
-- `stripe_customer_id` (text) - Stripe customer reference
-- `subscription_id` (text) - Active subscription ID
-- `subscription_status` (text) - Subscription status (active/canceled/past_due/incomplete)
-- `subscription_price_id` (text) - Current plan price ID
-- `plan_type` (text) - Plan tier (starter/pro/agency)
-- `subscription_current_period_end` (timestamptz) - Subscription renewal date
-- `subscription_cancel_at_period_end` (boolean) - Cancellation flag
-- `created_at` (timestamptz) - Creation timestamp
-- `updated_at` (timestamptz) - Last update timestamp
+```sql
+CREATE TABLE organizations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    plan TEXT NOT NULL CHECK (plan IN ('starter', 'pro', 'agency')),
+    white_label_settings JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
 
-**Constraints:**
-- Unique constraint on `stripe_customer_id`
-- Not null constraints on `name`, `created_at`
+**Fields:**
+- `id`: Unique organization identifier
+- `name`: Organization display name
+- `plan`: Subscription plan (starter/pro/agency)
+- `white_label_settings`: JSON configuration for white-label features
+- `created_at`, `updated_at`: Timestamps with auto-update trigger
 
-**RLS Policies:**
-- Users can read their own organization
-- Organization admins can update organization details
+**Relationships:**
+- One-to-many with users table
+- One-to-many with articles table
+- One-to-many with subscriptions table
 
 ### users
 
-User accounts linked to organizations with role-based permissions.
+User table linked to organizations with RBAC roles.
 
-**Columns:**
-- `id` (uuid, primary_key) - User identifier (matches Supabase auth.users.id)
-- `email` (text) - User email address
-- `first_name` (text) - User first name
-- `last_name` (text) - User last name
-- `organization_id` (uuid, foreign_key → organizations.id) - Organization membership
-- `role` (text) - User role (admin/member/viewer)
-- `suspended` (boolean) - Account suspension status
-- `suspension_reason` (text) - Reason for suspension
-- `created_at` (timestamptz) - Account creation timestamp
-- `updated_at` (timestamptz) - Last update timestamp
+```sql
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT NOT NULL UNIQUE,
+    org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('owner', 'admin', 'member')),
+    full_name TEXT,
+    avatar_url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
 
-**Constraints:**
-- Foreign key constraint to organizations
-- Not null constraints on `email`, `organization_id`, `role`
-- Unique constraint on `email` within organization
+**Fields:**
+- `id`: Unique user identifier
+- `email`: User email (unique across system)
+- `org_id`: Organization foreign key
+- `role`: User role within organization (owner/admin/member)
+- `full_name`: Display name
+- `avatar_url`: Profile image URL
 
-**RLS Policies:**
-- Users can read their own profile
-- Organization members can read other members' profiles
-- Organization admins can update member roles
+**Relationships:**
+- Many-to-one with organizations
+- One-to-many with articles (author)
+
+### subscriptions
+
+Stripe subscription management for organizations.
+
+```sql
+CREATE TABLE subscriptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    stripe_subscription_id TEXT UNIQUE,
+    stripe_customer_id TEXT,
+    plan TEXT NOT NULL,
+    status TEXT NOT NULL,
+    current_period_start TIMESTAMP WITH TIME ZONE,
+    current_period_end TIMESTAMP WITH TIME ZONE,
+    trial_end TIMESTAMP WITH TIME ZONE,
+    grace_period_end TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+**Fields:**
+- `stripe_subscription_id`: Stripe subscription identifier
+- `stripe_customer_id`: Stripe customer identifier
+- `plan`: Subscription plan
+- `status`: Subscription status (active/canceled/trialing/etc.)
+- `current_period_start/end`: Current billing period
+- `trial_end`: Trial period end
+- `grace_period_end`: Grace period for failed payments
 
 ### team_invitations
 
-Team member invitation system with expiration and role management.
+Team invitation system for adding users to organizations.
 
-**Columns:**
-- `id` (uuid, primary_key) - Invitation identifier
-- `email` (text) - Invitee email address
-- `organization_id` (uuid, foreign_key → organizations.id) - Target organization
-- `invited_by` (uuid, foreign_key → users.id) - Inviter user ID
-- `role` (text) - Role to assign upon acceptance (admin/member/viewer)
-- `token` (text) - Invitation token for verification
-- `accepted` (boolean) - Acceptance status
-- `accepted_at` (timestamptz) - Acceptance timestamp
-- `accepted_by` (uuid, foreign_key → users.id) - User who accepted
-- `expires_at` (timestamptz) - Invitation expiration
-- `created_at` (timestamptz) - Invitation creation timestamp
+```sql
+CREATE TABLE team_invitations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    email TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'member',
+    invited_by_user_id UUID REFERENCES users(id),
+    token TEXT UNIQUE NOT NULL,
+    accepted_at TIMESTAMP WITH TIME ZONE,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
 
-**Constraints:**
-- Foreign key constraints to organizations and users
-- Not null constraints on `email`, `organization_id`, `role`, `token`
-- Unique constraint on `token`
-
-**RLS Policies:**
-- Organization members can read pending invitations
-- Organization admins can manage invitations
-- Invitees can access their own invitations via token
-
-### audit_logs
-
-Comprehensive activity tracking for compliance and security monitoring.
-
-**Columns:**
-- `id` (uuid, primary_key) - Log entry identifier
-- `organization_id` (uuid, foreign_key → organizations.id) - Organization context
-- `user_id` (uuid, foreign_key → users.id) - Acting user (nullable for system actions)
-- `action` (text) - Action performed (create/update/delete/login/etc.)
-- `resource_type` (text) - Resource type (user/article/organization/etc.)
-- `resource_id` (uuid) - Resource identifier
-- `old_values` (jsonb) - Previous state (for updates)
-- `new_values` (jsonb) - New state (for creates/updates)
-- `ip_address` (text) - Client IP address
-- `user_agent` (text) - Client user agent
-- `created_at` (timestamptz) - Log entry timestamp
-
-**Constraints:**
-- Foreign key constraints to organizations and users
-- Not null constraints on `organization_id`, `action`, `created_at`
-
-**RLS Policies:**
-- Organization members can read audit logs for their organization
-- System logs (user_id = null) only visible to admins
+**Fields:**
+- `email`: Invitee email address
+- `role`: Role to assign when accepted
+- `invited_by_user_id`: User who sent invitation
+- `token`: Unique invitation token
+- `accepted_at`: When invitation was accepted
+- `expires_at`: Invitation expiration
 
 ## Content Management Tables
 
 ### articles
 
-AI-generated content with progress tracking and metadata.
+AI-generated content with metadata and publishing status.
 
-**Columns:**
-- `id` (uuid, primary_key) - Article identifier
-- `organization_id` (uuid, foreign_key → organizations.id) - Owner organization
-- `user_id` (uuid, foreign_key → users.id) - Creator user
-- `title` (text) - Article title
-- `topic` (text) - Article topic/theme
-- `tone` (text) - Content tone (professional/casual/etc.)
-- `length` (integer) - Target word count
-- `status` (text) - Generation status (queued/generating/completed/failed/canceled)
-- `content` (text) - Generated article content
-- `outline` (jsonb) - Article structure/outline
-- `keywords` (text[]) - SEO keywords array
-- `progress` (integer) - Generation progress percentage (0-100)
-- `error_message` (text) - Error details if failed
-- `started_at` (timestamptz) - Generation start time
-- `completed_at` (timestamptz) - Completion timestamp
-- `created_at` (timestamptz) - Article creation timestamp
-- `updated_at` (timestamptz) - Last update timestamp
+```sql
+CREATE TABLE articles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    author_id UUID NOT NULL REFERENCES users(id),
+    title TEXT NOT NULL,
+    content TEXT,
+    status TEXT NOT NULL DEFAULT 'draft',
+    word_count INTEGER,
+    generation_metadata JSONB,
+    wordpress_post_id TEXT,
+    published_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
 
-**Constraints:**
-- Foreign key constraints to organizations and users
-- Not null constraints on `organization_id`, `user_id`, `title`, `status`
+**Fields:**
+- `title`: Article title
+- `content`: Generated article content
+- `status`: Draft/published/archived
+- `word_count`: Article length
+- `generation_metadata`: AI generation parameters and metrics
+- `wordpress_post_id`: WordPress post ID for published articles
+- `published_at`: Publication timestamp
 
-**RLS Policies:**
-- Users can read articles from their organization
-- Article creators can update their own articles
-- Organization admins can access all organization articles
+### publish_references
 
-### keyword_research
+Idempotency tracking for WordPress publishing (Story 5-1).
 
-SEO keyword research data and analysis results.
+```sql
+CREATE TABLE publish_references (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    article_id UUID NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+    wordpress_post_id TEXT,
+    wordpress_url TEXT,
+    published_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(article_id)
+);
+```
 
-**Columns:**
-- `id` (uuid, primary_key) - Research identifier
-- `organization_id` (uuid, foreign_key → organizations.id) - Owner organization
-- `user_id` (uuid, foreign_key → users.id) - Research creator
-- `keyword` (text) - Primary keyword
-- `search_volume` (integer) - Monthly search volume
-- `difficulty` (decimal) - SEO difficulty score
-- `competition` (decimal) - Competition level
-- `cpc` (decimal) - Cost per click
-- `related_keywords` (jsonb) - Related keywords data
-- `search_intent` (text) - Search intent category
-- `tavily_data` (jsonb) - Raw Tavily API response
-- `dataforseo_data` (jsonb) - DataForSEO analysis results
-- `created_at` (timestamptz) - Research timestamp
+**Purpose:** Ensures idempotent publishing by tracking article-to-WordPress mappings.
 
-**Constraints:**
-- Foreign key constraints to organizations and users
-- Not null constraints on `organization_id`, `user_id`, `keyword`
+## Analytics and Performance Tables
 
-**RLS Policies:**
-- Users can read research from their organization
-- Research creators can update their own research
-- Organization admins can access all organization research
+### performance_metrics
 
-### tavily_research_cache
+Content generation performance tracking.
 
-Cached research results to optimize API costs and improve performance.
+```sql
+CREATE TABLE performance_metrics (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    article_id UUID REFERENCES articles(id),
+    metric_type TEXT NOT NULL,
+    value NUMERIC,
+    unit TEXT,
+    recorded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
 
-**Columns:**
-- `id` (uuid, primary_key) - Cache entry identifier
-- `query_hash` (text) - Hash of research query for lookup
-- `query` (text) - Original research query
-- `response_data` (jsonb) - Cached Tavily API response
-- `expires_at` (timestamptz) - Cache expiration time
-- `hit_count` (integer) - Number of times cache accessed
-- `created_at` (timestamptz) - Cache creation timestamp
+**Metric Types:**
+- Generation time (seconds)
+- Token usage
+- API costs
+- Quality scores
 
-**Constraints:**
-- Unique constraint on `query_hash`
-- Not null constraints on `query_hash`, `query`, `response_data`
+### analytics_recommendations
 
-**RLS Policies:**
-- Cache is globally accessible (read-only for optimization)
-- System-only write access
+AI-generated content optimization recommendations.
 
-## Payment Tables
+```sql
+CREATE TABLE analytics_recommendations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    article_id UUID REFERENCES articles(id),
+    recommendation_type TEXT NOT NULL,
+    content TEXT,
+    priority INTEGER DEFAULT 1,
+    implemented_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
 
-### stripe_customers
+## Security and Audit Tables
 
-Stripe customer management and synchronization.
+### otp_codes
 
-**Columns:**
-- `id` (uuid, primary_key) - Local record identifier
-- `organization_id` (uuid, foreign_key → organizations.id) - Associated organization
-- `stripe_customer_id` (text) - Stripe customer identifier
-- `email` (text) - Customer email
-- `name` (text) - Customer display name
-- `metadata` (jsonb) - Additional Stripe metadata
-- `created_at` (timestamptz) - Record creation timestamp
-- `updated_at` (timestamptz) - Last update timestamp
+OTP verification for user registration.
 
-**Constraints:**
-- Foreign key constraint to organizations
-- Unique constraint on `stripe_customer_id`
+```sql
+CREATE TABLE otp_codes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT NOT NULL,
+    code TEXT NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    used_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
 
-**RLS Policies:**
-- Organization admins can read their customer data
-- System-only write access (Stripe webhook sync)
+### activity_logs
 
-### subscriptions
+Comprehensive audit logging for compliance.
 
-Subscription tracking and plan management.
-
-**Columns:**
-- `id` (uuid, primary_key) - Subscription identifier
-- `organization_id` (uuid, foreign_key → organizations.id) - Subscribed organization
-- `stripe_subscription_id` (text) - Stripe subscription identifier
-- `status` (text) - Subscription status
-- `price_id` (text) - Current price identifier
-- `quantity` (integer) - Subscription quantity
-- `current_period_start` (timestamptz) - Current period start
-- `current_period_end` (timestamptz) - Current period end
-- `cancel_at_period_end` (boolean) - Cancellation flag
-- `canceled_at` (timestamptz) - Cancellation timestamp
-- `trial_start` (timestamptz) - Trial period start
-- `trial_end` (timestamptz) - Trial period end
-- `metadata` (jsonb) - Additional subscription metadata
-- `created_at` (timestamptz) - Subscription creation timestamp
-- `updated_at` (timestamptz) - Last update timestamp
-
-**Constraints:**
-- Foreign key constraint to organizations
-- Unique constraint on `stripe_subscription_id`
-
-**RLS Policies:**
-- Organization admins can read subscription status
-- System-only write access (Stripe webhook sync)
-
-### payment_grace_periods
-
-7-day grace period management for failed payments.
-
-**Columns:**
-- `id` (uuid, primary_key) - Grace period identifier
-- `organization_id` (uuid, foreign_key → organizations.id) - Affected organization
-- `subscription_id` (uuid, foreign_key → subscriptions.id) - Related subscription
-- `starts_at` (timestamptz) - Grace period start
-- `ends_at` (timestamptz) - Grace period end
-- `status` (text) - Grace period status (active/expired/resolved)
-- `notifications_sent` (integer) - Count of notifications sent
-- `last_notification_at` (timestamptz) - Last notification timestamp
-- `resolved_at` (timestamptz) - Resolution timestamp
-- `created_at` (timestamptz) - Grace period creation timestamp
-
-**Constraints:**
-- Foreign key constraints to organizations and subscriptions
-- Not null constraints on `organization_id`, `subscription_id`, `starts_at`, `ends_at`
-
-**RLS Policies:**
-- Organization admins can read grace period status
-- System-only write access (automated management)
+```sql
+CREATE TABLE activity_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID REFERENCES organizations(id),
+    user_id UUID REFERENCES users(id),
+    action TEXT NOT NULL,
+    resource_type TEXT,
+    resource_id UUID,
+    ip_address INET,
+    user_agent TEXT,
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
 
 ## Database Features
 
 ### Row Level Security (RLS)
-- All tables have RLS enabled for multi-tenant isolation
-- Organization-based data segregation
-- Role-based access control within organizations
+
+All tables implement RLS policies to ensure:
+- Users can only access their organization's data
+- Role-based permissions within organizations
+- Audit trail for all data access
 
 ### Indexes
-- Primary key indexes on all tables
-- Foreign key indexes for join performance
-- Composite indexes on frequently queried columns
-- Unique constraints on business-critical fields
 
-### Triggers and Functions
-- Automatic timestamp updates (created_at/updated_at)
-- Audit log generation for data changes
-- Article progress synchronization triggers
-- Cache cleanup automation
+Performance-optimized indexes on:
+- Foreign key relationships
+- Frequently queried fields (email, status, dates)
+- Unique constraints for data integrity
 
-### Data Integrity
-- Foreign key constraints with proper cascading
-- Check constraints for business rules
-- Not null constraints on required fields
-- Unique constraints to prevent duplicates
+### Triggers
+
+- `update_updated_at_column()`: Auto-updates timestamp fields
+- Data validation triggers
+- Audit logging triggers
+
+### Constraints
+
+- CHECK constraints for enum values
+- Foreign key constraints with CASCADE deletes
+- UNIQUE constraints for business rules
 
 ## Migration Strategy
 
-- **Version Control**: All migrations timestamped and ordered
-- **Rollback Support**: Migration files include rollback procedures
-- **Data Safety**: Migrations include data preservation steps
-- **Testing**: All migrations tested on staging before production
+Database schema is managed through versioned migrations in `/supabase/migrations/`:
+- `20260101124156_initial_schema.sql`: Core tables
+- `20260104095303_link_auth_users.sql`: Auth integration
+- `20260104100500_add_otp_verification.sql`: OTP system
+- `20260105003507_add_stripe_payment_fields.sql`: Payment integration
+- Additional migrations for features and fixes
 
----
+## Data Privacy
 
-*This documentation was generated as part of the BMad Method document-project workflow on 2026-01-11.*
+- GDPR-compliant data handling
+- Right to deletion implemented
+- Data retention policies
+- Secure data encryption at rest
+
+## Performance Considerations
+
+- Connection pooling via Supabase
+- Query optimization for multi-tenant patterns
+- Efficient pagination for large datasets
+- Caching strategies for frequently accessed data

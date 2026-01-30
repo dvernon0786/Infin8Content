@@ -228,7 +228,7 @@ export const generateArticle = inngest.createFunction(
       })
 
       // Step 4: Generate outline
-      const outline = await step.run('generate-outline', async () => {
+      const outlineData = await step.run('generate-outline', async () => {
         console.log(`[Inngest] Step: generate-outline - Generating outline for keyword: ${(article as any).keyword}`)
         const startTime = Date.now()
         
@@ -236,14 +236,14 @@ export const generateArticle = inngest.createFunction(
         await (article as any).progressTracker?.updateResearching('Generating article structure and outline...')
         
         try {
-          const generatedOutline = await generateOutline(
+          const { outline: generatedOutline, cost: outlineCost, tokensUsed: outlineTokens } = await generateOutline(
             (article as any).keyword,
             keywordResearch,
             serpAnalysis
           )
 
           const duration = Date.now() - startTime
-          console.log(`[Inngest] Step: generate-outline - Success: Outline generated in ${duration}ms`)
+          console.log(`[Inngest] Step: generate-outline - Success: Outline generated in ${duration}ms (${outlineTokens} tokens, $${outlineCost.toFixed(4)} cost)`)
 
           // Update progress tracker with correct total sections
           const totalSections = 1 + generatedOutline.h2_sections.length + 1 + (generatedOutline.faq?.included ? 1 : 0)
@@ -285,7 +285,7 @@ export const generateArticle = inngest.createFunction(
             throw new Error(errorMsg)
           }
 
-          return generatedOutline
+          return { outline: generatedOutline, cost: outlineCost }
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : String(error)
           console.error(`[Inngest] Step: generate-outline - ERROR: ${errorMsg}`)
@@ -295,6 +295,9 @@ export const generateArticle = inngest.createFunction(
           throw error
         }
       })
+
+      const outline = outlineData.outline
+      const outlineCost = outlineData.cost
 
       // Step 5: Perform batch research optimization (Story 20.2: Batch Research Optimizer)
       const batchResearch = await step.run('batch-research', async () => {
@@ -352,7 +355,7 @@ export const generateArticle = inngest.createFunction(
           let currentSectionNumber = 1
           let totalWordCount = 0
           let totalCitations = 0
-          let totalApiCost = 0
+          let totalApiCost = outlineCost
 
           // Phase 1: Process Introduction (sequential - must come first)
           console.log(`[Inngest] Step: process-sections - Phase 1: Processing Introduction (index 0)`)

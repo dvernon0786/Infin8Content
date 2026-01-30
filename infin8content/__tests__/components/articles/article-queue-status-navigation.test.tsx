@@ -138,7 +138,7 @@ describe('Article Queue Status Navigation Integration', () => {
     expect(viewButton).toHaveClass('h-6', 'w-6', 'p-0')
   })
 
-  it('should handle navigation errors gracefully', () => {
+  it('should handle navigation errors gracefully', async () => {
     vi.mocked(useRealtimeArticles).mockReturnValue({
       articles: [mockCompletedArticle],
       isConnected: true,
@@ -151,19 +151,23 @@ describe('Article Queue Status Navigation Integration', () => {
     })
 
     // Mock router to throw an error
+    const errorPush = vi.fn(() => {
+      throw new Error('Navigation failed')
+    })
     ;(useRouter as any).mockReturnValue({
-      push: vi.fn(() => {
-        throw new Error('Navigation failed')
-      }),
+      push: errorPush,
     })
 
     render(<ArticleQueueStatus organizationId="test-org" showCompleted={true} />)
 
     const viewButton = screen.getByTitle('View completed article')
     
-    // Should not throw error when clicking (error is handled internally)
-    expect(() => {
-      fireEvent.click(viewButton)
-    }).not.toThrow()
+    // Click should be called, but error should be handled by component
+    fireEvent.click(viewButton)
+    
+    // Verify that push was attempted
+    await waitFor(() => {
+      expect(errorPush).toHaveBeenCalled()
+    })
   })
 })

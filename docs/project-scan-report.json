@@ -1,8 +1,9 @@
 {
   "workflow_version": "1.2.0",
   "timestamps": {
-    "started": "2026-01-20T23:51:00+11:00",
-    "last_updated": "2026-01-20T23:58:00+11:00"
+    "started": "2026-01-23T09:44:00+11:00",
+    "last_updated": "2026-01-23T09:55:00+11:00",
+    "completed": "2026-01-23T09:55:00+11:00"
   },
   "mode": "full_rescan",
   "scan_level": "deep",
@@ -12,139 +13,139 @@
     {
       "step": "step_1",
       "status": "completed",
-      "timestamp": "2026-01-20T23:52:00+11:00",
-      "summary": "Classified as monorepo with 2 parts: main application and tools"
+      "timestamp": "2026-01-23T09:45:00+11:00",
+      "summary": "Classified as monorepo with 3 parts"
     },
     {
       "step": "step_2",
       "status": "completed",
-      "timestamp": "2026-01-20T23:53:00+11:00",
-      "summary": "Found 15 existing docs in docs/ directory"
+      "timestamp": "2026-01-23T09:46:00+11:00",
+      "summary": "Found 15 existing docs"
     },
     {
       "step": "step_3",
       "status": "completed",
-      "timestamp": "2026-01-20T23:54:00+11:00",
-      "summary": "Tech stack: Next.js 16.1.1, React 19.2.3, TypeScript, Tailwind CSS 4"
+      "timestamp": "2026-01-23T09:47:00+11:00",
+      "summary": "Tech stack: Next.js 16.1.1, React 19.2.3, TypeScript"
     },
     {
       "step": "step_4",
       "status": "completed",
-      "timestamp": "2026-01-20T23:55:00+11:00",
-      "summary": "Conditional analysis complete: 55 API routes, 30 migrations, 124 components"
+      "timestamp": "2026-01-23T09:48:00+11:00",
+      "summary": "Conditional analysis complete, 2 files written"
     },
     {
       "step": "step_5",
       "status": "completed",
-      "timestamp": "2026-01-20T23:56:00+11:00",
-      "summary": "Source tree analysis updated with latest structure"
+      "timestamp": "2026-01-23T09:49:00+11:00",
+      "summary": "Source tree documented"
     },
     {
       "step": "step_6",
       "status": "completed",
-      "timestamp": "2026-01-20T23:57:00+11:00",
-      "summary": "Development and deployment information documented"
+      "timestamp": "2026-01-23T09:50:00+11:00",
+      "summary": "Dev setup and deployment guides written"
     },
     {
       "step": "step_7",
       "status": "completed",
-      "timestamp": "2026-01-20T23:57:30+11:00",
-      "summary": "Integration architecture reviewed and documented"
+      "timestamp": "2026-01-23T09:51:00+11:00",
+      "summary": "Integration architecture documented"
     },
     {
       "step": "step_8",
       "status": "completed",
-      "timestamp": "2026-01-20T23:58:00+11:00",
-      "summary": "Architecture documentation updated with latest findings"
+      "timestamp": "2026-01-23T09:52:00+11:00",
+      "summary": "Architecture docs written for infin8content"
     },
     {
       "step": "step_9",
       "status": "completed",
-      "timestamp": "2026-01-20T23:58:15+11:00",
-      "summary": "All supporting documentation updated with latest metrics"
+      "timestamp": "2026-01-23T09:53:00+11:00",
+      "summary": "All supporting docs written"
     },
     {
       "step": "step_10",
       "status": "completed",
-      "timestamp": "2026-01-20T23:58:30+11:00",
-      "summary": "Master index updated with deep scan results"
+      "timestamp": "2026-01-23T09:54:00+11:00",
+      "summary": "Master index generated"
     },
     {
       "step": "step_11",
       "status": "completed",
-      "timestamp": "2026-01-20T23:58:45+11:00",
-      "summary": "Validation and review complete - all documentation updated"
+      "timestamp": "2026-01-23T09:55:00+11:00",
+      "summary": "Validation complete - no incomplete items"
     }
   ],
   "current_step": "completed",
   "findings": {
     "project_classification": {
       "repository_type": "monorepo",
-      "parts_count": 2,
-      "primary_tech": "Next.js 16.1.1 with TypeScript"
+      "parts_count": 3,
+      "primary_tech": "Next.js"
     },
-    "existing_docs": {
-      "count": 15,
-      "key_docs": [
-        "index.md",
-        "architecture.md",
-        "api-contracts.md",
-        "data-models.md",
-        "component-inventory.md"
-      ]
-    },
+    "existing_docs_count": 15,
     "technology_stack": {
-      "framework": "Next.js 16.1.1",
-      "language": "TypeScript 5",
-      "ui": "React 19.2.3",
-      "styling": "Tailwind CSS 4",
-      "database": "Supabase + PostgreSQL",
-      "auth": "Supabase Auth",
-      "payments": "Stripe",
-      "testing": "Vitest + Playwright",
-      "monitoring": "Sentry",
-      "background_jobs": "Inngest"
-    },
-    "conditional_analysis": {
-      "api_endpoints": 55,
-      "database_migrations": 30,
-      "components": 124,
-      "typescript_files": 566,
-      "test_files": 155
-    },
-    "final_metrics": {
-      "scan_type": "deep",
-      "files_analyzed": 566,
-      "typescript_files": 566,
-      "react_components": 124,
-      "test_files": 155,
-      "api_endpoints": 55,
-      "database_migrations": 30,
-      "services": 31,
-      "components": 124
+      "infin8content": {
+        "framework": "Next.js 16.1.1",
+        "language": "TypeScript",
+        "ui": "React 19.2.3",
+        "styling": "Tailwind CSS 4",
+        "database": "Supabase",
+        "payment": "Stripe",
+        "testing": "Vitest + Playwright"
+      },
+      "tools": {
+        "type": "ESLint Plugin",
+        "language": "JavaScript",
+        "testing": "Jest"
+      },
+      "_bmad": {
+        "type": "Workflow Framework"
+      }
     }
   },
   "outputs_generated": [
     "project-scan-report.json",
-    "source-tree-analysis.md",
     "api-contracts.md",
-    "component-inventory.md",
-    "index.md"
+    "data-models.md",
+    "source-tree-analysis.md",
+    "development-guide-infin8content-updated.md",
+    "integration-architecture-updated.md",
+    "architecture-infin8content-updated.md",
+    "component-inventory-infin8content-updated.md",
+    "index-updated.md"
   ],
-  "resume_instructions": "Workflow completed successfully",
+  "resume_instructions": "Starting from step 1",
   "project_types": [
     {
-      "part_id": "main",
+      "part_id": "infin8content",
       "project_type_id": "web",
       "display_name": "Web Application"
     },
     {
       "part_id": "tools",
-      "project_type_id": "tools",
-      "display_name": "Development Tools"
+      "project_type_id": "library",
+      "display_name": "Development Utilities"
+    },
+    {
+      "part_id": "_bmad",
+      "project_type_id": "framework",
+      "display_name": "BMad Framework"
     }
   ],
-  "status": "completed",
-  "completion_timestamp": "2026-01-20T23:58:45+11:00",
-  "summary": "Deep project documentation completed successfully. Updated all documentation with latest findings from critical file analysis: 55 API routes, 124 components, 30 migrations, and 566 TypeScript files."
+  "validation": {
+    "incomplete_docs": [],
+    "all_links_valid": true,
+    "file_sizes": {
+      "api-contracts.md": 8,
+      "data-models.md": 12,
+      "source-tree-analysis.md": 10,
+      "development-guide-infin8content-updated.md": 15,
+      "integration-architecture-updated.md": 12,
+      "architecture-infin8content-updated.md": 20,
+      "component-inventory-infin8content-updated.md": 18,
+      "index-updated.md": 15
+    }
+  }
 }

@@ -1,35 +1,258 @@
-# Infin8Content API Reference
+# API Reference Documentation
 
-## Base URL
+## 🎯 Overview
 
+Complete API reference for all Infin8Content endpoints including WordPress publishing, article management, and realtime functionality.
+
+---
+
+## 📚 Table of Contents
+
+1. [WordPress Publishing APIs](#wordpress-publishing-apis)
+2. [Article Management APIs](#article-management-apis)
+3. [Authentication APIs](#authentication-apis)
+4. [Realtime APIs](#realtime-apis)
+5. [Error Codes](#error-codes)
+6. [Rate Limiting](#rate-limiting)
+
+---
+
+## 🚀 WordPress Publishing APIs
+
+### POST /api/articles/publish
+
+Publish a completed article to WordPress.
+
+**Authentication Required**: Yes  
+**Rate Limit**: 10 requests per minute per user  
+
+#### Request
+
+```json
+{
+  "articleId": "uuid-string"
+}
 ```
-Production: https://your-domain.com/api
-Development: http://localhost:3000/api
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| articleId | string | Yes | UUID of the article to publish |
+
+#### Response
+
+**Success (200 OK):**
+```json
+{
+  "success": true,
+  "url": "https://site.com/post-url",
+  "postId": 123,
+  "alreadyPublished": false
+}
 ```
 
-## Authentication
-
-### JWT Token Authentication
-
-All API endpoints (except public ones) require authentication via JWT token.
-
-```http
-Authorization: Bearer <jwt_token>
+**Already Published (200 OK):**
+```json
+{
+  "success": true,
+  "url": "https://site.com/existing-post-url",
+  "alreadyPublished": true
+}
 ```
 
-### Token Source
+**Error Responses:**
+```json
+// 401 Unauthorized
+{
+  "error": "Authentication required"
+}
 
-- **Client-side**: Stored in secure HTTP-only cookie
-- **Server-side**: Extracted from request headers
+// 403 Forbidden
+{
+  "error": "Access denied"
+}
 
-## API Endpoints
+// 404 Not Found
+{
+  "error": "Article not found"
+}
 
-### Authentication Endpoints
+// 400 Bad Request
+{
+  "error": "Article must be completed before publishing"
+}
 
-#### POST /api/auth/signin
+// 500 Internal Server Error
+{
+  "error": "WordPress authentication failed. Please check your credentials."
+}
+
+// 503 Service Unavailable
+{
+  "error": "WordPress publishing is currently disabled"
+}
+```
+
+#### Example
+
+```bash
+curl -X POST http://localhost:3000/api/articles/publish \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"articleId": "f8080b57-b592-46ff-a9de-f6e3a2a871b1"}'
+```
+
+---
+
+### GET /api/articles/publish
+
+Check WordPress publishing feature status and configuration.
+
+**Authentication Required**: Yes  
+
+#### Response
+
+```json
+{
+  "enabled": true,
+  "configured": true
+}
+```
+
+#### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| enabled | boolean | Whether WordPress publishing is enabled via feature flag |
+| configured | boolean | Whether WordPress credentials are properly configured |
+
+---
+
+## 📝 Article Management APIs
+
+### GET /api/articles
+
+List articles for the authenticated user's organization.
+
+**Authentication Required**: Yes  
+**Rate Limit**: 100 requests per minute per user  
+
+#### Query Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| limit | number | No | 20 | Maximum number of articles to return |
+| offset | number | No | 0 | Number of articles to skip |
+| status | string | No | all | Filter by article status |
+| sort | string | No | created_at | Sort field |
+| order | string | No | desc | Sort order (asc/desc) |
+
+#### Response
+
+```json
+{
+  "articles": [
+    {
+      "id": "uuid-string",
+      "title": "Article Title",
+      "keyword": "article-keyword",
+      "status": "completed",
+      "target_word_count": 2000,
+      "writing_style": "professional",
+      "target_audience": "general",
+      "created_at": "2026-01-22T00:00:00Z",
+      "updated_at": "2026-01-22T00:00:00Z",
+      "org_id": "uuid-string"
+    }
+  ],
+  "total": 42,
+  "limit": 20,
+  "offset": 0
+}
+```
+
+---
+
+### GET /api/articles/[id]
+
+Get detailed information about a specific article.
+
+**Authentication Required**: Yes  
+
+#### Response
+
+```json
+{
+  "id": "uuid-string",
+  "title": "Article Title",
+  "keyword": "article-keyword",
+  "status": "completed",
+  "target_word_count": 2000,
+  "writing_style": "professional",
+  "target_audience": "general",
+  "content": "<p>Article content...</p>",
+  "sections": [
+    {
+      "id": "uuid-string",
+      "section_type": "introduction",
+      "section_title": "Introduction",
+      "section_order": 1,
+      "content": "Section content...",
+      "word_count": 250,
+      "status": "completed"
+    }
+  ],
+  "created_at": "2026-01-22T00:00:00Z",
+  "updated_at": "2026-01-22T00:00:00Z",
+  "org_id": "uuid-string"
+}
+```
+
+---
+
+### POST /api/articles
+
+Create a new article for generation.
+
+**Authentication Required**: Yes  
+**Rate Limit**: 10 requests per minute per user  
+
+#### Request
+
+```json
+{
+  "keyword": "article-keyword",
+  "target_word_count": 2000,
+  "writing_style": "professional",
+  "target_audience": "general",
+  "custom_instructions": "Additional instructions..."
+}
+```
+
+#### Response
+
+```json
+{
+  "id": "uuid-string",
+  "keyword": "article-keyword",
+  "status": "queued",
+  "created_at": "2026-01-22T00:00:00Z"
+}
+```
+
+---
+
+## 🔐 Authentication APIs
+
+### POST /api/auth/signin
+
 Sign in user with email and password.
 
-**Request Body:**
+**Rate Limit**: 5 requests per minute per IP  
+
+#### Request
+
 ```json
 {
   "email": "user@example.com",
@@ -37,7 +260,8 @@ Sign in user with email and password.
 }
 ```
 
-**Response:**
+#### Response
+
 ```json
 {
   "user": {
@@ -48,6 +272,345 @@ Sign in user with email and password.
   "token": "jwt_token_here"
 }
 ```
+
+---
+
+### POST /api/auth/logout
+
+Invalidate user session.
+
+**Authentication Required**: Yes  
+
+#### Response
+
+```json
+{
+  "success": true,
+  "message": "Logged out successfully"
+}
+```
+
+---
+
+### GET /api/auth/me
+
+Get current user information.
+
+**Authentication Required**: Yes  
+
+#### Response
+
+```json
+{
+  "id": "uuid-string",
+  "email": "user@example.com",
+  "name": "User Name",
+  "org_id": "uuid-string",
+  "role": "admin",
+  "created_at": "2026-01-01T00:00:00Z"
+}
+```
+
+---
+
+## 🔄 Realtime APIs
+
+### GET /api/articles/[id]/status
+
+Get real-time status updates for an article.
+
+**Authentication Required**: Yes  
+**Rate Limit**: 60 requests per minute per user  
+
+#### Response
+
+```json
+{
+  "id": "uuid-string",
+  "status": "generating",
+  "progress": 75,
+  "current_section": "Main Content",
+  "estimated_completion": "2026-01-22T00:30:00Z",
+  "updated_at": "2026-01-22T00:15:00Z"
+}
+```
+
+#### WebSocket Connection
+
+For real-time updates, connect to the WebSocket endpoint:
+
+```javascript
+const ws = new WebSocket('ws://localhost:3000/api/articles/realtime');
+ws.send(JSON.stringify({
+  type: 'subscribe',
+  articleId: 'uuid-string',
+  token: 'JWT_TOKEN'
+}));
+```
+
+#### WebSocket Events
+
+```json
+// Status update
+{
+  "type": "status_update",
+  "articleId": "uuid-string",
+  "status": "completed",
+  "progress": 100,
+  "timestamp": "2026-01-22T00:30:00Z"
+}
+
+// Progress update
+{
+  "type": "progress_update",
+  "articleId": "uuid-string",
+  "progress": 85,
+  "current_section": "Conclusion",
+  "timestamp": "2026-01-22T00:25:00Z"
+}
+```
+
+---
+
+## ❌ Error Codes
+
+### HTTP Status Codes
+
+| Code | Meaning | Description |
+|------|---------|-------------|
+| 200 | OK | Request successful |
+| 201 | Created | Resource created successfully |
+| 400 | Bad Request | Invalid request parameters |
+| 401 | Unauthorized | Authentication required or invalid |
+| 403 | Forbidden | Insufficient permissions |
+| 404 | Not Found | Resource not found |
+| 409 | Conflict | Resource conflict |
+| 429 | Too Many Requests | Rate limit exceeded |
+| 500 | Internal Server Error | Server error |
+| 503 | Service Unavailable | Feature disabled or maintenance |
+
+### Error Response Format
+
+```json
+{
+  "error": "Human-readable error message",
+  "code": "ERROR_CODE",
+  "details": {
+    "field": "Additional error details",
+    "timestamp": "2026-01-22T00:00:00Z"
+  }
+}
+```
+
+### Specific Error Codes
+
+| Code | Context | Description |
+|------|---------|-------------|
+| ARTICLE_NOT_FOUND | Article APIs | Article with specified ID not found |
+| ARTICLE_NOT_COMPLETED | WordPress Publishing | Article must be completed before publishing |
+| WORDPRESS_DISABLED | WordPress Publishing | WordPress publishing feature disabled |
+| WORDPRESS_AUTH_FAILED | WordPress Publishing | WordPress authentication failed |
+| WORDPRESS_API_ERROR | WordPress Publishing | WordPress API error occurred |
+| PUBLISH_ALREADY_EXISTS | WordPress Publishing | Article already published |
+| INVALID_CREDENTIALS | Authentication | Invalid email or password |
+| TOKEN_EXPIRED | Authentication | JWT token has expired |
+| INSUFFICIENT_PERMISSIONS | Authorization | User lacks required permissions |
+| RATE_LIMIT_EXCEEDED | Rate Limiting | Too many requests |
+| VALIDATION_ERROR | Validation | Request validation failed |
+
+---
+
+## ⚡ Rate Limiting
+
+### Rate Limits by Endpoint
+
+| Endpoint | Limit | Period | Scope |
+|----------|-------|--------|-------|
+| POST /api/articles/publish | 10 | 1 minute | Per user |
+| POST /api/articles | 10 | 1 minute | Per user |
+| GET /api/articles | 100 | 1 minute | Per user |
+| GET /api/articles/[id]/status | 60 | 1 minute | Per user |
+| POST /api/auth/signin | 5 | 1 minute | Per IP |
+| All other endpoints | 1000 | 1 hour | Per user |
+
+### Rate Limit Headers
+
+```http
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1642848000
+```
+
+### Rate Limit Exceeded Response
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "code": "RATE_LIMIT_EXCEEDED",
+  "details": {
+    "limit": 10,
+    "reset": "2026-01-22T00:01:00Z"
+  }
+}
+```
+
+---
+
+## 🌐 Base URLs
+
+```
+Production: https://api.infin8content.com
+Development: http://localhost:3000/api
+Sandbox: https://sandbox-api.infin8content.com
+```
+
+---
+
+## 🔍 Pagination
+
+### Cursor-based Pagination
+
+For large datasets, use cursor-based pagination:
+
+```json
+{
+  "data": [...],
+  "pagination": {
+    "hasNext": true,
+    "hasPrev": false,
+    "nextCursor": "eyJpZCI6IjEyMyJ9",
+    "prevCursor": null
+  }
+}
+```
+
+### Offset-based Pagination
+
+For smaller datasets, use offset-based pagination:
+
+```json
+{
+  "data": [...],
+  "pagination": {
+    "total": 100,
+    "limit": 20,
+    "offset": 0,
+    "hasNext": true,
+    "hasPrev": false
+  }
+}
+```
+
+---
+
+## 📝 SDK Examples
+
+### JavaScript/TypeScript
+
+```typescript
+import { Infin8ContentAPI } from '@infin8content/api-client';
+
+const api = new Infin8ContentAPI({
+  baseURL: 'https://api.infin8content.com',
+  token: 'your-jwt-token'
+});
+
+// Publish article
+const result = await api.articles.publish({
+  articleId: 'uuid-string'
+});
+
+// Get articles
+const articles = await api.articles.list({
+  limit: 20,
+  status: 'completed'
+});
+```
+
+### Python
+
+```python
+import requests
+
+class Infin8ContentAPI:
+    def __init__(self, base_url, token):
+        self.base_url = base_url
+        self.headers = {
+            'Authorization': f'Bearer {token}',
+            'Content-Type': 'application/json'
+        }
+    
+    def publish_article(self, article_id):
+        response = requests.post(
+            f'{self.base_url}/api/articles/publish',
+            headers=self.headers,
+            json={'articleId': article_id}
+        )
+        return response.json()
+
+api = Infin8ContentAPI('https://api.infin8content.com', 'your-token')
+result = api.publish_article('uuid-string')
+```
+
+---
+
+## 🧪 Testing Endpoints
+
+### Sandbox Environment
+
+For testing, use the sandbox environment:
+
+- **Base URL**: `https://sandbox-api.infin8content.com`
+- **Authentication**: Test tokens available in developer dashboard
+- **Rate Limits**: Relaxed for testing
+
+### Test Data
+
+```json
+{
+  "test_article_id": "00000000-0000-0000-0000-000000000000",
+  "test_token": "test-jwt-token-for-development"
+}
+```
+
+---
+
+## 📞 Support
+
+### API Support
+
+- **Documentation**: [https://docs.infin8content.com](https://docs.infin8content.com)
+- **Status Page**: [https://status.infin8content.com](https://status.infin8content.com)
+- **Support Email**: api-support@infin8content.com
+
+### Reporting Issues
+
+When reporting API issues, include:
+- Request URL and method
+- Request headers and body
+- Response status and body
+- Timestamp and timezone
+- User ID and organization ID (if applicable)
+
+---
+
+## 🔄 Version History
+
+### v2.0.0 (January 22, 2026)
+- ✅ Added WordPress publishing APIs
+- ✅ Enhanced realtime stability
+- ✅ Improved error handling
+- ✅ Added comprehensive rate limiting
+
+### v1.0.0 (January 1, 2026)
+- ✅ Initial API release
+- ✅ Basic article management
+- ✅ Authentication system
+- ✅ Realtime updates
+
+---
+
+**This API reference is continuously updated. Check the documentation portal for the latest changes and additions.**
 
 #### POST /api/auth/signup
 Register new user account.

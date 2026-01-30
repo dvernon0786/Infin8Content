@@ -1,194 +1,247 @@
-# API Contracts Documentation
+# API Contracts - Infin8Content
 
-Generated: 2026-01-20 (Updated)  
-Project: Infin8Content  
-Framework: Next.js 16.1.1 with TypeScript  
-Total Endpoints: 55  
-Scan Type: Deep Scan (Critical API routes analyzed)
+Generated: 2026-01-23 (Deep Scan Update)  
+Framework: Next.js 16.1.1 API Routes  
+Base URL: `/api`
 
----
+## Overview
 
-## API Overview
-
-The Infin8Content API follows RESTful conventions using Next.js App Router with comprehensive test coverage. All endpoints include proper error handling, authentication middleware, and request validation using Zod schemas.
+Infin8Content implements a comprehensive REST API using Next.js App Router with TypeScript, featuring multi-tenant architecture, authentication, payment processing, and AI content generation capabilities.
 
 ## Authentication
 
-All API endpoints require authentication except where noted:
-- **Authentication Method**: Supabase JWT tokens
-- **Header**: `Authorization: Bearer <token>`
-- **Middleware**: Automatic user validation and suspension checks
+All API endpoints require authentication via Supabase Auth sessions. Authentication is handled through middleware and user context validation.
 
-## API Endpoints by Category
+## API Endpoints
 
-### Authentication (`/api/auth`)
+### Authentication Endpoints
 
-| Method | Endpoint | Description | Auth Required |
-|--------|-----------|-------------|---------------|
-| POST | `/api/auth/login` | User login with email/OTP | No |
-| POST | `/api/auth/register` | User registration | No |
-| POST | `/api/auth/logout` | User logout | Yes |
-| POST | `/api/auth/resend-otp` | Resend verification OTP | No |
-| POST | `/api/auth/verify-otp` | Verify email OTP | No |
+#### POST /api/auth/register
+Registers new user with OTP verification via Brevo email service.
 
-### Articles (`/api/articles`)
-
-| Method | Endpoint | Description | Auth Required |
-|--------|-----------|-------------|---------------|
-| POST | `/api/articles/generate` | Generate AI content | Yes |
-| GET | `/api/articles/status/[id]` | Get generation progress | Yes |
-| POST | `/api/articles/queue` | Queue article generation | Yes |
-| DELETE | `/api/articles/[id]/cancel` | Cancel article generation | Yes |
-| GET | `/api/articles/[id]/diagnostics` | Get generation diagnostics | Yes |
-| POST | `/api/articles/fix-stuck` | Fix stuck generation | Yes |
-| POST | `/api/articles/test-inngest` | Test Inngest integration | Yes |
-| GET | `/api/articles/usage` | Get usage statistics | Yes |
-
-### Organizations (`/api/organizations`)
-
-| Method | Endpoint | Description | Auth Required |
-|--------|-----------|-------------|---------------|
-| POST | `/api/organizations/create` | Create new organization | Yes |
-| PUT | `/api/organizations/update` | Update organization details | Yes |
-
-### Payment (`/api/payment`)
-
-| Method | Endpoint | Description | Auth Required |
-|--------|-----------|-------------|---------------|
-| POST | `/api/payment/create-checkout-session` | Create Stripe checkout | Yes |
-
-### Research (`/api/research`)
-
-| Method | Endpoint | Description | Auth Required |
-|--------|-----------|-------------|---------------|
-| POST | `/api/research/keywords` | Keyword research analysis | Yes |
-
-### Team Management (`/api/team`)
-
-| Method | Endpoint | Description | Auth Required |
-|--------|-----------|-------------|---------------|
-| GET | `/api/team/members` | List team members | Yes |
-| POST | `/api/team/invite` | Invite team member | Yes |
-| POST | `/api/team/accept-invitation` | Accept team invitation | Yes |
-| DELETE | `/api/team/cancel-invitation` | Cancel pending invitation | Yes |
-| POST | `/api/team/resend-invitation` | Resend invitation | Yes |
-| DELETE | `/api/team/remove-member` | Remove team member | Yes |
-| PUT | `/api/team/update-role` | Update member role | Yes |
-
-### User Management (`/api/user`)
-
-| Method | Endpoint | Description | Auth Required |
-|--------|-----------|-------------|---------------|
-| DELETE | `/api/user/delete` | Delete user account | Yes |
-| GET | `/api/user/export` | Export user data | Yes |
-
-### Webhooks (`/api/webhooks`)
-
-| Method | Endpoint | Description | Auth Required |
-|--------|-----------|-------------|---------------|
-| POST | `/api/webhooks/stripe` | Stripe webhook handler | No (signature verified) |
-
-### Debug (`/api/debug`)
-
-| Method | Endpoint | Description | Auth Required |
-|--------|-----------|-------------|---------------|
-| GET | `/api/debug/payment-status` | Debug payment status | Yes |
-
-### Inngest (`/api/inngest`)
-
-| Method | Endpoint | Description | Auth Required |
-|--------|-----------|-------------|---------------|
-| POST/GET | `/api/inngest` | Inngest webhook endpoint | No (internal) |
-
-## Request/Response Patterns
-
-### Standard Success Response
+**Request Body:**
 ```typescript
 {
-  success: true,
-  data: any,
-  message?: string
+  email: string;
+  password: string; // min 8 characters
 }
 ```
 
-### Standard Error Response
+**Response:** 201 Created
 ```typescript
 {
-  success: false,
-  error: string,
-  details?: any
+  message: "Registration successful. Please check your email for OTP code.";
+  userId: string;
 }
 ```
 
-### Authentication Error Response
+#### POST /api/auth/verify-otp
+Verifies OTP code for user registration.
+
+**Request Body:**
 ```typescript
 {
-  success: false,
-  error: "Unauthorized",
-  code: "AUTH_REQUIRED"
+  email: string;
+  code: string; // 6-digit OTP
 }
 ```
 
-## Rate Limiting
+#### POST /api/auth/login
+Authenticates user and creates session.
 
-- **General API**: 100 requests per minute per user
-- **Article Generation**: 10 requests per minute per user
-- **Research API**: 20 requests per minute per user
+#### POST /api/auth/logout
+Terminates user session.
 
-## Data Validation
+### Articles Endpoints
 
-All endpoints use Zod schemas for request validation:
-- Automatic request body validation
-- Type safety for all parameters
-- Detailed error messages for invalid inputs
+#### POST /api/articles/generate
+Creates new article and queues it for AI generation (Story 4a implementation).
 
-## Testing Coverage
+**Authentication:** Required (401 if not authenticated)  
+**Usage Limits:** Enforced per plan (Starter: 10, Pro: 50, Agency: unlimited)
 
-- **Unit Tests**: All non-auth endpoints have comprehensive unit tests
-- **Integration Tests**: Database operations tested with test database
-- **E2E Tests**: Critical user flows tested with Playwright
+**Request Body:**
+```typescript
+{
+  keyword: string; // min 1, max 200 characters
+  targetWordCount: number; // min 500, max 10000
+  writingStyle?: 'Professional' | 'Conversational' | 'Technical' | 'Casual' | 'Formal';
+  targetAudience?: 'General' | 'B2B' | 'B2C' | 'Technical' | 'Consumer';
+  customInstructions?: string; // max 2000 characters
+}
+```
 
-## Security Features
+**Response:** 200 OK
+```typescript
+{
+  id: string;
+  keyword: string;
+  status: 'queued';
+  createdAt: string;
+  estimatedCompletionTime: string;
+}
+```
 
-- **Input Validation**: All inputs sanitized and validated
-- **Authentication**: JWT-based auth with automatic token refresh
-- **Authorization**: Role-based access control (Admin, Member, Viewer)
-- **Rate Limiting**: Request throttling per user
-- **Audit Logging**: All API calls logged for compliance
+**Error Responses:**
+- 401 Unauthorized: Authentication required
+- 403 Forbidden: Usage limit exceeded
+```typescript
+{
+  error: "You've reached your article limit for this month";
+  details: {
+    code: 'USAGE_LIMIT_EXCEEDED';
+    usageLimitExceeded: true;
+    currentUsage: number;
+    limit: number | null;
+  };
+}
+```
+
+**Features:**
+- Multi-tenant article creation with organization isolation
+- Usage tracking with monthly billing periods
+- Activity logging for audit trail
+- Automatic queuing via Inngest for AI generation
+- Plan-based usage limits enforcement
+
+#### POST /api/articles/publish
+Publishes article to WordPress (Story 5-1 implementation).
+
+**Request Body:**
+```typescript
+{
+  articleId: string;
+}
+```
+
+**Response:** 200 OK
+```typescript
+{
+  success: boolean;
+  wordpressPostId?: string;
+  wordpressUrl?: string;
+  publishedAt: string;
+}
+```
+
+**Features:**
+- Idempotent publishing via publish_references table
+- WordPress Application Password authentication
+- Synchronous execution with 30s timeout
+- Error handling for API failures
+
+### Organizations Endpoints
+
+#### GET /api/organizations
+Retrieves user's organizations.
+
+#### POST /api/organizations
+Creates new organization.
+
+#### PUT /api/organizations/{id}
+Updates organization details.
+
+### Payment Endpoints
+
+#### POST /api/payment/create-checkout-session
+Creates Stripe checkout session for subscription.
+
+#### POST /api/payment/webhook
+Handles Stripe webhook events.
+
+### Team Management Endpoints
+
+#### GET /api/team/members
+Lists organization team members.
+
+#### POST /api/team/invite
+Invites new team member.
+
+#### POST /api/team/accept-invitation
+Accepts team invitation.
+
+### Analytics Endpoints
+
+#### GET /api/analytics/dashboard
+Retrieves dashboard analytics data.
+
+#### GET /api/analytics/performance
+Gets performance metrics.
+
+### Research Endpoints
+
+#### POST /api/research/keyword
+Performs keyword research using Tavily API.
+
+#### POST /api/research/seo-analysis
+Conducts SEO analysis using DataForSEO.
+
+### SEO Endpoints
+
+#### GET /api/seo/metrics
+Retrieves SEO metrics for content.
+
+#### POST /api/seo/optimize
+Optimizes content for SEO.
 
 ## Error Handling
 
-### HTTP Status Codes
-- `200` - Success
-- `201` - Created
-- `400` - Bad Request (validation errors)
-- `401` - Unauthorized (authentication required)
-- `403` - Forbidden (insufficient permissions)
-- `404` - Not Found
-- `429` - Too Many Requests (rate limited)
-- `500` - Internal Server Error
-
-### Error Response Format
+Standard error response format:
 ```typescript
 {
-  success: false,
-  error: "Human-readable error message",
-  code: "ERROR_CODE",
-  details?: {
-    field: "validation_error",
-    message: "Specific field error"
-  }
+  error: string;
+  code?: string;
+  details?: any;
 }
 ```
 
-## Development Notes
+Common HTTP status codes:
+- 400: Bad Request (validation errors)
+- 401: Unauthorized (authentication required)
+- 403: Forbidden (insufficient permissions)
+- 404: Not Found
+- 500: Internal Server Error
+- 503: Service Unavailable (feature disabled)
 
-- All API routes follow Next.js 13+ App Router conventions
-- TypeScript strictly enforced throughout
-- Environment variables validated on startup
-- Comprehensive error logging and monitoring
-- Automatic API documentation generation from TypeScript types
+## Rate Limiting
 
----
+API endpoints implement rate limiting to prevent abuse. Specific limits vary by endpoint type.
 
-*This documentation was generated as part of the BMad Method document-project workflow on 2026-01-11.*
+## Security Features
+
+- Row Level Security (RLS) on all database operations
+- Multi-tenant data isolation via org_id
+- OTP verification for registration
+- Stripe webhook signature validation
+- Input validation using Zod schemas
+
+## Real-time Features
+
+While API endpoints are synchronous, the application uses Supabase real-time subscriptions for:
+- Article generation progress
+- Dashboard updates
+- Team collaboration features
+
+## External API Integrations
+
+- **OpenRouter**: AI content generation
+- **Tavily**: Keyword research and analysis
+- **DataForSEO**: SEO data services
+- **Brevo**: Email notifications and OTP
+- **Stripe**: Payment processing
+- **WordPress**: Content publishing
+
+## Testing
+
+API endpoints are tested with:
+- Unit tests (Vitest)
+- Integration tests 
+- Contract tests
+- Error scenario validation
+
+## Version Information
+
+- API Version: 1.0
+- Framework: Next.js 16.1.1
+- Language: TypeScript 5
+- Database: Supabase (PostgreSQL)

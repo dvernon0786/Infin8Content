@@ -1,349 +1,421 @@
-# API Contracts
-
-**Project:** Infin8Content  
-**Generated:** 2026-01-12 (Updated)  
-**Base URL:** `/api`
+# API Contracts - Infin8Content
 
 ## Overview
+Infin8Content uses Next.js 16.1.1 API routes with TypeScript, providing RESTful endpoints for article generation, user authentication, payment processing, and team management.
 
-The API follows RESTful conventions using Next.js API Routes. All authentication endpoints are located under `/api/auth/`.
+## Base URL
+```
+/api/
+```
 
-## API Structure
+## Authentication
+- **Method**: Supabase Auth with JWT tokens
+- **Header**: `Authorization: Bearer <token>`
+- **Validation**: Middleware-based authentication checks
 
-Based on directory scan, the API is organized into these modules:
+## API Endpoints
 
-- **Authentication** (`/api/auth/*`) - User registration, OTP verification
-- **Articles** (`/api/articles/*`) - Article management and content
-- **Organizations** (`/api/organizations/*`) - Multi-tenant organization management
-- **Payment** (`/api/payment/*`) - Stripe payment processing
-- **Team** (`/api/team/*`) - Team member management and invitations
-- **User** (`/api/user/*`) - User profile and settings
-- **Admin** (`/api/admin/*`) - Administrative operations
-- **Research** (`/api/research/*`) - Research and content analysis
-- **Webhooks** (`/api/webhooks/*`) - External service webhooks
-- **Inngest** (`/api/inngest/*`) - Background job processing
+### Authentication Endpoints
 
-## Authentication Endpoints
-
-### POST /api/auth/register
-
-Register a new user with email and password.
-
-**Request Body:**
+#### POST /api/auth/login
+Login user with email and password
 ```typescript
-{
-  email: string;      // Valid email address
-  password: string;   // Password (min length enforced by Supabase)
+Request: {
+  email: string;
+  password: string;
+}
+Response: {
+  success: true;
+  user: { id: string; email: string; role: string };
+  redirectTo: '/dashboard' | '/payment' | '/create-organization';
 }
 ```
 
-**Response:**
-- **200 OK**: Registration successful, OTP sent to email
-- **400 Bad Request**: Validation error (Zod schema validation)
-- **500 Internal Server Error**: Server error (database, email service, etc.)
-
-**Notes:**
-- Creates user in Supabase Auth
-- Creates user record in `users` table
-- Sends 6-digit OTP via Brevo email service
-- OTP expires in 10 minutes
-
-**Related Files:**
-- `app/api/auth/register/route.ts`
-- `app/api/auth/register/route.test.ts`
-
----
-
-### POST /api/auth/verify-otp
-
-Verify OTP code sent to user's email.
-
-**Request Body:**
+#### POST /api/auth/register
+Register new user with email and password
 ```typescript
-{
-  email: string;      // User's email address
-  code: string;       // 6-digit OTP code
+Request: {
+  email: string;
+  password: string;
+}
+Response: {
+  success: true;
+  user: { id: string; email: string };
+  redirectTo: '/auth';
 }
 ```
 
-**Response:**
-- **200 OK**: OTP verified successfully, user marked as verified
-- **400 Bad Request**: Invalid OTP code or expired
-- **404 Not Found**: OTP code not found for email
-- **500 Internal Server Error**: Server error
-
-**Notes:**
-- Validates OTP code against `otp_codes` table
-- Checks expiration (10 minutes)
-- Marks OTP as verified
-- Updates `users.otp_verified` to `true`
-
-**Related Files:**
-- `app/api/auth/verify-otp/route.ts`
-
----
-
-### POST /api/auth/resend-otp
-
-Resend OTP code to user's email.
-
-**Request Body:**
+#### POST /api/auth/verify-otp
+Verify OTP code for authentication
 ```typescript
-{
-  email: string;      // User's email address
+Request: {
+  email: string;
+  code: string;
+}
+Response: {
+  success: boolean;
+  message: string;
 }
 ```
 
-**Response:**
-- **200 OK**: New OTP sent successfully
-- **400 Bad Request**: Invalid email or user not found
-- **500 Internal Server Error**: Server error (email service failure)
-
-**Notes:**
-- Generates new 6-digit OTP code
-- Invalidates previous OTP codes for the user
-- Sends new OTP via Brevo email service
-- New OTP expires in 10 minutes
-
-**Related Files:**
-- `app/api/auth/resend-otp/route.ts`
-
----
-
-### POST /api/auth/login
-
-Authenticate user with email and password.
-
-**Request Body:**
+#### POST /api/auth/resend-otp
+Resend OTP code to user email
 ```typescript
-{
-  email: string;      // Valid email address
-  password: string;   // User's password
+Request: {
+  email: string;
+}
+Response: {
+  success: boolean;
+  message: string;
 }
 ```
 
-**Response:**
-- **200 OK**: Login successful
-  ```typescript
-  {
-    success: true;
-    user: {
-      id: string;
-      email: string;
-      role: string;
-    };
-    redirectTo: '/dashboard' | '/payment' | '/create-organization';
-  }
-  ```
-- **400 Bad Request**: Validation error (Zod schema validation)
-- **401 Unauthorized**: Invalid email or password (generic error message)
-- **403 Forbidden**: Email not verified (OTP verification required)
-  ```typescript
-  {
-    error: 'Email not verified';
-    redirectTo: '/verify-email?email={email}';
-  }
-  ```
-- **500 Internal Server Error**: Server error
-
-**Notes:**
-- Authenticates user via Supabase Auth (`signInWithPassword`)
-- Verifies OTP verification status (`users.otp_verified = true`)
-- Checks organization membership (`users.org_id`)
-- Determines redirect destination based on:
-  - No organization → `/create-organization` (Story 1.6)
-  - Organization exists → `/dashboard` (assumes payment confirmed, Story 1.7 will add payment check)
-  - Payment not confirmed → `/payment` (Story 1.7)
-- Session is automatically stored in cookies by Supabase SSR
-- JWT token expiration: 24 hours (configured in Supabase)
-
-**Error Handling:**
-- Invalid credentials return generic "Invalid email or password" (prevents user enumeration)
-- OTP not verified returns error with redirect to verification page
-- Rate limiting handled by Supabase (no custom implementation)
-
-**Related Files:**
-- `app/api/auth/login/route.ts`
-- `app/(auth)/login/page.tsx`
-
----
-
-## Organization Endpoints
-
-### POST /api/organizations/create
-
-Create a new organization for the authenticated user.
-
-**Request Body:**
+#### POST /api/auth/logout
+Logout user and invalidate session
 ```typescript
-{
-  name: string;      // Organization name (2-100 characters)
+Request: {}
+Response: {
+  success: boolean;
+  message: string;
 }
 ```
 
-**Response:**
-- **200 OK**: Organization created successfully
-  ```typescript
-  {
-    success: true;
-    organization: {
-      id: string;
-      name: string;
-      plan: 'starter' | 'pro' | 'agency';
-      created_at: string;
-    };
-    redirectTo: '/dashboard';
-  }
-  ```
-- **400 Bad Request**: 
-  - Validation error (Zod schema validation)
-  - User already has an organization
-  - Organization name already exists
-- **401 Unauthorized**: Authentication required
-- **404 Not Found**: User record not found
-- **500 Internal Server Error**: Server error (database, etc.)
+### Article Management Endpoints
 
-**Notes:**
-- Creates organization record in `organizations` table
-- Sets default plan to `'starter'`
-- Links user to organization (`users.org_id = organization.id`)
-- Ensures user role is set to `'owner'`
-- Prevents duplicate organizations (one per user initially)
-- Prevents duplicate organization names (application-level check)
-- Rolls back organization creation if user update fails
-
-**Authorization:**
-- Requires authenticated user (Supabase session)
-- User must not already have an organization
-
-**Related Files:**
-- `app/api/organizations/create/route.ts`
-- `app/api/organizations/create/route.test.ts`
-- `app/create-organization/page.tsx`
-- `app/create-organization/create-organization-form.tsx`
-
----
-
-### POST /api/organizations/update
-
-Update organization name (organization owner only).
-
-**Request Body:**
+#### POST /api/articles/generate
+Generate new article with AI
 ```typescript
-{
-  name: string;      // Organization name (2-100 characters)
+Request: {
+  keyword: string;
+  targetWordCount: number;
+  writingStyle?: 'Professional' | 'Conversational' | 'Technical' | 'Casual' | 'Formal';
+  targetAudience?: 'General' | 'B2B' | 'B2C' | 'Technical' | 'Consumer';
+  customInstructions?: string;
+}
+Response: {
+  success: boolean;
+  articleId?: string;
+  message?: string;
 }
 ```
 
-**Response:**
-- **200 OK**: Organization updated successfully
-  ```typescript
-  {
-    success: true;
-    organization: {
-      id: string;
-      name: string;
-      plan: 'starter' | 'pro' | 'agency';
-      created_at: string;
-      updated_at: string;
-    };
-  }
-  ```
-- **400 Bad Request**: 
-  - Validation error (Zod schema validation)
-  - Organization name already exists
-- **401 Unauthorized**: Authentication required
-- **403 Forbidden**: User is not organization owner
-- **404 Not Found**: Organization not found
-- **500 Internal Server Error**: Server error
+#### GET /api/articles/[id]/status
+Get generation status for specific article
+```typescript
+Response: {
+  id: string;
+  status: 'queued' | 'generating' | 'completed' | 'failed';
+  progress?: number;
+  error?: string;
+}
+```
 
-**Notes:**
-- Updates organization name in database
-- Prevents duplicate organization names (application-level check)
-- Only organization owners can update organization settings
+#### POST /api/articles/[id]/publish
+Publish article to external CMS (WordPress)
+```typescript
+Request: {
+  cmsType: 'wordpress';
+  cmsCredentials: CMSConnectionDetails;
+}
+Response: {
+  success: boolean;
+  publishedUrl?: string;
+  externalId?: string;
+  error?: string;
+}
+```
 
-**Authorization:**
-- Requires authenticated user (Supabase session)
-- User must be organization owner (`users.role = 'owner'`)
-- User must belong to the organization being updated
+#### GET /api/articles/queue
+Get all articles in generation queue
+```typescript
+Response: {
+  articles: Article[];
+  total: number;
+}
+```
 
-**Related Files:**
-- `app/api/organizations/update/route.ts`
-- `app/api/organizations/update/route.test.ts`
-- `app/settings/organization/page.tsx`
-- `app/settings/organization/organization-settings-form.tsx`
+#### POST /api/articles/bulk
+Bulk operations on multiple articles
+```typescript
+Request: {
+  action: 'delete' | 'publish' | 'regenerate';
+  articleIds: string[];
+}
+Response: {
+  success: boolean;
+  processed: number;
+  failed: number;
+}
+```
 
----
+### Organization Management Endpoints
 
-## Authentication Flow
+#### GET /api/organizations
+Get user's organizations
+```typescript
+Response: {
+  organizations: Organization[];
+  current: Organization;
+}
+```
 
-1. **Registration:**
-   - User submits email/password → `POST /api/auth/register`
-   - System creates Supabase Auth user
-   - System creates user record in database
-   - System generates and sends OTP via email
+#### POST /api/organizations
+Create new organization
+```typescript
+Request: {
+  name: string;
+  plan: 'starter' | 'pro' | 'agency';
+}
+Response: {
+  success: boolean;
+  organization: Organization;
+}
+```
 
-2. **Verification:**
-   - User receives email with 6-digit OTP
-   - User submits OTP → `POST /api/auth/verify-otp`
-   - System validates OTP and marks user as verified
+#### PUT /api/organizations/[id]
+Update organization details
+```typescript
+Request: {
+  name?: string;
+  settings?: OrganizationSettings;
+}
+Response: {
+  success: boolean;
+  organization: Organization;
+}
+```
 
-3. **Resend (if needed):**
-   - User requests new OTP → `POST /api/auth/resend-otp`
-   - System generates and sends new OTP
+### Payment Endpoints
 
-4. **Login:**
-   - User submits email/password → `POST /api/auth/login`
-   - System authenticates via Supabase Auth
-   - System verifies OTP verification status
-   - System checks organization and payment status
-   - System redirects based on user state:
-     - OTP not verified → `/verify-email`
-     - No organization → `/create-organization`
-     - Organization exists → `/dashboard` (or `/payment` if not paid)
+#### POST /api/payment/create-checkout
+Create Stripe checkout session
+```typescript
+Request: {
+  planId: string;
+  successUrl: string;
+  cancelUrl: string;
+}
+Response: {
+  success: boolean;
+  checkoutUrl?: string;
+  sessionId?: string;
+}
+```
 
-## Middleware Protection
+#### POST /api/payment/webhooks
+Handle Stripe webhook events
+```typescript
+Headers: {
+  'stripe-signature': string;
+}
+Request: StripeWebhookEvent
+Response: {
+  received: boolean;
+}
+```
 
-**File:** `app/middleware.ts`
+### Team Management Endpoints
 
-Protected routes require:
-- Valid Supabase session (authenticated)
-- `otp_verified = true` in users table
+#### GET /api/team/members
+Get organization team members
+```typescript
+Response: {
+  members: TeamMember[];
+  total: number;
+}
+```
 
-Unprotected routes:
-- `/register` - Registration page
-- `/login` - Login page
-- `/verify-email` - OTP verification page
-- `/api/auth/*` - Authentication endpoints
+#### POST /api/team/invite
+Invite new team member
+```typescript
+Request: {
+  email: string;
+  role: 'admin' | 'member' | 'viewer';
+}
+Response: {
+  success: boolean;
+  inviteId: string;
+}
+```
 
-Protected routes (require authentication + OTP verification):
-- `/create-organization` - Organization creation page
-- `/settings/organization` - Organization settings page
-- `/api/organizations/*` - Organization endpoints
+#### PUT /api/team/members/[id]/role
+Update team member role
+```typescript
+Request: {
+  role: 'admin' | 'member' | 'viewer';
+}
+Response: {
+  success: boolean;
+  member: TeamMember;
+}
+```
+
+### Analytics Endpoints
+
+#### GET /api/analytics/dashboard
+Get dashboard analytics data
+```typescript
+Response: {
+  articles: {
+    total: number;
+    published: number;
+    inProgress: number;
+  };
+  usage: {
+    current: number;
+    limit: number;
+    period: string;
+  };
+  performance: {
+    avgGenerationTime: number;
+    successRate: number;
+  };
+}
+```
+
+#### GET /api/analytics/usage
+Get usage statistics
+```typescript
+Response: {
+  usage: UsageStats[];
+  billing: BillingInfo;
+}
+```
+
+### Research Endpoints
+
+#### POST /api/research/keyword
+Perform keyword research
+```typescript
+Request: {
+  keyword: string;
+  location?: string;
+  language?: string;
+}
+Response: {
+  success: boolean;
+  data: KeywordResearchData;
+}
+```
+
+#### GET /api/research/suggestions
+Get keyword suggestions
+```typescript
+Request: {
+  seedKeyword: string;
+  limit?: number;
+}
+Response: {
+  suggestions: KeywordSuggestion[];
+}
+```
+
+### SEO Endpoints
+
+#### GET /api/seo/metrics
+Get SEO metrics for articles
+```typescript
+Response: {
+  metrics: SEOMetrics[];
+  summary: SEOSummary;
+}
+```
+
+#### POST /api/seo/optimize
+Get SEO optimization suggestions
+```typescript
+Request: {
+  articleId: string;
+  targetKeywords: string[];
+}
+Response: {
+  suggestions: SEOSuggestion[];
+  score: number;
+}
+```
+
+### Admin Endpoints
+
+#### GET /api/admin/system
+Get system health and metrics
+```typescript
+Response: {
+  system: SystemHealth;
+  metrics: SystemMetrics;
+}
+```
+
+#### POST /api/admin/maintenance
+Perform maintenance operations
+```typescript
+Request: {
+  operation: 'cleanup' | 'backup' | 'optimize';
+}
+Response: {
+  success: boolean;
+  result: MaintenanceResult;
+}
+```
 
 ## Error Handling
 
-All endpoints use Zod for request validation and return structured error responses:
-
+All endpoints return consistent error responses:
 ```typescript
 {
-  error: string;           // Error message
-  details?: any;            // Additional error details (validation errors, etc.)
+  error: string;
+  details?: any;
+  code?: string;
 }
 ```
 
-## Environment Variables
+Common error codes:
+- `400` - Bad Request (validation errors)
+- `401` - Unauthorized (authentication required)
+- `403` - Forbidden (insufficient permissions)
+- `404` - Not Found (resource doesn't exist)
+- `429` - Too Many Requests (rate limit exceeded)
+- `500` - Internal Server Error
 
-Required for API functionality:
-- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
-- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (server-side only)
-- `BREVO_API_KEY` - Brevo email service API key
-- `NEXT_PUBLIC_APP_URL` - Application base URL (for email links)
+## Rate Limiting
 
-## Related Documentation
+- **Authentication endpoints**: 5 requests per minute
+- **Article generation**: Based on plan limits
+- **Research endpoints**: 100 requests per hour
+- **General endpoints**: 1000 requests per hour
 
-- [Data Models](./data-models.md) - Database schema
-- [Development Guide](./development-guide.md) - Local development setup
-- [Architecture](./architecture.md) - System architecture
+## Data Validation
 
+All requests are validated using Zod schemas with:
+- Type checking
+- Length limits
+- Format validation
+- Sanitization for security
+
+## Security Features
+
+- **CSRF Protection**: Built-in Next.js middleware
+- **Input Sanitization**: All user inputs sanitized
+- **SQL Injection Prevention**: Supabase RLS policies
+- **Rate Limiting**: Endpoint-specific limits
+- **Audit Logging**: All actions logged for compliance
+
+## WebSocket Support
+
+Real-time updates available via:
+- **Article generation progress**: `/api/articles/[id]/status` with polling
+- **Team collaboration**: Real-time updates via WebSocket connections
+- **Dashboard metrics**: Live data updates
+
+## Testing
+
+API endpoints covered by:
+- **Unit tests**: Vitest for individual functions
+- **Integration tests**: Full endpoint testing
+- **E2E tests**: Playwright for user flows
+
+## Versioning
+
+Current API version: **v1**
+- Version specified in URL: `/api/v1/...`
+- Backward compatibility maintained
+- Deprecation notices sent for breaking changes
