@@ -404,3 +404,70 @@ development_status:
   32-2-efficiency-and-performance-metrics: done
   32-3-analytics-dashboard-and-reporting: complete
   epic-32-retrospective: done
+
+  # === PRIMARY CONTENT WORKFLOW EPICS (NEW - Intent Engine) ===
+  
+  # Epic 33: Workflow Foundation & Organization Setup
+  epic-33: backlog
+  33-1-create-intent-workflow-with-organization-context: backlog
+  33-2-configure-organization-icp-settings: backlog
+  33-3-configure-competitor-urls-for-analysis: backlog
+  33-4-enable-intent-engine-feature-flag: backlog
+  33-5-preserve-legacy-article-generation-system: backlog
+  epic-33-retrospective: optional
+
+  # Epic 34: Intent Validation - ICP & Competitive Analysis
+  epic-34: backlog
+  34-1-generate-icp-document-via-perplexity-ai: backlog
+  34-2-analyze-competitor-content-via-dataforseo: backlog
+  34-3-handle-icp-generation-failures-with-retry: backlog
+  34-4-handle-competitor-analysis-failures-with-retry: backlog
+  epic-34-retrospective: optional
+
+  # Epic 35: Keyword Research & Expansion
+  epic-35: backlog
+  35-1-extract-seed-keywords-from-competitor-data: backlog
+  35-2-expand-keywords-using-multiple-dataforseo-methods: backlog
+  35-3-approve-seed-keywords-before-expansion: backlog
+  epic-35-retrospective: optional
+
+  # Epic 36: Keyword Refinement & Topic Clustering
+  epic-36: backlog
+  36-1-filter-keywords-for-quality-and-relevance: backlog
+  36-2-cluster-keywords-into-hub-and-spoke-structure: backlog
+  36-3-validate-cluster-coherence-and-structure: backlog
+  epic-36-retrospective: optional
+
+  # Epic 37: Content Topic Generation & Approval
+  epic-37: backlog
+  37-1-generate-subtopic-definitions-via-perplexity-ai: backlog
+  37-2-review-and-approve-subtopics-before-article-generation: backlog
+  37-3-implement-human-approval-gate: backlog
+  37-4-maintain-complete-audit-trail-of-all-decisions: backlog
+  epic-37-retrospective: optional
+
+  # Epic 38: Article Generation & Workflow Completion
+  epic-38: backlog
+  38-1-queue-approved-subtopics-for-article-generation: backlog
+  38-2-track-article-generation-progress: backlog
+  38-3-link-generated-articles-to-intent-workflow: backlog
+  epic-38-retrospective: optional
+
+  # Epic 39: Workflow Orchestration & State Management
+  epic-39: backlog
+  39-1-enforce-hard-gate-icp-required-for-all-downstream-steps: backlog
+  39-2-enforce-hard-gate-competitors-required-for-seed-keywords: backlog
+  39-3-enforce-hard-gate-approved-seeds-required-for-longtail-expansion: backlog
+  39-4-enforce-hard-gate-longtails-required-for-subtopics: backlog
+  39-5-enforce-hard-gate-approval-required-for-articles: backlog
+  39-6-create-workflow-status-dashboard: backlog
+  39-7-display-workflow-blocking-conditions: backlog
+  epic-39-retrospective: optional
+
+  # Epic 40: Feature Flag Rollout & Brownfield Safety
+  epic-40: backlog
+  40-1-implement-gradual-feature-flag-rollout: backlog
+  40-2-implement-instant-rollback-capability: backlog
+  40-3-monitor-intent-engine-health-metrics: backlog
+  40-4-ensure-zero-impact-on-legacy-article-generation: backlog
+  epic-40-retrospective: optional
