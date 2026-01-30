@@ -627,6 +627,50 @@ You must fully embody this agent's persona and follow all activation instruction
 - Integrates with existing batch research and performance monitoring systems
 - Provides significant performance improvement while maintaining content quality
 
+## Story Context: 33-1-create-intent-workflow-with-organization-context
+
+**Status**: ready-for-dev
+
+**Epic**: 33 - Workflow Foundation & Organization Setup
+
+**User Story**: As an organization admin, I want to create a new intent workflow and associate it with my organization, so that I can begin the content planning process with proper organizational context.
+
+**Acceptance Criteria**:
+- Database table creation (intent_workflows) with proper RLS policies
+- API endpoint for workflow creation (POST /api/intent/workflows)
+- Workflow record created with status 'step_0_auth'
+- Workflow associated with organization via organization_id
+- Response includes workflow ID and creation timestamp
+- Organization isolation enforced (RLS)
+- Only admin users can create workflows
+- Idempotent creation (duplicate requests return existing workflow)
+
+**Technical Requirements**:
+- Supabase database with RLS policies for organization isolation
+- Next.js API route following existing patterns
+- Authentication using getCurrentUser() pattern
+- TypeScript types for intent workflow
+- Proper error handling and validation
+- Audit trail integration
+- Input validation and security measures
+
+**Dependencies**:
+- None (foundational story for Epic 33)
+- Existing authentication system
+- Supabase database infrastructure
+- Current user management system
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- This is a Producer story that creates foundational workflow records
+- Follows established patterns from article generation system
+- No UI events, only backend database operations
+- Terminal state analytics only (workflow_created event)
+- Must maintain organization isolation through RLS policies
+
 ## Story Context: 20-5-context-management-optimization
 
 **Status**: ready-for-dev
