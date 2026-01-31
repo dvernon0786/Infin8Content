@@ -139,7 +139,8 @@ export async function PUT(
     }
 
     // Check for domain conflicts if URL is being updated
-    if (normalizedUrl && domain !== existingCompetitor.domain) {
+    const existingDomain = (existingCompetitor as any).domain
+    if (normalizedUrl && domain !== existingDomain) {
       const { data: domainConflict, error: checkError } = await supabase
         .from('organization_competitors')
         .select('id')
@@ -319,8 +320,8 @@ export async function DELETE(
         action: AuditAction.COMPETITOR_DELETED,
         details: {
           competitor_id: competitorId,
-          domain: existingCompetitor.domain,
-          had_name: !!existingCompetitor.name
+          domain: (existingCompetitor as any).domain,
+          had_name: !!(existingCompetitor as any).name
         },
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
