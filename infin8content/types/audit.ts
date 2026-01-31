@@ -38,6 +38,12 @@ export const AuditAction = {
     INTENT_WORKFLOW_CREATED: 'intent.workflow.created',
     INTENT_WORKFLOW_UPDATED: 'intent.workflow.updated',
     INTENT_WORKFLOW_DELETED: 'intent.workflow.deleted',
+
+    // ICP settings actions
+    ICP_SETTINGS_CREATED: 'icp.settings.created',
+    ICP_SETTINGS_UPDATED: 'icp.settings.updated',
+    ICP_SETTINGS_DELETED: 'icp.settings.deleted',
+    ICP_SETTINGS_VIEWED: 'icp.settings.viewed',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];
