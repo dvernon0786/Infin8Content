@@ -408,12 +408,12 @@ development_status:
   # === PRIMARY CONTENT WORKFLOW EPICS (NEW - Intent Engine) ===
   
   # Epic 33: Workflow Foundation & Organization Setup
-  epic-33: in-progress
+  epic-33: done
   33-1-create-intent-workflow-with-organization-context: done
   33-2-configure-organization-icp-settings: done
   33-3-configure-competitor-urls-for-analysis: done
   33-4-enable-intent-engine-feature-flag: done
-  33-5-preserve-legacy-article-generation-system: backlog
+  33-5-preserve-legacy-article-generation-system: done
   epic-33-retrospective: optional
 
   # Epic 34: Intent Validation - ICP & Competitive Analysis
