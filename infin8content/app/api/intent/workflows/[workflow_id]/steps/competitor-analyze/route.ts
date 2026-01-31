@@ -148,13 +148,9 @@ export async function POST(
 
     console.log(`[CompetitorAnalyze] Successfully completed competitor analysis for workflow ${workflowId}`)
 
-    // Determine response status based on partial vs full success
-    const hasPartialFailures = result.competitors_failed > 0
-    const statusCode = hasPartialFailures ? 207 : 200
-
     return NextResponse.json({
       success: true,
-      warning: hasPartialFailures ? `${result.competitors_failed} competitor(s) failed during analysis` : undefined,
+      warning: result.competitors_failed > 0 ? `${result.competitors_failed} competitor(s) failed during analysis` : undefined,
       data: {
         seed_keywords_created: result.total_keywords_created,
         step_2_competitor_completed_at: new Date().toISOString(),
@@ -162,7 +158,7 @@ export async function POST(
         competitors_failed: result.competitors_failed,
         results: result.results
       }
-    }, { status: statusCode })
+    })
   } catch (error) {
     // Log error
     console.error(`[CompetitorAnalyze] Error during competitor analysis:`, error)

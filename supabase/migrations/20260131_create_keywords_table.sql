@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS keywords (
   subtopics_status TEXT NOT NULL DEFAULT 'not_started' CHECK (subtopics_status IN ('not_started', 'in_progress', 'completed', 'failed')),
   article_status TEXT NOT NULL DEFAULT 'not_started' CHECK (article_status IN ('not_started', 'in_progress', 'completed', 'failed')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(organization_id, competitor_url_id, seed_keyword)
 );
 
 -- Create indexes for common queries
@@ -69,14 +70,8 @@ DROP POLICY IF EXISTS keywords_org_access ON keywords;
 CREATE POLICY keywords_org_access ON keywords
   FOR ALL
   USING (
-    organization_id IN (
-      SELECT org_id FROM public.users 
-      WHERE auth_user_id = auth.uid() AND org_id IS NOT NULL
-    )
+    organization_id = public.get_auth_user_org_id()
   )
   WITH CHECK (
-    organization_id IN (
-      SELECT org_id FROM public.users 
-      WHERE auth_user_id = auth.uid() AND org_id IS NOT NULL
-    )
+    organization_id = public.get_auth_user_org_id()
   );

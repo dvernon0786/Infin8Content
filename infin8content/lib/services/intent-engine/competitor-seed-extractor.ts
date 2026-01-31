@@ -72,66 +72,62 @@ export async function extractSeedKeywords(
     competitors,
     organizationId,
     maxSeedsPerCompetitor = 3,
-    locationCode = 2840, // US default
+    locationCode = 2840,
     languageCode = 'en',
-    timeoutMs = 600000 // 10 minutes default
+    timeoutMs = 600000
   } = request
 
-  const startTime = Date.now()
-  const results: CompetitorSeedExtractionResult[] = []
-  let totalKeywordsCreated = 0
-  let competitorsFailed = 0
-
-  // Validate inputs
   if (!competitors || competitors.length === 0) {
     throw new Error('No competitors provided for seed keyword extraction')
   }
 
   if (!organizationId) {
-    throw new Error('Organization ID is required')
+    throw new Error('Organization ID is required for seed keyword extraction')
   }
 
   console.log(`[CompetitorSeedExtractor] Starting extraction for ${competitors.length} competitors`)
 
-  // Process each competitor
+  const results: CompetitorSeedExtractionResult[] = []
+  let totalKeywordsCreated = 0
+  let competitorsProcessed = 0
+  let competitorsFailed = 0
+
+  // Distribute timeout across competitors (with 10% buffer for database operations)
+  const perCompetitorTimeoutMs = Math.floor((timeoutMs * 0.9) / competitors.length)
+  const startTime = Date.now()
+
   for (const competitor of competitors) {
     try {
-      // Check timeout
-      const elapsed = Date.now() - startTime
-      if (elapsed > timeoutMs) {
-        throw new Error(`Extraction timeout: exceeded ${timeoutMs}ms limit`)
+      // Check if we've exceeded overall timeout
+      const elapsedMs = Date.now() - startTime
+      if (elapsedMs >= timeoutMs) {
+        throw new Error('Seed keyword extraction timed out')
       }
 
-      console.log(`[CompetitorSeedExtractor] Processing competitor: ${competitor.domain}`)
-
-      // Extract keywords from competitor URL
       const keywords = await extractKeywordsFromCompetitor(
         competitor.url,
         maxSeedsPerCompetitor,
         locationCode,
-        languageCode
+        languageCode,
+        perCompetitorTimeoutMs
       )
 
-      // Persist keywords to database
-      const createdCount = await persistSeedKeywords(
-        organizationId,
-        competitor.id,
-        keywords
-      )
+      await persistSeedKeywords(organizationId, competitor.id, keywords)
+      totalKeywordsCreated += keywords.length
+      competitorsProcessed++
 
       results.push({
         competitor_id: competitor.id,
         competitor_url: competitor.url,
-        seed_keywords_created: createdCount,
+        seed_keywords_created: keywords.length,
         keywords
       })
 
-      totalKeywordsCreated += createdCount
-      console.log(`[CompetitorSeedExtractor] Created ${createdCount} seed keywords for ${competitor.domain}`)
+      console.log(`[CompetitorSeedExtractor] Created ${keywords.length} seed keywords for ${competitor.url}`)
     } catch (error) {
       competitorsFailed++
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      console.error(`[CompetitorSeedExtractor] Failed to process competitor ${competitor.domain}:`, errorMessage)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.error(`[CompetitorSeedExtractor] Failed to process competitor ${competitor.url}: ${errorMessage}`)
 
       results.push({
         competitor_id: competitor.id,
@@ -143,17 +139,18 @@ export async function extractSeedKeywords(
     }
   }
 
-  // Check if all competitors failed
-  if (competitorsFailed === competitors.length) {
+  if (competitorsProcessed === 0) {
     throw new Error('All competitors failed during seed keyword extraction')
   }
 
-  const duration = Date.now() - startTime
-  console.log(`[CompetitorSeedExtractor] Extraction completed in ${duration}ms: ${totalKeywordsCreated} keywords created`)
+  const totalElapsedMs = Date.now() - startTime
+  console.log(
+    `[CompetitorSeedExtractor] Extraction completed in ${totalElapsedMs}ms: ${totalKeywordsCreated} keywords created`
+  )
 
   return {
     total_keywords_created: totalKeywordsCreated,
-    competitors_processed: competitors.length - competitorsFailed,
+    competitors_processed: competitorsProcessed,
     competitors_failed: competitorsFailed,
     results
   }
@@ -166,7 +163,8 @@ async function extractKeywordsFromCompetitor(
   url: string,
   maxKeywords: number,
   locationCode: number,
-  languageCode: string
+  languageCode: string,
+  timeoutMs?: number
 ): Promise<SeedKeywordData[]> {
   const login = process.env.DATAFORSEO_LOGIN
   const password = process.env.DATAFORSEO_PASSWORD
@@ -245,7 +243,11 @@ async function extractKeywordsFromCompetitor(
         throw new Error(`DataForSEO API error: ${task?.status_message || 'Unknown error'}`)
       }
 
-      const taskResults = task.result || []
+      const taskResults = task.result
+      if (!Array.isArray(taskResults)) {
+        throw new Error(`DataForSEO API error: Invalid result format - expected array, got ${typeof taskResults}`)
+      }
+      
       if (taskResults.length === 0) {
         console.warn(`No keyword results returned from DataForSEO for ${url}`)
         return []

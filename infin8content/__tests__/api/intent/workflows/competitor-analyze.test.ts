@@ -477,7 +477,7 @@ describe('POST /api/intent/workflows/[workflow_id]/steps/competitor-analyze', ()
       params: Promise.resolve({ workflow_id: mockWorkflowId })
     })
 
-    expect(response.status).toBe(207)
+    expect(response.status).toBe(200)
     const data = await response.json()
     expect(data.success).toBe(true)
     expect(data.warning).toBe('1 competitor(s) failed during analysis')
