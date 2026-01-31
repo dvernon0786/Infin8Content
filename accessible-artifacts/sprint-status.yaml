@@ -420,7 +420,7 @@ development_status:
   epic-34: in-progress
   34-1-generate-icp-document-via-perplexity-ai: done
   34-2-extract-seed-keywords-from-competitor-urls: done
-  34-3-handle-icp-generation-failures-with-retry: ready-for-dev
+  34-3-handle-icp-generation-failures-with-retry: ready-for-merge
   34-4-handle-competitor-analysis-failures-with-retry: backlog
   epic-34-retrospective: optional
 
