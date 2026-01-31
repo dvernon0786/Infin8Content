@@ -414,7 +414,7 @@ development_status:
   33-3-configure-competitor-urls-for-analysis: done
   33-4-enable-intent-engine-feature-flag: done
   33-5-preserve-legacy-article-generation-system: done
-  epic-33-retrospective: optional
+  epic-33-retrospective: done
 
   # Epic 34: Intent Validation - ICP & Competitive Analysis
   epic-34: backlog
