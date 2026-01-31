@@ -1655,3 +1655,55 @@ You must fully embody this agent's persona and follow all activation instruction
 - Reuses existing OpenRouter client to reduce implementation scope
 - Organization data variables populated from intent_workflows table
 - Cost tracking integrated with existing OpenRouter system
+
+## Story Context: 34-2-extract-seed-keywords-from-competitor-urls
+
+**Status**: ready-for-dev
+
+**Epic**: Epic 34 - Intent Validation - ICP & Competitive Analysis
+
+**User Story**: As a content manager, I want to analyze competitor websites and extract a small, high-quality set of seed keywords from each competitor domain, so that these seed keywords can be expanded into long-tail keywords and subtopics in later steps of the keyword generation pipeline.
+
+**Acceptance Criteria**:
+- System loads active competitor URLs for the organization
+- For each competitor URL, the system calls the DataForSEO `keywords_for_site` API endpoint
+- System extracts up to 3 seed keywords per competitor, ordered by highest search volume
+- For each extracted seed keyword, a record is created in the `keywords` table with seed_keyword, search_volume, competition_level, keyword_difficulty, competitor_url_id, and organization_id
+- All created seed keywords are marked with longtail_status, subtopics_status, and article_status as 'not_started'
+- Workflow status updates to `step_2_competitors` with step_2_competitor_completed_at timestamp
+- Step is marked as completed with timestamp
+
+**Technical Requirements**:
+- API endpoint: POST `/api/intent/workflows/{workflow_id}/steps/competitor-analyze`
+- DataForSEO endpoint: POST `/v3/dataforseo_labs/google/keywords_for_site/live`
+- Service: `lib/services/intent-engine/competitor-seed-extractor.ts`
+- One request per competitor URL with limit to top 3 keywords
+- Retry: up to 3 attempts (2s, 4s, 8s backoff)
+- Timeout: hard stop at 10 minutes total
+- Normalized keyword records stored in `keywords` table (no JSON storage)
+- Idempotent: re-running overwrites existing seeds, no duplicates
+- Non-blocking per competitor: continues with others on failure
+- Audit logging for workflow.competitor_seed_keywords.started and .completed actions
+
+**Dependencies**:
+- Epic 34.1 - Generate ICP Document via Perplexity AI (COMPLETED ✅)
+  - ICP generation is complete
+  - Organization context is available
+  - Competitor URLs are configured and stored
+- Existing DataForSEO API integration
+- Existing authentication patterns (`getCurrentUser()`)
+- Supabase database infrastructure with `keywords` table
+
+**Priority**: High
+**Story Points**: 13
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Producer story that creates seed keyword records for workflow step 2
+- Follows established patterns from article generation system
+- No UI events, only backend workflow operations
+- Terminal state analytics only (workflow_step_completed event)
+- Establishes foundation for hub-and-spoke SEO model
+- Matches Outrank-style keyword engine architecture
+- Non-goals: does not generate long-tail keywords, subtopics, or content
+- Error handling: if one competitor fails, continue with others; if all fail, fail the step

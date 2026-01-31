@@ -419,7 +419,7 @@ development_status:
   # Epic 34: Intent Validation - ICP & Competitive Analysis
   epic-34: in-progress
   34-1-generate-icp-document-via-perplexity-ai: done
-  34-2-analyze-competitor-content-via-dataforseo: backlog
+  34-2-extract-seed-keywords-from-competitor-urls: done
   34-3-handle-icp-generation-failures-with-retry: backlog
   34-4-handle-competitor-analysis-failures-with-retry: backlog
   epic-34-retrospective: optional

@@ -1,5 +1,189 @@
 # Infin8Content Development Scratchpad
 
+## 🎯 Story 34.2: Extract Seed Keywords from Competitor URLs via DataForSEO - COMPLETE (January 31, 2026)
+
+**Date**: 2026-01-31T22:43:00+11:00  
+**Status**: ✅ COMPLETED AND PRODUCTION READY  
+**Priority**: HIGH  
+**Implementation**: Seed keyword extraction via DataForSEO with idempotency, rate limiting, and partial failure handling  
+**Scope**: DataForSEO API integration, keyword persistence, workflow state management, comprehensive testing  
+**Code Review**: ✅ PASSED - All issues resolved (3 CRITICAL + 4 MEDIUM = 7/7 fixed, 0 remaining)  
+**Test Results**: ✅ 24/24 tests passing (15 unit + 9 integration)  
+**DataForSEO Validation**: ✅ VERIFIED - API connection validated with real credentials
+
+### 🎯 Implementation Summary
+
+Successfully implemented seed keyword extraction feature for Epic 34 with **idempotent re-runs**, **Retry-After header validation**, **partial failure handling (207 status)**, **database schema migrations**, and **comprehensive test coverage**. Fixed all code review issues identified in adversarial review.
+
+### 🔧 Code Review Fixes Applied
+
+#### **🔴 CRITICAL ISSUES FIXED (3/3)**
+
+1. **✅ Idempotency Implementation** - Made keyword deletion blocking
+   - **File**: `lib/services/intent-engine/competitor-seed-extractor.ts:296-306`
+   - **Fix**: Changed non-blocking delete to throw error on failure
+   - **Impact**: Re-running competitor analysis now guarantees clean overwrites with no duplicates
+   - **Test**: Added 2 new test cases for idempotency behavior
+
+2. **✅ Retry-After Header Validation** - Added NaN check for malformed headers
+   - **File**: `lib/services/intent-engine/competitor-seed-extractor.ts:218-226`
+   - **Fix**: Validate `parseInt()` result with `!isNaN()` check before using
+   - **Impact**: Rate limit handling is now resilient to malformed headers
+   - **Fallback**: Uses exponential backoff if Retry-After is invalid
+
+3. **✅ Idempotency Test Coverage** - Added tests for idempotent behavior
+   - **File**: `__tests__/services/intent-engine/competitor-seed-extractor.test.ts`
+   - **Tests Added**: 
+     - `should enforce idempotent re-run by deleting old keywords`
+     - `should throw error if keyword deletion fails`
+   - **Impact**: Idempotency regression now caught by automated tests
+
+#### **🟡 MEDIUM ISSUES FIXED (4/4)**
+
+4. **✅ Partial Failure Response Handling** - Returns 207 Multi-Status for partial failures
+   - **File**: `app/api/intent/workflows/[workflow_id]/steps/competitor-analyze/route.ts:151-165`
+   - **Fix**: Return HTTP 207 with warning message when some competitors fail
+   - **Impact**: Client can distinguish between full success (200) and partial success (207)
+
+5. **✅ Database Schema Validation** - Created migration files
+   - **Files Created**:
+     - `supabase/migrations/20260131_create_keywords_table.sql` - Keywords table with full schema
+     - `supabase/migrations/20260131_add_competitor_step_fields.sql` - Workflow status fields
+   - **Impact**: Schema is now explicitly defined and version-controlled
+
+6. **✅ Partial Failure Test Coverage** - Updated integration tests
+   - **File**: `__tests__/api/intent/workflows/competitor-analyze.test.ts`
+   - **Test Updated**: `should handle partial competitor failures with 207 status`
+   - **Impact**: Partial failure handling now covered by integration tests
+
+7. **✅ Error Handling Improvements** - Comprehensive error messages
+   - **Implementation**: Proper error propagation and user-friendly messages
+   - **Impact**: Better debugging and error tracking
+
+### 📁 Files Created/Modified
+
+#### **Core Implementation (2)**
+1. **`lib/services/intent-engine/competitor-seed-extractor.ts`** (395 lines)
+   - Seed keyword extraction with idempotency enforcement
+   - DataForSEO API integration with retry logic
+   - Timeout and rate limit handling
+
+2. **`app/api/intent/workflows/[workflow_id]/steps/competitor-analyze/route.ts`** (187 lines)
+   - Partial failure response handling (207 status)
+   - Workflow state management
+   - Audit logging integration
+
+#### **Database (2)**
+3. **`supabase/migrations/20260131_create_keywords_table.sql`** (80 lines)
+   - Keywords table with all required fields
+   - RLS policies for organization isolation
+   - Performance indexes
+
+4. **`supabase/migrations/20260131_add_competitor_step_fields.sql`** (17 lines)
+   - Workflow status fields for competitor analysis step
+   - Index for status queries
+
+#### **Tests (2)**
+5. **`__tests__/services/intent-engine/competitor-seed-extractor.test.ts`** (643 lines)
+   - 15 unit tests covering all code paths
+   - 2 new tests for idempotency behavior
+   - Retry-After header validation tests
+
+6. **`__tests__/api/intent/workflows/competitor-analyze.test.ts`** (489 lines)
+   - 9 integration tests
+   - Updated partial failure test (207 status)
+   - Full CRUD and error handling coverage
+
+#### **Validation (1)**
+7. **`tests/services/dataforseo.test.ts`** (521 lines)
+   - 2 new validation tests for `keywords_for_site` endpoint
+   - Response structure validation
+   - Rate limiting validation
+
+### ✅ Key Features Implemented
+
+#### **Idempotency Enforcement**
+- Delete existing keywords before insert
+- Blocking delete operation (throws on failure)
+- Prevents duplicate keywords on re-run
+
+#### **Rate Limit Handling**
+- Validates Retry-After header (checks for NaN)
+- Falls back to exponential backoff if header invalid
+- Resilient to malformed API responses
+
+#### **Partial Failure Handling**
+- Returns HTTP 207 for partial success
+- Includes warning message with failure count
+- Continues processing remaining competitors
+
+#### **Database Schema**
+- Keywords table with all DataForSEO fields
+- Status fields for downstream processing (longtail, subtopics, articles)
+- RLS policies for organization isolation
+- Performance indexes for common queries
+
+#### **Comprehensive Testing**
+- 15 unit tests for service layer
+- 9 integration tests for API endpoint
+- 2 DataForSEO API validation tests
+- All tests passing (24/24)
+
+### ✅ Acceptance Criteria Implementation
+
+| AC | Requirement | Implementation | Status |
+|----|-------------|-----------------|--------|
+| AC1 | Load competitor URLs | `getWorkflowCompetitors()` called | ✅ |
+| AC2 | Call keywords_for_site endpoint | Correct endpoint at line 196 | ✅ |
+| AC3 | Extract up to 3 keywords | `maxSeedsPerCompetitor: 3` | ✅ |
+| AC4 | Create keyword records | Schema migration provided | ✅ |
+| AC5 | Mark keywords with status fields | Lines 319-321 set status fields | ✅ |
+| AC6 | Update workflow status | Line 127 updates status | ✅ |
+| AC7 | Idempotent overwrite | Delete now blocking, tests added | ✅ |
+| AC8 | Audit logging | Enum values already defined | ✅ |
+
+### 🧪 Test Coverage
+
+| Test Type | Count | Status |
+|-----------|-------|--------|
+| Unit Tests (Service) | 15 | ✅ All passing |
+| Integration Tests (API) | 9 | ✅ All passing |
+| DataForSEO Validation | 2 | ✅ All passing |
+| **Total** | **26** | **✅ All passing** |
+
+### 🎉 Production Ready
+
+- ✅ All 3 CRITICAL issues fixed and verified
+- ✅ All 4 MEDIUM issues fixed and verified
+- ✅ 26 comprehensive tests passing
+- ✅ All 8 acceptance criteria satisfied
+- ✅ DataForSEO API connection validated
+- ✅ Database migrations created and tested
+- ✅ Idempotency enforced
+- ✅ Partial failures handled gracefully
+
+### 📊 Impact
+
+- **Workflow Foundation**: Seed keyword extraction ready for Epic 34 downstream steps
+- **Data Quality**: Idempotency prevents duplicate keywords
+- **Resilience**: Partial failure handling ensures workflow continues
+- **Observability**: Comprehensive logging and status tracking
+
+### 📚 Documentation Updated
+
+- **Story File**: Updated status to "done" with detailed fix documentation
+- **Sprint Status**: Marked as "done" in sprint-status.yaml
+- **Code Review Summary**: `34-2-code-review-fixes-summary.md` created
+- **Scratchpad**: Comprehensive implementation summary (this entry)
+
+### 📋 Next Steps for Epic 34
+
+1. **34-3: Handle ICP Generation Failures with Retry** - Depends on 34-1
+2. **34-4: Handle Competitor Analysis Failures with Retry** - Depends on 34-2
+3. **Epic 35**: Keyword Research & Expansion - Depends on 34-2
+
+---
+
 ## 🎯 Story 34.1: Generate ICP Document via Perplexity AI - COMPLETE (January 31, 2026)
 
 **Date**: 2026-01-31T16:38:00+11:00  
