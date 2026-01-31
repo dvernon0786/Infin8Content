@@ -1,13 +1,23 @@
 /**
  * ICP Generator Service
  * Story 34.1: Generate ICP Document via Perplexity AI
+ * Story 34.3: Harden ICP Generation with Automatic Retry & Failure Recovery
  * 
  * Generates Ideal Customer Profile (ICP) documents using OpenRouter Perplexity API
- * based on organization profile data.
+ * based on organization profile data, with automatic retry logic for transient failures.
  */
 
 import { generateContent, type OpenRouterMessage } from '@/lib/services/openrouter/openrouter-client'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
+import {
+  isRetryableError,
+  calculateBackoffDelay,
+  sleep,
+  classifyErrorType,
+  DEFAULT_RETRY_POLICY,
+  type RetryPolicy
+} from './retry-utils'
 
 export interface ICPData {
   industries: string[]
@@ -29,19 +39,103 @@ export interface ICPGenerationResult {
   tokensUsed: number
   modelUsed: string
   generatedAt: string
+  retryCount?: number
+  lastError?: string
 }
 
 /**
- * Generate ICP document using Perplexity API via OpenRouter
+ * Generate ICP document using Perplexity API via OpenRouter with automatic retry
  * 
  * @param request - Organization profile data for ICP generation
  * @param organizationId - Organization ID for tracking and storage
- * @returns Generated ICP data with metadata
+ * @param timeoutMs - Timeout per attempt in milliseconds
+ * @param retryPolicy - Retry configuration (uses defaults if not provided)
+ * @returns Generated ICP data with metadata including retry information
  */
 export async function generateICPDocument(
   request: ICPGenerationRequest,
   organizationId: string,
-  timeoutMs: number = 300000 // 5 minutes default
+  timeoutMs: number = 300000, // 5 minutes default
+  retryPolicy: RetryPolicy = DEFAULT_RETRY_POLICY,
+  workflowId: string = ''
+): Promise<ICPGenerationResult> {
+  let lastError: Error | null = null
+  let retryCount = 0
+
+  for (let attempt = 0; attempt < retryPolicy.maxAttempts; attempt++) {
+    try {
+      const result = await generateICPDocumentAttempt(request, organizationId, timeoutMs)
+      
+      // Success on first attempt or after retry
+      if (attempt > 0) {
+        result.retryCount = attempt
+        console.log(`[ICP-Generator] ICP generation succeeded on retry attempt ${attempt}`)
+      }
+      
+      return result
+    } catch (error) {
+      lastError = error as Error
+      retryCount = attempt + 1
+
+      // Check if error is retryable
+      if (!isRetryableError(error)) {
+        console.error(`[ICP-Generator] Non-retryable error on attempt ${attempt + 1}:`, error)
+        throw error
+      }
+
+      // Check if we have more attempts
+      if (attempt < retryPolicy.maxAttempts - 1) {
+        const delayMs = calculateBackoffDelay(attempt, retryPolicy)
+        const errorType = classifyErrorType(error)
+        
+        console.warn(
+          `[ICP-Generator] Retryable error on attempt ${attempt + 1} (${errorType}). ` +
+          `Retrying in ${delayMs}ms...`,
+          error
+        )
+
+        // Emit retry analytics event
+        emitRetryAnalyticsEvent({
+          workflowId,
+          organizationId,
+          attemptNumber: attempt + 1,
+          errorType,
+          delayBeforeRetryMs: delayMs
+        })
+
+        await sleep(delayMs)
+      }
+    }
+  }
+
+  // All retries exhausted
+  const finalError = lastError || new Error('ICP generation failed after all retry attempts')
+  const errorType = classifyErrorType(finalError)
+  
+  console.error(
+    `[ICP-Generator] ICP generation failed after ${retryCount} attempts. ` +
+    `Final error type: ${errorType}`,
+    finalError
+  )
+
+  // Emit terminal failure analytics event
+  emitTerminalFailureAnalyticsEvent({
+    workflowId,
+    organizationId,
+    totalAttempts: retryCount,
+    finalErrorMessage: finalError.message
+  })
+
+  throw finalError
+}
+
+/**
+ * Single attempt at ICP generation (internal)
+ */
+async function generateICPDocumentAttempt(
+  request: ICPGenerationRequest,
+  organizationId: string,
+  timeoutMs: number
 ): Promise<ICPGenerationResult> {
   const startTime = Date.now()
 
@@ -231,20 +325,32 @@ export async function storeICPGenerationResult(
 ): Promise<void> {
   const supabase = createServiceRoleClient()
 
+  const updateData: any = {
+    icp_data: icpResult.icp_data,
+    status: 'step_1_icp',
+    workflow_data: {
+      icp_generation: {
+        tokensUsed: icpResult.tokensUsed,
+        modelUsed: icpResult.modelUsed,
+        generatedAt: icpResult.generatedAt
+      }
+    }
+  }
+
+  // Only set completion timestamp on first successful attempt, not on retries
+  if (!icpResult.retryCount || icpResult.retryCount === 0) {
+    updateData.step_1_icp_completed_at = new Date().toISOString()
+  }
+
+  // Include retry metadata if this was a retry
+  if (icpResult.retryCount && icpResult.retryCount > 0) {
+    updateData.retry_count = icpResult.retryCount
+    updateData.step_1_icp_last_error_message = icpResult.lastError || null
+  }
+
   const { error } = await supabase
     .from('intent_workflows')
-    .update({
-      icp_data: icpResult.icp_data,
-      step_1_icp_completed_at: new Date().toISOString(),
-      status: 'step_1_icp',
-      workflow_data: {
-        icp_generation: {
-          tokensUsed: icpResult.tokensUsed,
-          modelUsed: icpResult.modelUsed,
-          generatedAt: icpResult.generatedAt
-        }
-      }
-    })
+    .update(updateData)
     .eq('id', workflowId)
     .eq('organization_id', organizationId)
 
@@ -252,7 +358,7 @@ export async function storeICPGenerationResult(
     throw new Error(`Failed to store ICP generation result: ${error.message}`)
   }
 
-  console.log(`[ICPGenerator] ICP result stored for workflow ${workflowId}`)
+  console.log(`[ICP-Generator] ICP result stored for workflow ${workflowId}`)
 }
 
 /**
@@ -261,7 +367,9 @@ export async function storeICPGenerationResult(
 export async function handleICPGenerationFailure(
   workflowId: string,
   organizationId: string,
-  error: Error
+  error: Error,
+  retryCount: number = 0,
+  lastErrorMessage: string | null = null
 ): Promise<void> {
   const supabase = createServiceRoleClient()
 
@@ -270,10 +378,14 @@ export async function handleICPGenerationFailure(
     .update({
       status: 'failed',
       step_1_icp_error_message: error.message,
+      retry_count: retryCount,
+      step_1_icp_last_error_message: lastErrorMessage || error.message,
       workflow_data: {
         icp_generation_error: {
           message: error.message,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          retryCount,
+          lastErrorMessage
         }
       }
     })
@@ -285,4 +397,69 @@ export async function handleICPGenerationFailure(
   }
 
   console.log(`[ICPGenerator] ICP generation failure recorded for workflow ${workflowId}`)
+}
+
+/**
+ * Emit retry analytics event
+ * 
+ * Logs a retry attempt event for audit trail and analytics tracking.
+ * This event is emitted when a transient failure occurs and the system
+ * decides to retry the ICP generation.
+ * 
+ * @param event - Event data containing workflow ID, organization ID, attempt number, error type, and delay
+ * @param event.workflowId - Unique identifier for the workflow
+ * @param event.organizationId - Organization ID for tracking and multi-tenancy
+ * @param event.attemptNumber - Current attempt number (1-indexed)
+ * @param event.errorType - Classified error type (timeout, rate_limit, server_error, etc.)
+ * @param event.delayBeforeRetryMs - Milliseconds to wait before retry (exponential backoff)
+ */
+function emitRetryAnalyticsEvent(event: {
+  workflowId: string
+  organizationId: string
+  attemptNumber: number
+  errorType: string
+  delayBeforeRetryMs: number
+}): void {
+  const analyticsEvent = {
+    event_type: 'workflow_step_retried',
+    step: 'step_1_icp',
+    workflow_id: event.workflowId,
+    organization_id: event.organizationId,
+    attempt_number: event.attemptNumber,
+    error_type: event.errorType,
+    delay_before_retry_ms: event.delayBeforeRetryMs,
+    timestamp: new Date().toISOString()
+  }
+  emitAnalyticsEvent(analyticsEvent)
+}
+
+/**
+ * Emit terminal failure analytics event
+ * 
+ * Logs a terminal failure event when all retry attempts have been exhausted.
+ * This event indicates that the ICP generation has permanently failed and
+ * requires manual intervention or user retry.
+ * 
+ * @param event - Event data containing workflow ID, organization ID, total attempts, and final error message
+ * @param event.workflowId - Unique identifier for the workflow
+ * @param event.organizationId - Organization ID for tracking and multi-tenancy
+ * @param event.totalAttempts - Total number of attempts made (including initial attempt)
+ * @param event.finalErrorMessage - Error message from the final failed attempt
+ */
+function emitTerminalFailureAnalyticsEvent(event: {
+  workflowId: string
+  organizationId: string
+  totalAttempts: number
+  finalErrorMessage: string
+}): void {
+  const analyticsEvent = {
+    event_type: 'workflow_step_failed',
+    step: 'step_1_icp',
+    workflow_id: event.workflowId,
+    organization_id: event.organizationId,
+    total_attempts: event.totalAttempts,
+    final_error_message: event.finalErrorMessage,
+    timestamp: new Date().toISOString()
+  }
+  emitAnalyticsEvent(analyticsEvent)
 }

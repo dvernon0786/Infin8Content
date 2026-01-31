@@ -1,14 +1,16 @@
 /**
  * ICP Generation API Endpoint
  * Story 34.1: Generate ICP Document via Perplexity AI
+ * Story 34.3: Harden ICP Generation with Automatic Retry & Failure Recovery
  * 
  * POST /api/intent/workflows/{workflow_id}/steps/icp-generate
- * Triggers ICP generation for a workflow step
+ * Triggers ICP generation for a workflow step with automatic retry on transient failures
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { checkRateLimit, type RateLimitConfig } from '@/lib/services/rate-limiting/persistent-rate-limiter'
 import {
   generateICPDocument,
   storeICPGenerationResult,
@@ -16,28 +18,27 @@ import {
   type ICPGenerationRequest
 } from '@/lib/services/intent-engine/icp-generator'
 
-// Rate limiting: Track ICP generation requests per organization
-// Key: organization_id, Value: { count: number, resetAt: number }
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
-const RATE_LIMIT_WINDOW_MS = 3600000 // 1 hour
-const MAX_REQUESTS_PER_HOUR = 10 // Max 10 ICP generations per organization per hour
+// Rate limit configuration for ICP generation
+const RATE_LIMIT_CONFIG: RateLimitConfig = {
+  windowMs: 3600000, // 1 hour
+  maxRequests: 10, // Max 10 ICP generations per organization per hour
+  keyPrefix: 'icp_generation'
+}
 
-function checkRateLimit(organizationId: string): { allowed: boolean; remaining: number } {
-  const now = Date.now()
-  const existing = rateLimitMap.get(organizationId)
+// Concurrent retry prevention: Track in-progress ICP generations per workflow
+// Key: workflow_id, Value: true if generation is in progress
+const inProgressMap = new Map<string, boolean>()
 
-  if (!existing || now > existing.resetAt) {
-    // Reset window
-    rateLimitMap.set(organizationId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
-    return { allowed: true, remaining: MAX_REQUESTS_PER_HOUR - 1 }
-  }
+function isGenerationInProgress(workflowId: string): boolean {
+  return inProgressMap.has(workflowId) && inProgressMap.get(workflowId) === true
+}
 
-  if (existing.count >= MAX_REQUESTS_PER_HOUR) {
-    return { allowed: false, remaining: 0 }
-  }
+function markGenerationInProgress(workflowId: string): void {
+  inProgressMap.set(workflowId, true)
+}
 
-  existing.count++
-  return { allowed: true, remaining: MAX_REQUESTS_PER_HOUR - existing.count }
+function clearGenerationInProgress(workflowId: string): void {
+  inProgressMap.delete(workflowId)
 }
 
 export async function POST(
@@ -60,13 +61,25 @@ export async function POST(
 
     organizationId = currentUser.org_id
 
-    // Check rate limit
-    const rateLimit = checkRateLimit(organizationId)
+    // Check for concurrent retry prevention
+    if (isGenerationInProgress(workflowId)) {
+      return NextResponse.json(
+        {
+          error: 'Generation in progress',
+          message: 'ICP generation is already in progress for this workflow'
+        },
+        { status: 409 }
+      )
+    }
+
+    // Check persistent rate limit
+    const rateLimit = await checkRateLimit(organizationId, RATE_LIMIT_CONFIG)
     if (!rateLimit.allowed) {
       return NextResponse.json(
         {
           error: 'Rate limit exceeded',
-          message: 'Maximum 10 ICP generations per organization per hour'
+          message: 'Maximum 10 ICP generations per organization per hour',
+          retryAfter: rateLimit.retryAfter
         },
         { status: 429 }
       )
@@ -143,11 +156,17 @@ export async function POST(
       })
     }
 
-    // Generate ICP document
-    const icpResult = await generateICPDocument(icpRequest, organizationId)
+    // Mark generation as in-progress
+    markGenerationInProgress(workflowId)
 
-    // Store result in workflow
+    // Generate ICP document with automatic retry
+    const icpResult = await generateICPDocument(icpRequest, organizationId, 300000, undefined, workflowId)
+
+    // Store result in workflow with retry metadata (consolidated in single update)
     await storeICPGenerationResult(workflowId, organizationId, icpResult)
+
+    // Clear in-progress flag on success
+    clearGenerationInProgress(workflowId)
 
     // Emit analytics event for workflow step completion
     try {
@@ -160,7 +179,8 @@ export async function POST(
         metadata: {
           tokens_used: icpResult.tokensUsed,
           model_used: icpResult.modelUsed,
-          generated_at: icpResult.generatedAt
+          generated_at: icpResult.generatedAt,
+          retry_count: icpResult.retryCount || 0
         },
         timestamp: new Date().toISOString()
       }
@@ -170,7 +190,11 @@ export async function POST(
     }
 
     // Log activity
-    console.log(`[ICP-Generate] Successfully generated ICP for workflow ${workflowId}`)
+    if (icpResult.retryCount && icpResult.retryCount > 0) {
+      console.log(`[ICP-Generate] Successfully generated ICP for workflow ${workflowId} after ${icpResult.retryCount} retry attempt(s)`)
+    } else {
+      console.log(`[ICP-Generate] Successfully generated ICP for workflow ${workflowId}`)
+    }
 
     return NextResponse.json({
       success: true,
@@ -180,10 +204,14 @@ export async function POST(
       metadata: {
         tokens_used: icpResult.tokensUsed,
         model_used: icpResult.modelUsed,
-        generated_at: icpResult.generatedAt
+        generated_at: icpResult.generatedAt,
+        retry_count: icpResult.retryCount || 0
       }
     })
   } catch (error) {
+    // Clear in-progress flag on error
+    clearGenerationInProgress(workflowId)
+
     // Log error
     console.error(`[ICP-Generate] Error generating ICP:`, error)
 
