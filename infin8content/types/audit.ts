@@ -50,6 +50,9 @@ export const AuditAction = {
     COMPETITOR_UPDATED: 'competitor.updated',
     COMPETITOR_DELETED: 'competitor.deleted',
     COMPETITORS_VIEWED: 'competitors.viewed',
+
+    // Feature flag actions
+    FEATURE_FLAG_TOGGLED: 'feature.flag.toggled',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];

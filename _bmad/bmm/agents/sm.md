@@ -1326,6 +1326,67 @@ You must fully embody this agent's persona and follow all activation instruction
 - Keyword density calculator with industry-standard ranges
 - Readability analysis integration (Flesch-Kincaid, Gunning Fog)
 - E-E-A-T signal detection and scoring system
+
+## Story Context: 33-4-enable-intent-engine-feature-flag
+
+**Status**: ready-for-dev
+
+**Epic**: 33 - Workflow Foundation & Organization Setup
+
+**User Story**: As a system administrator, I want to enable the intent engine feature flag so that the intent workflow system becomes active and users can begin using the intent-based content planning functionality.
+
+**Acceptance Criteria**:
+- Feature flag system implementation for intent engine activation
+- Database flag configuration with organization-level control
+- API endpoint for feature flag management (GET/POST /api/features/intent-engine)
+- Feature flag state persistence in database with audit trail
+- Organization-specific feature flag settings with inheritance from global defaults
+- Real-time feature flag updates without system restart
+- Feature flag validation system to prevent invalid states
+- Feature flag monitoring and analytics for usage tracking
+- Rollback capability for feature flag changes
+- Feature flag permissions with admin-only access controls
+- Feature flag change notifications to system administrators
+- Integration with existing workflow system for conditional activation
+
+**Technical Requirements**:
+- Feature flags table creation with proper RLS policies
+- Feature flag service implementation with caching layer
+- API endpoints following existing patterns from article generation system
+- TypeScript types for feature flag configuration and state
+- Real-time feature flag propagation using WebSocket or Server-Sent Events
+- Feature flag validation with schema checking
+- Audit trail integration for feature flag changes
+- Performance monitoring for feature flag evaluation
+- Error handling and fallback mechanisms for flag failures
+- Integration with existing authentication and authorization systems
+- Feature flag analytics and usage tracking
+- Database migrations for feature flag infrastructure
+
+**Dependencies**:
+- Story 33-1 (Create Intent Workflow with Organization Context) for workflow foundation
+- Story 33-2 (Intent Data Collection Interface) for user interface components
+- Story 33-3 (Intent Processing Engine) for core processing logic
+- Existing authentication system using getCurrentUser() pattern
+- Supabase database infrastructure with RLS policies
+- Next.js API route patterns
+- Real-time infrastructure from existing article status system
+- Performance monitoring system integration
+
+**Priority**: High
+**Story Points**: 5
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- This is an Aggregator story that enables functionality created by other stories
+- Feature flag system should follow established patterns from modern SaaS applications
+- Organization-level control allows for gradual rollout and testing
+- Real-time updates ensure immediate effect without system restarts
+- Comprehensive audit trail provides visibility into feature flag changes
+- Rollback capability ensures safe feature activation and deactivation
+- Integration with existing systems maintains architectural consistency
+- Performance optimization ensures minimal overhead for flag evaluation
+- Security controls prevent unauthorized feature flag manipulation
 - Meta tag optimization validator with length and character checks
 - Internal linking analysis with authority flow calculation
 - Media optimization checker for images and videos

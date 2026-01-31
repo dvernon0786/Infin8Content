@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
+import { isFeatureFlagEnabled } from '@/lib/utils/feature-flags'
+import { FEATURE_FLAG_KEYS } from '@/lib/types/feature-flag'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 import type { 
@@ -91,6 +93,20 @@ export async function POST(request: Request) {
     if (targetOrgId !== currentUser.org_id) {
       return NextResponse.json(
         { error: 'Cannot create workflows for other organizations' },
+        { status: 403 }
+      )
+    }
+
+    // Check if intent engine feature flag is enabled for this organization
+    const isIntentEngineEnabled = await isFeatureFlagEnabled(
+      targetOrgId, 
+      FEATURE_FLAG_KEYS.ENABLE_INTENT_ENGINE
+    )
+    
+    if (!isIntentEngineEnabled) {
+      console.warn(`Intent engine not enabled for organization ${targetOrgId}`)
+      return NextResponse.json(
+        { error: 'Intent engine not enabled for this organization' },
         { status: 403 }
       )
     }
