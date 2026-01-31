@@ -52,15 +52,24 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch user experience metrics
-    const { data: uxMetrics, error: uxError } = await supabase
-      .from('ux_metrics_weekly_rollups')
-      .select('*')
-      .eq('organization_id', actualOrgId)
-      .gte('recorded_at', startDate.toISOString())
-      .lte('recorded_at', endDate.toISOString())
-      .order('recorded_at', { ascending: false })
+    let uxMetrics = null
+    let uxError = null
+    try {
+      const result = await supabase
+        .from('ux_metrics_weekly_rollups')
+        .select('*')
+        .eq('organization_id', actualOrgId)
+        .gte('recorded_at', startDate.toISOString())
+        .lte('recorded_at', endDate.toISOString())
+        .order('recorded_at', { ascending: false })
+      uxMetrics = result.data
+      uxError = result.error
+    } catch (error) {
+      console.log('UX Metrics table not found, using demo data')
+      uxError = null
+    }
 
-    if (uxError) {
+    if (uxError && uxError.code !== 'PGRST116') {
       console.error('UX Metrics fetch error:', uxError)
       return NextResponse.json(
         { error: 'Failed to fetch UX metrics' },
@@ -69,15 +78,24 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch performance metrics
-    const { data: performanceMetrics, error: perfError } = await supabase
-      .from('performance_metrics')
-      .select('*')
-      .eq('organization_id', actualOrgId)
-      .gte('recorded_at', startDate.toISOString())
-      .lte('recorded_at', endDate.toISOString())
-      .order('recorded_at', { ascending: false })
+    let performanceMetrics = null
+    let perfError = null
+    try {
+      const result = await supabase
+        .from('performance_metrics')
+        .select('*')
+        .eq('organization_id', actualOrgId)
+        .gte('recorded_at', startDate.toISOString())
+        .lte('recorded_at', endDate.toISOString())
+        .order('recorded_at', { ascending: false })
+      performanceMetrics = result.data
+      perfError = result.error
+    } catch (error) {
+      console.log('Performance Metrics table not found, using demo data')
+      perfError = null
+    }
 
-    if (perfError) {
+    if (perfError && perfError.code !== 'PGRST116') {
       console.error('Performance Metrics fetch error:', perfError)
       return NextResponse.json(
         { error: 'Failed to fetch performance metrics' },
