@@ -1608,3 +1608,50 @@ You must fully embody this agent's persona and follow all activation instruction
 - Manual override provides content creators with final control over content acceptance
 - Comprehensive analytics enable continuous improvement of retry strategies
 - Integration with existing parallel processing maintains performance benefits
+
+## Story Context: 34-1-generate-icp-document-via-perplexity-ai
+
+**Status**: ready-for-dev
+
+**Epic**: Epic 34 - Intent Validation - ICP & Competitive Analysis
+
+**User Story**: As a content manager, I want to generate an ICP document using AI based on my organization's profile, so that I have a clear definition of my target audience before planning content.
+
+**Acceptance Criteria**:
+- System calls Perplexity API with organization profile data when ICP generation is triggered
+- ICP generation completes within 5 minutes
+- Generated ICP includes industries, buyer roles, pain points, and value proposition
+- ICP is stored in the workflow's icp_data field
+- Workflow status updates to 'step_1_icp' with step_1_icp_completed_at timestamp
+- Step is marked as completed with timestamp
+
+**Technical Requirements**:
+- OpenRouter Perplexity integration using existing OpenRouter client
+- ICP generator service in `lib/services/intent-engine/icp-generator.ts`
+- API endpoint: POST `/api/intent/workflows/{workflow_id}/steps/icp-generate`
+- Database migration to add icp_data, step_1_icp_completed_at, step_1_icp_error_message fields
+- Timeout: 5 minutes maximum with exponential backoff retry (2 attempts)
+- ICPData structure with industries, buyerRoles, painPoints, valueProposition fields
+- Organization profile data extraction and sanitization before API call
+- Audit logging for all ICP generation attempts
+
+**Dependencies**:
+- Epic 33 - Workflow Foundation & Organization Setup (COMPLETED ✅)
+  - Story 33.1: Create Intent Workflow with Organization Context
+  - Story 33.2: Configure Organization ICP Settings
+- Existing OpenRouter client from `lib/services/openrouter/openrouter-client.ts`
+- Existing authentication patterns (`getCurrentUser()`)
+- Supabase database infrastructure
+
+**Priority**: High
+**Story Points**: 13
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Producer story that generates ICP data for workflow step 1
+- Follows established patterns from article generation system
+- No UI events, only backend workflow operations
+- Terminal state analytics only (workflow_step_completed event)
+- Reuses existing OpenRouter client to reduce implementation scope
+- Organization data variables populated from intent_workflows table
+- Cost tracking integrated with existing OpenRouter system
