@@ -417,11 +417,11 @@ development_status:
   epic-33-retrospective: done
 
   # Epic 34: Intent Validation - ICP & Competitive Analysis
-  epic-34: in-progress
+  epic-34: done
   34-1-generate-icp-document-via-perplexity-ai: done
   34-2-extract-seed-keywords-from-competitor-urls: done
   34-3-handle-icp-generation-failures-with-retry: done
-  34-4-handle-competitor-analysis-failures-with-retry: review
+  34-4-handle-competitor-analysis-failures-with-retry: done
   epic-34-retrospective: optional
 
   # Epic 35: Keyword Research & Expansion
