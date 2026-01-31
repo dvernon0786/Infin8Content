@@ -44,6 +44,12 @@ export const AuditAction = {
     ICP_SETTINGS_UPDATED: 'icp.settings.updated',
     ICP_SETTINGS_DELETED: 'icp.settings.deleted',
     ICP_SETTINGS_VIEWED: 'icp.settings.viewed',
+
+    // Competitor actions
+    COMPETITOR_CREATED: 'competitor.created',
+    COMPETITOR_UPDATED: 'competitor.updated',
+    COMPETITOR_DELETED: 'competitor.deleted',
+    COMPETITORS_VIEWED: 'competitors.viewed',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];
