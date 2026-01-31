@@ -1707,3 +1707,57 @@ You must fully embody this agent's persona and follow all activation instruction
 - Matches Outrank-style keyword engine architecture
 - Non-goals: does not generate long-tail keywords, subtopics, or content
 - Error handling: if one competitor fails, continue with others; if all fail, fail the step
+
+## Story Context: 34-3-handle-icp-generation-failures-with-retry
+
+**Status**: ready-for-dev
+
+**Epic**: Epic 34 - Intent Validation - ICP & Competitive Analysis
+
+**User Story**: As a content manager, I want ICP generation to automatically retry when transient failures occur, so that temporary external API issues do not prevent me from completing onboarding.
+
+**Acceptance Criteria**:
+- When ICP generation fails with a retryable error (timeout, rate limit, 5xx), the system automatically retries using exponential backoff
+- Retryable errors: network timeouts, HTTP 429, HTTP 5xx
+- Non-retryable errors (4xx, auth, validation) immediately stop execution
+- System performs at most 3 total attempts (initial + 2 retries)
+- Workflow records retry_count and last_error_message
+- If ICP generation succeeds on a retry, workflow proceeds normally to step_1_icp with retry metadata available for audit
+- If all retry attempts fail, ICP generation is marked failed via error metadata, workflow remains at step_1_icp, user may re-trigger manually
+- Analytics events emitted for each retry attempt and final failure after retries exhausted
+
+**Technical Requirements**:
+- Retry logic implemented inside `icp-generator.ts` service
+- Retry policy: maxAttempts=3, initialDelayMs=1000, backoffMultiplier=2, maxDelayMs=30000
+- Error classification logic distinguishing retryable vs non-retryable errors
+- Database changes: ALTER TABLE intent_workflows ADD COLUMN retry_count INTEGER DEFAULT 0, ADD COLUMN step_1_icp_last_error_message TEXT
+- Observability: emit workflow_step_retried and workflow_step_failed events
+- API behavior: retries transparent to caller, response includes retry metadata if applicable
+- Manual re-trigger uses same endpoint (POST /api/intent/workflows/{workflow_id}/steps/icp-generate)
+
+**Dependencies**:
+- Story 34.1 - Generate ICP Document via Perplexity AI (COMPLETED ✅)
+  - ICP producer implementation is complete
+  - OpenRouter integration is working
+  - Organization context is available
+- Existing icp-generator.ts service
+- Existing error handling patterns from article generation system
+- Supabase database infrastructure
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Producer enhancement that hardens existing ICP generation
+- Retry logic lives inside the ICP producer (icp-generator.ts)
+- No new workflow steps or statuses introduced
+- No consumer semantics changes
+- No separate retry API endpoint
+- No UI-driven retry logic (retry occurs server-side)
+- No long-term job scheduling or background queues
+- Fully aligned with Product & Stack Overview
+- Keeps ICP generation as single, hardened producer
+- Safe to ship without downstream refactors
+- Follows established patterns from article generation system
+- Terminal state analytics only (workflow_step_retried and workflow_step_failed events)
