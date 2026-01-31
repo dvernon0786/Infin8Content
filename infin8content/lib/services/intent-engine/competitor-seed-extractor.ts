@@ -8,6 +8,15 @@
  */
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { RetryPolicy, isRetryableError, calculateBackoffDelay, sleep, classifyErrorType } from './retry-utils'
+import { emitAnalyticsEvent } from '../analytics/event-emitter'
+
+export const COMPETITOR_RETRY_POLICY: RetryPolicy = {
+  maxAttempts: 4,        // initial + 3 retries
+  initialDelayMs: 1000,  // 1 second
+  backoffMultiplier: 2,  // exponential
+  maxDelayMs: 30000      // 30 second cap
+}
 
 export interface CompetitorData {
   id: string
@@ -45,6 +54,7 @@ export interface CompetitorSeedExtractionResult {
 export interface ExtractSeedKeywordsRequest {
   competitors: CompetitorData[]
   organizationId: string
+  workflowId?: string  // Optional workflow ID for retry tracking
   maxSeedsPerCompetitor?: number
   locationCode?: number
   languageCode?: string
@@ -71,6 +81,7 @@ export async function extractSeedKeywords(
   const {
     competitors,
     organizationId,
+    workflowId,
     maxSeedsPerCompetitor = 3,
     locationCode = 2840,
     languageCode = 'en',
@@ -91,6 +102,7 @@ export async function extractSeedKeywords(
   let totalKeywordsCreated = 0
   let competitorsProcessed = 0
   let competitorsFailed = 0
+  let totalRetryCount = 0
 
   // Distribute timeout across competitors (with 10% buffer for database operations)
   const perCompetitorTimeoutMs = Math.floor((timeoutMs * 0.9) / competitors.length)
@@ -109,7 +121,9 @@ export async function extractSeedKeywords(
         maxSeedsPerCompetitor,
         locationCode,
         languageCode,
-        perCompetitorTimeoutMs
+        perCompetitorTimeoutMs,
+        workflowId,
+        organizationId
       )
 
       await persistSeedKeywords(organizationId, competitor.id, keywords)
@@ -140,7 +154,16 @@ export async function extractSeedKeywords(
   }
 
   if (competitorsProcessed === 0) {
+    // Update workflow status to failed with retry metadata
+    if (workflowId) {
+      await updateWorkflowStatus(workflowId, organizationId, 'failed', 'All competitors failed during seed keyword extraction', totalRetryCount)
+    }
     throw new Error('All competitors failed during seed keyword extraction')
+  }
+
+  // Update workflow status to success with retry metadata
+  if (workflowId) {
+    await updateWorkflowStatus(workflowId, organizationId, 'step_2_competitors', undefined, totalRetryCount)
   }
 
   const totalElapsedMs = Date.now() - startTime
@@ -157,14 +180,16 @@ export async function extractSeedKeywords(
 }
 
 /**
- * Extract keywords from a single competitor URL using DataForSEO
+ * Extract keywords from a single competitor URL using DataForSEO with retry logic
  */
 async function extractKeywordsFromCompetitor(
   url: string,
   maxKeywords: number,
   locationCode: number,
   languageCode: string,
-  timeoutMs?: number
+  timeoutMs?: number,
+  workflowId?: string,
+  organizationId?: string
 ): Promise<SeedKeywordData[]> {
   const login = process.env.DATAFORSEO_LOGIN
   const password = process.env.DATAFORSEO_PASSWORD
@@ -184,11 +209,9 @@ async function extractKeywordsFromCompetitor(
   const authHeader = 'Basic ' + Buffer.from(`${login}:${password}`).toString('base64')
 
   let lastError: Error | null = null
-  const maxRetries = 3
-  const retryDelays = [2000, 4000, 8000] // 2s, 4s, 8s backoff
 
-  // Retry logic with exponential backoff
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
+  // Retry logic using retry-utils
+  for (let attempt = 0; attempt < COMPETITOR_RETRY_POLICY.maxAttempts; attempt++) {
     try {
       const response = await fetch(
         'https://api.dataforseo.com/v3/dataforseo_labs/google/keywords_for_site/live',
@@ -213,7 +236,7 @@ async function extractKeywordsFromCompetitor(
         const errorMessage = `DataForSEO API error: ${data.status_message}`
 
         // Handle rate limiting with Retry-After header
-        if (data.status_code === 42900 && attempt < maxRetries - 1) {
+        if (data.status_code === 42900 && attempt < COMPETITOR_RETRY_POLICY.maxAttempts - 1) {
           const retryAfter = response.headers.get('Retry-After')
           let delay: number
           
@@ -222,23 +245,28 @@ async function extractKeywordsFromCompetitor(
             const delaySeconds = parseInt(retryAfter, 10)
             if (!isNaN(delaySeconds) && delaySeconds > 0) {
               delay = delaySeconds * 1000
-              console.warn(`DataForSEO rate limited (attempt ${attempt + 1}/${maxRetries}), retrying after ${delay}ms (from Retry-After header)...`)
+              console.warn(`DataForSEO rate limited (attempt ${attempt + 1}/${COMPETITOR_RETRY_POLICY.maxAttempts}), retrying after ${delay}ms (from Retry-After header)...`)
             } else {
               // Invalid Retry-After header, fall back to exponential backoff
-              delay = retryDelays[attempt]
-              console.warn(`DataForSEO rate limited (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms (exponential backoff)...`)
+              delay = calculateBackoffDelay(attempt, COMPETITOR_RETRY_POLICY)
+              console.warn(`DataForSEO rate limited (attempt ${attempt + 1}/${COMPETITOR_RETRY_POLICY.maxAttempts}), retrying in ${delay}ms (exponential backoff)...`)
             }
           } else {
             // No Retry-After header, use exponential backoff
-            delay = retryDelays[attempt]
-            console.warn(`DataForSEO rate limited (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms (exponential backoff)...`)
+            delay = calculateBackoffDelay(attempt, COMPETITOR_RETRY_POLICY)
+            console.warn(`DataForSEO rate limited (attempt ${attempt + 1}/${COMPETITOR_RETRY_POLICY.maxAttempts}), retrying in ${delay}ms (exponential backoff)...`)
           }
           
-          await delay_ms(delay)
+          // Update retry metadata before retry
+          if (workflowId && organizationId) {
+            await updateWorkflowRetryMetadata(workflowId, organizationId, attempt + 1, errorMessage)
+          }
+          
+          await sleep(delay)
           continue
         }
 
-        // Don't retry for API errors
+        // Don't retry for API errors - mark as non-retryable
         const apiError = new Error(errorMessage) as Error & { isApiError: boolean }
         apiError.isApiError = true
         throw apiError
@@ -277,22 +305,47 @@ async function extractKeywordsFromCompetitor(
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
 
-      // Don't retry API errors
-      if ((error as Error & { isApiError?: boolean }).isApiError) {
-        throw error
+      // Check if error is retryable
+      if (!isRetryableError(lastError)) {
+        console.error(`DataForSEO API call failed with non-retryable error: ${lastError.message}`)
+        throw lastError
       }
 
       // If not the last attempt, wait before retrying
-      if (attempt < maxRetries - 1) {
-        const delay = retryDelays[attempt]
-        console.warn(`DataForSEO API call failed (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms...`, lastError.message)
-        await delay_ms(delay)
+      if (attempt < COMPETITOR_RETRY_POLICY.maxAttempts - 1) {
+        const delay = calculateBackoffDelay(attempt, COMPETITOR_RETRY_POLICY)
+        const errorType = classifyErrorType(lastError)
+        console.warn(`DataForSEO API call failed (attempt ${attempt + 1}/${COMPETITOR_RETRY_POLICY.maxAttempts}), retrying in ${delay}ms... Error: ${lastError.message}`)
+        
+        // Update retry metadata before retry
+        if (workflowId && organizationId) {
+          await updateWorkflowRetryMetadata(workflowId, organizationId, attempt + 1, lastError.message)
+        }
+        
+        // Emit retry analytics event
+        if (workflowId && organizationId) {
+          await emitRetryEvent(workflowId, organizationId, url, attempt + 1, errorType, delay)
+        }
+        
+        await sleep(delay)
       }
     }
   }
 
   // All retries exhausted
-  console.error('DataForSEO API call failed after all retries:', lastError)
+  const errorType = classifyErrorType(lastError)
+  console.error('DataForSEO API call failed after all retries:', lastError?.message)
+  
+  // Update final retry metadata
+  if (workflowId && organizationId) {
+    await updateWorkflowRetryMetadata(workflowId, organizationId, COMPETITOR_RETRY_POLICY.maxAttempts, lastError?.message)
+  }
+  
+  // Emit terminal failure analytics event
+  if (workflowId && organizationId) {
+    await emitFailureEvent(workflowId, organizationId, url, COMPETITOR_RETRY_POLICY.maxAttempts, lastError?.message || 'Unknown error')
+  }
+  
   throw lastError || new Error('DataForSEO API call failed')
 }
 
@@ -361,11 +414,51 @@ function mapCompetitionLevel(competitionIndex: number): 'low' | 'medium' | 'high
 }
 
 /**
- * Delay helper
+ * Emit retry analytics event
  */
-function delay_ms(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
+async function emitRetryEvent(
+  workflowId: string,
+  organizationId: string,
+  url: string,
+  attemptNumber: number,
+  errorType: string,
+  delayMs: number
+): Promise<void> {
+  emitAnalyticsEvent({
+    event_type: 'workflow_step_retried',
+    organization_id: organizationId,
+    workflow_id: workflowId,
+    step: 'step_2_competitors',
+    attempt_number: attemptNumber,
+    error_type: errorType,
+    delay_before_retry_ms: delayMs,
+    competitor_url: url,
+    timestamp: new Date().toISOString()
+  })
 }
+
+/**
+ * Emit terminal failure analytics event
+ */
+async function emitFailureEvent(
+  workflowId: string,
+  organizationId: string,
+  url: string,
+  totalAttempts: number,
+  finalErrorMessage: string
+): Promise<void> {
+  emitAnalyticsEvent({
+    event_type: 'workflow_step_failed',
+    organization_id: organizationId,
+    workflow_id: workflowId,
+    step: 'step_2_competitors',
+    total_attempts: totalAttempts,
+    final_error_message: finalErrorMessage,
+    competitor_url: url,
+    timestamp: new Date().toISOString()
+  })
+}
+
 
 /**
  * Update workflow status after seed keyword extraction
@@ -374,7 +467,8 @@ export async function updateWorkflowStatus(
   workflowId: string,
   organizationId: string,
   status: 'step_2_competitors' | 'failed',
-  errorMessage?: string
+  errorMessage?: string,
+  retryCount?: number
 ): Promise<void> {
   const supabase = createServiceRoleClient()
 
@@ -385,8 +479,17 @@ export async function updateWorkflowStatus(
 
   if (status === 'step_2_competitors') {
     updateData.step_2_competitor_completed_at = new Date().toISOString()
+    // Preserve retry metadata on successful completion
+    if (retryCount && retryCount > 0) {
+      updateData.step_2_competitors_retry_count = retryCount
+    }
   } else if (status === 'failed' && errorMessage) {
-    updateData.step_2_competitor_error_message = errorMessage
+    updateData.step_2_competitors_last_error_message = errorMessage
+    // Update retry metadata on failure
+    if (retryCount !== undefined) {
+      updateData.step_2_competitors_retry_count = retryCount
+      updateData.step_2_competitors_last_error_message = errorMessage
+    }
   }
 
   const { error } = await supabase
@@ -400,4 +503,37 @@ export async function updateWorkflowStatus(
   }
 
   console.log(`[CompetitorSeedExtractor] Workflow ${workflowId} status updated to ${status}`)
+}
+
+/**
+ * Update workflow retry metadata during retry attempts
+ */
+export async function updateWorkflowRetryMetadata(
+  workflowId: string,
+  organizationId: string,
+  retryCount: number,
+  lastErrorMessage?: string
+): Promise<void> {
+  const supabase = createServiceRoleClient()
+
+  const updateData: any = {
+    step_2_competitors_retry_count: retryCount,
+    updated_at: new Date().toISOString()
+  }
+
+  if (lastErrorMessage) {
+    updateData.step_2_competitors_last_error_message = lastErrorMessage
+  }
+
+  const { error } = await supabase
+    .from('intent_workflows')
+    .update(updateData)
+    .eq('id', workflowId)
+    .eq('organization_id', organizationId)
+
+  if (error) {
+    throw new Error(`Failed to update workflow retry metadata: ${error.message}`)
+  }
+
+  console.log(`[CompetitorSeedExtractor] Workflow ${workflowId} retry metadata updated: count=${retryCount}`)
 }
