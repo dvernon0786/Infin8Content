@@ -60,7 +60,7 @@ export async function getWorkflowCompetitors(workflowId: string): Promise<Compet
     return []
   }
   
-  return (competitors as CompetitorWorkflowData[]) || []
+  return (competitors as unknown as CompetitorWorkflowData[]) || []
 }
 
 /**
@@ -92,7 +92,7 @@ export async function getOrganizationCompetitors(organizationId: string): Promis
     return []
   }
   
-  return (competitors as CompetitorWorkflowData[]) || []
+  return (competitors as unknown as CompetitorWorkflowData[]) || []
 }
 
 /**
