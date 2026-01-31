@@ -215,18 +215,25 @@ async function extractKeywordsFromCompetitor(
         // Handle rate limiting with Retry-After header
         if (data.status_code === 42900 && attempt < maxRetries - 1) {
           const retryAfter = response.headers.get('Retry-After')
+          let delay: number
+          
+          // Use Retry-After header if valid, otherwise use exponential backoff
           if (retryAfter) {
             const delaySeconds = parseInt(retryAfter, 10)
             if (!isNaN(delaySeconds) && delaySeconds > 0) {
-              const delay = delaySeconds * 1000
-              console.warn(`DataForSEO rate limited (attempt ${attempt + 1}/${maxRetries}), retrying after ${delay}ms...`)
-              await delay_ms(delay)
-              continue
+              delay = delaySeconds * 1000
+              console.warn(`DataForSEO rate limited (attempt ${attempt + 1}/${maxRetries}), retrying after ${delay}ms (from Retry-After header)...`)
+            } else {
+              // Invalid Retry-After header, fall back to exponential backoff
+              delay = retryDelays[attempt]
+              console.warn(`DataForSEO rate limited (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms (exponential backoff)...`)
             }
+          } else {
+            // No Retry-After header, use exponential backoff
+            delay = retryDelays[attempt]
+            console.warn(`DataForSEO rate limited (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms (exponential backoff)...`)
           }
-          // If Retry-After is invalid or missing, use exponential backoff
-          const delay = retryDelays[attempt]
-          console.warn(`DataForSEO rate limited (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms...`)
+          
           await delay_ms(delay)
           continue
         }
