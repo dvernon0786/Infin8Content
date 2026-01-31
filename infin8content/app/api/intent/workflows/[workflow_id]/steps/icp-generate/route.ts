@@ -42,9 +42,10 @@ function checkRateLimit(organizationId: string): { allowed: boolean; remaining: 
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { workflow_id: string } }
+  { params }: { params: Promise<{ workflow_id: string }> }
 ) {
-  const workflowId = params.workflow_id
+  const { workflow_id } = await params
+  const workflowId = workflow_id
   let organizationId: string | undefined
 
   try {
