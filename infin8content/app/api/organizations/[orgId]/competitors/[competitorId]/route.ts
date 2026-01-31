@@ -106,7 +106,7 @@ export async function PUT(
     }
 
     const updates = validationResult.data
-    let normalizedUrl: string | undefined
+    let normalizedUrl: string | null | undefined
     let domain: string | undefined
 
     // Validate and normalize URL if provided
