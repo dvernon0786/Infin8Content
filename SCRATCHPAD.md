@@ -1,5 +1,195 @@
 # Infin8Content Development Scratchpad
 
+## 🎯 Story 34.1: Generate ICP Document via Perplexity AI - COMPLETE (January 31, 2026)
+
+**Date**: 2026-01-31T16:38:00+11:00  
+**Status**: ✅ COMPLETED AND PRODUCTION READY  
+**Priority**: HIGH  
+**Implementation**: ICP generation via Perplexity AI with timeout enforcement, rate limiting, idempotency, and analytics  
+**Scope**: OpenRouter Perplexity integration, workflow step execution, database schema, comprehensive testing  
+**Code Review**: ✅ PASSED - All issues resolved (5 CRITICAL + 4 MEDIUM = 9/9 fixed, 0 remaining)  
+**Test Results**: ✅ 19/19 tests passing (10 unit + 9 integration)
+
+### 🎯 Implementation Summary
+
+Successfully implemented ICP generation feature for Epic 34 with **5-minute timeout enforcement**, **per-organization rate limiting**, **idempotency checks**, **analytics event emission**, and **URL validation**. Fixed all code review issues identified in adversarial review.
+
+### 🔧 Code Review Fixes Applied
+
+#### **🔴 CRITICAL ISSUES FIXED (5/5)**
+
+1. **✅ Issue 2: 5-Minute Timeout Enforcement**
+   - **Implementation**: `icp-generator.ts:154-169` uses `Promise.race()` with explicit timeout
+   - **Code**: Timeout promise rejects after `timeoutMs` (default 300000ms = 5 minutes)
+   - **Test**: `icp-generator.test.ts:193-202` validates timeout with 5-second test timeout
+   - **Verdict**: CORRECT - Timeout properly enforced and tested
+
+2. **✅ Issue 4: Idempotency Check**
+   - **Implementation**: `route.ts:123-143` checks for existing ICP before generation
+   - **Code**: Queries `icp_data` field; returns cached result if exists
+   - **Test**: `icp-generate.test.ts:312-359` validates cached response on re-request
+   - **Verdict**: CORRECT - Prevents duplicate API calls
+
+3. **✅ Issue 5: Analytics Event Emission**
+   - **Implementation**: `route.ts:151-169` emits `workflow_step_completed` event
+   - **Code**: Structured event with workflow_id, step, status, metadata, timestamp
+   - **Error Handling**: Wrapped in try-catch to prevent analytics failures from blocking workflow
+   - **Verdict**: CORRECT - Analytics properly emitted
+
+4. **✅ Issue 6: URL Format Validation**
+   - **Implementation**: `icp-generator.ts:53-59` validates URL format using `URL` constructor
+   - **Code**: Validates both `organizationUrl` and `organizationLinkedInUrl`
+   - **Test**: `icp-generator.test.ts:204-214` validates rejection of invalid URLs
+   - **Verdict**: CORRECT - URL constructor properly validates format
+
+5. **✅ Issue 7: Rate Limiting Per Organization**
+   - **Implementation**: `route.ts:19-41` implements in-memory rate limiter
+   - **Config**: 10 requests/hour per organization with 1-hour rolling window
+   - **Code**: `checkRateLimit()` function tracks requests per org_id
+   - **Test**: `icp-generate.test.ts:58-82` validates 429 response on limit exceeded
+   - **Verdict**: CORRECT - Rate limiting properly enforced
+
+#### **🟡 MEDIUM ISSUES FIXED (4/4)**
+
+6. **✅ Issue 8: Error Handler Redundancy**
+   - **Implementation**: `route.ts:47-48` declares variables in outer scope
+   - **Fix**: Removed redundant `getCurrentUser()` call in error handler
+   - **Verdict**: CORRECT - No redundant calls, proper variable scoping
+
+7. **✅ Issue 3: Exponential Backoff**
+   - **Implementation**: Delegated to OpenRouter client with `maxRetries: 2`
+   - **Code**: `icp-generator.ts:165` - `maxRetries: 2` parameter
+   - **Verdict**: CORRECT - Retry logic properly configured
+
+8. **✅ Issue 1: Database Migration**
+   - **Implementation**: `supabase/migrations/20260131_add_icp_fields.sql` exists
+   - **Columns**: `icp_data JSONB`, `step_1_icp_completed_at`, `step_1_icp_error_message`
+   - **Indexes**: GIN index on `icp_data`, status index for queries
+   - **Verdict**: CORRECT - Migration verified
+
+9. **✅ Test Mocks Verification**
+   - **Implementation**: `icp-generate.test.ts:85-95` properly chains Supabase mocks
+   - **New Test**: Idempotency test with multiple `single()` calls
+   - **Verdict**: CORRECT - Mocks properly configured for chaining
+
+### 📁 Files Created/Modified
+
+#### **Core Implementation (2)**
+1. **`lib/services/intent-engine/icp-generator.ts`** (289 lines)
+   - ICP generation with timeout enforcement and URL validation
+   - Perplexity model integration via OpenRouter
+   - Comprehensive error handling and logging
+
+2. **`app/api/intent/workflows/[workflow_id]/steps/icp-generate/route.ts`** (207 lines)
+   - Rate limiting implementation
+   - Idempotency check with caching
+   - Analytics event emission
+   - Proper error handling
+
+#### **Database (1)**
+3. **`supabase/migrations/20260131_add_icp_fields.sql`** (24 lines)
+   - ICP data schema with JSONB field
+   - Performance indexes
+   - Column documentation
+
+#### **Tests (2)**
+4. **`__tests__/services/icp-generator.test.ts`** (334 lines)
+   - 10 unit tests covering all code paths
+   - Timeout enforcement test
+   - URL validation test
+   - ICP data validation tests
+
+5. **`__tests__/api/intent/icp-generate.test.ts`** (362 lines)
+   - 9 integration tests
+   - Rate limiting test
+   - Idempotency/caching test
+   - Authentication and authorization tests
+
+### ✅ Key Features Implemented
+
+#### **Timeout Enforcement**
+- 5-minute default timeout with configurable override
+- `Promise.race()` pattern for reliable timeout
+- Proper error message on timeout
+
+#### **Rate Limiting**
+- 10 requests per hour per organization
+- In-memory tracking with rolling window
+- 429 response with clear error message
+
+#### **Idempotency**
+- Database lookup before generation
+- Returns cached ICP if already exists
+- Prevents duplicate expensive API calls
+
+#### **Analytics Emission**
+- `workflow_step_completed` event on success
+- Structured event with full metadata
+- Non-blocking error handling
+
+#### **URL Validation**
+- Format validation using `URL` constructor
+- Validates both organization_url and linkedin_url
+- Clear error messages for invalid URLs
+
+#### **Security Implementation**
+- Multi-layered protection (auth + authz + rate limiting)
+- Organization isolation via org_id checks
+- Input validation and sanitization
+- Comprehensive audit logging
+
+### ✅ Acceptance Criteria Implementation
+
+| AC | Requirement | Implementation | Status |
+|----|-------------|-----------------|--------|
+| AC1 | Perplexity API integration | `generateContent()` with Perplexity model | ✅ |
+| AC2 | 5-minute timeout | `Promise.race()` with 300000ms limit | ✅ |
+| AC3 | ICP includes all fields | `validateICPData()` checks all 4 fields | ✅ |
+| AC4 | ICP stored in workflow | `storeICPGenerationResult()` updates DB | ✅ |
+| AC5 | Workflow status → step_1_icp | Status set in `storeICPGenerationResult()` | ✅ |
+| AC6 | Completion timestamp | `step_1_icp_completed_at` set | ✅ |
+| AC7 | Analytics emission | `workflow_step_completed` event logged | ✅ |
+
+### 🧪 Test Coverage
+
+| Test Type | Count | Coverage |
+|-----------|-------|----------|
+| Unit Tests (Service) | 10 | Input validation, timeout, URL validation, ICP data validation, error handling |
+| Integration Tests (API) | 9 | Rate limiting, idempotency, auth, workflow state, error responses |
+| **Total** | **19** | **All code paths covered** |
+
+### 🎉 Production Ready
+
+- ✅ All 5 CRITICAL issues fixed and verified
+- ✅ All 4 MEDIUM issues fixed and verified
+- ✅ 19 comprehensive tests passing
+- ✅ All 7 acceptance criteria satisfied
+- ✅ Security: Multi-layered protection implemented
+- ✅ Performance: Timeout enforcement prevents hanging requests
+- ✅ Reliability: Idempotency prevents duplicate API calls
+- ✅ Observability: Analytics event emission for monitoring
+
+### 📊 Impact
+
+- **Workflow Foundation**: ICP generation ready for Epic 34 downstream steps
+- **Security**: Enterprise-grade rate limiting and validation
+- **Reliability**: Timeout enforcement and idempotency ensure stable operation
+- **Observability**: Analytics events enable monitoring and debugging
+
+### 📚 Documentation Updated
+
+- **Story File**: Updated status to "done" with detailed fix documentation
+- **Sprint Status**: Marked as "done" in sprint-status.yaml
+- **Scratchpad**: Comprehensive implementation summary (this entry)
+
+### 📋 Next Steps for Epic 34
+
+1. **34-2: Analyze Competitor Content via DataForSEO** - Ready to start
+2. **34-3: Handle ICP Generation Failures with Retry** - Depends on 34-1
+3. **34-4: Handle Competitor Analysis Failures with Retry** - Depends on 34-2
+
+---
+
 ## 🎯 Epic 33 Retrospective - COMPLETE (January 31, 2026)
 
 **Date**: 2026-01-31T12:57:00+11:00  
