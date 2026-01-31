@@ -53,6 +53,10 @@ export const AuditAction = {
 
     // Feature flag actions
     FEATURE_FLAG_TOGGLED: 'feature.flag.toggled',
+
+    // Workflow step actions
+    WORKFLOW_COMPETITOR_SEED_KEYWORDS_STARTED: 'workflow.competitor_seed_keywords.started',
+    WORKFLOW_COMPETITOR_SEED_KEYWORDS_COMPLETED: 'workflow.competitor_seed_keywords.completed',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];
