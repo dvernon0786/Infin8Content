@@ -411,7 +411,7 @@ development_status:
   epic-33: in-progress
   33-1-create-intent-workflow-with-organization-context: done
   33-2-configure-organization-icp-settings: done
-  33-3-configure-competitor-urls-for-analysis: ready-for-dev
+  33-3-configure-competitor-urls-for-analysis: done
   33-4-enable-intent-engine-feature-flag: backlog
   33-5-preserve-legacy-article-generation-system: backlog
   epic-33-retrospective: optional
