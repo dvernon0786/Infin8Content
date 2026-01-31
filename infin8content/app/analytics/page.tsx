@@ -16,14 +16,15 @@ export const metadata: Metadata = {
 }
 
 interface AnalyticsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     orgId?: string
-  }
+  }>
 }
 
-export default function AnalyticsPage({ searchParams }: AnalyticsPageProps) {
+export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps) {
   // In a real implementation, orgId would come from authentication context
-  const orgId = searchParams.orgId || 'default-org-id'
+  const resolvedSearchParams = await searchParams
+  const orgId = resolvedSearchParams.orgId || 'default-org-id'
 
   return (
     <div className="container mx-auto px-4 py-6">
