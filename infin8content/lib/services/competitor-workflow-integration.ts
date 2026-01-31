@@ -40,6 +40,7 @@ export async function getWorkflowCompetitors(workflowId: string): Promise<Compet
   }
   
   // Get all active competitors for the organization
+  const workflowOrgId = (workflow as any).organization_id
   const { data: competitors, error: competitorsError } = await supabase
     .from('organization_competitors')
     .select(`
@@ -50,7 +51,7 @@ export async function getWorkflowCompetitors(workflowId: string): Promise<Compet
       is_active,
       created_at
     `)
-    .eq('organization_id', workflow.organization_id)
+    .eq('organization_id', workflowOrgId)
     .eq('is_active', true)
     .order('created_at', { ascending: true })
   
