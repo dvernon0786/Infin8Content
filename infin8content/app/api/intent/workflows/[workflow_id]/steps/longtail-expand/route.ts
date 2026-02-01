@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { logIntentActionAsync } from '@/lib/services/intent-engine/intent-audit-logger'
 import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import {
@@ -122,6 +123,29 @@ export async function POST(
       // Continue anyway - logging is non-blocking
     }
 
+    // Log Intent audit trail entry (Story 37.4)
+    try {
+      logIntentActionAsync({
+        organizationId,
+        workflowId,
+        entityType: 'workflow',
+        entityId: workflowId,
+        actorId: userId,
+        action: AuditAction.WORKFLOW_STEP_COMPLETED,
+        details: {
+          step: 'step_4_longtails',
+          seeds_processed: expansionResult.seeds_processed,
+          longtails_created: expansionResult.total_longtails_created,
+          duration_ms: duration,
+        },
+        ipAddress: extractIpAddress(request.headers),
+        userAgent: extractUserAgent(request.headers),
+      })
+    } catch (intentLogError) {
+      console.error('Failed to log intent audit entry:', intentLogError)
+      // Continue anyway - logging is non-blocking
+    }
+
     // Emit analytics event
     emitAnalyticsEvent({
       event_type: 'longtail_expansion_completed',
@@ -163,6 +187,26 @@ export async function POST(
         })
       } catch (logError) {
         console.error('Failed to log workflow error:', logError)
+      }
+
+      // Log Intent audit trail entry (Story 37.4)
+      try {
+        logIntentActionAsync({
+          organizationId,
+          workflowId,
+          entityType: 'workflow',
+          entityId: workflowId,
+          actorId: userId,
+          action: AuditAction.WORKFLOW_STEP_FAILED,
+          details: {
+            step: 'step_4_longtails',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+          ipAddress: extractIpAddress(request.headers),
+          userAgent: extractUserAgent(request.headers),
+        })
+      } catch (intentLogError) {
+        console.error('Failed to log intent audit entry:', intentLogError)
       }
     }
 

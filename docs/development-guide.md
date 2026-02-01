@@ -754,6 +754,141 @@ npm run test:integration
 - Verify organization record exists and is not deleted
 - Check logs for warning messages about missing settings
 
+### Intent Audit Logging (Story 37.4)
+
+#### Overview
+The Intent Engine maintains a comprehensive, immutable audit trail of all workflow actions and decisions for compliance tracking. This provides complete traceability of who performed which action, when it occurred, and why it occurred.
+
+#### Architecture
+- **Table**: `intent_audit_logs` (main) + `intent_audit_logs_archive` (historical)
+- **Immutability**: WORM compliance enforced via database triggers
+- **Retention**: 1 year in main table, lifetime in archive table
+- **Access**: Organization owners only (RLS enforced)
+
+#### Key Components
+
+**Service**: `lib/services/intent-engine/intent-audit-logger.ts`
+```typescript
+// Log an intent action
+await logIntentAction({
+  organizationId: 'org-123',
+  workflowId: 'workflow-123',
+  entityType: 'workflow',
+  entityId: 'entity-123',
+  actorId: 'user-123',
+  action: 'workflow.step.completed',
+  details: { step: 'step_4_longtails' },
+})
+
+// Fire-and-forget logging
+logIntentActionAsync({...})
+```
+
+**API**: `GET /api/intent/audit/logs`
+```typescript
+// Query with filters
+const logs = await fetch('/api/intent/audit/logs?' + new URLSearchParams({
+  workflow_id: 'workflow-123',
+  action: 'workflow.step.completed',
+  limit: '100',
+  include_count: 'true'
+}))
+```
+
+**Archival**: `lib/services/intent-engine/intent-audit-archiver.ts`
+```typescript
+// Archive logs older than 1 year
+const result = await archiveOldIntentAuditLogs()
+console.log(`Archived ${result.archived_count} logs`)
+
+// Get archival statistics
+const stats = await getIntentAuditArchivalStats()
+```
+
+#### Integration Pattern
+Add Intent audit logging to all workflow steps and critical actions:
+
+```typescript
+// In workflow step completion
+logIntentActionAsync({
+  organizationId,
+  workflowId,
+  entityType: 'workflow',
+  entityId: workflowId,
+  actorId: userId,
+  action: AuditAction.WORKFLOW_STEP_COMPLETED,
+  details: { step: 'step_4_longtails', duration: 120000 },
+  ipAddress: extractIpAddress(request.headers),
+  userAgent: extractUserAgent(request.headers),
+})
+```
+
+#### Supported Actions
+- **Workflow Events**: `workflow.created`, `workflow.archived`, `workflow.superseded`
+- **Step Events**: `workflow.step.completed`, `workflow.step.failed`, `workflow.step.blocked`
+- **Approval Events**: `workflow.approval.approved`, `workflow.approval.rejected`
+- **Keyword Events**: `keyword.subtopics.approved`, `keyword.subtopics.rejected`
+- **Article Events**: `article.queued`, `article.generated`, `article.failed`
+- **System Events**: `system.error`, `system.retry_exhausted`
+
+#### Testing
+```bash
+# Run audit logger tests
+npm test -- __tests__/services/intent-engine/intent-audit-logger.test.ts
+
+# Run API tests
+npm test -- __tests__/api/intent/audit/logs.test.ts
+
+# Test archival functionality
+npm test -- __tests__/services/intent-engine/intent-audit-archiver.test.ts
+```
+
+#### Database Schema
+```sql
+-- Main table (last 12 months)
+CREATE TABLE intent_audit_logs (
+  id UUID PRIMARY KEY,
+  organization_id UUID NOT NULL,
+  workflow_id UUID,
+  entity_type TEXT NOT NULL,
+  entity_id UUID NOT NULL,
+  actor_id UUID NOT NULL,
+  action TEXT NOT NULL,
+  details JSONB,
+  ip_address TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ NOT NULL
+);
+
+-- Archive table (historical)
+CREATE TABLE intent_audit_logs_archive (
+  -- Same schema + archived_at timestamp
+);
+```
+
+#### Security & Compliance
+- **WORM Compliance**: No UPDATE/DELETE operations allowed
+- **Organization Isolation**: RLS policies enforce data separation
+- **Access Control**: Only organization owners can view audit logs
+- **Non-blocking**: Audit failures never affect core functionality
+- **Complete Coverage**: All Intent Engine actions are logged
+
+#### Troubleshooting
+**Issue: "Audit logging not working"**
+- Check `intent_audit_logs` table exists and RLS is enabled
+- Verify user has `owner` role in organization
+- Check console for audit logging errors (non-blocking)
+
+**Issue: "Performance degradation"**
+- Run archival process: `await archiveOldIntentAuditLogs()`
+- Check table size: `SELECT COUNT(*) FROM intent_audit_logs`
+- Monitor query performance with indexes
+
+**Issue: "Missing audit entries"**
+- Verify `logIntentActionAsync()` calls are added to new features
+- Check for errors in console (audit logging is fire-and-forget)
+- Ensure proper organization context is available
+
 ## Contributing Guidelines
 
 ### Git Workflow
