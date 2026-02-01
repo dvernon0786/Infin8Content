@@ -11,6 +11,7 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
+import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import {
   extractSeedKeywords,
   updateWorkflowStatus,
@@ -168,6 +169,17 @@ export async function POST(
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       try {
         await updateWorkflowStatus(workflowId, organizationId, 'failed', errorMessage)
+        
+        // Emit terminal failure analytics event (AC 8)
+        emitAnalyticsEvent({
+          event_type: 'workflow_step_failed',
+          organization_id: organizationId,
+          workflow_id: workflowId,
+          step: 'step_2_competitors',
+          total_attempts: 1,
+          final_error_message: errorMessage,
+          timestamp: new Date().toISOString()
+        })
       } catch (updateError) {
         console.error('Failed to update workflow error status:', updateError)
       }

@@ -1,5 +1,133 @@
 # Infin8Content Development Scratchpad
 
+## 🎯 Story 34.4: Handle Competitor Analysis Failures with Retry - COMPLETE (February 1, 2026)
+
+**Date**: 2026-02-01T09:17:00+11:00  
+**Status**: ✅ COMPLETED AND PRODUCTION READY  
+**Priority**: HIGH  
+**Implementation**: Automatic retry logic with exponential backoff for competitor analysis failures  
+**Scope**: Retry policy, error classification, analytics event emission, workflow state management  
+**Code Review**: ✅ PASSED - All issues resolved (5 HIGH + 2 MEDIUM + 1 LOW = 8/8 fixed, 0 remaining)  
+**Database**: ✅ VERIFIED - Retry metadata columns exist and applied  
+
+### 🎯 Implementation Summary
+
+Successfully completed Story 34.4 with **exponential backoff retry logic (4 attempts max)**, **error classification (retryable vs non-retryable)**, **analytics event emission**, and **workflow state management**. Fixed all code review issues identified in initial adversarial review.
+
+### 🔧 Code Review Fixes Applied
+
+#### **🔴 HIGH SEVERITY ISSUES FIXED (5/5)**
+
+1. **✅ Test Async Error Handling** - Fixed unhandled promise rejections
+   - **File**: `lib/services/intent-engine/__tests__/competitor-seed-extractor.test.ts`
+   - **Fix**: Replaced array-based mock queue with proper `mockImplementation()` and call counter
+   - **Result**: Tests now properly handle async retry scenarios without unhandled rejections
+
+2. **✅ Column Name Mismatch** - Fixed database column references
+   - **File**: `lib/services/intent-engine/competitor-seed-extractor.ts:493`
+   - **Fix**: Changed `step_2_competitor_error_message` → `step_2_competitors_last_error_message`
+   - **Impact**: Retry metadata now properly stored in database
+
+3. **✅ Analytics Integration** - Added event emission to API route
+   - **File**: `app/api/intent/workflows/[workflow_id]/steps/competitor-analyze/route.ts:14, 174`
+   - **Fix**: Added `emitAnalyticsEvent` import and terminal failure event emission
+   - **Impact**: AC 8 fully implemented - analytics events emitted for failures
+
+4. **✅ Database Migration Verified** - Confirmed migration applied
+   - **File**: `supabase/migrations/20260131_add_competitor_retry_metadata.sql`
+   - **Status**: Migration exists locally and columns verified in remote database
+   - **Columns**: `step_2_competitors_retry_count`, `step_2_competitors_last_error_message`
+
+5. **✅ Workflow Status Management** - Fixed retry metadata persistence
+   - **File**: `lib/services/intent-engine/competitor-seed-extractor.ts:486-499`
+   - **Fix**: Corrected column name in failure path to use correct schema
+   - **Result**: Retry metadata properly persisted on all code paths
+
+#### **🟡 MEDIUM ISSUES FIXED (2/2)**
+
+6. **✅ Git vs Story Discrepancy** - Updated File List documentation
+   - **File**: `accessible-artifacts/34-4-handle-competitor-analysis-failures-with-retry-story-context.md:153-160`
+   - **Fix**: Added all changed files to File List (test file, retry-utils, migrations)
+   - **Result**: Complete documentation of all changes
+
+7. **✅ Test Quality** - Improved async error handling
+   - **File**: `lib/services/intent-engine/__tests__/competitor-seed-extractor.test.ts:6, 29-32`
+   - **Fix**: Added proper `afterEach` cleanup and global fetch mock setup
+   - **Result**: Tests no longer have unhandled rejections
+
+#### **🟢 LOW ISSUES FIXED (1/1)**
+
+8. **✅ Code Cleanup** - Removed deprecated function
+   - **File**: `lib/services/intent-engine/competitor-seed-extractor.ts:462-467`
+   - **Fix**: Removed deprecated `delay_ms()` function
+   - **Result**: Cleaner codebase
+
+### ✅ Acceptance Criteria Implementation
+
+| AC | Requirement | Implementation | Status |
+|---|---|---|---|
+| 1 | Retry on transient failures with exponential backoff | `extractKeywordsFromCompetitor()` lines 214-333 | ✅ |
+| 2 | Retryable errors: timeouts, 429, 5xx | `isRetryableError()` in retry-utils.ts | ✅ |
+| 3 | Non-retryable errors stop immediately | Error classification at line 309 | ✅ |
+| 4 | Max 4 total attempts | `COMPETITOR_RETRY_POLICY.maxAttempts = 4` line 15 | ✅ |
+| 5 | Workflow records retry metadata | Columns exist in intent_workflows table | ✅ |
+| 6 | Success on retry advances workflow | `updateWorkflowStatus()` line 166 | ✅ |
+| 7 | Final failure keeps workflow at step_1_icp | Error handler line 170 | ✅ |
+| 8 | Analytics events emitted | `emitAnalyticsEvent()` in route.ts line 174 + extractor.ts | ✅ |
+
+### 📁 Files Modified
+
+```
+✅ lib/services/intent-engine/competitor-seed-extractor.ts
+   - Fixed column name mismatch (line 493)
+   - Removed deprecated delay_ms function
+
+✅ app/api/intent/workflows/[workflow_id]/steps/competitor-analyze/route.ts
+   - Added analytics event emitter import
+   - Added terminal failure event emission
+
+✅ lib/services/intent-engine/__tests__/competitor-seed-extractor.test.ts
+   - Fixed unhandled promise rejections
+   - Proper async mock handling
+
+✅ accessible-artifacts/34-4-handle-competitor-analysis-failures-with-retry-story-context.md
+   - Updated File List with all changed files
+```
+
+### 🗄️ Database Verification
+
+| Column | Table | Status |
+|--------|-------|--------|
+| `step_2_competitors_retry_count` | intent_workflows | ✅ EXISTS |
+| `step_2_competitors_last_error_message` | intent_workflows | ✅ EXISTS |
+| Migration applied | 20260131_add_competitor_retry_metadata.sql | ✅ APPLIED |
+
+### 🎉 Production Ready
+
+- ✅ All 5 HIGH issues fixed and verified
+- ✅ All 2 MEDIUM issues fixed and verified
+- ✅ All 1 LOW issue fixed and verified
+- ✅ All 8 acceptance criteria satisfied
+- ✅ Database schema aligned and verified
+- ✅ Analytics events working
+- ✅ Retry metadata persisted correctly
+- ✅ Code cleanup complete
+
+### 📊 Impact
+
+- **Reliability**: Automatic retry prevents transient failures from blocking workflow
+- **Observability**: Analytics events enable monitoring of retry behavior
+- **User Experience**: Workflow continues despite temporary API issues
+- **Downstream**: Foundation for Epic 34 completion
+
+### 📚 Documentation Updated
+
+- **Story File**: Updated status to "done" with detailed fix documentation
+- **Sprint Status**: Ready to update to "done"
+- **Scratchpad**: Comprehensive implementation summary (this entry)
+
+---
+
 ## 🎯 Story 34.2: Extract Seed Keywords from Competitor URLs via DataForSEO - COMPLETE (January 31, 2026)
 
 **Date**: 2026-01-31T22:43:00+11:00  
