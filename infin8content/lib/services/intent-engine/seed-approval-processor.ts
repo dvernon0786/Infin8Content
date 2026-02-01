@@ -73,7 +73,11 @@ export async function processSeedApproval(
     throw new Error('Workflow not found')
   }
 
-  const workflow = workflowResult.data
+  const workflow = workflowResult.data as unknown as {
+    id: string
+    status: string
+    organization_id: string
+  }
 
   // Validate workflow is at step_3_seeds
   if (workflow.status !== 'step_3_seeds') {
@@ -124,7 +128,9 @@ export async function processSeedApproval(
     throw new Error('Failed to process approval')
   }
 
-  const approval = approvalResult.data
+  const approval = approvalResult.data as unknown as {
+    id: string
+  }
   const auditAction = decision === 'approved' 
     ? AuditAction.WORKFLOW_SEED_KEYWORDS_APPROVED 
     : AuditAction.WORKFLOW_SEED_KEYWORDS_REJECTED
@@ -179,7 +185,11 @@ export async function areSeedsApproved(workflowId: string): Promise<boolean> {
     return false
   }
 
-  return approvalResult.data.decision === 'approved'
+  const approval = approvalResult.data as unknown as {
+    decision: string
+  }
+
+  return approval.decision === 'approved'
 }
 
 /**
@@ -206,7 +216,10 @@ export async function getApprovedSeedKeywordIds(workflowId: string): Promise<str
     return []
   }
 
-  const approval = approvalResult.data
+  const approval = approvalResult.data as unknown as {
+    decision: string
+    approved_items: string[] | null
+  }
 
   if (approval.decision !== 'approved') {
     return []
