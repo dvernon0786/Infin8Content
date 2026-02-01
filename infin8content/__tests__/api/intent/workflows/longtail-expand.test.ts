@@ -49,6 +49,21 @@ describe('/api/intent/workflows/[workflow_id]/steps/longtail-expand', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset default mock behavior
+    vi.mocked(mockGetCurrentUser).mockReset()
+    vi.mocked(mockCreateServiceRoleClient).mockReset()
+    vi.mocked(mockLogActionAsync).mockReset()
+    vi.mocked(mockEmitAnalyticsEvent).mockReset()
+    vi.mocked(mockExpandSeedKeywordsToLongtails).mockReset()
+    
+    // Set up default mocks
+    vi.mocked(mockLogActionAsync).mockResolvedValue(undefined)
+    vi.mocked(mockEmitAnalyticsEvent).mockResolvedValue(undefined)
+    vi.mocked(mockExpandSeedKeywordsToLongtails).mockResolvedValue({
+      seeds_processed: 1,
+      total_longtails_created: 12,
+      step_4_longtails_completed_at: new Date().toISOString()
+    })
   })
 
   describe('Authentication', () => {

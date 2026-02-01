@@ -1853,3 +1853,111 @@ You must fully embody this agent's persona and follow all activation instruction
 - Safe to ship without downstream refactors
 - Follows established patterns from article generation system
 - Terminal state analytics only (workflow_step_retried and workflow_step_failed events)
+
+## Story Context: 35-2-expand-keywords-using-multiple-dataforseo-methods
+
+**Status**: ready-for-dev
+
+**Epic**: 35 – Keyword Research & Expansion
+
+**User Story**: As an SEO specialist, I want to expand each seed keyword into a structured set of long-tail keywords using multiple keyword intelligence sources, so that I can build topical depth and scalable content coverage.
+
+**Story Classification**:
+- Type: Producer (long-tail keyword generator)
+- Tier: Tier 1 (foundational expansion step)
+
+**Business Intent**: Expand existing seed keywords into a high-quality, diverse set of long-tail keywords using multiple Google-derived data sources, forming the spokes of the hub-and-spoke SEO model and enabling downstream subtopic and article generation.
+
+**Contracts Required**:
+- C1: POST /api/intent/workflows/{workflow_id}/steps/longtail-expand endpoint
+- C2/C4/C5: DataForSEO API integration (4 endpoints), keywords table operations
+- Terminal State: workflow.status = 'step_4_longtails', seeds_processed count, longtails_created count
+- UI Boundary: No UI events (backend only)
+- Analytics: workflow.longtail_keywords.started/completed audit events
+
+**Contracts Modified**: None (new endpoint only)
+
+**Contracts Guaranteed**:
+- ✅ No UI events emitted
+- ✅ No intermediate analytics (only terminal state)
+- ✅ No state mutation outside producer (keywords table only)
+- ✅ Idempotency: Re-running skips existing long-tails, no duplicates
+- ✅ Retry rules: 3 attempts per endpoint (2s, 4s, 8s backoff), 5 minute timeout
+
+**Producer Dependency Check**:
+- Epic 34 Status: COMPLETED ✅
+- Seed keywords exist in keywords table
+- Competitor → seed extraction completed (Story 34.2)
+- Retry hardening applied (Story 34.3)
+- Organization context available
+
+**Blocking Decision**: ALLOWED
+
+**Acceptance Criteria**:
+1. Given seed keywords exist with `longtail_status = 'not_started'` 
+   When I trigger long-tail expansion (Epic 35 – Step 2)
+   Then the system expands each seed keyword using all four DataForSEO keyword intelligence endpoints
+
+2. And for each seed keyword, the system retrieves up to 3 long-tail keywords from each of the following sources:
+   - Related Keywords
+   - Keyword Suggestions
+   - Keyword Ideas
+   - Google Autocomplete
+
+3. And the system generates up to 12 long-tail keywords per seed keyword
+
+4. And all generated long-tail keywords are:
+   - De-duplicated across all sources
+   - Semantically related to the parent seed keyword
+   - Ordered by relevance using: search_volume DESC, then competition_index ASC, then source priority
+
+5. And each generated long-tail keyword is stored as a new row in the `keywords` table with:
+   - `parent_seed_keyword_id` 
+   - `longtail_status = 'complete'` 
+   - `subtopics_status = 'not_started'` 
+   - `article_status = 'not_started'` 
+
+6. And the original seed keyword is updated to:
+   - `longtail_status = 'complete'` 
+
+7. And long-tail expansion completes within 5 minutes
+
+8. And the workflow status updates to `step_4_longtails` 
+
+**Technical Requirements**:
+- API Endpoint: POST /api/intent/workflows/{workflow_id}/steps/longtail-expand
+- DataForSEO Integration: 4 endpoints (related_keywords, keyword_suggestions, keyword_ideas, autocomplete)
+- Database: Normalized keywords table with parent_seed_keyword_id relationships
+- Retry Logic: 3 attempts per endpoint with exponential backoff
+- Timeout: 5 minutes maximum for entire step
+- Audit Logging: workflow.longtail_keywords.started/completed events
+
+**Dependencies**:
+- Epic 34 (Seed keyword extraction) - COMPLETED ✅
+- Story 34.3 (Retry utilities) - COMPLETED ✅
+- Database schema with parent_seed_keyword_id support
+- DataForSEO API access and rate limit management
+
+**Priority**: High
+**Story Points**: 13
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Story 35.1 already implemented this feature and is COMPLETE
+- This story follows the same patterns as Story 35.1
+- Uses existing retry utilities from Story 34.3
+- Maintains normalized data model (no JSON storage in workflow)
+- Implements proper error handling with partial success support
+- 4-endpoint model: Related, Suggestions, Ideas, Autocomplete (3 results each)
+
+**Files to be Created**:
+- `lib/services/intent-engine/longtail-keyword-expander.ts`
+- `app/api/intent/workflows/[workflow_id]/steps/longtail-expand/route.ts`
+- `__tests__/services/intent-engine/longtail-keyword-expander.test.ts`
+- `__tests__/api/intent/workflows/longtail-expand.test.ts`
+
+**Files to be Modified**:
+- `types/audit.ts` (add long-tail keyword audit actions)
+- `docs/api-contracts.md` (add endpoint documentation)
+- `docs/development-guide.md` (add workflow state transitions)
+- `accessible-artifacts/sprint-status.yaml` (update story status)

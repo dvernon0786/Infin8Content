@@ -9,6 +9,25 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 const mockFetch = vi.fn()
 global.fetch = mockFetch
 
+// Mock sleep function to prevent actual delays in tests
+vi.mock('@/lib/services/intent-engine/retry-utils', async () => {
+  const actual = await vi.importActual('@/lib/services/intent-engine/retry-utils') as any
+  return {
+    ...actual,
+    sleep: vi.fn(() => Promise.resolve()),
+    retryWithPolicy: vi.fn(async (fn, policy, context) => {
+      // Use faster retry policy for tests
+      const testPolicy = {
+        maxAttempts: 2, // Fewer attempts for faster tests
+        initialDelayMs: 10, // Much shorter delay
+        backoffMultiplier: 2,
+        maxDelayMs: 20
+      }
+      return actual.retryWithPolicy(fn, testPolicy, context)
+    })
+  }
+})
+
 // Mock DataForSEO API responses
 const mockRelatedKeywordsResponse = {
   version: '0.1.20230228',
