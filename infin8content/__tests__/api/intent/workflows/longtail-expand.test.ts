@@ -88,6 +88,12 @@ describe('/api/intent/workflows/[workflow_id]/steps/longtail-expand', () => {
 
   describe('Workflow Validation', () => {
     it('should return 404 when workflow is not found', async () => {
+      // Ensure user is authenticated for this test
+      vi.mocked(mockGetCurrentUser).mockResolvedValueOnce({
+        id: 'user-123',
+        org_id: 'org-123'
+      })
+
       const mockSupabase = {
         from: vi.fn(() => ({
           select: vi.fn(() => ({
@@ -115,6 +121,12 @@ describe('/api/intent/workflows/[workflow_id]/steps/longtail-expand', () => {
     })
 
     it('should return 400 when workflow is not in correct state', async () => {
+      // Ensure user is authenticated for this test
+      vi.mocked(mockGetCurrentUser).mockResolvedValueOnce({
+        id: 'user-123',
+        org_id: 'org-123'
+      })
+
       const mockSupabase = {
         from: vi.fn(() => ({
           select: vi.fn(() => ({
@@ -147,6 +159,12 @@ describe('/api/intent/workflows/[workflow_id]/steps/longtail-expand', () => {
 
   describe('Successful Expansion', () => {
     it('should successfully expand long-tail keywords', async () => {
+      // Ensure user is authenticated for this test
+      vi.mocked(mockGetCurrentUser).mockResolvedValueOnce({
+        id: 'user-123',
+        org_id: 'org-123'
+      })
+
       const mockSupabase = {
         from: vi.fn(() => ({
           select: vi.fn(() => ({

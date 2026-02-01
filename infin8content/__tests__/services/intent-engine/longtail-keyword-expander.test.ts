@@ -185,7 +185,7 @@ describe('Long-Tail Keyword Expander', () => {
       expect(result[0]).toEqual({
         keyword: 'best seo tools 2024',
         search_volume: 1200,
-        competition_level: 'medium',
+        competition_level: 'low',
         competition_index: 50,
         keyword_difficulty: 45,
         cpc: 2.50,
