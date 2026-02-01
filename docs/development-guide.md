@@ -793,4 +793,81 @@ chore: build process or dependency changes
 
 ---
 
+## Keyword Engine Patterns
+
+### Overview
+The Keyword Engine provides SEO-focused keyword processing capabilities, separate from the Intent Engine workflow system. It handles individual keyword operations like subtopic generation.
+
+### Architecture
+- **Service Layer**: `lib/services/keyword-engine/`
+- **API Layer**: `app/api/keywords/[id]/`
+- **Type Definitions**: `types/keyword.ts`
+
+### Key Components
+
+#### Subtopic Generator
+```typescript
+import { KeywordSubtopicGenerator } from '@/lib/services/keyword-engine/subtopic-generator'
+
+const generator = new KeywordSubtopicGenerator()
+const subtopics = await generator.generate(keywordId)
+await generator.store(keywordId, subtopics)
+```
+
+#### DataForSEO Integration
+```typescript
+import { generateSubtopics } from '@/lib/services/keyword-engine/dataforseo-client'
+
+const subtopics = await generateSubtopics(
+  topic,
+  language,
+  locationCode,
+  limit
+)
+```
+
+### Database Schema
+- `keywords.subtopics`: JSONB array storing subtopic ideas
+- `keywords.subtopics_status`: Track generation progress
+- `keywords.longtail_status`: Prerequisite for subtopic generation
+
+### Error Handling
+- Authentication required for all operations
+- Organization isolation via RLS
+- Idempotency: Skip if already completed
+- Retry logic for external API calls
+
+### Testing Patterns
+```typescript
+// Mock external dependencies
+vi.mock('@/lib/services/keyword-engine/dataforseo-client')
+vi.mock('@/lib/supabase/server')
+
+// Test service methods
+it('should generate subtopics for valid keyword', async () => {
+  const generator = new KeywordSubtopicGenerator()
+  const result = await generator.generate(keywordId)
+  expect(result).toHaveLength(3) // Exactly 3 subtopics
+})
+```
+
+### Troubleshooting
+
+**DataForSEO API Issues**
+- Check environment variables: `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`
+- Verify rate limits and retry configuration
+- Monitor API cost and usage
+
+**Database Issues**
+- Verify keyword has `longtail_status = 'complete'`
+- Check organization isolation (RLS policies)
+- Ensure proper JSONB structure for subtopics
+
+**Authentication Issues**
+- Verify user session and organization membership
+- Check RLS policies on keywords table
+- Ensure proper middleware configuration
+
+---
+
 *This documentation was generated as part of the BMad Method document-project workflow on 2026-01-11.*

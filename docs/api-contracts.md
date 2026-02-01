@@ -348,6 +348,48 @@ While API endpoints are synchronous, the application uses Supabase real-time sub
 
 ## Testing
 
+## Keyword Engine Endpoints
+
+### POST /api/keywords/[keyword_id]/subtopics
+Generate subtopic ideas for a longtail keyword using DataForSEO NLP.
+
+**Authentication:** Required (valid user session with organization)
+
+**Request Parameters:**
+- `keyword_id` (path): UUID of the keyword to generate subtopics for
+
+**Request Body:** None (uses keyword_id from path)
+
+**Response:** 200 OK
+```typescript
+{
+  success: true,
+  data: {
+    keyword_id: string,
+    subtopics: Array<{
+      title: string,
+      keywords: string[]
+    }>,
+    subtopics_count: number
+  }
+}
+```
+
+**Error Responses:**
+- 401 Unauthorized: Authentication required
+- 400 Bad Request: Keyword ID missing or invalid
+- 404 Not Found: Keyword not found
+- 409 Conflict: Subtopics already generated for this keyword
+- 503 Service Unavailable: DataForSEO API error
+
+**Requirements:**
+- Keyword must have `longtail_status = 'complete'`
+- Keyword must have `subtopics_status != 'complete'`
+- Generates exactly 3 subtopics per keyword
+- Updates keyword record with subtopics and status
+
+---
+
 API endpoints are tested with:
 - Unit tests (Vitest)
 - Integration tests 
