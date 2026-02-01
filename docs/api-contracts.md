@@ -422,6 +422,90 @@ Processes final human approval decision for the entire workflow (Story 37.3).
 - `workflow.human_approval.approved` - on approval
 - `workflow.human_approval.rejected` - on rejection
 
+#### GET /api/intent/audit/logs
+Retrieves Intent Engine audit logs for compliance tracking (Story 37.4).
+
+**Authentication:** Required (401 if not authenticated)  
+**Authorization:** Organization owners only (403 if not owner)  
+**Rate Limiting:** Standard API limits apply
+
+**Query Parameters:**
+```typescript
+{
+  workflow_id?: string;     // Filter by specific workflow
+  actor_id?: string;        // Filter by specific user
+  action?: string;          // Filter by specific action
+  entity_type?: 'workflow' | 'keyword' | 'article'; // Filter by entity type
+  date_from?: string;       // ISO 8601 timestamp (inclusive)
+  date_to?: string;         // ISO 8601 timestamp (inclusive)
+  limit?: number;           // Max 1000, default 100
+  offset?: number;          // Default 0, minimum 0
+  include_count?: boolean;  // Include total count in response
+}
+```
+
+**Response:** 200 OK
+```typescript
+{
+  logs: IntentAuditLog[];
+  pagination: {
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+    totalCount?: number; // Only if include_count=true
+  };
+}
+```
+
+**IntentAuditLog Schema:**
+```typescript
+{
+  id: string;
+  organization_id: string;
+  workflow_id: string | null;
+  entity_type: 'workflow' | 'keyword' | 'article';
+  entity_id: string;
+  actor_id: string;
+  action: string;
+  details: Record<string, unknown>;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string; // ISO 8601 timestamp
+}
+```
+
+**Supported Actions:**
+- `workflow.created` - Workflow creation
+- `workflow.archived` - Workflow archival
+- `workflow.superseded` - Workflow superseded
+- `workflow.step.completed` - Step completion
+- `workflow.step.failed` - Step failure
+- `workflow.step.blocked` - Step blocked
+- `workflow.approval.approved` - Approval granted
+- `workflow.approval.rejected` - Approval denied
+- `keyword.subtopics.approved` - Subtopic approval
+- `keyword.subtopics.rejected` - Subtopic rejection
+- `article.queued` - Article queued for generation
+- `article.generated` - Article generation completed
+- `article.failed` - Article generation failed
+- `system.error` - System error
+- `system.retry_exhausted` - Retry attempts exhausted
+
+**Business Logic:**
+- Organization isolation: Users can only view their organization's audit logs
+- Immutable records: Audit logs cannot be modified or deleted (WORM compliance)
+- Non-blocking: Audit logging failures do not affect core functionality
+- Comprehensive: All Intent Engine actions are logged with full context
+
+**Error Responses:**
+- 400 Bad Request: Invalid query parameters
+- 401 Unauthorized: Authentication required
+- 403 Forbidden: Owner access required
+- 500 Internal Server Error: Database query failed
+
+**Audit Logging:**
+- `audit.queries.executed` - Logs each audit query for meta-auditing
+
 ## Rate Limiting
 
 API endpoints implement rate limiting to prevent abuse. Specific limits vary by endpoint type.

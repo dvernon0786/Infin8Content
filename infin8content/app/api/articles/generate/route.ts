@@ -5,6 +5,7 @@ import { inngest } from '@/lib/inngest/client'
 import { sanitizeText } from '@/lib/utils/sanitize-text'
 import { emitUXMetricsEvent } from '@/lib/services/ux-metrics'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { logIntentActionAsync } from '@/lib/services/intent-engine/intent-audit-logger'
 import { AuditAction } from '@/types/audit'
 import { isFeatureFlagEnabled } from '@/lib/utils/feature-flags'
 import { FEATURE_FLAG_KEYS } from '@/lib/types/feature-flag'
@@ -181,6 +182,23 @@ async function executeLegacyArticleGeneration({
     action: 'article.generation.started',
     details: {
       articleId: article.id,
+      keyword: parsed.keyword,
+      targetWordCount: parsed.targetWordCount,
+      writingStyle: parsed.writingStyle,
+      targetAudience: parsed.targetAudience,
+    },
+    ipAddress: extractIpAddress(request.headers),
+    userAgent: extractUserAgent(request.headers),
+  })
+
+  // Log Intent audit trail entry (Story 37.4)
+  logIntentActionAsync({
+    organizationId,
+    entityType: 'article',
+    entityId: article.id,
+    actorId: userId,
+    action: AuditAction.ARTICLE_QUEUED,
+    details: {
       keyword: parsed.keyword,
       targetWordCount: parsed.targetWordCount,
       writingStyle: parsed.writingStyle,
