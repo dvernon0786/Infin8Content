@@ -40,7 +40,7 @@ describe('/api/keywords/[keyword_id]/approve-subtopics', () => {
         })
       })
 
-      const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
+const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -71,7 +71,7 @@ describe('/api/keywords/[keyword_id]/approve-subtopics', () => {
         })
       })
 
-      const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
+const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -93,7 +93,7 @@ describe('/api/keywords/[keyword_id]/approve-subtopics', () => {
         })
       })
 
-      const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
+const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
       const data = await response.json()
 
       expect(response.status).toBe(400)
@@ -111,7 +111,7 @@ describe('/api/keywords/[keyword_id]/approve-subtopics', () => {
         })
       })
 
-      const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
+const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
       const data = await response.json()
 
       expect(response.status).toBe(400)
@@ -132,7 +132,7 @@ describe('/api/keywords/[keyword_id]/approve-subtopics', () => {
         })
       })
 
-      const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
+const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
       const data = await response.json()
 
       expect(response.status).toBe(401)
@@ -153,7 +153,7 @@ describe('/api/keywords/[keyword_id]/approve-subtopics', () => {
         })
       })
 
-      const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
+const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
       const data = await response.json()
 
       expect(response.status).toBe(403)
@@ -174,7 +174,7 @@ describe('/api/keywords/[keyword_id]/approve-subtopics', () => {
         })
       })
 
-      const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
+const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
       const data = await response.json()
 
       expect(response.status).toBe(404)
@@ -195,7 +195,7 @@ describe('/api/keywords/[keyword_id]/approve-subtopics', () => {
         })
       })
 
-      const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
+const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
       const data = await response.json()
 
       expect(response.status).toBe(400)
@@ -216,7 +216,7 @@ describe('/api/keywords/[keyword_id]/approve-subtopics', () => {
         })
       })
 
-      const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
+const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
       const data = await response.json()
 
       expect(response.status).toBe(403)
@@ -243,7 +243,7 @@ describe('/api/keywords/[keyword_id]/approve-subtopics', () => {
         })
       })
 
-      const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
+const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
       const data = await response.json()
 
       expect(response.status).toBe(500)
@@ -264,7 +264,7 @@ describe('/api/keywords/[keyword_id]/approve-subtopics', () => {
         })
       })
 
-      const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
+const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
       const data = await response.json()
 
       expect(response.status).toBe(500)
@@ -291,7 +291,7 @@ describe('/api/keywords/[keyword_id]/approve-subtopics', () => {
         })
       })
 
-      const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
+const response = await POST(request, { params: Promise.resolve({ keyword_id: mockKeywordId }) })
       const data = await response.json()
 
       expect(response.status).toBe(200)
