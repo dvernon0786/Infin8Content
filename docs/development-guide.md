@@ -544,6 +544,80 @@ NODE_ENV=staging npm run build
 
 ## Intent Workflow State Management
 
+### Seed Keyword Approval (Story 35.3)
+
+The seed approval workflow provides a human governance gate before long-tail expansion:
+
+#### Approval States
+```
+step_3_seeds → step_3_seeds (approval gate - status unchanged)
+            → step_3_seeds (rejection - status unchanged)
+```
+
+**Approval Process:**
+```typescript
+POST /api/intent/workflows/{workflow_id}/steps/approve-seeds
+```
+
+**Business Logic:**
+- **Governance Gate**: Workflow status remains `step_3_seeds` (this is approval, not advancement)
+- **Authorization**: Only organization admins can approve/reject
+- **Idempotency**: One approval record per workflow + approval_type
+- **Partial Approval**: Can approve subset of keywords via `approved_keyword_ids`
+- **Full Approval**: All keywords approved when `approved_keyword_ids` is omitted
+
+**Approval Types:**
+- **Approved**: Keywords eligible for long-tail expansion
+- **Rejected**: Keywords blocked from expansion
+
+**Success Path:**
+1. Approval record created in `intent_approvals` table
+2. Workflow status remains `step_3_seeds`
+3. Audit event logged: `workflow.seed_keywords.approved` or `workflow.seed_keywords.rejected`
+4. Long-tail expansion (Story 35.2) checks approval before proceeding
+
+**Audit Events:**
+```typescript
+// Approval event
+action: 'workflow.seed_keywords.approved'
+details: {
+  workflow_id: string,
+  approved_keyword_ids: string[] | null,
+  feedback: string | null
+}
+
+// Rejection event
+action: 'workflow.seed_keywords.rejected'
+details: {
+  workflow_id: string,
+  feedback: string | null
+}
+```
+
+#### Testing the Approval Workflow
+
+```bash
+# Run unit tests for approval processor
+npm test -- __tests__/services/intent-engine/seed-approval-processor.test.ts
+
+# Run integration tests for API endpoint
+npm test -- __tests__/api/intent/workflows/approve-seeds.test.ts
+```
+
+#### Troubleshooting
+
+**Issue: "Admin access required"**
+- Verify user has `role = 'admin'` in users table
+- Check user belongs to correct organization
+
+**Issue: "Workflow must be at step_3_seeds"**
+- Verify workflow status is `step_3_seeds`
+- Ensure previous steps (ICP, competitors) completed successfully
+
+**Issue: "Invalid keyword ID format"**
+- Verify keyword IDs are valid UUIDs
+- Check keywords exist in keywords table
+
 ### Long-Tail Keyword Expansion (Story 35.1)
 
 The long-tail expansion workflow follows a state machine pattern with the following transitions:

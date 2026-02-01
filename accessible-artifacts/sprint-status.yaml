@@ -428,7 +428,7 @@ development_status:
   epic-35: in-progress
   35-1-extract-seed-keywords-from-competitor-data: done
   35-2-expand-keywords-using-multiple-dataforseo-methods: review
-  35-3-approve-seed-keywords-before-expansion: backlog
+  35-3-approve-seed-keywords-before-expansion: done
   epic-35-retrospective: optional
 
   # Epic 36: Keyword Refinement & Topic Clustering

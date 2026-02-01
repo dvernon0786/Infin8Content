@@ -627,6 +627,96 @@ You must fully embody this agent's persona and follow all activation instruction
 - Integrates with existing batch research and performance monitoring systems
 - Provides significant performance improvement while maintaining content quality
 
+## Story Context: 35-3-approve-seed-keywords-before-expansion
+
+**Status**: ready-for-dev
+
+**Epic**: 35 – Keyword Research & Expansion
+
+**User Story**: As a content manager, I want to review and approve seed keywords before they are expanded, so that only relevant keywords are eligible for long-tail generation.
+
+**Story Classification**:
+- Type: Governance / Control (Human-in-the-loop approval gate)
+- Tier: Tier 1 (critical quality control)
+
+**Business Intent**: Introduce a mandatory human approval gate for seed keywords before long-tail expansion, ensuring that only relevant, high-quality seeds are eligible for downstream processing.
+
+**Contracts Required**:
+- C1: POST /api/intent/workflows/{workflow_id}/steps/approve-seeds endpoint
+- C2/C4/C5: intent_approvals table (approval persistence), intent_workflows (state validation), keywords table (read-only eligibility reference)
+- Terminal State: None (authorization gate, not workflow-advancing step)
+- UI Boundary: No UI events (backend only)
+- Analytics: workflow.seed_keywords.approved/rejected audit events
+
+**Contracts Modified**:
+- New table: intent_approvals
+- No workflow state changes
+
+**Contracts Guaranteed**:
+- ✅ Idempotent approval (one record per workflow + approval_type)
+- ✅ Partial approval supported
+- ✅ Complete audit trail
+- ✅ Workflow state integrity preserved
+- ✅ No producer execution triggered
+
+**Producer Dependency Check**:
+- Epic 34 Status: COMPLETED ✅
+- Story 35.1 (Seed Extraction): COMPLETED ✅
+- Dependencies Met: Seed keywords exist in keywords table, workflow at step_3_seeds, intent workflow infrastructure exists
+- Blocking Decision: ALLOWED
+
+**Acceptance Criteria**:
+1. Given seed keywords exist for a workflow at step_3_seeds
+2. When an authorized user submits an approval decision
+3. Then the system creates or updates an approval record of type seed_keywords
+4. And the decision (approved or rejected) is persisted with approver context
+5. And optional feedback is stored for reference
+6. And if approved, the approved seed keyword IDs are marked eligible for expansion
+7. And if rejected, seed keywords remain ineligible for expansion
+8. And the workflow status remains step_3_seeds in all cases
+9. And downstream expansion (Story 35.2) is blocked unless approval exists
+
+**Technical Requirements**:
+- API Endpoint: POST /api/intent/workflows/{workflow_id}/steps/approve-seeds
+- Database Schema: intent_approvals table with workflow_id, approval_type, decision, approver_id, feedback, approved_items
+- Authorization: User must be authenticated and organization admin
+- Validation: Workflow must be at step_3_seeds, seed keywords must exist
+- Business Logic: Idempotent approval updates, partial approval support, execution gate for Story 35.2
+- Error Handling: 400/401/403/500 responses for various failure scenarios
+- Audit Logging: workflow.seed_keywords.approved/rejected events with decision context
+
+**Dependencies**:
+- Epic 34 (Seed keyword extraction) - COMPLETED ✅
+- Story 35.1 (Seed extraction implementation) - COMPLETED ✅
+- Intent workflow infrastructure
+- Database schema with keywords table
+- Authentication and authorization system
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- This is a governance story, not a producer - it authorizes downstream execution only
+- Does not generate keywords or advance workflow step
+- Maintains workflow state at step_3_seeds in all cases
+- Story 35.2 must check for approved seed_keywords approval before running
+- Supports partial approval (subset of seeds) and complete rejection
+- Provides audit trail of all approval decisions
+
+**Files to be Created**:
+- `app/api/intent/workflows/[workflow_id]/steps/approve-seeds/route.ts`
+- `lib/services/intent-engine/seed-approval-processor.ts`
+- `__tests__/services/intent-engine/seed-approval-processor.test.ts`
+- `__tests__/api/intent/workflows/approve-seeds.test.ts`
+- `supabase/migrations/20260201_add_intent_approvals_table.sql`
+
+**Files to be Modified**:
+- `types/audit.ts` (add seed keyword approval actions)
+- `docs/api-contracts.md` (add endpoint documentation)
+- `docs/development-guide.md` (add approval workflow guidance)
+- `accessible-artifacts/sprint-status.yaml` (update story status)
+
 ## Story Context: 35-1-extract-seed-keywords-from-competitor-data
 
 **Status**: ready-for-dev

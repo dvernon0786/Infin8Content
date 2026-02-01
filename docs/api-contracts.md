@@ -205,6 +205,55 @@ Common HTTP status codes:
 
 ### Intent Workflow Endpoints
 
+#### POST /api/intent/workflows/{workflow_id}/steps/approve-seeds
+Approves or rejects seed keywords for long-tail expansion (Story 35.3).
+
+**Authentication:** Required (401 if not authenticated)  
+**Authorization:** User must be organization admin (403 if not admin)
+
+**Path Parameters:**
+```typescript
+{
+  workflow_id: string; // UUID of intent workflow
+}
+```
+
+**Request Body:**
+```typescript
+{
+  decision: 'approved' | 'rejected'; // Approval decision
+  feedback?: string; // Optional feedback or notes
+  approved_keyword_ids?: string[]; // Optional subset of keyword IDs for partial approval
+}
+```
+
+**Response:** 200 OK
+```typescript
+{
+  success: boolean;
+  approval_id: string; // UUID of approval record
+  workflow_status: 'step_3_seeds'; // Status unchanged (governance gate)
+  message: string; // Success message
+}
+```
+
+**Workflow State Requirements:**
+- Workflow must be in `step_3_seeds` status
+- Seed keywords must exist
+
+**Business Logic:**
+- Idempotent: One approval record per workflow + approval_type
+- Full approval: All seed keywords approved (approved_items = null)
+- Partial approval: Only specified keyword IDs approved
+- Rejection: No keywords approved for expansion
+
+**Error Responses:**
+- 400 Bad Request: Invalid decision, workflow state, or keyword ID format
+- 401 Unauthorized: Authentication required
+- 403 Forbidden: Admin access required
+- 404 Not Found: Workflow not found or belongs to different organization
+- 500 Internal Server Error: Database constraint violation
+
 #### POST /api/intent/workflows/{workflow_id}/steps/longtail-expand
 Expands seed keywords into long-tail keywords using four DataForSEO endpoints (Story 35.1).
 
