@@ -7,11 +7,23 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
 // Mock dependencies
-vi.mock('@/lib/supabase/get-current-user')
-vi.mock('@/lib/supabase/server')
-vi.mock('@/lib/services/audit-logger')
-vi.mock('@/lib/services/analytics/event-emitter')
-vi.mock('@/lib/services/intent-engine/longtail-keyword-expander')
+vi.mock('@/lib/supabase/get-current-user', () => ({
+  getCurrentUser: mockGetCurrentUser
+}))
+vi.mock('@/lib/supabase/server', () => ({
+  createServiceRoleClient: mockCreateServiceRoleClient
+}))
+vi.mock('@/lib/services/audit-logger', () => ({
+  logActionAsync: mockLogActionAsync,
+  extractIpAddress: vi.fn(() => '127.0.0.1'),
+  extractUserAgent: vi.fn(() => 'test-agent')
+}))
+vi.mock('@/lib/services/analytics/event-emitter', () => ({
+  emitAnalyticsEvent: mockEmitAnalyticsEvent
+}))
+vi.mock('@/lib/services/intent-engine/longtail-keyword-expander', () => ({
+  expandSeedKeywordsToLongtails: mockExpandSeedKeywordsToLongtails
+}))
 
 // Mock modules
 const mockGetCurrentUser = vi.fn()
@@ -49,17 +61,20 @@ describe('/api/intent/workflows/[workflow_id]/steps/longtail-expand', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    // Reset default mock behavior
-    vi.mocked(mockGetCurrentUser).mockReset()
-    vi.mocked(mockCreateServiceRoleClient).mockReset()
-    vi.mocked(mockLogActionAsync).mockReset()
-    vi.mocked(mockEmitAnalyticsEvent).mockReset()
-    vi.mocked(mockExpandSeedKeywordsToLongtails).mockReset()
     
-    // Set up default mocks
-    vi.mocked(mockLogActionAsync).mockResolvedValue(undefined)
-    vi.mocked(mockEmitAnalyticsEvent).mockResolvedValue(undefined)
-    vi.mocked(mockExpandSeedKeywordsToLongtails).mockResolvedValue({
+    // Set up default authenticated user mock
+    mockGetCurrentUser.mockResolvedValue({
+      id: 'user-123',
+      org_id: 'org-123'
+    })
+    
+    mockCreateServiceRoleClient.mockReturnValue({
+      from: vi.fn()
+    })
+    
+    mockLogActionAsync.mockResolvedValue(undefined)
+    mockEmitAnalyticsEvent.mockResolvedValue(undefined)
+    mockExpandSeedKeywordsToLongtails.mockResolvedValue({
       seeds_processed: 1,
       total_longtails_created: 12,
       step_4_longtails_completed_at: new Date().toISOString()
@@ -103,12 +118,6 @@ describe('/api/intent/workflows/[workflow_id]/steps/longtail-expand', () => {
 
   describe('Workflow Validation', () => {
     it('should return 404 when workflow is not found', async () => {
-      // Ensure user is authenticated for this test
-      vi.mocked(mockGetCurrentUser).mockResolvedValueOnce({
-        id: 'user-123',
-        org_id: 'org-123'
-      })
-
       const mockSupabase = {
         from: vi.fn(() => ({
           select: vi.fn(() => ({
@@ -121,7 +130,7 @@ describe('/api/intent/workflows/[workflow_id]/steps/longtail-expand', () => {
         }))
       }
 
-      vi.mocked(mockCreateServiceRoleClient).mockReturnValue(mockSupabase)
+      mockCreateServiceRoleClient.mockReturnValue(mockSupabase)
 
       const request = new NextRequest('http://localhost:3000/api/intent/workflows/invalid/steps/longtail-expand', {
         method: 'POST',
@@ -168,7 +177,7 @@ describe('/api/intent/workflows/[workflow_id]/steps/longtail-expand', () => {
       const data = await response.json()
 
       expect(response.status).toBe(400)
-      expect(data.error).toContain('not in the correct state')
+      expect(data.error).toContain('Invalid workflow state')
     })
   })
 
