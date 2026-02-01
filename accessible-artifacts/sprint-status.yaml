@@ -439,9 +439,9 @@ development_status:
   epic-36-retrospective: optional
 
   # Epic 37: Content Topic Generation & Approval
-  epic-37: backlog
-  37-1-generate-subtopic-definitions-via-perplexity-ai: backlog
-  37-2-review-and-approve-subtopics-before-article-generation: backlog
+  epic-37: in-progress
+  37-1-generate-subtopic-definitions-via-perplexity-ai: done
+  37-2-review-and-approve-subtopics-before-article-generation: ready-for-dev
   37-3-implement-human-approval-gate: backlog
   37-4-maintain-complete-audit-trail-of-all-decisions: backlog
   epic-37-retrospective: optional
