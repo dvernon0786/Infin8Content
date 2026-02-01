@@ -447,8 +447,8 @@ development_status:
   epic-37-retrospective: optional
 
   # Epic 38: Article Generation & Workflow Completion
-  epic-38: backlog
-  38-1-queue-approved-subtopics-for-article-generation: backlog
+  epic-38: in-progress
+  38-1-queue-approved-subtopics-for-article-generation: ready-for-dev
   38-2-track-article-generation-progress: backlog
   38-3-link-generated-articles-to-intent-workflow: backlog
   epic-38-retrospective: optional
