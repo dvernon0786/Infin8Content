@@ -126,7 +126,7 @@ export async function POST(
 
         // Initialize validator and perform validation
         const validator = new ClusterValidator()
-        return await validator.validateWorkflowClusters(workflowId, clusters, keywords)
+        return await validator.validateWorkflowClusters(workflowId, clusters as any, keywords as any)
       },
       CLUSTER_VALIDATION_RETRY_POLICY,
       'cluster validation'
