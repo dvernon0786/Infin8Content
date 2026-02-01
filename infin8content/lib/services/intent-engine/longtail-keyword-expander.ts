@@ -457,12 +457,45 @@ async function getOrganizationSettings(organizationId: string): Promise<{ locati
 }
 
 /**
+ * Check if seed keywords are approved for a workflow
+ */
+async function checkSeedApproval(workflowId: string): Promise<void> {
+  const supabase = createServiceRoleClient()
+  
+  const { data: approval, error } = await supabase
+    .from('intent_approvals')
+    .select('decision')
+    .eq('workflow_id', workflowId)
+    .eq('approval_type', 'seed_keywords')
+    .single()
+  
+  if (error || !approval) {
+    throw new Error('seed_approval_required')
+  }
+  
+  const typedApproval = approval as unknown as { decision: string }
+  if (typedApproval.decision !== 'approved') {
+    throw new Error('seed_approval_required')
+  }
+}
+
+/**
  * Main function to expand seed keywords into long-tail keywords
  */
 export async function expandSeedKeywordsToLongtails(workflowId: string): Promise<ExpansionSummary> {
   const supabase = createServiceRoleClient()
   
   console.log(`[LongtailExpander] Starting long-tail expansion for workflow ${workflowId}`)
+  
+  // APPROVAL GUARD: Check seed keyword approval before any external API calls
+  try {
+    await checkSeedApproval(workflowId)
+  } catch (error) {
+    if (error instanceof Error && error.message === 'seed_approval_required') {
+      throw new Error('Seed keywords must be approved before long-tail expansion')
+    }
+    throw error
+  }
   
   // Get workflow details
   const { data: workflow, error: workflowError } = await supabase

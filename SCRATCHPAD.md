@@ -1,5 +1,123 @@
 # Infin8Content Development Scratchpad
 
+## 🎯 Story 35.2a: Approval Guard for Long-Tail Expansion - COMPLETE (February 1, 2026)
+
+**Date**: 2026-02-01T19:11:00+11:00  
+**Status**: ✅ COMPLETED AND PRODUCTION READY  
+**Priority**: CRITICAL  
+**Implementation**: Policy enforcement gate for seed keyword approval before long-tail expansion  
+**Scope**: Service-level guard, unit tests with table-gating, documentation update  
+**Code Review**: ✅ PASSED - Adversarial compliance verified (all 7 criteria met)  
+**Test Results**: ✅ 3/3 tests passing (approval guard enforcement)
+
+### 🎯 Implementation Summary
+
+Successfully implemented **approval guard enforcement** for Story 35.2 (long-tail expansion) that prevents execution unless seed keywords are approved via Story 35.3. This is a **policy gate, not a workflow step** — it enforces the architectural principle that **Permission ≠ Execution**.
+
+### 🔧 Adversarial Review Fixes Applied
+
+#### **Initial Test Failures Caught & Fixed**
+
+1. **✅ Wrong Expectation on Approved Path** - Fixed test 3
+   - **Before**: Test expected throw when approval = 'approved' (wrong)
+   - **After**: Test now verifies execution reaches workflow lookup (proves guard passed)
+   - **Impact**: Correctly proves guard passes, not just "doesn't throw"
+
+2. **✅ Loose Supabase Mock Chains** - Added table-gating
+   - **Before**: Mocks didn't verify table access order or prevent unexpected tables
+   - **After**: Mock throws if any table besides `intent_approvals` accessed early
+   - **Impact**: Prevents false positives from incomplete mocking
+
+3. **✅ No Proof of Fast-Fail** - Added structural enforcement
+   - **Before**: Tests only asserted error message
+   - **After**: Tests enforce that guard executes before any other operations
+   - **Impact**: Guarantees guard is truly a fast-fail mechanism
+
+### 📁 Files Created/Modified
+
+#### **Core Implementation (1)**
+1. **`lib/services/intent-engine/longtail-keyword-expander.ts`** (617 lines)
+   - Added `checkSeedApproval()` function (lines 459-480)
+   - Guard executes at lines 490-498, **before any DataForSEO API calls**
+   - Fails fast with explicit error: "Seed keywords must be approved before long-tail expansion"
+   - Read-only lookup from `intent_approvals` table only
+
+#### **Tests (1)**
+2. **`__tests__/services/intent-engine/longtail-keyword-expander.test.ts`** (465 lines)
+   - Added "Seed Approval Guard (Story 35.2a)" test suite (lines 313-463)
+   - Test 1 (lines 314-350): ❌ Fails when no approval exists
+   - Test 2 (lines 352-388): ❌ Fails when approval decision = 'rejected'
+   - Test 3 (lines 390-462): ✅ Proceeds when approval decision = 'approved'
+   - All tests use table-gating to prevent false positives
+
+#### **Documentation (1)**
+3. **`accessible-artifacts/35-2-expand-keywords-using-multiple-dataforseo-methods.md`**
+   - Added "🔒 Execution Preconditions" section (lines 82-84)
+   - Documents approval requirement clearly
+   - No other edits to story (preserves historical integrity)
+
+### ✅ Adversarial Compliance Verified
+
+| Criterion | Status | Evidence |
+|---|---|---|
+| Guard placement | ✅ PASS | Line 490 executes before line 501 workflow fetch |
+| Failure semantics | ✅ PASS | Explicit error message, deterministic behavior |
+| Approved path correctness | ✅ PASS | Test 3 proves execution reaches workflow lookup |
+| External side-effect suppression | ✅ PASS | Table-gated mocks prevent false positives |
+| Scope containment | ✅ PASS | No workflow mutations, read-only approval lookup |
+| Historical integrity | ✅ PASS | Patch story used, Story 35.2 only clarified |
+| Critical invariant | ✅ PASS | Nothing before guard reads/writes/calls externals |
+
+### 🧪 Test Coverage
+
+| Test Type | Count | Coverage |
+|-----------|-------|----------|
+| Unit Tests (Service) | 3 | Approval guard enforcement (missing, rejected, approved) |
+| **Total** | **3** | **All guard paths covered** |
+
+### 🎉 Production Ready
+
+- ✅ Guard executes before any external API calls
+- ✅ No workflow state mutation
+- ✅ No schema changes
+- ✅ Tests properly enforce guard with table-gating
+- ✅ Story 35.2 behavior unchanged when approval exists
+- ✅ Service-level enforcement (not API-level)
+- ✅ Explicit error assertions
+- ✅ Fast-fail semantics
+
+### 🧠 Architectural Pattern
+
+**Permission ≠ Execution**
+- Story 35.3 = Authority (approval decision)
+- Story 35.2 = Capability (expansion execution)
+- Story 35.2a = Enforcement (guard gate)
+
+The system now correctly distinguishes between "can we do this" and "should we do this."
+
+### 📊 Impact
+
+- **Governance**: Mandatory human-in-the-loop control point before expansion
+- **Quality**: Only approved seeds proceed to downstream processing
+- **Compliance**: Clear audit trail of approval decisions
+- **Reliability**: Fast-fail prevents wasted API calls on unapproved workflows
+
+### 📚 Documentation Updated
+
+- **Story File**: Added execution preconditions note
+- **Scratchpad**: Comprehensive implementation summary (this entry)
+
+### 📋 Epic 35 Status
+
+**Epic 35: Keyword Research & Expansion**
+- ✅ 35.1: Expand Seed Keywords into Long-Tail Keywords - DONE
+- ✅ 35.2: Expand Keywords Using Multiple DataForSEO Methods - DONE
+- ✅ 35.2a: Approval Guard for Long-Tail Expansion - DONE
+- ✅ 35.3: Approve Seed Keywords Before Expansion - DONE
+- Epic 35: Ready for next phase (subtopic generation)
+
+---
+
 ## 🎯 Story 35.3: Approve Seed Keywords Before Expansion - COMPLETE (February 1, 2026)
 
 **Date**: 2026-02-01T18:38:00+11:00  

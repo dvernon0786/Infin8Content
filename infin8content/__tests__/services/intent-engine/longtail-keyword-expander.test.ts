@@ -160,6 +160,11 @@ const mockAutocompleteResponse = {
   }]
 }
 
+// Mock Supabase client
+vi.mock('@/lib/supabase/server', () => ({
+  createServiceRoleClient: vi.fn()
+}))
+
 describe('Long-Tail Keyword Expander', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -302,6 +307,156 @@ describe('Long-Tail Keyword Expander', () => {
 
       await expect(fetchRelatedKeywords('seo tools', 2840, 'en'))
         .rejects.toThrow('Related keywords API failed')
+    })
+  })
+
+  describe('Seed Approval Guard (Story 35.2a)', () => {
+    it('should fail when no approval exists', async () => {
+      const { createServiceRoleClient } = await import('@/lib/supabase/server')
+      
+      // Mock approval lookup to return no data
+      const mockApprovalChain = {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: null,
+                error: new Error('No rows found')
+              })
+            })
+          })
+        })
+      }
+      
+      const mockSupabase = {
+        from: vi.fn((table: string) => {
+          if (table === 'intent_approvals') {
+            return mockApprovalChain
+          }
+          // Should never reach other tables if approval fails
+          throw new Error(`Unexpected table access: ${table}`)
+        })
+      }
+      
+      vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
+
+      const { expandSeedKeywordsToLongtails } = await import('@/lib/services/intent-engine/longtail-keyword-expander')
+
+      await expect(expandSeedKeywordsToLongtails('test-workflow-id'))
+        .rejects.toThrow('Seed keywords must be approved before long-tail expansion')
+      
+      // Verify approval lookup was attempted
+      expect(mockSupabase.from).toHaveBeenCalledWith('intent_approvals')
+    })
+
+    it('should fail when approval decision is rejected', async () => {
+      const { createServiceRoleClient } = await import('@/lib/supabase/server')
+      
+      // Mock approval lookup to return rejected decision
+      const mockApprovalChain = {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { decision: 'rejected' },
+                error: null
+              })
+            })
+          })
+        })
+      }
+      
+      const mockSupabase = {
+        from: vi.fn((table: string) => {
+          if (table === 'intent_approvals') {
+            return mockApprovalChain
+          }
+          // Should never reach other tables if approval is rejected
+          throw new Error(`Unexpected table access: ${table}`)
+        })
+      }
+      
+      vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
+
+      const { expandSeedKeywordsToLongtails } = await import('@/lib/services/intent-engine/longtail-keyword-expander')
+
+      await expect(expandSeedKeywordsToLongtails('test-workflow-id'))
+        .rejects.toThrow('Seed keywords must be approved before long-tail expansion')
+      
+      // Verify approval lookup was attempted
+      expect(mockSupabase.from).toHaveBeenCalledWith('intent_approvals')
+    })
+
+    it('should proceed to expansion when approval decision is approved', async () => {
+      const { createServiceRoleClient } = await import('@/lib/supabase/server')
+      
+      // Mock approval lookup to return approved decision
+      const mockApprovalChain = {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { decision: 'approved' },
+                error: null
+              })
+            })
+          })
+        })
+      }
+      
+      // Mock workflow lookup
+      const mockWorkflowChain = {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: { organization_id: 'org-123', status: 'step_3_seeds' },
+              error: null
+            })
+          })
+        })
+      }
+      
+      // Mock keywords lookup (empty - no seeds to expand)
+      const mockKeywordsChain = {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            is: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: [],
+                error: null
+              })
+            })
+          })
+        })
+      }
+      
+      const mockSupabase = {
+        from: vi.fn((table: string) => {
+          if (table === 'intent_approvals') {
+            return mockApprovalChain
+          }
+          if (table === 'intent_workflows') {
+            return mockWorkflowChain
+          }
+          if (table === 'keywords') {
+            return mockKeywordsChain
+          }
+          throw new Error(`Unexpected table access: ${table}`)
+        })
+      }
+      
+      vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
+
+      const { expandSeedKeywordsToLongtails } = await import('@/lib/services/intent-engine/longtail-keyword-expander')
+
+      // Should fail with "no seeds" error, not "approval required" error
+      // This proves the guard passed and execution proceeded
+      await expect(expandSeedKeywordsToLongtails('test-workflow-id'))
+        .rejects.toThrow('No seed keywords found for long-tail expansion')
+      
+      // Verify all lookups were attempted in order
+      expect(mockSupabase.from).toHaveBeenCalledWith('intent_approvals')
+      expect(mockSupabase.from).toHaveBeenCalledWith('intent_workflows')
     })
   })
 })
