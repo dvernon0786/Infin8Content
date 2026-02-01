@@ -74,6 +74,11 @@ export const AuditAction = {
     WORKFLOW_TOPIC_CLUSTERING_STARTED: 'workflow.topic_clustering.started',
     WORKFLOW_TOPIC_CLUSTERING_COMPLETED: 'workflow.topic_clustering.completed',
     WORKFLOW_TOPIC_CLUSTERING_FAILED: 'workflow.topic_clustering.failed',
+
+    // Cluster validation actions
+    WORKFLOW_CLUSTER_VALIDATION_STARTED: 'workflow.cluster_validation.started',
+    WORKFLOW_CLUSTER_VALIDATION_COMPLETED: 'workflow.cluster_validation.completed',
+    WORKFLOW_CLUSTER_VALIDATION_FAILED: 'workflow.cluster_validation.failed',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];

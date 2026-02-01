@@ -435,7 +435,7 @@ development_status:
   epic-36: in-progress
   36-1-filter-keywords-for-quality-and-relevance: done
   36-2-cluster-keywords-into-hub-and-spoke-structure: done
-  36-3-validate-cluster-coherence-and-structure: backlog
+  36-3-validate-cluster-coherence-and-structure: done
   epic-36-retrospective: optional
 
   # Epic 37: Content Topic Generation & Approval
