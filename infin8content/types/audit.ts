@@ -88,6 +88,21 @@ export const AuditAction = {
     WORKFLOW_HUMAN_APPROVAL_STARTED: 'workflow.human_approval.started',
     WORKFLOW_HUMAN_APPROVAL_APPROVED: 'workflow.human_approval.approved',
     WORKFLOW_HUMAN_APPROVAL_REJECTED: 'workflow.human_approval.rejected',
+
+    // Intent Engine specific audit events (Story 37.4)
+    WORKFLOW_CREATED: 'workflow.created',
+    WORKFLOW_ARCHIVED: 'workflow.archived',
+    WORKFLOW_SUPERSEDED: 'workflow.superseded',
+    WORKFLOW_STEP_COMPLETED: 'workflow.step.completed',
+    WORKFLOW_STEP_FAILED: 'workflow.step.failed',
+    WORKFLOW_STEP_BLOCKED: 'workflow.step.blocked',
+    WORKFLOW_APPROVAL_APPROVED: 'workflow.approval.approved',
+    WORKFLOW_APPROVAL_REJECTED: 'workflow.approval.rejected',
+    ARTICLE_QUEUED: 'article.queued',
+    ARTICLE_GENERATED: 'article.generated',
+    ARTICLE_FAILED: 'article.failed',
+    SYSTEM_ERROR: 'system.error',
+    SYSTEM_RETRY_EXHAUSTED: 'system.retry_exhausted',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];
@@ -113,6 +128,38 @@ export interface CreateAuditLogParams {
     orgId: string;
     userId?: string | null;
     action: AuditActionType;
+    details?: Record<string, unknown>;
+    ipAddress?: string | null;
+    userAgent?: string | null;
+}
+
+/**
+ * Intent audit log entry structure (Story 37.4)
+ */
+export interface IntentAuditLog {
+    id: string;
+    organization_id: string;
+    workflow_id: string | null;
+    entity_type: 'workflow' | 'keyword' | 'article';
+    entity_id: string;
+    actor_id: string;
+    action: string;
+    details: Record<string, unknown>;
+    ip_address: string | null;
+    user_agent: string | null;
+    created_at: string;
+}
+
+/**
+ * Parameters for creating an intent audit log entry (Story 37.4)
+ */
+export interface CreateIntentAuditLogParams {
+    organizationId: string;
+    workflowId?: string | null;
+    entityType: 'workflow' | 'keyword' | 'article';
+    entityId: string;
+    actorId: string;
+    action: string;
     details?: Record<string, unknown>;
     ipAddress?: string | null;
     userAgent?: string | null;
