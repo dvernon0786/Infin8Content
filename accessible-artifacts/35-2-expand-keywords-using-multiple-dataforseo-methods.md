@@ -79,6 +79,12 @@ So that I can build topical depth and scalable content coverage.
 
 ---
 
+## 🔒 Execution Preconditions (Added Post-Implementation)
+
+Long-tail expansion requires an approved `seed_keywords` intent_approval record. Execution will fail fast if approval is missing or rejected.
+
+---
+
 ## Explicit Non-Goals (Out of Scope)
 
 This story **must not**:
