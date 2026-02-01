@@ -52,12 +52,15 @@ export async function POST(
       )
     }
 
+    // Type guard: ensure workflow is properly typed
+    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string }
+
     // Validate workflow state - must be at step_5_filtering
-    if (workflow.status !== 'step_5_filtering') {
+    if (typedWorkflow.status !== 'step_5_filtering') {
       return NextResponse.json(
         { 
           error: 'Invalid workflow state',
-          current_status: workflow.status,
+          current_status: typedWorkflow.status,
           required_status: 'step_5_filtering'
         },
         { status: 409 }
@@ -71,7 +74,7 @@ export async function POST(
       action: AuditAction.WORKFLOW_TOPIC_CLUSTERING_STARTED,
       details: {
         workflow_id: workflowId,
-        current_status: workflow.status
+        current_status: typedWorkflow.status
       },
       ipAddress: extractIpAddress(request.headers),
       userAgent: extractUserAgent(request.headers),
