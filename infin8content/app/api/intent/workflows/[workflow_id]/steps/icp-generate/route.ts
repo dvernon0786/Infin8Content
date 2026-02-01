@@ -1,0 +1,235 @@
+/**
+ * ICP Generation API Endpoint
+ * Story 34.1: Generate ICP Document via Perplexity AI
+ * Story 34.3: Harden ICP Generation with Automatic Retry & Failure Recovery
+ * 
+ * POST /api/intent/workflows/{workflow_id}/steps/icp-generate
+ * Triggers ICP generation for a workflow step with automatic retry on transient failures
+ */
+
+import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/supabase/get-current-user'
+import { createServiceRoleClient } from '@/lib/supabase/server'
+import { checkRateLimit, type RateLimitConfig } from '@/lib/services/rate-limiting/persistent-rate-limiter'
+import {
+  generateICPDocument,
+  storeICPGenerationResult,
+  handleICPGenerationFailure,
+  type ICPGenerationRequest
+} from '@/lib/services/intent-engine/icp-generator'
+
+// Rate limit configuration for ICP generation
+const RATE_LIMIT_CONFIG: RateLimitConfig = {
+  windowMs: 3600000, // 1 hour
+  maxRequests: 10, // Max 10 ICP generations per organization per hour
+  keyPrefix: 'icp_generation'
+}
+
+// Concurrent retry prevention: Track in-progress ICP generations per workflow
+// Key: workflow_id, Value: true if generation is in progress
+const inProgressMap = new Map<string, boolean>()
+
+function isGenerationInProgress(workflowId: string): boolean {
+  return inProgressMap.has(workflowId) && inProgressMap.get(workflowId) === true
+}
+
+function markGenerationInProgress(workflowId: string): void {
+  inProgressMap.set(workflowId, true)
+}
+
+function clearGenerationInProgress(workflowId: string): void {
+  inProgressMap.delete(workflowId)
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ workflow_id: string }> }
+) {
+  const { workflow_id } = await params
+  const workflowId = workflow_id
+  let organizationId: string | undefined
+
+  try {
+    // Authenticate user
+    const currentUser = await getCurrentUser()
+    if (!currentUser || !currentUser.org_id) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    organizationId = currentUser.org_id
+
+    // Check for concurrent retry prevention
+    if (isGenerationInProgress(workflowId)) {
+      return NextResponse.json(
+        {
+          error: 'Generation in progress',
+          message: 'ICP generation is already in progress for this workflow'
+        },
+        { status: 409 }
+      )
+    }
+
+    // Check persistent rate limit
+    const rateLimit = await checkRateLimit(organizationId, RATE_LIMIT_CONFIG)
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          message: 'Maximum 10 ICP generations per organization per hour',
+          retryAfter: rateLimit.retryAfter
+        },
+        { status: 429 }
+      )
+    }
+
+    // Parse request body
+    const body = await request.json()
+    const icpRequest: ICPGenerationRequest = {
+      organizationName: body.organization_name,
+      organizationUrl: body.organization_url,
+      organizationLinkedInUrl: body.organization_linkedin_url
+    }
+
+    // Validate request
+    if (!icpRequest.organizationName || !icpRequest.organizationUrl || !icpRequest.organizationLinkedInUrl) {
+      return NextResponse.json(
+        {
+          error: 'Invalid request',
+          message: 'organization_name, organization_url, and organization_linkedin_url are required'
+        },
+        { status: 400 }
+      )
+    }
+
+    // Verify workflow exists and belongs to user's organization
+    const supabase = createServiceRoleClient()
+    const { data: workflow, error: workflowError } = await supabase
+      .from('intent_workflows')
+      .select('id, status, organization_id')
+      .eq('id', workflowId)
+      .eq('organization_id', organizationId)
+      .single()
+
+    if (workflowError || !workflow) {
+      return NextResponse.json(
+        { error: 'Workflow not found' },
+        { status: 404 }
+      )
+    }
+
+    // Type assertion for workflow data
+    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string }
+
+    // Check if workflow is in correct state for ICP generation
+    if (typedWorkflow.status !== 'step_0_auth' && typedWorkflow.status !== 'step_1_icp') {
+      return NextResponse.json(
+        {
+          error: 'Invalid workflow state',
+          message: `Workflow must be in step_0_auth or step_1_icp state, currently in ${typedWorkflow.status}`
+        },
+        { status: 400 }
+      )
+    }
+
+    // Check for idempotency - if ICP already generated, return existing result
+    const { data: existingWorkflow, error: fetchError } = await supabase
+      .from('intent_workflows')
+      .select('icp_data, step_1_icp_completed_at')
+      .eq('id', workflowId)
+      .eq('organization_id', organizationId)
+      .single()
+
+    if (!fetchError && existingWorkflow && (existingWorkflow as any).icp_data) {
+      console.log(`[ICP-Generate] ICP already exists for workflow ${workflowId}, returning cached result`)
+      return NextResponse.json({
+        success: true,
+        workflow_id: workflowId,
+        status: 'step_1_icp',
+        icp_data: (existingWorkflow as any).icp_data,
+        cached: true,
+        metadata: {
+          generated_at: (existingWorkflow as any).step_1_icp_completed_at
+        }
+      })
+    }
+
+    // Mark generation as in-progress
+    markGenerationInProgress(workflowId)
+
+    // Generate ICP document with automatic retry
+    const icpResult = await generateICPDocument(icpRequest, organizationId, 300000, undefined, workflowId)
+
+    // Store result in workflow with retry metadata (consolidated in single update)
+    await storeICPGenerationResult(workflowId, organizationId, icpResult)
+
+    // Clear in-progress flag on success
+    clearGenerationInProgress(workflowId)
+
+    // Emit analytics event for workflow step completion
+    try {
+      const analyticsEvent = {
+        event_type: 'workflow_step_completed',
+        workflow_id: workflowId,
+        organization_id: organizationId,
+        step: 'step_1_icp',
+        status: 'success',
+        metadata: {
+          tokens_used: icpResult.tokensUsed,
+          model_used: icpResult.modelUsed,
+          generated_at: icpResult.generatedAt,
+          retry_count: icpResult.retryCount || 0
+        },
+        timestamp: new Date().toISOString()
+      }
+      console.log(`[ICP-Generate] Analytics event: ${JSON.stringify(analyticsEvent)}`)
+    } catch (analyticsError) {
+      console.error(`[ICP-Generate] Failed to emit analytics event:`, analyticsError)
+    }
+
+    // Log activity
+    if (icpResult.retryCount && icpResult.retryCount > 0) {
+      console.log(`[ICP-Generate] Successfully generated ICP for workflow ${workflowId} after ${icpResult.retryCount} retry attempt(s)`)
+    } else {
+      console.log(`[ICP-Generate] Successfully generated ICP for workflow ${workflowId}`)
+    }
+
+    return NextResponse.json({
+      success: true,
+      workflow_id: workflowId,
+      status: 'step_1_icp',
+      icp_data: icpResult.icp_data,
+      metadata: {
+        tokens_used: icpResult.tokensUsed,
+        model_used: icpResult.modelUsed,
+        generated_at: icpResult.generatedAt,
+        retry_count: icpResult.retryCount || 0
+      }
+    })
+  } catch (error) {
+    // Clear in-progress flag on error
+    clearGenerationInProgress(workflowId)
+
+    // Log error
+    console.error(`[ICP-Generate] Error generating ICP:`, error)
+
+    // Update workflow with error status if we have the necessary IDs
+    if (workflowId && organizationId) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      await handleICPGenerationFailure(workflowId, organizationId, new Error(errorMessage))
+    }
+
+    // Return error response
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate ICP document'
+    return NextResponse.json(
+      {
+        error: 'ICP generation failed',
+        message: errorMessage,
+        workflow_id: workflowId
+      },
+      { status: 500 }
+    )
+  }
+}

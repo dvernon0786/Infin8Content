@@ -407,5 +407,114 @@ describe('DataForSEO Service Client', () => {
       expect(result.data.trend).toEqual([800, 900, 1000])
     })
   })
+
+  describe('keywords_for_site endpoint (Story 34.2)', () => {
+    it('should validate keywords_for_site endpoint response structure', async () => {
+      const mockResponse = {
+        status_code: 20000,
+        status_message: 'Ok.',
+        tasks: [{
+          id: 'test-task-id',
+          status_code: 20000,
+          status_message: 'Ok.',
+          result: [
+            {
+              keyword: 'example keyword 1',
+              search_volume: 5000,
+              competition_index: 45,
+              keyword_difficulty: 42,
+              cpc: 1.5
+            },
+            {
+              keyword: 'example keyword 2',
+              search_volume: 3000,
+              competition_index: 35,
+              keyword_difficulty: 38,
+              cpc: 1.2
+            },
+            {
+              keyword: 'example keyword 3',
+              search_volume: 2000,
+              competition_index: 30,
+              keyword_difficulty: 35,
+              cpc: 0.9
+            }
+          ]
+        }]
+      }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      })
+
+      const auth = Buffer.from(`${process.env.DATAFORSEO_LOGIN}:${process.env.DATAFORSEO_PASSWORD}`).toString('base64')
+      const response = await fetch(
+        'https://api.dataforseo.com/v3/dataforseo_labs/google/keywords_for_site/live',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify([{
+            target: 'example.com',
+            location_code: 2840,
+            language_code: 'en',
+            limit: 3
+          }]),
+        }
+      )
+
+      expect(response.ok).toBe(true)
+      const data = await response.json()
+
+      expect(data.status_code).toBe(20000)
+      expect(data.tasks).toBeDefined()
+      expect(data.tasks[0].result.length).toBe(3)
+      expect(data.tasks[0].result[0]).toHaveProperty('keyword')
+      expect(data.tasks[0].result[0]).toHaveProperty('search_volume')
+      expect(data.tasks[0].result[0]).toHaveProperty('competition_index')
+    })
+
+    it('should handle keywords_for_site rate limiting with Retry-After', async () => {
+      const mockHeaders = {
+        get: vi.fn((header: string) => {
+          if (header === 'Retry-After') return '2'
+          return null
+        }),
+      }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: mockHeaders,
+        json: async () => ({
+          status_code: 42900,
+          status_message: 'Rate limit exceeded',
+        }),
+      })
+
+      const auth = Buffer.from(`${process.env.DATAFORSEO_LOGIN}:${process.env.DATAFORSEO_PASSWORD}`).toString('base64')
+      const response = await fetch(
+        'https://api.dataforseo.com/v3/dataforseo_labs/google/keywords_for_site/live',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify([{
+            target: 'example.com',
+            location_code: 2840,
+            language_code: 'en',
+          }]),
+        }
+      )
+
+      const data = await response.json()
+      expect(data.status_code).toBe(42900)
+      expect(response.headers.get('Retry-After')).toBe('2')
+    })
+  })
 })
 

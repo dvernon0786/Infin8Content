@@ -542,6 +542,218 @@ NODE_ENV=production npm run build
 NODE_ENV=staging npm run build
 ```
 
+## Intent Workflow State Management
+
+### Seed Keyword Approval (Story 35.3)
+
+The seed approval workflow provides a human governance gate before long-tail expansion:
+
+#### Approval States
+```
+step_3_seeds → step_3_seeds (approval gate - status unchanged)
+            → step_3_seeds (rejection - status unchanged)
+```
+
+**Approval Process:**
+```typescript
+POST /api/intent/workflows/{workflow_id}/steps/approve-seeds
+```
+
+**Business Logic:**
+- **Governance Gate**: Workflow status remains `step_3_seeds` (this is approval, not advancement)
+- **Authorization**: Only organization admins can approve/reject
+- **Idempotency**: One approval record per workflow + approval_type
+- **Partial Approval**: Can approve subset of keywords via `approved_keyword_ids`
+- **Full Approval**: All keywords approved when `approved_keyword_ids` is omitted
+
+**Approval Types:**
+- **Approved**: Keywords eligible for long-tail expansion
+- **Rejected**: Keywords blocked from expansion
+
+**Success Path:**
+1. Approval record created in `intent_approvals` table
+2. Workflow status remains `step_3_seeds`
+3. Audit event logged: `workflow.seed_keywords.approved` or `workflow.seed_keywords.rejected`
+4. Long-tail expansion (Story 35.2) checks approval before proceeding
+
+**Audit Events:**
+```typescript
+// Approval event
+action: 'workflow.seed_keywords.approved'
+details: {
+  workflow_id: string,
+  approved_keyword_ids: string[] | null,
+  feedback: string | null
+}
+
+// Rejection event
+action: 'workflow.seed_keywords.rejected'
+details: {
+  workflow_id: string,
+  feedback: string | null
+}
+```
+
+#### Testing the Approval Workflow
+
+```bash
+# Run unit tests for approval processor
+npm test -- __tests__/services/intent-engine/seed-approval-processor.test.ts
+
+# Run integration tests for API endpoint
+npm test -- __tests__/api/intent/workflows/approve-seeds.test.ts
+```
+
+#### Troubleshooting
+
+**Issue: "Admin access required"**
+- Verify user has `role = 'admin'` in users table
+- Check user belongs to correct organization
+
+**Issue: "Workflow must be at step_3_seeds"**
+- Verify workflow status is `step_3_seeds`
+- Ensure previous steps (ICP, competitors) completed successfully
+
+**Issue: "Invalid keyword ID format"**
+- Verify keyword IDs are valid UUIDs
+- Check keywords exist in keywords table
+
+### Long-Tail Keyword Expansion (Story 35.1)
+
+The long-tail expansion workflow follows a state machine pattern with the following transitions:
+
+#### Workflow States
+```
+step_3_seeds → step_4_longtails (on successful expansion)
+            → step_3_seeds (on failure, retry available)
+```
+
+#### State Transition Details
+
+**Initial State: `step_3_seeds`**
+- Seed keywords extracted and stored with `longtail_status = 'not_started'`
+- Ready for long-tail expansion
+
+**Expansion Process:**
+```typescript
+POST /api/intent/workflows/{workflow_id}/steps/longtail-expand
+```
+
+**Success Path:**
+1. Workflow status: `step_3_seeds` → `step_4_longtails`
+2. Seed keywords: `longtail_status = 'not_started'` → `'complete'`
+3. Long-tail keywords created with:
+   - `parent_seed_keyword_id` = seed keyword ID
+   - `longtail_status = 'complete'`
+   - `subtopics_status = 'not_started'`
+   - `article_status = 'not_started'`
+
+**Failure Path:**
+1. Workflow status remains at `step_3_seeds`
+2. Error message stored in `step_4_longtails_error_message`
+3. User can retry the expansion
+
+#### DataForSEO Integration
+
+The expansion calls four endpoints per seed keyword with retry logic:
+
+```typescript
+// Retry Configuration
+const LONGTAIL_RETRY_POLICY = {
+  maxAttempts: 3,           // 3 total attempts
+  initialDelayMs: 2000,     // 2 seconds
+  backoffMultiplier: 2,     // exponential backoff
+  maxDelayMs: 8000          // 8 second max
+}
+
+// Backoff Sequence: 2s → 4s → 8s
+```
+
+**Endpoints Called:**
+1. Related Keywords: `/v3/dataforseo_labs/google/related_keywords/live`
+2. Keyword Suggestions: `/v3/dataforseo_labs/google/keyword_suggestions/live`
+3. Keyword Ideas: `/v3/dataforseo_labs/google/keyword_ideas/live`
+4. Google Autocomplete: `/v3/serp/google/autocomplete/live/advanced`
+
+#### Organization Settings
+
+The expansion respects organization-level configuration:
+
+```typescript
+// From organizations table
+{
+  default_location_code: number;    // e.g., 2840 for United States
+  default_language_code: string;    // e.g., 'en' for English
+}
+```
+
+If settings are missing, defaults are used with a warning log:
+```
+[LongtailExpander] Organization {id} missing location/language settings. 
+Using defaults: locationCode=2840, languageCode=en
+```
+
+#### Audit Logging
+
+All expansion operations are logged:
+
+```typescript
+// Start event
+action: 'workflow.longtail_keywords.started'
+details: {
+  workflow_id: string,
+  seed_count: number,
+  sources: ['related', 'suggestions', 'ideas', 'autocomplete'],
+  max_longtails_per_seed: 12
+}
+
+// Completion event
+action: 'workflow.longtail_keywords.completed'
+details: {
+  workflow_id: string,
+  seeds_processed: number,
+  longtails_created: number,
+  duration_ms: number
+}
+
+// Failure event
+action: 'workflow.longtail_keywords.failed'
+details: {
+  workflow_id: string,
+  error: string
+}
+```
+
+#### Testing the Workflow
+
+```bash
+# Run unit tests for expansion service
+npm test -- lib/services/intent-engine/longtail-keyword-expander.test.ts
+
+# Run integration tests for API endpoint
+npm test -- __tests__/api/intent/workflows/longtail-expand.test.ts
+
+# Test with real DataForSEO credentials (requires .env.local)
+npm run test:integration
+```
+
+#### Troubleshooting
+
+**Issue: "No seed keywords found for expansion"**
+- Verify workflow is in `step_3_seeds` status
+- Check that seed keywords exist with `longtail_status = 'not_started'`
+- Ensure previous step (seed extraction) completed successfully
+
+**Issue: DataForSEO API errors**
+- Verify `DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD` environment variables
+- Check DataForSEO API rate limits
+- Review retry logs for specific error messages
+
+**Issue: Organization settings not applied**
+- Check `organizations` table for `default_location_code` and `default_language_code`
+- Verify organization record exists and is not deleted
+- Check logs for warning messages about missing settings
+
 ## Contributing Guidelines
 
 ### Git Workflow

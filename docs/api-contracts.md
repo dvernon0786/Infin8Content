@@ -203,6 +203,121 @@ Common HTTP status codes:
 - 500: Internal Server Error
 - 503: Service Unavailable (feature disabled)
 
+### Intent Workflow Endpoints
+
+#### POST /api/intent/workflows/{workflow_id}/steps/approve-seeds
+Approves or rejects seed keywords for long-tail expansion (Story 35.3).
+
+**Authentication:** Required (401 if not authenticated)  
+**Authorization:** User must be organization admin (403 if not admin)
+
+**Path Parameters:**
+```typescript
+{
+  workflow_id: string; // UUID of intent workflow
+}
+```
+
+**Request Body:**
+```typescript
+{
+  decision: 'approved' | 'rejected'; // Approval decision
+  feedback?: string; // Optional feedback or notes
+  approved_keyword_ids?: string[]; // Optional subset of keyword IDs for partial approval
+}
+```
+
+**Response:** 200 OK
+```typescript
+{
+  success: boolean;
+  approval_id: string; // UUID of approval record
+  workflow_status: 'step_3_seeds'; // Status unchanged (governance gate)
+  message: string; // Success message
+}
+```
+
+**Workflow State Requirements:**
+- Workflow must be in `step_3_seeds` status
+- Seed keywords must exist
+
+**Business Logic:**
+- Idempotent: One approval record per workflow + approval_type
+- Full approval: All seed keywords approved (approved_items = null)
+- Partial approval: Only specified keyword IDs approved
+- Rejection: No keywords approved for expansion
+
+**Error Responses:**
+- 400 Bad Request: Invalid decision, workflow state, or keyword ID format
+- 401 Unauthorized: Authentication required
+- 403 Forbidden: Admin access required
+- 404 Not Found: Workflow not found or belongs to different organization
+- 500 Internal Server Error: Database constraint violation
+
+#### POST /api/intent/workflows/{workflow_id}/steps/longtail-expand
+Expands seed keywords into long-tail keywords using four DataForSEO endpoints (Story 35.1).
+
+**Authentication:** Required (401 if not authenticated)  
+**Authorization:** Workflow must belong to authenticated user's organization
+
+**Path Parameters:**
+```typescript
+{
+  workflow_id: string; // UUID of intent workflow
+}
+```
+
+**Request Body:**
+```typescript
+{
+  // No request body required - uses workflow context
+}
+```
+
+**Response:** 200 OK
+```typescript
+{
+  success: boolean;
+  data: {
+    seeds_processed: number;
+    longtails_created: number;
+    step_4_longtails_completed_at: string; // ISO 8601 timestamp
+  }
+}
+```
+
+**Workflow State Requirements:**
+- Workflow must be in `step_3_seeds` status
+- Seed keywords must exist with `longtail_status = 'not_started'`
+
+**Error Responses:**
+- 400 Bad Request: Invalid workflow state or no seed keywords found
+- 401 Unauthorized: Authentication required
+- 404 Not Found: Workflow not found or belongs to different organization
+- 500 Internal Server Error: Expansion failed
+
+**DataForSEO Integration:**
+Calls four endpoints per seed keyword:
+1. `/v3/dataforseo_labs/google/related_keywords/live` - 3 results
+2. `/v3/dataforseo_labs/google/keyword_suggestions/live` - 3 results
+3. `/v3/dataforseo_labs/google/keyword_ideas/live` - 3 results
+4. `/v3/serp/google/autocomplete/live/advanced` - 3 results
+
+**Retry Policy:**
+- Max attempts: 3
+- Backoff: Exponential (2s, 4s, 8s)
+- Timeout: 5 minutes total
+
+**Database Updates:**
+- Creates new keyword records with `parent_seed_keyword_id` reference
+- Updates seed keyword `longtail_status` to `'complete'`
+- Updates workflow status to `step_4_longtails`
+
+**Audit Logging:**
+- `workflow.longtail_keywords.started` - on request start
+- `workflow.longtail_keywords.completed` - on successful completion
+- `workflow.longtail_keywords.failed` - on error
+
 ## Rate Limiting
 
 API endpoints implement rate limiting to prevent abuse. Specific limits vary by endpoint type.

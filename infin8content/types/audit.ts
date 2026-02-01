@@ -53,6 +53,27 @@ export const AuditAction = {
 
     // Feature flag actions
     FEATURE_FLAG_TOGGLED: 'feature.flag.toggled',
+
+    // Workflow step actions
+    WORKFLOW_COMPETITOR_SEED_KEYWORDS_STARTED: 'workflow.competitor_seed_keywords.started',
+    WORKFLOW_COMPETITOR_SEED_KEYWORDS_COMPLETED: 'workflow.competitor_seed_keywords.completed',
+    WORKFLOW_LONGTAIL_KEYWORDS_STARTED: 'workflow.longtail_keywords.started',
+    WORKFLOW_LONGTAIL_KEYWORDS_COMPLETED: 'workflow.longtail_keywords.completed',
+    WORKFLOW_LONGTAIL_KEYWORDS_FAILED: 'workflow.longtail_keywords.failed',
+
+    // Seed keyword approval actions
+    WORKFLOW_SEED_KEYWORDS_APPROVED: 'workflow.seed_keywords.approved',
+    WORKFLOW_SEED_KEYWORDS_REJECTED: 'workflow.seed_keywords.rejected',
+
+    // Keyword filtering actions
+    WORKFLOW_KEYWORD_FILTERING_STARTED: 'workflow.keyword_filtering.started',
+    WORKFLOW_KEYWORD_FILTERING_COMPLETED: 'workflow.keyword_filtering.completed',
+    WORKFLOW_KEYWORD_FILTERING_FAILED: 'workflow.keyword_filtering.failed',
+
+    // Topic clustering actions
+    WORKFLOW_TOPIC_CLUSTERING_STARTED: 'workflow.topic_clustering.started',
+    WORKFLOW_TOPIC_CLUSTERING_COMPLETED: 'workflow.topic_clustering.completed',
+    WORKFLOW_TOPIC_CLUSTERING_FAILED: 'workflow.topic_clustering.failed',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];

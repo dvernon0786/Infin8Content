@@ -627,6 +627,188 @@ You must fully embody this agent's persona and follow all activation instruction
 - Integrates with existing batch research and performance monitoring systems
 - Provides significant performance improvement while maintaining content quality
 
+## Story Context: 35-3-approve-seed-keywords-before-expansion
+
+**Status**: ready-for-dev
+
+**Epic**: 35 – Keyword Research & Expansion
+
+**User Story**: As a content manager, I want to review and approve seed keywords before they are expanded, so that only relevant keywords are eligible for long-tail generation.
+
+**Story Classification**:
+- Type: Governance / Control (Human-in-the-loop approval gate)
+- Tier: Tier 1 (critical quality control)
+
+**Business Intent**: Introduce a mandatory human approval gate for seed keywords before long-tail expansion, ensuring that only relevant, high-quality seeds are eligible for downstream processing.
+
+**Contracts Required**:
+- C1: POST /api/intent/workflows/{workflow_id}/steps/approve-seeds endpoint
+- C2/C4/C5: intent_approvals table (approval persistence), intent_workflows (state validation), keywords table (read-only eligibility reference)
+- Terminal State: None (authorization gate, not workflow-advancing step)
+- UI Boundary: No UI events (backend only)
+- Analytics: workflow.seed_keywords.approved/rejected audit events
+
+**Contracts Modified**:
+- New table: intent_approvals
+- No workflow state changes
+
+**Contracts Guaranteed**:
+- ✅ Idempotent approval (one record per workflow + approval_type)
+- ✅ Partial approval supported
+- ✅ Complete audit trail
+- ✅ Workflow state integrity preserved
+- ✅ No producer execution triggered
+
+**Producer Dependency Check**:
+- Epic 34 Status: COMPLETED ✅
+- Story 35.1 (Seed Extraction): COMPLETED ✅
+- Dependencies Met: Seed keywords exist in keywords table, workflow at step_3_seeds, intent workflow infrastructure exists
+- Blocking Decision: ALLOWED
+
+**Acceptance Criteria**:
+1. Given seed keywords exist for a workflow at step_3_seeds
+2. When an authorized user submits an approval decision
+3. Then the system creates or updates an approval record of type seed_keywords
+4. And the decision (approved or rejected) is persisted with approver context
+5. And optional feedback is stored for reference
+6. And if approved, the approved seed keyword IDs are marked eligible for expansion
+7. And if rejected, seed keywords remain ineligible for expansion
+8. And the workflow status remains step_3_seeds in all cases
+9. And downstream expansion (Story 35.2) is blocked unless approval exists
+
+**Technical Requirements**:
+- API Endpoint: POST /api/intent/workflows/{workflow_id}/steps/approve-seeds
+- Database Schema: intent_approvals table with workflow_id, approval_type, decision, approver_id, feedback, approved_items
+- Authorization: User must be authenticated and organization admin
+- Validation: Workflow must be at step_3_seeds, seed keywords must exist
+- Business Logic: Idempotent approval updates, partial approval support, execution gate for Story 35.2
+- Error Handling: 400/401/403/500 responses for various failure scenarios
+- Audit Logging: workflow.seed_keywords.approved/rejected events with decision context
+
+**Dependencies**:
+- Epic 34 (Seed keyword extraction) - COMPLETED ✅
+- Story 35.1 (Seed extraction implementation) - COMPLETED ✅
+- Intent workflow infrastructure
+- Database schema with keywords table
+- Authentication and authorization system
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- This is a governance story, not a producer - it authorizes downstream execution only
+- Does not generate keywords or advance workflow step
+- Maintains workflow state at step_3_seeds in all cases
+- Story 35.2 must check for approved seed_keywords approval before running
+- Supports partial approval (subset of seeds) and complete rejection
+- Provides audit trail of all approval decisions
+
+**Files to be Created**:
+- `app/api/intent/workflows/[workflow_id]/steps/approve-seeds/route.ts`
+- `lib/services/intent-engine/seed-approval-processor.ts`
+- `__tests__/services/intent-engine/seed-approval-processor.test.ts`
+- `__tests__/api/intent/workflows/approve-seeds.test.ts`
+- `supabase/migrations/20260201_add_intent_approvals_table.sql`
+
+**Files to be Modified**:
+- `types/audit.ts` (add seed keyword approval actions)
+- `docs/api-contracts.md` (add endpoint documentation)
+- `docs/development-guide.md` (add approval workflow guidance)
+- `accessible-artifacts/sprint-status.yaml` (update story status)
+
+## Story Context: 35-1-extract-seed-keywords-from-competitor-data
+
+**Status**: ready-for-dev
+
+**Epic**: 35 – Keyword Research & Expansion
+
+**User Story**: As an SEO specialist, I want to expand each seed keyword into a structured set of long-tail keywords using multiple keyword intelligence sources, so that I can build topical depth and scalable content coverage.
+
+**Story Classification**:
+- Type: Producer (long-tail keyword generator)
+- Tier: Tier 1 (foundational expansion step)
+
+**Business Intent**: Expand existing seed keywords into a high-quality, diverse set of long-tail keywords using multiple Google-derived data sources, forming the spokes of the hub-and-spoke SEO model and enabling downstream subtopic and article generation.
+
+**Contracts Required**:
+- C1: POST /api/intent/workflows/{workflow_id}/steps/longtail-expand endpoint
+- C2/C4/C5: DataForSEO API integration (4 endpoints), keywords table operations
+- Terminal State: workflow.status = 'step_4_longtails', seeds_processed count, longtails_created count
+- UI Boundary: No UI events (backend only)
+- Analytics: workflow.longtail_keywords.started/completed audit events
+
+**Contracts Modified**: None (new endpoint only)
+
+**Contracts Guaranteed**:
+- ✅ No UI events emitted
+- ✅ No intermediate analytics (only terminal state)
+- ✅ No state mutation outside producer (keywords table only)
+- ✅ Idempotency: Re-running skips existing long-tails, no duplicates
+- ✅ Retry rules: 3 attempts per endpoint (2s, 4s, 8s backoff), 5 minute timeout
+
+**Producer Dependency Check**:
+- Epic 34 Status: COMPLETED ✅
+- Seed keywords exist in keywords table
+- Competitor → seed extraction completed
+- Retry hardening applied
+- Organization context available
+
+**Blocking Decision**: ALLOWED
+
+**Acceptance Criteria**:
+1. Given seed keywords exist with longtail_status = 'not_started'
+   When I trigger long-tail expansion (Epic 35 – Step 1)
+   Then the system expands each seed keyword using all four DataForSEO keyword intelligence endpoints
+
+2. And for each seed keyword, the system retrieves up to 3 long-tail keywords from each source:
+   - Related Keywords (POST /v3/dataforseo_labs/google/related_keywords/live)
+   - Keyword Suggestions (POST /v3/dataforseo_labs/google/keyword_suggestions/live)
+   - Keyword Ideas (POST /v3/dataforseo_labs/google/keyword_ideas/live)
+   - Google Autocomplete (POST /v3/serp/google/autocomplete/live/advanced)
+
+3. And the system generates up to 12 long-tail keywords per seed keyword
+
+4. And all generated long-tail keywords are de-duplicated across sources, semantically related to parent seed, and ordered by relevance
+
+5. And each long-tail keyword is stored as new row in keywords table with parent_seed_keyword_id, longtail_status = 'complete', subtopics_status = 'not_started', article_status = 'not_started'
+
+6. And original seed keyword updated to longtail_status = 'complete'
+
+7. And long-tail expansion completes within 5 minutes
+
+8. And workflow status updates to step_4_longtails
+
+**Technical Requirements**:
+- Endpoint: POST /api/intent/workflows/{workflow_id}/steps/longtail-expand
+- Request: { workflow_id: string }
+- Response: { success: boolean, data: { seeds_processed: number, longtails_created: number, step_4_longtails_completed_at: string }, error?: string }
+- Service: lib/services/intent-engine/longtail-keyword-expander.ts
+- Database: keywords table (normalized storage, no JSON in workflow)
+- Retry: 3 attempts per endpoint (2s, 4s, 8s backoff)
+- Timeout: 5 minutes max for entire step
+- Language/location from organization defaults
+- Batch requests where possible
+
+**Dependencies**:
+- Epic 34 (ICP generation) - COMPLETED ✅
+- DataForSEO API integration
+- Supabase database with keywords table
+- Organization context system
+- Authentication system (getCurrentUser pattern)
+
+**Priority**: High
+**Story Points**: 13
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Producer story with no UI events
+- Uses normalized data model (no JSON storage in workflow)
+- Four-endpoint DataForSEO integration for comprehensive coverage
+- Retry logic reused from Story 34.3 utilities
+- Idempotent design prevents duplicate long-tails
+- Workflow table used only for state management
+
 ## Story Context: 33-1-create-intent-workflow-with-organization-context
 
 **Status**: ready-for-dev
@@ -1608,3 +1790,354 @@ You must fully embody this agent's persona and follow all activation instruction
 - Manual override provides content creators with final control over content acceptance
 - Comprehensive analytics enable continuous improvement of retry strategies
 - Integration with existing parallel processing maintains performance benefits
+
+## Story Context: 34-1-generate-icp-document-via-perplexity-ai
+
+**Status**: ready-for-dev
+
+**Epic**: Epic 34 - Intent Validation - ICP & Competitive Analysis
+
+**User Story**: As a content manager, I want to generate an ICP document using AI based on my organization's profile, so that I have a clear definition of my target audience before planning content.
+
+**Acceptance Criteria**:
+- System calls Perplexity API with organization profile data when ICP generation is triggered
+- ICP generation completes within 5 minutes
+- Generated ICP includes industries, buyer roles, pain points, and value proposition
+- ICP is stored in the workflow's icp_data field
+- Workflow status updates to 'step_1_icp' with step_1_icp_completed_at timestamp
+- Step is marked as completed with timestamp
+
+**Technical Requirements**:
+- OpenRouter Perplexity integration using existing OpenRouter client
+- ICP generator service in `lib/services/intent-engine/icp-generator.ts`
+- API endpoint: POST `/api/intent/workflows/{workflow_id}/steps/icp-generate`
+- Database migration to add icp_data, step_1_icp_completed_at, step_1_icp_error_message fields
+- Timeout: 5 minutes maximum with exponential backoff retry (2 attempts)
+- ICPData structure with industries, buyerRoles, painPoints, valueProposition fields
+- Organization profile data extraction and sanitization before API call
+- Audit logging for all ICP generation attempts
+
+**Dependencies**:
+- Epic 33 - Workflow Foundation & Organization Setup (COMPLETED ✅)
+  - Story 33.1: Create Intent Workflow with Organization Context
+  - Story 33.2: Configure Organization ICP Settings
+- Existing OpenRouter client from `lib/services/openrouter/openrouter-client.ts`
+- Existing authentication patterns (`getCurrentUser()`)
+- Supabase database infrastructure
+
+**Priority**: High
+**Story Points**: 13
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Producer story that generates ICP data for workflow step 1
+- Follows established patterns from article generation system
+- No UI events, only backend workflow operations
+- Terminal state analytics only (workflow_step_completed event)
+- Reuses existing OpenRouter client to reduce implementation scope
+- Organization data variables populated from intent_workflows table
+- Cost tracking integrated with existing OpenRouter system
+
+## Story Context: 34-2-extract-seed-keywords-from-competitor-urls
+
+**Status**: ready-for-dev
+
+**Epic**: Epic 34 - Intent Validation - ICP & Competitive Analysis
+
+**User Story**: As a content manager, I want to analyze competitor websites and extract a small, high-quality set of seed keywords from each competitor domain, so that these seed keywords can be expanded into long-tail keywords and subtopics in later steps of the keyword generation pipeline.
+
+**Acceptance Criteria**:
+- System loads active competitor URLs for the organization
+- For each competitor URL, the system calls the DataForSEO `keywords_for_site` API endpoint
+- System extracts up to 3 seed keywords per competitor, ordered by highest search volume
+- For each extracted seed keyword, a record is created in the `keywords` table with seed_keyword, search_volume, competition_level, keyword_difficulty, competitor_url_id, and organization_id
+- All created seed keywords are marked with longtail_status, subtopics_status, and article_status as 'not_started'
+- Workflow status updates to `step_2_competitors` with step_2_competitor_completed_at timestamp
+- Step is marked as completed with timestamp
+
+**Technical Requirements**:
+- API endpoint: POST `/api/intent/workflows/{workflow_id}/steps/competitor-analyze`
+- DataForSEO endpoint: POST `/v3/dataforseo_labs/google/keywords_for_site/live`
+- Service: `lib/services/intent-engine/competitor-seed-extractor.ts`
+- One request per competitor URL with limit to top 3 keywords
+- Retry: up to 3 attempts (2s, 4s, 8s backoff)
+- Timeout: hard stop at 10 minutes total
+- Normalized keyword records stored in `keywords` table (no JSON storage)
+- Idempotent: re-running overwrites existing seeds, no duplicates
+- Non-blocking per competitor: continues with others on failure
+- Audit logging for workflow.competitor_seed_keywords.started and .completed actions
+
+**Dependencies**:
+- Epic 34.1 - Generate ICP Document via Perplexity AI (COMPLETED ✅)
+  - ICP generation is complete
+  - Organization context is available
+  - Competitor URLs are configured and stored
+- Existing DataForSEO API integration
+- Existing authentication patterns (`getCurrentUser()`)
+- Supabase database infrastructure with `keywords` table
+
+**Priority**: High
+**Story Points**: 13
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Producer story that creates seed keyword records for workflow step 2
+- Follows established patterns from article generation system
+- No UI events, only backend workflow operations
+- Terminal state analytics only (workflow_step_completed event)
+- Establishes foundation for hub-and-spoke SEO model
+- Matches Outrank-style keyword engine architecture
+- Non-goals: does not generate long-tail keywords, subtopics, or content
+- Error handling: if one competitor fails, continue with others; if all fail, fail the step
+
+## Story Context: 34-3-handle-icp-generation-failures-with-retry
+
+**Status**: ready-for-dev
+
+**Epic**: Epic 34 - Intent Validation - ICP & Competitive Analysis
+
+**User Story**: As a content manager, I want ICP generation to automatically retry when transient failures occur, so that temporary external API issues do not prevent me from completing onboarding.
+
+**Acceptance Criteria**:
+- When ICP generation fails with a retryable error (timeout, rate limit, 5xx), the system automatically retries using exponential backoff
+- Retryable errors: network timeouts, HTTP 429, HTTP 5xx
+- Non-retryable errors (4xx, auth, validation) immediately stop execution
+- System performs at most 3 total attempts (initial + 2 retries)
+- Workflow records retry_count and last_error_message
+- If ICP generation succeeds on a retry, workflow proceeds normally to step_1_icp with retry metadata available for audit
+- If all retry attempts fail, ICP generation is marked failed via error metadata, workflow remains at step_1_icp, user may re-trigger manually
+- Analytics events emitted for each retry attempt and final failure after retries exhausted
+
+**Technical Requirements**:
+- Retry logic implemented inside `icp-generator.ts` service
+- Retry policy: maxAttempts=3, initialDelayMs=1000, backoffMultiplier=2, maxDelayMs=30000
+- Error classification logic distinguishing retryable vs non-retryable errors
+- Database changes: ALTER TABLE intent_workflows ADD COLUMN retry_count INTEGER DEFAULT 0, ADD COLUMN step_1_icp_last_error_message TEXT
+- Observability: emit workflow_step_retried and workflow_step_failed events
+- API behavior: retries transparent to caller, response includes retry metadata if applicable
+- Manual re-trigger uses same endpoint (POST /api/intent/workflows/{workflow_id}/steps/icp-generate)
+
+**Dependencies**:
+- Story 34.1 - Generate ICP Document via Perplexity AI (COMPLETED ✅)
+  - ICP producer implementation is complete
+  - OpenRouter integration is working
+  - Organization context is available
+- Existing icp-generator.ts service
+- Existing error handling patterns from article generation system
+- Supabase database infrastructure
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Producer enhancement that hardens existing ICP generation
+- Retry logic lives inside the ICP producer (icp-generator.ts)
+- No new workflow steps or statuses introduced
+- No consumer semantics changes
+- No separate retry API endpoint
+- No UI-driven retry logic (retry occurs server-side)
+- No long-term job scheduling or background queues
+- Fully aligned with Product & Stack Overview
+- Keeps ICP generation as single, hardened producer
+- Safe to ship without downstream refactors
+- Follows established patterns from article generation system
+- Terminal state analytics only (workflow_step_retried and workflow_step_failed events)
+
+## Story Context: 35-2-expand-keywords-using-multiple-dataforseo-methods
+
+**Status**: ready-for-dev
+
+**Epic**: 35 – Keyword Research & Expansion
+
+**User Story**: As an SEO specialist, I want to expand each seed keyword into a structured set of long-tail keywords using multiple keyword intelligence sources, so that I can build topical depth and scalable content coverage.
+
+**Story Classification**:
+- Type: Producer (long-tail keyword generator)
+- Tier: Tier 1 (foundational expansion step)
+
+**Business Intent**: Expand existing seed keywords into a high-quality, diverse set of long-tail keywords using multiple Google-derived data sources, forming the spokes of the hub-and-spoke SEO model and enabling downstream subtopic and article generation.
+
+**Contracts Required**:
+- C1: POST /api/intent/workflows/{workflow_id}/steps/longtail-expand endpoint
+- C2/C4/C5: DataForSEO API integration (4 endpoints), keywords table operations
+- Terminal State: workflow.status = 'step_4_longtails', seeds_processed count, longtails_created count
+- UI Boundary: No UI events (backend only)
+- Analytics: workflow.longtail_keywords.started/completed audit events
+
+**Contracts Modified**: None (new endpoint only)
+
+**Contracts Guaranteed**:
+- ✅ No UI events emitted
+- ✅ No intermediate analytics (only terminal state)
+- ✅ No state mutation outside producer (keywords table only)
+- ✅ Idempotency: Re-running skips existing long-tails, no duplicates
+- ✅ Retry rules: 3 attempts per endpoint (2s, 4s, 8s backoff), 5 minute timeout
+
+**Producer Dependency Check**:
+- Epic 34 Status: COMPLETED ✅
+- Seed keywords exist in keywords table
+- Competitor → seed extraction completed (Story 34.2)
+- Retry hardening applied (Story 34.3)
+- Organization context available
+
+**Blocking Decision**: ALLOWED
+
+**Acceptance Criteria**:
+1. Given seed keywords exist with `longtail_status = 'not_started'` 
+   When I trigger long-tail expansion (Epic 35 – Step 2)
+   Then the system expands each seed keyword using all four DataForSEO keyword intelligence endpoints
+
+2. And for each seed keyword, the system retrieves up to 3 long-tail keywords from each of the following sources:
+   - Related Keywords
+   - Keyword Suggestions
+   - Keyword Ideas
+   - Google Autocomplete
+
+3. And the system generates up to 12 long-tail keywords per seed keyword
+
+4. And all generated long-tail keywords are:
+   - De-duplicated across all sources
+   - Semantically related to the parent seed keyword
+   - Ordered by relevance using: search_volume DESC, then competition_index ASC, then source priority
+
+5. And each generated long-tail keyword is stored as a new row in the `keywords` table with:
+   - `parent_seed_keyword_id` 
+   - `longtail_status = 'complete'` 
+   - `subtopics_status = 'not_started'` 
+   - `article_status = 'not_started'` 
+
+6. And the original seed keyword is updated to:
+   - `longtail_status = 'complete'` 
+
+7. And long-tail expansion completes within 5 minutes
+
+8. And the workflow status updates to `step_4_longtails` 
+
+**Technical Requirements**:
+- API Endpoint: POST /api/intent/workflows/{workflow_id}/steps/longtail-expand
+- DataForSEO Integration: 4 endpoints (related_keywords, keyword_suggestions, keyword_ideas, autocomplete)
+- Database: Normalized keywords table with parent_seed_keyword_id relationships
+- Retry Logic: 3 attempts per endpoint with exponential backoff
+- Timeout: 5 minutes maximum for entire step
+- Audit Logging: workflow.longtail_keywords.started/completed events
+
+**Dependencies**:
+- Epic 34 (Seed keyword extraction) - COMPLETED ✅
+- Story 34.3 (Retry utilities) - COMPLETED ✅
+- Database schema with parent_seed_keyword_id support
+- DataForSEO API access and rate limit management
+
+**Priority**: High
+**Story Points**: 13
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Story 35.1 already implemented this feature and is COMPLETE
+- This story follows the same patterns as Story 35.1
+- Uses existing retry utilities from Story 34.3
+- Maintains normalized data model (no JSON storage in workflow)
+- Implements proper error handling with partial success support
+- 4-endpoint model: Related, Suggestions, Ideas, Autocomplete (3 results each)
+
+**Files to be Created**:
+- `lib/services/intent-engine/longtail-keyword-expander.ts`
+- `app/api/intent/workflows/[workflow_id]/steps/longtail-expand/route.ts`
+- `__tests__/services/intent-engine/longtail-keyword-expander.test.ts`
+- `__tests__/api/intent/workflows/longtail-expand.test.ts`
+
+**Files to be Modified**:
+- `types/audit.ts` (add long-tail keyword audit actions)
+- `docs/api-contracts.md` (add endpoint documentation)
+- `docs/development-guide.md` (add workflow state transitions)
+- `accessible-artifacts/sprint-status.yaml` (update story status)
+
+## Story Context: 36-1-filter-keywords-for-quality-and-relevance
+
+**Status**: ready-for-dev
+
+**Epic**: 36 – Keyword Refinement & Topic Clustering
+
+**User Story**: As an SEO specialist, I want long-tail keywords to be filtered for basic quality issues, so that only clean and viable keywords move forward to clustering.
+
+**Story Classification**:
+- Type: Producer (mechanical keyword filtering)
+- Tier: Tier 1 (foundational hygiene step)
+
+**Business Intent**: Produce a clean, high-quality keyword set by mechanically filtering expanded long-tail keywords, ensuring that only viable, non-duplicative, sufficiently searched terms proceed to semantic clustering.
+
+**Contracts Required**:
+- C1: POST /api/intent/workflows/{workflow_id}/steps/filter-keywords
+- C2/C4/C5: intent_workflows (read/update workflow state), keywords (read/update keyword filtering metadata), audit_logs (record terminal audit events)
+- Terminal State: workflow.status = 'step_5_filtering', filtered_keywords_count
+- UI Boundary: No UI events (backend only)
+- Analytics: workflow.keyword_filtering.started/completed audit events
+
+**Contracts Modified**: None
+
+**Contracts Guaranteed**:
+- ✅ No UI events emitted
+- ✅ No intermediate analytics
+- ✅ No state mutation outside producer boundary
+- ✅ Idempotent execution guaranteed
+- ✅ Retry rules strictly enforced for system failures only
+
+**Producer Dependency Check**:
+- Epic 34 Status: COMPLETED ✅
+- Epic 35 Status: COMPLETED ✅
+- Long-tail keywords exist in keywords table
+- Workflow status is step_4_longtails
+- Organization context available
+- Blocking Decision: ALLOWED
+
+**Acceptance Criteria**:
+1. Given the workflow is at step_4_longtails
+   When keyword filtering is triggered
+   Then the system removes duplicate and near-duplicate keywords
+
+2. And keywords with search_volume below the configured minimum are removed
+
+3. And filtering completes within 1 minute
+
+4. And filtered keywords remain stored as normalized rows in the keywords table
+
+5. And the workflow status updates to step_5_filtering
+
+**Technical Requirements**:
+- API Endpoint: POST /api/intent/workflows/{workflow_id}/steps/filter-keywords
+- Filtering Rules: Duplicate removal (similarity ≥ 0.85), minimum search volume (default 100)
+- Database: Normalized keywords table with is_filtered_out, filtered_reason, filtered_at fields
+- Retry Logic: 3 attempts for database failures only (2s → 4s → 8s backoff)
+- Timeout: 1 minute maximum for entire step
+- Audit Logging: workflow.keyword_filtering.started/completed events
+
+**Dependencies**:
+- Epic 34 (Seed keyword extraction) - COMPLETED ✅
+- Epic 35 (Long-tail keyword expansion) - COMPLETED ✅
+- Database schema with filtering metadata support
+- Organization settings for minimum search volume threshold
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Mechanical-only hygiene step with no semantic reasoning
+- Duplicate removal uses similarity ratio ≥ 0.85, retains variant with highest search_volume
+- Minimum search volume filtering with configurable threshold (default 100)
+- Near-duplicate removal uses string normalization (lowercase, trim, remove punctuation)
+- Workflow state progression from step_4_longtails to step_5_filtering
+- Maintains normalized data model (no JSON storage in workflow)
+- Implements proper error handling with partial success support
+
+**Files to be Created**:
+- `lib/services/intent-engine/keyword-filter.ts`
+- `app/api/intent/workflows/[workflow_id]/steps/filter-keywords/route.ts`
+- `__tests__/services/intent-engine/keyword-filter.test.ts`
+- `__tests__/api/intent/workflows/filter-keywords.test.ts`
+
+**Files to be Modified**:
+- `types/audit.ts` (add keyword filtering audit actions)
+- `docs/api-contracts.md` (add endpoint documentation)
+- `docs/development-guide.md` (add workflow state transitions)
+- `accessible-artifacts/sprint-status.yaml` (update story status)
