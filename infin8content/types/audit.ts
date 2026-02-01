@@ -83,6 +83,11 @@ export const AuditAction = {
     // Keyword subtopic approval actions
     KEYWORD_SUBTOPICS_APPROVED: 'keyword.subtopics.approved',
     KEYWORD_SUBTOPICS_REJECTED: 'keyword.subtopics.rejected',
+
+    // Human approval actions
+    WORKFLOW_HUMAN_APPROVAL_STARTED: 'workflow.human_approval.started',
+    WORKFLOW_HUMAN_APPROVAL_APPROVED: 'workflow.human_approval.approved',
+    WORKFLOW_HUMAN_APPROVAL_REJECTED: 'workflow.human_approval.rejected',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];

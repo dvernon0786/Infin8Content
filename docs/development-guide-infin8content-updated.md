@@ -401,6 +401,97 @@ npm run profile
 - **API examples:** Postman collection
 - **Database schema:** Migration files
 
+## Intent Engine Workflow States
+
+### State Machine Overview
+The Intent Engine follows a linear progression through well-defined states:
+
+```
+step_1_icp → step_2_competitors → step_3_seeds → step_4_longtails → 
+step_5_filtering → step_6_clustering → step_7_validation → 
+step_8_approval → step_9_articles
+```
+
+### State Transitions
+
+**Step 7: Subtopic Generation**
+- **Entry:** `step_6_clustering` completed
+- **Process:** Generate subtopics for longtail keywords
+- **Exit:** `step_7_subtopics` (ready for human approval)
+
+**Step 8: Human Approval (NEW)**
+- **Entry:** `step_7_subtopics` with approved keywords
+- **Process:** Final human review and approval
+- **Approved Exit:** `step_9_articles` (article generation eligible)
+- **Rejected Exit:** `step_{reset_to_step}` (return to correction phase)
+
+**Step 9: Article Generation**
+- **Entry:** `step_8_approval` completed successfully
+- **Process:** Generate articles from approved keywords
+- **Terminal:** Final state
+
+### Approval Gates
+
+**Seed Keyword Approval (Story 35.3)**
+- Location: `/api/intent/workflows/{workflow_id}/steps/approve-seeds`
+- State: `step_3_seeds`
+- Scope: Seed keywords only
+- Effect: Enables long-tail expansion
+
+**Human Approval (Story 37.3)**
+- Location: `/api/intent/workflows/{workflow_id}/steps/human-approval`
+- State: `step_7_subtopics`
+- Scope: Entire workflow
+- Effect: Final gate before article generation
+
+### Implementation Patterns
+
+**Service Layer Pattern**
+```typescript
+// lib/services/intent-engine/{feature}-processor.ts
+export async function process{Feature}(
+  workflowId: string,
+  request: {Feature}Request,
+  headers?: Headers
+): Promise<{Feature}Response>
+```
+
+**API Layer Pattern**
+```typescript
+// app/api/intent/workflows/[workflow_id]/steps/{feature}/route.ts
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ workflow_id: string }> }
+) {
+  // Validation → Service → Error handling
+}
+```
+
+**Audit Logging Pattern**
+```typescript
+logActionAsync({
+  orgId: currentUser.org_id,
+  userId: currentUser.id,
+  action: AuditAction.WORKFLOW_{FEATURE}_{ACTION},
+  details: { workflow_id, ... },
+  ipAddress: extractIpAddress(headers),
+  userAgent: extractUserAgent(headers),
+})
+```
+
+### Database Schema Patterns
+
+**Workflows Table**
+- `status`: Current workflow state
+- `organization_id`: Multi-tenant isolation
+- Updated via state transitions only
+
+**Approvals Table**
+- `workflow_id + approval_type`: Unique constraint
+- `decision`: 'approved' | 'rejected'
+- `approver_id`: User who made decision
+- `feedback`: Optional notes
+
 ## Contributing
 
 ### Code Style

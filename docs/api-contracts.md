@@ -318,6 +318,110 @@ Calls four endpoints per seed keyword:
 - `workflow.longtail_keywords.completed` - on successful completion
 - `workflow.longtail_keywords.failed` - on error
 
+#### GET /api/intent/workflows/{workflow_id}/steps/human-approval/summary
+Provides a complete, read-only summary of the workflow for human review (Story 37.3).
+
+**Authentication:** Required (401 if not authenticated)  
+**Authorization:** Workflow must belong to authenticated user's organization
+
+**Path Parameters:**
+```typescript
+{
+  workflow_id: string; // UUID of intent workflow
+}
+```
+
+**Request Body:** None
+
+**Response:** 200 OK
+```typescript
+{
+  workflow_id: string;
+  status: string;
+  organization_id: string;
+  created_at: string;
+  updated_at: string;
+  icp_document: any;
+  competitor_analysis: any;
+  seed_keywords: any[];
+  longtail_keywords: any[];
+  topic_clusters: any[];
+  validation_results: any[];
+  approved_keywords: any[];
+  summary_statistics: {
+    total_keywords: number;
+    seed_keywords_count: number;
+    longtail_keywords_count: number;
+    topic_clusters_count: number;
+    approved_keywords_count: number;
+  }
+}
+```
+
+**Workflow State Requirements:**
+- Workflow must exist and belong to user's organization
+- No specific status requirement (read-only)
+
+**Error Responses:**
+- 400 Bad Request: Invalid workflow ID
+- 401 Unauthorized: Authentication required
+- 403 Forbidden: Workflow belongs to different organization
+- 404 Not Found: Workflow not found
+- 500 Internal Server Error: Database query failed
+
+#### POST /api/intent/workflows/{workflow_id}/steps/human-approval
+Processes final human approval decision for the entire workflow (Story 37.3).
+
+**Authentication:** Required (401 if not authenticated)  
+**Authorization:** User must be organization admin (403 if not admin)
+
+**Path Parameters:**
+```typescript
+{
+  workflow_id: string; // UUID of intent workflow
+}
+```
+
+**Request Body:**
+```typescript
+{
+  decision: 'approved' | 'rejected'; // Approval decision
+  feedback?: string; // Optional feedback or notes
+  reset_to_step?: number; // Required if rejected: 1-7
+}
+```
+
+**Response:** 200 OK
+```typescript
+{
+  success: boolean;
+  approval_id: string; // UUID of approval record
+  workflow_status: string; // 'step_9_articles' if approved, 'step_{reset_to_step}' if rejected
+  message: string; // Success message
+}
+```
+
+**Workflow State Requirements:**
+- Workflow must be in `step_7_subtopics` status
+- Keywords with `article_status = 'ready'` must exist
+
+**Business Logic:**
+- Idempotent: One approval record per workflow + approval_type
+- Approved: Workflow status updates to `step_9_articles` (article generation eligible)
+- Rejected: Workflow status resets to specified step with feedback
+
+**Error Responses:**
+- 400 Bad Request: Invalid decision, workflow state, or reset_to_step
+- 401 Unauthorized: Authentication required
+- 403 Forbidden: Admin access required
+- 404 Not Found: Workflow not found or belongs to different organization
+- 500 Internal Server Error: Database constraint violation
+
+**Audit Logging:**
+- `workflow.human_approval.started` - on request start
+- `workflow.human_approval.approved` - on approval
+- `workflow.human_approval.rejected` - on rejection
+
 ## Rate Limiting
 
 API endpoints implement rate limiting to prevent abuse. Specific limits vary by endpoint type.
