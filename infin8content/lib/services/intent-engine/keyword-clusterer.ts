@@ -98,11 +98,14 @@ export class KeywordClusterer {
         throw new Error(`Workflow not found: ${workflowId}`)
       }
 
+      // Type guard: ensure workflow is properly typed
+      const typedWorkflow = workflow as unknown as { organization_id: string }
+
       // Emit start event
       emitAnalyticsEvent({
         event_type: 'workflow.topic_clustering.started',
         timestamp: new Date().toISOString(),
-        organization_id: workflow.organization_id,
+        organization_id: typedWorkflow.organization_id,
         workflow_id: workflowId,
         similarity_threshold: similarityThreshold,
         max_spokes_per_hub: maxSpokesPerHub
@@ -142,7 +145,7 @@ export class KeywordClusterer {
       emitAnalyticsEvent({
         event_type: 'workflow.topic_clustering.completed',
         timestamp: new Date().toISOString(),
-        organization_id: workflow.organization_id,
+        organization_id: typedWorkflow.organization_id,
         workflow_id: workflowId,
         total_keywords: keywords.length,
         cluster_count: result.cluster_count,
@@ -178,20 +181,22 @@ export class KeywordClusterer {
           throw new Error(`Workflow not found: ${workflowId}`)
         }
 
+        // Type guard: ensure workflow is properly typed
+        const typedWorkflow = workflow as unknown as { organization_id: string }
+
         // Then get keywords for that organization
         const { data, error } = await this.supabase
           .from('keywords')
           .select('*')
-          .eq('organization_id', workflow.organization_id)
+          .eq('organization_id', typedWorkflow.organization_id)
           .eq('is_filtered_out', false)
           .order('search_volume', { ascending: false })
 
-        if (error) throw error
-        if (!data || data.length === 0) {
-          throw new Error('No filtered keywords found for clustering')
+        if (error || !data) {
+          throw new Error(`Failed to load keywords: ${error?.message}`)
         }
 
-        return data as Keyword[]
+        return data as unknown as Keyword[]
       },
       CLUSTERING_RETRY_POLICY,
       'loadFilteredKeywords'
