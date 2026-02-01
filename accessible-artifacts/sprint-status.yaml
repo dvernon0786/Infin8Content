@@ -434,7 +434,7 @@ development_status:
   # Epic 36: Keyword Refinement & Topic Clustering
   epic-36: in-progress
   36-1-filter-keywords-for-quality-and-relevance: done
-  36-2-cluster-keywords-into-hub-and-spoke-structure: backlog
+  36-2-cluster-keywords-into-hub-and-spoke-structure: done
   36-3-validate-cluster-coherence-and-structure: backlog
   epic-36-retrospective: optional
 
