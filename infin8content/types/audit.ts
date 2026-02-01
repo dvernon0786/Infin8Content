@@ -57,6 +57,9 @@ export const AuditAction = {
     // Workflow step actions
     WORKFLOW_COMPETITOR_SEED_KEYWORDS_STARTED: 'workflow.competitor_seed_keywords.started',
     WORKFLOW_COMPETITOR_SEED_KEYWORDS_COMPLETED: 'workflow.competitor_seed_keywords.completed',
+    WORKFLOW_LONGTAIL_KEYWORDS_STARTED: 'workflow.longtail_keywords.started',
+    WORKFLOW_LONGTAIL_KEYWORDS_COMPLETED: 'workflow.longtail_keywords.completed',
+    WORKFLOW_LONGTAIL_KEYWORDS_FAILED: 'workflow.longtail_keywords.failed',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];

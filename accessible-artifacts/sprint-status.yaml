@@ -422,11 +422,11 @@ development_status:
   34-2-extract-seed-keywords-from-competitor-urls: done
   34-3-handle-icp-generation-failures-with-retry: done
   34-4-handle-competitor-analysis-failures-with-retry: done
-  epic-34-retrospective: optional
+  epic-34-retrospective: done
 
   # Epic 35: Keyword Research & Expansion
-  epic-35: backlog
-  35-1-extract-seed-keywords-from-competitor-data: backlog
+  epic-35: in-progress
+  35-1-extract-seed-keywords-from-competitor-data: review
   35-2-expand-keywords-using-multiple-dataforseo-methods: backlog
   35-3-approve-seed-keywords-before-expansion: backlog
   epic-35-retrospective: optional
