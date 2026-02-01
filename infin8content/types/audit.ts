@@ -64,6 +64,11 @@ export const AuditAction = {
     // Seed keyword approval actions
     WORKFLOW_SEED_KEYWORDS_APPROVED: 'workflow.seed_keywords.approved',
     WORKFLOW_SEED_KEYWORDS_REJECTED: 'workflow.seed_keywords.rejected',
+
+    // Keyword filtering actions
+    WORKFLOW_KEYWORD_FILTERING_STARTED: 'workflow.keyword_filtering.started',
+    WORKFLOW_KEYWORD_FILTERING_COMPLETED: 'workflow.keyword_filtering.completed',
+    WORKFLOW_KEYWORD_FILTERING_FAILED: 'workflow.keyword_filtering.failed',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];

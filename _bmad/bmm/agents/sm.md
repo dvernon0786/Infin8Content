@@ -2051,3 +2051,93 @@ You must fully embody this agent's persona and follow all activation instruction
 - `docs/api-contracts.md` (add endpoint documentation)
 - `docs/development-guide.md` (add workflow state transitions)
 - `accessible-artifacts/sprint-status.yaml` (update story status)
+
+## Story Context: 36-1-filter-keywords-for-quality-and-relevance
+
+**Status**: ready-for-dev
+
+**Epic**: 36 – Keyword Refinement & Topic Clustering
+
+**User Story**: As an SEO specialist, I want long-tail keywords to be filtered for basic quality issues, so that only clean and viable keywords move forward to clustering.
+
+**Story Classification**:
+- Type: Producer (mechanical keyword filtering)
+- Tier: Tier 1 (foundational hygiene step)
+
+**Business Intent**: Produce a clean, high-quality keyword set by mechanically filtering expanded long-tail keywords, ensuring that only viable, non-duplicative, sufficiently searched terms proceed to semantic clustering.
+
+**Contracts Required**:
+- C1: POST /api/intent/workflows/{workflow_id}/steps/filter-keywords
+- C2/C4/C5: intent_workflows (read/update workflow state), keywords (read/update keyword filtering metadata), audit_logs (record terminal audit events)
+- Terminal State: workflow.status = 'step_5_filtering', filtered_keywords_count
+- UI Boundary: No UI events (backend only)
+- Analytics: workflow.keyword_filtering.started/completed audit events
+
+**Contracts Modified**: None
+
+**Contracts Guaranteed**:
+- ✅ No UI events emitted
+- ✅ No intermediate analytics
+- ✅ No state mutation outside producer boundary
+- ✅ Idempotent execution guaranteed
+- ✅ Retry rules strictly enforced for system failures only
+
+**Producer Dependency Check**:
+- Epic 34 Status: COMPLETED ✅
+- Epic 35 Status: COMPLETED ✅
+- Long-tail keywords exist in keywords table
+- Workflow status is step_4_longtails
+- Organization context available
+- Blocking Decision: ALLOWED
+
+**Acceptance Criteria**:
+1. Given the workflow is at step_4_longtails
+   When keyword filtering is triggered
+   Then the system removes duplicate and near-duplicate keywords
+
+2. And keywords with search_volume below the configured minimum are removed
+
+3. And filtering completes within 1 minute
+
+4. And filtered keywords remain stored as normalized rows in the keywords table
+
+5. And the workflow status updates to step_5_filtering
+
+**Technical Requirements**:
+- API Endpoint: POST /api/intent/workflows/{workflow_id}/steps/filter-keywords
+- Filtering Rules: Duplicate removal (similarity ≥ 0.85), minimum search volume (default 100)
+- Database: Normalized keywords table with is_filtered_out, filtered_reason, filtered_at fields
+- Retry Logic: 3 attempts for database failures only (2s → 4s → 8s backoff)
+- Timeout: 1 minute maximum for entire step
+- Audit Logging: workflow.keyword_filtering.started/completed events
+
+**Dependencies**:
+- Epic 34 (Seed keyword extraction) - COMPLETED ✅
+- Epic 35 (Long-tail keyword expansion) - COMPLETED ✅
+- Database schema with filtering metadata support
+- Organization settings for minimum search volume threshold
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Mechanical-only hygiene step with no semantic reasoning
+- Duplicate removal uses similarity ratio ≥ 0.85, retains variant with highest search_volume
+- Minimum search volume filtering with configurable threshold (default 100)
+- Near-duplicate removal uses string normalization (lowercase, trim, remove punctuation)
+- Workflow state progression from step_4_longtails to step_5_filtering
+- Maintains normalized data model (no JSON storage in workflow)
+- Implements proper error handling with partial success support
+
+**Files to be Created**:
+- `lib/services/intent-engine/keyword-filter.ts`
+- `app/api/intent/workflows/[workflow_id]/steps/filter-keywords/route.ts`
+- `__tests__/services/intent-engine/keyword-filter.test.ts`
+- `__tests__/api/intent/workflows/filter-keywords.test.ts`
+
+**Files to be Modified**:
+- `types/audit.ts` (add keyword filtering audit actions)
+- `docs/api-contracts.md` (add endpoint documentation)
+- `docs/development-guide.md` (add workflow state transitions)
+- `accessible-artifacts/sprint-status.yaml` (update story status)
