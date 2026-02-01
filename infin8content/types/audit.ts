@@ -79,6 +79,10 @@ export const AuditAction = {
     WORKFLOW_CLUSTER_VALIDATION_STARTED: 'workflow.cluster_validation.started',
     WORKFLOW_CLUSTER_VALIDATION_COMPLETED: 'workflow.cluster_validation.completed',
     WORKFLOW_CLUSTER_VALIDATION_FAILED: 'workflow.cluster_validation.failed',
+
+    // Keyword subtopic approval actions
+    KEYWORD_SUBTOPICS_APPROVED: 'keyword.subtopics.approved',
+    KEYWORD_SUBTOPICS_REJECTED: 'keyword.subtopics.rejected',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];
