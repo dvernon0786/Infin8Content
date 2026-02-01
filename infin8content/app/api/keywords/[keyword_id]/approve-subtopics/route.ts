@@ -13,10 +13,10 @@ import { processSubtopicApproval, SubtopicApprovalRequest } from '@/lib/services
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { keyword_id: string } }
+  { params }: { params: Promise<{ keyword_id: string }> }
 ) {
   try {
-    const keywordId = params.keyword_id
+    const { keyword_id: keywordId } = await params
 
     // Parse request body
     const body = await request.json() as SubtopicApprovalRequest
