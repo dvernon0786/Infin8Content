@@ -7,9 +7,11 @@ import { KeywordSubtopicGenerator } from '@/lib/services/keyword-engine/subtopic
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params to get the id
+    const { id } = await params
     // Get current user and validate authentication
     const currentUser = await getCurrentUser()
     if (!currentUser || !currentUser.org_id) {
@@ -20,8 +22,7 @@ export async function POST(
     }
 
     // Validate keyword ID
-    const keywordId = params.id
-    if (!keywordId) {
+    if (!id) {
       return NextResponse.json(
         { error: 'Keyword ID is required' },
         { status: 400 }
@@ -32,15 +33,15 @@ export async function POST(
     const generator = new KeywordSubtopicGenerator()
 
     // Generate subtopics
-    const subtopics = await generator.generate(keywordId)
+    const subtopics = await generator.generate(id)
 
     // Store subtopics and update status
-    await generator.store(keywordId, subtopics)
+    await generator.store(id, subtopics)
 
     return NextResponse.json({
       success: true,
       data: {
-        keyword_id: keywordId,
+        keyword_id: id,
         subtopics: subtopics,
         subtopics_count: subtopics.length
       }
