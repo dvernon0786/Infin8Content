@@ -627,6 +627,98 @@ You must fully embody this agent's persona and follow all activation instruction
 - Integrates with existing batch research and performance monitoring systems
 - Provides significant performance improvement while maintaining content quality
 
+## Story Context: 35-1-extract-seed-keywords-from-competitor-data
+
+**Status**: ready-for-dev
+
+**Epic**: 35 – Keyword Research & Expansion
+
+**User Story**: As an SEO specialist, I want to expand each seed keyword into a structured set of long-tail keywords using multiple keyword intelligence sources, so that I can build topical depth and scalable content coverage.
+
+**Story Classification**:
+- Type: Producer (long-tail keyword generator)
+- Tier: Tier 1 (foundational expansion step)
+
+**Business Intent**: Expand existing seed keywords into a high-quality, diverse set of long-tail keywords using multiple Google-derived data sources, forming the spokes of the hub-and-spoke SEO model and enabling downstream subtopic and article generation.
+
+**Contracts Required**:
+- C1: POST /api/intent/workflows/{workflow_id}/steps/longtail-expand endpoint
+- C2/C4/C5: DataForSEO API integration (4 endpoints), keywords table operations
+- Terminal State: workflow.status = 'step_4_longtails', seeds_processed count, longtails_created count
+- UI Boundary: No UI events (backend only)
+- Analytics: workflow.longtail_keywords.started/completed audit events
+
+**Contracts Modified**: None (new endpoint only)
+
+**Contracts Guaranteed**:
+- ✅ No UI events emitted
+- ✅ No intermediate analytics (only terminal state)
+- ✅ No state mutation outside producer (keywords table only)
+- ✅ Idempotency: Re-running skips existing long-tails, no duplicates
+- ✅ Retry rules: 3 attempts per endpoint (2s, 4s, 8s backoff), 5 minute timeout
+
+**Producer Dependency Check**:
+- Epic 34 Status: COMPLETED ✅
+- Seed keywords exist in keywords table
+- Competitor → seed extraction completed
+- Retry hardening applied
+- Organization context available
+
+**Blocking Decision**: ALLOWED
+
+**Acceptance Criteria**:
+1. Given seed keywords exist with longtail_status = 'not_started'
+   When I trigger long-tail expansion (Epic 35 – Step 1)
+   Then the system expands each seed keyword using all four DataForSEO keyword intelligence endpoints
+
+2. And for each seed keyword, the system retrieves up to 3 long-tail keywords from each source:
+   - Related Keywords (POST /v3/dataforseo_labs/google/related_keywords/live)
+   - Keyword Suggestions (POST /v3/dataforseo_labs/google/keyword_suggestions/live)
+   - Keyword Ideas (POST /v3/dataforseo_labs/google/keyword_ideas/live)
+   - Google Autocomplete (POST /v3/serp/google/autocomplete/live/advanced)
+
+3. And the system generates up to 12 long-tail keywords per seed keyword
+
+4. And all generated long-tail keywords are de-duplicated across sources, semantically related to parent seed, and ordered by relevance
+
+5. And each long-tail keyword is stored as new row in keywords table with parent_seed_keyword_id, longtail_status = 'complete', subtopics_status = 'not_started', article_status = 'not_started'
+
+6. And original seed keyword updated to longtail_status = 'complete'
+
+7. And long-tail expansion completes within 5 minutes
+
+8. And workflow status updates to step_4_longtails
+
+**Technical Requirements**:
+- Endpoint: POST /api/intent/workflows/{workflow_id}/steps/longtail-expand
+- Request: { workflow_id: string }
+- Response: { success: boolean, data: { seeds_processed: number, longtails_created: number, step_4_longtails_completed_at: string }, error?: string }
+- Service: lib/services/intent-engine/longtail-keyword-expander.ts
+- Database: keywords table (normalized storage, no JSON in workflow)
+- Retry: 3 attempts per endpoint (2s, 4s, 8s backoff)
+- Timeout: 5 minutes max for entire step
+- Language/location from organization defaults
+- Batch requests where possible
+
+**Dependencies**:
+- Epic 34 (ICP generation) - COMPLETED ✅
+- DataForSEO API integration
+- Supabase database with keywords table
+- Organization context system
+- Authentication system (getCurrentUser pattern)
+
+**Priority**: High
+**Story Points**: 13
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Producer story with no UI events
+- Uses normalized data model (no JSON storage in workflow)
+- Four-endpoint DataForSEO integration for comprehensive coverage
+- Retry logic reused from Story 34.3 utilities
+- Idempotent design prevents duplicate long-tails
+- Workflow table used only for state management
+
 ## Story Context: 33-1-create-intent-workflow-with-organization-context
 
 **Status**: ready-for-dev
