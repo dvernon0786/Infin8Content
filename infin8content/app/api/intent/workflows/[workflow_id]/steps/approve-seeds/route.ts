@@ -13,10 +13,10 @@ import { extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { workflow_id: string } }
+  { params }: { params: Promise<{ workflow_id: string }> }
 ) {
   try {
-    const workflowId = params.workflow_id
+    const { workflow_id: workflowId } = await params
     const body = await request.json()
 
     // Validate request body
