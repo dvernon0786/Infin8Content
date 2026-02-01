@@ -10,7 +10,14 @@
  */
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
-import { RetryPolicy, isRetryableError, calculateBackoffDelay, sleep, classifyErrorType } from './retry-utils'
+import { 
+  RetryPolicy, 
+  isRetryableError, 
+  calculateBackoffDelay, 
+  sleep, 
+  classifyErrorType,
+  retryWithPolicy 
+} from './retry-utils'
 import { emitAnalyticsEvent } from '../analytics/event-emitter'
 
 export const LONGTAIL_RETRY_POLICY: RetryPolicy = {
@@ -130,7 +137,11 @@ export async function fetchRelatedKeywords(
     limit: 3
   }]
 
-  const response = await makeDataForSEORequest(endpoint, data)
+  const response = await retryWithPolicy(
+    () => makeDataForSEORequest(endpoint, data),
+    LONGTAIL_RETRY_POLICY,
+    `fetchRelatedKeywords(${seedKeyword})`
+  )
   
   if (response.status_code !== 200 || !response.tasks?.[0]?.result) {
     throw new Error(`Related keywords API failed: ${response.status_message}`)

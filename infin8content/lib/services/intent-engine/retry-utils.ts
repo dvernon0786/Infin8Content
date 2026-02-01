@@ -127,3 +127,48 @@ export function extractHttpStatus(error: unknown): number | null {
   }
   return null
 }
+
+/**
+ * Execute a function with retry policy
+ * 
+ * @param fn - Function to execute (should return a Promise)
+ * @param policy - Retry policy configuration
+ * @param context - Context for error logging
+ * @returns Result of the function execution
+ */
+export async function retryWithPolicy<T>(
+  fn: () => Promise<T>,
+  policy: RetryPolicy = DEFAULT_RETRY_POLICY,
+  context?: string
+): Promise<T> {
+  let lastError: unknown
+  
+  for (let attempt = 0; attempt < policy.maxAttempts; attempt++) {
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error
+      
+      // Don't retry on last attempt
+      if (attempt === policy.maxAttempts - 1) {
+        break
+      }
+      
+      // Check if error is retryable
+      if (!isRetryableError(error)) {
+        break
+      }
+      
+      // Calculate delay and wait before retry
+      const delay = calculateBackoffDelay(attempt, policy)
+      await sleep(delay)
+    }
+  }
+  
+  // Log final error with context if provided
+  if (context && lastError instanceof Error) {
+    console.error(`Error in ${context} after ${policy.maxAttempts} attempts:`, lastError.message)
+  }
+  
+  throw lastError
+}
