@@ -178,7 +178,7 @@ Return the article structure as valid JSON matching this schema:
 }`
 
     const response = await generateText({
-      model: client('google/gemini-3-flash-preview'),
+      model: client.languageModel('google/gemini-3-flash-preview'),
       temperature: 0.3,
       system: PLANNER_SYSTEM_PROMPT,
       prompt: userPrompt,
