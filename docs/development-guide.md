@@ -831,6 +831,179 @@ logIntentActionAsync({
 - **Article Events**: `article.queued`, `article.generated`, `article.failed`
 - **System Events**: `system.error`, `system.retry_exhausted`
 
+### Article Generation Progress Tracking (Story 38.2)
+
+#### Overview
+The article generation progress tracking system provides real-time visibility into article generation status for intent workflows. This read-only service tracks articles through queued → generating → completed/failed states with estimated completion times and comprehensive error reporting.
+
+#### Architecture
+- **Service Layer**: `lib/services/intent-engine/article-progress-tracker.ts`
+- **API Endpoint**: `GET /api/intent/workflows/{workflow_id}/articles/progress`
+- **Database**: `article_progress` table (existing) with real-time updates
+- **Response Format**: Detailed progress objects with summary statistics
+
+#### Service Pattern
+
+```typescript
+// Fetch workflow article progress with filters
+const articles = await getWorkflowArticleProgress(workflowId, {
+  status: 'generating',
+  date_from: '2026-02-01',
+  limit: 50
+})
+
+// Format response with summary statistics
+const response = formatProgressResponse(articles, workflowId)
+```
+
+#### API Integration Pattern
+
+```typescript
+// In API route
+const articles = await getWorkflowArticleProgress(workflowId, filters)
+const response = formatProgressResponse(articles, workflowId)
+
+// Log audit event
+await logActionAsync({
+  orgId: currentUser.org_id,
+  userId: currentUser.id,
+  action: AuditAction.WORKFLOW_ARTICLE_GENERATION_PROGRESS_QUERIED,
+  details: {
+    workflow_id: workflowId,
+    article_count: articles.length,
+    filters_applied: filters
+  },
+  ipAddress: extractIpAddress(request.headers),
+  userAgent: extractUserAgent(request.headers),
+})
+```
+
+#### Progress Calculation Pattern
+
+```typescript
+// Calculate estimated completion time
+function calculateEstimatedCompletion(article: ArticleProgress): Date | null {
+  if (article.status !== 'generating') return null
+  
+  const progress = article.progress_percentage || 0
+  const timeSpent = article.actual_time_spent * 1000 // milliseconds
+  
+  if (progress === 0) {
+    // Use average time per section
+    const remainingSections = article.total_sections - article.current_section + 1
+    return new Date(Date.now() + remainingSections * 60000) // 60s per section
+  }
+  
+  // Calculate based on current progress rate
+  const progressRate = timeSpent / progress
+  const remainingProgress = 100 - progress
+  return new Date(Date.now() + remainingProgress * progressRate)
+}
+```
+
+#### Response Format Pattern
+
+```typescript
+interface ProgressResponse {
+  workflow_id: string;
+  total_articles: number;
+  articles: ArticleProgress[];
+  summary: {
+    queued_count: number;
+    generating_count: number;
+    completed_count: number;
+    failed_count: number;
+    average_generation_time_seconds: number;
+    estimated_total_completion_time?: string;
+  };
+}
+```
+
+#### Error Handling Pattern
+
+```typescript
+// Graceful error handling with audit logging
+try {
+  const articles = await getWorkflowArticleProgress(workflowId, filters)
+  return formatProgressResponse(articles, workflowId)
+} catch (error) {
+  // Log error for debugging
+  await logActionAsync({
+    orgId: currentUser.org_id,
+    userId: currentUser.id,
+    action: AuditAction.WORKFLOW_ARTICLE_GENERATION_PROGRESS_ERROR,
+    details: {
+      workflow_id: workflowId,
+      error: error.message
+    }
+  })
+  
+  // Return user-friendly error
+  return NextResponse.json({
+    error: {
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'An error occurred while fetching article progress'
+    }
+  }, { status: 500 })
+}
+```
+
+#### Performance Considerations
+
+- **Query Optimization**: Use indexed queries on (workflow_id, status, created_at)
+- **Pagination**: Support 1000+ articles per workflow with efficient paging
+- **Response Time**: Target < 2 seconds for typical queries
+- **Memory Usage**: Stream results for large datasets
+
+#### Testing Pattern
+
+```typescript
+// Unit tests for progress calculation
+describe('calculateEstimatedCompletion', () => {
+  it('should estimate completion for in-progress article', () => {
+    const article = {
+      status: 'generating',
+      progress_percentage: 40,
+      actual_time_spent: 120, // 2 minutes
+      // ... other fields
+    }
+    
+    const result = calculateEstimatedCompletion(article)
+    expect(result).toBeInstanceOf(Date)
+    expect(result.getTime()).toBeGreaterThan(Date.now())
+  })
+})
+
+// Integration tests for API endpoint
+describe('GET /api/intent/workflows/{workflow_id}/articles/progress', () => {
+  it('should return progress data for authorized user', async () => {
+    const response = await GET(request, { params: { workflow_id: 'test' } })
+    expect(response.status).toBe(200)
+    
+    const data = await response.json()
+    expect(data.workflow_id).toBe('test')
+    expect(data.summary).toBeDefined()
+  })
+})
+```
+
+#### Troubleshooting
+
+**Issue: "No articles found for workflow"**
+- Verify workflow exists and belongs to user's organization
+- Check that articles have been queued (Story 38.1 completed)
+- Ensure article_progress records exist for articles
+
+**Issue: "Estimated completion time seems inaccurate"**
+- Progress estimates are based on average generation rates
+- Actual times vary by content complexity and API response times
+- For more accuracy, consider historical performance data
+
+**Issue: "Slow response times"**
+- Check database indexes on article_progress table
+- Verify query is using proper filtering (status, date range)
+- Consider implementing caching for frequently accessed workflows
+
 #### Testing
 ```bash
 # Run audit logger tests

@@ -94,6 +94,10 @@ export const AuditAction = {
     WORKFLOW_ARTICLE_QUEUING_COMPLETED: 'workflow.article_queuing.completed',
     WORKFLOW_ARTICLE_QUEUING_FAILED: 'workflow.article_queuing.failed',
 
+    // Article generation progress tracking actions (Story 38.2)
+    WORKFLOW_ARTICLE_GENERATION_PROGRESS_QUERIED: 'workflow.article_generation.progress_queried',
+    WORKFLOW_ARTICLE_GENERATION_PROGRESS_ERROR: 'workflow.article_generation.progress_error',
+
     // Intent Engine specific audit events (Story 37.4)
     WORKFLOW_CREATED: 'workflow.created',
     WORKFLOW_ARCHIVED: 'workflow.archived',
