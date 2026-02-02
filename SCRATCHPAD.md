@@ -206,6 +206,36 @@ Completed **adversarial code review** identifying **8 issues** (5 High, 3 Medium
 **🎯 Story Status**: DONE - Ready for production deployment
    - **Impact**: Zero confidence → High confidence in implementation
 
+---
+
+## ✅ CORRECTED UNDERSTANDING: Story 37-3 (February 2, 2026)
+
+**Story 37-3 IS a workflow-level human approval gate.**
+
+**What Story 37-3 does:**
+- ✅ Operates at workflow level (entire intent_workflows)
+- ✅ Introduces paused approval state (step_8_approval)
+- ✅ Provides comprehensive workflow summary for human review
+- ✅ Requires explicit admin approval before article generation
+- ✅ Advances to step_9_articles on approval
+- ✅ Allows reset to steps 1-7 on rejection
+- ✅ Records decisions in intent_approvals with audit logging
+- ✅ Enforces admin-only access and organization isolation
+
+**What Story 37-3 does NOT do:**
+- ❌ Generate articles or outlines
+- ❌ Perform research or create content structure
+- ❌ Decide article format or structure
+
+**Final Authorization Boundary:**
+Story 37-3 establishes the final editorial gate between intent definition (Epic 37) and article generation (Epic 38).
+
+**Epic 37 Complete Structure:**
+1. Story 37-2: Keyword-level approval (subtopic eligibility)
+2. Story 37-3: Workflow-level approval (generation authorization)
+
+Both fully implemented, tested, and production-ready.
+
 2. **Missing API Documentation** - No endpoint documentation in api-contracts.md
    - **Fix**: Added comprehensive /api/keywords/[id]/subtopics endpoint docs
    - **Impact**: Complete API contract with request/response examples
