@@ -89,6 +89,11 @@ export const AuditAction = {
     WORKFLOW_HUMAN_APPROVAL_APPROVED: 'workflow.human_approval.approved',
     WORKFLOW_HUMAN_APPROVAL_REJECTED: 'workflow.human_approval.rejected',
 
+    // Article queuing actions (Story 38.1)
+    WORKFLOW_ARTICLE_QUEUING_STARTED: 'workflow.article_queuing.started',
+    WORKFLOW_ARTICLE_QUEUING_COMPLETED: 'workflow.article_queuing.completed',
+    WORKFLOW_ARTICLE_QUEUING_FAILED: 'workflow.article_queuing.failed',
+
     // Intent Engine specific audit events (Story 37.4)
     WORKFLOW_CREATED: 'workflow.created',
     WORKFLOW_ARCHIVED: 'workflow.archived',
