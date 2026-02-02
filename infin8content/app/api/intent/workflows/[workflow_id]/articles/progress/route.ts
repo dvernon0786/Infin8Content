@@ -18,7 +18,7 @@ import { AuditAction } from '@/types/audit'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { workflow_id: string } }
+  { params }: { params: Promise<{ workflow_id: string }> }
 ) {
   try {
     // Get current user and validate authentication
@@ -30,7 +30,8 @@ export async function GET(
       )
     }
 
-    const workflowId = params.workflow_id
+    // Await the params object (Next.js 16.1.1 change)
+    const { workflow_id: workflowId } = await params
     if (!workflowId) {
       return NextResponse.json(
         { error: { code: 'INVALID_REQUEST', message: 'Workflow ID is required' } },
@@ -132,12 +133,14 @@ export async function GET(
     try {
       const currentUser = await getCurrentUser()
       if (currentUser) {
+        // Await the params object (Next.js 16.1.1 change)
+        const { workflow_id } = await params
         await logActionAsync({
           orgId: currentUser.org_id || '',
           userId: currentUser.id,
           action: AuditAction.WORKFLOW_ARTICLE_GENERATION_PROGRESS_ERROR,
           details: {
-            workflow_id: params.workflow_id,
+            workflow_id,
             error: error instanceof Error ? error.message : 'Unknown error'
           },
           ipAddress: request.headers.get('x-forwarded-for') || 
