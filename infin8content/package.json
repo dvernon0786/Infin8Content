@@ -27,6 +27,8 @@
   },
   "dependencies": {
     "@getbrevo/brevo": "^3.0.1",
+    "@openrouter/ai-sdk-provider": "^2.1.1",
+    "ai": "^3.4.32",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -37,7 +39,6 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@sentry/nextjs": "^10.34.0",
     "@stripe/stripe-js": "^8.6.0",
-    "@openrouter/ai-sdk-provider": "^2.1.1",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.89.0",
     "@types/mark.js": "^8.11.12",

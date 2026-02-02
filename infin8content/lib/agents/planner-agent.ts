@@ -6,7 +6,8 @@
  * Returns raw planner output (no mutation, no validation, no DB writes).
  */
 
-import { createClient } from '@openrouter/ai-sdk-provider'
+import { createOpenRouter } from '@openrouter/ai-sdk-provider'
+import { generateText } from 'ai'
 
 /**
  * Planner input structure
@@ -143,7 +144,7 @@ Solutions (Error Handling)
  */
 export async function runPlannerAgent(input: PlannerInput): Promise<PlannerOutput> {
   try {
-    const client = createClient({
+    const client = createOpenRouter({
       apiKey: process.env.OPENROUTER_API_KEY,
     })
 
@@ -176,23 +177,15 @@ Return the article structure as valid JSON matching this schema:
   "total_estimated_words": number
 }`
 
-    const response = await client.messages.create({
-      model: 'google/gemini-3-flash-preview',
-      fallback_models: ['perplexity/sonar'],
-      max_tokens: 1200,
+    const response = await generateText({
+      model: client('google/gemini-3-flash-preview'),
       temperature: 0.3,
       system: PLANNER_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: userPrompt,
-        },
-      ],
+      prompt: userPrompt,
     })
 
     // Extract JSON from response
-    const responseText =
-      response.content[0].type === 'text' ? response.content[0].text : ''
+    const responseText = response.text
 
     // Parse JSON from response (handle markdown code blocks)
     let jsonStr = responseText
