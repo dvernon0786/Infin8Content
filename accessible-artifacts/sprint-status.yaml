@@ -441,8 +441,8 @@ development_status:
   # Epic 37: Content Topic Generation & Approval
   epic-37: done
   37-1-generate-subtopic-definitions-via-perplexity-ai: done
-37-2-review-and-approve-subtopics-before-article-generation: done
-37-3-implement-human-approval-gate: done
+  37-2-review-and-approve-subtopics-before-article-generation: done
+  37-3-implement-human-approval-gate: done
   37-4-maintain-complete-audit-trail-of-all-decisions: done
   epic-37-retrospective: done
 
@@ -455,7 +455,7 @@ development_status:
 
   # Epic 39: Workflow Orchestration & State Management
   epic-39: backlog
-  39-1-enforce-hard-gate-icp-required-for-all-downstream-steps: backlog
+  39-1-enforce-hard-gate-icp-required-for-all-downstream-steps: done
   39-2-enforce-hard-gate-competitors-required-for-seed-keywords: backlog
   39-3-enforce-hard-gate-approved-seeds-required-for-longtail-expansion: backlog
   39-4-enforce-hard-gate-longtails-required-for-subtopics: backlog

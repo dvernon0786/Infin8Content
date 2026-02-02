@@ -98,6 +98,10 @@ export const AuditAction = {
     WORKFLOW_ARTICLE_GENERATION_PROGRESS_QUERIED: 'workflow.article_generation.progress_queried',
     WORKFLOW_ARTICLE_GENERATION_PROGRESS_ERROR: 'workflow.article_generation.progress_error',
 
+    // ICP Gate enforcement actions (Story 39-1)
+    WORKFLOW_GATE_ICP_ALLOWED: 'workflow.gate.icp.allowed',
+    WORKFLOW_GATE_ICP_BLOCKED: 'workflow.gate.icp.blocked',
+
     // Article linking actions (Story 38.3)
     WORKFLOW_ARTICLES_LINKING_STARTED: 'workflow.articles.linking.started',
     WORKFLOW_ARTICLE_LINKED: 'workflow.article.linked',

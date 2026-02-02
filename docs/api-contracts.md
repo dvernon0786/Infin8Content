@@ -205,6 +205,42 @@ Common HTTP status codes:
 
 ### Intent Workflow Endpoints
 
+#### ICP Gate Enforcement (Story 39-1)
+All downstream Intent Engine workflow endpoints are protected by an ICP (Ideal Customer Profile) completion gate. This ensures that ICP generation is completed before any subsequent workflow steps can be executed.
+
+**Gate Behavior:**
+- **423 Blocked:** Returned when ICP is not complete (`step_1_icp` or earlier)
+- **200 OK:** Proceeds normally when ICP is complete (`step_2_icp_complete` or later)
+- **Fail-Open:** Database errors allow access for availability
+
+**423 Response Format:**
+```typescript
+{
+  error: "ICP completion required before {step_name}",
+  workflowStatus: "step_1_icp",
+  icpStatus: "step_1_icp", 
+  requiredAction: "Complete ICP generation (step 2) before proceeding",
+  currentStep: "{step_name}",
+  blockedAt: "2026-01-31T10:00:00.000Z"
+}
+```
+
+**Protected Endpoints:**
+- POST /api/intent/workflows/{workflow_id}/steps/competitor-analyze
+- POST /api/intent/workflows/{workflow_id}/steps/longtail-expand  
+- POST /api/intent/workflows/{workflow_id}/steps/filter-keywords
+- POST /api/intent/workflows/{workflow_id}/steps/cluster-topics
+- POST /api/intent/workflows/{workflow_id}/steps/validate-clusters
+- POST /api/keywords/{keyword_id}/subtopics
+- POST /api/keywords/{keyword_id}/approve-subtopics
+- POST /api/intent/workflows/{workflow_id}/steps/queue-articles
+
+**Audit Logging:**
+All gate enforcement attempts are logged with:
+- `workflow.gate.icp.allowed` - when access is permitted
+- `workflow.gate.icp.blocked` - when access is denied
+- Full context including workflow status, step attempted, and error details
+
 #### POST /api/intent/workflows/{workflow_id}/steps/approve-seeds
 Approves or rejects seed keywords for long-tail expansion (Story 35.3).
 

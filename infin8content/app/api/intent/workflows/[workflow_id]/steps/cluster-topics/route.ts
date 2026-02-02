@@ -13,6 +13,7 @@ import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/servic
 import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import { KeywordClusterer } from '@/lib/services/intent-engine/keyword-clusterer'
+import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
 
 export async function POST(
   request: NextRequest,
@@ -35,6 +36,12 @@ export async function POST(
 
     organizationId = currentUser.org_id
     userId = currentUser.id
+
+    // ENFORCE ICP GATE - Check if ICP is complete before proceeding
+    const gateResponse = await enforceICPGate(workflowId, 'cluster-topics')
+    if (gateResponse) {
+      return gateResponse
+    }
 
     // Verify workflow exists and belongs to user's organization
     const supabase = createServiceRoleClient()

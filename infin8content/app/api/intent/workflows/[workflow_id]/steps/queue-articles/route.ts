@@ -15,6 +15,7 @@ import {
   queueApprovedSubtopicsForArticles,
   type ArticleQueueingResult
 } from '@/lib/services/intent-engine/article-queuing-processor'
+import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
 
 export async function POST(
   request: NextRequest,
@@ -37,6 +38,12 @@ export async function POST(
 
     organizationId = currentUser.org_id
     userId = currentUser.id
+
+    // ENFORCE ICP GATE - Check if ICP is complete before proceeding
+    const gateResponse = await enforceICPGate(workflowId, 'queue-articles')
+    if (gateResponse) {
+      return gateResponse
+    }
 
     // Verify workflow exists and belongs to user's organization
     const supabase = await createServiceRoleClient()
