@@ -10,6 +10,13 @@ export interface GateResult {
   errorResponse?: object
 }
 
+export interface WorkflowData {
+  id: string
+  status: string
+  organization_id: string
+  icp_completed_at: string | null
+}
+
 export class ICPGateValidator {
   /**
    * Validates ICP completion for a given workflow
@@ -25,7 +32,7 @@ export class ICPGateValidator {
         .from('intent_workflows')
         .select('id, status, organization_id, icp_completed_at')
         .eq('id', workflowId)
-        .single()
+        .single() as { data: WorkflowData | null, error: any }
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -134,7 +141,7 @@ export class ICPGateValidator {
         .from('intent_workflows')
         .select('organization_id')
         .eq('id', workflowId)
-        .single()
+        .single() as { data: Pick<WorkflowData, 'organization_id'> | null }
 
       if (!workflow) {
         console.warn('Cannot log gate enforcement - workflow not found:', workflowId)
