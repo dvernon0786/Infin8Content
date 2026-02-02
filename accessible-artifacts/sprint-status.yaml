@@ -448,7 +448,7 @@ development_status:
 
   # Epic 38: Article Generation & Workflow Completion
   epic-38: in-progress
-  38-1-queue-approved-subtopics-for-article-generation: ready-for-dev
+  38-1-queue-approved-subtopics-for-article-generation: done
   38-2-track-article-generation-progress: backlog
   38-3-link-generated-articles-to-intent-workflow: backlog
   epic-38-retrospective: optional

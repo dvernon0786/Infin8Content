@@ -1,5 +1,52 @@
 # Scratchpad
 
+---
+
+## Code Review Results: Story 38-1 (2026-02-02)
+
+**Story:** 38-1-queue-approved-subtopics-for-article-generation  
+**Status:** ✅ DONE - Production Ready
+
+### Issues Fixed (8 total)
+
+#### 🔴 HIGH SEVERITY (5 fixed)
+1. **Idempotency** - Added check to skip existing articles on re-run
+2. **Missing keyword_id** - Added foreign key link to keywords table  
+3. **Inngest Failure Handling** - Articles marked 'planner_failed' if event fails
+4. **Test Mocks** - Fixed mock setup for multiple independent queries
+5. **Article Count Limit** - Added validation (max 50 per workflow)
+
+#### 🟡 MEDIUM SEVERITY (3 fixed)
+6. **Retry Policy** - Wrapped service with exponential backoff (3 attempts: 2s, 4s, 8s)
+7. **Idempotency Tests** - Added test coverage for re-runs and limits
+8. **Organization Isolation** - Added security tests for org boundaries
+
+### Key Changes Made
+
+**Service Layer** (`article-queuing-processor.ts`):
+- Lines 66-74: Added retry policy wrapper
+- Lines 135-140: Article count limit validation
+- Lines 147-162: Idempotency check before article creation
+- Line 169: Added `keyword_id` foreign key
+- Lines 196-229: Improved Inngest error handling
+
+**Tests**:
+- Added 4 new test cases covering idempotency, limits, and org isolation
+- Fixed mock chains for multiple queries
+
+### Acceptance Criteria
+✅ All 7 ACs implemented and verified
+✅ Idempotency guaranteed
+✅ Error handling improved  
+✅ Retry logic implemented
+✅ Organization isolation enforced
+
+### Status Updates
+- Story file: `Status: done`
+- Sprint tracking: `38-1: done`
+
+**Story 38-1 is production-ready.**
+
 ## 🎉 **SYSTEM STATUS: EXCEPTIONAL ENTERPRISE SUCCESS - ALL SYSTEMS OPERATIONAL**
 
 ### 🚀 **Current System Achievement Summary**
