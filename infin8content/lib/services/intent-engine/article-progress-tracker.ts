@@ -76,7 +76,7 @@ export async function validateWorkflowAccess(
       .from('intent_workflows')
       .select('organization_id')
       .eq('id', workflowId)
-      .single()
+      .single() as any
 
     if (workflowError || !workflow) {
       return false
@@ -87,7 +87,7 @@ export async function validateWorkflowAccess(
       .from('users')
       .select('org_id')
       .eq('auth_user_id', userId)
-      .single()
+      .single() as any
 
     if (userError || !user || user.org_id !== workflow.organization_id) {
       return false
