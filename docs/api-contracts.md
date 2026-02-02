@@ -510,6 +510,73 @@ Tracks article generation progress for intent workflows (Story 38.2).
 - `workflow.article_generation.progress_queried` - on successful request
 - `workflow.article_generation.progress_error` - on error
 
+#### POST /api/intent/workflows/{workflow_id}/steps/link-articles
+Links completed articles back to their originating intent workflow (Story 38.3).
+
+**Authentication:** Required (401 if not authenticated)  
+**Authorization:** Organization isolation via RLS (403 if not owner)  
+**Rate Limiting:** Standard API limits apply
+
+**Request Body:** Empty (workflow_id from path parameter)
+
+**Response:** 200 OK
+```typescript
+{
+  success: true;
+  data: {
+    workflow_id: string;
+    linking_status: 'in_progress' | 'completed' | 'failed';
+    total_articles: number;
+    linked_articles: number;
+    already_linked: number;
+    failed_articles: number;
+    workflow_status: string;
+    processing_time_seconds: number;
+    details: {
+      linked_article_ids: string[];
+      failed_article_ids: string[];
+      skipped_article_ids: string[];
+    };
+  };
+}
+```
+
+**Workflow State Requirements:**
+- Workflow must exist and belong to user's organization
+- Workflow status must be 'step_9_articles'
+
+**Business Logic:**
+- Links completed/published articles to their workflow
+- Processes articles in batches of 10 for performance
+- Updates workflow status to 'step_10_completed' when successful
+- Maintains bidirectional references (articles ↔ workflow)
+- Idempotent: safe to re-run, skips already linked articles
+
+**Database Changes:**
+- articles.workflow_link_status: 'not_linked' → 'linking' → 'linked'/'failed'
+- articles.linked_at: timestamp when linked
+- intent_workflows.article_link_count: count of linked articles
+- intent_workflows.status: 'step_9_articles' → 'step_10_completed'
+
+**Error Responses:**
+- 400 Bad Request: Invalid workflow state (must be step_9_articles)
+- 401 Unauthorized: Authentication required
+- 403 Forbidden: Workflow belongs to different organization
+- 404 Not Found: Workflow not found
+- 500 Internal Server Error: Linking service failure
+
+**Performance:**
+- Processing time < 30 seconds for 100 articles
+- Batch processing (10 articles per transaction)
+- Database indexes on (workflow_id, status, workflow_link_status)
+
+**Audit Logging:**
+- `workflow.articles.linking.started` - when linking process begins
+- `workflow.article.linked` - for each successfully linked article
+- `workflow.article.link_failed` - for each failed linking attempt
+- `workflow.articles.linking.completed` - when entire process completes
+- `workflow.articles.linking.failed` - on overall process failure
+
 #### GET /api/intent/audit/logs
 Retrieves Intent Engine audit logs for compliance tracking (Story 37.4).
 
