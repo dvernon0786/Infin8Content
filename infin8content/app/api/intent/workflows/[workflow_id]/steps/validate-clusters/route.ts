@@ -13,6 +13,7 @@ import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/servic
 import { AuditAction } from '@/types/audit'
 import { ClusterValidator } from '@/lib/services/intent-engine/cluster-validator'
 import { retryWithPolicy } from '@/lib/services/intent-engine/retry-utils'
+import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
 
 // Custom retry policy for cluster validation (2s → 4s → 8s as per story requirements)
 const CLUSTER_VALIDATION_RETRY_POLICY = {
@@ -43,6 +44,12 @@ export async function POST(
 
     organizationId = currentUser.org_id
     userId = currentUser.id
+
+    // ENFORCE ICP GATE - Check if ICP is complete before proceeding
+    const gateResponse = await enforceICPGate(workflowId, 'validate-clusters')
+    if (gateResponse) {
+      return gateResponse
+    }
 
     // Verify workflow exists and belongs to user's organization
     const supabase = createServiceRoleClient()

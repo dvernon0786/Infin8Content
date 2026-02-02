@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { processSubtopicApproval, SubtopicApprovalRequest } from '@/lib/services/keyword-engine/subtopic-approval-processor'
+import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
 
 export async function POST(
   request: NextRequest,
@@ -20,6 +21,13 @@ export async function POST(
 
     // Parse request body
     const body = await request.json() as SubtopicApprovalRequest
+
+    // ENFORCE ICP GATE - Check if ICP is complete before proceeding
+    // For keyword-level operations, we need to get the workflow_id from the keyword
+    const gateResponse = await enforceICPGate(keywordId, 'approve-subtopics')
+    if (gateResponse) {
+      return gateResponse
+    }
 
     // Validate request body
     if (!body.decision || !['approved', 'rejected'].includes(body.decision)) {

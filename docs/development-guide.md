@@ -1295,6 +1295,135 @@ chore: build process or dependency changes
 
 ---
 
+## ICP Gate Enforcement Patterns (Story 39-1)
+
+### Overview
+The ICP (Ideal Customer Profile) gate enforcement system ensures that ICP generation is completed before any downstream workflow steps can be executed. This provides a hard gate that prevents workflow progression until foundational ICP work is complete.
+
+### Architecture
+- **Validator Service**: `lib/services/intent-engine/icp-gate-validator.ts`
+- **Middleware**: `lib/middleware/intent-engine-gate.ts`
+- **Audit Actions**: `types/audit.ts` (WORKFLOW_GATE_ICP_ALLOWED/BLOCKED)
+- **Protected Endpoints**: 8 downstream Intent Engine endpoints
+
+### Key Components
+
+#### Gate Validator
+```typescript
+import { ICPGateValidator } from '@/lib/services/intent-engine/icp-gate-validator'
+
+const validator = new ICPGateValidator()
+const result = await validator.validateICPCompletion(workflowId)
+
+if (!result.allowed) {
+  return NextResponse.json(result.errorResponse, { status: 423 })
+}
+```
+
+#### Middleware Integration
+```typescript
+import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
+
+// In API route after authentication
+const gateResponse = await enforceICPGate(workflowId, 'step-name')
+if (gateResponse) {
+  return gateResponse
+}
+
+// Continue with step logic...
+```
+
+#### Workflow Status Validation
+The gate checks for ICP completion using these status levels:
+- **Blocked**: `step_1_icp` and earlier
+- **Allowed**: `step_2_icp_complete` and later
+
+#### Audit Logging
+All gate enforcement attempts are logged with full context:
+```typescript
+await validator.logGateEnforcement(workflowId, stepName, result)
+```
+
+### Implementation Pattern
+
+#### 1. Add Import
+```typescript
+import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
+```
+
+#### 2. Add Gate Check
+```typescript
+// After authentication, before business logic
+const gateResponse = await enforceICPGate(workflowId, 'step-name')
+if (gateResponse) {
+  return gateResponse
+}
+```
+
+#### 3. Test Integration
+```typescript
+// Mock gate for testing
+vi.mock('@/lib/middleware/intent-engine-gate', () => ({
+  enforceICPGate: vi.fn()
+}))
+
+// Test blocked scenario
+vi.mocked(enforceICPGate).mockResolvedValue(mock423Response)
+```
+
+### Error Handling
+
+#### Fail-Open Strategy
+Database errors allow access for system availability:
+```typescript
+catch (error) {
+  // Fail open for availability
+  return NextResponse.json({
+    error: 'Gate enforcement failed - failing open for availability'
+  }, { status: 200 })
+}
+```
+
+#### 423 Response Format
+```typescript
+{
+  error: "ICP completion required before {step}",
+  workflowStatus: "step_1_icp",
+  icpStatus: "step_1_icp",
+  requiredAction: "Complete ICP generation (step 2) before proceeding",
+  currentStep: "{step}",
+  blockedAt: "2026-01-31T10:00:00.000Z"
+}
+```
+
+### Performance Considerations
+
+- **Validation Time**: < 50ms per request
+- **Database Query**: Single workflow lookup
+- **Audit Logging**: Async, non-blocking
+- **Memory Usage**: Minimal, stateless design
+
+### Testing Strategy
+
+#### Unit Tests
+```bash
+npm test -- __tests__/services/intent-engine/icp-gate-validator.test.ts
+```
+
+#### Integration Tests
+```bash
+npm test -- __tests__/api/intent/workflows/competitor-analyze-gate-integration.test.ts
+```
+
+#### Test Scenarios
+- ICP complete → 200 OK
+- ICP incomplete → 423 Blocked
+- Database error → 200 Fail-open
+- Workflow not found → 423 Blocked
+- Audit logging verification
+
+---
+
 ## Keyword Engine Patterns
 
 ### Overview
