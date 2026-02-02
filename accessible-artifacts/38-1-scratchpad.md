@@ -152,9 +152,30 @@ The article generation pipeline is operational and ready for Story 38.2 to build
 - Error Handling: 2/2 passing
 - Seed Approval Guard: 3/3 passing
 
+### Vercel Build Fixes (2026-02-02 23:14-23:20 UTC)
+
+**Branch**: `story-38-1-complete`
+
+**Build Issues Fixed**:
+1. ✅ Added missing `@openrouter/ai-sdk-provider@^2.1.1` dependency
+2. ✅ Corrected version from `0.0.55` (non-existent) to `2.1.1` (latest stable)
+3. ✅ Updated planner-agent to use `createOpenRouter` API
+4. ✅ Added `ai@^6.0.0` dependency for Vercel AI SDK
+5. ✅ Resolved zod dependency conflict: downgraded from `^4.3.4` to `^3.23.8`
+6. ✅ Updated API call to use `client.languageModel()` for v6 compatibility
+
+**Commits**:
+- `bbf59d1` - Add missing @openrouter/ai-sdk-provider dependency
+- `8434fdd` - Correct @openrouter/ai-sdk-provider version
+- `dc826b0` - Update planner-agent to use new OpenRouter API
+- `082ff26` - Resolve zod dependency conflict with ai package
+- `3d6073b` - Update ai package to v6 and fix OpenRouter API usage
+
+**Current Status**: Build should now pass TypeScript compilation
+
 **Deployment Recommendation**: ✅ **MERGE TO MAIN**
 
 ---
 
-**Last Updated**: 2026-02-02 22:51 UTC
+**Last Updated**: 2026-02-02 23:20 UTC
 **Next Review**: After Story 38.2 implementation

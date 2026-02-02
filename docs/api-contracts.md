@@ -422,6 +422,94 @@ Processes final human approval decision for the entire workflow (Story 37.3).
 - `workflow.human_approval.approved` - on approval
 - `workflow.human_approval.rejected` - on rejection
 
+#### GET /api/intent/workflows/{workflow_id}/articles/progress
+Tracks article generation progress for intent workflows (Story 38.2).
+
+**Authentication:** Required (401 if not authenticated)  
+**Authorization:** Workflow must belong to authenticated user's organization
+
+**Path Parameters:**
+```typescript
+{
+  workflow_id: string; // UUID of intent workflow
+}
+```
+
+**Query Parameters:**
+```typescript
+{
+  status?: 'queued' | 'generating' | 'completed' | 'failed'; // Filter by status
+  date_from?: string;       // ISO 8601 timestamp (inclusive)
+  date_to?: string;         // ISO 8601 timestamp (inclusive)
+  limit?: number;          // Max 1000, default 100
+  offset?: number;         // Default 0
+}
+```
+
+**Response:** 200 OK
+```typescript
+{
+  workflow_id: string;
+  total_articles: number;
+  articles: [
+    {
+      article_id: string;
+      subtopic_id?: string;
+      status: 'queued' | 'generating' | 'completed' | 'failed';
+      progress_percent: number;        // 0-100
+      sections_completed: number;
+      sections_total: number;
+      current_section?: string;
+      estimated_completion_time?: string; // ISO 8601
+      created_at: string;
+      started_at?: string;
+      completed_at?: string;
+      error?: {
+        code: string;
+        message: string;
+        details: object;
+      } | null;
+      word_count?: number;
+      quality_score?: number;
+    }
+  ];
+  summary: {
+    queued_count: number;
+    generating_count: number;
+    completed_count: number;
+    failed_count: number;
+    average_generation_time_seconds: number;
+    estimated_total_completion_time?: string;
+  };
+}
+```
+
+**Workflow State Requirements:**
+- Workflow must exist and belong to user's organization
+- No specific status requirement (read-only)
+
+**Business Logic:**
+- Read-only access to article generation progress
+- Supports filtering by status, date range, and pagination
+- Calculates estimated completion times based on current progress
+- Returns comprehensive summary statistics
+
+**Error Responses:**
+- 400 Bad Request: Invalid workflow ID, date format, or status parameter
+- 401 Unauthorized: Authentication required
+- 403 Forbidden: Workflow belongs to different organization
+- 404 Not Found: Workflow not found
+- 500 Internal Server Error: Database query failed
+
+**Performance:**
+- Response time < 2 seconds for 1000+ articles
+- Supports pagination for large result sets
+- Indexed queries on (workflow_id, status, created_at)
+
+**Audit Logging:**
+- `workflow.article_generation.progress_queried` - on successful request
+- `workflow.article_generation.progress_error` - on error
+
 #### GET /api/intent/audit/logs
 Retrieves Intent Engine audit logs for compliance tracking (Story 37.4).
 
