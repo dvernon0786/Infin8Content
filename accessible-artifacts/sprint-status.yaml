@@ -450,7 +450,7 @@ development_status:
   epic-38: in-progress
   38-1-queue-approved-subtopics-for-article-generation: done
   38-2-track-article-generation-progress: done
-  38-3-link-generated-articles-to-intent-workflow: ready-for-dev
+  38-3-link-generated-articles-to-intent-workflow: done
   epic-38-retrospective: optional
 
   # Epic 39: Workflow Orchestration & State Management

@@ -1004,6 +1004,200 @@ describe('GET /api/intent/workflows/{workflow_id}/articles/progress', () => {
 - Verify query is using proper filtering (status, date range)
 - Consider implementing caching for frequently accessed workflows
 
+### Article-Workflow Linking (Story 38.3)
+
+#### Overview
+The article-workflow linking system establishes bidirectional links between generated articles and their originating intent workflow. This completes the workflow lifecycle by connecting completed articles back to their keyword research origins, enabling full traceability and workflow completion.
+
+#### Architecture
+- **Service Layer**: `lib/services/intent-engine/article-workflow-linker.ts`
+- **API Endpoint**: `POST /api/intent/workflows/{workflow_id}/steps/link-articles`
+- **Database**: New fields in `articles` and `intent_workflows` tables
+- **Response Format**: Comprehensive linking results with detailed counts
+
+#### Service Pattern
+
+```typescript
+// Link articles to workflow with comprehensive tracking
+const result = await linkArticlesToWorkflow(workflowId, userId)
+
+// Result includes detailed breakdown
+interface LinkingResult {
+  workflow_id: string;
+  linking_status: 'in_progress' | 'completed' | 'failed';
+  total_articles: number;
+  linked_articles: number;
+  already_linked: number;
+  failed_articles: number;
+  workflow_status: string;
+  processing_time_seconds: number;
+  details: {
+    linked_article_ids: string[];
+    failed_article_ids: string[];
+    skipped_article_ids: string[];
+  };
+}
+```
+
+#### API Implementation
+
+```typescript
+// In API route
+const currentUser = await getCurrentUser()
+if (!currentUser || !currentUser.org_id) {
+  return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+}
+
+// Validate workflow state (must be step_9_articles)
+const { valid, workflow } = await validateWorkflowForLinking(workflowId)
+if (!valid) {
+  return NextResponse.json({ error: 'Invalid workflow state' }, { status: 400 })
+}
+
+// Execute linking process
+const linkingResult = await linkArticlesToWorkflow(workflowId, currentUser.id)
+
+// Log completion
+await logActionAsync({
+  orgId: currentUser.org_id,
+  userId: currentUser.id,
+  action: AuditAction.WORKFLOW_ARTICLES_LINKING_COMPLETED,
+  details: { /* linking results */ }
+})
+
+return NextResponse.json({ success: true, data: linkingResult })
+```
+
+#### Database Schema Changes
+
+```sql
+-- Articles table new fields
+ALTER TABLE articles ADD COLUMN workflow_link_status TEXT DEFAULT 'not_linked';
+ALTER TABLE articles ADD COLUMN linked_at TIMESTAMP WITH TIME ZONE;
+
+-- Workflow table new fields  
+ALTER TABLE intent_workflows ADD COLUMN article_link_count INTEGER DEFAULT 0;
+ALTER TABLE intent_workflows ADD COLUMN article_linking_started_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE intent_workflows ADD COLUMN article_linking_completed_at TIMESTAMP WITH TIME ZONE;
+
+-- Performance indexes
+CREATE INDEX idx_articles_workflow_linking ON articles(workflow_id, status, workflow_link_status);
+CREATE INDEX idx_workflows_article_link_count ON intent_workflows(article_link_count) WHERE article_link_count > 0;
+```
+
+#### Business Logic
+
+```typescript
+// Eligibility criteria for linking
+const eligibleArticles = await getCompletedArticlesForWorkflow(workflowId)
+// - status must be 'completed' or 'published'
+// - workflow_link_status must be 'not_linked'
+// - must belong to specified workflow
+
+// Batch processing for performance
+const batchSize = 10
+for (let i = 0; i < articles.length; i += batchSize) {
+  const batch = articles.slice(i, i + batchSize)
+  // Process each article with individual error handling
+}
+
+// Idempotent design - safe to re-run
+if (article.workflow_link_status === 'linked') {
+  // Skip already linked articles
+  continue
+}
+
+// Workflow state transition
+if (linkingResult.failed_articles === 0) {
+  // Update to final completion state
+  await updateWorkflowStatus(workflowId, 'step_10_completed')
+}
+```
+
+#### Error Handling
+
+```typescript
+// Individual article failures don't stop the process
+try {
+  await linkSingleArticle(articleId, workflowId, userId)
+  result.linked_articles++
+} catch (error) {
+  result.failed_articles++
+  // Mark article as failed but continue with others
+  await markArticleAsFailed(articleId, error)
+}
+
+// Comprehensive audit logging
+await logIntentAction({
+  organizationId: workflow.organization_id,
+  workflowId,
+  entityType: 'article',
+  entityId: articleId,
+  actorId: userId,
+  action: success ? 
+    AuditAction.WORKFLOW_ARTICLE_LINKED : 
+    AuditAction.WORKFLOW_ARTICLE_LINK_FAILED,
+  details: { linking_result: success ? 'success' : 'failed' }
+})
+```
+
+#### Testing Strategy
+
+```typescript
+// Unit tests for service layer
+describe('Article-Workflow Linker Service', () => {
+  it('should link completed articles to workflow', async () => {
+    const result = await linkArticlesToWorkflow(workflowId, userId)
+    expect(result.linked_articles).toBeGreaterThan(0)
+    expect(result.linking_status).toBe('completed')
+  })
+
+  it('should handle individual article failures gracefully', async () => {
+    // Mock one failing article
+    const result = await linkArticlesToWorkflow(workflowId, userId)
+    expect(result.failed_articles).toBe(1)
+    expect(result.linked_articles).toBe(2) // others succeeded
+  })
+})
+
+// Integration tests for API endpoint
+describe('POST /api/intent/workflows/{workflow_id}/steps/link-articles', () => {
+  it('should require authentication', async () => {
+    const response = await POST(request, { params: { workflow_id: 'test' } })
+    expect(response.status).toBe(401)
+  })
+
+  it('should validate workflow state', async () => {
+    // Mock workflow in wrong state
+    const response = await POST(request, { params: { workflow_id: 'test' } })
+    expect(response.status).toBe(400)
+    expect(response.data.error).toContain('step_9_articles')
+  })
+})
+```
+
+#### Troubleshooting
+
+**Issue: "No articles found for linking"**
+- Verify articles exist with status 'completed' or 'published'
+- Check workflow is in 'step_9_articles' state
+- Ensure articles have workflow_link_status = 'not_linked'
+
+**Issue: "Linking process taking too long"**
+- Check database indexes on articles table
+- Verify batch processing is working (10 articles per batch)
+- Monitor for database connection issues
+
+**Issue: "Workflow status not updating to completed"**
+- Verify all articles linked successfully (failed_articles = 0)
+- Check for database constraint violations
+- Ensure workflow update transaction is not failing
+
+**Issue: "Audit logging not working"**
+- Verify intent-audit-logger service is properly imported
+- Check organization_id is available for audit context
+- Ensure audit logging failures don't affect core functionality
+
 #### Testing
 ```bash
 # Run audit logger tests

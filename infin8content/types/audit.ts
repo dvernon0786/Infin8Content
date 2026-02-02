@@ -98,6 +98,13 @@ export const AuditAction = {
     WORKFLOW_ARTICLE_GENERATION_PROGRESS_QUERIED: 'workflow.article_generation.progress_queried',
     WORKFLOW_ARTICLE_GENERATION_PROGRESS_ERROR: 'workflow.article_generation.progress_error',
 
+    // Article linking actions (Story 38.3)
+    WORKFLOW_ARTICLES_LINKING_STARTED: 'workflow.articles.linking.started',
+    WORKFLOW_ARTICLE_LINKED: 'workflow.article.linked',
+    WORKFLOW_ARTICLE_LINK_FAILED: 'workflow.article.link_failed',
+    WORKFLOW_ARTICLES_LINKING_COMPLETED: 'workflow.articles.linking.completed',
+    WORKFLOW_ARTICLES_LINKING_FAILED: 'workflow.articles.linking.failed',
+
     // Intent Engine specific audit events (Story 37.4)
     WORKFLOW_CREATED: 'workflow.created',
     WORKFLOW_ARCHIVED: 'workflow.archived',
