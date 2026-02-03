@@ -461,7 +461,7 @@ development_status:
   39-4-enforce-hard-gate-longtails-required-for-subtopics: done
 39-5-enforce-hard-gate-approval-required-for-articles: done
   39-6-create-workflow-status-dashboard: done
-  39-7-display-workflow-blocking-conditions: review
+  39-7-display-workflow-blocking-conditions: done
   epic-39-retrospective: optional
 
   # Epic 40: Feature Flag Rollout & Brownfield Safety

@@ -4161,6 +4161,37 @@ return <Component data={transformedData} />
 
 ---
 
+## Story 39-7: Next.js 16.1.1 Build Fix - COMPLETE
+
+**Date:** 2026-02-03  
+**Status:** ✅ BUILD ERROR RESOLVED
+
+### Issue Identified
+- Next.js 16.1.1 changed API route parameter structure
+- `params` is now `Promise<{workflow_id: string}>` instead of direct object
+- TypeScript compilation failed during Vercel build
+
+### Fix Applied
+- Updated parameter type in blocking conditions endpoint
+- Added `await params` to extract workflow_id
+- Maintained authentication and validation flow
+
+### Changes Made
+```typescript
+// Before: { params: { workflow_id: string } }
+// After:  { params: Promise<{ workflow_id: string }> }
+const { workflow_id: workflowId } = await params
+```
+
+### Commit & Push
+- **Commit:** `2116f86` - "fix: Next.js 16.1.1 API route parameter structure"
+- **Branch:** `story-39-7-blocking-conditions`
+- **Status:** Pushed and ready for Vercel build
+
+**Result:** Build error resolved, deployment should now succeed.
+
+---
+
 ## 🔐 **FINAL MISSION STATUS**
 
 ### **✅ MISSION STATUS: COMPLETE**
