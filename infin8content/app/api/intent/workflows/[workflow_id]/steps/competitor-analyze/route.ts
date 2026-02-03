@@ -18,7 +18,7 @@ import {
   type ExtractSeedKeywordsRequest
 } from '@/lib/services/intent-engine/competitor-seed-extractor'
 import { getWorkflowCompetitors } from '@/lib/services/competitor-workflow-integration'
-import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
+import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
 
 export async function POST(
   request: NextRequest,
