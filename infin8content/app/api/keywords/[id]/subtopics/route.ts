@@ -1,9 +1,12 @@
 // API route for generating subtopics for a keyword
 // Story 37.1: Generate Subtopic Ideas via DataForSEO
+// Story 39.4: Enforce hard gate - longtails required for subtopics
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { KeywordSubtopicGenerator } from '@/lib/services/keyword-engine/subtopic-generator'
+import { WorkflowGateValidator } from '@/lib/services/intent-engine/workflow-gate-validator'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 
 export async function POST(
   request: NextRequest,
@@ -26,6 +29,46 @@ export async function POST(
       return NextResponse.json(
         { error: 'Keyword ID is required' },
         { status: 400 }
+      )
+    }
+
+    // Get the keyword to find its workflow
+    const supabase = createServiceRoleClient()
+    const { data: keyword, error: keywordError } = await supabase
+      .from('keywords')
+      .select('workflow_id')
+      .eq('id', id)
+      .eq('organization_id', currentUser.org_id)
+      .single() as { data: { workflow_id: string } | null, error: any }
+
+    if (keywordError || !keyword) {
+      return NextResponse.json(
+        { error: 'Keyword not found' },
+        { status: 404 }
+      )
+    }
+
+    // Validate workflow gate - longtails and clustering must be complete
+    // Pass organization ID for cross-org isolation validation
+    const gateValidator = new WorkflowGateValidator()
+    const gateResult = await gateValidator.validateLongtailsRequiredForSubtopics(keyword.workflow_id, currentUser.org_id)
+
+    // Log gate enforcement for audit trail
+    await gateValidator.logGateEnforcement(keyword.workflow_id, 'subtopic-generation', gateResult)
+
+    // If gate validation fails, return 423 Locked response
+    if (!gateResult.allowed) {
+      return NextResponse.json(
+        gateResult.errorResponse || {
+          error: gateResult.error || 'Longtail expansion and clustering required before subtopics',
+          workflowStatus: gateResult.workflowStatus,
+          longtailStatus: gateResult.longtailStatus,
+          clusteringStatus: gateResult.clusteringStatus,
+          requiredAction: 'Complete longtail expansion (step 4) and topic clustering (step 6) before subtopic generation',
+          currentStep: 'subtopic-generation',
+          blockedAt: new Date().toISOString()
+        },
+        { status: 423 }
       )
     }
 

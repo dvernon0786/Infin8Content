@@ -457,9 +457,9 @@ development_status:
   epic-39: backlog
   39-1-enforce-hard-gate-icp-required-for-all-downstream-steps: done
   39-2-enforce-hard-gate-competitors-required-for-seed-keywords: done
-  39-3-enforce-hard-gate-approved-seeds-required-for-longtail-expansion: ready-for-dev
-  39-4-enforce-hard-gate-longtails-required-for-subtopics: ready-for-dev
-  39-5-enforce-hard-gate-approval-required-for-articles: backlog
+  39-3-enforce-hard-gate-approved-seeds-required-for-longtail-expansion: done
+  39-4-enforce-hard-gate-longtails-required-for-subtopics: done
+  39-5-enforce-hard-gate-approval-required-for-articles: ready-for-dev
   39-6-create-workflow-status-dashboard: backlog
   39-7-display-workflow-blocking-conditions: backlog
   epic-39-retrospective: optional
