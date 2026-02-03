@@ -1,6 +1,6 @@
 # Story 39.4: Enforce Hard Gate - Longtails Required for Subtopics
 
-Status: review
+Status: done
 
 ## Story Context: 39-4-enforce-hard-gate-longtails-required-for-subtopics
 
