@@ -1,10 +1,10 @@
 # Story 39.5: Enforce Hard Gate - Approval Required for Articles
 
-Status: ready-for-dev
+Status: done
 
 ## Story Context: 39-5-enforce-hard-gate-approval-required-for-articles
 
-**Status**: ready-for-dev
+**Status**: done
 
 **Epic**: 39 – Workflow Orchestration & State Management
 
@@ -79,13 +79,14 @@ Status: ready-for-dev
    And provides sufficient detail for compliance review
 
 **Technical Requirements**:
-- Gate enforcement middleware in workflow orchestration
-- Approval status validation against intent_approvals table
-- Workflow state consistency checks
-- Comprehensive audit logging for gate violations
-- Error handling with user-friendly messages
+- Gate enforcement validator following `SeedApprovalGateValidator` pattern
+- Subtopic approval validation against `intent_approvals` table with `approval_type='subtopics'`
+- Workflow state consistency checks using step ordering array
+- Comprehensive audit logging via `logIntentAction` function
+- Error handling with user-friendly messages and fail-open availability
 - Performance: <100ms gate check response time
 - Security: Prevent unauthorized workflow advancement
+- Integration with existing `lib/middleware/intent-engine-gate.ts`
 
 **Database Schema Usage**:
 - intent_workflows.status (validate current step)
@@ -99,22 +100,21 @@ Status: ready-for-dev
 - Gate enforcement applied at orchestration layer
 
 **Implementation Notes**:
-- Gate enforcement occurs before step execution in Inngest workflow
-- Uses existing approval infrastructure from Story 37.2
-- Maintains workflow state integrity
-- Provides clear error messages for blocked attempts
+- Gate enforcement follows established pattern from `seed-approval-gate-validator.ts`
+- Uses existing `intent_approvals` table with `approval_type='subtopics'`
+- Integrates with existing `lib/middleware/intent-engine-gate.ts` middleware
+- Maintains workflow state integrity with clear error messages
 - Audit trail includes all gate violations and successful passages
+- Follows fail-open pattern for database errors to maintain availability
 
 **Files Required**:
-- lib/services/intent-engine/workflow-gate-enforcer.ts (NEW)
-- lib/services/intent-engine/approval-validator.ts (NEW)
-- __tests__/services/intent-engine/workflow-gate-enforcer.test.ts (NEW)
-- __tests__/services/intent-engine/approval-validator.test.ts (NEW)
+- `lib/services/intent-engine/subtopic-approval-gate-validator.ts` (NEW)
+- `__tests__/services/intent-engine/subtopic-approval-gate-validator.test.ts` (NEW)
 
 **Files Modified**:
-- lib/services/intent-engine/workflow-orchestrator.ts (add gate checks)
-- types/audit.ts (add gate enforcement audit actions)
-- docs/api-contracts.md (document gate enforcement behavior)
+- `lib/middleware/intent-engine-gate.ts` (add subtopic approval gate check)
+- `types/audit.ts` (add subtopic approval gate enforcement audit actions)
+- `docs/api-contracts.md` (document gate enforcement behavior)
 
 **Out of Scope**:
 - UI components for gate status display
@@ -146,10 +146,12 @@ Status: ready-for-dev
 ## Dev Notes
 
 ### Architecture Compliance
-- Follows existing gate enforcement patterns from Stories 39.1-39.4
-- Uses established intent_approvals infrastructure
-- Maintains workflow state consistency
-- Implements comprehensive audit logging
+- Follows existing gate enforcement patterns from `seed-approval-gate-validator.ts`
+- Uses established `intent_approvals` infrastructure with `approval_type='subtopics'`
+- Maintains workflow state consistency using step ordering array pattern
+- Implements comprehensive audit logging via `logIntentAction`
+- Integrates with existing `lib/middleware/intent-engine-gate.ts` middleware
+- Follows fail-open pattern for database availability
 
 ### Project Structure Notes
 - Gate enforcement services in lib/services/intent-engine/
@@ -169,12 +171,14 @@ Status: ready-for-dev
 - Efficient database queries for approval validation
 - Minimal overhead to workflow execution
 
-## References
+### References
 
 - [Source: docs/project-documentation/ARCHITECTURE_PRIMARY_CONTENT_WORKFLOW.md#Workflow Orchestration]
 - [Source: docs/project-documentation/ARCHITECTURE_PRIMARY_CONTENT_WORKFLOW.md#Gate Enforcement]
 - [Source: accessible-artifacts/epics.md#Epic 39]
 - [Source: accessible-artifacts/37-2-review-and-approve-subtopics-before-article-generation.md]
+- [Source: infin8content/lib/services/intent-engine/seed-approval-gate-validator.ts] (Implementation Pattern)
+- [Source: infin8content/lib/middleware/intent-engine-gate.ts] (Integration Point)
 
 ## Dev Agent Record
 
