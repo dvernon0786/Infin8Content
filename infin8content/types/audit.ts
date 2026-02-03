@@ -112,6 +112,11 @@ export const AuditAction = {
     WORKFLOW_GATE_SEEDS_BLOCKED: 'workflow.gate.seeds_blocked',
     WORKFLOW_GATE_SEEDS_ERROR: 'workflow.gate.seeds_error',
 
+    // Longtail Gate enforcement actions (Story 39-4)
+    WORKFLOW_GATE_LONGTAILS_ALLOWED: 'workflow.gate.longtails_allowed',
+    WORKFLOW_GATE_LONGTAILS_BLOCKED: 'workflow.gate.longtails_blocked',
+    WORKFLOW_GATE_LONGTAILS_ERROR: 'workflow.gate.longtails_error',
+
     // Article linking actions (Story 38.3)
     WORKFLOW_ARTICLES_LINKING_STARTED: 'workflow.articles.linking.started',
     WORKFLOW_ARTICLE_LINKED: 'workflow.article.linked',
