@@ -138,6 +138,9 @@ export const AuditAction = {
     ARTICLE_FAILED: 'article.failed',
     SYSTEM_ERROR: 'system.error',
     SYSTEM_RETRY_EXHAUSTED: 'system.retry_exhausted',
+
+    // Dashboard actions (Story 39.6)
+    DASHBOARD_VIEWED: 'dashboard.viewed',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];
