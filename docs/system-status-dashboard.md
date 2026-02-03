@@ -174,7 +174,44 @@ npx supabase status 2>/dev/null || echo "Connected via environment variables"
 
 ---
 
-## 🆘 Troubleshooting
+## 🔒 HARD RULE (CRITICAL - Never Forget)
+
+### When you perform ANY of these operations:
+- ✅ Rename a dynamic route folder
+- ✅ Change dynamic parameter names  
+- ✅ Move folders under `app/`
+- ✅ Switch branches with route changes
+
+👉 **ALWAYS do this immediately:**
+```bash
+rm -rf .next
+npm run dev
+```
+
+**Never trust hot reload for dynamic route changes. Ever.**
+
+### Why This Matters
+Next.js App Router caches:
+- Route manifests
+- Segment trees  
+- Param name resolution
+
+Dynamic route renames are one of the few cases where hot reload, restart, and branch switching **will not fix** the issue. Only a complete `.next` cache clearing works.
+
+### Prevention Checklist
+Before saying "routing is broken":
+1. `git status` clean?
+2. Confirm folder structure: `tree app/api | grep '\['`
+3. Kill all dev servers
+4. `rm -rf .next`
+5. Restart once
+
+If error persists after that → **Real bug**  
+If not → **Cache illusion**
+
+---
+
+## 🧠 Troubleshooting
 
 ### Common Issues & Solutions
 

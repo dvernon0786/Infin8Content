@@ -46,6 +46,36 @@ curl -X POST -H "Content-Type: application/json" \
 - **Supabase CLI**: For database management
 - **Playwright Browser**: For E2E testing
 
+## 🔒 CRITICAL: Next.js Cache Management
+
+### When Working with Dynamic Routes
+
+If you perform ANY of these operations:
+- Rename dynamic route folders (`[id]` → `[keyword_id]`)
+- Change parameter names
+- Move folders under `app/`
+- Switch branches with route changes
+
+**ALWAYS clear the cache immediately:**
+```bash
+rm -rf .next
+npm run dev
+```
+
+**Never trust hot reload for dynamic route changes.** This prevents "ghost routing errors" where Next.js caches old route structures.
+
+### Prevention Checklist
+Before debugging routing issues:
+1. `git status` - ensure clean state
+2. `tree app/api | grep '\['` - confirm folder structure
+3. Kill all dev servers
+4. `rm -rf .next` - clear cache
+5. Restart once
+
+If errors persist after cache clearing → real bug. If not → cache illusion.
+
+---
+
 ## Environment Setup
 
 ### 1. Clone Repository

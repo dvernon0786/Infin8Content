@@ -92,6 +92,38 @@ curl -i http://localhost:3000/api/keywords/test/subtopics
 
 ---
 
+## 🔒 CRITICAL RULE LOCKED (Never Forget)
+
+**Next.js Dynamic Route Cache Poisoning - SOLVED**
+
+When you perform ANY of these operations:
+- ✅ Rename dynamic route folders (`[id]` → `[keyword_id]`)
+- ✅ Change parameter names
+- ✅ Move folders under `app/`
+- ✅ Switch branches with route changes
+
+👉 **ALWAYS do this immediately:**
+```bash
+rm -rf .next
+npm run dev
+```
+
+**Never trust hot reload for dynamic route changes. Ever.**
+
+**Root Cause**: Next.js App Router caches route manifests, segment trees, and param name resolution. Dynamic route renames are one of the few cases where hot reload, restart, and branch switching **will not fix** the issue.
+
+**Prevention Checklist**:
+1. `git status` clean?
+2. `tree app/api | grep '\['` - confirm folder structure
+3. Kill all dev servers
+4. `rm -rf .next` - clear cache
+5. Restart once
+
+If error persists → **Real bug**  
+If not → **Cache illusion**
+
+---
+
 ## 🎯 Source Tree Analysis Complete (February 3, 2026)
 
 **Date**: 2026-02-03T20:37:00+11:00  
