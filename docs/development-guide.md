@@ -1416,6 +1416,138 @@ npm test -- __tests__/api/intent/workflows/competitor-analyze-gate-integration.t
 ```
 
 #### Test Scenarios
+
+## Competitor Gate Enforcement Patterns (Story 39-2)
+
+### Overview
+The competitor gate enforcement system ensures that competitor analysis is completed before seed keyword extraction can begin. This provides a hard gate that prevents seed extraction until foundational competitor work is complete, ensuring all seed keywords are derived from actual competitor data.
+
+### Architecture
+- **Validator Service**: `lib/services/intent-engine/competitor-gate-validator.ts`
+- **Middleware**: `lib/middleware/intent-engine-gate.ts` (extended from ICP gate)
+- **Audit Actions**: `types/audit.ts` (WORKFLOW_GATE_COMPETITORS_ALLOWED/BLOCKED/ERROR)
+- **Protected Endpoints**: 1 seed extraction endpoint
+
+### Key Components
+
+#### Gate Validator
+```typescript
+import { CompetitorGateValidator } from '@/lib/services/intent-engine/competitor-gate-validator'
+
+const validator = new CompetitorGateValidator()
+const result = await validator.validateCompetitorCompletion(workflowId)
+
+if (!result.allowed) {
+  // Block access with 423 response
+  return NextResponse.json(result.errorResponse, { status: 423 })
+}
+
+// Allow access - continue with step logic
+```
+
+#### Middleware Integration
+```typescript
+import { enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
+
+// In API route after authentication and ICP gate
+const gateResponse = await enforceCompetitorGate(workflowId, 'seed-extract')
+if (gateResponse) {
+  return gateResponse
+}
+
+// Continue with step logic...
+```
+
+#### Workflow Status Validation
+The gate checks for competitor analysis completion using these status levels:
+- **Blocked**: `step_2_icp_complete` and earlier
+- **Allowed**: `step_3_competitors` and later
+
+#### Audit Logging
+All gate enforcement attempts are logged with full context:
+```typescript
+await validator.logGateEnforcement(workflowId, stepName, result)
+```
+
+### Implementation Pattern
+
+#### 1. Add Import
+```typescript
+import { enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
+```
+
+#### 2. Add Gate Check (after ICP gate)
+```typescript
+// After authentication and ICP gate, before business logic
+const gateResponse = await enforceCompetitorGate(workflowId, 'seed-extract')
+if (gateResponse) {
+  return gateResponse
+}
+```
+
+#### 3. Test Integration
+```typescript
+// Mock gate for testing
+vi.mock('@/lib/middleware/intent-engine-gate', () => ({
+  enforceCompetitorGate: vi.fn()
+}))
+
+// Test blocked scenario
+vi.mocked(enforceCompetitorGate).mockResolvedValue(mock423Response)
+```
+
+### Error Handling
+The gate follows the same fail-open pattern as the ICP gate:
+```typescript
+catch (error) {
+  // Fail open for availability
+  return NextResponse.json({
+    error: 'Gate enforcement failed - failing open for availability'
+  }, { status: 200 })
+}
+```
+
+### Error Response Format
+```json
+{
+  "error": "Competitor analysis required before seed keywords",
+  "workflowStatus": "step_2_icp_complete",
+  "competitorStatus": "not_complete",
+  "requiredAction": "Complete competitor analysis (step 2) before proceeding",
+  "currentStep": "step_2_icp_complete",
+  "blockedAt": "2026-02-03T10:13:00.000Z"
+}
+```
+
+### Testing
+
+#### Unit Tests
+```bash
+npm test -- __tests__/services/intent-engine/competitor-gate-validator.test.ts
+```
+
+#### Integration Tests
+```bash
+npm test -- __tests__/api/intent/workflows/seed-extract.test.ts
+```
+
+#### Test Scenarios
+- ✅ Allow access when workflow status is `step_3_competitors`
+- ✅ Block access when workflow status is `step_2_icp_complete`
+- ✅ Fail open on database errors
+- ✅ Proper audit logging for enforcement
+- ✅ Organization isolation enforcement
+- ✅ Performance validation (< 100ms)
+
+### Relationship to ICP Gate
+The competitor gate is designed to work in conjunction with the ICP gate:
+1. **ICP Gate**: Validates ICP completion (step 2)
+2. **Competitor Gate**: Validates competitor analysis completion (step 3)
+3. **Sequential Enforcement**: Both gates must pass for seed extraction
+
+This creates a strict dependency chain: ICP → Competitors → Seeds → Longtails
+
+#### Test Scenarios
 - ICP complete → 200 OK
 - ICP incomplete → 423 Blocked
 - Database error → 200 Fail-open
@@ -1498,6 +1630,106 @@ it('should generate subtopics for valid keyword', async () => {
 - Verify user session and organization membership
 - Check RLS policies on keywords table
 - Ensure proper middleware configuration
+
+---
+
+## Intent Engine Workflow Gates
+
+### Seed Approval Gate Pattern (Story 39-3)
+
+The seed approval gate enforces that seed keywords must be approved before long-tail expansion proceeds.
+
+**Gate Enforcement Pattern:**
+```typescript
+// In API endpoint handler
+import { enforceSeedApprovalGate } from '@/lib/middleware/intent-engine-gate'
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ workflow_id: string }> }
+) {
+  const { workflow_id } = await params
+
+  // Enforce seed approval gate
+  const seedGateResponse = await enforceSeedApprovalGate(workflow_id, 'longtail-expand')
+  if (seedGateResponse) {
+    return seedGateResponse  // Returns 423 Locked if not approved
+  }
+
+  // Continue with step logic if gate passes
+  // ...
+}
+```
+
+**Gate Validation Rules:**
+1. **Workflow State Check**: Workflow must be at `step_3_seeds` or beyond
+2. **Approval Check**: `intent_approvals` table must have `approval_type='seed_keywords'` and `decision='approved'`
+3. **Organization Isolation**: Workflow must belong to user's organization (RLS enforced)
+4. **Fail-Open Principle**: Database errors allow request to proceed (availability over strictness)
+
+**Response Codes:**
+- **423 Locked**: Seed keywords not approved or not yet extracted
+- **200 OK**: Gate passes, continue to step logic
+- **401 Unauthorized**: Authentication required
+- **404 Not Found**: Workflow not found
+
+**Audit Logging:**
+- `workflow.gate.seeds_allowed`: Gate passes, access granted
+- `workflow.gate.seeds_blocked`: Gate blocks, access denied
+- `workflow.gate.seeds_error`: Gate enforcement encounters error
+
+**Testing Strategy:**
+```typescript
+// Mock the gate validator
+vi.mock('@/lib/services/intent-engine/seed-approval-gate-validator')
+
+// Test blocking behavior
+it('should return 423 when seeds not approved', async () => {
+  vi.mocked(SeedApprovalGateValidator).mockImplementation(() => ({
+    validateSeedApproval: vi.fn().mockResolvedValue({
+      allowed: false,
+      seedApprovalStatus: 'not_approved',
+      workflowStatus: 'step_3_seeds'
+    }),
+    logGateEnforcement: vi.fn()
+  }))
+
+  const response = await enforceSeedApprovalGate('workflow-123', 'longtail-expand')
+  expect(response?.status).toBe(423)
+})
+
+// Test passing behavior
+it('should return null when seeds approved', async () => {
+  vi.mocked(SeedApprovalGateValidator).mockImplementation(() => ({
+    validateSeedApproval: vi.fn().mockResolvedValue({
+      allowed: true,
+      seedApprovalStatus: 'approved',
+      workflowStatus: 'step_3_seeds'
+    }),
+    logGateEnforcement: vi.fn()
+  }))
+
+  const response = await enforceSeedApprovalGate('workflow-123', 'longtail-expand')
+  expect(response).toBeNull()
+})
+```
+
+**Troubleshooting:**
+
+**Gate Returns 423 Locked**
+- Verify seed keywords have been approved: Check `intent_approvals` table for `approval_type='seed_keywords'` and `decision='approved'`
+- Ensure workflow is at `step_3_seeds`: Check `intent_workflows.status`
+- Verify organization isolation: Confirm workflow belongs to user's organization
+
+**Gate Fails Open (Allows Despite Error)**
+- Database connection issues trigger fail-open behavior
+- Check database connectivity and RLS policies
+- Monitor error logs for underlying database errors
+
+**Gate Enforcement Not Triggered**
+- Verify gate is called before step logic: `const response = await enforceSeedApprovalGate(...)`
+- Check gate function is imported: `import { enforceSeedApprovalGate } from '@/lib/middleware/intent-engine-gate'`
+- Ensure response is checked: `if (seedGateResponse) { return seedGateResponse }`
 
 ---
 

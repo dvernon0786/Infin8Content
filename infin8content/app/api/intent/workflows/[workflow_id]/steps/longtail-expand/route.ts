@@ -17,7 +17,7 @@ import {
   expandSeedKeywordsToLongtails,
   type ExpansionSummary
 } from '@/lib/services/intent-engine/longtail-keyword-expander'
-import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
+import { enforceICPGate, enforceSeedApprovalGate } from '@/lib/middleware/intent-engine-gate'
 
 export async function POST(
   request: NextRequest,
@@ -42,9 +42,15 @@ export async function POST(
     userId = currentUser.id
 
     // ENFORCE ICP GATE - Check if ICP is complete before proceeding
-    const gateResponse = await enforceICPGate(workflowId, 'longtail-expand')
-    if (gateResponse) {
-      return gateResponse
+    const icpGateResponse = await enforceICPGate(workflowId, 'longtail-expand')
+    if (icpGateResponse) {
+      return icpGateResponse
+    }
+
+    // ENFORCE SEED APPROVAL GATE - Check if seed keywords are approved before proceeding
+    const seedGateResponse = await enforceSeedApprovalGate(workflowId, 'longtail-expand')
+    if (seedGateResponse) {
+      return seedGateResponse
     }
 
     // Verify workflow exists and belongs to user's organization
