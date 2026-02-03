@@ -102,6 +102,16 @@ export const AuditAction = {
     WORKFLOW_GATE_ICP_ALLOWED: 'workflow.gate.icp.allowed',
     WORKFLOW_GATE_ICP_BLOCKED: 'workflow.gate.icp.blocked',
 
+    // Competitor Gate enforcement actions (Story 39-2)
+    WORKFLOW_GATE_COMPETITORS_ALLOWED: 'workflow.gate.competitors_allowed',
+    WORKFLOW_GATE_COMPETITORS_BLOCKED: 'workflow.gate.competitors_blocked',
+    WORKFLOW_GATE_COMPETITORS_ERROR: 'workflow.gate.competitors_error',
+
+    // Seed Approval Gate enforcement actions (Story 39-3)
+    WORKFLOW_GATE_SEEDS_ALLOWED: 'workflow.gate.seeds_allowed',
+    WORKFLOW_GATE_SEEDS_BLOCKED: 'workflow.gate.seeds_blocked',
+    WORKFLOW_GATE_SEEDS_ERROR: 'workflow.gate.seeds_error',
+
     // Article linking actions (Story 38.3)
     WORKFLOW_ARTICLES_LINKING_STARTED: 'workflow.articles.linking.started',
     WORKFLOW_ARTICLE_LINKED: 'workflow.article.linked',
