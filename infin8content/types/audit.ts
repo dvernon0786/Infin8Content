@@ -117,6 +117,11 @@ export const AuditAction = {
     WORKFLOW_GATE_LONGTAILS_BLOCKED: 'workflow.gate.longtails_blocked',
     WORKFLOW_GATE_LONGTAILS_ERROR: 'workflow.gate.longtails_error',
 
+    // Subtopic Approval Gate enforcement actions (Story 39-5)
+    WORKFLOW_GATE_SUBTOPICS_ALLOWED: 'workflow.gate.subtopics_allowed',
+    WORKFLOW_GATE_SUBTOPICS_BLOCKED: 'workflow.gate.subtopics_blocked',
+    WORKFLOW_GATE_SUBTOPICS_ERROR: 'workflow.gate.subtopics_error',
+
     // Article linking actions (Story 38.3)
     WORKFLOW_ARTICLES_LINKING_STARTED: 'workflow.articles.linking.started',
     WORKFLOW_ARTICLE_LINKED: 'workflow.article.linked',

@@ -15,7 +15,7 @@ import {
   queueApprovedSubtopicsForArticles,
   type ArticleQueueingResult
 } from '@/lib/services/intent-engine/article-queuing-processor'
-import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
+import { enforceICPGate, enforceSubtopicApprovalGate } from '@/lib/middleware/intent-engine-gate'
 
 export async function POST(
   request: NextRequest,
@@ -43,6 +43,12 @@ export async function POST(
     const gateResponse = await enforceICPGate(workflowId, 'queue-articles')
     if (gateResponse) {
       return gateResponse
+    }
+
+    // ENFORCE SUBTOPIC APPROVAL GATE - Check if subtopics are approved before proceeding
+    const subtopicGateResponse = await enforceSubtopicApprovalGate(workflowId, 'queue-articles')
+    if (subtopicGateResponse) {
+      return subtopicGateResponse
     }
 
     // Verify workflow exists and belongs to user's organization
