@@ -899,6 +899,66 @@ Generate subtopic ideas for a longtail keyword using DataForSEO NLP.
 - Generates exactly 3 subtopics per keyword
 - Updates keyword record with subtopics and status
 
+### Intent Workflow Blocking Conditions Endpoints
+
+#### GET /api/intent/workflows/{workflow_id}/blocking-conditions
+Retrieves blocking condition for a workflow if it is blocked at a gate (Story 39-7).
+
+**Authentication:** Required (401 if not authenticated)  
+**Organization Isolation:** RLS enforced via organization_id
+
+**Path Parameters:**
+```typescript
+{
+  workflow_id: string; // UUID format
+}
+```
+
+**Response:** 200 OK
+```typescript
+{
+  workflow_id: string;
+  blocking_condition: {
+    blocked_at_step: string; // e.g., 'step_0_auth'
+    blocking_gate: string; // e.g., 'gate_icp_required'
+    blocking_reason: string; // Human-readable explanation
+    required_action: string; // What needs to be done
+    action_link: string; // Direct link to required action
+    blocked_since: string; // ISO 8601 timestamp
+  } | null;
+  queried_at: string; // ISO 8601 timestamp
+}
+```
+
+**Error Responses:**
+- 400 Bad Request: Invalid workflow_id format
+```typescript
+{
+  error: "Invalid workflow_id format"
+}
+```
+- 401 Unauthorized: Authentication required
+- 500 Internal Server Error: Service error
+
+**Features:**
+- Returns null if workflow is not blocked
+- Provides clear, actionable blocking messages
+- Includes direct links to unblock actions
+- Logs all queries for audit trail
+- Supports organization isolation via RLS
+
+**Blocking Conditions Map:**
+| Step | Gate | Reason | Action |
+|------|------|--------|--------|
+| step_0_auth | gate_icp_required | ICP generation required | Generate ICP document |
+| step_1_icp | gate_competitors_required | Competitor analysis required | Analyze competitors |
+| step_3_seeds | gate_seeds_approval_required | Seed keywords must be approved | Review and approve seeds |
+| step_4_longtails | gate_filtering_required | Keyword filtering required | Filter keywords |
+| step_5_filtering | gate_clustering_required | Clustering required | Cluster keywords |
+| step_6_clustering | gate_validation_required | Cluster validation required | Validate clusters |
+| step_7_validation | gate_subtopic_generation_required | Subtopic generation required | Generate subtopics |
+| step_8_subtopics | gate_subtopic_approval_required | Subtopics must be approved | Review and approve subtopics |
+
 ---
 
 API endpoints are tested with:
