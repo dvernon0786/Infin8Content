@@ -20,16 +20,18 @@ import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logge
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { workflow_id: string } }
+  { params }: { params: Promise<{ workflow_id: string }> }
 ) {
   try {
+    // Await params to get workflow_id
+    const { workflow_id: workflowId } = await params
+    
     // Authenticate user
     const currentUser = await getCurrentUser()
     if (!currentUser || !currentUser.org_id) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const workflowId = params.workflow_id
     const organizationId = currentUser.org_id
 
     // Validate workflow_id format (UUID)
