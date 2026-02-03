@@ -1,9 +1,34 @@
 # Development Guide
 
-Generated: 2026-01-13 (Updated)  
+Generated: 2026-02-04 (System Status Update)  
 Project: Infin8Content  
 Framework: Next.js 16.1.1 with TypeScript  
-Environment: Development
+Environment: Development - ✅ **FULLY OPERATIONAL**
+
+---
+
+## System Status (2026-02-04)
+
+✅ **All Systems Operational**
+- Dev Server: Running cleanly without routing conflicts
+- Authentication: Registration and OTP verification working
+- Database: Supabase connected and configured
+- Email: Brevo OTP delivery active
+- Environment: All variables configured
+
+## Quick Start (Verified Working)
+
+```bash
+# 1. Start development server
+npm run dev
+
+# 2. Test registration (working example)
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password123"}' \
+  http://localhost:3000/api/auth/register
+
+# Expected: 200 OK with user data and OTP message
+```
 
 ---
 
@@ -20,6 +45,36 @@ Environment: Development
 - **Postman**: For API testing
 - **Supabase CLI**: For database management
 - **Playwright Browser**: For E2E testing
+
+## 🔒 CRITICAL: Next.js Cache Management
+
+### When Working with Dynamic Routes
+
+If you perform ANY of these operations:
+- Rename dynamic route folders (`[id]` → `[keyword_id]`)
+- Change parameter names
+- Move folders under `app/`
+- Switch branches with route changes
+
+**ALWAYS clear the cache immediately:**
+```bash
+rm -rf .next
+npm run dev
+```
+
+**Never trust hot reload for dynamic route changes.** This prevents "ghost routing errors" where Next.js caches old route structures.
+
+### Prevention Checklist
+Before debugging routing issues:
+1. `git status` - ensure clean state
+2. `tree app/api | grep '\['` - confirm folder structure
+3. Kill all dev servers
+4. `rm -rf .next` - clear cache
+5. Restart once
+
+If errors persist after cache clearing → real bug. If not → cache illusion.
+
+---
 
 ## Environment Setup
 

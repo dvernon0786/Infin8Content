@@ -10,11 +10,11 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ keyword_id: string }> }
 ) {
   try {
-    // Await params to get the id
-    const { id } = await params
+    // Await params to get the keyword_id
+    const { keyword_id } = await params
     // Get current user and validate authentication
     const currentUser = await getCurrentUser()
     if (!currentUser || !currentUser.org_id) {
@@ -25,7 +25,7 @@ export async function POST(
     }
 
     // Validate keyword ID
-    if (!id) {
+    if (!keyword_id) {
       return NextResponse.json(
         { error: 'Keyword ID is required' },
         { status: 400 }
@@ -37,7 +37,7 @@ export async function POST(
     const { data: keyword, error: keywordError } = await supabase
       .from('keywords')
       .select('workflow_id')
-      .eq('id', id)
+      .eq('id', keyword_id)
       .eq('organization_id', currentUser.org_id)
       .single() as { data: { workflow_id: string } | null, error: any }
 
@@ -76,15 +76,15 @@ export async function POST(
     const generator = new KeywordSubtopicGenerator()
 
     // Generate subtopics
-    const subtopics = await generator.generate(id)
+    const subtopics = await generator.generate(keyword_id)
 
     // Store subtopics and update status
-    await generator.store(id, subtopics)
+    await generator.store(keyword_id, subtopics)
 
     return NextResponse.json({
       success: true,
       data: {
-        keyword_id: id,
+        keyword_id: keyword_id,
         subtopics: subtopics,
         subtopics_count: subtopics.length
       }
