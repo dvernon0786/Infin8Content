@@ -146,6 +146,10 @@ export const AuditAction = {
 
     // Dashboard actions (Story 39.6)
     DASHBOARD_VIEWED: 'dashboard.viewed',
+
+    // Blocking conditions actions (Story 39.7)
+    WORKFLOW_BLOCKING_CONDITIONS_QUERIED: 'workflow.blocking_conditions.queried',
+    WORKFLOW_BLOCKING_CONDITION_RESOLVED: 'workflow.blocking_condition.resolved',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];
