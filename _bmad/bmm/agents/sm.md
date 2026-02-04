@@ -2052,6 +2052,118 @@ You must fully embody this agent's persona and follow all activation instruction
 - `docs/development-guide.md` (add workflow state transitions)
 - `accessible-artifacts/sprint-status.yaml` (update story status)
 
+## Story Context: A-3-Onboarding-API-Endpoints
+
+**Status**: ready-for-dev
+
+**Epic**: A – Onboarding System & Guards
+
+**User Story**: As a developer, I need to implement API endpoints for each onboarding step so that the frontend can persist user input server-side.
+
+**Story Classification**:
+- Type: Producer (API endpoint implementation)
+- Tier: Tier 1 (infrastructure foundation)
+
+**Business Intent**: Enable frontend onboarding wizard to persist user input server-side with proper validation, authentication, and organization isolation.
+
+**Contracts Required**:
+- C1: 7 API endpoints (/api/onboarding/business, /api/onboarding/competitors, /api/onboarding/blog, /api/onboarding/content-defaults, /api/onboarding/keyword-settings, /api/onboarding/integration, /api/onboarding/complete)
+- C2/C4/C5: organizations table operations (A-1 schema), authentication system, RLS policies
+- Terminal State: Onboarding data persisted in organizations table with validation
+- UI Boundary: No UI events (backend API only)
+- Analytics: No analytics emission (infrastructure endpoints)
+
+**Contracts Modified**: None (uses existing organizations table from A-1)
+
+**Contracts Guaranteed**:
+- ✅ No UI events emitted (backend API endpoints only)
+- ✅ No intermediate analytics (infrastructure layer)
+- ✅ No state mutation outside producer boundary (organizations table only)
+- ✅ Idempotency: Re-running endpoints does not duplicate data
+- ✅ Retry rules: Standard HTTP error handling with 400/401/403/500 responses
+
+**Producer Dependency Check**:
+- Epic A Status: In Progress
+- Story A-1 (Data Model Extensions): COMPLETED ✅
+- Story A-2 (Onboarding Guard Middleware): COMPLETED ✅
+- Dependencies Met: organizations table extended, middleware guards implemented
+- Blocking Decision: ALLOWED
+
+**Acceptance Criteria**:
+1. Given the onboarding wizard is active
+   When a user completes a step
+   Then the following endpoints exist and work:
+   - POST /api/onboarding/business (save business info)
+   - POST /api/onboarding/competitors (save competitors)
+   - POST /api/onboarding/blog (save blog config)
+   - POST /api/onboarding/content-defaults (save article rules)
+   - POST /api/onboarding/keyword-settings (save keyword settings)
+   - POST /api/onboarding/integration (save integration config)
+   - POST /api/onboarding/complete (mark onboarding complete)
+
+2. And all endpoints require authentication
+
+3. And all endpoints validate input server-side
+
+4. And all endpoints return 400 with validation errors if input is invalid
+
+5. And all endpoints return 200 with saved data on success
+
+6. And all endpoints enforce organization isolation (RLS)
+
+7. And all endpoints are idempotent (re-running does not duplicate data)
+
+**Technical Requirements**:
+- API Endpoints: 7 POST endpoints in /app/api/onboarding/
+- Authentication: Required for all endpoints (getCurrentUser pattern)
+- Validation: Server-side validation with Zod schemas
+- Database: Update organizations table columns from A-1
+- Error Handling: 400/401/403/500 responses with clear error messages
+- Organization Isolation: RLS policies enforced
+- Idempotency: Upsert operations with proper conflict resolution
+
+**Dependencies**:
+- Story A-1 (Data Model Extensions): COMPLETED ✅
+- Story A-2 (Onboarding Guard Middleware): COMPLETED ✅
+- Organizations table with onboarding columns
+- Authentication system (getCurrentUser)
+- Supabase client with RLS
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Follow existing API route patterns in the codebase
+- Use Zod for input validation
+- Implement proper error handling and logging
+- Ensure all endpoints are organization-isolated
+- Add comprehensive test coverage for all endpoints
+- Use existing authentication patterns from other API routes
+
+**Files to be Created**:
+- `app/api/onboarding/business/route.ts`
+- `app/api/onboarding/competitors/route.ts`
+- `app/api/onboarding/blog/route.ts`
+- `app/api/onboarding/content-defaults/route.ts`
+- `app/api/onboarding/keyword-settings/route.ts`
+- `app/api/onboarding/integration/route.ts`
+- `app/api/onboarding/complete/route.ts`
+- `lib/validation/onboarding-schema.ts`
+- `__tests__/api/onboarding/*.test.ts`
+
+**Files to be Modified**:
+- `types/organization.ts` (add/update onboarding interfaces)
+- `docs/api-contracts.md` (add onboarding endpoints)
+- `docs/development-guide.md` (add onboarding patterns)
+
+**Out of Scope**:
+- Frontend UI components (Story A-4)
+- AI autocomplete functionality (Story A-5)
+- Onboarding validation logic (Story A-6)
+- Intent Engine integration
+- Workflow creation guards
+
 ## Story Context: 36-1-filter-keywords-for-quality-and-relevance
 
 **Status**: ready-for-dev
@@ -2141,3 +2253,115 @@ You must fully embody this agent's persona and follow all activation instruction
 - `docs/api-contracts.md` (add endpoint documentation)
 - `docs/development-guide.md` (add workflow state transitions)
 - `accessible-artifacts/sprint-status.yaml` (update story status)
+
+## Story Context: A-3-Onboarding-API-Endpoints
+
+**Status**: ready-for-dev
+
+**Epic**: A – Onboarding System & Guards
+
+**User Story**: As a developer, I need to implement API endpoints for each onboarding step so that the frontend can persist user input server-side.
+
+**Story Classification**:
+- Type: Producer (API endpoint implementation)
+- Tier: Tier 1 (infrastructure foundation)
+
+**Business Intent**: Enable frontend onboarding wizard to persist user input server-side with proper validation, authentication, and organization isolation.
+
+**Contracts Required**:
+- C1: 7 API endpoints (/api/onboarding/business, /api/onboarding/competitors, /api/onboarding/blog, /api/onboarding/content-defaults, /api/onboarding/keyword-settings, /api/onboarding/integration, /api/onboarding/complete)
+- C2/C4/C5: organizations table operations (A-1 schema), authentication system, RLS policies
+- Terminal State: Onboarding data persisted in organizations table with validation
+- UI Boundary: No UI events (backend API only)
+- Analytics: No analytics emission (infrastructure endpoints)
+
+**Contracts Modified**: None (uses existing organizations table from A-1)
+
+**Contracts Guaranteed**:
+- ✅ No UI events emitted (backend API endpoints only)
+- ✅ No intermediate analytics (infrastructure layer)
+- ✅ No state mutation outside producer boundary (organizations table only)
+- ✅ Idempotency: Re-running endpoints does not duplicate data
+- ✅ Retry rules: Standard HTTP error handling with 400/401/403/500 responses
+
+**Producer Dependency Check**:
+- Epic A Status: In Progress
+- Story A-1 (Data Model Extensions): COMPLETED ✅
+- Story A-2 (Onboarding Guard Middleware): COMPLETED ✅
+- Dependencies Met: organizations table extended, middleware guards implemented
+- Blocking Decision: ALLOWED
+
+**Acceptance Criteria**:
+1. Given the onboarding wizard is active
+   When a user completes a step
+   Then the following endpoints exist and work:
+   - POST /api/onboarding/business (save business info)
+   - POST /api/onboarding/competitors (save competitors)
+   - POST /api/onboarding/blog (save blog config)
+   - POST /api/onboarding/content-defaults (save article rules)
+   - POST /api/onboarding/keyword-settings (save keyword settings)
+   - POST /api/onboarding/integration (save integration config)
+   - POST /api/onboarding/complete (mark onboarding complete)
+
+2. And all endpoints require authentication
+
+3. And all endpoints validate input server-side
+
+4. And all endpoints return 400 with validation errors if input is invalid
+
+5. And all endpoints return 200 with saved data on success
+
+6. And all endpoints enforce organization isolation (RLS)
+
+7. And all endpoints are idempotent (re-running does not duplicate data)
+
+**Technical Requirements**:
+- API Endpoints: 7 POST endpoints in /app/api/onboarding/
+- Authentication: Required for all endpoints (getCurrentUser pattern)
+- Validation: Server-side validation with Zod schemas
+- Database: Update organizations table columns from A-1
+- Error Handling: 400/401/403/500 responses with clear error messages
+- Organization Isolation: RLS policies enforced
+- Idempotency: Upsert operations with proper conflict resolution
+
+**Dependencies**:
+- Story A-1 (Data Model Extensions): COMPLETED ✅
+- Story A-2 (Onboarding Guard Middleware): COMPLETED ✅
+- Organizations table with onboarding columns
+- Authentication system (getCurrentUser)
+- Supabase client with RLS
+
+**Priority**: High
+**Story Points**: 8
+**Target Sprint**: Current sprint
+
+**Implementation Notes**:
+- Follow existing API route patterns in the codebase
+- Use Zod for input validation
+- Implement proper error handling and logging
+- Ensure all endpoints are organization-isolated
+- Add comprehensive test coverage for all endpoints
+- Use existing authentication patterns from other API routes
+
+**Files to be Created**:
+- `app/api/onboarding/business/route.ts`
+- `app/api/onboarding/competitors/route.ts`
+- `app/api/onboarding/blog/route.ts`
+- `app/api/onboarding/content-defaults/route.ts`
+- `app/api/onboarding/keyword-settings/route.ts`
+- `app/api/onboarding/integration/route.ts`
+- `app/api/onboarding/complete/route.ts`
+- `lib/validation/onboarding-schema.ts`
+- `__tests__/api/onboarding/*.test.ts`
+
+**Files to be Modified**:
+- `types/organization.ts` (add/update onboarding interfaces)
+- `docs/api-contracts.md` (add onboarding endpoints)
+- `docs/development-guide.md` (add onboarding patterns)
+
+**Out of Scope**:
+- Frontend UI components (Story A-4)
+- AI autocomplete functionality (Story A-5)
+- Onboarding validation logic (Story A-6)
+- Intent Engine integration
+- Workflow creation guards
