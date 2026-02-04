@@ -194,21 +194,30 @@ describe('/api/onboarding/competitors', () => {
       // Mock Supabase client with existing blog_config
       const mockSupabase = {
         from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: {
-            id: 'org-id',
-            blog_config: {
-              existing_setting: 'value',
-              competitors: [
-                { name: 'Competitor One', url: 'https://competitor1.com', description: 'A major competitor' }
-              ]
-            }
-          },
-          error: null
-        })
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn()
+          .mockResolvedValueOnce({
+            data: { 
+              blog_config: {
+                existing_setting: 'value'
+              }
+            },
+            error: null
+          })
+          .mockResolvedValueOnce({
+            data: {
+              id: 'org-id',
+              blog_config: {
+                existing_setting: 'value',
+                competitors: [
+                  { name: 'Competitor Two', url: 'https://competitor2.com' }
+                ]
+              }
+            },
+            error: null
+          }),
+        update: vi.fn().mockReturnThis(),
       }
       mockCreateClient.mockResolvedValue(mockSupabase)
 

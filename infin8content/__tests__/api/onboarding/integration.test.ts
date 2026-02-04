@@ -132,32 +132,6 @@ describe('/api/onboarding/integration', () => {
       // Mock authentication
       mockGetCurrentUser.mockResolvedValue({ id: 'user-id', org_id: 'org-id' })
 
-      // Mock Supabase client
-      const mockSupabase = {
-        from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: {
-            id: 'org-id',
-            blog_config: {
-              integrations: {
-                wordpress_url: 'https://example.com/wp-json',
-                wordpress_username: 'admin',
-                webflow_url: 'https://example.webflow.com',
-                other_integrations: {
-                  github: 'enabled',
-                  slack: 'disabled'
-                }
-              }
-            }
-          },
-          error: null
-        })
-      }
-      mockCreateClient.mockResolvedValue(mockSupabase)
-
       const requestBody = {
         wordpress_url: 'https://example.com/wp-json',
         wordpress_username: 'admin',
@@ -167,6 +141,29 @@ describe('/api/onboarding/integration', () => {
           slack: 'disabled'
         }
       }
+
+      // Mock Supabase client
+      const mockSupabase = {
+        from: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn()
+          .mockResolvedValueOnce({
+            data: { blog_config: {} },
+            error: null
+          })
+          .mockResolvedValueOnce({
+            data: {
+              id: 'org-id',
+              blog_config: {
+                integrations: requestBody
+              }
+            },
+            error: null
+          }),
+        update: vi.fn().mockReturnThis(),
+      }
+      mockCreateClient.mockResolvedValue(mockSupabase)
 
       const request = new Request('http://localhost:3000/api/onboarding/integration', {
         method: 'POST',
@@ -179,7 +176,9 @@ describe('/api/onboarding/integration', () => {
 
       expect(response.status).toBe(200)
       expect(data.success).toBe(true)
-      expect(data.organization.blog_config.integrations).toEqual(requestBody)
+      expect(data.organization.blog_config).toEqual({
+        integrations: requestBody
+      })
 
       // Verify Supabase calls
       expect(mockSupabase.from).toHaveBeenCalledWith('organizations')
@@ -196,25 +195,30 @@ describe('/api/onboarding/integration', () => {
       // Mock authentication
       mockGetCurrentUser.mockResolvedValue({ id: 'user-id', org_id: 'org-id' })
 
+      const requestBody = {}
+
       // Mock Supabase client
       const mockSupabase = {
         from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: {
-            id: 'org-id',
-            blog_config: {
-              integrations: {}
-            }
-          },
-          error: null
-        })
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn()
+          .mockResolvedValueOnce({
+            data: { blog_config: {} },
+            error: null
+          })
+          .mockResolvedValueOnce({
+            data: {
+              id: 'org-id',
+              blog_config: {
+                integrations: {}
+              }
+            },
+            error: null
+          }),
+        update: vi.fn().mockReturnThis(),
       }
       mockCreateClient.mockResolvedValue(mockSupabase)
-
-      const requestBody = {}
 
       const request = new Request('http://localhost:3000/api/onboarding/integration', {
         method: 'POST',
@@ -227,7 +231,9 @@ describe('/api/onboarding/integration', () => {
 
       expect(response.status).toBe(200)
       expect(data.success).toBe(true)
-      expect(data.organization.blog_config.integrations).toEqual({})
+      expect(data.organization.blog_config).toEqual({
+        integrations: {}
+      })
     })
 
     it('should merge integrations with existing blog_config', async () => {
@@ -237,22 +243,28 @@ describe('/api/onboarding/integration', () => {
       // Mock Supabase client with existing blog_config
       const mockSupabase = {
         from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: {
-            id: 'org-id',
-            blog_config: {
-              existing_setting: 'value',
-              integrations: {
-                wordpress_url: 'https://example.com/wp-json',
-                wordpress_username: 'admin'
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn()
+          .mockResolvedValueOnce({
+            data: { blog_config: { existing_setting: 'value' } },
+            error: null
+          })
+          .mockResolvedValueOnce({
+            data: {
+              id: 'org-id',
+              blog_config: {
+                existing_setting: 'value',
+                integrations: {
+                  wordpress_url: 'https://example.com/wp-json',
+                  wordpress_username: 'admin',
+                  webflow_url: 'https://example.webflow.com'
+                }
               }
-            }
-          },
-          error: null
-        })
+            },
+            error: null
+          }),
+        update: vi.fn().mockReturnThis(),
       }
       mockCreateClient.mockResolvedValue(mockSupabase)
 

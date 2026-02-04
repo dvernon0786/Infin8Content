@@ -221,22 +221,31 @@ describe('/api/onboarding/keyword-settings', () => {
       // Mock Supabase client with existing keyword_settings
       const mockSupabase = {
         from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: {
-            id: 'org-id',
-            keyword_settings: {
-              existing_setting: 'value',
-              target_region: 'United States',
-              language_code: 'en',
-              auto_generate_keywords: true,
-              monthly_keyword_limit: 100
-            }
-          },
-          error: null
-        })
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn()
+          .mockResolvedValueOnce({
+            data: { 
+              keyword_settings: {
+                existing_setting: 'value'
+              }
+            },
+            error: null
+          })
+          .mockResolvedValueOnce({
+            data: {
+              id: 'org-id',
+              keyword_settings: {
+                existing_setting: 'value',
+                target_region: 'United Kingdom',
+                language_code: 'en',
+                auto_generate_keywords: false,
+                monthly_keyword_limit: 200
+              }
+            },
+            error: null
+          }),
+        update: vi.fn().mockReturnThis(),
       }
       mockCreateClient.mockResolvedValue(mockSupabase)
 

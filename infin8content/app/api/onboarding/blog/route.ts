@@ -36,14 +36,11 @@ export async function POST(request: Request) {
   console.log('[Onboarding Blog] API route called')
   
   try {
-    // Parse and validate request body
+    // Parse request body
     const body = await request.json()
     console.log('[Onboarding Blog] Request body parsed:', body)
     
-    const validated = blogSchema.parse(body)
-    console.log('[Onboarding Blog] Request validated successfully')
-    
-    // Authenticate user
+    // Authenticate user first
     const currentUser = await getCurrentUser()
     if (!currentUser || !currentUser.org_id) {
       return NextResponse.json(
@@ -54,6 +51,10 @@ export async function POST(request: Request) {
     
     const organizationId = currentUser.org_id
     console.log('[Onboarding Blog] Authenticated user for organization:', organizationId)
+    
+    // Validate request body
+    const validated = blogSchema.parse(body)
+    console.log('[Onboarding Blog] Request validated successfully')
     
     // Create Supabase client
     const supabase = await createClient()
@@ -73,12 +74,10 @@ export async function POST(request: Request) {
       .update({
         blog_config: {
           ...currentBlogConfig,
-          blog: {
-            name: validated.blog_name,
-            description: validated.blog_description,
-            category: validated.blog_category,
-            post_frequency: validated.post_frequency,
-          },
+          blog_name: validated.blog_name,
+          blog_description: validated.blog_description,
+          blog_category: validated.blog_category,
+          post_frequency: validated.post_frequency,
         },
         updated_at: new Date().toISOString(),
       })
@@ -89,7 +88,7 @@ export async function POST(request: Request) {
     if (updateError) {
       console.error('[Onboarding Blog] Failed to update organization:', updateError)
       return NextResponse.json(
-        { error: 'Failed to save blog configuration' },
+        { error: 'Failed to save blog information' },
         { status: 500 }
       )
     }

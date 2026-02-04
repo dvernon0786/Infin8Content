@@ -227,23 +227,32 @@ describe('/api/onboarding/content-defaults', () => {
       // Mock Supabase client with existing content_defaults
       const mockSupabase = {
         from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: {
-            id: 'org-id',
-            content_defaults: {
-              existing_setting: 'value',
-              language: 'en',
-              tone: 'professional',
-              style: 'informative',
-              target_word_count: 1500,
-              auto_publish: false
-            }
-          },
-          error: null
-        })
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn()
+          .mockResolvedValueOnce({
+            data: { 
+              content_defaults: {
+                existing_setting: 'value'
+              }
+            },
+            error: null
+          })
+          .mockResolvedValueOnce({
+            data: {
+              id: 'org-id',
+              content_defaults: {
+                existing_setting: 'value',
+                language: 'es',
+                tone: 'casual',
+                style: 'persuasive',
+                target_word_count: 2000,
+                auto_publish: true
+              }
+            },
+            error: null
+          }),
+        update: vi.fn().mockReturnThis(),
       }
       mockCreateClient.mockResolvedValue(mockSupabase)
 

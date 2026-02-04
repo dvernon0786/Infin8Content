@@ -33,14 +33,11 @@ export async function POST(request: Request) {
   console.log('[Onboarding Competitors] API route called')
   
   try {
-    // Parse and validate request body
+    // Parse request body
     const body = await request.json()
     console.log('[Onboarding Competitors] Request body parsed:', body)
     
-    const validated = competitorsSchema.parse(body)
-    console.log('[Onboarding Competitors] Request validated successfully')
-    
-    // Authenticate user
+    // Authenticate user first
     const currentUser = await getCurrentUser()
     if (!currentUser || !currentUser.org_id) {
       return NextResponse.json(
@@ -51,6 +48,10 @@ export async function POST(request: Request) {
     
     const organizationId = currentUser.org_id
     console.log('[Onboarding Competitors] Authenticated user for organization:', organizationId)
+    
+    // Validate request body
+    const validated = competitorsSchema.parse(body)
+    console.log('[Onboarding Competitors] Request validated successfully')
     
     // Create Supabase client
     const supabase = await createClient()

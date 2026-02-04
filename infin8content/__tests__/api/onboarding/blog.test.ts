@@ -69,7 +69,7 @@ describe('/api/onboarding/blog', () => {
       expect(response.status).toBe(400)
       expect(data.error).toBe('Invalid input')
       expect(data.details.field).toBe('blog_name')
-      expect(data.details.message).toContain('Blog name must be at least 3 characters')
+      expect(data.details.message).toBe('Required')
     })
 
     it('should return 400 for short blog name', async () => {
@@ -163,33 +163,33 @@ describe('/api/onboarding/blog', () => {
       // Mock authentication
       mockGetCurrentUser.mockResolvedValue({ id: 'user-id', org_id: 'org-id' })
 
-      // Mock Supabase client
-      const mockSupabase = {
-        from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: {
-            id: 'org-id',
-            blog_config: {
-              blog_name: 'Tech Blog',
-              blog_description: 'A blog about technology and innovation',
-              blog_category: 'Technology',
-              post_frequency: 'weekly'
-            }
-          },
-          error: null
-        })
-      }
-      mockCreateClient.mockResolvedValue(mockSupabase)
-
       const requestBody = {
         blog_name: 'Tech Blog',
         blog_description: 'A blog about technology and innovation',
         blog_category: 'Technology',
         post_frequency: 'weekly'
       }
+
+      // Mock Supabase client
+      const mockSupabase = {
+        from: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn()
+          .mockResolvedValueOnce({
+            data: { blog_config: {} },
+            error: null
+          })
+          .mockResolvedValueOnce({
+            data: {
+              id: 'org-id',
+              blog_config: requestBody
+            },
+            error: null
+          }),
+        update: vi.fn().mockReturnThis(),
+      }
+      mockCreateClient.mockResolvedValue(mockSupabase)
 
       const request = new Request('http://localhost:3000/api/onboarding/blog', {
         method: 'POST',
@@ -220,22 +220,31 @@ describe('/api/onboarding/blog', () => {
       // Mock Supabase client with existing blog_config
       const mockSupabase = {
         from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: {
-            id: 'org-id',
-            blog_config: {
-              existing_setting: 'value',
-              blog_name: 'Tech Blog',
-              blog_description: 'A blog about technology and innovation',
-              blog_category: 'Technology',
-              post_frequency: 'weekly'
-            }
-          },
-          error: null
-        })
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn()
+          .mockResolvedValueOnce({
+            data: { 
+              blog_config: {
+                existing_setting: 'value'
+              }
+            },
+            error: null
+          })
+          .mockResolvedValueOnce({
+            data: {
+              id: 'org-id',
+              blog_config: {
+                existing_setting: 'value',
+                blog_name: 'Updated Blog',
+                blog_description: 'Updated description',
+                blog_category: 'Business',
+                post_frequency: 'daily'
+              }
+            },
+            error: null
+          }),
+        update: vi.fn().mockReturnThis(),
       }
       mockCreateClient.mockResolvedValue(mockSupabase)
 
