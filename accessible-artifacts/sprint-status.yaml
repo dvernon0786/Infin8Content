@@ -484,7 +484,7 @@ development_status:
   epic-a: in-progress
   a-1-data-model-extensions: done
   a-2-onboarding-guard-middleware: done
-  a-3-onboarding-api-endpoints: backlog
+  a-3-onboarding-api-endpoints: review
   a-4-onboarding-ui-components: backlog
   a-5-onboarding-agent-ai-autocomplete: backlog
   a-6-onboarding-validator: backlog
