@@ -36,14 +36,11 @@ export async function POST(request: Request) {
   console.log('[Onboarding Keyword Settings] API route called')
   
   try {
-    // Parse and validate request body
+    // Parse request body
     const body = await request.json()
     console.log('[Onboarding Keyword Settings] Request body parsed:', body)
     
-    const validated = keywordSettingsSchema.parse(body)
-    console.log('[Onboarding Keyword Settings] Request validated successfully')
-    
-    // Authenticate user
+    // Authenticate user first
     const currentUser = await getCurrentUser()
     if (!currentUser || !currentUser.org_id) {
       return NextResponse.json(
@@ -55,14 +52,28 @@ export async function POST(request: Request) {
     const organizationId = currentUser.org_id
     console.log('[Onboarding Keyword Settings] Authenticated user for organization:', organizationId)
     
+    // Validate request body
+    const validated = keywordSettingsSchema.parse(body)
+    console.log('[Onboarding Keyword Settings] Request validated successfully')
+    
     // Create Supabase client
     const supabase = await createClient()
+    
+    // Get current keyword_settings to merge with new settings
+    const { data: currentOrg } = await supabase
+      .from('organizations')
+      .select('keyword_settings')
+      .eq('id', organizationId)
+      .single() as any
+    
+    const currentKeywordSettings = currentOrg?.keyword_settings || {}
     
     // Update organization with keyword settings
     const { data: organization, error: updateError } = await supabase
       .from('organizations')
       .update({
         keyword_settings: {
+          ...currentKeywordSettings,
           target_region: validated.target_region,
           language_code: validated.language_code,
           auto_generate_keywords: validated.auto_generate_keywords,

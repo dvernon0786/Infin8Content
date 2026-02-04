@@ -73,16 +73,7 @@ export async function POST(request: Request) {
       .update({
         blog_config: {
           ...currentBlogConfig,
-          integrations: {
-            wordpress: {
-              url: validated.wordpress_url,
-              username: validated.wordpress_username,
-            },
-            webflow: {
-              url: validated.webflow_url,
-            },
-            other: validated.other_integrations,
-          },
+          integrations: validated
         },
         updated_at: new Date().toISOString(),
       })
@@ -93,7 +84,7 @@ export async function POST(request: Request) {
     if (updateError) {
       console.error('[Onboarding Integration] Failed to update organization:', updateError)
       return NextResponse.json(
-        { error: 'Failed to save integration configuration' },
+        { error: 'Failed to save integration information' },
         { status: 500 }
       )
     }
@@ -112,7 +103,7 @@ export async function POST(request: Request) {
       success: true,
       organization: {
         id: organization.id,
-        integration_config: organization.blog_config?.integrations || {},
+        blog_config: organization.blog_config || {},
       },
     })
     
