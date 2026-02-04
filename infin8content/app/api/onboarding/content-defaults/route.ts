@@ -37,14 +37,11 @@ export async function POST(request: Request) {
   console.log('[Onboarding Content Defaults] API route called')
   
   try {
-    // Parse and validate request body
+    // Parse request body
     const body = await request.json()
     console.log('[Onboarding Content Defaults] Request body parsed:', body)
     
-    const validated = contentDefaultsSchema.parse(body)
-    console.log('[Onboarding Content Defaults] Request validated successfully')
-    
-    // Authenticate user
+    // Authenticate user first
     const currentUser = await getCurrentUser()
     if (!currentUser || !currentUser.org_id) {
       return NextResponse.json(
@@ -56,14 +53,28 @@ export async function POST(request: Request) {
     const organizationId = currentUser.org_id
     console.log('[Onboarding Content Defaults] Authenticated user for organization:', organizationId)
     
+    // Validate request body
+    const validated = contentDefaultsSchema.parse(body)
+    console.log('[Onboarding Content Defaults] Request validated successfully')
+    
     // Create Supabase client
     const supabase = await createClient()
+    
+    // Get current content_defaults to merge with new defaults
+    const { data: currentOrg } = await supabase
+      .from('organizations')
+      .select('content_defaults')
+      .eq('id', organizationId)
+      .single() as any
+    
+    const currentContentDefaults = currentOrg?.content_defaults || {}
     
     // Update organization with content defaults
     const { data: organization, error: updateError } = await supabase
       .from('organizations')
       .update({
         content_defaults: {
+          ...currentContentDefaults,
           language: validated.language,
           tone: validated.tone,
           style: validated.style,

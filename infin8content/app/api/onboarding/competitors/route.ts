@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       success: true,
       organization: {
         id: organization.id,
-        competitor_data: organization.blog_config?.competitors || {},
+        blog_config: organization.blog_config || {},
       },
     })
     
