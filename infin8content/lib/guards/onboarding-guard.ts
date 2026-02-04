@@ -34,7 +34,7 @@ export async function checkOnboardingStatus(orgId: string): Promise<boolean> {
     
     // Return the onboarding_completed status (boolean, null, or undefined)
     // Treat null/undefined as false (not completed)
-    return Boolean(data.onboarding_completed)
+    return Boolean((data as any).onboarding_completed)
   } catch (exception) {
     // Handle any unexpected errors (database connection, etc.)
     console.error('Onboarding guard exception:', {
