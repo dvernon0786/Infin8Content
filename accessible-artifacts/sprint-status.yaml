@@ -482,7 +482,7 @@ development_status:
   
   # Epic A: Onboarding System & Guards (26 hours - 6 stories)
   epic-a: in-progress
-  a-1-data-model-extensions: review
+  a-1-data-model-extensions: done
   a-2-onboarding-guard-middleware: backlog
   a-3-onboarding-api-endpoints: backlog
   a-4-onboarding-ui-components: backlog

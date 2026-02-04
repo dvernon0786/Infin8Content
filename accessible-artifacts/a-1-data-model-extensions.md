@@ -1,6 +1,6 @@
 # Story A.1: Data Model Extensions
 
-**Status:** review
+**Status:** done
 
 **Epic:** A – Onboarding System & Guards
 
@@ -484,8 +484,16 @@ AND onboarding_version = 'v1';
 - [x] Database verification queries pass
 - [x] RLS policies verified
 - [x] Migration rollback tested
-- [ ] Code review completed
+- [x] Code review completed
 - [x] Ready for A-2 (Onboarding Guard Middleware)
+
+## Review Follow-ups (AI)
+
+- [x] [AI-Review][HIGH] Add actual RLS policy verification queries to migration (replaced placeholder comments)
+- [x] [AI-Review][HIGH] Add rollback testing to database test coverage (AC4 requirement)
+- [x] [AI-Review][HIGH] Implement database verification queries from story in test suite
+- [x] [AI-Review][MEDIUM] Move organization.ts to root types directory for consistency
+- [x] [AI-Review][HIGH] Commit all changes to git with proper commit messages
 
 ---
 
