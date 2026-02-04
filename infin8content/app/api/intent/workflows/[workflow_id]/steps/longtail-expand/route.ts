@@ -10,12 +10,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { logIntentActionAsync } from '@/lib/services/intent-engine/intent-audit-logger'
 import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import {
   expandSeedKeywordsToLongtails,
   type ExpansionSummary
 } from '@/lib/services/intent-engine/longtail-keyword-expander'
+import { enforceICPGate, enforceSeedApprovalGate } from '@/lib/middleware/intent-engine-gate'
 
 export async function POST(
   request: NextRequest,
@@ -38,6 +40,18 @@ export async function POST(
 
     organizationId = currentUser.org_id
     userId = currentUser.id
+
+    // ENFORCE ICP GATE - Check if ICP is complete before proceeding
+    const icpGateResponse = await enforceICPGate(workflowId, 'longtail-expand')
+    if (icpGateResponse) {
+      return icpGateResponse
+    }
+
+    // ENFORCE SEED APPROVAL GATE - Check if seed keywords are approved before proceeding
+    const seedGateResponse = await enforceSeedApprovalGate(workflowId, 'longtail-expand')
+    if (seedGateResponse) {
+      return seedGateResponse
+    }
 
     // Verify workflow exists and belongs to user's organization
     const supabase = createServiceRoleClient()
@@ -122,6 +136,29 @@ export async function POST(
       // Continue anyway - logging is non-blocking
     }
 
+    // Log Intent audit trail entry (Story 37.4)
+    try {
+      logIntentActionAsync({
+        organizationId,
+        workflowId,
+        entityType: 'workflow',
+        entityId: workflowId,
+        actorId: userId,
+        action: AuditAction.WORKFLOW_STEP_COMPLETED,
+        details: {
+          step: 'step_4_longtails',
+          seeds_processed: expansionResult.seeds_processed,
+          longtails_created: expansionResult.total_longtails_created,
+          duration_ms: duration,
+        },
+        ipAddress: extractIpAddress(request.headers),
+        userAgent: extractUserAgent(request.headers),
+      })
+    } catch (intentLogError) {
+      console.error('Failed to log intent audit entry:', intentLogError)
+      // Continue anyway - logging is non-blocking
+    }
+
     // Emit analytics event
     emitAnalyticsEvent({
       event_type: 'longtail_expansion_completed',
@@ -163,6 +200,26 @@ export async function POST(
         })
       } catch (logError) {
         console.error('Failed to log workflow error:', logError)
+      }
+
+      // Log Intent audit trail entry (Story 37.4)
+      try {
+        logIntentActionAsync({
+          organizationId,
+          workflowId,
+          entityType: 'workflow',
+          entityId: workflowId,
+          actorId: userId,
+          action: AuditAction.WORKFLOW_STEP_FAILED,
+          details: {
+            step: 'step_4_longtails',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+          ipAddress: extractIpAddress(request.headers),
+          userAgent: extractUserAgent(request.headers),
+        })
+      } catch (intentLogError) {
+        console.error('Failed to log intent audit entry:', intentLogError)
       }
     }
 

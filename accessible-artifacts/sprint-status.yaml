@@ -336,6 +336,12 @@ development_status:
   # Solution: Inline styles to bypass CSS specificity conflicts
   # Tool: LayoutDiagnostic component for detection and validation
 
+  # System Infrastructure Crisis Resolution (February 4, 2026)
+  system-infrastructure-crisis-resolution: done
+  # Issues Fixed: Routing conflicts, environment configuration, OTP system
+  # Solution: Standardized route parameters, configured .env.local, service role client for OTP
+  # Result: Full system operational with authentication and email verification
+
   # Epic 24: Real-time Infrastructure UX (HIGH - Sprint 3)
   epic-24: backlog
   # Sprint 3 Priority - Supabase real-time, celebration experience
@@ -435,33 +441,33 @@ development_status:
   epic-36: in-progress
   36-1-filter-keywords-for-quality-and-relevance: done
   36-2-cluster-keywords-into-hub-and-spoke-structure: done
-  36-3-validate-cluster-coherence-and-structure: backlog
+  36-3-validate-cluster-coherence-and-structure: done
   epic-36-retrospective: optional
 
   # Epic 37: Content Topic Generation & Approval
-  epic-37: backlog
-  37-1-generate-subtopic-definitions-via-perplexity-ai: backlog
-  37-2-review-and-approve-subtopics-before-article-generation: backlog
-  37-3-implement-human-approval-gate: backlog
-  37-4-maintain-complete-audit-trail-of-all-decisions: backlog
-  epic-37-retrospective: optional
+  epic-37: done
+  37-1-generate-subtopic-definitions-via-perplexity-ai: done
+  37-2-review-and-approve-subtopics-before-article-generation: done
+  37-3-implement-human-approval-gate: done
+  37-4-maintain-complete-audit-trail-of-all-decisions: done
+  epic-37-retrospective: done
 
   # Epic 38: Article Generation & Workflow Completion
-  epic-38: backlog
-  38-1-queue-approved-subtopics-for-article-generation: backlog
-  38-2-track-article-generation-progress: backlog
-  38-3-link-generated-articles-to-intent-workflow: backlog
-  epic-38-retrospective: optional
+  epic-38: done
+  38-1-queue-approved-subtopics-for-article-generation: done
+  38-2-track-article-generation-progress: done
+  38-3-link-generated-articles-to-intent-workflow: done
+  epic-38-retrospective: done
 
   # Epic 39: Workflow Orchestration & State Management
-  epic-39: backlog
-  39-1-enforce-hard-gate-icp-required-for-all-downstream-steps: backlog
-  39-2-enforce-hard-gate-competitors-required-for-seed-keywords: backlog
-  39-3-enforce-hard-gate-approved-seeds-required-for-longtail-expansion: backlog
-  39-4-enforce-hard-gate-longtails-required-for-subtopics: backlog
-  39-5-enforce-hard-gate-approval-required-for-articles: backlog
-  39-6-create-workflow-status-dashboard: backlog
-  39-7-display-workflow-blocking-conditions: backlog
+  epic-39: in-progress
+  39-1-enforce-hard-gate-icp-required-for-all-downstream-steps: done
+  39-2-enforce-hard-gate-competitors-required-for-seed-keywords: done
+  39-3-enforce-hard-gate-approved-seeds-required-for-longtail-expansion: done
+  39-4-enforce-hard-gate-longtails-required-for-subtopics: done
+39-5-enforce-hard-gate-approval-required-for-articles: done
+  39-6-create-workflow-status-dashboard: done
+  39-7-display-workflow-blocking-conditions: done
   epic-39-retrospective: optional
 
   # Epic 40: Feature Flag Rollout & Brownfield Safety
@@ -471,3 +477,32 @@ development_status:
   40-3-monitor-intent-engine-health-metrics: backlog
   40-4-ensure-zero-impact-on-legacy-article-generation: backlog
   epic-40-retrospective: optional
+
+  # === FORMALIZED EPICS A, B, C (PRD v1.0 - NEW) ===
+  
+  # Epic A: Onboarding System & Guards (26 hours - 6 stories)
+  epic-a: backlog
+  a-1-data-model-extensions: backlog
+  a-2-onboarding-guard-middleware: backlog
+  a-3-onboarding-api-endpoints: backlog
+  a-4-onboarding-ui-components: backlog
+  a-5-onboarding-agent-ai-autocomplete: backlog
+  a-6-onboarding-validator: backlog
+  epic-a-retrospective: optional
+
+  # Epic B: Deterministic Article Pipeline (26 hours - 5 stories)
+  epic-b: backlog
+  b-1-article-sections-data-model: backlog
+  b-2-research-agent-service: backlog
+  b-3-content-writing-agent-service: backlog
+  b-4-sequential-orchestration-inngest: backlog
+  b-5-article-status-tracking: backlog
+  epic-b-retrospective: optional
+
+  # Epic C: Assembly, Status & Publishing (20 hours - 4 stories)
+  epic-c: backlog
+  c-1-article-assembly-service: backlog
+  c-2-publish-references-table: backlog
+  c-3-wordpress-publishing-service: backlog
+  c-4-publishing-api-endpoint: backlog
+  epic-c-retrospective: optional

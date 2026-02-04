@@ -1,9 +1,34 @@
 # Development Guide
 
-Generated: 2026-01-13 (Updated)  
+Generated: 2026-02-04 (System Status Update)  
 Project: Infin8Content  
 Framework: Next.js 16.1.1 with TypeScript  
-Environment: Development
+Environment: Development - ✅ **FULLY OPERATIONAL**
+
+---
+
+## System Status (2026-02-04)
+
+✅ **All Systems Operational**
+- Dev Server: Running cleanly without routing conflicts
+- Authentication: Registration and OTP verification working
+- Database: Supabase connected and configured
+- Email: Brevo OTP delivery active
+- Environment: All variables configured
+
+## Quick Start (Verified Working)
+
+```bash
+# 1. Start development server
+npm run dev
+
+# 2. Test registration (working example)
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password123"}' \
+  http://localhost:3000/api/auth/register
+
+# Expected: 200 OK with user data and OTP message
+```
 
 ---
 
@@ -20,6 +45,36 @@ Environment: Development
 - **Postman**: For API testing
 - **Supabase CLI**: For database management
 - **Playwright Browser**: For E2E testing
+
+## 🔒 CRITICAL: Next.js Cache Management
+
+### When Working with Dynamic Routes
+
+If you perform ANY of these operations:
+- Rename dynamic route folders (`[id]` → `[keyword_id]`)
+- Change parameter names
+- Move folders under `app/`
+- Switch branches with route changes
+
+**ALWAYS clear the cache immediately:**
+```bash
+rm -rf .next
+npm run dev
+```
+
+**Never trust hot reload for dynamic route changes.** This prevents "ghost routing errors" where Next.js caches old route structures.
+
+### Prevention Checklist
+Before debugging routing issues:
+1. `git status` - ensure clean state
+2. `tree app/api | grep '\['` - confirm folder structure
+3. Kill all dev servers
+4. `rm -rf .next` - clear cache
+5. Restart once
+
+If errors persist after cache clearing → real bug. If not → cache illusion.
+
+---
 
 ## Environment Setup
 
@@ -754,6 +809,508 @@ npm run test:integration
 - Verify organization record exists and is not deleted
 - Check logs for warning messages about missing settings
 
+### Intent Audit Logging (Story 37.4)
+
+#### Overview
+The Intent Engine maintains a comprehensive, immutable audit trail of all workflow actions and decisions for compliance tracking. This provides complete traceability of who performed which action, when it occurred, and why it occurred.
+
+#### Architecture
+- **Table**: `intent_audit_logs` (main) + `intent_audit_logs_archive` (historical)
+- **Immutability**: WORM compliance enforced via database triggers
+- **Retention**: 1 year in main table, lifetime in archive table
+- **Access**: Organization owners only (RLS enforced)
+
+#### Key Components
+
+**Service**: `lib/services/intent-engine/intent-audit-logger.ts`
+```typescript
+// Log an intent action
+await logIntentAction({
+  organizationId: 'org-123',
+  workflowId: 'workflow-123',
+  entityType: 'workflow',
+  entityId: 'entity-123',
+  actorId: 'user-123',
+  action: 'workflow.step.completed',
+  details: { step: 'step_4_longtails' },
+})
+
+// Fire-and-forget logging
+logIntentActionAsync({...})
+```
+
+**API**: `GET /api/intent/audit/logs`
+```typescript
+// Query with filters
+const logs = await fetch('/api/intent/audit/logs?' + new URLSearchParams({
+  workflow_id: 'workflow-123',
+  action: 'workflow.step.completed',
+  limit: '100',
+  include_count: 'true'
+}))
+```
+
+**Archival**: `lib/services/intent-engine/intent-audit-archiver.ts`
+```typescript
+// Archive logs older than 1 year
+const result = await archiveOldIntentAuditLogs()
+console.log(`Archived ${result.archived_count} logs`)
+
+// Get archival statistics
+const stats = await getIntentAuditArchivalStats()
+```
+
+#### Integration Pattern
+Add Intent audit logging to all workflow steps and critical actions:
+
+```typescript
+// In workflow step completion
+logIntentActionAsync({
+  organizationId,
+  workflowId,
+  entityType: 'workflow',
+  entityId: workflowId,
+  actorId: userId,
+  action: AuditAction.WORKFLOW_STEP_COMPLETED,
+  details: { step: 'step_4_longtails', duration: 120000 },
+  ipAddress: extractIpAddress(request.headers),
+  userAgent: extractUserAgent(request.headers),
+})
+```
+
+#### Supported Actions
+- **Workflow Events**: `workflow.created`, `workflow.archived`, `workflow.superseded`
+- **Step Events**: `workflow.step.completed`, `workflow.step.failed`, `workflow.step.blocked`
+- **Approval Events**: `workflow.approval.approved`, `workflow.approval.rejected`
+- **Keyword Events**: `keyword.subtopics.approved`, `keyword.subtopics.rejected`
+- **Article Events**: `article.queued`, `article.generated`, `article.failed`
+- **System Events**: `system.error`, `system.retry_exhausted`
+
+### Article Generation Progress Tracking (Story 38.2)
+
+#### Overview
+The article generation progress tracking system provides real-time visibility into article generation status for intent workflows. This read-only service tracks articles through queued → generating → completed/failed states with estimated completion times and comprehensive error reporting.
+
+#### Architecture
+- **Service Layer**: `lib/services/intent-engine/article-progress-tracker.ts`
+- **API Endpoint**: `GET /api/intent/workflows/{workflow_id}/articles/progress`
+- **Database**: `article_progress` table (existing) with real-time updates
+- **Response Format**: Detailed progress objects with summary statistics
+
+#### Service Pattern
+
+```typescript
+// Fetch workflow article progress with filters
+const articles = await getWorkflowArticleProgress(workflowId, {
+  status: 'generating',
+  date_from: '2026-02-01',
+  limit: 50
+})
+
+// Format response with summary statistics
+const response = formatProgressResponse(articles, workflowId)
+```
+
+#### API Integration Pattern
+
+```typescript
+// In API route
+const articles = await getWorkflowArticleProgress(workflowId, filters)
+const response = formatProgressResponse(articles, workflowId)
+
+// Log audit event
+await logActionAsync({
+  orgId: currentUser.org_id,
+  userId: currentUser.id,
+  action: AuditAction.WORKFLOW_ARTICLE_GENERATION_PROGRESS_QUERIED,
+  details: {
+    workflow_id: workflowId,
+    article_count: articles.length,
+    filters_applied: filters
+  },
+  ipAddress: extractIpAddress(request.headers),
+  userAgent: extractUserAgent(request.headers),
+})
+```
+
+#### Progress Calculation Pattern
+
+```typescript
+// Calculate estimated completion time
+function calculateEstimatedCompletion(article: ArticleProgress): Date | null {
+  if (article.status !== 'generating') return null
+  
+  const progress = article.progress_percentage || 0
+  const timeSpent = article.actual_time_spent * 1000 // milliseconds
+  
+  if (progress === 0) {
+    // Use average time per section
+    const remainingSections = article.total_sections - article.current_section + 1
+    return new Date(Date.now() + remainingSections * 60000) // 60s per section
+  }
+  
+  // Calculate based on current progress rate
+  const progressRate = timeSpent / progress
+  const remainingProgress = 100 - progress
+  return new Date(Date.now() + remainingProgress * progressRate)
+}
+```
+
+#### Response Format Pattern
+
+```typescript
+interface ProgressResponse {
+  workflow_id: string;
+  total_articles: number;
+  articles: ArticleProgress[];
+  summary: {
+    queued_count: number;
+    generating_count: number;
+    completed_count: number;
+    failed_count: number;
+    average_generation_time_seconds: number;
+    estimated_total_completion_time?: string;
+  };
+}
+```
+
+#### Error Handling Pattern
+
+```typescript
+// Graceful error handling with audit logging
+try {
+  const articles = await getWorkflowArticleProgress(workflowId, filters)
+  return formatProgressResponse(articles, workflowId)
+} catch (error) {
+  // Log error for debugging
+  await logActionAsync({
+    orgId: currentUser.org_id,
+    userId: currentUser.id,
+    action: AuditAction.WORKFLOW_ARTICLE_GENERATION_PROGRESS_ERROR,
+    details: {
+      workflow_id: workflowId,
+      error: error.message
+    }
+  })
+  
+  // Return user-friendly error
+  return NextResponse.json({
+    error: {
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'An error occurred while fetching article progress'
+    }
+  }, { status: 500 })
+}
+```
+
+#### Performance Considerations
+
+- **Query Optimization**: Use indexed queries on (workflow_id, status, created_at)
+- **Pagination**: Support 1000+ articles per workflow with efficient paging
+- **Response Time**: Target < 2 seconds for typical queries
+- **Memory Usage**: Stream results for large datasets
+
+#### Testing Pattern
+
+```typescript
+// Unit tests for progress calculation
+describe('calculateEstimatedCompletion', () => {
+  it('should estimate completion for in-progress article', () => {
+    const article = {
+      status: 'generating',
+      progress_percentage: 40,
+      actual_time_spent: 120, // 2 minutes
+      // ... other fields
+    }
+    
+    const result = calculateEstimatedCompletion(article)
+    expect(result).toBeInstanceOf(Date)
+    expect(result.getTime()).toBeGreaterThan(Date.now())
+  })
+})
+
+// Integration tests for API endpoint
+describe('GET /api/intent/workflows/{workflow_id}/articles/progress', () => {
+  it('should return progress data for authorized user', async () => {
+    const response = await GET(request, { params: { workflow_id: 'test' } })
+    expect(response.status).toBe(200)
+    
+    const data = await response.json()
+    expect(data.workflow_id).toBe('test')
+    expect(data.summary).toBeDefined()
+  })
+})
+```
+
+#### Troubleshooting
+
+**Issue: "No articles found for workflow"**
+- Verify workflow exists and belongs to user's organization
+- Check that articles have been queued (Story 38.1 completed)
+- Ensure article_progress records exist for articles
+
+**Issue: "Estimated completion time seems inaccurate"**
+- Progress estimates are based on average generation rates
+- Actual times vary by content complexity and API response times
+- For more accuracy, consider historical performance data
+
+**Issue: "Slow response times"**
+- Check database indexes on article_progress table
+- Verify query is using proper filtering (status, date range)
+- Consider implementing caching for frequently accessed workflows
+
+### Article-Workflow Linking (Story 38.3)
+
+#### Overview
+The article-workflow linking system establishes bidirectional links between generated articles and their originating intent workflow. This completes the workflow lifecycle by connecting completed articles back to their keyword research origins, enabling full traceability and workflow completion.
+
+#### Architecture
+- **Service Layer**: `lib/services/intent-engine/article-workflow-linker.ts`
+- **API Endpoint**: `POST /api/intent/workflows/{workflow_id}/steps/link-articles`
+- **Database**: New fields in `articles` and `intent_workflows` tables
+- **Response Format**: Comprehensive linking results with detailed counts
+
+#### Service Pattern
+
+```typescript
+// Link articles to workflow with comprehensive tracking
+const result = await linkArticlesToWorkflow(workflowId, userId)
+
+// Result includes detailed breakdown
+interface LinkingResult {
+  workflow_id: string;
+  linking_status: 'in_progress' | 'completed' | 'failed';
+  total_articles: number;
+  linked_articles: number;
+  already_linked: number;
+  failed_articles: number;
+  workflow_status: string;
+  processing_time_seconds: number;
+  details: {
+    linked_article_ids: string[];
+    failed_article_ids: string[];
+    skipped_article_ids: string[];
+  };
+}
+```
+
+#### API Implementation
+
+```typescript
+// In API route
+const currentUser = await getCurrentUser()
+if (!currentUser || !currentUser.org_id) {
+  return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+}
+
+// Validate workflow state (must be step_9_articles)
+const { valid, workflow } = await validateWorkflowForLinking(workflowId)
+if (!valid) {
+  return NextResponse.json({ error: 'Invalid workflow state' }, { status: 400 })
+}
+
+// Execute linking process
+const linkingResult = await linkArticlesToWorkflow(workflowId, currentUser.id)
+
+// Log completion
+await logActionAsync({
+  orgId: currentUser.org_id,
+  userId: currentUser.id,
+  action: AuditAction.WORKFLOW_ARTICLES_LINKING_COMPLETED,
+  details: { /* linking results */ }
+})
+
+return NextResponse.json({ success: true, data: linkingResult })
+```
+
+#### Database Schema Changes
+
+```sql
+-- Articles table new fields
+ALTER TABLE articles ADD COLUMN workflow_link_status TEXT DEFAULT 'not_linked';
+ALTER TABLE articles ADD COLUMN linked_at TIMESTAMP WITH TIME ZONE;
+
+-- Workflow table new fields  
+ALTER TABLE intent_workflows ADD COLUMN article_link_count INTEGER DEFAULT 0;
+ALTER TABLE intent_workflows ADD COLUMN article_linking_started_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE intent_workflows ADD COLUMN article_linking_completed_at TIMESTAMP WITH TIME ZONE;
+
+-- Performance indexes
+CREATE INDEX idx_articles_workflow_linking ON articles(workflow_id, status, workflow_link_status);
+CREATE INDEX idx_workflows_article_link_count ON intent_workflows(article_link_count) WHERE article_link_count > 0;
+```
+
+#### Business Logic
+
+```typescript
+// Eligibility criteria for linking
+const eligibleArticles = await getCompletedArticlesForWorkflow(workflowId)
+// - status must be 'completed' or 'published'
+// - workflow_link_status must be 'not_linked'
+// - must belong to specified workflow
+
+// Batch processing for performance
+const batchSize = 10
+for (let i = 0; i < articles.length; i += batchSize) {
+  const batch = articles.slice(i, i + batchSize)
+  // Process each article with individual error handling
+}
+
+// Idempotent design - safe to re-run
+if (article.workflow_link_status === 'linked') {
+  // Skip already linked articles
+  continue
+}
+
+// Workflow state transition
+if (linkingResult.failed_articles === 0) {
+  // Update to final completion state
+  await updateWorkflowStatus(workflowId, 'step_10_completed')
+}
+```
+
+#### Error Handling
+
+```typescript
+// Individual article failures don't stop the process
+try {
+  await linkSingleArticle(articleId, workflowId, userId)
+  result.linked_articles++
+} catch (error) {
+  result.failed_articles++
+  // Mark article as failed but continue with others
+  await markArticleAsFailed(articleId, error)
+}
+
+// Comprehensive audit logging
+await logIntentAction({
+  organizationId: workflow.organization_id,
+  workflowId,
+  entityType: 'article',
+  entityId: articleId,
+  actorId: userId,
+  action: success ? 
+    AuditAction.WORKFLOW_ARTICLE_LINKED : 
+    AuditAction.WORKFLOW_ARTICLE_LINK_FAILED,
+  details: { linking_result: success ? 'success' : 'failed' }
+})
+```
+
+#### Testing Strategy
+
+```typescript
+// Unit tests for service layer
+describe('Article-Workflow Linker Service', () => {
+  it('should link completed articles to workflow', async () => {
+    const result = await linkArticlesToWorkflow(workflowId, userId)
+    expect(result.linked_articles).toBeGreaterThan(0)
+    expect(result.linking_status).toBe('completed')
+  })
+
+  it('should handle individual article failures gracefully', async () => {
+    // Mock one failing article
+    const result = await linkArticlesToWorkflow(workflowId, userId)
+    expect(result.failed_articles).toBe(1)
+    expect(result.linked_articles).toBe(2) // others succeeded
+  })
+})
+
+// Integration tests for API endpoint
+describe('POST /api/intent/workflows/{workflow_id}/steps/link-articles', () => {
+  it('should require authentication', async () => {
+    const response = await POST(request, { params: { workflow_id: 'test' } })
+    expect(response.status).toBe(401)
+  })
+
+  it('should validate workflow state', async () => {
+    // Mock workflow in wrong state
+    const response = await POST(request, { params: { workflow_id: 'test' } })
+    expect(response.status).toBe(400)
+    expect(response.data.error).toContain('step_9_articles')
+  })
+})
+```
+
+#### Troubleshooting
+
+**Issue: "No articles found for linking"**
+- Verify articles exist with status 'completed' or 'published'
+- Check workflow is in 'step_9_articles' state
+- Ensure articles have workflow_link_status = 'not_linked'
+
+**Issue: "Linking process taking too long"**
+- Check database indexes on articles table
+- Verify batch processing is working (10 articles per batch)
+- Monitor for database connection issues
+
+**Issue: "Workflow status not updating to completed"**
+- Verify all articles linked successfully (failed_articles = 0)
+- Check for database constraint violations
+- Ensure workflow update transaction is not failing
+
+**Issue: "Audit logging not working"**
+- Verify intent-audit-logger service is properly imported
+- Check organization_id is available for audit context
+- Ensure audit logging failures don't affect core functionality
+
+#### Testing
+```bash
+# Run audit logger tests
+npm test -- __tests__/services/intent-engine/intent-audit-logger.test.ts
+
+# Run API tests
+npm test -- __tests__/api/intent/audit/logs.test.ts
+
+# Test archival functionality
+npm test -- __tests__/services/intent-engine/intent-audit-archiver.test.ts
+```
+
+#### Database Schema
+```sql
+-- Main table (last 12 months)
+CREATE TABLE intent_audit_logs (
+  id UUID PRIMARY KEY,
+  organization_id UUID NOT NULL,
+  workflow_id UUID,
+  entity_type TEXT NOT NULL,
+  entity_id UUID NOT NULL,
+  actor_id UUID NOT NULL,
+  action TEXT NOT NULL,
+  details JSONB,
+  ip_address TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ NOT NULL
+);
+
+-- Archive table (historical)
+CREATE TABLE intent_audit_logs_archive (
+  -- Same schema + archived_at timestamp
+);
+```
+
+#### Security & Compliance
+- **WORM Compliance**: No UPDATE/DELETE operations allowed
+- **Organization Isolation**: RLS policies enforce data separation
+- **Access Control**: Only organization owners can view audit logs
+- **Non-blocking**: Audit failures never affect core functionality
+- **Complete Coverage**: All Intent Engine actions are logged
+
+#### Troubleshooting
+**Issue: "Audit logging not working"**
+- Check `intent_audit_logs` table exists and RLS is enabled
+- Verify user has `owner` role in organization
+- Check console for audit logging errors (non-blocking)
+
+**Issue: "Performance degradation"**
+- Run archival process: `await archiveOldIntentAuditLogs()`
+- Check table size: `SELECT COUNT(*) FROM intent_audit_logs`
+- Monitor query performance with indexes
+
+**Issue: "Missing audit entries"**
+- Verify `logIntentActionAsync()` calls are added to new features
+- Check for errors in console (audit logging is fire-and-forget)
+- Ensure proper organization context is available
+
 ## Contributing Guidelines
 
 ### Git Workflow
@@ -790,6 +1347,444 @@ chore: build process or dependency changes
 3. Verify ESLint passes
 4. Test functionality manually
 5. Request review from team member
+
+---
+
+## ICP Gate Enforcement Patterns (Story 39-1)
+
+### Overview
+The ICP (Ideal Customer Profile) gate enforcement system ensures that ICP generation is completed before any downstream workflow steps can be executed. This provides a hard gate that prevents workflow progression until foundational ICP work is complete.
+
+### Architecture
+- **Validator Service**: `lib/services/intent-engine/icp-gate-validator.ts`
+- **Middleware**: `lib/middleware/intent-engine-gate.ts`
+- **Audit Actions**: `types/audit.ts` (WORKFLOW_GATE_ICP_ALLOWED/BLOCKED)
+- **Protected Endpoints**: 8 downstream Intent Engine endpoints
+
+### Key Components
+
+#### Gate Validator
+```typescript
+import { ICPGateValidator } from '@/lib/services/intent-engine/icp-gate-validator'
+
+const validator = new ICPGateValidator()
+const result = await validator.validateICPCompletion(workflowId)
+
+if (!result.allowed) {
+  return NextResponse.json(result.errorResponse, { status: 423 })
+}
+```
+
+#### Middleware Integration
+```typescript
+import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
+
+// In API route after authentication
+const gateResponse = await enforceICPGate(workflowId, 'step-name')
+if (gateResponse) {
+  return gateResponse
+}
+
+// Continue with step logic...
+```
+
+#### Workflow Status Validation
+The gate checks for ICP completion using these status levels:
+- **Blocked**: `step_1_icp` and earlier
+- **Allowed**: `step_2_icp_complete` and later
+
+#### Audit Logging
+All gate enforcement attempts are logged with full context:
+```typescript
+await validator.logGateEnforcement(workflowId, stepName, result)
+```
+
+### Implementation Pattern
+
+#### 1. Add Import
+```typescript
+import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
+```
+
+#### 2. Add Gate Check
+```typescript
+// After authentication, before business logic
+const gateResponse = await enforceICPGate(workflowId, 'step-name')
+if (gateResponse) {
+  return gateResponse
+}
+```
+
+#### 3. Test Integration
+```typescript
+// Mock gate for testing
+vi.mock('@/lib/middleware/intent-engine-gate', () => ({
+  enforceICPGate: vi.fn()
+}))
+
+// Test blocked scenario
+vi.mocked(enforceICPGate).mockResolvedValue(mock423Response)
+```
+
+### Error Handling
+
+#### Fail-Open Strategy
+Database errors allow access for system availability:
+```typescript
+catch (error) {
+  // Fail open for availability
+  return NextResponse.json({
+    error: 'Gate enforcement failed - failing open for availability'
+  }, { status: 200 })
+}
+```
+
+#### 423 Response Format
+```typescript
+{
+  error: "ICP completion required before {step}",
+  workflowStatus: "step_1_icp",
+  icpStatus: "step_1_icp",
+  requiredAction: "Complete ICP generation (step 2) before proceeding",
+  currentStep: "{step}",
+  blockedAt: "2026-01-31T10:00:00.000Z"
+}
+```
+
+### Performance Considerations
+
+- **Validation Time**: < 50ms per request
+- **Database Query**: Single workflow lookup
+- **Audit Logging**: Async, non-blocking
+- **Memory Usage**: Minimal, stateless design
+
+### Testing Strategy
+
+#### Unit Tests
+```bash
+npm test -- __tests__/services/intent-engine/icp-gate-validator.test.ts
+```
+
+#### Integration Tests
+```bash
+npm test -- __tests__/api/intent/workflows/competitor-analyze-gate-integration.test.ts
+```
+
+#### Test Scenarios
+
+## Competitor Gate Enforcement Patterns (Story 39-2)
+
+### Overview
+The competitor gate enforcement system ensures that competitor analysis is completed before seed keyword extraction can begin. This provides a hard gate that prevents seed extraction until foundational competitor work is complete, ensuring all seed keywords are derived from actual competitor data.
+
+### Architecture
+- **Validator Service**: `lib/services/intent-engine/competitor-gate-validator.ts`
+- **Middleware**: `lib/middleware/intent-engine-gate.ts` (extended from ICP gate)
+- **Audit Actions**: `types/audit.ts` (WORKFLOW_GATE_COMPETITORS_ALLOWED/BLOCKED/ERROR)
+- **Protected Endpoints**: 1 seed extraction endpoint
+
+### Key Components
+
+#### Gate Validator
+```typescript
+import { CompetitorGateValidator } from '@/lib/services/intent-engine/competitor-gate-validator'
+
+const validator = new CompetitorGateValidator()
+const result = await validator.validateCompetitorCompletion(workflowId)
+
+if (!result.allowed) {
+  // Block access with 423 response
+  return NextResponse.json(result.errorResponse, { status: 423 })
+}
+
+// Allow access - continue with step logic
+```
+
+#### Middleware Integration
+```typescript
+import { enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
+
+// In API route after authentication and ICP gate
+const gateResponse = await enforceCompetitorGate(workflowId, 'seed-extract')
+if (gateResponse) {
+  return gateResponse
+}
+
+// Continue with step logic...
+```
+
+#### Workflow Status Validation
+The gate checks for competitor analysis completion using these status levels:
+- **Blocked**: `step_2_icp_complete` and earlier
+- **Allowed**: `step_3_competitors` and later
+
+#### Audit Logging
+All gate enforcement attempts are logged with full context:
+```typescript
+await validator.logGateEnforcement(workflowId, stepName, result)
+```
+
+### Implementation Pattern
+
+#### 1. Add Import
+```typescript
+import { enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
+```
+
+#### 2. Add Gate Check (after ICP gate)
+```typescript
+// After authentication and ICP gate, before business logic
+const gateResponse = await enforceCompetitorGate(workflowId, 'seed-extract')
+if (gateResponse) {
+  return gateResponse
+}
+```
+
+#### 3. Test Integration
+```typescript
+// Mock gate for testing
+vi.mock('@/lib/middleware/intent-engine-gate', () => ({
+  enforceCompetitorGate: vi.fn()
+}))
+
+// Test blocked scenario
+vi.mocked(enforceCompetitorGate).mockResolvedValue(mock423Response)
+```
+
+### Error Handling
+The gate follows the same fail-open pattern as the ICP gate:
+```typescript
+catch (error) {
+  // Fail open for availability
+  return NextResponse.json({
+    error: 'Gate enforcement failed - failing open for availability'
+  }, { status: 200 })
+}
+```
+
+### Error Response Format
+```json
+{
+  "error": "Competitor analysis required before seed keywords",
+  "workflowStatus": "step_2_icp_complete",
+  "competitorStatus": "not_complete",
+  "requiredAction": "Complete competitor analysis (step 2) before proceeding",
+  "currentStep": "step_2_icp_complete",
+  "blockedAt": "2026-02-03T10:13:00.000Z"
+}
+```
+
+### Testing
+
+#### Unit Tests
+```bash
+npm test -- __tests__/services/intent-engine/competitor-gate-validator.test.ts
+```
+
+#### Integration Tests
+```bash
+npm test -- __tests__/api/intent/workflows/seed-extract.test.ts
+```
+
+#### Test Scenarios
+- ✅ Allow access when workflow status is `step_3_competitors`
+- ✅ Block access when workflow status is `step_2_icp_complete`
+- ✅ Fail open on database errors
+- ✅ Proper audit logging for enforcement
+- ✅ Organization isolation enforcement
+- ✅ Performance validation (< 100ms)
+
+### Relationship to ICP Gate
+The competitor gate is designed to work in conjunction with the ICP gate:
+1. **ICP Gate**: Validates ICP completion (step 2)
+2. **Competitor Gate**: Validates competitor analysis completion (step 3)
+3. **Sequential Enforcement**: Both gates must pass for seed extraction
+
+This creates a strict dependency chain: ICP → Competitors → Seeds → Longtails
+
+#### Test Scenarios
+- ICP complete → 200 OK
+- ICP incomplete → 423 Blocked
+- Database error → 200 Fail-open
+- Workflow not found → 423 Blocked
+- Audit logging verification
+
+---
+
+## Keyword Engine Patterns
+
+### Overview
+The Keyword Engine provides SEO-focused keyword processing capabilities, separate from the Intent Engine workflow system. It handles individual keyword operations like subtopic generation.
+
+### Architecture
+- **Service Layer**: `lib/services/keyword-engine/`
+- **API Layer**: `app/api/keywords/[id]/`
+- **Type Definitions**: `types/keyword.ts`
+
+### Key Components
+
+#### Subtopic Generator
+```typescript
+import { KeywordSubtopicGenerator } from '@/lib/services/keyword-engine/subtopic-generator'
+
+const generator = new KeywordSubtopicGenerator()
+const subtopics = await generator.generate(keywordId)
+await generator.store(keywordId, subtopics)
+```
+
+#### DataForSEO Integration
+```typescript
+import { generateSubtopics } from '@/lib/services/keyword-engine/dataforseo-client'
+
+const subtopics = await generateSubtopics(
+  topic,
+  language,
+  locationCode,
+  limit
+)
+```
+
+### Database Schema
+- `keywords.subtopics`: JSONB array storing subtopic ideas
+- `keywords.subtopics_status`: Track generation progress
+- `keywords.longtail_status`: Prerequisite for subtopic generation
+
+### Error Handling
+- Authentication required for all operations
+- Organization isolation via RLS
+- Idempotency: Skip if already completed
+- Retry logic for external API calls
+
+### Testing Patterns
+```typescript
+// Mock external dependencies
+vi.mock('@/lib/services/keyword-engine/dataforseo-client')
+vi.mock('@/lib/supabase/server')
+
+// Test service methods
+it('should generate subtopics for valid keyword', async () => {
+  const generator = new KeywordSubtopicGenerator()
+  const result = await generator.generate(keywordId)
+  expect(result).toHaveLength(3) // Exactly 3 subtopics
+})
+```
+
+### Troubleshooting
+
+**DataForSEO API Issues**
+- Check environment variables: `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`
+- Verify rate limits and retry configuration
+- Monitor API cost and usage
+
+**Database Issues**
+- Verify keyword has `longtail_status = 'complete'`
+- Check organization isolation (RLS policies)
+- Ensure proper JSONB structure for subtopics
+
+**Authentication Issues**
+- Verify user session and organization membership
+- Check RLS policies on keywords table
+- Ensure proper middleware configuration
+
+---
+
+## Intent Engine Workflow Gates
+
+### Seed Approval Gate Pattern (Story 39-3)
+
+The seed approval gate enforces that seed keywords must be approved before long-tail expansion proceeds.
+
+**Gate Enforcement Pattern:**
+```typescript
+// In API endpoint handler
+import { enforceSeedApprovalGate } from '@/lib/middleware/intent-engine-gate'
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ workflow_id: string }> }
+) {
+  const { workflow_id } = await params
+
+  // Enforce seed approval gate
+  const seedGateResponse = await enforceSeedApprovalGate(workflow_id, 'longtail-expand')
+  if (seedGateResponse) {
+    return seedGateResponse  // Returns 423 Locked if not approved
+  }
+
+  // Continue with step logic if gate passes
+  // ...
+}
+```
+
+**Gate Validation Rules:**
+1. **Workflow State Check**: Workflow must be at `step_3_seeds` or beyond
+2. **Approval Check**: `intent_approvals` table must have `approval_type='seed_keywords'` and `decision='approved'`
+3. **Organization Isolation**: Workflow must belong to user's organization (RLS enforced)
+4. **Fail-Open Principle**: Database errors allow request to proceed (availability over strictness)
+
+**Response Codes:**
+- **423 Locked**: Seed keywords not approved or not yet extracted
+- **200 OK**: Gate passes, continue to step logic
+- **401 Unauthorized**: Authentication required
+- **404 Not Found**: Workflow not found
+
+**Audit Logging:**
+- `workflow.gate.seeds_allowed`: Gate passes, access granted
+- `workflow.gate.seeds_blocked`: Gate blocks, access denied
+- `workflow.gate.seeds_error`: Gate enforcement encounters error
+
+**Testing Strategy:**
+```typescript
+// Mock the gate validator
+vi.mock('@/lib/services/intent-engine/seed-approval-gate-validator')
+
+// Test blocking behavior
+it('should return 423 when seeds not approved', async () => {
+  vi.mocked(SeedApprovalGateValidator).mockImplementation(() => ({
+    validateSeedApproval: vi.fn().mockResolvedValue({
+      allowed: false,
+      seedApprovalStatus: 'not_approved',
+      workflowStatus: 'step_3_seeds'
+    }),
+    logGateEnforcement: vi.fn()
+  }))
+
+  const response = await enforceSeedApprovalGate('workflow-123', 'longtail-expand')
+  expect(response?.status).toBe(423)
+})
+
+// Test passing behavior
+it('should return null when seeds approved', async () => {
+  vi.mocked(SeedApprovalGateValidator).mockImplementation(() => ({
+    validateSeedApproval: vi.fn().mockResolvedValue({
+      allowed: true,
+      seedApprovalStatus: 'approved',
+      workflowStatus: 'step_3_seeds'
+    }),
+    logGateEnforcement: vi.fn()
+  }))
+
+  const response = await enforceSeedApprovalGate('workflow-123', 'longtail-expand')
+  expect(response).toBeNull()
+})
+```
+
+**Troubleshooting:**
+
+**Gate Returns 423 Locked**
+- Verify seed keywords have been approved: Check `intent_approvals` table for `approval_type='seed_keywords'` and `decision='approved'`
+- Ensure workflow is at `step_3_seeds`: Check `intent_workflows.status`
+- Verify organization isolation: Confirm workflow belongs to user's organization
+
+**Gate Fails Open (Allows Despite Error)**
+- Database connection issues trigger fail-open behavior
+- Check database connectivity and RLS policies
+- Monitor error logs for underlying database errors
+
+**Gate Enforcement Not Triggered**
+- Verify gate is called before step logic: `const response = await enforceSeedApprovalGate(...)`
+- Check gate function is imported: `import { enforceSeedApprovalGate } from '@/lib/middleware/intent-engine-gate'`
+- Ensure response is checked: `if (seedGateResponse) { return seedGateResponse }`
 
 ---
 

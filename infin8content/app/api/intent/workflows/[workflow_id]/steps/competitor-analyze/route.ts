@@ -18,6 +18,7 @@ import {
   type ExtractSeedKeywordsRequest
 } from '@/lib/services/intent-engine/competitor-seed-extractor'
 import { getWorkflowCompetitors } from '@/lib/services/competitor-workflow-integration'
+import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
 
 export async function POST(
   request: NextRequest,
@@ -40,6 +41,12 @@ export async function POST(
 
     organizationId = currentUser.org_id
     userId = currentUser.id
+
+    // ENFORCE ICP GATE - Check if ICP is complete before proceeding
+    const gateResponse = await enforceICPGate(workflowId, 'competitor-analyze')
+    if (gateResponse) {
+      return gateResponse
+    }
 
     // Verify workflow exists and belongs to user's organization
     const supabase = createServiceRoleClient()
