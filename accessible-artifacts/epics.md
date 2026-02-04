@@ -13038,3 +13038,26 @@ So that we maintain stability for existing users.
 **And** this is verified through automated testing
 
 ---
+
+## 📋 Formalized Epics A, B, C (PRD v1.0)
+
+**⚠️ IMPORTANT:** For the latest formalized epics A, B, C with PRD v1.0 requirements, please refer to:
+**[Formalized Epics: A, B, C](./epics-formalized.md)**
+
+### Epic A: Onboarding System & Guards (26 hours - 6 stories)
+- **Status:** in-progress
+- **Reference:** See epics-formalized.md for complete story breakdown and requirements
+
+### Epic B: Deterministic Article Pipeline (26 hours - 5 stories)
+- **Status:** backlog
+- **Reference:** See epics-formalized.md for complete story breakdown and requirements
+
+### Epic C: Assembly, Status & Publishing (20 hours - 4 stories)
+- **Status:** backlog
+- **Reference:** See epics-formalized.md for complete story breakdown and requirements
+
+---
+
+**📖 Note:** This document (epics.md) contains the original epics 1-40 for historical reference. For all new development work on formalized epics A, B, C, please use the [epics-formalized.md](./epics-formalized.md) document as the authoritative source.
+
+---

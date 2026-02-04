@@ -481,8 +481,8 @@ development_status:
   # === FORMALIZED EPICS A, B, C (PRD v1.0 - NEW) ===
   
   # Epic A: Onboarding System & Guards (26 hours - 6 stories)
-  epic-a: backlog
-  a-1-data-model-extensions: backlog
+  epic-a: in-progress
+  a-1-data-model-extensions: review
   a-2-onboarding-guard-middleware: backlog
   a-3-onboarding-api-endpoints: backlog
   a-4-onboarding-ui-components: backlog
