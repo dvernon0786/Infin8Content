@@ -1,14 +1,14 @@
 # API Contracts - Infin8Content
 
-Generated: 2026-02-04 (System Status Update)  
+Generated: 2026-02-05 (Onboarding API Endpoints Added)  
 Framework: Next.js 16.1.1 API Routes  
 Base URL: `/api`
 
 ## Overview
 
-Infin8Content implements a comprehensive REST API using Next.js App Router with TypeScript, featuring multi-tenant architecture, authentication, payment processing, and AI content generation capabilities.
+Infin8Content implements a comprehensive REST API using Next.js App Router with TypeScript, featuring multi-tenant architecture, authentication, payment processing, AI content generation, and onboarding capabilities.
 
-## System Status (2026-02-04)
+## System Status (2026-02-05)
 
 ✅ **FULLY OPERATIONAL** - All core systems functional:
 - Authentication: Registration and OTP verification working
@@ -16,12 +16,189 @@ Infin8Content implements a comprehensive REST API using Next.js App Router with 
 - Email: Brevo OTP delivery active
 - Routing: All API endpoints accessible
 - Environment: All variables configured
+- Onboarding: New API endpoints implemented and tested
 
 ## Authentication
 
 All API endpoints require authentication via Supabase Auth sessions. Authentication is handled through middleware and user context validation.
 
 ## API Endpoints
+
+### Onboarding Endpoints
+
+#### POST /api/onboarding/business
+Saves business information during onboarding process.
+
+**Request Body:**
+```typescript
+{
+  website_url?: string; // Valid URL, max 255 chars
+  business_description?: string; // 10-500 chars
+  target_audiences?: string[]; // 2-50 chars each, max 10 items
+}
+```
+
+**Response:** 200 OK
+```typescript
+{
+  "success": true,
+  "organization": {
+    "id": "string",
+    "website_url?: "string",
+    "business_description?: "string", 
+    "target_audiences?: string[]
+  }
+}
+```
+
+**Error Responses:**
+- 400: Invalid input with field details
+- 401: Authentication required
+- 404: Organization not found
+- 500: Failed to save business information
+
+#### POST /api/onboarding/competitors
+Saves competitor information during onboarding process.
+
+**Request Body:**
+```typescript
+{
+  competitors: Array<{
+    name: string; // 2-100 chars
+    url: string; // Valid URL, max 255 chars
+    description?: string; // max 500 chars
+  }>; // 1-10 competitors
+}
+```
+
+**Response:** 200 OK
+```typescript
+{
+  "success": true,
+  "organization": {
+    "id": "string",
+    "competitor_data": object // Stored in blog_config
+  }
+}
+```
+
+#### POST /api/onboarding/blog
+Saves blog configuration during onboarding process.
+
+**Request Body:**
+```typescript
+{
+  blog_name: string; // 3-100 chars
+  blog_description: string; // 10-500 chars
+  blog_category: string; // 2-50 chars
+  post_frequency: 'daily' | 'weekly' | 'monthly';
+}
+```
+
+**Response:** 200 OK
+```typescript
+{
+  "success": true,
+  "organization": {
+    "id": "string",
+    "blog_config": object
+  }
+}
+```
+
+#### POST /api/onboarding/content-defaults
+Saves content generation defaults during onboarding process.
+
+**Request Body:**
+```typescript
+{
+  language: string; // 2-10 chars
+  tone: 'professional' | 'casual' | 'formal' | 'friendly';
+  style: 'informative' | 'persuasive' | 'educational';
+  target_word_count: number; // 500-10000
+  auto_publish: boolean;
+}
+```
+
+**Response:** 200 OK
+```typescript
+{
+  "success": true,
+  "organization": {
+    "id": "string",
+    "content_defaults": object
+  }
+}
+```
+
+#### POST /api/onboarding/keyword-settings
+Saves keyword research settings during onboarding process.
+
+**Request Body:**
+```typescript
+{
+  target_region: string; // 2-50 chars
+  language_code: string; // 2-10 chars
+  auto_generate_keywords: boolean;
+  monthly_keyword_limit: number; // 1-1000
+}
+```
+
+**Response:** 200 OK
+```typescript
+{
+  "success": true,
+  "organization": {
+    "id": "string",
+    "keyword_settings": object
+  }
+}
+```
+
+#### POST /api/onboarding/integration
+Saves integration configuration during onboarding process.
+
+**Request Body:**
+```typescript
+{
+  wordpress_url?: string; // Valid URL, max 255 chars
+  wordpress_username?: string; // 2-100 chars
+  webflow_url?: string; // Valid URL, max 255 chars
+  other_integrations?: object;
+}
+```
+
+**Response:** 200 OK
+```typescript
+{
+  "success": true,
+  "organization": {
+    "id": "string",
+    "integration_config": object // Stored in blog_config
+  }
+}
+```
+
+#### POST /api/onboarding/complete
+Marks onboarding as completed and enables dashboard access.
+
+**Request Body:**
+```typescript
+{} // Empty object
+```
+
+**Response:** 200 OK
+```typescript
+{
+  "success": true,
+  "organization": {
+    "id": "string",
+    "onboarding_completed": true,
+    "onboarding_completed_at": "string"
+  },
+  "redirectTo": "/dashboard"
+}
+```
 
 ### Authentication Endpoints
 

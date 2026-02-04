@@ -1,13 +1,13 @@
 # Development Guide
 
-Generated: 2026-02-04 (System Status Update)  
+Generated: 2026-02-05 (Onboarding API Patterns Added)  
 Project: Infin8Content  
 Framework: Next.js 16.1.1 with TypeScript  
 Environment: Development - ✅ **FULLY OPERATIONAL**
 
 ---
 
-## System Status (2026-02-04)
+## System Status (2026-02-05)
 
 ✅ **All Systems Operational**
 - Dev Server: Running cleanly without routing conflicts
@@ -15,6 +15,7 @@ Environment: Development - ✅ **FULLY OPERATIONAL**
 - Database: Supabase connected and configured
 - Email: Brevo OTP delivery active
 - Environment: All variables configured
+- Onboarding: New API endpoints implemented and tested
 
 ## Quick Start (Verified Working)
 
@@ -28,6 +29,126 @@ curl -X POST -H "Content-Type: application/json" \
   http://localhost:3000/api/auth/register
 
 # Expected: 200 OK with user data and OTP message
+```
+
+---
+
+## Onboarding API Patterns
+
+### Authentication Pattern
+All onboarding endpoints follow the same authentication pattern:
+
+```typescript
+import { getCurrentUser } from '@/lib/supabase/get-current-user'
+
+// Authenticate user
+const currentUser = await getCurrentUser()
+if (!currentUser || !currentUser.org_id) {
+  return NextResponse.json(
+    { error: 'Authentication required' },
+    { status: 401 }
+  )
+}
+
+const organizationId = currentUser.org_id
+```
+
+### Validation Pattern
+Use Zod schemas for server-side validation:
+
+```typescript
+import { businessSchema } from '@/lib/validation/onboarding-schema'
+
+// Parse and validate request body
+const body = await request.json()
+const validated = businessSchema.parse(body)
+```
+
+### Database Update Pattern
+Update organizations table with proper error handling:
+
+```typescript
+import { createClient } from '@/lib/supabase/server'
+
+const supabase = await createClient()
+const { data: organization, error: updateError } = await supabase
+  .from('organizations')
+  .update({
+    field_name: validated.value,
+    updated_at: new Date().toISOString(),
+  })
+  .eq('id', organizationId)
+  .select('id, field_name')
+  .single() as any
+
+if (updateError) {
+  return NextResponse.json(
+    { error: 'Failed to save data' },
+    { status: 500 }
+  )
+}
+```
+
+### Error Handling Pattern
+Consistent error responses across all endpoints:
+
+```typescript
+// Handle Zod validation errors
+if (error instanceof Error && 'issues' in error) {
+  const zodError = error as any
+  const firstError = zodError.issues?.[0]
+  return NextResponse.json(
+    { 
+      error: 'Invalid input',
+      details: {
+        field: firstError?.path?.[0] || 'unknown',
+        message: firstError?.message || 'Validation error'
+      }
+    },
+    { status: 400 }
+  )
+}
+
+// Handle JSON parsing errors
+if (error instanceof SyntaxError && error.message.includes('JSON')) {
+  return NextResponse.json(
+    { error: 'Invalid JSON in request body' },
+    { status: 400 }
+  )
+}
+```
+
+### JSONB Field Management
+Store structured data in JSONB fields:
+
+```typescript
+// Get current config to merge
+const { data: currentOrg } = await supabase
+  .from('organizations')
+  .select('blog_config')
+  .eq('id', organizationId)
+  .single() as any
+
+const currentConfig = currentOrg?.blog_config || {}
+
+// Update with merged data
+.blog_config: {
+  ...currentConfig,
+  new_section: validated.data,
+}
+```
+
+### Response Pattern
+Consistent success response format:
+
+```typescript
+return NextResponse.json({
+  success: true,
+  organization: {
+    id: organization.id,
+    field_name: organization.field_name,
+  },
+})
 ```
 
 ---
