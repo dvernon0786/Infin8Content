@@ -494,7 +494,7 @@ a-3-onboarding-api-endpoints: done
   epic-b: in-progress
   b-1-article-sections-data-model: done
   b-2-research-agent-service: done
-  b-3-content-writing-agent-service: backlog
+  b-3-content-writing-agent-service: done
   b-4-sequential-orchestration-inngest: backlog
   b-5-article-status-tracking: backlog
   epic-b-retrospective: optional
