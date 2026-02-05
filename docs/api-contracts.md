@@ -148,6 +148,43 @@ Publishes article to WordPress (Story 5-1 implementation).
 - Synchronous execution with 30s timeout
 - Error handling for API failures
 
+#### POST /api/articles/{article_id}/sections/{section_id}/write
+Generates content for a specific article section using AI (Story B-3 implementation).
+
+**Authentication:** Required (401 if not authenticated)  
+**Authorization:** User must belong to the same organization as the article
+
+**Request Body:** Empty (all data retrieved from database)
+
+**Response:** 200 OK
+```typescript
+{
+  success: true,
+  data: {
+    section_id: string,
+    status: 'completed',
+    markdown: string,
+    html: string,
+    word_count: number
+  }
+}
+```
+
+**Error Responses:**
+- 400: Section must be researched before writing
+- 401: Authentication required
+- 404: Section not found
+- 500: Content writing failed
+
+**Features:**
+- Fixed system prompt with integrity enforcement (SHA-256 hashing)
+- 60-second timeout protection
+- Exponential backoff retry (2s, 4s, 8s)
+- Comprehensive audit logging
+- Markdown to HTML conversion with XSS protection
+- Organization isolation via RLS
+- Prior sections context for coherence
+
 ### Organizations Endpoints
 
 #### GET /api/organizations
