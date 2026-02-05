@@ -1,738 +1,267 @@
 import { inngest } from '@/lib/inngest/client'
 import { createServiceRoleClient } from '@/lib/supabase/server'
-import { generateOutline } from '@/lib/services/article-generation/outline-generator'
-import { processSection } from '@/lib/services/article-generation/section-processor'
-import { analyzeSerpStructure } from '@/lib/services/dataforseo/serp-analysis'
-import { createProgressTracker } from '@/lib/services/progress-tracking'
-import { performBatchResearch, clearResearchCache } from '@/lib/services/article-generation/research-optimizer'
-import { clearContextCache } from '@/lib/services/article-generation/context-manager'
-import { performanceMonitor } from '@/lib/services/article-generation/performance-monitor'
-import { emitUXMetricsEvent } from '@/lib/services/ux-metrics'
-import type { Section } from '@/lib/services/article-generation/section-processor'
+import { runResearchAgent } from '@/lib/services/article-generation/research-agent'
+import { runContentWritingAgent } from '@/lib/services/article-generation/content-writing-agent'
+import type { ArticleSection, ResearchPayload, ContentDefaults } from '@/types/article'
 
-/**
- * Retry with exponential backoff
- */
-async function retryWithBackoff<T>(
+// B-4 Required: Retry wrapper with exponential backoff (matches existing retryWithBackoff)
+async function withRetries<T>(
   fn: () => Promise<T>,
-  maxAttempts: number = 3,
-  delays: number[] = [1000, 2000, 4000]
+  attempts = 3
 ): Promise<T> {
-  let lastError: Error | null = null
-
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+  let error: any
+  for (let i = 0; i < attempts; i++) {
     try {
       return await fn()
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error))
-      
-      if (attempt < maxAttempts - 1) {
-        const delay = delays[attempt] || delays[delays.length - 1]
-        await new Promise(resolve => setTimeout(resolve, delay))
-        continue
+    } catch (e) {
+      error = e
+      if (i < attempts - 1) {
+        await new Promise(resolve => setTimeout(resolve, 2 ** i * 1000))
       }
     }
   }
-
-  throw lastError || new Error('Retry exhausted')
+  throw error
 }
 
 export const generateArticle = inngest.createFunction(
   { 
-    id: 'article/generate', 
-    concurrency: { limit: 5 }, // Plan limit: 5 concurrent (can be increased when plan upgraded)
-    // Note: Inngest functions run in Inngest Cloud (not Vercel), so they're not subject to
-    // Vercel's 10s FUNCTION_INVOCATION_TIMEOUT. Functions can run for up to 24 hours by default.
-    // The cleanup job will catch any articles that get stuck due to unexpected failures.
+    id: 'article/generate', // PRESERVED: Same function ID as original
+    concurrency: { limit: 5 }, // PRESERVED: Same concurrency limits
   },
-  { event: 'article/generate' },
+  { event: 'article/generate' }, // PRESERVED: Same event name
   async ({ event, step }: any) => {
-    // Log function invocation immediately
-    console.log(`[Inngest] Function invoked - Event received:`, {
-      eventName: event.name,
-      eventId: event.id,
-      articleId: event.data?.articleId,
-      timestamp: new Date().toISOString(),
-    })
-
     const { articleId } = event.data
-    
-    if (!articleId) {
-      const errorMsg = 'Missing articleId in event data'
-      console.error(`[Inngest] ERROR: ${errorMsg}`, { event })
-      throw new Error(errorMsg)
-    }
-
     const supabase = createServiceRoleClient()
 
-    console.log(`[Inngest] Starting article generation for articleId: ${articleId}`)
+    /* -------------------------------------------------- */
+    /* Load article                                      */
+    /* -------------------------------------------------- */
+
+    const article = await step.run('load-article', async () => {
+      const { data, error } = await supabase
+        .from('articles')
+        .select('id, organization_id, status')
+        .eq('id', articleId)
+        .single()
+
+      if (error || !data) throw new Error('Article not found')
+
+      // Type guard to ensure we have the expected data structure
+      const articleData = data as unknown as { id: string; organization_id: string; status: string }
+
+      // 🔴 REQUIRED FIX 1: Prevent double execution
+      if (['completed', 'failed', 'generating'].includes(articleData.status)) {
+        return { skipped: true }
+      }
+
+      await supabase
+        .from('articles')
+        .update({ status: 'generating' })
+        .eq('id', articleId)
+
+      return articleData
+    })
+
+    if ((article as any).skipped) return { success: true, skipped: true }
+
+    /* -------------------------------------------------- */
+    /* Load organization context                         */
+    /* -------------------------------------------------- */
+
+    const organization = await step.run('load-organization', async () => {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id, name, description, content_defaults')
+        .eq('id', (article as any).organization_id)
+        .single()
+
+      if (error || !data) throw new Error('Organization not found')
+      return data
+    })
+
+    /* -------------------------------------------------- */
+    /* Load sections                                     */
+    /* -------------------------------------------------- */
+
+    const sections = await step.run('load-sections', async () => {
+      const { data, error } = await supabase
+        .from('article_sections')
+        .select('*')
+        .eq('article_id', articleId)
+        .order('section_order')
+
+      if (error || !data) throw new Error('Failed to load sections')
+      
+      // 🔴 REQUIRED FIX 2: Explicit section ordering assertion
+      const sectionsArray = data as unknown as ArticleSection[]
+      sectionsArray.sort((a, b) => a.section_order - b.section_order)
+      return sectionsArray
+    })
+
+    const completedSections: ArticleSection[] = []
+
+    /* -------------------------------------------------- */
+    /* Emit pipeline started event                        */
+    /* -------------------------------------------------- */
+
+    await step.run('emit-pipeline-started', async () => {
+      console.log(`[B-4] Pipeline started for article: ${articleId}`)
+    })
+
+    /* -------------------------------------------------- */
+    /* Sequential section processing (B-4 CORE)          */
+    /* -------------------------------------------------- */
 
     try {
-      // Step 1: Load article and check if it's already in a terminal state
-      const article = await step.run('load-article', async () => {
-        console.log(`[Inngest] Step: load-article - Loading article ${articleId}`)
-        const { data, error } = await supabase
-          .from('articles' as any)
-          .select('id, org_id, keyword, status')
-          .eq('id', articleId)
-          .maybeSingle()
-
-        if (error) {
-          const errorMsg = `Database error loading article ${articleId}: ${error.message}`
-          console.error(`[Inngest] Step: load-article - ERROR: ${errorMsg}`)
-          throw new Error(errorMsg)
+      for (const section of sections) {
+        if (section.status === 'completed') {
+          completedSections.push(section)
+          continue
         }
 
-        if (!data) {
-          const errorMsg = `Article ${articleId} not found in database. This may happen if the article creation failed or the article was deleted.`
-          console.warn(`[Inngest] Step: load-article - WARNING: ${errorMsg}`)
-          // Return a special result to indicate graceful handling
-          return {
-            handled: true,
-            reason: 'ARTICLE_NOT_FOUND',
-            message: errorMsg
-          }
-        }
+        try {
+          // ---- Research (B-2) - SEQUENTIAL with exactly-once persistence
+          const research = await step.run(
+            `research-${section.section_order}`,
+            async () => {
+              await supabase
+                .from('article_sections')
+                .update({ status: 'researching' })
+                .eq('id', section.id)
 
-        // Type assertion after error check
-        type ArticleData = {
-          id: string
-          org_id: string
-          keyword: string
-          status: string
-        }
-        const articleData = data as unknown as ArticleData
+              // 🔴 REQUIRED FIX 3: Research persistence inside retry block
+              const researchResult = await withRetries(async () => 
+                runResearchAgent({
+                  sectionHeader: section.section_header,
+                  sectionType: section.section_type,
+                  priorSections: completedSections, // B-4: Context accumulation
+                  organizationContext: organization,
+                })
+              )
 
-        // Check if article is already in a terminal state (failed, cancelled, completed)
-        // This can happen if the article was manually marked as failed/cancelled
-        // or if the function is retrying after the article was already processed
-        const terminalStates = ['failed', 'cancelled', 'completed']
-        if (terminalStates.includes(articleData.status)) {
-          const msg = `Article ${articleId} is already in terminal state: ${articleData.status}. Skipping generation.`
-          console.log(`[Inngest] Step: load-article - ${msg}`)
-          return {
-            ...articleData,
-            skipped: true,
-            reason: `Article already ${articleData.status}`
-          }
-        }
+              // Convert to ResearchPayload format and persist immediately
+              const researchPayload = {
+                queries: researchResult.queries,
+                results: researchResult.results,
+                total_searches: researchResult.totalSearches,
+                research_timestamp: new Date().toISOString(),
+              } as ResearchPayload
 
-        // Update status to generating
-        const { error: updateError } = await supabase
-          .from('articles' as any)
-          .update({
-            status: 'generating',
-            generation_started_at: new Date().toISOString()
-          })
-          .eq('id', articleId)
+              // Exactly-once persistence - inside retry block
+              await supabase
+                .from('article_sections')
+                .update({
+                  research_payload: researchPayload,
+                  status: 'researched',
+                })
+                .eq('id', section.id)
 
-        if (updateError) {
-          const errorMsg = `Failed to update article status: ${updateError.message}`
-          console.error(`[Inngest] Step: load-article - ERROR: ${errorMsg}`)
-          throw new Error(errorMsg)
-        }
-
-        console.log(`[Inngest] Step: load-article - Success: Article ${articleId} loaded, status updated to generating`)
-
-        // Start performance monitoring after article is loaded
-        performanceMonitor.startMonitoring(articleId, articleData.org_id, articleData.keyword)
-
-        // Initialize progress tracking (will be updated after outline generation)
-        const progressTracker = createProgressTracker(articleId, articleData.org_id, 1) // Temporary, will be updated after outline
-        await progressTracker.initialize('Starting article generation...')
-
-        console.log(`[Inngest] Step: load-article - Progress tracking initialized`)
-
-        // Type assertion needed because database types haven't been regenerated after migration
-        // We've already checked data exists above, so this is safe
-        return (data as unknown) as { id: string; org_id: string; keyword: string; status: string; skipped?: boolean; reason?: string; progressTracker?: any }
-      })
-
-      // Check if article was handled (not found or already processed)
-      if (article && 'handled' in article && article.handled) {
-        console.log(`[Inngest] Article ${articleId} handled gracefully: ${article.reason}`)
-        return {
-          success: false,
-          reason: article.reason,
-          message: article.message,
-          articleId
-        }
-      }
-
-      // Early exit if article was skipped (already in terminal state)
-      if ((article as any).skipped) {
-        console.log(`[Inngest] Article generation skipped for articleId: ${articleId} - ${(article as any).reason}`)
-        return { 
-          success: true, 
-          articleId, 
-          skipped: true,
-          reason: (article as any).reason
-        }
-      }
-
-      // Step 2: Load keyword research data
-      const keywordResearch = await step.run('load-keyword-research', async () => {
-        console.log(`[Inngest] Step: load-keyword-research - Loading research for keyword: ${(article as any).keyword}`)
-        const cacheKey = (article as any).keyword.toLowerCase().trim()
-        const { data } = await supabase
-          .from('keyword_researches' as any)
-          .select('results')
-          .eq('organization_id', (article as any).org_id)
-          .eq('keyword', cacheKey)
-          .gt('cached_until', new Date().toISOString())
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single()
-
-        // Extract keyword research data from JSONB results
-        // Type assertion needed because database types haven't been regenerated after migration
-        const researchData = (data as unknown) as { results?: any } | null
-        if (researchData?.results) {
-          const results = researchData.results as any
-          const keywordResult = results.tasks?.[0]?.result?.[0]
-          if (keywordResult) {
-            return {
-              keyword: keywordResult.keyword,
-              searchVolume: keywordResult.search_volume || 0,
-              keywordDifficulty: keywordResult.competition_index || 0,
-              trend: keywordResult.monthly_searches?.map((m: any) => m.search_volume) || [],
-              cpc: keywordResult.cpc,
-              competition: keywordResult.keyword_info?.competition || 'Medium'
+              return researchPayload
             }
-          }
-        }
-
-        console.log(`[Inngest] Step: load-keyword-research - ${researchData ? 'Cache hit' : 'Cache miss'}`)
-        return null // Cache miss - use keyword only
-      })
-
-      // Step 3: Generate SERP analysis
-      const serpAnalysis = await step.run('generate-serp-analysis', async () => {
-        console.log(`[Inngest] Step: generate-serp-analysis - Analyzing SERP for keyword: ${(article as any).keyword}`)
-        
-        // Update progress to researching
-        await (article as any).progressTracker?.updateResearching('Analyzing search results and competitor content...')
-        
-        try {
-          const analysis = await analyzeSerpStructure((article as any).keyword, (article as any).org_id)
-          console.log(`[Inngest] Step: generate-serp-analysis - Success: SERP analysis completed`)
-          return analysis
-        } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : String(error)
-          console.error(`[Inngest] Step: generate-serp-analysis - ERROR: ${errorMsg}`)
-          
-          // Mark progress as failed
-          await (article as any).progressTracker?.fail(`SERP analysis failed: ${errorMsg}`)
-          throw error
-        }
-      })
-
-      // Step 4: Generate outline
-      const outlineData = await step.run('generate-outline', async () => {
-        console.log(`[Inngest] Step: generate-outline - Generating outline for keyword: ${(article as any).keyword}`)
-        const startTime = Date.now()
-        
-        // Update progress to researching during outline generation
-        await (article as any).progressTracker?.updateResearching('Generating article structure and outline...')
-        
-        try {
-          const { outline: generatedOutline, cost: outlineCost, tokensUsed: outlineTokens } = await generateOutline(
-            (article as any).keyword,
-            keywordResearch,
-            serpAnalysis
           )
 
-          const duration = Date.now() - startTime
-          console.log(`[Inngest] Step: generate-outline - Success: Outline generated in ${duration}ms (${outlineTokens} tokens, $${outlineCost.toFixed(4)} cost)`)
+          // ---- Writing (B-3) - SEQUENTIAL
+          const content = await step.run(
+            `write-${section.section_order}`,
+            async () => {
+              await supabase
+                .from('article_sections')
+                .update({ status: 'writing' })
+                .eq('id', section.id)
 
-          // Update progress tracker with correct total sections
-          const totalSections = 1 + generatedOutline.h2_sections.length + 1 + (generatedOutline.faq?.included ? 1 : 0)
-          console.log(`[Inngest] Step: generate-outline - Updating progress tracker with ${totalSections} total sections`)
-          
-          // Clean up any existing progress entries before creating new one
-          console.log(`[Inngest] Step: generate-outline - Cleaning up existing progress entries for article ${articleId}`)
-          const { error: cleanupError } = await supabase
-            .from('article_progress' as any)
-            .delete()
-            .eq('article_id', articleId)
+              // Use organization content_defaults or fallback
+              const organizationDefaults: ContentDefaults = (organization as any).content_defaults || {
+                tone: 'professional',
+                language: 'en',
+                internal_links: true,
+                global_instructions: '',
+              }
 
-          if (cleanupError) {
-            console.warn(`[Inngest] Step: generate-outline - Warning: Failed to cleanup progress entries: ${cleanupError.message}`)
-          }
-
-          // Create new progress tracker with correct section count
-          const newProgressTracker = createProgressTracker(articleId, (article as any).org_id, totalSections)
-          await newProgressTracker.initialize('Article structure generated, starting content creation...')
-          
-          // Update the article object to use the new progress tracker
-          ;(article as any).progressTracker = newProgressTracker
-
-          // Store outline in article record
-          const { error: updateError } = await supabase
-            .from('articles' as any)
-            .update({
-              outline: generatedOutline,
-              outline_generation_duration_ms: duration
-            })
-            .eq('id', articleId)
-
-          if (updateError) {
-            const errorMsg = `Failed to store outline: ${updateError.message}`
-            console.error(`[Inngest] Step: generate-outline - ERROR: ${errorMsg}`)
-            
-            // Mark progress as failed
-            await (article as any).progressTracker?.fail(`Failed to store outline: ${errorMsg}`)
-            throw new Error(errorMsg)
-          }
-
-          return { outline: generatedOutline, cost: outlineCost }
-        } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : String(error)
-          console.error(`[Inngest] Step: generate-outline - ERROR: ${errorMsg}`)
-          
-          // Mark progress as failed
-          await (article as any).progressTracker?.fail(`Outline generation failed: ${errorMsg}`)
-          throw error
-        }
-      })
-
-      const outline = outlineData.outline
-      const outlineCost = outlineData.cost
-
-      // Step 5: Perform batch research optimization (Story 20.2: Batch Research Optimizer)
-      const batchResearch = await step.run('batch-research', async () => {
-        console.log(`[Inngest] Step: batch-research - Performing comprehensive research for article ${articleId}`)
-        
-        try {
-          // Update progress to researching
-          await (article as any).progressTracker?.updateResearching('Performing comprehensive research for all sections...')
-          
-          // Perform batch research once for the entire article using the generated outline
-          const researchCache = await performBatchResearch(
-            articleId,
-            (article as any).keyword,
-            outline,
-            (article as any).org_id
+              return await withRetries(async () =>
+                runContentWritingAgent({
+                  sectionHeader: section.section_header,
+                  sectionType: section.section_type,
+                  researchPayload: research, // B-4: Pass research from this section
+                  priorSections: completedSections, // B-4: Context accumulation
+                  organizationDefaults,
+                })
+              )
+            }
           )
-          
-          console.log(`[Inngest] Step: batch-research - Success: Research completed with ${researchCache.comprehensiveSources.length} comprehensive sources and ${researchCache.sectionSpecificSources.size} section-specific mappings`)
-          return researchCache
-        } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : String(error)
-          console.error(`[Inngest] Step: batch-research - ERROR: ${errorMsg}`)
-          
-          // Don't fail the entire generation - continue without research
-          console.warn(`[Inngest] Step: batch-research - Continuing generation without research due to error`)
-          return null
-        }
-      })
 
-      // Step 6: Process sections with parallel H2 processing (Performance Optimization)
-      const sectionStats = await step.run('process-sections', async () => {
-        console.log(`[Inngest] Step: process-sections - Starting optimized section processing for article ${articleId}`)
-        
-        try {
-          const { data: articleData, error: fetchError } = await supabase
-            .from('articles' as any)
-            .select('outline')
-            .eq('id', articleId)
-            .single()
-
-          if (fetchError) {
-            throw new Error(`Failed to load article outline: ${fetchError.message}`)
-          }
-
-          // Type assertion needed because database types haven't been regenerated after migration
-          const article = (articleData as unknown) as { outline?: any } | null
-          if (!article?.outline) {
-            throw new Error('Outline not found in article data')
-          }
-
-          const outline = article.outline as any
-          const totalSections = 1 + outline.h2_sections.length + 1 + (outline.faq?.included ? 1 : 0)
-          console.log(`[Inngest] Step: process-sections - Processing ${totalSections} sections total with parallel H2 processing`)
-
-          let currentSectionNumber = 1
-          let totalWordCount = 0
-          let totalCitations = 0
-          let totalApiCost = outlineCost
-
-          // Phase 1: Process Introduction (sequential - must come first)
-          console.log(`[Inngest] Step: process-sections - Phase 1: Processing Introduction (index 0)`)
-          await (article as any).progressTracker?.updateWritingSection(currentSectionNumber, 'Writing Introduction...')
-          
-          try {
-            const sectionResult = await retryWithBackoff(() => processSection(articleId, 0, outline)) as Section | null
-            
-            if (sectionResult) {
-              totalWordCount += sectionResult.word_count || 0
-              totalCitations += sectionResult.citations_included || 0
-              totalApiCost += 0
-            }
-            
-            await (article as any).progressTracker?.completeSection(currentSectionNumber, sectionResult?.word_count || 0, sectionResult?.citations_included || 0, 0)
-            console.log(`[Inngest] Step: process-sections - Phase 1: Introduction completed`)
-          } catch (error) {
-            const errorMsg = error instanceof Error ? error.message : String(error)
-            await (article as any).progressTracker?.fail(`Introduction failed: ${errorMsg}`)
-            throw error
-          }
-          currentSectionNumber++
-
-          // Phase 2: Process all H2 sections in parallel (biggest time savings)
-          console.log(`[Inngest] Step: process-sections - Phase 2: Processing ${outline.h2_sections.length} H2 sections in parallel`)
-          const h2ProcessingPromises = outline.h2_sections.map(async (h2Section: any, h2Index: number) => {
-            const sectionIndex = h2Index + 1 // H2 sections start at index 1
-            
-            // Update progress for this H2 section
-            await (article as any).progressTracker?.updateWritingSection(
-              currentSectionNumber + h2Index, 
-              `Writing Section ${h2Index + 1}: ${h2Section?.title || 'H2 Section'}...`
-            )
-            
-            try {
-              const sectionResult = await retryWithBackoff(() => processSection(articleId, sectionIndex, outline)) as Section | null
-              
-              console.log(`[Inngest] Step: process-sections - Phase 2: H2 section ${h2Index + 1} completed`)
-              
-              return {
-                sectionIndex,
-                h2Index,
-                sectionResult,
-                wordCount: sectionResult?.word_count || 0,
-                citations: sectionResult?.citations_included || 0
-              }
-            } catch (error) {
-              const errorMsg = error instanceof Error ? error.message : String(error)
-              console.error(`[Inngest] Step: process-sections - Phase 2: H2 section ${h2Index + 1} failed: ${errorMsg}`)
-              
-              // Don't fail entire batch - mark individual section as failed
-              await (article as any).progressTracker?.fail(`H2 section ${h2Index + 1} failed: ${errorMsg}`)
-              
-              return {
-                sectionIndex,
-                h2Index,
-                sectionResult: null,
-                wordCount: 0,
-                citations: 0,
-                error: errorMsg
-              }
-            }
-          })
-
-          // Wait for all H2 sections to complete (or fail)
-          const h2Results = await Promise.allSettled(h2ProcessingPromises)
-          
-          // Process H2 results and update totals
-          for (const promiseResult of h2Results) {
-            if (promiseResult.status === 'fulfilled') {
-              const result = promiseResult.value
-              totalWordCount += result.wordCount
-              totalCitations += result.citations
-              
-              if (result.sectionResult) {
-                await (article as any).progressTracker?.completeSection(
-                  currentSectionNumber + result.h2Index,
-                  result.wordCount,
-                  result.citations,
-                  0
-                )
-              }
-            } else {
-              console.error(`[Inngest] Step: process-sections - H2 processing promise rejected:`, promiseResult.reason)
-            }
-          }
-          
-          currentSectionNumber += outline.h2_sections.length
-
-          // Phase 3: Process H3 subsections in parallel (grouped by parent H2)
-          console.log(`[Inngest] Step: process-sections - Phase 3: Processing H3 subsections in parallel groups`)
-          
-          for (let h2Index = 0; h2Index < outline.h2_sections.length; h2Index++) {
-            const h2Section = outline.h2_sections[h2Index]
-            
-            if (h2Section?.h3_subsections && Array.isArray(h2Section.h3_subsections) && h2Section.h3_subsections.length > 0) {
-              console.log(`[Inngest] Step: process-sections - Phase 3: Processing ${h2Section.h3_subsections.length} H3 subsections for H2-${h2Index + 1} in parallel`)
-              
-              const h3ProcessingPromises = h2Section.h3_subsections.map(async (h3Subsection: string, h3Index: number) => {
-                const sectionIndex = parseFloat(`${h2Index + 1}.${h3Index + 1}`)
-                
-                try {
-                  const h3Result = await retryWithBackoff(() => processSection(articleId, sectionIndex, outline)) as Section | null
-                  
-                  console.log(`[Inngest] Step: process-sections - Phase 3: H3 subsection ${sectionIndex} completed`)
-                  
-                  return {
-                    sectionIndex,
-                    h3Index,
-                    h3Result,
-                    wordCount: h3Result?.word_count || 0,
-                    citations: h3Result?.citations_included || 0
-                  }
-                } catch (error) {
-                  const errorMsg = error instanceof Error ? error.message : String(error)
-                  console.error(`[Inngest] Step: process-sections - Phase 3: H3 subsection ${sectionIndex} failed: ${errorMsg}`)
-                  
-                  return {
-                    sectionIndex,
-                    h3Index,
-                    h3Result: null,
-                    wordCount: 0,
-                    citations: 0,
-                    error: errorMsg
-                  }
-                }
-              })
-              
-              // Wait for all H3 subsections of this H2 to complete
-              const h3Results = await Promise.allSettled(h3ProcessingPromises)
-              
-              // Process H3 results and update totals
-              for (const promiseResult of h3Results) {
-                if (promiseResult.status === 'fulfilled') {
-                  const result = promiseResult.value
-                  totalWordCount += result.wordCount
-                  totalCitations += result.citations
-                } else {
-                  console.error(`[Inngest] Step: process-sections - H3 processing promise rejected:`, promiseResult.reason)
-                }
-              }
-            }
-          }
-
-          // Phase 4: Process Conclusion and FAQ in parallel
-          console.log(`[Inngest] Step: process-sections - Phase 4: Processing Conclusion and FAQ in parallel`)
-          
-          const conclusionIndex = outline.h2_sections.length + 1
-          const faqIndex = outline.faq?.included ? outline.h2_sections.length + 2 : -1
-          
-          const parallelTasks = []
-          
-          // Add conclusion task
-          parallelTasks.push(
-            (async () => {
-              console.log(`[Inngest] Step: process-sections - Phase 4: Processing Conclusion (index ${conclusionIndex})`)
-              
-              await (article as any).progressTracker?.updateWritingSection(currentSectionNumber, 'Writing Conclusion...')
-              
-              try {
-                const conclusionResult = await retryWithBackoff(() => processSection(articleId, conclusionIndex, outline)) as Section | null
-                
-                if (conclusionResult) {
-                  totalWordCount += conclusionResult.word_count || 0
-                  totalCitations += conclusionResult.citations_included || 0
-                }
-                
-                await (article as any).progressTracker?.completeSection(currentSectionNumber, conclusionResult?.word_count || 0, conclusionResult?.citations_included || 0, 0)
-                console.log(`[Inngest] Step: process-sections - Phase 4: Conclusion completed`)
-                
-                return { type: 'conclusion', result: conclusionResult }
-              } catch (error) {
-                const errorMsg = error instanceof Error ? error.message : String(error)
-                await (article as any).progressTracker?.fail(`Conclusion failed: ${errorMsg}`)
-                console.error(`[Inngest] Step: process-sections - Phase 4: Conclusion failed: ${errorMsg}`)
-                return { type: 'conclusion', error: errorMsg }
-              }
-            })()
-          )
-          
-          currentSectionNumber++
-          
-          // Add FAQ task if included
-          if (outline.faq?.included && faqIndex > -1) {
-            parallelTasks.push(
-              (async () => {
-                console.log(`[Inngest] Step: process-sections - Phase 4: Processing FAQ (index ${faqIndex})`)
-                
-                await (article as any).progressTracker?.updateWritingSection(currentSectionNumber, 'Writing FAQ...')
-                
-                try {
-                  const faqResult = await retryWithBackoff(() => processSection(articleId, faqIndex, outline)) as Section | null
-                  
-                  if (faqResult) {
-                    totalWordCount += faqResult.word_count || 0
-                    totalCitations += faqResult.citations_included || 0
-                  }
-                  
-                  await (article as any).progressTracker?.completeSection(currentSectionNumber, faqResult?.word_count || 0, faqResult?.citations_included || 0, 0)
-                  console.log(`[Inngest] Step: process-sections - Phase 4: FAQ completed`)
-                  
-                  return { type: 'faq', result: faqResult }
-                } catch (error) {
-                  const errorMsg = error instanceof Error ? error.message : String(error)
-                  await (article as any).progressTracker?.fail(`FAQ failed: ${errorMsg}`)
-                  console.error(`[Inngest] Step: process-sections - Phase 4: FAQ failed: ${errorMsg}`)
-                  return { type: 'faq', error: errorMsg }
-                }
-              })()
-            )
-          }
-          
-          // Wait for conclusion and FAQ to complete
-          const finalTasksResults = await Promise.allSettled(parallelTasks)
-          
-          // Process final task results
-          for (const promiseResult of finalTasksResults) {
-            if (promiseResult.status === 'rejected') {
-              console.error(`[Inngest] Step: process-sections - Final task promise rejected:`, promiseResult.reason)
-            }
-          }
-
-          console.log(`[Inngest] Step: process-sections - All phases completed successfully with parallel processing`)
-          
-          // Return the accumulated statistics for the next step
-          return {
-            totalWordCount,
-            totalCitations,
-            totalApiCost
-          };
-        } catch (error) {
-          // Ensure we update status even if timeout occurs mid-processing
-          const isTimeout = error instanceof Error && 
-            (error.message.includes('timeout') || error.message.includes('TIMEOUT'))
-          
-          if (isTimeout) {
-            console.error(`[Inngest] Step: process-sections - TIMEOUT ERROR: ${error instanceof Error ? error.message : String(error)}`)
+          await step.run(`persist-content-${section.section_order}`, async () => {
             await supabase
-              .from('articles' as any)
+              .from('article_sections')
+              .update({
+                content_markdown: content.markdown,
+                content_html: content.html,
+                status: 'completed',
+              })
+              .eq('id', section.id)
+          })
+
+          // B-4: Add completed section to context for next sections
+          completedSections.push({
+            ...section,
+            content_markdown: content.markdown,
+            status: 'completed',
+          } as ArticleSection)
+
+        } catch (sectionError) {
+          // B-4: Stop pipeline on section failure
+          await step.run(`fail-section-${section.section_order}`, async () => {
+            await supabase
+              .from('article_sections')
               .update({
                 status: 'failed',
                 error_details: {
-                  error_message: `Timeout during section processing: ${error instanceof Error ? error.message : String(error)}`,
+                  message: sectionError instanceof Error ? sectionError.message : String(sectionError),
                   failed_at: new Date().toISOString(),
-                  timeout: true
-                }
+                },
               })
-              .eq('id', articleId)
-          }
-          throw error
-        }
-      })
-
-      // Step 7: Update article status to completed
-      await step.run('complete-article', async () => {
-        console.log(`[Inngest] Step: complete-article - Marking article ${articleId} as completed`)
-        
-        // Mark progress as completed with final statistics
-        await (article as any).progressTracker?.complete({
-          wordCount: sectionStats.totalWordCount,
-          citations: sectionStats.totalCitations,
-          apiCost: sectionStats.totalApiCost
-        })
-
-        // Ensure ALL progress entries for this article are marked as completed
-        console.log(`[Inngest] Step: complete-article - Ensuring all progress entries are marked as completed`)
-        const { error: progressCleanupError } = await supabase
-          .from('article_progress' as any)
-          .update({
-            status: 'completed',
-            progress_percentage: 100,
-            current_stage: 'Completed',
-            updated_at: new Date().toISOString(),
-            word_count: sectionStats.totalWordCount,
-            citations_count: sectionStats.totalCitations,
-            api_cost: sectionStats.totalApiCost.toFixed(4)
+              .eq('id', section.id)
           })
-          .eq('article_id', articleId)
-          .in('status', ['queued', 'researching', 'writing', 'generating'])
 
-        if (progressCleanupError) {
-          console.warn(`[Inngest] Step: complete-article - Warning: Failed to cleanup remaining progress entries: ${progressCleanupError.message}`)
+          throw new Error(`Sequential processing stopped: Section ${section.section_order} failed - ${sectionError instanceof Error ? sectionError.message : String(sectionError)}`)
         }
-        
-        const { error: updateError } = await supabase
-          .from('articles' as any)
-          .update({
-            status: 'completed',
-            generation_completed_at: new Date().toISOString()
-          })
-          .eq('id', articleId)
-
-        if (updateError) {
-          const errorMsg = `Failed to mark article as completed: ${updateError.message}`
-          console.error(`[Inngest] Step: complete-article - ERROR: ${errorMsg}`)
-          throw new Error(errorMsg)
-        }
-
-        await emitUXMetricsEvent({
-          orgId: (article as any).org_id,
-          userId: null,
-          eventName: 'article_create_flow.COMPLETED',
-          flowInstanceId: articleId,
-          articleId,
-        })
-
-        console.log(`[Inngest] Step: complete-article - Success: Article ${articleId} marked as completed`)
-        console.log(`[Inngest] Step: complete-article - Final stats: ${sectionStats.totalWordCount} words, ${sectionStats.totalCitations} citations, $${sectionStats.totalApiCost.toFixed(2)} cost`)
-        
-        // Clean up research cache to free memory
-        clearResearchCache(articleId)
-        clearContextCache(articleId)
-        console.log(`[Inngest] Step: complete-article - All caches cleared for article ${articleId}`)
-      })
-
-      console.log(`[Inngest] Article generation completed successfully for articleId: ${articleId}`)
-      
-      // Complete performance monitoring
-      const performanceMetrics = await performanceMonitor.completeMonitoring(articleId)
-      if (performanceMetrics) {
-        console.log(`[PerformanceMonitor] Generation completed in ${performanceMetrics.totalDuration}ms with ${performanceMetrics.apiCalls.total} API calls`)
       }
-      
-      return { success: true, articleId }
-    } catch (error) {
-      // Handle errors: save partial article and update status
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      console.error(`[Inngest] Article generation FAILED for articleId: ${articleId}`, {
-        error: errorMessage,
-        stack: error instanceof Error ? error.stack : undefined
-      })
-      
-      // Check if this is a timeout error
-      const isTimeout = errorMessage.includes('timeout') || 
-                       errorMessage.includes('TIMEOUT') ||
-                       errorMessage.includes('Function invocation timeout') ||
-                       errorMessage.includes('FUNCTION_INVOCATION_TIMEOUT')
-      
-      await step.run('handle-error', async () => {
-        console.log(`[Inngest] Step: handle-error - Handling error for article ${articleId}, isTimeout: ${isTimeout}`)
-        // Get current sections to preserve partial article
-        const { data: articleData } = await supabase
-          .from('articles' as any)
-          .select('sections, current_section_index')
-          .eq('id', articleId)
-          .single()
-
-        // Type assertion needed because database types haven't been regenerated after migration
-        const article = (articleData as unknown) as { sections?: any[]; current_section_index?: number } | null
-
-        const { error: updateError } = await supabase
-          .from('articles' as any)
+    } catch (pipelineError) {
+      // Mark article as failed
+      await step.run('mark-article-failed', async () => {
+        await supabase
+          .from('articles')
           .update({
             status: 'failed',
             error_details: {
-              error_message: errorMessage,
+              message: pipelineError instanceof Error ? pipelineError.message : String(pipelineError),
               failed_at: new Date().toISOString(),
-              section_index: article?.current_section_index || 0,
-              partial_sections: article?.sections || [],
-              timeout: isTimeout
-            }
+            },
           })
           .eq('id', articleId)
-
-        if (updateError) {
-          console.error(`[Inngest] Step: handle-error - Failed to update article status: ${updateError.message}`)
-        } else {
-          console.log(`[Inngest] Step: handle-error - Success: Article ${articleId} marked as failed`)
-        }
-
-        // NOTE: User notification is handled by Story 4a-6 (real-time progress tracking)
-        // The article status update to "failed" will trigger real-time updates to the user
-        // via WebSocket/SSE connections established in Story 4a-6
       })
 
-      throw error
+      throw pipelineError
     }
+
+    /* -------------------------------------------------- */
+    /* Mark article complete                             */
+    /* -------------------------------------------------- */
+
+    await step.run('complete-article', async () => {
+      await supabase
+        .from('articles')
+        .update({ status: 'completed' })
+        .eq('id', articleId)
+    })
+
+    /* -------------------------------------------------- */
+    /* Emit pipeline completed event                      */
+    /* -------------------------------------------------- */
+
+    await step.run('emit-pipeline-completed', async () => {
+      console.log(`[B-4] Pipeline completed for article: ${articleId}`)
+    })
+
+    return { success: true, articleId }
   }
 )
-
