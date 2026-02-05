@@ -223,6 +223,43 @@ Common HTTP status codes:
 
 ### Intent Workflow Endpoints
 
+#### Onboarding Validation Gate (Story A-6)
+Intent workflow creation is protected by an onboarding completion validation gate. This ensures that all required onboarding steps are completed before any Intent Engine workflows can be created.
+
+**Gate Behavior:**
+- **403 Forbidden:** Returned when onboarding is incomplete with detailed error list
+- **200 Allowed:** Gate passes, workflow creation proceeds
+- **Authoritative:** Server-side validation (cannot be bypassed by client)
+
+**Validated Requirements:**
+- `onboarding_completed = true`
+- `website_url` is not null and valid URL
+- `business_description` is not null and > 10 characters
+- `target_audiences` array is not empty
+- `competitors` table has 3-7 entries for the organization
+- `content_defaults` JSONB is not empty
+- `keyword_settings` JSONB is not empty
+
+**Error Response Format:**
+```json
+{
+  "error": "ONBOARDING_INCOMPLETE",
+  "details": [
+    "WEBSITE_URL_MISSING",
+    "COMPETITORS_INVALID_COUNT"
+  ]
+}
+```
+
+**Protected Endpoints:**
+- POST /api/intent/workflows
+
+**Audit Logging:**
+All validation attempts are logged with:
+- `onboarding.validation.succeeded` - when validation passes
+- `onboarding.validation.failed` - when validation fails
+- Full context including organization ID, missing requirements, and error details
+
 #### ICP Gate Enforcement (Story 39-1)
 All downstream Intent Engine workflow endpoints are protected by an ICP (Ideal Customer Profile) completion gate. This ensures that ICP generation is completed before any subsequent workflow steps can be executed.
 

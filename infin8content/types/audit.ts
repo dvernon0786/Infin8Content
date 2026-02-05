@@ -122,6 +122,10 @@ export const AuditAction = {
     WORKFLOW_GATE_SUBTOPICS_BLOCKED: 'workflow.gate.subtopics_blocked',
     WORKFLOW_GATE_SUBTOPICS_ERROR: 'workflow.gate.subtopics_error',
 
+    // Onboarding validation actions (Story A-6)
+    ONBOARDING_VALIDATION_SUCCEEDED: 'onboarding.validation.succeeded',
+    ONBOARDING_VALIDATION_FAILED: 'onboarding.validation.failed',
+
     // Article linking actions (Story 38.3)
     WORKFLOW_ARTICLES_LINKING_STARTED: 'workflow.articles.linking.started',
     WORKFLOW_ARTICLE_LINKED: 'workflow.article.linked',
