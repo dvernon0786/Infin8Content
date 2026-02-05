@@ -94,6 +94,11 @@ export const AuditAction = {
     WORKFLOW_ARTICLE_QUEUING_COMPLETED: 'workflow.article_queuing.completed',
     WORKFLOW_ARTICLE_QUEUING_FAILED: 'workflow.article_queuing.failed',
 
+    // Research agent actions (Story B-2)
+    RESEARCH_AGENT_SECTION_STARTED: 'research_agent.section.started',
+    RESEARCH_AGENT_SECTION_COMPLETED: 'research_agent.section.completed',
+    RESEARCH_AGENT_SECTION_FAILED: 'research_agent.section.failed',
+
     // Article generation progress tracking actions (Story 38.2)
     WORKFLOW_ARTICLE_GENERATION_PROGRESS_QUERIED: 'workflow.article_generation.progress_queried',
     WORKFLOW_ARTICLE_GENERATION_PROGRESS_ERROR: 'workflow.article_generation.progress_error',

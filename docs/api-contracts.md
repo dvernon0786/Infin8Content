@@ -829,6 +829,84 @@ Retrieves Intent Engine audit logs for compliance tracking (Story 37.4).
 **Audit Logging:**
 - `audit.queries.executed` - Logs each audit query for meta-auditing
 
+## Research Agent Service (Story B-2)
+
+### Service Overview
+The Research Agent Service provides deterministic research capabilities for article sections using Perplexity Sonar API with a fixed, immutable system prompt.
+
+### Core Function
+```typescript
+export async function runResearchAgent(
+  input: ResearchAgentInput
+): Promise<ResearchAgentOutput>
+```
+
+### Input Interface
+```typescript
+interface ResearchAgentInput {
+  sectionHeader: string;
+  sectionType: string;
+  priorSections: ArticleSection[];
+  organizationContext: {
+    name: string;
+    description: string;
+    website?: string;
+    industry?: string;
+  };
+}
+```
+
+### Output Interface
+```typescript
+interface ResearchAgentOutput {
+  queries: string[];
+  results: {
+    query: string;
+    answer: string;
+    citations: string[];
+  }[];
+  totalSearches: number;
+}
+```
+
+### Key Features
+- **Fixed System Prompt**: Locked, immutable prompt using expert Research Analyst persona
+- **Perplexity Sonar Integration**: Uses `perplexity/llama-3.1-sonar-small-128k-online` model
+- **Search Limits**: Hard maximum of 10 searches per section
+- **Timeout Enforcement**: 30-second absolute timeout via Promise.race()
+- **Retry Logic**: 3 attempts with exponential backoff (2s, 4s, 8s)
+- **JSON Output**: Structured research results with citations
+
+### Usage Pattern
+```typescript
+import { runResearchAgent } from '@/lib/services/article-generation/research-agent';
+
+const researchResults = await runResearchAgent({
+  sectionHeader: 'Introduction to AI',
+  sectionType: 'introduction',
+  priorSections: completedSections,
+  organizationContext: orgContext
+});
+```
+
+### Error Handling
+- **Timeout**: Rejects with "Research timeout: 30 seconds exceeded"
+- **Non-retryable**: 401/403 errors propagate immediately
+- **Retryable**: 429/5xx errors trigger exponential backoff
+- **JSON Parsing**: Malformed responses throw "Invalid JSON response from research service"
+
+### Performance Characteristics
+- **Typical Response**: 2-8 seconds for simple queries
+- **Maximum Timeout**: 30 seconds enforced
+- **Search Limit**: 10 searches maximum (hard enforced)
+- **Retry Pattern**: 2s → 4s → 8s backoff
+
+### Security Notes
+- Server-only execution (browser context blocked)
+- Organization isolation via RLS
+- No prompt modification possible (locked in code)
+- Structured error reporting without sensitive data exposure
+
 ## Rate Limiting
 
 API endpoints implement rate limiting to prevent abuse. Specific limits vary by endpoint type.
