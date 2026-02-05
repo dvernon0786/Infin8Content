@@ -15,7 +15,7 @@ export class PromptIntegrityError extends Error {
   }
 }
 
-export function assertTemplateIntegrity(
+export function assertPromptIntegrity(
   templatePrompt: string,
   expectedHash: string,
   promptName: string
