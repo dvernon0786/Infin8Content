@@ -76,3 +76,67 @@ export interface GenerationStatistics {
   sections_completed: number;
   total_sections: number;
 }
+
+/**
+ * Article sections data model types
+ * Story B-1: Article Sections Data Model
+ */
+
+export type SectionStatus = 
+  | 'pending'
+  | 'researching' 
+  | 'researched'
+  | 'writing'
+  | 'completed'
+  | 'failed';
+
+export interface PlannerPayload {
+  section_header: string;
+  section_type: string;
+  instructions: string;
+  context_requirements: string[];
+  estimated_words: number;
+}
+
+export interface ResearchPayload {
+  queries: string[];
+  results: {
+    query: string;
+    answer: string;
+    citations: string[];
+  }[];
+  total_searches: number;
+  research_timestamp: string;
+}
+
+export interface ArticleSection {
+  id: string;
+  article_id: string;
+  section_order: number;
+  section_header: string;
+  section_type: string;
+  planner_payload: PlannerPayload;
+  research_payload?: ResearchPayload;
+  content_markdown?: string;
+  content_html?: string;
+  status: SectionStatus;
+  error_details?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateArticleSectionParams {
+  article_id: string;
+  section_order: number;
+  section_header: string;
+  section_type: string;
+  planner_payload: PlannerPayload;
+}
+
+export interface UpdateArticleSectionParams {
+  research_payload?: ResearchPayload;
+  content_markdown?: string;
+  content_html?: string;
+  status?: SectionStatus;
+  error_details?: Record<string, unknown>;
+}
