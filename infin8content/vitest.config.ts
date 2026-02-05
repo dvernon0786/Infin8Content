@@ -18,10 +18,6 @@ export default defineConfig({
       jsdom: {
         resources: 'usable'
       }
-    },
-    // Add TypeScript configuration for tests
-    typecheck: {
-      tsconfig: './tsconfig.test.json'
     }
   },
   resolve: {
