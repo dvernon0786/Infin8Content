@@ -10,6 +10,9 @@ import { generateContent } from '../openrouter/openrouter-client'
 import { retryWithPolicy, DEFAULT_RETRY_POLICY } from '../intent-engine/retry-utils'
 import { ResearchAgentOutput, ArticleSection } from '../../../types/article'
 
+// Re-export ResearchAgentOutput for other modules
+export type { ResearchAgentOutput }
+
 // Export the input interface for API endpoint use
 export interface ResearchAgentInput {
   sectionHeader: string
