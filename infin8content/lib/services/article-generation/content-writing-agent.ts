@@ -2,7 +2,7 @@ import {
   CONTENT_WRITING_SYSTEM_PROMPT,
   CONTENT_WRITING_PROMPT_HASH
 } from '@/lib/llm/prompts/content-writing.prompt';
-import { assertTemplateIntegrity, assertNoUnresolvedPlaceholders } from '@/lib/llm/prompts/assert-prompt-integrity';
+import { assertPromptIntegrity, assertNoUnresolvedPlaceholders } from '@/lib/llm/prompts/assert-prompt-integrity';
 import { generateContent, type OpenRouterMessage } from '@/lib/services/openrouter/openrouter-client';
 import type { 
   ResearchPayload, 
@@ -16,7 +16,7 @@ export async function runContentWritingAgent(
   input: ContentWritingAgentInput
 ): Promise<ContentWritingAgentOutput> {
   // 🔒 Template integrity check (hash the canonical template)
-  assertTemplateIntegrity(
+  assertPromptIntegrity(
     CONTENT_WRITING_SYSTEM_PROMPT,
     CONTENT_WRITING_PROMPT_HASH,
     'ContentWritingAgent'
@@ -66,18 +66,38 @@ export async function runContentWritingAgent(
     let result;
     let lastError;
     
+    // Create timeout promise (60 seconds)
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Content writing timeout: 60 seconds exceeded')), 60000)
+    });
+    
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        result = await generateContent(messages, {
-          maxTokens: 2000,
-          temperature: 0.7,
-          model: 'google/gemini-2.5-flash-exp'
-        });
+        console.log(`Content writing attempt ${attempt}/3`);
+        
+        // Race between generation and timeout
+        result = await Promise.race([
+          generateContent(messages, {
+            maxTokens: 2000,
+            temperature: 0.7,
+            model: 'google/gemini-2.5-flash-exp'
+          }),
+          timeoutPromise
+        ]);
+        
+        console.log(`Content writing succeeded on attempt ${attempt}`);
         break; // Success
       } catch (error) {
         lastError = error;
-        if (attempt < 3) {
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000)); // 2s, 4s, 8s
+        console.error(`Attempt ${attempt} failed:`, error);
+        
+        if (attempt < 3 && isRetryableError(error)) {
+          const delayMs = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+          console.log(`Retrying in ${delayMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        } else if (attempt === 3) {
+          console.error('All retry attempts exhausted');
+          break;
         }
       }
     }
@@ -108,8 +128,7 @@ export async function runContentWritingAgent(
 
 // Helper functions
 async function convertMarkdownToHtml(markdown: string): Promise<string> {
-  // Safe markdown to HTML conversion with XSS prevention
-  // Escapes HTML entities first, then applies safe markdown patterns
+  // Escape HTML entities first
   const escapeHtml = (text: string): string => {
     const map: Record<string, string> = {
       '&': '&amp;',
@@ -121,21 +140,54 @@ async function convertMarkdownToHtml(markdown: string): Promise<string> {
     return text.replace(/[&<>"']/g, (char) => map[char]);
   };
 
-  // First escape all HTML
   let html = escapeHtml(markdown);
   
-  // Then apply safe markdown patterns (after escaping, these are safe)
+  // Process headers (must come before other patterns)
   html = html
     .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
     .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+    .replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+
+  // Process code blocks (must come before inline code)
+  html = html
+    .replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+      const escapedCode = escapeHtml(code.trim());
+      return `<pre><code class="language-${lang || ''}">${escapedCode}</code></pre>`;
+    })
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // Process lists
+  const listItems = html.match(/^\* (.+)$/gm);
+  if (listItems) {
+    html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
+  }
+  
+  const orderedListItems = html.match(/^\d+\. (.+)$/gm);
+  if (orderedListItems) {
+    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/g, '<ol>$1</ol>');
+  }
+
+  // Process blockquotes
+  html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+
+  // Process links
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
+  // Process emphasis
+  html = html
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/~~(.*?)~~/g, '<del>$1</del>');
+
+  // Process line breaks and paragraphs
+  html = html
     .replace(/\n\n/g, '</p><p>')
     .replace(/\n/g, '<br>');
 
-  // Wrap in paragraph tags if not already wrapped
-  if (!html.startsWith('<p>')) {
+  // Wrap in paragraph tags if not already wrapped and not a block element
+  if (!html.startsWith('<h') && !html.startsWith('<pre') && !html.startsWith('<ul') && !html.startsWith('<ol') && !html.startsWith('<blockquote')) {
     html = '<p>' + html + '</p>';
   }
 
@@ -144,4 +196,23 @@ async function convertMarkdownToHtml(markdown: string): Promise<string> {
 
 function countWords(text: string): number {
   return text.split(/\s+/).filter(word => word.length > 0).length;
+}
+
+function isRetryableError(error: unknown): boolean {
+  if (error instanceof Error) {
+    // Retry on network errors, timeouts, and rate limiting
+    const retryablePatterns = [
+      /timeout/i,
+      /network/i,
+      /rate limit/i,
+      /temporary/i,
+      /connection/i,
+      /ECONNRESET/i,
+      /ETIMEDOUT/i
+    ];
+    
+    return retryablePatterns.some(pattern => pattern.test(error.message));
+  }
+  // Retry on unknown errors by default
+  return true;
 }

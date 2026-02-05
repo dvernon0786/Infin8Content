@@ -157,9 +157,32 @@ export interface CreateArticleSectionParams {
 }
 
 export interface UpdateArticleSectionParams {
-  research_payload?: ResearchPayload;
-  content_markdown?: string;
-  content_html?: string;
-  status?: SectionStatus;
-  error_details?: Record<string, unknown>;
+  research_payload?: ResearchPayload
+  content_markdown?: string
+  content_html?: string
+  status?: SectionStatus
+  error_details?: Record<string, unknown>
+}
+
+// Content Writing Agent Types (Story B-3)
+export interface ContentWritingAgentInput {
+  sectionHeader: string
+  sectionType: string
+  researchPayload: ResearchPayload
+  priorSections: ArticleSection[]
+  organizationDefaults: ContentDefaults
+}
+
+export interface ContentWritingAgentOutput {
+  markdown: string
+  html: string
+  wordCount: number
+}
+
+export interface ContentDefaults {
+  tone: string
+  language: string
+  internal_links: boolean
+  global_instructions: string
+  auto_publish_rules?: Record<string, any>
 }

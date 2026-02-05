@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { runContentWritingAgent } from '@/lib/services/article-generation/content-writing-agent';
-import { generateContent } from '@/lib/services/openrouter/openrouter-client';
-import { CONTENT_WRITING_SYSTEM_PROMPT, CONTENT_WRITING_PROMPT_HASH } from '@/lib/llm/prompts/content-writing.prompt';
-import { assertTemplateIntegrity, PromptIntegrityError } from '@/lib/llm/prompts/assert-prompt-integrity';
+import { runContentWritingAgent } from '../../../../lib/services/article-generation/content-writing-agent';
+import { generateContent } from '../../../../lib/services/openrouter/openrouter-client';
+import { CONTENT_WRITING_SYSTEM_PROMPT, CONTENT_WRITING_PROMPT_HASH } from '../../../../lib/llm/prompts/content-writing.prompt';
+import { assertPromptIntegrity, PromptIntegrityError, assertNoUnresolvedPlaceholders } from '../../../../lib/llm/prompts/assert-prompt-integrity';
 
 // Mock OpenRouter
 vi.mock('@/lib/services/openrouter/openrouter-client');
@@ -88,13 +88,123 @@ describe('Content Writing Agent', () => {
   it('throws if content writing system prompt is modified', () => {
     const mutatedPrompt = CONTENT_WRITING_SYSTEM_PROMPT + ' ';
     expect(() =>
-      assertTemplateIntegrity(
+      assertPromptIntegrity(
         mutatedPrompt,
         CONTENT_WRITING_PROMPT_HASH,
         'ContentWritingAgent'
       )
     ).toThrow(PromptIntegrityError);
   });
+
+  it('throws if unresolved placeholders remain in prompt', () => {
+    const promptWithPlaceholders = 'Section: {section_header}\nType: {section_type}';
+    expect(() =>
+      assertNoUnresolvedPlaceholders(promptWithPlaceholders)
+    ).toThrow('unresolved placeholders detected');
+  });
+
+  it('enforces 60-second timeout', async () => {
+    const mockGenerateContent = vi.mocked(generateContent);
+    // Mock a very slow response
+    mockGenerateContent.mockImplementation(() => new Promise(() => {}));
+
+    const input = {
+      sectionHeader: 'Test',
+      sectionType: 'h1',
+      researchPayload: {},
+      priorSections: [],
+      organizationDefaults: mockOrganizationDefaults
+    };
+
+    const start = Date.now();
+    await expect(runContentWritingAgent(input)).rejects.toThrow('60 seconds exceeded');
+    const duration = Date.now() - start;
+    
+    expect(duration).toBeLessThan(65000); // Should timeout around 60 seconds
+  }, 70000);
+
+  it('properly converts markdown to HTML', async () => {
+    const mockGenerateContent = vi.mocked(generateContent);
+    mockGenerateContent.mockResolvedValue({
+      content: '# Test Section\n\nThis is **bold** text and *italic* text.\n\n- Item 1\n- Item 2\n\n`code snippet`',
+      tokensUsed: 100,
+      modelUsed: 'gemini-2.5-flash',
+      promptTokens: 50,
+      completionTokens: 50
+    });
+
+    const input = {
+      sectionHeader: 'Test',
+      sectionType: 'h1',
+      researchPayload: {},
+      priorSections: [],
+      organizationDefaults: mockOrganizationDefaults
+    };
+
+    const result = await runContentWritingAgent(input);
+
+    expect(result.html).toContain('<h1>Test Section</h1>');
+    expect(result.html).toContain('<strong>bold</strong>');
+    expect(result.html).toContain('<em>italic</em>');
+    expect(result.html).toContain('<code>code snippet</code>');
+  });
+
+  it('handles empty research payload gracefully', async () => {
+    const mockGenerateContent = vi.mocked(generateContent);
+    mockGenerateContent.mockResolvedValue({
+      content: 'Test content',
+      tokensUsed: 50,
+      modelUsed: 'gemini-2.5-flash',
+      promptTokens: 25,
+      completionTokens: 25
+    });
+
+    const input = {
+      sectionHeader: 'Test',
+      sectionType: 'h1',
+      researchPayload: {},
+      priorSections: [],
+      organizationDefaults: mockOrganizationDefaults
+    };
+
+    const result = await runContentWritingAgent(input);
+    expect(result.markdown).toBe('Test content');
+  });
+
+  it('uses exponential backoff for retries', async () => {
+    const mockGenerateContent = vi.mocked(generateContent);
+    let callCount = 0;
+    
+    mockGenerateContent.mockImplementation(() => {
+      callCount++;
+      if (callCount < 3) {
+        return Promise.reject(new Error('Temporary failure'));
+      }
+      return Promise.resolve({
+        content: 'Success after retries',
+        tokensUsed: 50,
+        modelUsed: 'gemini-2.5-flash',
+        promptTokens: 25,
+        completionTokens: 25
+      });
+    });
+
+    const input = {
+      sectionHeader: 'Test',
+      sectionType: 'h1',
+      researchPayload: {},
+      priorSections: [],
+      organizationDefaults: mockOrganizationDefaults
+    };
+
+    const start = Date.now();
+    const result = await runContentWritingAgent(input);
+    const duration = Date.now() - start;
+
+    expect(result.markdown).toBe('Success after retries');
+    expect(mockGenerateContent).toHaveBeenCalledTimes(3);
+    expect(duration).toBeGreaterThan(2000); // Should have waited for retries
+  }, 10000);
 
   it('converts markdown to HTML and counts words', async () => {
     const mockGenerateContent = vi.mocked(generateContent);
