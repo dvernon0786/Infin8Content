@@ -933,6 +933,203 @@ await logActionAsync({
 })
 ```
 
+### Content Writing Agent Service (Story B-3)
+
+#### Overview
+The Content Writing Agent Service generates high-quality, coherent article sections by calling an LLM with a fixed prompt, research results, and prior section context. This service ensures content consistency and adherence to organization guidelines.
+
+#### Architecture
+- **Service Layer**: `lib/services/article-generation/content-writing-agent.ts`
+- **API Endpoint**: `POST /api/articles/{article_id}/sections/{section_id}/write`
+- **Prompt Integrity**: `lib/llm/prompts/content-writing.prompt.ts` with SHA-256 hashing
+- **Database**: Updates `article_sections` table with generated content
+
+#### Critical Security Features
+
+**Prompt Integrity Enforcement**:
+```typescript
+// Fixed system prompt with runtime integrity check
+assertPromptIntegrity(
+  CONTENT_WRITING_SYSTEM_PROMPT,
+  CONTENT_WRITING_PROMPT_HASH,
+  'ContentWritingAgent'
+);
+
+// Safety check for role placement
+if (messages[0]?.role !== 'system') {
+  throw new Error('System prompt must be first message.');
+}
+```
+
+**Timeout Protection**:
+```typescript
+// 60-second timeout enforcement
+const timeoutPromise = new Promise<never>((_, reject) => {
+  setTimeout(() => reject(new Error('Content writing timeout: 60 seconds exceeded')), 60000)
+});
+
+const result = await Promise.race([
+  generateContent(messages, options),
+  timeoutPromise
+]);
+```
+
+#### Service Pattern
+
+```typescript
+// Content writing with retry logic and comprehensive logging
+for (let attempt = 1; attempt <= 3; attempt++) {
+  try {
+    console.log(`Content writing attempt ${attempt}/3`);
+    result = await Promise.race([generateContent(messages, options), timeoutPromise]);
+    console.log(`Content writing succeeded on attempt ${attempt}`);
+    break;
+  } catch (error) {
+    console.error(`Attempt ${attempt} failed:`, error);
+    if (attempt < 3 && isRetryableError(error)) {
+      const delayMs = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+      console.log(`Retrying in ${delayMs}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+}
+```
+
+#### Markdown to HTML Conversion
+
+```typescript
+// Safe markdown parsing with XSS protection
+async function convertMarkdownToHtml(markdown: string): Promise<string> {
+  const escapeHtml = (text: string): string => {
+    const map: Record<string, string> = {
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, (char) => map[char]);
+  };
+
+  let html = escapeHtml(markdown);
+  
+  // Process headers, code blocks, lists, links, emphasis
+  html = html
+    .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+    .replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+      const escapedCode = escapeHtml(code.trim());
+      return `<pre><code class="language-${lang || ''}">${escapedCode}</code></pre>`;
+    })
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+  return html;
+}
+```
+
+#### API Integration Pattern
+
+```typescript
+// Authentication and organization validation
+const currentUser = await getCurrentUser();
+if (!currentUser || !currentUser.org_id) {
+  return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+}
+
+// Section validation with RLS
+const { data: section } = await supabase
+  .from('article_sections')
+  .select(`*, articles(organization_id)`)
+  .eq('id', section_id)
+  .eq('articles.organization_id', currentUser.org_id)
+  .single();
+
+// Status validation
+if (section.status !== 'researched') {
+  return NextResponse.json({ 
+    error: 'Section must be researched before writing',
+    current_status: section.status 
+  }, { status: 400 });
+}
+
+// Audit logging
+await logActionAsync({
+  orgId: currentUser.org_id,
+  userId: currentUser.id,
+  action: 'article.section.content_generation.started',
+  details: { section_id, article_id },
+  ipAddress: extractIpAddress(request.headers),
+  userAgent: extractUserAgent(request.headers),
+});
+```
+
+#### Error Handling Strategy
+
+**Retryable Error Classification**:
+```typescript
+function isRetryableError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const retryablePatterns = [
+      /timeout/i, /network/i, /rate limit/i, /temporary/i,
+      /connection/i, /ECONNRESET/i, /ETIMEDOUT/i
+    ];
+    return retryablePatterns.some(pattern => pattern.test(error.message));
+  }
+  return true; // Retry on unknown errors by default
+}
+```
+
+**Database Error Handling**:
+```typescript
+// Service layer retries, API layer persists failures
+try {
+  result = await runContentWritingAgent(input);
+} catch (error) {
+  // Persist failure state
+  await supabase
+    .from('article_sections')
+    .update({ 
+      status: 'failed',
+      error_details: { message: (error as Error)?.message, attempts: 3 },
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', section_id);
+  throw error;
+}
+```
+
+#### Testing Strategy
+
+**Unit Tests**:
+- Prompt integrity enforcement
+- Timeout enforcement (60-second limit)
+- Exponential backoff timing (2s, 4s, 8s)
+- Markdown to HTML conversion
+- Error classification and retry logic
+
+**Integration Tests**:
+- Full API endpoint with authentication
+- Organization isolation enforcement
+- Database operations and status transitions
+- Audit logging verification
+
+**Test Example**:
+```typescript
+it('enforces 60-second timeout', async () => {
+  const mockGenerateContent = vi.fn().mockImplementation(() => new Promise(() => {}));
+  
+  const start = Date.now();
+  await expect(runContentWritingAgent(input)).rejects.toThrow('60 seconds exceeded');
+  const duration = Date.now() - start;
+  
+  expect(duration).toBeLessThan(65000);
+}, 70000);
+```
+  },
+  ipAddress: extractIpAddress(request.headers),
+  userAgent: extractUserAgent(request.headers),
+})
+```
+
 #### Progress Calculation Pattern
 
 ```typescript
