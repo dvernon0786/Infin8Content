@@ -11,6 +11,15 @@ export type OnboardingValidationError =
   | 'CONTENT_DEFAULTS_MISSING'
   | 'KEYWORD_SETTINGS_MISSING'
 
+interface OrganizationData {
+  onboarding_completed: boolean
+  website_url: string | null
+  business_description: string | null
+  target_audiences: string[] | null
+  content_defaults: Record<string, any> | null
+  keyword_settings: Record<string, any> | null
+}
+
 export interface OnboardingValidationResult {
   isValid: boolean
   missingSteps: string[]        // ALWAYS an array, never undefined
@@ -56,46 +65,43 @@ export async function validateOnboardingComplete(
     }
   }
 
-  if (!org.onboarding_completed) {
+  // Type assertion to ensure we have the correct data structure
+  const organizationData = org as unknown as OrganizationData
+
+  if (!organizationData.onboarding_completed) {
     errors.push('ONBOARDING_NOT_COMPLETED')
     missingSteps.push('Complete onboarding process')
   }
 
-  if (!org.website_url) {
+  if (!organizationData.website_url) {
     errors.push('WEBSITE_URL_MISSING')
     missingSteps.push('Add website URL')
   } else {
     // Validate URL format
     try {
-      new URL(org.website_url)
+      new URL(organizationData.website_url)
     } catch {
       errors.push('WEBSITE_URL_INVALID')
       missingSteps.push('Fix website URL format')
     }
   }
 
-  if (!org.business_description || org.business_description.length < 10) {
+  if (!organizationData.business_description || organizationData.business_description.length < 50) {
     errors.push('BUSINESS_DESCRIPTION_MISSING')
-    missingSteps.push('Add business description (min 10 characters)')
+    missingSteps.push('Add business description (min 50 characters)')
   }
 
-  if (!org.target_audiences || org.target_audiences.length === 0) {
+  if (!organizationData.target_audiences || organizationData.target_audiences.length === 0) {
     errors.push('TARGET_AUDIENCES_EMPTY')
-    missingSteps.push('Select target audiences')
+    missingSteps.push('Add target audiences')
   }
 
-  if (
-    !org.content_defaults ||
-    Object.keys(org.content_defaults).length === 0
-  ) {
+  if (!organizationData.content_defaults || Object.keys(organizationData.content_defaults).length === 0) {
     errors.push('CONTENT_DEFAULTS_MISSING')
     missingSteps.push('Configure content defaults')
   }
 
-  if (
-    !org.keyword_settings ||
-    Object.keys(org.keyword_settings).length === 0
-  ) {
+  if (!organizationData.keyword_settings || Object.keys(organizationData.keyword_settings).length === 0) {
     errors.push('KEYWORD_SETTINGS_MISSING')
     missingSteps.push('Configure keyword settings')
   }
