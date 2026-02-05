@@ -5,6 +5,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AIEnhancedInput } from "@/components/onboarding/ai-enhanced-input"
 import { cn } from "@/lib/utils"
 
 interface StepCompetitorsProps {
@@ -123,19 +124,14 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
               {competitors.map((competitor, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <div className="flex-1 space-y-2">
-                    <Input
-                      type="url"
-                      placeholder={`Competitor ${index + 1} URL`}
+                    <AIEnhancedInput
                       value={competitor}
-                      onChange={(e) => updateCompetitor(index, e.target.value)}
-                      className={cn(errors[`competitor_${index}`] && "border-destructive")}
-                      aria-describedby={errors[`competitor_${index}`] ? `competitor_${index}-error` : undefined}
+                      onChange={(value) => updateCompetitor(index, value)}
+                      context="competitors"
+                      placeholder={`Competitor ${index + 1} URL`}
+                      error={errors[`competitor_${index}`]}
+                      aria-label={`Competitor ${index + 1} URL with AI suggestions`}
                     />
-                    {errors[`competitor_${index}`] && (
-                      <p id={`competitor_${index}-error`} className="text-sm text-destructive" role="alert">
-                        {errors[`competitor_${index}`]}
-                      </p>
-                    )}
                   </div>
                   {competitors.length > 1 && (
                     <Button
