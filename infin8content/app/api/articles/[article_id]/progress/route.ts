@@ -57,8 +57,10 @@ import { NextResponse } from 'next/server'
  */
 export async function GET(
   request: Request,
-  { params }: { params: { article_id: string } }
+  context: { params: Promise<{ article_id: string }> }
 ) {
+  const { article_id: articleId } = await context.params
+  
   try {
     // Authenticate user
     const currentUser = await getCurrentUser()
@@ -70,7 +72,6 @@ export async function GET(
     }
 
     const organizationId = currentUser.org_id
-    const articleId = params.article_id
 
     // Validate article ID format
     if (!articleId || typeof articleId !== 'string' || articleId.length < 10) {
