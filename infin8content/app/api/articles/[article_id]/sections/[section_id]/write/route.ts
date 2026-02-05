@@ -41,9 +41,10 @@ async function logActionAsync(data: {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { article_id: string; section_id: string } }
+  { params }: { params: Promise<{ article_id: string; section_id: string }> }
 ) {
   const startTime = Date.now();
+  const { article_id, section_id } = await params;
 
   try {
     // Authentication
@@ -53,7 +54,6 @@ export async function POST(
     }
 
     const supabase = createServiceRoleClient();
-    const { article_id, section_id } = params;
 
     // Log audit event - content generation started
     await logActionAsync({
