@@ -486,7 +486,7 @@ development_status:
   a-2-onboarding-guard-middleware: done
 a-3-onboarding-api-endpoints: done
   a-4-onboarding-ui-components: done
-  a-5-onboarding-agent-ai-autocomplete: review
+  a-5-onboarding-agent-ai-autocomplete: done
   a-6-onboarding-validator: backlog
   epic-a-retrospective: optional
 
