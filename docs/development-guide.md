@@ -1728,6 +1728,151 @@ export async function POST(
 - **401 Unauthorized**: Authentication required
 - **404 Not Found**: Workflow not found
 
+## Research Agent Patterns (Story B-2)
+
+### Research Agent Usage
+The Research Agent provides deterministic research capabilities for article sections using Perplexity Sonar API.
+
+```typescript
+import { runResearchAgent } from '@/lib/services/article-generation/research-agent'
+
+const researchResults = await runResearchAgent({
+  sectionHeader: 'Introduction to AI',
+  sectionType: 'introduction',
+  priorSections: completedSections,
+  organizationContext: {
+    name: 'Tech Education Co',
+    description: 'Educational platform for technology topics',
+    website: 'https://techedu.com',
+    industry: 'education'
+  }
+})
+```
+
+### Research Agent Architecture
+The Research Agent follows a pure function pattern with separate status management:
+
+```typescript
+// Core research (pure function)
+const researchOutput = await runResearchAgent(input)
+
+// Status management (separate service)
+await markSectionResearching(sectionId)
+await markSectionResearched(sectionId, researchOutput)
+```
+
+### Key Implementation Patterns
+
+#### 1. Fixed Prompt Enforcement
+```typescript
+export const RESEARCH_AGENT_SYSTEM_PROMPT = `Role
+You are an expert Research Analyst specialized in conducting targeted research using multiple web searches...`
+
+// Tests enforce exact equality
+expect(systemPrompt).toBe(RESEARCH_AGENT_SYSTEM_PROMPT)
+```
+
+#### 2. Timeout and Retry Pattern
+```typescript
+// Timeout enforcement
+const timeoutPromise = new Promise<never>((_, reject) => {
+  setTimeout(() => reject(new Error('Research timeout: 30 seconds exceeded')), 30000)
+})
+
+const result = await Promise.race([executeResearchWithRetry(userPrompt), timeoutPromise])
+```
+
+#### 3. Search Limit Enforcement
+```typescript
+// Hard limit enforcement post-processing
+if (researchData.queries.length > 10) {
+  researchData.queries = researchData.queries.slice(0, 10)
+  researchData.results = researchData.results.slice(0, 10)
+  researchData.totalSearches = 10
+}
+```
+
+#### 4. Server-Only Security Pattern
+```typescript
+function assertServerContext(): void {
+  if (typeof window !== 'undefined') {
+    throw new Error('Research agent updater used in browser context')
+  }
+}
+```
+
+### Error Handling Patterns
+
+#### Timeout Errors
+```typescript
+try {
+  const result = await runResearchAgent(input)
+  return result
+} catch (error) {
+  if (error.message.includes('Research timeout')) {
+    // Handle timeout specifically
+  }
+  throw error
+}
+```
+
+#### Non-Retryable Errors
+```typescript
+// 401/403 errors propagate immediately without retry
+if (error.message.includes('HTTP 401') || error.message.includes('HTTP 403')) {
+  throw error
+}
+```
+
+#### JSON Parsing Errors
+```typescript
+try {
+  const parsed = JSON.parse(content)
+  return parsed
+} catch (error) {
+  if (error instanceof SyntaxError) {
+    throw new Error('Invalid JSON response from research service')
+  }
+  throw error
+}
+```
+
+### Testing Patterns
+
+#### Unit Test Structure
+```typescript
+describe('Research Agent Service', () => {
+  it('should enforce exact canonical system prompt', async () => {
+    const result = await runResearchAgent(mockInput)
+    const systemPrompt = vi.mocked(generateContent).mock.calls[0][0][0].content
+    expect(systemPrompt).toBe(RESEARCH_AGENT_SYSTEM_PROMPT)
+  })
+})
+```
+
+#### Integration Test Pattern
+```typescript
+it.skipIf(!process.env.OPENROUTER_API_KEY)('should call real Perplexity API', async () => {
+  const result = await runResearchAgent(mockInput)
+  expect(result.results.length).toBeGreaterThan(0)
+  expect(result.results[0].citations.length).toBeGreaterThan(0)
+}, 45000)
+```
+
+### Performance Considerations
+- **Typical Response**: 2-8 seconds for simple queries
+- **Maximum Timeout**: 30 seconds enforced
+- **Search Limit**: 10 searches maximum (hard enforced)
+- **Memory Usage**: Minimal - pure function pattern
+- **Concurrent Requests**: Sequential processing only
+
+### Security Guidelines
+- Server-only execution enforced
+- Organization isolation via RLS
+- Fixed prompt prevents injection
+- No sensitive data in error messages
+- Structured error reporting only
+
 **Audit Logging:**
 - `workflow.gate.seeds_allowed`: Gate passes, access granted
 - `workflow.gate.seeds_blocked`: Gate blocks, access denied
