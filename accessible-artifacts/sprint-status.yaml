@@ -496,7 +496,7 @@ a-3-onboarding-api-endpoints: done
   b-2-research-agent-service: done
   b-3-content-writing-agent-service: done
   b-4-sequential-orchestration-inngest: done
-  b-5-article-status-tracking: backlog
+  b-5-article-status-tracking: done
   epic-b-retrospective: optional
 
   # Epic C: Assembly, Status & Publishing (20 hours - 4 stories)

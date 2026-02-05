@@ -186,3 +186,44 @@ export interface ContentDefaults {
   global_instructions: string
   auto_publish_rules?: Record<string, any>
 }
+
+// Article Progress Tracking Types (Story B-5)
+export interface ArticleProgressResponse {
+  articleId: string
+  status: ArticleProgressStatus
+
+  progress: {
+    completedSections: number
+    totalSections: number
+    percentage: number
+    currentSection?: {
+      id: string
+      section_order: number
+      section_header: string
+      status: string
+    }
+  }
+
+  timing: {
+    startedAt?: string
+    estimatedCompletionAt?: string
+    averageSectionDurationSeconds?: number
+  }
+
+  error?: {
+    message: string
+    failedSectionOrder?: number
+    failedAt?: string
+  }
+}
+
+export interface ProgressApiResponse {
+  success: true
+  data: ArticleProgressResponse
+}
+
+export interface ProgressApiErrorResponse {
+  success: false
+  error: string
+  code?: 'NOT_FOUND' | 'UNAUTHORIZED' | 'FORBIDDEN' | 'INVALID_REQUEST' | 'DATABASE_ERROR' | 'INTERNAL_ERROR'
+}
