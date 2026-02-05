@@ -125,6 +125,29 @@ export interface ArticleSection {
   updated_at: string;
 }
 
+// Research Agent Types (Story B-2)
+export interface ResearchAgentInput {
+  sectionHeader: string;
+  sectionType: string;
+  priorSections: ArticleSection[];
+  organizationContext: {
+    name: string;
+    description: string;
+    website?: string;
+    industry?: string;
+  };
+}
+
+export interface ResearchAgentOutput {
+  queries: string[];
+  results: {
+    query: string;
+    answer: string;
+    citations: string[];
+  }[];
+  totalSearches: number;
+}
+
 export interface CreateArticleSectionParams {
   article_id: string;
   section_order: number;

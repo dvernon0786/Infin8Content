@@ -493,7 +493,7 @@ a-3-onboarding-api-endpoints: done
   # Epic B: Deterministic Article Pipeline (26 hours - 5 stories)
   epic-b: in-progress
   b-1-article-sections-data-model: done
-  b-2-research-agent-service: backlog
+  b-2-research-agent-service: done
   b-3-content-writing-agent-service: backlog
   b-4-sequential-orchestration-inngest: backlog
   b-5-article-status-tracking: backlog
