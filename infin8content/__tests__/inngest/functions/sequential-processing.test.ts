@@ -118,12 +118,12 @@ describe('B-4 Sequential Processing Logic', () => {
   })
 
   it('maintains execution order with proper timing', async () => {
-    const timestamps: number[] = []
+    const executionLog: string[] = []
     
     const mockFunction = vi.fn().mockImplementation(async (id: number) => {
-      timestamps.push(Date.now())
+      executionLog.push(`start:${id}`)
       await new Promise(resolve => setTimeout(resolve, 10 * id)) // Variable delay
-      timestamps.push(Date.now())
+      executionLog.push(`end:${id}`)
       return `result-${id}`
     })
 
@@ -132,16 +132,23 @@ describe('B-4 Sequential Processing Logic', () => {
     const result2 = await mockFunction(2)  
     const result3 = await mockFunction(3)
 
-    // Verify all completed
+    // Verify all completed in correct order
     expect([result1, result2, result3]).toEqual(['result-1', 'result-2', 'result-3'])
     expect(mockFunction).toHaveBeenCalledTimes(3)
 
-    // Verify timing shows sequential execution
-    expect(timestamps).toHaveLength(6) // 3 starts + 3 ends
-    expect(timestamps[0]).toBeLessThan(timestamps[1]) // 1 starts before 1 ends
-    expect(timestamps[1]).toBeLessThan(timestamps[2]) // 1 ends before 2 starts
-    expect(timestamps[2]).toBeLessThan(timestamps[3]) // 2 starts before 2 ends
-    expect(timestamps[3]).toBeLessThan(timestamps[4]) // 2 ends before 3 starts
-    expect(timestamps[4]).toBeLessThan(timestamps[5]) // 3 starts before 3 ends
+    // Verify execution order from the log
+    expect(executionLog).toEqual([
+      'start:1',
+      'end:1',
+      'start:2',
+      'end:2', 
+      'start:3',
+      'end:3'
+    ])
+
+    // Verify that each function was called in order
+    expect(mockFunction.mock.calls[0][0]).toBe(1)
+    expect(mockFunction.mock.calls[1][0]).toBe(2)
+    expect(mockFunction.mock.calls[2][0]).toBe(3)
   })
 })
