@@ -47,7 +47,7 @@ export const generateArticle = inngest.createFunction(
       if (error || !data) throw new Error('Article not found')
 
       // Type guard to ensure we have the expected data structure
-      const articleData = data as { id: string; organization_id: string; status: string }
+      const articleData = data as unknown as { id: string; organization_id: string; status: string }
 
       // 🔴 REQUIRED FIX 1: Prevent double execution
       if (['completed', 'failed', 'generating'].includes(articleData.status)) {
@@ -93,7 +93,7 @@ export const generateArticle = inngest.createFunction(
       if (error || !data) throw new Error('Failed to load sections')
       
       // 🔴 REQUIRED FIX 2: Explicit section ordering assertion
-      const sectionsArray = data as ArticleSection[]
+      const sectionsArray = data as unknown as ArticleSection[]
       sectionsArray.sort((a, b) => a.section_order - b.section_order)
       return sectionsArray
     })
