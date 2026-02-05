@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { AuditAction } from '@/types/audit'
 
 export type OnboardingValidationError =
   | 'ONBOARDING_NOT_COMPLETED'
@@ -140,7 +141,7 @@ export async function validateOnboardingComplete(
     await logActionAsync({
       orgId: organizationId,
       userId: 'system', // This is a system validation, not user-initiated
-      action: validationResult.isValid ? 'onboarding.validation.succeeded' : 'onboarding.validation.failed',
+      action: validationResult.isValid ? AuditAction.ONBOARDING_VALIDATION_SUCCEEDED : AuditAction.ONBOARDING_VALIDATION_FAILED,
       details: {
         validationTime,
         errors: validationResult.errors,
