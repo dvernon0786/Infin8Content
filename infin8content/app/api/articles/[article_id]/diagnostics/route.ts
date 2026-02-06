@@ -3,21 +3,21 @@ import { NextResponse } from 'next/server'
 
 /**
  * Diagnostic endpoint to check article status and Inngest event details
- * GET /api/articles/[id]/diagnostics
+ * GET /api/articles/[article_id]/diagnostics
  */
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ article_id: string }> }
 ) {
   try {
-    const { id } = await params
+    const { article_id } = await params
     const supabase = createServiceRoleClient()
 
     // Get article details including Inngest event ID
     const { data: article, error } = await supabase
       .from('articles' as any)
       .select('id, keyword, status, inngest_event_id, generation_started_at, created_at, error_details')
-      .eq('id', id)
+      .eq('id', article_id)
       .single()
 
     if (error || !article) {

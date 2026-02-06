@@ -18,7 +18,7 @@ import { NextResponse } from 'next/server'
  * Response (Success - 200):
  * - success: boolean
  * - data: ArticleProgress object containing:
- *   - articleId: string
+ *   - article_id: string
  *   - status: 'queued' | 'generating' | 'completed' | 'failed'
  *   - progress: {
  *     - completedSections: number
@@ -57,9 +57,9 @@ import { NextResponse } from 'next/server'
  */
 export async function GET(
   request: Request,
-  context: { params: Promise<{ article_id: string }> }
+  { params }: { params: Promise<{ article_id: string }> }
 ) {
-  const { article_id: articleId } = await context.params
+  const { article_id } = await params
   
   try {
     // Authenticate user
@@ -74,7 +74,7 @@ export async function GET(
     const organizationId = currentUser.org_id
 
     // Validate article ID format
-    if (!articleId || typeof articleId !== 'string' || articleId.length < 10) {
+    if (!article_id || typeof article_id !== 'string' || article_id.length < 10) {
       return NextResponse.json<ProgressApiErrorResponse>(
         { success: false, error: 'Invalid article ID', code: 'INVALID_REQUEST' },
         { status: 400 }
@@ -100,7 +100,7 @@ export async function GET(
           updated_at
         )
       `)
-      .eq('id', articleId)
+      .eq('id', article_id)
       .eq('organization_id', organizationId)  // Defensive filtering
       .single() as any);
 
@@ -154,7 +154,7 @@ export async function GET(
           userId: currentUser.id,
           action: AuditAction.WORKFLOW_ARTICLE_GENERATION_PROGRESS_QUERIED,
           details: {
-            articleId: articleId,
+            article_id: article_id,
             articleStatus: (articleData as any).status,
             progressPercentage: progress.progress.percentage,
             completedSections: progress.progress.completedSections,

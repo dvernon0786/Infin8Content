@@ -438,11 +438,11 @@ development_status:
   epic-35-retrospective: done
 
   # Epic 36: Keyword Refinement & Topic Clustering
-  epic-36: in-progress
+  epic-36: done
   36-1-filter-keywords-for-quality-and-relevance: done
   36-2-cluster-keywords-into-hub-and-spoke-structure: done
   36-3-validate-cluster-coherence-and-structure: done
-  epic-36-retrospective: optional
+  epic-36-retrospective: done
 
   # Epic 37: Content Topic Generation & Approval
   epic-37: done
@@ -460,15 +460,15 @@ development_status:
   epic-38-retrospective: done
 
   # Epic 39: Workflow Orchestration & State Management
-  epic-39: in-progress
+  epic-39: done
   39-1-enforce-hard-gate-icp-required-for-all-downstream-steps: done
   39-2-enforce-hard-gate-competitors-required-for-seed-keywords: done
   39-3-enforce-hard-gate-approved-seeds-required-for-longtail-expansion: done
   39-4-enforce-hard-gate-longtails-required-for-subtopics: done
-39-5-enforce-hard-gate-approval-required-for-articles: done
+  39-5-enforce-hard-gate-approval-required-for-articles: done
   39-6-create-workflow-status-dashboard: done
   39-7-display-workflow-blocking-conditions: done
-  epic-39-retrospective: optional
+  epic-39-retrospective: done
 
   # Epic 40: Feature Flag Rollout & Brownfield Safety
   epic-40: backlog
@@ -481,10 +481,10 @@ development_status:
   # === FORMALIZED EPICS A, B, C (PRD v1.0 - NEW) ===
   
   # Epic A: Onboarding System & Guards (26 hours - 6 stories)
-  epic-a: in-progress
+  epic-a: done
   a-1-data-model-extensions: done
   a-2-onboarding-guard-middleware: done
-a-3-onboarding-api-endpoints: done
+  a-3-onboarding-api-endpoints: done
   a-4-onboarding-ui-components: done
   a-5-onboarding-agent-ai-autocomplete: done
   a-6-onboarding-validator: done

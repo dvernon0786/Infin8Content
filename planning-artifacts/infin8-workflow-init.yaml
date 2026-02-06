@@ -1,0 +1,110 @@
+---
+# Infin8Content Workflow Configuration
+# Generated: 2026-02-06
+# Project: Content Generation Platform
+# Type: Feature Enhancement Workflow
+
+project:
+  name: "Infin8Content"
+  type: "content-generation-platform"
+  version: "v2.0"
+  status: "active-development"
+
+workflow:
+  type: "feature-enhancement"
+  category: "intent-engine-extension"
+  priority: "high"
+  estimated_duration: "2-3 weeks"
+  
+directories:
+  project_root: "/home/dghost/Desktop/Infin8Content"
+  planning_artifacts: "/home/dghost/Desktop/Infin8Content/planning-artifacts"
+  implementation_artifacts: "/home/dghost/Desktop/Infin8Content/implementation-artifacts"
+  docs_folder: "/home/dghost/Desktop/Infin8Content/docs"
+  tests_folder: "/home/dghost/Desktop/Infin8Content/__tests__"
+
+current_state:
+  completed_epics: 40+
+  active_epics:
+    - "epic-36: Keyword Refinement & Topic Clustering (in-progress)"
+    - "epic-39: Workflow Orchestration & State Management (in-progress)"
+    - "epic-a: Onboarding System & Guards (in-progress)"
+  recent_completions:
+    - "epic-b: Deterministic Article Pipeline (done)"
+    - "epic-c: Assembly, Status & Publishing (done)"
+  
+dependencies:
+  database:
+    - "supabase"
+    - "postgresql"
+  services:
+    - "openrouter"
+    - "dataforseo"
+    - "tavily"
+    - "perplexity"
+  infrastructure:
+    - "nextjs"
+    - "inngest"
+    - "stripe"
+
+quality_gates:
+  test_coverage_required: true
+  code_review_required: true
+  documentation_required: true
+  security_review: true for sensitive changes
+  migration_required: for database changes
+
+available_workflows:
+  - "/agent-builder"
+  - "/analyst"
+  - "/architect"
+  - "/code-review"
+  - "/correct-course"
+  - "/create-excalidraw-dataflow"
+  - "/create-excalidraw-diagram"
+  - "/create-excalidraw-flowchart"
+  - "/create-excalidraw-wireframe"
+  - "/create-story"
+  - "/dev"
+  - "/dev-story"
+  - "/document-project"
+  - "/index-docs"
+  - "/module-builder"
+  - "/pm"
+  - "/quick-flow-solo-dev"
+  - "/retrospective"
+  - "/sm"
+  - "/source-tree-analysis"
+  - "/sprint-planning"
+  - "/sprint-status"
+  - "/tea"
+  - "/tech-writer"
+  - "/ux-designer"
+  - "/workflow-builder"
+  - "/workflow-status"
+
+next_steps:
+  1. Choose specific workflow based on requirements
+  2. Follow workflow-specific steps
+  3. Use appropriate agent for specialized tasks
+  4. Track progress in workflow status file
+  5. Validate completion against acceptance criteria
+
+environment:
+  node_version: "18+"
+  package_manager: "npm"
+  framework: "nextjs"
+  database: "supabase"
+  deployment: "vercel"
+
+notes: |
+  This is a mature project with extensive existing functionality.
+  Focus on integration with existing patterns and maintaining backward compatibility.
+  Current priority areas: Intent Engine completion, workflow orchestration, onboarding system.
+  
+  Key architectural patterns to follow:
+  - Intent Engine workflow steps with proper state management
+  - Organization isolation via RLS policies
+  - Audit logging for compliance
+  - Real-time updates via Supabase subscriptions
+  - Deterministic article generation pipeline
