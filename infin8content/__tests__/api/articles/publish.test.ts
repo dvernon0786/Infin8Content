@@ -23,6 +23,8 @@ vi.mock('@/lib/supabase/publish-references', () => ({
 const originalEnv = process.env;
 
 describe('/api/articles/publish', () => {
+  let mockCreateClient: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
     process.env = {
@@ -34,6 +36,10 @@ describe('/api/articles/publish', () => {
       NEXT_PUBLIC_SUPABASE_URL: 'https://test.supabase.co',
       SUPABASE_SERVICE_ROLE_KEY: 'test-key',
     };
+
+    // Get mock reference
+    const { createClient } = require('@supabase/supabase-js');
+    mockCreateClient = vi.mocked(createClient);
   });
 
   afterEach(() => {
@@ -66,7 +72,6 @@ describe('/api/articles/publish', () => {
       };
 
       // Mock Supabase responses
-      const { createClient } = require('@supabase/supabase-js');
       const mockSupabaseClient = {
         auth: { getSession: vi.fn().mockResolvedValue({ data: { session: mockSession } }) },
         from: vi.fn().mockReturnValue({
@@ -79,7 +84,7 @@ describe('/api/articles/publish', () => {
           }),
         }),
       };
-      createClient.mockReturnValue(mockSupabaseClient);
+      mockCreateClient.mockReturnValue(mockSupabaseClient);
 
       // Mock publish references
       const { getPublishReference, createPublishReference } = require('@/lib/supabase/publish-references');
@@ -142,7 +147,6 @@ describe('/api/articles/publish', () => {
       };
 
       // Mock Supabase responses
-      const { createClient } = require('@supabase/supabase-js');
       const mockSupabaseClient = {
         auth: { getSession: vi.fn().mockResolvedValue({ data: { session: mockSession } }) },
         from: vi.fn().mockReturnValue({
@@ -155,7 +159,7 @@ describe('/api/articles/publish', () => {
           }),
         }),
       };
-      createClient.mockReturnValue(mockSupabaseClient);
+      mockCreateClient.mockReturnValue(mockSupabaseClient);
 
       // Mock publish references
       const { getPublishReference } = require('@/lib/supabase/publish-references');
@@ -197,7 +201,6 @@ describe('/api/articles/publish', () => {
       };
 
       // Mock Supabase responses
-      const { createClient } = require('@supabase/supabase-js');
       const mockSupabaseClient = {
         auth: { getSession: vi.fn().mockResolvedValue({ data: { session: mockSession } }) },
         from: vi.fn().mockReturnValue({
@@ -210,7 +213,7 @@ describe('/api/articles/publish', () => {
           }),
         }),
       };
-      createClient.mockReturnValue(mockSupabaseClient);
+      mockCreateClient.mockReturnValue(mockSupabaseClient);
 
       const request = new NextRequest('http://localhost/api/articles/publish', {
         method: 'POST',
@@ -243,11 +246,10 @@ describe('/api/articles/publish', () => {
 
     it('should handle authentication errors', async () => {
       // Mock Supabase auth error
-      const { createClient } = require('@supabase/supabase-js');
       const mockSupabaseClient = {
         auth: { getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: 'Auth error' }) },
       };
-      createClient.mockReturnValue(mockSupabaseClient);
+      mockCreateClient.mockReturnValue(mockSupabaseClient);
 
       const request = new NextRequest('http://localhost/api/articles/publish', {
         method: 'POST',
@@ -286,7 +288,6 @@ describe('/api/articles/publish', () => {
       };
 
       // Mock Supabase responses
-      const { createClient } = require('@supabase/supabase-js');
       const mockSupabaseClient = {
         auth: { getSession: vi.fn().mockResolvedValue({ data: { session: mockSession } }) },
         from: vi.fn().mockReturnValue({
@@ -299,7 +300,7 @@ describe('/api/articles/publish', () => {
           }),
         }),
       };
-      createClient.mockReturnValue(mockSupabaseClient);
+      mockCreateClient.mockReturnValue(mockSupabaseClient);
 
       // Mock publish references
       const { getPublishReference } = require('@/lib/supabase/publish-references');

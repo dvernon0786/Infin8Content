@@ -481,28 +481,28 @@ development_status:
   # === FORMALIZED EPICS A, B, C (PRD v1.0 - NEW) ===
   
   # Epic A: Onboarding System & Guards (26 hours - 6 stories)
-  epic-a: backlog
-  a-1-data-model-extensions: backlog
-  a-2-onboarding-guard-middleware: backlog
-  a-3-onboarding-api-endpoints: backlog
-  a-4-onboarding-ui-components: backlog
-  a-5-onboarding-agent-ai-autocomplete: backlog
-  a-6-onboarding-validator: backlog
-  epic-a-retrospective: optional
+  epic-a: in-progress
+  a-1-data-model-extensions: done
+  a-2-onboarding-guard-middleware: done
+a-3-onboarding-api-endpoints: done
+  a-4-onboarding-ui-components: done
+  a-5-onboarding-agent-ai-autocomplete: done
+  a-6-onboarding-validator: done
+  epic-a-retrospective: done
 
   # Epic B: Deterministic Article Pipeline (26 hours - 5 stories)
-  epic-b: backlog
-  b-1-article-sections-data-model: backlog
-  b-2-research-agent-service: backlog
-  b-3-content-writing-agent-service: backlog
-  b-4-sequential-orchestration-inngest: backlog
-  b-5-article-status-tracking: backlog
-  epic-b-retrospective: optional
+  epic-b: done
+  b-1-article-sections-data-model: done
+  b-2-research-agent-service: done
+  b-3-content-writing-agent-service: done
+  b-4-sequential-orchestration-inngest: done
+  b-5-article-status-tracking: done
+  epic-b-retrospective: done
 
   # Epic C: Assembly, Status & Publishing (20 hours - 4 stories)
-  epic-c: backlog
-  c-1-article-assembly-service: backlog
-  c-2-publish-references-table: backlog
-  c-3-wordpress-publishing-service: backlog
+  epic-c: in-progress
+  c-1-article-assembly-service: done
+  c-2-publish-references-table: done
+  c-3-wordpress-publishing-service: review
   c-4-publishing-api-endpoint: backlog
   epic-c-retrospective: optional

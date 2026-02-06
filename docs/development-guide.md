@@ -886,6 +886,213 @@ logIntentActionAsync({
 - **Article Events**: `article.queued`, `article.generated`, `article.failed`
 - **System Events**: `system.error`, `system.retry_exhausted`
 
+### Article Assembly Service (Story C-1)
+
+#### Overview
+The Article Assembly Service combines completed article sections into final markdown and HTML content with table of contents generation and metadata calculation. This service transforms individual sections into a cohesive, publishable article.
+
+#### Architecture
+- **Service Layer**: `lib/services/article-generation/article-assembler.ts`
+- **Type Definitions**: `types/article.ts` (AssemblyInput, AssemblyOutput, TOCEntry)
+- **Database**: Updates `articles` table with final content and metadata
+- **Integration**: Called by Inngest functions during article generation workflow
+
+#### Service Pattern
+
+```typescript
+import { ArticleAssembler } from '@/lib/services/article-generation/article-assembler'
+import { AssemblyInput, AssemblyOutput } from '@/types/article'
+
+const assembler = new ArticleAssembler()
+const result = await assembler.assemble({
+  articleId: 'article-uuid',
+  organizationId: 'org-uuid'
+})
+
+// Returns: AssemblyOutput with markdown, html, wordCount, readingTimeMinutes, tableOfContents
+```
+
+#### Core Assembly Logic
+
+**Section Loading**:
+```typescript
+// Load completed sections in order
+const sections = await this.loadSections({ articleId, organizationId })
+if (!sections.length) {
+  throw new Error('No completed sections found')
+}
+```
+
+**Table of Contents Generation**:
+```typescript
+private buildTOC(sections: ArticleAssemblySection[]): TOCEntry[] {
+  return sections.map(section => ({
+    level: 2,
+    header: section.title,
+    anchor: this.slugify(section.title)
+  }))
+}
+
+private slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+}
+```
+
+**Markdown Assembly**:
+```typescript
+private buildMarkdown(title: string, toc: TOCEntry[], sections: ArticleAssemblySection[]): string {
+  const tocBlock = toc.map(t => `- [${t.header}](#${t.anchor})`).join('\n')
+  const body = sections.map(s => `## ${s.title}\n\n${s.content_markdown.trim()}\n`).join('\n')
+  return `# ${title}\n\n## Table of Contents\n${tocBlock}\n\n${body}`
+}
+```
+
+**HTML Assembly**:
+```typescript
+private buildHTML(title: string, toc: TOCEntry[], sections: ArticleAssemblySection[]): string {
+  const tocHtml = toc.map(t => `<li><a href="#${t.anchor}">${t.header}</a></li>`).join('')
+  const body = sections.map(s => `
+<section id="${this.slugify(s.title)}">
+  <h2>${s.title}</h2>
+  ${s.content_html}
+</section>`).join('\n')
+  
+  return `
+<h1>${title}</h1>
+<nav>
+  <ul>${tocHtml}</ul>
+</nav>
+${body}
+`.trim()
+}
+```
+
+**Metadata Calculation**:
+```typescript
+private countWords(markdown: string): number {
+  // Extract only actual content words, not headers or TOC
+  const contentLines = markdown.split('\n')
+    .filter(line => !line.startsWith('#') && !line.startsWith('- [') && line.trim())
+  
+  const contentText = contentLines.join(' ')
+  return contentText
+    .replace(/[#*_>\-\n`]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean).length
+}
+
+// Reading time: 200 words per minute, rounded up
+const readingTimeMinutes = Math.ceil(wordCount / 200)
+```
+
+**Note**: Word count excludes headers and table of contents to provide accurate content metrics for users.
+
+#### Error Handling and Retry Logic
+
+**Retry Policy**:
+```typescript
+return retryWithPolicy(async () => {
+  // Assembly logic here
+}, DEFAULT_RETRY_POLICY, 'article-assembly')
+```
+
+**Error Classification**:
+- Missing article: "Article not found or access denied"
+- No completed sections: "No completed sections found"
+- Database errors: Proper error propagation with retry
+
+**Analytics Events**:
+```typescript
+logger.log('article.assembly.started', { articleId, organizationId })
+// ... assembly logic ...
+logger.log('article.assembly.completed', { 
+  articleId, 
+  organizationId, 
+  wordCount, 
+  readingTimeMinutes, 
+  durationMs: Date.now() - start 
+})
+```
+
+#### Testing Strategy
+
+**Unit Tests**:
+- Assembly order verification (sections ordered correctly)
+- TOC generation with proper anchors
+- Word count calculation (content only, no headers)
+- Reading time calculation (200 wpm, rounded up)
+- Empty section handling
+- Idempotency (re-run overwrites content)
+- Error scenarios (missing article, no sections)
+
+**Test Example**:
+```typescript
+describe('ArticleAssembler', () => {
+  it('assembles markdown in correct order', async () => {
+    const result = await assembler.assemble(mockInput)
+    expect(result.markdown).toContain('## First Section')
+    expect(result.markdown).toContain('## Second Section')
+    expect(result.tableOfContents).toHaveLength(2)
+  })
+
+  it('calculates word count from content only', async () => {
+    const result = await assembler.assemble(mockInput)
+    expect(result.wordCount).toBe(5) // Content words only
+    expect(result.readingTimeMinutes).toBe(1) // Math.ceil(5/200)
+  })
+})
+```
+
+#### Performance and Security
+
+**Performance**:
+- Assembly time < 5 seconds
+- Supports up to 10 sections per article
+- Single atomic database write for final content
+- Efficient word counting (content-only parsing)
+
+**Security**:
+- Organization isolation via RLS
+- Service role client for admin operations
+- No intermediate analytics events
+- Backend-only execution
+- Input validation and sanitization
+
+#### Integration Patterns
+
+**Inngest Integration**:
+```typescript
+// Inngest step calling assembly service
+export const assembleArticleStep = inngest.createFunction(
+  { id: 'assemble-article' },
+  { event: 'article/assembly.requested' },
+  async ({ event }) => {
+    const assembler = new ArticleAssembler()
+    return await assembler.assemble({
+      articleId: event.data.articleId,
+      organizationId: event.data.organizationId
+    })
+  }
+)
+```
+
+**Database Transaction**:
+```typescript
+// Single atomic write for final content
+await this.persistResult({
+  articleId: input.articleId,
+  markdown,
+  html,
+  wordCount,
+  readingTimeMinutes
+})
+```
+
 ### Article Generation Progress Tracking (Story 38.2)
 
 #### Overview
@@ -927,6 +1134,203 @@ await logActionAsync({
     workflow_id: workflowId,
     article_count: articles.length,
     filters_applied: filters
+  },
+  ipAddress: extractIpAddress(request.headers),
+  userAgent: extractUserAgent(request.headers),
+})
+```
+
+### Content Writing Agent Service (Story B-3)
+
+#### Overview
+The Content Writing Agent Service generates high-quality, coherent article sections by calling an LLM with a fixed prompt, research results, and prior section context. This service ensures content consistency and adherence to organization guidelines.
+
+#### Architecture
+- **Service Layer**: `lib/services/article-generation/content-writing-agent.ts`
+- **API Endpoint**: `POST /api/articles/{article_id}/sections/{section_id}/write`
+- **Prompt Integrity**: `lib/llm/prompts/content-writing.prompt.ts` with SHA-256 hashing
+- **Database**: Updates `article_sections` table with generated content
+
+#### Critical Security Features
+
+**Prompt Integrity Enforcement**:
+```typescript
+// Fixed system prompt with runtime integrity check
+assertPromptIntegrity(
+  CONTENT_WRITING_SYSTEM_PROMPT,
+  CONTENT_WRITING_PROMPT_HASH,
+  'ContentWritingAgent'
+);
+
+// Safety check for role placement
+if (messages[0]?.role !== 'system') {
+  throw new Error('System prompt must be first message.');
+}
+```
+
+**Timeout Protection**:
+```typescript
+// 60-second timeout enforcement
+const timeoutPromise = new Promise<never>((_, reject) => {
+  setTimeout(() => reject(new Error('Content writing timeout: 60 seconds exceeded')), 60000)
+});
+
+const result = await Promise.race([
+  generateContent(messages, options),
+  timeoutPromise
+]);
+```
+
+#### Service Pattern
+
+```typescript
+// Content writing with retry logic and comprehensive logging
+for (let attempt = 1; attempt <= 3; attempt++) {
+  try {
+    console.log(`Content writing attempt ${attempt}/3`);
+    result = await Promise.race([generateContent(messages, options), timeoutPromise]);
+    console.log(`Content writing succeeded on attempt ${attempt}`);
+    break;
+  } catch (error) {
+    console.error(`Attempt ${attempt} failed:`, error);
+    if (attempt < 3 && isRetryableError(error)) {
+      const delayMs = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+      console.log(`Retrying in ${delayMs}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+}
+```
+
+#### Markdown to HTML Conversion
+
+```typescript
+// Safe markdown parsing with XSS protection
+async function convertMarkdownToHtml(markdown: string): Promise<string> {
+  const escapeHtml = (text: string): string => {
+    const map: Record<string, string> = {
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, (char) => map[char]);
+  };
+
+  let html = escapeHtml(markdown);
+  
+  // Process headers, code blocks, lists, links, emphasis
+  html = html
+    .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+    .replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+      const escapedCode = escapeHtml(code.trim());
+      return `<pre><code class="language-${lang || ''}">${escapedCode}</code></pre>`;
+    })
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+  return html;
+}
+```
+
+#### API Integration Pattern
+
+```typescript
+// Authentication and organization validation
+const currentUser = await getCurrentUser();
+if (!currentUser || !currentUser.org_id) {
+  return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+}
+
+// Section validation with RLS
+const { data: section } = await supabase
+  .from('article_sections')
+  .select(`*, articles(organization_id)`)
+  .eq('id', section_id)
+  .eq('articles.organization_id', currentUser.org_id)
+  .single();
+
+// Status validation
+if (section.status !== 'researched') {
+  return NextResponse.json({ 
+    error: 'Section must be researched before writing',
+    current_status: section.status 
+  }, { status: 400 });
+}
+
+// Audit logging
+await logActionAsync({
+  orgId: currentUser.org_id,
+  userId: currentUser.id,
+  action: 'article.section.content_generation.started',
+  details: { section_id, article_id },
+  ipAddress: extractIpAddress(request.headers),
+  userAgent: extractUserAgent(request.headers),
+});
+```
+
+#### Error Handling Strategy
+
+**Retryable Error Classification**:
+```typescript
+function isRetryableError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const retryablePatterns = [
+      /timeout/i, /network/i, /rate limit/i, /temporary/i,
+      /connection/i, /ECONNRESET/i, /ETIMEDOUT/i
+    ];
+    return retryablePatterns.some(pattern => pattern.test(error.message));
+  }
+  return true; // Retry on unknown errors by default
+}
+```
+
+**Database Error Handling**:
+```typescript
+// Service layer retries, API layer persists failures
+try {
+  result = await runContentWritingAgent(input);
+} catch (error) {
+  // Persist failure state
+  await supabase
+    .from('article_sections')
+    .update({ 
+      status: 'failed',
+      error_details: { message: (error as Error)?.message, attempts: 3 },
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', section_id);
+  throw error;
+}
+```
+
+#### Testing Strategy
+
+**Unit Tests**:
+- Prompt integrity enforcement
+- Timeout enforcement (60-second limit)
+- Exponential backoff timing (2s, 4s, 8s)
+- Markdown to HTML conversion
+- Error classification and retry logic
+
+**Integration Tests**:
+- Full API endpoint with authentication
+- Organization isolation enforcement
+- Database operations and status transitions
+- Audit logging verification
+
+**Test Example**:
+```typescript
+it('enforces 60-second timeout', async () => {
+  const mockGenerateContent = vi.fn().mockImplementation(() => new Promise(() => {}));
+  
+  const start = Date.now();
+  await expect(runContentWritingAgent(input)).rejects.toThrow('60 seconds exceeded');
+  const duration = Date.now() - start;
+  
+  expect(duration).toBeLessThan(65000);
+}, 70000);
+```
   },
   ipAddress: extractIpAddress(request.headers),
   userAgent: extractUserAgent(request.headers),
@@ -1727,6 +2131,151 @@ export async function POST(
 - **200 OK**: Gate passes, continue to step logic
 - **401 Unauthorized**: Authentication required
 - **404 Not Found**: Workflow not found
+
+## Research Agent Patterns (Story B-2)
+
+### Research Agent Usage
+The Research Agent provides deterministic research capabilities for article sections using Perplexity Sonar API.
+
+```typescript
+import { runResearchAgent } from '@/lib/services/article-generation/research-agent'
+
+const researchResults = await runResearchAgent({
+  sectionHeader: 'Introduction to AI',
+  sectionType: 'introduction',
+  priorSections: completedSections,
+  organizationContext: {
+    name: 'Tech Education Co',
+    description: 'Educational platform for technology topics',
+    website: 'https://techedu.com',
+    industry: 'education'
+  }
+})
+```
+
+### Research Agent Architecture
+The Research Agent follows a pure function pattern with separate status management:
+
+```typescript
+// Core research (pure function)
+const researchOutput = await runResearchAgent(input)
+
+// Status management (separate service)
+await markSectionResearching(sectionId)
+await markSectionResearched(sectionId, researchOutput)
+```
+
+### Key Implementation Patterns
+
+#### 1. Fixed Prompt Enforcement
+```typescript
+export const RESEARCH_AGENT_SYSTEM_PROMPT = `Role
+You are an expert Research Analyst specialized in conducting targeted research using multiple web searches...`
+
+// Tests enforce exact equality
+expect(systemPrompt).toBe(RESEARCH_AGENT_SYSTEM_PROMPT)
+```
+
+#### 2. Timeout and Retry Pattern
+```typescript
+// Timeout enforcement
+const timeoutPromise = new Promise<never>((_, reject) => {
+  setTimeout(() => reject(new Error('Research timeout: 30 seconds exceeded')), 30000)
+})
+
+const result = await Promise.race([executeResearchWithRetry(userPrompt), timeoutPromise])
+```
+
+#### 3. Search Limit Enforcement
+```typescript
+// Hard limit enforcement post-processing
+if (researchData.queries.length > 10) {
+  researchData.queries = researchData.queries.slice(0, 10)
+  researchData.results = researchData.results.slice(0, 10)
+  researchData.totalSearches = 10
+}
+```
+
+#### 4. Server-Only Security Pattern
+```typescript
+function assertServerContext(): void {
+  if (typeof window !== 'undefined') {
+    throw new Error('Research agent updater used in browser context')
+  }
+}
+```
+
+### Error Handling Patterns
+
+#### Timeout Errors
+```typescript
+try {
+  const result = await runResearchAgent(input)
+  return result
+} catch (error) {
+  if (error.message.includes('Research timeout')) {
+    // Handle timeout specifically
+  }
+  throw error
+}
+```
+
+#### Non-Retryable Errors
+```typescript
+// 401/403 errors propagate immediately without retry
+if (error.message.includes('HTTP 401') || error.message.includes('HTTP 403')) {
+  throw error
+}
+```
+
+#### JSON Parsing Errors
+```typescript
+try {
+  const parsed = JSON.parse(content)
+  return parsed
+} catch (error) {
+  if (error instanceof SyntaxError) {
+    throw new Error('Invalid JSON response from research service')
+  }
+  throw error
+}
+```
+
+### Testing Patterns
+
+#### Unit Test Structure
+```typescript
+describe('Research Agent Service', () => {
+  it('should enforce exact canonical system prompt', async () => {
+    const result = await runResearchAgent(mockInput)
+    const systemPrompt = vi.mocked(generateContent).mock.calls[0][0][0].content
+    expect(systemPrompt).toBe(RESEARCH_AGENT_SYSTEM_PROMPT)
+  })
+})
+```
+
+#### Integration Test Pattern
+```typescript
+it.skipIf(!process.env.OPENROUTER_API_KEY)('should call real Perplexity API', async () => {
+  const result = await runResearchAgent(mockInput)
+  expect(result.results.length).toBeGreaterThan(0)
+  expect(result.results[0].citations.length).toBeGreaterThan(0)
+}, 45000)
+```
+
+### Performance Considerations
+- **Typical Response**: 2-8 seconds for simple queries
+- **Maximum Timeout**: 30 seconds enforced
+- **Search Limit**: 10 searches maximum (hard enforced)
+- **Memory Usage**: Minimal - pure function pattern
+- **Concurrent Requests**: Sequential processing only
+
+### Security Guidelines
+- Server-only execution enforced
+- Organization isolation via RLS
+- Fixed prompt prevents injection
+- No sensitive data in error messages
+- Structured error reporting only
 
 **Audit Logging:**
 - `workflow.gate.seeds_allowed`: Gate passes, access granted

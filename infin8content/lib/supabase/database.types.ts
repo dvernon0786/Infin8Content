@@ -14,28 +14,27 @@ export interface Database {
         Row: {
           id: string;
           article_id: string;
-          cms_type: 'wordpress';
-          published_url: string;
-          external_id?: string;
+          platform: string;
+          platform_post_id: string;
+          platform_url: string;
+          published_at: string;
           created_at: string;
-          updated_at: string;
         };
         Insert: {
           id?: string;
           article_id: string;
-          cms_type: 'wordpress';
-          published_url: string;
-          external_id?: string;
-          created_at?: string;
-          updated_at?: string;
+          platform: string;
+          platform_post_id: string;
+          platform_url: string;
+          published_at: string;
         };
         Update: {
           id?: string;
           article_id?: string;
-          cms_type?: 'wordpress';
-          published_url?: string;
-          external_id?: string;
-          updated_at?: string;
+          platform?: string;
+          platform_post_id?: string;
+          platform_url?: string;
+          published_at?: string;
         };
       };
     };

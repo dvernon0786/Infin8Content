@@ -94,6 +94,11 @@ export const AuditAction = {
     WORKFLOW_ARTICLE_QUEUING_COMPLETED: 'workflow.article_queuing.completed',
     WORKFLOW_ARTICLE_QUEUING_FAILED: 'workflow.article_queuing.failed',
 
+    // Research agent actions (Story B-2)
+    RESEARCH_AGENT_SECTION_STARTED: 'research_agent.section.started',
+    RESEARCH_AGENT_SECTION_COMPLETED: 'research_agent.section.completed',
+    RESEARCH_AGENT_SECTION_FAILED: 'research_agent.section.failed',
+
     // Article generation progress tracking actions (Story 38.2)
     WORKFLOW_ARTICLE_GENERATION_PROGRESS_QUERIED: 'workflow.article_generation.progress_queried',
     WORKFLOW_ARTICLE_GENERATION_PROGRESS_ERROR: 'workflow.article_generation.progress_error',
@@ -121,6 +126,10 @@ export const AuditAction = {
     WORKFLOW_GATE_SUBTOPICS_ALLOWED: 'workflow.gate.subtopics_allowed',
     WORKFLOW_GATE_SUBTOPICS_BLOCKED: 'workflow.gate.subtopics_blocked',
     WORKFLOW_GATE_SUBTOPICS_ERROR: 'workflow.gate.subtopics_error',
+
+    // Onboarding validation actions (Story A-6)
+    ONBOARDING_VALIDATION_SUCCEEDED: 'onboarding.validation.succeeded',
+    ONBOARDING_VALIDATION_FAILED: 'onboarding.validation.failed',
 
     // Article linking actions (Story 38.3)
     WORKFLOW_ARTICLES_LINKING_STARTED: 'workflow.articles.linking.started',

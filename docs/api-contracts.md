@@ -148,6 +148,126 @@ Publishes article to WordPress (Story 5-1 implementation).
 - Synchronous execution with 30s timeout
 - Error handling for API failures
 
+#### POST /api/articles/{article_id}/sections/{section_id}/write
+Generates content for a specific article section using AI (Story B-3 implementation).
+
+**Authentication:** Required (401 if not authenticated)  
+**Authorization:** User must belong to the same organization as the article
+
+**Request Body:** Empty (all data retrieved from database)
+
+**Response:** 200 OK
+```typescript
+{
+  success: true,
+  data: {
+    section_id: string,
+    status: 'completed',
+    markdown: string,
+    html: string,
+    word_count: number
+  }
+}
+```
+
+**Error Responses:**
+- 400: Section must be researched before writing
+- 401: Authentication required
+- 404: Section not found
+- 500: Content writing failed
+
+**Features:**
+- Fixed system prompt with integrity enforcement (SHA-256 hashing)
+- 60-second timeout protection
+- Exponential backoff retry (2s, 4s, 8s)
+- Comprehensive audit logging
+- Markdown to HTML conversion with XSS protection
+- Organization isolation via RLS
+- Prior sections context for coherence
+
+#### Article Assembly Service (Story C-1)
+
+**Service Overview**
+The Article Assembly Service combines completed article sections into final markdown and HTML content with table of contents generation and metadata calculation.
+
+**Core Function**
+```typescript
+interface AssemblyInput {
+  articleId: string
+  organizationId: string
+}
+
+interface AssemblyOutput {
+  markdown: string
+  html: string
+  wordCount: number
+  readingTimeMinutes: number
+  tableOfContents: TOCEntry[]
+}
+
+class ArticleAssembler {
+  async assemble(input: AssemblyInput): Promise<AssemblyOutput>
+}
+
+private countWords(markdown: string): number {
+  // Extract only actual content words, not headers or TOC
+  const contentLines = markdown.split('\n')
+    .filter(line => !line.startsWith('#') && !line.startsWith('- [') && line.trim())
+  
+  const contentText = contentLines.join(' ')
+  return contentText
+    .replace(/[#*_>\-\n`]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean).length
+}
+
+// Reading time: 200 words per minute, rounded up
+const readingTimeMinutes = Math.ceil(wordCount / 200)
+```
+
+**Assembly Process**
+1. Load article with status 'generating'
+2. Load all completed sections in order
+3. Generate table of contents with anchors
+4. Assemble markdown with H2 headers
+5. Assemble HTML with proper structure
+6. Calculate word count (content only, no headers)
+7. Calculate reading time (200 words/minute, rounded up)
+8. Persist final content to articles table
+9. Update article status to 'completed'
+
+**Business Rules**
+- Sections ordered by `section_order` ASC
+- H2 headers only for section titles
+- TOC generated from section titles with slugified anchors
+- Word count excludes headers and TOC
+- Reading time calculated as `Math.ceil(words / 200)`
+- Idempotent: re-running overwrites previous content
+- Graceful handling of missing/empty sections
+
+**Error Handling**
+- Missing article: "Article not found or access denied"
+- No completed sections: "No completed sections found"
+- Database errors: proper error propagation
+- Retry with exponential backoff (2s, 4s, 8s)
+
+**Analytics Events**
+- `article.assembly.started` - when assembly begins
+- `article.assembly.completed` - when assembly finishes
+
+**Performance**
+- Assembly time < 5 seconds
+- Supports up to 10 sections per article
+- Single atomic database write for final content
+
+**Security**
+- Organization isolation via RLS
+- Service role client for admin operations
+- No intermediate analytics events
+- Backend-only execution
+
 ### Organizations Endpoints
 
 #### GET /api/organizations
@@ -222,6 +342,43 @@ Common HTTP status codes:
 - 503: Service Unavailable (feature disabled)
 
 ### Intent Workflow Endpoints
+
+#### Onboarding Validation Gate (Story A-6)
+Intent workflow creation is protected by an onboarding completion validation gate. This ensures that all required onboarding steps are completed before any Intent Engine workflows can be created.
+
+**Gate Behavior:**
+- **403 Forbidden:** Returned when onboarding is incomplete with detailed error list
+- **200 Allowed:** Gate passes, workflow creation proceeds
+- **Authoritative:** Server-side validation (cannot be bypassed by client)
+
+**Validated Requirements:**
+- `onboarding_completed = true`
+- `website_url` is not null and valid URL
+- `business_description` is not null and > 10 characters
+- `target_audiences` array is not empty
+- `competitors` table has 3-7 entries for the organization
+- `content_defaults` JSONB is not empty
+- `keyword_settings` JSONB is not empty
+
+**Error Response Format:**
+```json
+{
+  "error": "ONBOARDING_INCOMPLETE",
+  "details": [
+    "WEBSITE_URL_MISSING",
+    "COMPETITORS_INVALID_COUNT"
+  ]
+}
+```
+
+**Protected Endpoints:**
+- POST /api/intent/workflows
+
+**Audit Logging:**
+All validation attempts are logged with:
+- `onboarding.validation.succeeded` - when validation passes
+- `onboarding.validation.failed` - when validation fails
+- Full context including organization ID, missing requirements, and error details
 
 #### ICP Gate Enforcement (Story 39-1)
 All downstream Intent Engine workflow endpoints are protected by an ICP (Ideal Customer Profile) completion gate. This ensures that ICP generation is completed before any subsequent workflow steps can be executed.
@@ -791,6 +948,84 @@ Retrieves Intent Engine audit logs for compliance tracking (Story 37.4).
 
 **Audit Logging:**
 - `audit.queries.executed` - Logs each audit query for meta-auditing
+
+## Research Agent Service (Story B-2)
+
+### Service Overview
+The Research Agent Service provides deterministic research capabilities for article sections using Perplexity Sonar API with a fixed, immutable system prompt.
+
+### Core Function
+```typescript
+export async function runResearchAgent(
+  input: ResearchAgentInput
+): Promise<ResearchAgentOutput>
+```
+
+### Input Interface
+```typescript
+interface ResearchAgentInput {
+  sectionHeader: string;
+  sectionType: string;
+  priorSections: ArticleSection[];
+  organizationContext: {
+    name: string;
+    description: string;
+    website?: string;
+    industry?: string;
+  };
+}
+```
+
+### Output Interface
+```typescript
+interface ResearchAgentOutput {
+  queries: string[];
+  results: {
+    query: string;
+    answer: string;
+    citations: string[];
+  }[];
+  totalSearches: number;
+}
+```
+
+### Key Features
+- **Fixed System Prompt**: Locked, immutable prompt using expert Research Analyst persona
+- **Perplexity Sonar Integration**: Uses `perplexity/llama-3.1-sonar-small-128k-online` model
+- **Search Limits**: Hard maximum of 10 searches per section
+- **Timeout Enforcement**: 30-second absolute timeout via Promise.race()
+- **Retry Logic**: 3 attempts with exponential backoff (2s, 4s, 8s)
+- **JSON Output**: Structured research results with citations
+
+### Usage Pattern
+```typescript
+import { runResearchAgent } from '@/lib/services/article-generation/research-agent';
+
+const researchResults = await runResearchAgent({
+  sectionHeader: 'Introduction to AI',
+  sectionType: 'introduction',
+  priorSections: completedSections,
+  organizationContext: orgContext
+});
+```
+
+### Error Handling
+- **Timeout**: Rejects with "Research timeout: 30 seconds exceeded"
+- **Non-retryable**: 401/403 errors propagate immediately
+- **Retryable**: 429/5xx errors trigger exponential backoff
+- **JSON Parsing**: Malformed responses throw "Invalid JSON response from research service"
+
+### Performance Characteristics
+- **Typical Response**: 2-8 seconds for simple queries
+- **Maximum Timeout**: 30 seconds enforced
+- **Search Limit**: 10 searches maximum (hard enforced)
+- **Retry Pattern**: 2s → 4s → 8s backoff
+
+### Security Notes
+- Server-only execution (browser context blocked)
+- Organization isolation via RLS
+- No prompt modification possible (locked in code)
+- Structured error reporting without sensitive data exposure
 
 ## Rate Limiting
 
