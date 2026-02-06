@@ -1,5 +1,5 @@
 // Publish References Unit Tests
-// Story 5-1: Publish Article to WordPress (Minimal One-Click Export)
+// Story C-2: Publish References Table
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { 
@@ -31,10 +31,11 @@ describe('Publish References Service', () => {
       const mockReference = {
         id: 'ref-123',
         article_id: 'article-123',
-        cms_type: 'wordpress',
-        published_url: 'https://testsite.com/article',
+        platform: 'wordpress',
+        platform_post_id: '123',
+        platform_url: 'https://testsite.com/article',
+        published_at: '2024-01-01T00:00:00Z',
         created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
       };
 
       const mockSelect = { single: vi.fn().mockResolvedValue({ data: mockReference, error: null }) };
@@ -47,7 +48,7 @@ describe('Publish References Service', () => {
       expect(result).toEqual(mockReference);
       expect(mockSupabase.from).toHaveBeenCalledWith('publish_references');
       expect(mockEq).toHaveBeenCalledWith('article_id', 'article-123');
-      expect(mockEq).toHaveBeenCalledWith('cms_type', 'wordpress');
+      expect(mockEq).toHaveBeenCalledWith('platform', 'wordpress');
     });
 
     it('should return null when no reference exists', async () => {
@@ -85,15 +86,16 @@ describe('Publish References Service', () => {
     it('should create new publish reference', async () => {
       const newReference = {
         article_id: 'article-123',
-        cms_type: 'wordpress',
-        published_url: 'https://testsite.com/article',
+        platform: 'wordpress',
+        platform_post_id: '123',
+        platform_url: 'https://testsite.com/article',
+        published_at: '2024-01-01T00:00:00Z',
       };
 
       const createdReference = {
         id: 'ref-123',
         ...newReference,
         created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
       };
 
       const mockSelect = { single: vi.fn().mockResolvedValue({ data: createdReference, error: null }) };
@@ -105,14 +107,16 @@ describe('Publish References Service', () => {
 
       expect(result).toEqual(createdReference);
       expect(mockSupabase.from).toHaveBeenCalledWith('publish_references');
-      expect(mockInsert).toHaveBeenCalledWith(newReference);
+      expect(mockFrom.insert).toHaveBeenCalledWith(newReference);
     });
 
     it('should throw error when creation fails', async () => {
       const newReference = {
         article_id: 'article-123',
-        cms_type: 'wordpress',
-        published_url: 'https://testsite.com/article',
+        platform: 'wordpress',
+        platform_post_id: '123',
+        platform_url: 'https://testsite.com/article',
+        published_at: '2024-01-01T00:00:00Z',
       };
 
       const mockSelect = { 
@@ -135,18 +139,20 @@ describe('Publish References Service', () => {
         {
           id: 'ref-123',
           article_id: 'article-123',
-          cms_type: 'wordpress',
-          published_url: 'https://testsite.com/article',
+          platform: 'wordpress',
+          platform_post_id: '123',
+          platform_url: 'https://testsite.com/article',
+          published_at: '2024-01-01T00:00:00Z',
           created_at: '2024-01-01T00:00:00Z',
-          updated_at: '2024-01-01T00:00:00Z',
         },
         {
           id: 'ref-456',
           article_id: 'article-123',
-          cms_type: 'wordpress',
-          published_url: 'https://anothersite.com/article',
+          platform: 'wordpress',
+          platform_post_id: '456',
+          platform_url: 'https://anothersite.com/article',
+          published_at: '2024-01-02T00:00:00Z',
           created_at: '2024-01-02T00:00:00Z',
-          updated_at: '2024-01-02T00:00:00Z',
         },
       ];
 
@@ -159,7 +165,7 @@ describe('Publish References Service', () => {
       const result = await getPublishReferencesForArticle('article-123');
 
       expect(result).toEqual(mockReferences);
-      expect(mockEq).toHaveBeenCalledWith('article_id', 'article-123');
+      expect(mockSelect.eq).toHaveBeenCalledWith('article_id', 'article-123');
       expect(mockOrder).toHaveBeenCalledWith('created_at', { ascending: false });
     });
 
@@ -200,7 +206,7 @@ describe('Publish References Service', () => {
 
       expect(result).toBe(true);
       expect(mockSupabase.from).toHaveBeenCalledWith('publish_references');
-      expect(mockEq).toHaveBeenCalledWith('id', 'ref-123');
+      expect(mockDelete.eq).toHaveBeenCalledWith('id', 'ref-123');
     });
 
     it('should throw error when deletion fails', async () => {

@@ -1,5 +1,5 @@
 // Publish References Service
-// Story 5-1: Publish Article to WordPress (Minimal One-Click Export)
+// Story C-2: Publish References Table
 // Handles database operations for publish references table
 
 import { createClient } from '@supabase/supabase-js';
@@ -8,18 +8,19 @@ import { Database } from '../supabase/database.types';
 export interface PublishReference {
   id: string;
   article_id: string;
-  cms_type: 'wordpress';
-  published_url: string;
-  external_id?: string;
+  platform: string;
+  platform_post_id: string;
+  platform_url: string;
+  published_at: string;
   created_at: string;
-  updated_at: string;
 }
 
 export interface CreatePublishReferenceData {
   article_id: string;
-  cms_type: 'wordpress';
-  published_url: string;
-  external_id?: string;
+  platform: string;
+  platform_post_id: string;
+  platform_url: string;
+  published_at: string;
 }
 
 // Lazy initialise Supabase client to avoid import-time crashes
@@ -31,14 +32,14 @@ function getSupabaseClient() {
 }
 
 /**
- * Check if an article has already been published to a specific CMS
+ * Check if an article has already been published to a specific platform
  * @param articleId - The article ID to check
- * @param cmsType - The CMS type (currently only 'wordpress')
+ * @param platform - The platform (e.g., 'wordpress')
  * @returns The existing publish reference or null
  */
 export async function getPublishReference(
   articleId: string,
-  cmsType: 'wordpress' = 'wordpress'
+  platform: string = 'wordpress'
 ): Promise<PublishReference | null> {
   try {
     const supabase = getSupabaseClient();
@@ -46,7 +47,7 @@ export async function getPublishReference(
       .from('publish_references')
       .select('*')
       .eq('article_id', articleId)
-      .eq('cms_type', cmsType)
+      .eq('platform', platform)
       .single();
 
     if (error) {
