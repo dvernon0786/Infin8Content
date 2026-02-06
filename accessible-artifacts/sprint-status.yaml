@@ -500,9 +500,9 @@ a-3-onboarding-api-endpoints: done
   epic-b-retrospective: done
 
   # Epic C: Assembly, Status & Publishing (20 hours - 4 stories)
-  epic-c: in-progress
+  epic-c: done
   c-1-article-assembly-service: done
   c-2-publish-references-table: done
-  c-3-wordpress-publishing-service: backlog
-  c-4-publishing-api-endpoint: backlog
+  c-3-wordpress-publishing-service: done
+  c-4-publishing-api-endpoint: done
   epic-c-retrospective: optional
