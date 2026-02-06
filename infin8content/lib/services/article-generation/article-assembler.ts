@@ -95,7 +95,7 @@ export class ArticleAssembler {
       throw error
     }
 
-    return (data || []).filter(s => s.content_markdown?.trim())
+    return (data || []).filter((s: any) => s.content_markdown?.trim())
   }
 
   private buildTOC(sections: { title: string }[]): TOCEntry[] {
