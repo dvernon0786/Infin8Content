@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       // Article already published - return existing URL
       return NextResponse.json({
         success: true,
-        url: existingReference.published_url,
+        url: existingReference.platform_url,
         alreadyPublished: true,
       });
     }
@@ -158,9 +158,10 @@ export async function POST(request: NextRequest) {
     try {
       await createPublishReference({
         article_id: articleId,
-        cms_type: 'wordpress',
-        published_url: publishResult.url!,
-        external_id: publishResult.postId?.toString(),
+        platform: 'wordpress',
+        platform_post_id: publishResult.postId?.toString() || '',
+        platform_url: publishResult.url!,
+        published_at: new Date().toISOString(),
       });
     } catch (dbError) {
       // Log error but don't fail the publish operation
