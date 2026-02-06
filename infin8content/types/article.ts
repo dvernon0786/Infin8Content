@@ -227,3 +227,32 @@ export interface ProgressApiErrorResponse {
   error: string
   code?: 'NOT_FOUND' | 'UNAUTHORIZED' | 'FORBIDDEN' | 'INVALID_REQUEST' | 'DATABASE_ERROR' | 'INTERNAL_ERROR'
 }
+
+// Article Assembly Types (Story C-1)
+export interface AssemblyInput {
+  articleId: string
+  organizationId: string
+}
+
+export interface TOCEntry {
+  level: number
+  header: string
+  anchor: string
+}
+
+export interface AssemblyOutput {
+  markdown: string
+  html: string
+  wordCount: number
+  readingTimeMinutes: number
+  tableOfContents: TOCEntry[]
+}
+
+export interface AssembledSection {
+  id: string
+  section_order: number
+  title: string
+  content_markdown: string
+  content_html: string
+  status: 'completed'
+}

@@ -185,6 +185,89 @@ Generates content for a specific article section using AI (Story B-3 implementat
 - Organization isolation via RLS
 - Prior sections context for coherence
 
+#### Article Assembly Service (Story C-1)
+
+**Service Overview**
+The Article Assembly Service combines completed article sections into final markdown and HTML content with table of contents generation and metadata calculation.
+
+**Core Function**
+```typescript
+interface AssemblyInput {
+  articleId: string
+  organizationId: string
+}
+
+interface AssemblyOutput {
+  markdown: string
+  html: string
+  wordCount: number
+  readingTimeMinutes: number
+  tableOfContents: TOCEntry[]
+}
+
+class ArticleAssembler {
+  async assemble(input: AssemblyInput): Promise<AssemblyOutput>
+}
+
+private countWords(markdown: string): number {
+  // Extract only actual content words, not headers or TOC
+  const contentLines = markdown.split('\n')
+    .filter(line => !line.startsWith('#') && !line.startsWith('- [') && line.trim())
+  
+  const contentText = contentLines.join(' ')
+  return contentText
+    .replace(/[#*_>\-\n`]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean).length
+}
+
+// Reading time: 200 words per minute, rounded up
+const readingTimeMinutes = Math.ceil(wordCount / 200)
+```
+
+**Assembly Process**
+1. Load article with status 'generating'
+2. Load all completed sections in order
+3. Generate table of contents with anchors
+4. Assemble markdown with H2 headers
+5. Assemble HTML with proper structure
+6. Calculate word count (content only, no headers)
+7. Calculate reading time (200 words/minute, rounded up)
+8. Persist final content to articles table
+9. Update article status to 'completed'
+
+**Business Rules**
+- Sections ordered by `section_order` ASC
+- H2 headers only for section titles
+- TOC generated from section titles with slugified anchors
+- Word count excludes headers and TOC
+- Reading time calculated as `Math.ceil(words / 200)`
+- Idempotent: re-running overwrites previous content
+- Graceful handling of missing/empty sections
+
+**Error Handling**
+- Missing article: "Article not found or access denied"
+- No completed sections: "No completed sections found"
+- Database errors: proper error propagation
+- Retry with exponential backoff (2s, 4s, 8s)
+
+**Analytics Events**
+- `article.assembly.started` - when assembly begins
+- `article.assembly.completed` - when assembly finishes
+
+**Performance**
+- Assembly time < 5 seconds
+- Supports up to 10 sections per article
+- Single atomic database write for final content
+
+**Security**
+- Organization isolation via RLS
+- Service role client for admin operations
+- No intermediate analytics events
+- Backend-only execution
+
 ### Organizations Endpoints
 
 #### GET /api/organizations

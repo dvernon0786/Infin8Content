@@ -886,6 +886,213 @@ logIntentActionAsync({
 - **Article Events**: `article.queued`, `article.generated`, `article.failed`
 - **System Events**: `system.error`, `system.retry_exhausted`
 
+### Article Assembly Service (Story C-1)
+
+#### Overview
+The Article Assembly Service combines completed article sections into final markdown and HTML content with table of contents generation and metadata calculation. This service transforms individual sections into a cohesive, publishable article.
+
+#### Architecture
+- **Service Layer**: `lib/services/article-generation/article-assembler.ts`
+- **Type Definitions**: `types/article.ts` (AssemblyInput, AssemblyOutput, TOCEntry)
+- **Database**: Updates `articles` table with final content and metadata
+- **Integration**: Called by Inngest functions during article generation workflow
+
+#### Service Pattern
+
+```typescript
+import { ArticleAssembler } from '@/lib/services/article-generation/article-assembler'
+import { AssemblyInput, AssemblyOutput } from '@/types/article'
+
+const assembler = new ArticleAssembler()
+const result = await assembler.assemble({
+  articleId: 'article-uuid',
+  organizationId: 'org-uuid'
+})
+
+// Returns: AssemblyOutput with markdown, html, wordCount, readingTimeMinutes, tableOfContents
+```
+
+#### Core Assembly Logic
+
+**Section Loading**:
+```typescript
+// Load completed sections in order
+const sections = await this.loadSections({ articleId, organizationId })
+if (!sections.length) {
+  throw new Error('No completed sections found')
+}
+```
+
+**Table of Contents Generation**:
+```typescript
+private buildTOC(sections: ArticleAssemblySection[]): TOCEntry[] {
+  return sections.map(section => ({
+    level: 2,
+    header: section.title,
+    anchor: this.slugify(section.title)
+  }))
+}
+
+private slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+}
+```
+
+**Markdown Assembly**:
+```typescript
+private buildMarkdown(title: string, toc: TOCEntry[], sections: ArticleAssemblySection[]): string {
+  const tocBlock = toc.map(t => `- [${t.header}](#${t.anchor})`).join('\n')
+  const body = sections.map(s => `## ${s.title}\n\n${s.content_markdown.trim()}\n`).join('\n')
+  return `# ${title}\n\n## Table of Contents\n${tocBlock}\n\n${body}`
+}
+```
+
+**HTML Assembly**:
+```typescript
+private buildHTML(title: string, toc: TOCEntry[], sections: ArticleAssemblySection[]): string {
+  const tocHtml = toc.map(t => `<li><a href="#${t.anchor}">${t.header}</a></li>`).join('')
+  const body = sections.map(s => `
+<section id="${this.slugify(s.title)}">
+  <h2>${s.title}</h2>
+  ${s.content_html}
+</section>`).join('\n')
+  
+  return `
+<h1>${title}</h1>
+<nav>
+  <ul>${tocHtml}</ul>
+</nav>
+${body}
+`.trim()
+}
+```
+
+**Metadata Calculation**:
+```typescript
+private countWords(markdown: string): number {
+  // Extract only actual content words, not headers or TOC
+  const contentLines = markdown.split('\n')
+    .filter(line => !line.startsWith('#') && !line.startsWith('- [') && line.trim())
+  
+  const contentText = contentLines.join(' ')
+  return contentText
+    .replace(/[#*_>\-\n`]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean).length
+}
+
+// Reading time: 200 words per minute, rounded up
+const readingTimeMinutes = Math.ceil(wordCount / 200)
+```
+
+**Note**: Word count excludes headers and table of contents to provide accurate content metrics for users.
+
+#### Error Handling and Retry Logic
+
+**Retry Policy**:
+```typescript
+return retryWithPolicy(async () => {
+  // Assembly logic here
+}, DEFAULT_RETRY_POLICY, 'article-assembly')
+```
+
+**Error Classification**:
+- Missing article: "Article not found or access denied"
+- No completed sections: "No completed sections found"
+- Database errors: Proper error propagation with retry
+
+**Analytics Events**:
+```typescript
+logger.log('article.assembly.started', { articleId, organizationId })
+// ... assembly logic ...
+logger.log('article.assembly.completed', { 
+  articleId, 
+  organizationId, 
+  wordCount, 
+  readingTimeMinutes, 
+  durationMs: Date.now() - start 
+})
+```
+
+#### Testing Strategy
+
+**Unit Tests**:
+- Assembly order verification (sections ordered correctly)
+- TOC generation with proper anchors
+- Word count calculation (content only, no headers)
+- Reading time calculation (200 wpm, rounded up)
+- Empty section handling
+- Idempotency (re-run overwrites content)
+- Error scenarios (missing article, no sections)
+
+**Test Example**:
+```typescript
+describe('ArticleAssembler', () => {
+  it('assembles markdown in correct order', async () => {
+    const result = await assembler.assemble(mockInput)
+    expect(result.markdown).toContain('## First Section')
+    expect(result.markdown).toContain('## Second Section')
+    expect(result.tableOfContents).toHaveLength(2)
+  })
+
+  it('calculates word count from content only', async () => {
+    const result = await assembler.assemble(mockInput)
+    expect(result.wordCount).toBe(5) // Content words only
+    expect(result.readingTimeMinutes).toBe(1) // Math.ceil(5/200)
+  })
+})
+```
+
+#### Performance and Security
+
+**Performance**:
+- Assembly time < 5 seconds
+- Supports up to 10 sections per article
+- Single atomic database write for final content
+- Efficient word counting (content-only parsing)
+
+**Security**:
+- Organization isolation via RLS
+- Service role client for admin operations
+- No intermediate analytics events
+- Backend-only execution
+- Input validation and sanitization
+
+#### Integration Patterns
+
+**Inngest Integration**:
+```typescript
+// Inngest step calling assembly service
+export const assembleArticleStep = inngest.createFunction(
+  { id: 'assemble-article' },
+  { event: 'article/assembly.requested' },
+  async ({ event }) => {
+    const assembler = new ArticleAssembler()
+    return await assembler.assemble({
+      articleId: event.data.articleId,
+      organizationId: event.data.organizationId
+    })
+  }
+)
+```
+
+**Database Transaction**:
+```typescript
+// Single atomic write for final content
+await this.persistResult({
+  articleId: input.articleId,
+  markdown,
+  html,
+  wordCount,
+  readingTimeMinutes
+})
+```
+
 ### Article Generation Progress Tracking (Story 38.2)
 
 #### Overview

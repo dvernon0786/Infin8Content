@@ -491,17 +491,17 @@ a-3-onboarding-api-endpoints: done
   epic-a-retrospective: done
 
   # Epic B: Deterministic Article Pipeline (26 hours - 5 stories)
-  epic-b: in-progress
+  epic-b: done
   b-1-article-sections-data-model: done
   b-2-research-agent-service: done
   b-3-content-writing-agent-service: done
   b-4-sequential-orchestration-inngest: done
   b-5-article-status-tracking: done
-  epic-b-retrospective: optional
+  epic-b-retrospective: done
 
   # Epic C: Assembly, Status & Publishing (20 hours - 4 stories)
-  epic-c: backlog
-  c-1-article-assembly-service: backlog
+  epic-c: in-progress
+  c-1-article-assembly-service: done
   c-2-publish-references-table: backlog
   c-3-wordpress-publishing-service: backlog
   c-4-publishing-api-endpoint: backlog
