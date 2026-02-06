@@ -3,7 +3,7 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { NextResponse } from 'next/server'
 
 /**
- * POST /api/articles/[id]/cancel
+ * POST /api/articles/[article_id]/cancel
  * 
  * Cancels a queued article generation request.
  * Only articles with status "queued" can be cancelled.
@@ -13,7 +13,7 @@ import { NextResponse } from 'next/server'
  * @returns JSON response with success status
  * 
  * Route Parameters:
- * - id: string (required) - UUID of the article to cancel
+ * - article_id: string (required) - UUID of the article to cancel
  * 
  * Response (Success - 200):
  * - success: boolean
@@ -36,10 +36,10 @@ import { NextResponse } from 'next/server'
  */
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ article_id: string }> }
 ) {
   try {
-    const { id } = await params
+    const { article_id } = await params
     const currentUser = await getCurrentUser()
     
     if (!currentUser || !currentUser.org_id) {
@@ -57,7 +57,7 @@ export async function POST(
     const { data: article, error: fetchError } = await (supabase
       .from('articles' as any)
       .select('id, status, org_id')
-      .eq('id', id)
+      .eq('id', article_id)
       .eq('org_id', currentUser.org_id)
       .single() as unknown as Promise<{ data: any; error: any }>)
 
@@ -80,7 +80,7 @@ export async function POST(
     const { error: updateError } = await supabase
       .from('articles' as any)
       .update({ status: 'cancelled' })
-      .eq('id', id)
+      .eq('id', article_id)
 
     if (updateError) {
       console.error('Failed to cancel article:', updateError)
