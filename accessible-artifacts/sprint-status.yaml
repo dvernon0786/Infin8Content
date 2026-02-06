@@ -503,6 +503,6 @@ a-3-onboarding-api-endpoints: done
   epic-c: in-progress
   c-1-article-assembly-service: done
   c-2-publish-references-table: done
-  c-3-wordpress-publishing-service: backlog
+  c-3-wordpress-publishing-service: review
   c-4-publishing-api-endpoint: backlog
   epic-c-retrospective: optional
