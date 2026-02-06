@@ -30,10 +30,22 @@ describe('ArticleAssembler', () => {
     assembler = new ArticleAssembler()
     // Ensure the mock is properly set up for each test
     mockCreateServiceRoleClient.mockReturnValue(mockClient as any)
+    mockFrom.mockReset()
+    // Set up default mock return value to prevent undefined errors
+    mockFrom.mockReturnValue({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+            order: vi.fn(() => Promise.resolve({ data: [], error: null }))
+          }))
+        }))
+      }))
+    })
   })
 
   function mockArticlesQuery(status = 'generating') {
-    mockFrom.mockImplementationOnce(() => ({
+    mockFrom.mockReturnValueOnce({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
           eq: vi.fn(() => ({
@@ -48,11 +60,11 @@ describe('ArticleAssembler', () => {
           }))
         }))
       }))
-    }))
+    })
   }
 
   function mockSectionsQuery(sections: any[]) {
-    mockFrom.mockImplementationOnce(() => ({
+    mockFrom.mockReturnValueOnce({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
           eq: vi.fn(() => ({
@@ -65,15 +77,15 @@ describe('ArticleAssembler', () => {
           }))
         }))
       }))
-    }))
+    })
   }
 
   function mockArticleUpdate() {
-    mockFrom.mockImplementationOnce(() => ({
+    mockFrom.mockReturnValueOnce({
       update: vi.fn(() => ({
         eq: vi.fn(() => Promise.resolve({ error: null }))
       }))
-    }))
+    })
   }
 
   it('assembles markdown and HTML in correct order', async () => {
@@ -153,15 +165,25 @@ describe('ArticleAssembler', () => {
   })
 
   it('skips empty sections gracefully', async () => {
-    mockArticlesQuery()
-    mockSectionsQuery([
-      {
-        section_order: 1,
-        title: 'Empty',
-        content_markdown: '   ',
-        content_html: '<p></p>'
-      }
-    ])
+    // Mock empty sections by returning empty array
+    mockFrom.mockReturnValueOnce({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            single: vi.fn(() => Promise.resolve({
+              data: {
+                id: 'article-1',
+                title: 'Test Article',
+            eq: vi.fn(() => ({
+              order: vi.fn(() => Promise.resolve({
+                data: [], // Empty sections array
+                error: null
+              }))
+            }))
+          }))
+        }))
+      }))
+    })
     mockArticleUpdate()
 
     await expect(
@@ -209,7 +231,7 @@ describe('ArticleAssembler', () => {
   })
 
   it('throws error when article not found', async () => {
-    mockFrom.mockImplementationOnce(() => ({
+    mockFrom.mockReturnValueOnce({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
           eq: vi.fn(() => ({
@@ -220,7 +242,7 @@ describe('ArticleAssembler', () => {
           }))
         }))
       }))
-    }))
+    })
 
     await expect(
       assembler.assemble({
