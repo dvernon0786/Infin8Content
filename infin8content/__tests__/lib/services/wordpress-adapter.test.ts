@@ -2,7 +2,7 @@
 // Story 5-1: Publish Article to WordPress (Minimal One-Click Export)
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { WordPressAdapter, WordPressPostRequest } from '@/lib/services/wordpress-adapter';
+import { WordPressAdapter, WordPressPostRequest } from '../../../lib/services/wordpress-adapter';
 
 // Mock fetch for testing
 const mockFetch = vi.fn();
