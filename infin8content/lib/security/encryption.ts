@@ -1,19 +1,26 @@
 import crypto from "crypto"
 
-// 🚨 CRITICAL: Fail fast if encryption secret is missing
-if (!process.env.INTEGRATION_SECRET) {
-  throw new Error("INTEGRATION_SECRET environment variable is required for credential encryption. Generate with: openssl rand -hex 32")
+// 🚨 CRITICAL: Check for encryption secret
+const INTEGRATION_SECRET = process.env.INTEGRATION_SECRET
+
+// Allow missing during build time, but require at runtime
+if (!INTEGRATION_SECRET && process.env.NODE_ENV === 'production') {
+  console.warn("⚠️ INTEGRATION_SECRET not set - encryption will be disabled until configured")
 }
 
 const ALGO = "aes-256-gcm"
-const KEY = Buffer.from(process.env.INTEGRATION_SECRET, "hex")
+const KEY = INTEGRATION_SECRET ? Buffer.from(INTEGRATION_SECRET, "hex") : null
 
-// Validate key length (must be 32 bytes for AES-256)
-if (KEY.length !== 32) {
+// Validate key length if secret exists
+if (KEY && KEY.length !== 32) {
   throw new Error(`INTEGRATION_SECRET must be 32 bytes (64 hex chars). Got ${KEY.length} bytes.`)
 }
 
 export function encrypt(value: string): string {
+  if (!KEY) {
+    throw new Error("INTEGRATION_SECRET is required for encryption. Please set the environment variable.")
+  }
+  
   const iv = crypto.randomBytes(12)
   const cipher = crypto.createCipheriv(ALGO, KEY, iv)
   const encrypted = Buffer.concat([cipher.update(value, "utf8"), cipher.final()])
@@ -23,6 +30,10 @@ export function encrypt(value: string): string {
 }
 
 export function decrypt(payload: string): string {
+  if (!KEY) {
+    throw new Error("INTEGRATION_SECRET is required for decryption. Please set the environment variable.")
+  }
+  
   const parts = payload.split(":")
   if (parts.length !== 3) {
     throw new Error("Invalid encrypted payload format")
