@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation"
 export default function IntegrationStepPage() {
   const router = useRouter()
 
-  const handleComplete = (data: any) => {
+  const handleComplete = async (data: any) => {
     localStorage.setItem('onboarding-integration', JSON.stringify(data))
     // Mark onboarding complete and redirect to dashboard
     localStorage.setItem('onboarding-completed', 'true')

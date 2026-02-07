@@ -27,7 +27,7 @@ export default function OnboardingPage() {
     }
   }
 
-  const handleComplete = (data: any) => {
+  const handleComplete = async (data: any) => {
     setOnboardingData(prev => ({ ...prev, ...data }))
     // Handle completion - redirect to dashboard
     window.location.href = "/dashboard"
