@@ -223,7 +223,7 @@ export default async function PaymentSuccessPage({
   const supabase = await createClient()
   const { data: organization, error: orgError } = await supabase
     .from('organizations')
-    .select('id, payment_status, plan')
+    .select('id, payment_status, plan, onboarding_completed')
     .eq('id', sessionOrgId)
     .single()
 
@@ -272,10 +272,15 @@ export default async function PaymentSuccessPage({
 
   // If payment is active, show success and redirect
   if (paymentStatus === 'active') {
-    // Get redirect destination from session metadata (for post-reactivation redirect)
-    const redirectTo = validateRedirect(session.metadata?.redirect, '/dashboard')
-    // Check if this was a reactivation (account was suspended before payment)
     const isReactivation = session.metadata?.suspended === 'true'
+
+    // HARD RULE:
+    // - First activation → onboarding (mandatory)
+    // - Reactivation → dashboard (user already completed onboarding)
+    const redirectTo = (organization as any).onboarding_completed
+      ? '/dashboard'
+      : '/onboarding'
+
     return (
       <PaymentSuccessClient
         status="active"

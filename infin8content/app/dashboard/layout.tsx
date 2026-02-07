@@ -3,6 +3,7 @@ import { SidebarNavigation } from "@/components/dashboard/sidebar-navigation"
 import { TopNavigation } from "@/components/dashboard/top-navigation"
 import { ResponsiveLayoutProvider } from "@/components/dashboard/responsive-layout-provider"
 import { getCurrentUser } from "@/lib/supabase/get-current-user"
+import { checkOnboardingStatus } from "@/lib/guards/onboarding-guard"
 import { redirect } from "next/navigation"
 import { PaymentGuard } from "@/components/guards/payment-guard"
 
@@ -15,6 +16,15 @@ export default async function DashboardLayout({
 
     if (!currentUser) {
         redirect("/login")
+    }
+
+    // CHECK ONBOARDING STATUS - HARD GATE
+    if (currentUser.org_id) {
+        const onboardingCompleted = await checkOnboardingStatus(currentUser.org_id)
+        
+        if (!onboardingCompleted) {
+            redirect('/onboarding')  // ← MANDATORY REDIRECT
+        }
     }
 
     return (
