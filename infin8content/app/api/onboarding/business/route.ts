@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
-import { businessSchema } from '@/lib/validation/onboarding-schema'
+import { onboardingProfileSchema } from '@/lib/validation/onboarding-profile-schema'
+import { z, ZodError } from 'zod'
 import { NextResponse } from 'next/server'
 
 /**
@@ -39,7 +40,23 @@ export async function POST(request: Request) {
     const body = await request.json()
     console.log('[Onboarding Business] Request body parsed:', body)
     
-    const validated = businessSchema.parse(body)
+    // Create business-specific schema that includes website URL
+    const businessStepSchema = z.object({
+      website_url: z.string().url("Please enter a valid URL").max(255, "URL must be 255 characters or fewer"),
+      business_description: z.string().min(20, "Business description is too short").max(500, "Business description must be 500 characters or fewer"),
+      target_audiences: z.array(z.string().min(10, "Audience description is too short").max(80, "Each audience must be 80 characters or fewer")).min(1, "At least one target audience is required").max(5, "You can add up to 5 target audiences only").refine(
+        (audiences) =>
+          audiences.every(
+            (a) =>
+              !/^(everyone|anyone|all businesses|general public|people|users|customers)$/i.test(a.trim())
+          ),
+        {
+          message: "Target audiences must be specific (e.g. role + context, not 'everyone')",
+        }
+      )
+    })
+    
+    const validated = businessStepSchema.parse(body)
     console.log('[Onboarding Business] Request validated successfully')
     
     // Authenticate user
@@ -101,15 +118,14 @@ export async function POST(request: Request) {
     })
     
     // Handle Zod validation errors
-    if (error instanceof Error && 'issues' in error) {
-      const zodError = error as any
-      const firstError = zodError.issues?.[0]
+    if (error instanceof ZodError) {
+      const first = error.issues[0]
       return NextResponse.json(
         { 
           error: 'Invalid input',
           details: {
-            field: firstError?.path?.[0] || 'unknown',
-            message: firstError?.message || 'Validation error'
+            field: first.path.join('.') || 'unknown',
+            message: first.message
           }
         },
         { status: 400 }
