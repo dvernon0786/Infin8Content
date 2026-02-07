@@ -70,6 +70,20 @@ export type BusinessDescription = z.infer<typeof businessDescriptionSchema>
 export type TargetAudiences = z.infer<typeof targetAudiencesSchema>
 
 /**
+ * Utility functions for data normalization
+ */
+export function normalizeUrl(url: string): string {
+  if (!url) return url
+  return url.startsWith("http") ? url.replace(/\/$/, "") : `https://${url}`
+}
+
+export function deduplicateAudiences(audiences: string[]): string[] {
+  return Array.from(
+    new Set(audiences.map(a => a.trim().toLowerCase()))
+  )
+}
+
+/**
  * Validation helper functions
  */
 export function validateBusinessDescription(description: string) {

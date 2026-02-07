@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
-import { onboardingProfileSchema } from '@/lib/validation/onboarding-profile-schema'
+import { onboardingProfileSchema, normalizeUrl, deduplicateAudiences } from '@/lib/validation/onboarding-profile-schema'
 import { z, ZodError } from 'zod'
 import { NextResponse } from 'next/server'
 
@@ -56,7 +56,14 @@ export async function POST(request: Request) {
       )
     })
     
-    const validated = businessStepSchema.parse(body)
+    // Apply data normalization before validation
+    const normalizedBody = {
+      website_url: normalizeUrl(body.website_url || ''),
+      business_description: body.business_description || '',
+      target_audiences: deduplicateAudiences(body.target_audiences || [])
+    }
+    
+    const validated = businessStepSchema.parse(normalizedBody)
     console.log('[Onboarding Business] Request validated successfully')
     
     // Authenticate user
