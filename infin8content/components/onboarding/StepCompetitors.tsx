@@ -120,10 +120,16 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Competitor Inputs */}
-            <div className="space-y-3">
+            <div className="space-y-4">
+              <div className="text-sm font-medium">
+                Competitor Websites <span className="text-muted-foreground">(Optional)</span>
+              </div>
               {competitors.map((competitor, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <div className="flex-1 space-y-2">
+                    <label className="text-sm font-medium">
+                      Competitor {index + 1} URL <span className="text-muted-foreground">(Optional)</span>
+                    </label>
                     <AIEnhancedInput
                       value={competitor}
                       onChange={(value) => updateCompetitor(index, value)}

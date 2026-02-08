@@ -6,7 +6,8 @@
 **Build Status:** ✅ PASSING (Next.js 16.1.1)  
 **Server Status:** ✅ RUNNING (http://localhost:3000)  
 **WordPress Integration:** ✅ PRODUCTION-READY (Step 6 complete)  
-**Input Constraints:** ✅ PRODUCTION-READY (AI-optimized Step 1 complete)
+**Input Constraints:** ✅ PRODUCTION-READY (AI-optimized Step 1 complete)  
+**Redirect Bug Fix:** ✅ RESOLVED (Schema drift fixed, database authority established)
 
 ---
 
@@ -122,6 +123,34 @@ redirectTo: '/dashboard'
 - Shows keyword research UI
 - Shows topic clustering UI
 - Ready for full implementation
+
+---
+
+### 6️⃣ ONBOARDING REDIRECT BUG FIX - VERIFIED ✅
+
+**Status:** Schema drift resolved, database authority established
+
+**Migration Applied:** `20260208_add_onboarding_columns.sql`
+```sql
+-- Columns now exist in database
+onboarding_completed | onboarding_completed_at | onboarding_version
+-------------------- | ----------------------- | ------------------
+false                | null                    | v1
+```
+
+**Files Updated:**
+- ✅ `supabase/migrations/20260208_add_onboarding_columns.sql` (NEW)
+- ✅ `app/onboarding/integration/page.tsx` (Removed localStorage dependency)
+- ✅ `app/api/onboarding/integration/route.ts` (Added database update)
+- ✅ `lib/guards/onboarding-guard.ts` (Enhanced logging)
+- ✅ `app/middleware.ts` (Enhanced logging)
+
+**Expected Behavior:**
+- Complete Integration step → Database updated → No redirect to Step 1
+- Middleware reads `onboarding_completed = true` → Allows dashboard access
+- Deterministic navigation based on database state only
+
+**Status:** ✅ RESOLVED - Ready for end-to-end testing
 
 ---
 

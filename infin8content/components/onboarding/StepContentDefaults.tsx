@@ -87,7 +87,7 @@ export function StepContentDefaults({ className, onNext, onSkip }: StepContentDe
             {/* Language */}
             <div className="space-y-2">
               <label htmlFor="language" className="text-sm font-medium">
-                Primary Language
+                Primary Language <span className="text-destructive">*</span>
               </label>
               <select
                 id="language"
@@ -107,7 +107,7 @@ export function StepContentDefaults({ className, onNext, onSkip }: StepContentDe
             {/* Tone */}
             <div className="space-y-2">
               <label htmlFor="tone" className="text-sm font-medium">
-                Content Tone
+                Content Tone <span className="text-destructive">*</span>
               </label>
               <select
                 id="tone"
@@ -132,7 +132,7 @@ export function StepContentDefaults({ className, onNext, onSkip }: StepContentDe
                 {/* Min Word Count */}
                 <div className="space-y-2">
                   <label htmlFor="min_word_count" className="text-sm font-medium">
-                    Min Word Count
+                    Min Word Count <span className="text-destructive">*</span>
                   </label>
                   <Input
                     id="min_word_count"
@@ -147,7 +147,7 @@ export function StepContentDefaults({ className, onNext, onSkip }: StepContentDe
                 {/* Max Word Count */}
                 <div className="space-y-2">
                   <label htmlFor="max_word_count" className="text-sm font-medium">
-                    Max Word Count
+                    Max Word Count <span className="text-destructive">*</span>
                   </label>
                   <Input
                     id="max_word_count"
