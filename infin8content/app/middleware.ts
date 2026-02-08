@@ -452,6 +452,14 @@ export async function middleware(request: NextRequest) {
   if (isOnboardingProtectedRoute && !isOnboardingAllowedRoute && userRecord.org_id) {
     console.log(`[MIDDLEWARE-${requestId}] Starting onboarding status check for org: ${userRecord.org_id}`)
     
+    // ⏱️ Check for fresh onboarding completion cookie to bridge Edge replica lag
+    const justCompleted = request.cookies.get('onboarding_just_completed')
+    
+    if (justCompleted?.value === 'true') {
+      console.log(`[MIDDLEWARE-${requestId}] Allowing dashboard (fresh onboarding completion via cookie)`)
+      return response
+    }
+    
     const onboardingCompleted = await checkOnboardingStatus(userRecord.org_id);
     
     console.log(`[MIDDLEWARE-${requestId}] Onboarding status determined:`, {

@@ -176,7 +176,7 @@ export async function POST(request: Request) {
 
     console.log('[Integration API] Onboarding marked complete in DB (service role)')
     
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       organization: {
         id: organization.id,
@@ -185,6 +185,16 @@ export async function POST(request: Request) {
         onboarding_completed_at: new Date().toISOString(),
       },
     })
+    
+    // ⏱️ One-time onboarding completion signal to bridge Edge replica lag
+    response.cookies.set('onboarding_just_completed', 'true', {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 10, // seconds - very short-lived
+    })
+    
+    return response
     
   } catch (error: any) {
     console.error('[WordPress Integration] Error occurred:', {
