@@ -73,7 +73,7 @@ export default function OnboardingPage() {
       case 6:
         return <StepIntegration onComplete={handleComplete} onSkip={() => handleComplete({})} />
       default:
-        return <StepCompletion onStart={() => window.location.href = "/dashboard"} />
+        return <StepCompletion onStart={() => handleComplete({})} />
     }
   }
 
