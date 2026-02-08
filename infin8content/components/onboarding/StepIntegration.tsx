@@ -16,7 +16,7 @@ interface WordPressIntegrationData {
 
 interface StepIntegrationProps {
   onComplete: (data: WordPressIntegrationData) => Promise<void>
-  onSkip: () => void
+  onSkip?: () => void
   className?: string
 }
 
@@ -25,40 +25,48 @@ export function StepIntegration({ onComplete, onSkip, className }: StepIntegrati
     wordpress: {
       url: "",
       username: "",
-      application_password: ""
-    }
+      application_password: "",
+    },
   })
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const update = (field: keyof WordPressIntegrationData["wordpress"], value: string) => {
+  const update = (
+    field: keyof WordPressIntegrationData["wordpress"],
+    value: string
+  ) => {
     setData(prev => ({
-      wordpress: { ...prev.wordpress, [field]: value }
+      wordpress: { ...prev.wordpress, [field]: value },
     }))
     if (error) setError(null)
   }
 
   const submit = async () => {
+    // 🔒 HARD VALIDATION (NON-NEGOTIABLE)
+    const { url, username, application_password } = data.wordpress
+
+    if (!url || !username || !application_password) {
+      setError("All WordPress fields are required")
+      return
+    }
+
     setLoading(true)
     setError(null)
 
-    console.log('[UI] Test & Connect clicked', data)
+    console.log("[StepIntegration] Test & Connect clicked")
+    console.log("[StepIntegration] Payload:", data)
 
     try {
-      console.log('[UI] Calling onComplete...')
+      console.log("[StepIntegration] Calling onComplete()")
       await onComplete(data)
-      console.log('[UI] onComplete SUCCESS')
+      console.log("[StepIntegration] onComplete SUCCESS")
     } catch (e: any) {
-      console.error('[UI] onComplete FAILED', e)
-      setError(e.message || "Failed to connect to WordPress")
+      console.error("[StepIntegration] onComplete FAILED", e)
+      setError(e?.message || "Failed to connect to WordPress")
     } finally {
       setLoading(false)
     }
-  }
-
-  const skip = () => {
-    onSkip()
   }
 
   return (
@@ -69,51 +77,62 @@ export function StepIntegration({ onComplete, onSkip, className }: StepIntegrati
           Connect WordPress
         </CardTitle>
       </CardHeader>
+
       <CardContent className="space-y-4">
         {error && <p className="text-red-600 text-sm">{error}</p>}
 
         <div className="space-y-3">
           <div>
-            <label className="text-sm font-medium mb-1 block">WordPress Site URL</label>
+            <label className="text-sm font-medium mb-1 block">
+              WordPress Site URL
+            </label>
             <Input
               placeholder="https://your-site.com"
               value={data.wordpress.url}
-              onChange={(e) => update("url", e.target.value)}
+              onChange={e => update("url", e.target.value)}
               disabled={loading}
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-1 block">Username</label>
+            <label className="text-sm font-medium mb-1 block">
+              Username
+            </label>
             <Input
               placeholder="WordPress username"
               value={data.wordpress.username}
-              onChange={(e) => update("username", e.target.value)}
+              onChange={e => update("username", e.target.value)}
               disabled={loading}
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-1 block">Application Password</label>
+            <label className="text-sm font-medium mb-1 block">
+              Application Password
+            </label>
             <Input
               type="password"
               placeholder="WordPress application password"
               value={data.wordpress.application_password}
-              onChange={(e) => update("application_password", e.target.value)}
+              onChange={e => update("application_password", e.target.value)}
               disabled={loading}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Create an Application Password in WordPress → Users → Profile → Application Passwords
+              WordPress → Users → Profile → Application Passwords
             </p>
           </div>
         </div>
 
         <div className="flex gap-2">
-          <Button onClick={submit} disabled={loading} className="flex-1">
+          <Button
+            onClick={submit}
+            disabled={loading}
+            className="flex-1"
+          >
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Connecting...
+                Connecting…
               </>
             ) : (
               <>
@@ -122,9 +141,17 @@ export function StepIntegration({ onComplete, onSkip, className }: StepIntegrati
               </>
             )}
           </Button>
-          <Button variant="ghost" onClick={skip} disabled={loading}>
-            Skip
-          </Button>
+
+          {/* 🚫 SKIP SHOULD NOT COMPLETE ONBOARDING */}
+          {onSkip && (
+            <Button
+              variant="ghost"
+              onClick={onSkip}
+              disabled={loading}
+            >
+              Skip
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
