@@ -41,10 +41,8 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
 
-    // Website URL validation
-    if (!formData.website_url) {
-      newErrors.website_url = "Website URL is required"
-    } else if (!validateUrl(formData.website_url)) {
+    // Website URL validation (optional)
+    if (formData.website_url && !validateUrl(formData.website_url)) {
       newErrors.website_url = "Please enter a valid URL (e.g., https://example.com)"
     }
 
@@ -141,8 +139,8 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
   }
 
   const isFormValid = () => {
-    // Website URL must be valid
-    if (!formData.website_url || !validateUrl(formData.website_url)) {
+    // Website URL validation (optional)
+    if (formData.website_url && !validateUrl(formData.website_url)) {
       return false
     }
     
@@ -190,7 +188,7 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
             {/* Website URL */}
             <div className="space-y-2">
               <label htmlFor="website_url" className="text-sm font-medium">
-                Website URL <span className="text-destructive">*</span>
+                Website URL <span className="text-muted-foreground">(Optional)</span>
               </label>
               <Input
                 id="website_url"
@@ -246,7 +244,7 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
             {/* Target Audiences */}
             <div className="space-y-2">
               <label htmlFor="target_audiences" className="text-sm font-medium">
-                Target Audiences
+                Target Audiences <span className="text-destructive">*</span>
               </label>
               <div className="space-y-3">
                 <p id="target_audiences-help" className="text-sm text-muted-foreground">

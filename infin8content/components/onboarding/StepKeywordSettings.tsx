@@ -85,7 +85,7 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
             {/* Region */}
             <div className="space-y-2">
               <label htmlFor="region" className="text-sm font-medium">
-                Target Region
+                Target Region <span className="text-destructive">*</span>
               </label>
               <select
                 id="region"
@@ -114,7 +114,7 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
                 {/* Max Keywords Per Month */}
                 <div className="space-y-2">
                   <label htmlFor="max_keywords_per_month" className="text-sm font-medium">
-                    Max Keywords/Month
+                    Max Keywords/Month <span className="text-destructive">*</span>
                   </label>
                   <Input
                     id="max_keywords_per_month"
@@ -129,7 +129,7 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
                 {/* Competition Threshold */}
                 <div className="space-y-2">
                   <label htmlFor="competition_threshold" className="text-sm font-medium">
-                    Competition Threshold
+                    Competition Threshold <span className="text-destructive">*</span>
                   </label>
                   <Input
                     id="competition_threshold"
@@ -146,7 +146,7 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
                 {/* Search Volume Min */}
                 <div className="space-y-2">
                   <label htmlFor="search_volume_min" className="text-sm font-medium">
-                    Min Search Volume
+                    Min Search Volume <span className="text-destructive">*</span>
                   </label>
                   <Input
                     id="search_volume_min"

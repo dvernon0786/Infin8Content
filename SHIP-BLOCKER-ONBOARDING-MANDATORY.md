@@ -1,12 +1,13 @@
 # 🚨 SHIP-BLOCKER: Single Dashboard + Mandatory Onboarding (FINAL)
 
 **Status:** ✅ IMPLEMENTED & VERIFIED  
-**Date:** 2026-02-08  
+**Date:** 2026-02-09  
 **Priority:** CRITICAL - Blocks all dashboard access until onboarding is complete  
 **Implementation Date:** 2026-02-07 11:18 UTC+11:00  
 **Build Status:** ✅ PASSING  
 **WordPress Integration:** ✅ PRODUCTION-READY (Step 6 complete)  
-**Input Constraints:** ✅ PRODUCTION-READY (AI-optimized Step 1 complete)
+**Input Constraints:** ✅ PRODUCTION-READY (AI-optimized Step 1 complete)  
+**Redirect Loop Fix:** ✅ PERMANENTLY RESOLVED (Database as single source of truth)
 
 ---
 
@@ -160,7 +161,35 @@ export default async function DashboardLayout({
 
 ---
 
-### 3️⃣ REMOVE LEGACY DASHBOARD (MANDATORY)
+### 3️⃣ ONBOARDING REDIRECT BUG FIX (COMPLETED)
+
+**Issue:** Users completing Integration step were redirected back to Step 1 instead of accessing dashboard
+
+**Root Cause:** Schema drift - database lacked onboarding columns that application code expected
+
+**Solution Applied:**
+```sql
+-- Migration: 20260208_add_onboarding_columns.sql
+ALTER TABLE organizations
+ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN IF NOT EXISTS onboarding_completed_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS onboarding_version TEXT DEFAULT 'v1';
+```
+
+**Files Updated:**
+- ✅ `supabase/migrations/20260208_add_onboarding_columns.sql` (NEW)
+- ✅ `app/onboarding/integration/page.tsx` (Removed localStorage dependency)
+- ✅ `app/api/onboarding/integration/route.ts` (Added database update)
+- ✅ `lib/guards/onboarding-guard.ts` (Enhanced logging)
+- ✅ `app/middleware.ts` (Enhanced logging)
+
+**Result:** Database authority established, deterministic navigation, no more redirects
+
+**Status:** ✅ RESOLVED - Migration applied, columns exist, fix verified
+
+---
+
+### 4️⃣ REMOVE LEGACY DASHBOARD (MANDATORY)
 
 **File:** `/home/dghost/Desktop/Infin8Content/infin8content/app/dashboard/page.tsx`
 
@@ -209,6 +238,33 @@ return NextResponse.json({
 ```
 
 **❌ No alternate exits**
+
+---
+
+### 5️⃣ REDIRECT LOOP ELIMINATION (COMPLETE ✅)
+
+**Issue:** Infinite onboarding redirect loop caused by localStorage vs database mismatch
+
+**Root Cause:** Two onboarding flows existed - old flow (`/onboarding`) used localStorage, new flow (`/onboarding/integration`) called APIs
+
+**Fix Applied:**
+- ✅ **Eliminated all onboarding localStorage usage** - Database is single source of truth
+- ✅ **Wired all onboarding steps to backend APIs** - No more client-side completion
+- ✅ **Fixed both onboarding flows** - Old and new flows now call APIs
+- ✅ **Added comprehensive logging** - Impossible-to-miss debugging logs
+- ✅ **Hard validation in StepIntegration** - All WordPress fields required
+
+**Files Modified:**
+- `/app/onboarding/integration/page.tsx` - API call + logging
+- `/app/onboarding/page.tsx` - API call + logging (old flow)
+- `/app/onboarding/business/page.tsx` - API call
+- `/app/onboarding/competitors/page.tsx` - API call
+- `/app/onboarding/blog/page.tsx` - API call
+- `/app/onboarding/content-defaults/page.tsx` - API call
+- `/app/onboarding/keyword-settings/page.tsx` - API call
+- `/components/onboarding/StepIntegration.tsx` - Hard validation + logging
+
+**Result:** Onboarding redirect loop permanently eliminated
 
 ---
 
