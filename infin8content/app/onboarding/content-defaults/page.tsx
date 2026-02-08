@@ -8,9 +8,23 @@ import { useRouter } from "next/navigation"
 export default function ContentDefaultsStepPage() {
   const router = useRouter()
 
-  const handleNext = (data: any) => {
-    localStorage.setItem('onboarding-content-defaults', JSON.stringify(data))
-    router.push('/onboarding/keyword-settings')
+  const handleNext = async (data: any) => {
+    try {
+      const response = await fetch('/api/onboarding/content-defaults', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error?.error || 'Content defaults failed')
+      }
+
+      router.push('/onboarding/keyword-settings')
+    } catch (error) {
+      throw error
+    }
   }
 
   const handleSkip = () => {

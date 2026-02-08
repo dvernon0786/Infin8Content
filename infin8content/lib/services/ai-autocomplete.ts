@@ -179,11 +179,24 @@ async function generateAISuggestions(
       model: 'google/gemini-2.5-flash'
     })
 
-    // Parse AI response
+    // Parse AI response with safe parsing to handle markdown code blocks
     let suggestions: AutocompleteSuggestion[] = []
     
+    // 🛡️ SAFE JSON PARSING: Handle markdown code blocks and malformed responses
+    function safeJsonParse(content: string) {
+      try {
+        const cleaned = content
+          .replace(/```json/g, '')
+          .replace(/```/g, '')
+          .trim()
+        return JSON.parse(cleaned)
+      } catch {
+        return []
+      }
+    }
+    
     try {
-      const parsed = JSON.parse(response.content)
+      const parsed = safeJsonParse(response.content)
       if (Array.isArray(parsed)) {
         suggestions = parsed
           .filter(item => typeof item === 'object' && item.text)

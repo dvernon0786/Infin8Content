@@ -13,27 +13,30 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
  * to prevent unauthorized access if the guard cannot verify onboarding status.
  */
 export async function checkOnboardingStatus(orgId: string): Promise<boolean> {
-  console.log('[Onboarding Guard] Checking status for org:', orgId)
+  console.log('[Onboarding Guard] Checking onboarding status', {
+    orgId,
+  })
   
   try {
     const supabase = createServiceRoleClient()
     
     const { data, error } = await supabase
       .from('organizations')
-      .select('onboarding_completed')
+      .select('onboarding_completed, onboarding_completed_at')
       .eq('id', orgId)
       .single()
     
-    console.log('[Onboarding Guard] DB query result:', {
+    console.log('[Onboarding Guard] DB RESULT', {
       orgId,
       onboarding_completed: (data as any)?.onboarding_completed,
+      onboarding_completed_at: (data as any)?.onboarding_completed_at,
       error: error?.message,
       hasData: !!data
     })
     
     // If there's an error or no data found, default to false (fail-safe)
     if (error || !data) {
-      console.warn('[Onboarding Guard] Redirecting to Step 1 - DB ERROR', {
+      console.error('Onboarding guard check failed:', {
         orgId,
         error: error?.message,
         hasData: !!data
@@ -41,22 +44,20 @@ export async function checkOnboardingStatus(orgId: string): Promise<boolean> {
       return false
     }
     
-    const isCompleted = Boolean((data as any).onboarding_completed)
+    // Return the onboarding_completed status (boolean, null, or undefined)
+    // Treat null/undefined as false (not completed)
+    const result = Boolean((data as any).onboarding_completed)
     
-    if (!isCompleted) {
-      console.warn('[Onboarding Guard] Redirecting to Step 1 - ONBOARDING INCOMPLETE', {
-        orgId,
-        onboarding_completed: (data as any).onboarding_completed
-      })
-    } else {
-      console.log('[Onboarding Guard] Onboarding completed - allowing access', {
-        orgId
-      })
-    }
+    console.log('[Onboarding Guard] FINAL RESULT', {
+      orgId,
+      result,
+      onboarding_completed: (data as any)?.onboarding_completed,
+    })
     
-    return isCompleted
+    return result
   } catch (exception) {
-    console.error('[Onboarding Guard] Redirecting to Step 1 - EXCEPTION', {
+    // Handle any unexpected errors (database connection, etc.)
+    console.error('Onboarding guard exception:', {
       orgId,
       error: exception instanceof Error ? exception.message : String(exception)
     })

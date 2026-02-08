@@ -8,9 +8,23 @@ import { useRouter } from "next/navigation"
 export default function CompetitorsStepPage() {
   const router = useRouter()
 
-  const handleNext = (data: any) => {
-    localStorage.setItem('onboarding-competitors', JSON.stringify(data))
-    router.push('/onboarding/blog')
+  const handleNext = async (data: any) => {
+    try {
+      const response = await fetch('/api/onboarding/competitors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error?.error || 'Competitors info failed')
+      }
+
+      router.push('/onboarding/blog')
+    } catch (error) {
+      throw error
+    }
   }
 
   const handleSkip = () => {

@@ -2,48 +2,42 @@
 
 import { StepIntegration } from "@/components/onboarding/StepIntegration"
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard"
-
 import { useRouter } from "next/navigation"
+
+console.log("🔥🔥🔥 INTEGRATION PAGE LOADED 🔥🔥🔥")
 
 export default function IntegrationStepPage() {
   const router = useRouter()
 
   const handleComplete = async (data: any) => {
-    console.log('[IntegrationStepPage] handleComplete called', data)
+    console.log("🔥🔥🔥 HANDLE COMPLETE CALLED 🔥🔥🔥", data)
 
-    try {
-      console.log('[IntegrationStepPage] Sending API request...')
-      const response = await fetch('/api/onboarding/integration', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      })
+    const res = await fetch("/api/onboarding/integration", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
 
-      console.log('[IntegrationStepPage] API response status:', response.status)
+    console.log("🔥🔥🔥 API RESPONSE STATUS 🔥🔥🔥", res.status)
 
-      const payload = await response.json()
-      console.log('[IntegrationStepPage] API response payload:', payload)
-
-      if (!response.ok) {
-        throw new Error(payload.error || 'Failed to save integration')
-      }
-
-      console.log('[IntegrationStepPage] Integration saved, redirecting to dashboard')
-      // 🎯 NOTE: No localStorage - DB is now authoritative
-      router.push('/dashboard')
-
-    } catch (error) {
-      console.error('[IntegrationStepPage] ERROR:', error)
-      throw error // Re-throw to show error in component
+    if (!res.ok) {
+      const error = await res.json()
+      console.error("🔥🔥🔥 API FAILED 🔥🔥🔥", error)
+      throw new Error(error?.error || "WordPress integration failed")
     }
+
+    const result = await res.json()
+    console.log("🔥🔥🔥 API SUCCESS 🔥🔥🔥", result)
+
+    // ✅ Redirect ONLY after backend success
+    router.push("/dashboard")
   }
 
+  // 🚫 Skipping completion is NOT allowed without an API
   const handleSkip = () => {
-    console.log('[IntegrationStepPage] Skipping integration, redirecting to dashboard')
-    // 🎯 NOTE: No localStorage - DB is now authoritative
-    router.push('/dashboard')
+    router.push("/onboarding")
   }
 
   return (
