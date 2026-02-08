@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { createServiceRoleClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/supabase/get-current-user"
 import { z, ZodError } from "zod"
 import { testWordPressConnection } from "@/lib/services/wordpress/test-connection"
@@ -177,13 +178,69 @@ export async function POST(request: Request) {
       hasBlogConfig: !!organization.blog_config
     })
     
-    return NextResponse.json({
+    // 🎉 Mark onboarding as completed in database using SERVICE ROLE
+    console.log('[Integration API] Writing onboarding_completed (service role)')
+    const adminSupabase = createServiceRoleClient()
+
+    const { error: serviceRoleCompletionError } = await adminSupabase
+      .from('organizations')
+      .update({
+        onboarding_completed: true,
+        onboarding_completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', currentUser.org_id)
+
+    if (serviceRoleCompletionError) {
+      console.error('[Integration API] Failed to mark onboarding completed:', serviceRoleCompletionError)
+      throw new Error(`Failed to mark onboarding completed: ${serviceRoleCompletionError.message}`)
+    }
+
+    // 🔍 VERIFY the write was successful
+    const { data: verify } = await adminSupabase
+      .from('organizations')
+      .select('onboarding_completed')
+      .eq('id', currentUser.org_id)
+      .single() as any
+
+    console.log('[Integration API] VERIFY onboarding_completed:', verify?.onboarding_completed)
+
+    if (!verify?.onboarding_completed) {
+      throw new Error('Onboarding completion write failed - verification failed')
+    }
+
+    console.log('[Integration API] Onboarding marked complete in DB (service role)')
+    
+    const response = NextResponse.json({
       success: true,
       organization: {
         id: organization.id,
         blog_config: organization.blog_config || {},
+        onboarding_completed: verify?.onboarding_completed,
+        onboarding_completed_at: new Date().toISOString(),
       },
     })
+    
+    // ⏱️ One-time onboarding completion signal to bridge Edge replica lag
+    response.cookies.set('onboarding_just_completed', 'true', {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 10, // seconds - very short-lived
+    })
+    
+    console.log('[Integration API] Set cookie onboarding_just_completed', {
+      name: 'onboarding_just_completed',
+      value: 'true',
+      path: '/',
+      maxAge: 10,
+    })
+    
+    console.log('[Integration API] Response headers:', {
+      setCookie: response.headers.get('set-cookie'),
+    })
+    
+    return response
     
   } catch (error: any) {
     console.error('[WordPress Integration] Error occurred:', {
