@@ -43,9 +43,14 @@ export function StepIntegration({ onComplete, onSkip, className }: StepIntegrati
     setLoading(true)
     setError(null)
 
+    console.log('[UI] Test & Connect clicked', data)
+
     try {
+      console.log('[UI] Calling onComplete...')
       await onComplete(data)
+      console.log('[UI] onComplete SUCCESS')
     } catch (e: any) {
+      console.error('[UI] onComplete FAILED', e)
       setError(e.message || "Failed to connect to WordPress")
     } finally {
       setLoading(false)

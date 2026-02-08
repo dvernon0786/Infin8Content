@@ -40,7 +40,7 @@ const schema = z.object({
 })
 
 export async function POST(request: Request) {
-  console.log('[WordPress Integration] API route called')
+  console.log('🔥🔥🔥 INTEGRATION API HIT 🔥🔥🔥')
   
   try {
     // Parse and validate request body
