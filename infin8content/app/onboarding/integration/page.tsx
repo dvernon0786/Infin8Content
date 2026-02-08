@@ -4,11 +4,13 @@ import { StepIntegration } from "@/components/onboarding/StepIntegration"
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard"
 import { useRouter } from "next/navigation"
 
+console.log("🔥🔥🔥 INTEGRATION PAGE LOADED 🔥🔥🔥")
+
 export default function IntegrationStepPage() {
   const router = useRouter()
 
   const handleComplete = async (data: any) => {
-    console.log("[UI] Calling onboarding integration API", data)
+    console.log("🔥🔥🔥 HANDLE COMPLETE CALLED 🔥🔥🔥", data)
 
     const res = await fetch("/api/onboarding/integration", {
       method: "POST",
@@ -18,16 +20,16 @@ export default function IntegrationStepPage() {
       body: JSON.stringify(data),
     })
 
-    console.log("[UI] Integration API response status:", res.status)
+    console.log("🔥🔥🔥 API RESPONSE STATUS 🔥🔥🔥", res.status)
 
     if (!res.ok) {
       const error = await res.json()
-      console.error("[UI] Integration failed:", error)
+      console.error("🔥🔥🔥 API FAILED 🔥🔥🔥", error)
       throw new Error(error?.error || "WordPress integration failed")
     }
 
     const result = await res.json()
-    console.log("[UI] Integration succeeded:", result)
+    console.log("🔥🔥🔥 API SUCCESS 🔥🔥🔥", result)
 
     // ✅ Redirect ONLY after backend success
     router.push("/dashboard")
