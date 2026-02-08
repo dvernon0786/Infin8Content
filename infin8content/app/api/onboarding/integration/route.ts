@@ -39,15 +39,15 @@ const schema = z.object({
 })
 
 export async function POST(request: Request) {
-  console.log('[WordPress Integration] API route called')
+  console.log('[Integration API] START')
   
   try {
     // Parse and validate request body
     const body = await request.json()
-    console.log('[WordPress Integration] Request body parsed')
+    console.log('[Integration API] Request body parsed')
     
     const validated = schema.parse(body)
-    console.log('[WordPress Integration] Request validated successfully')
+    console.log('[Integration API] Request validated successfully')
     
     // Normalize WordPress URL to prevent subtle bugs
     validated.wordpress.url = normalizeWordPressUrl(validated.wordpress.url)
@@ -56,19 +56,30 @@ export async function POST(request: Request) {
     // Authenticate user
     const currentUser = await getCurrentUser()
     if (!currentUser?.org_id) {
+      console.warn('[Integration API] EARLY EXIT', {
+        reason: 'auth_required',
+        userId: currentUser?.id
+      })
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
       )
     }
     
-    console.log('[WordPress Integration] Authenticated user for organization:', currentUser.org_id)
+    console.log('[Integration API] AUTHENTICATED', {
+      userId: currentUser.id,
+      orgId: currentUser.org_id
+    })
     
     // 🔐 Test connection BEFORE saving credentials
-    console.log('[WordPress Integration] Testing connection...')
+    console.log('[Integration API] Testing connection...')
     const connectionResult = await testWordPressConnection(validated.wordpress)
     
     if (!connectionResult.success) {
+      console.warn('[Integration API] EARLY EXIT', {
+        reason: 'connection_failed',
+        message: connectionResult.message
+      })
       return NextResponse.json(
         { 
           error: "Connection test failed",
@@ -78,7 +89,7 @@ export async function POST(request: Request) {
       )
     }
     
-    console.log('[WordPress Integration] Connection test passed')
+    console.log('[Integration API] Connection test passed')
     
     // 🔐 Encrypt credentials before storage
     const encryptedPassword = encrypt(validated.wordpress.application_password)
@@ -140,7 +151,31 @@ export async function POST(request: Request) {
       )
     }
     
-    console.log('[WordPress Integration] Integration saved successfully')
+    console.log('[Integration API] Integration saved successfully')
+
+    // 🎉 Mark onboarding as completed in database
+    console.log('[Integration API] Marking onboarding completed in DB')
+    const { error: completionError } = await supabase
+      .from('organizations')
+      .update({
+        onboarding_completed: true,
+        onboarding_completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', currentUser.org_id)
+
+    if (completionError) {
+      console.error('[Integration API] Failed to mark onboarding complete:', completionError)
+      // Don't fail the integration, but log the error
+    } else {
+      console.log('[Integration API] Onboarding marked complete in DB')
+    }
+    
+    console.log('[Integration API] SUCCESS', {
+      orgId: currentUser.org_id,
+      wordpressUrl: validated.wordpress.url,
+      hasBlogConfig: !!organization.blog_config
+    })
     
     return NextResponse.json({
       success: true,

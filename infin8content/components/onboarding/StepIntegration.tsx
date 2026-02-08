@@ -69,7 +69,7 @@ export function StepIntegration({ onComplete, onSkip, className }: StepIntegrati
 
         <div className="space-y-3">
           <div>
-            <label className="text-sm font-medium mb-1 block">WordPress Site URL</label>
+            <label className="text-sm font-medium mb-1 block">WordPress Site URL <span className="text-destructive">*</span></label>
             <Input
               placeholder="https://your-site.com"
               value={data.wordpress.url}
@@ -79,7 +79,7 @@ export function StepIntegration({ onComplete, onSkip, className }: StepIntegrati
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-1 block">Username</label>
+            <label className="text-sm font-medium mb-1 block">Username <span className="text-destructive">*</span></label>
             <Input
               placeholder="WordPress username"
               value={data.wordpress.username}
@@ -89,7 +89,7 @@ export function StepIntegration({ onComplete, onSkip, className }: StepIntegrati
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-1 block">Application Password</label>
+            <label className="text-sm font-medium mb-1 block">Application Password <span className="text-destructive">*</span></label>
             <Input
               type="password"
               placeholder="WordPress application password"

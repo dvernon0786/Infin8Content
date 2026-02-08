@@ -161,7 +161,35 @@ export default async function DashboardLayout({
 
 ---
 
-### 3️⃣ REMOVE LEGACY DASHBOARD (MANDATORY)
+### 3️⃣ ONBOARDING REDIRECT BUG FIX (COMPLETED)
+
+**Issue:** Users completing Integration step were redirected back to Step 1 instead of accessing dashboard
+
+**Root Cause:** Schema drift - database lacked onboarding columns that application code expected
+
+**Solution Applied:**
+```sql
+-- Migration: 20260208_add_onboarding_columns.sql
+ALTER TABLE organizations
+ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN IF NOT EXISTS onboarding_completed_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS onboarding_version TEXT DEFAULT 'v1';
+```
+
+**Files Updated:**
+- ✅ `supabase/migrations/20260208_add_onboarding_columns.sql` (NEW)
+- ✅ `app/onboarding/integration/page.tsx` (Removed localStorage dependency)
+- ✅ `app/api/onboarding/integration/route.ts` (Added database update)
+- ✅ `lib/guards/onboarding-guard.ts` (Enhanced logging)
+- ✅ `app/middleware.ts` (Enhanced logging)
+
+**Result:** Database authority established, deterministic navigation, no more redirects
+
+**Status:** ✅ RESOLVED - Migration applied, columns exist, fix verified
+
+---
+
+### 4️⃣ REMOVE LEGACY DASHBOARD (MANDATORY)
 
 **File:** `/home/dghost/Desktop/Infin8Content/infin8content/app/dashboard/page.tsx`
 

@@ -13,6 +13,8 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
  * to prevent unauthorized access if the guard cannot verify onboarding status.
  */
 export async function checkOnboardingStatus(orgId: string): Promise<boolean> {
+  console.log('[Onboarding Guard] Checking status for org:', orgId)
+  
   try {
     const supabase = createServiceRoleClient()
     
@@ -22,9 +24,16 @@ export async function checkOnboardingStatus(orgId: string): Promise<boolean> {
       .eq('id', orgId)
       .single()
     
+    console.log('[Onboarding Guard] DB query result:', {
+      orgId,
+      onboarding_completed: (data as any)?.onboarding_completed,
+      error: error?.message,
+      hasData: !!data
+    })
+    
     // If there's an error or no data found, default to false (fail-safe)
     if (error || !data) {
-      console.error('Onboarding guard check failed:', {
+      console.warn('[Onboarding Guard] Redirecting to Step 1 - DB ERROR', {
         orgId,
         error: error?.message,
         hasData: !!data
@@ -32,12 +41,22 @@ export async function checkOnboardingStatus(orgId: string): Promise<boolean> {
       return false
     }
     
-    // Return the onboarding_completed status (boolean, null, or undefined)
-    // Treat null/undefined as false (not completed)
-    return Boolean((data as any).onboarding_completed)
+    const isCompleted = Boolean((data as any).onboarding_completed)
+    
+    if (!isCompleted) {
+      console.warn('[Onboarding Guard] Redirecting to Step 1 - ONBOARDING INCOMPLETE', {
+        orgId,
+        onboarding_completed: (data as any).onboarding_completed
+      })
+    } else {
+      console.log('[Onboarding Guard] Onboarding completed - allowing access', {
+        orgId
+      })
+    }
+    
+    return isCompleted
   } catch (exception) {
-    // Handle any unexpected errors (database connection, etc.)
-    console.error('Onboarding guard exception:', {
+    console.error('[Onboarding Guard] Redirecting to Step 1 - EXCEPTION', {
       orgId,
       error: exception instanceof Error ? exception.message : String(exception)
     })
