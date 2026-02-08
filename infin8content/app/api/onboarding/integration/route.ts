@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { createServiceRoleClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/supabase/get-current-user"
 import { z, ZodError } from "zod"
 import { testWordPressConnection } from "@/lib/services/wordpress/test-connection"
@@ -142,11 +143,46 @@ export async function POST(request: Request) {
     
     console.log('[WordPress Integration] Integration saved successfully')
     
+    // 🎉 Mark onboarding as completed in database using SERVICE ROLE
+    console.log('[Integration API] Writing onboarding_completed (service role)')
+    const adminSupabase = createServiceRoleClient()
+
+    const { error: completionError } = await adminSupabase
+      .from('organizations')
+      .update({
+        onboarding_completed: true,
+        onboarding_completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', currentUser.org_id)
+
+    if (completionError) {
+      console.error('[Integration API] Failed to mark onboarding completed:', completionError)
+      throw new Error(`Failed to mark onboarding completed: ${completionError.message}`)
+    }
+
+    // 🔍 VERIFY the write was successful
+    const { data: verify } = await adminSupabase
+      .from('organizations')
+      .select('onboarding_completed')
+      .eq('id', currentUser.org_id)
+      .single() as any
+
+    console.log('[Integration API] VERIFY onboarding_completed:', verify?.onboarding_completed)
+
+    if (!verify?.onboarding_completed) {
+      throw new Error('Onboarding completion write failed - verification failed')
+    }
+
+    console.log('[Integration API] Onboarding marked complete in DB (service role)')
+    
     return NextResponse.json({
       success: true,
       organization: {
         id: organization.id,
         blog_config: organization.blog_config || {},
+        onboarding_completed: verify?.onboarding_completed,
+        onboarding_completed_at: new Date().toISOString(),
       },
     })
     
