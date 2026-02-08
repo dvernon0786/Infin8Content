@@ -13,14 +13,26 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
  * to prevent unauthorized access if the guard cannot verify onboarding status.
  */
 export async function checkOnboardingStatus(orgId: string): Promise<boolean> {
+  console.log('[Onboarding Guard] Checking onboarding status', {
+    orgId,
+  })
+  
   try {
     const supabase = createServiceRoleClient()
     
     const { data, error } = await supabase
       .from('organizations')
-      .select('onboarding_completed')
+      .select('onboarding_completed, onboarding_completed_at')
       .eq('id', orgId)
       .single()
+    
+    console.log('[Onboarding Guard] DB RESULT', {
+      orgId,
+      onboarding_completed: (data as any)?.onboarding_completed,
+      onboarding_completed_at: (data as any)?.onboarding_completed_at,
+      error: error?.message,
+      hasData: !!data
+    })
     
     // If there's an error or no data found, default to false (fail-safe)
     if (error || !data) {
@@ -34,7 +46,15 @@ export async function checkOnboardingStatus(orgId: string): Promise<boolean> {
     
     // Return the onboarding_completed status (boolean, null, or undefined)
     // Treat null/undefined as false (not completed)
-    return Boolean((data as any).onboarding_completed)
+    const result = Boolean((data as any).onboarding_completed)
+    
+    console.log('[Onboarding Guard] FINAL RESULT', {
+      orgId,
+      result,
+      onboarding_completed: (data as any)?.onboarding_completed,
+    })
+    
+    return result
   } catch (exception) {
     // Handle any unexpected errors (database connection, etc.)
     console.error('Onboarding guard exception:', {

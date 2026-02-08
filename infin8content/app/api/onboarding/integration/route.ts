@@ -194,6 +194,17 @@ export async function POST(request: Request) {
       maxAge: 10, // seconds - very short-lived
     })
     
+    console.log('[Integration API] Set cookie onboarding_just_completed', {
+      name: 'onboarding_just_completed',
+      value: 'true',
+      path: '/',
+      maxAge: 10,
+    })
+    
+    console.log('[Integration API] Response headers:', {
+      setCookie: response.headers.get('set-cookie'),
+    })
+    
     return response
     
   } catch (error: any) {

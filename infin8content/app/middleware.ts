@@ -450,8 +450,23 @@ export async function middleware(request: NextRequest) {
 
   // Check onboarding status for protected routes (only if user has org_id)
   if (isOnboardingProtectedRoute && userRecord.org_id) {
+    // 🔍 COOKIE SNAPSHOT - Prove what Edge actually sees
+    const allCookies = request.cookies.getAll()
+    
+    console.log(`[MIDDLEWARE-${requestId}] COOKIE SNAPSHOT`, {
+      cookies: allCookies.map(c => ({
+        name: c.name,
+        value: c.value,
+      })),
+    })
+    
     // ⏱️ Edge replica lag bridge — MUST run FIRST before any redirect decisions
     const justCompleted = request.cookies.get('onboarding_just_completed')
+    
+    console.log(`[MIDDLEWARE-${requestId}] Cookie onboarding_just_completed`, {
+      exists: !!justCompleted,
+      value: justCompleted?.value,
+    })
 
     if (justCompleted?.value === 'true') {
       console.log(`[MIDDLEWARE-${requestId}] Allowing protected route (onboarding just completed via cookie)`)
