@@ -38,19 +38,8 @@ export async function testWordPressConnection(credentials: WordPressCredentials)
       throw new Error(connectionTest.message)
     }
 
-    // Try to get site info (optional - may fail on some hosts)
-    let siteInfo
-    try {
-      siteInfo = await wp.getSiteInfo()
-    } catch (siteError) {
-      // Site info often fails on shared hosting, but connection is still valid
-      console.warn('Site info unavailable, but connection is valid:', siteError)
-      siteInfo = {
-        name: 'WordPress Site',
-        description: '',
-        url: credentials.url
-      }
-    }
+    // Get site info (public endpoint, always safe)
+    const siteInfo = await wp.getSiteInfo()
 
     return {
       success: true,

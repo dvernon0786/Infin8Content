@@ -88,13 +88,24 @@ export class WordPressIntegration {
 
   /**
    * Get site info
+   * Uses public /wp-json endpoint - no auth required, always available
    */
   async getSiteInfo(): Promise<{ name: string; description: string; url: string }> {
-    const site = await this.makeRequest('/settings')
-    return {
-      name: site.title,
-      description: site.description,
-      url: this.credentials.url
+    try {
+      const site = await fetch(`${this.credentials.url}/wp-json`).then(res => res.json())
+
+      return {
+        name: site.name || 'WordPress Site',
+        description: site.description || '',
+        url: this.credentials.url
+      }
+    } catch (error) {
+      // Fallback if /wp-json is unavailable
+      return {
+        name: 'WordPress Site',
+        description: '',
+        url: this.credentials.url
+      }
     }
   }
 
