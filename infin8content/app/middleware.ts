@@ -449,30 +449,50 @@ export async function middleware(request: NextRequest) {
   })
 
   // Check onboarding status for protected routes (only if user has org_id)
-  if (isOnboardingProtectedRoute && !isOnboardingAllowedRoute && userRecord.org_id) {
-    console.log(`[MIDDLEWARE-${requestId}] Starting onboarding status check for org: ${userRecord.org_id}`)
+  if (isOnboardingProtectedRoute && userRecord.org_id) {
+    // 🔍 COOKIE SNAPSHOT - Prove what Edge actually sees
+    const allCookies = request.cookies.getAll()
     
-    const onboardingCompleted = await checkOnboardingStatus(userRecord.org_id);
+    console.log(`[MIDDLEWARE-${requestId}] COOKIE SNAPSHOT`, {
+      cookies: allCookies.map(c => ({
+        name: c.name,
+        value: c.value,
+      })),
+    })
     
-    console.log(`[MIDDLEWARE-${requestId}] Onboarding status determined:`, {
-      onboardingCompleted,
-      pathname,
-      orgId: userRecord.org_id
+    // ⏱️ Edge replica lag bridge — MUST run FIRST before any redirect decisions
+    const justCompleted = request.cookies.get('onboarding_just_completed')
+    
+    console.log(`[MIDDLEWARE-${requestId}] Cookie onboarding_just_completed`, {
+      exists: !!justCompleted,
+      value: justCompleted?.value,
     })
 
-    if (!onboardingCompleted) {
-      console.warn(`[MIDDLEWARE-${requestId}] REDIRECTING TO STEP 1`, {
+    if (justCompleted?.value === 'true') {
+      console.log(`[MIDDLEWARE-${requestId}] Allowing protected route (onboarding just completed via cookie)`)
+      return response
+    }
+
+    // Now run normal onboarding logic
+    if (!isOnboardingAllowedRoute) {
+      console.log(`[MIDDLEWARE-${requestId}] Starting onboarding status check for org: ${userRecord.org_id}`)
+
+      const onboardingCompleted = await checkOnboardingStatus(userRecord.org_id);
+
+      console.log(`[MIDDLEWARE-${requestId}] Onboarding status determined:`, {
         onboardingCompleted,
         pathname,
-        orgId: userRecord.org_id,
-        redirectTo: '/onboarding/business',
-        reason: 'onboarding_incomplete'
+        orgId: userRecord.org_id
       })
-      // Silent redirect to onboarding business step
-      const onboardingUrl = new URL('/onboarding/business', request.url);
-      return NextResponse.redirect(onboardingUrl);
-    } else {
-      console.log(`[MIDDLEWARE-${requestId}] Onboarding completed, allowing access`)
+
+      if (!onboardingCompleted) {
+        console.log(`[MIDDLEWARE-${requestId}] Onboarding incomplete, redirecting to /onboarding/business`)
+        // Silent redirect to onboarding business step
+        const onboardingUrl = new URL('/onboarding/business', request.url);
+        return NextResponse.redirect(onboardingUrl);
+      } else {
+        console.log(`[MIDDLEWARE-${requestId}] Onboarding completed, allowing access`)
+      }
     }
   } else {
     console.log(`[MIDDLEWARE-${requestId}] Onboarding check bypassed - allowed route or no org_id`)

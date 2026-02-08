@@ -28,9 +28,34 @@ export default function OnboardingPage() {
   }
 
   const handleComplete = async (data: any) => {
+    console.log("🔥🔥🔥 OLD ONBOARDING HANDLE COMPLETE CALLED 🔥🔥🔥", data)
+    
     setOnboardingData(prev => ({ ...prev, ...data }))
-    // Handle completion - redirect to dashboard
-    window.location.href = "/dashboard"
+    
+    try {
+      const res = await fetch("/api/onboarding/integration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+
+      console.log("🔥🔥🔥 OLD ONBOARDING API RESPONSE STATUS 🔥🔥🔥", res.status)
+
+      if (!res.ok) {
+        const error = await res.json()
+        console.error("🔥🔥🔥 OLD ONBOARDING API FAILED 🔥🔥🔥", error)
+        throw new Error(error?.error || "Integration failed")
+      }
+
+      const result = await res.json()
+      console.log("🔥🔥🔥 OLD ONBOARDING API SUCCESS 🔥🔥🔥", result)
+      
+      // Handle completion - redirect to dashboard
+      window.location.href = "/dashboard"
+    } catch (error) {
+      console.error("🔥🔥🔥 OLD ONBOARDING COMPLETE FAILED 🔥🔥🔥", error)
+      throw error
+    }
   }
 
   const renderStep = () => {

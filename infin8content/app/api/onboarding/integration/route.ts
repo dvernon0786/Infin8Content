@@ -40,15 +40,15 @@ const schema = z.object({
 })
 
 export async function POST(request: Request) {
-  console.log('[Integration API] START')
+  console.log('🔥🔥🔥 INTEGRATION API HIT 🔥🔥🔥')
   
   try {
     // Parse and validate request body
     const body = await request.json()
-    console.log('[Integration API] Request body parsed')
+    console.log('[WordPress Integration] Request body parsed')
     
     const validated = schema.parse(body)
-    console.log('[Integration API] Request validated successfully')
+    console.log('[WordPress Integration] Request validated successfully')
     
     // Normalize WordPress URL to prevent subtle bugs
     validated.wordpress.url = normalizeWordPressUrl(validated.wordpress.url)
@@ -57,30 +57,19 @@ export async function POST(request: Request) {
     // Authenticate user
     const currentUser = await getCurrentUser()
     if (!currentUser?.org_id) {
-      console.warn('[Integration API] EARLY EXIT', {
-        reason: 'auth_required',
-        userId: currentUser?.id
-      })
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
       )
     }
     
-    console.log('[Integration API] AUTHENTICATED', {
-      userId: currentUser.id,
-      orgId: currentUser.org_id
-    })
+    console.log('[WordPress Integration] Authenticated user for organization:', currentUser.org_id)
     
     // 🔐 Test connection BEFORE saving credentials
-    console.log('[Integration API] Testing connection...')
+    console.log('[WordPress Integration] Testing connection...')
     const connectionResult = await testWordPressConnection(validated.wordpress)
     
     if (!connectionResult.success) {
-      console.warn('[Integration API] EARLY EXIT', {
-        reason: 'connection_failed',
-        message: connectionResult.message
-      })
       return NextResponse.json(
         { 
           error: "Connection test failed",
@@ -90,7 +79,7 @@ export async function POST(request: Request) {
       )
     }
     
-    console.log('[Integration API] Connection test passed')
+    console.log('[WordPress Integration] Connection test passed')
     
     // 🔐 Encrypt credentials before storage
     const encryptedPassword = encrypt(validated.wordpress.application_password)
@@ -152,11 +141,13 @@ export async function POST(request: Request) {
       )
     }
     
-    console.log('[Integration API] Integration saved successfully')
+    console.log('[WordPress Integration] Integration saved successfully')
+    
+    // 🎉 Mark onboarding as completed in database using SERVICE ROLE
+    console.log('[Integration API] Writing onboarding_completed (service role)')
+    const adminSupabase = createServiceRoleClient()
 
-    // 🎉 Mark onboarding as completed in database
-    console.log('[Integration API] Marking onboarding completed in DB')
-    const { error: completionError } = await supabase
+    const { error: completionError } = await adminSupabase
       .from('organizations')
       .update({
         onboarding_completed: true,
@@ -166,34 +157,8 @@ export async function POST(request: Request) {
       .eq('id', currentUser.org_id)
 
     if (completionError) {
-      console.error('[Integration API] Failed to mark onboarding complete:', completionError)
-      // Don't fail the integration, but log the error
-    } else {
-      console.log('[Integration API] Onboarding marked complete in DB')
-    }
-    
-    console.log('[Integration API] SUCCESS', {
-      orgId: currentUser.org_id,
-      wordpressUrl: validated.wordpress.url,
-      hasBlogConfig: !!organization.blog_config
-    })
-    
-    // 🎉 Mark onboarding as completed in database using SERVICE ROLE
-    console.log('[Integration API] Writing onboarding_completed (service role)')
-    const adminSupabase = createServiceRoleClient()
-
-    const { error: serviceRoleCompletionError } = await adminSupabase
-      .from('organizations')
-      .update({
-        onboarding_completed: true,
-        onboarding_completed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', currentUser.org_id)
-
-    if (serviceRoleCompletionError) {
-      console.error('[Integration API] Failed to mark onboarding completed:', serviceRoleCompletionError)
-      throw new Error(`Failed to mark onboarding completed: ${serviceRoleCompletionError.message}`)
+      console.error('[Integration API] Failed to mark onboarding completed:', completionError)
+      throw new Error(`Failed to mark onboarding completed: ${completionError.message}`)
     }
 
     // 🔍 VERIFY the write was successful

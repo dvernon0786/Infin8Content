@@ -7,11 +7,34 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/supabase/get-current-user'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 import { generateAutocompleteSuggestions } from '@/lib/services/ai-autocomplete'
 import type { AutocompleteRequest } from '@/types/autocomplete'
 
 export async function POST(request: NextRequest) {
   try {
+    // 🛡️ HARD GUARD: Do NOT run AI during onboarding
+    const user = await getCurrentUser()
+    
+    if (!user?.org_id) {
+      return NextResponse.json({ suggestions: [] })
+    }
+    
+    // Check onboarding status using service role client
+    const adminSupabase = createServiceRoleClient()
+    const { data: org } = await adminSupabase
+      .from('organizations')
+      .select('onboarding_completed')
+      .eq('id', user.org_id)
+      .single() as any
+    
+    // Do NOT run AI during onboarding - this prevents crashes that break navigation
+    if (!org?.onboarding_completed) {
+      console.log('[AI Autocomplete] Onboarding incomplete - returning empty suggestions')
+      return NextResponse.json({ suggestions: [] })
+    }
+    
     // Parse request body
     const body: AutocompleteRequest = await request.json()
     
@@ -45,39 +68,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result, { status: 200 })
 
   } catch (error) {
-    console.error('Autocomplete API error:', error)
-
-    // Handle specific error types
-    if (error instanceof Error) {
-      if (error.message.includes('Authentication required')) {
-        return NextResponse.json(
-          { error: 'Authentication required' },
-          { status: 401 }
-        )
-      }
-
-      if (error.message.includes('Rate limit exceeded')) {
-        return NextResponse.json(
-          { error: 'Rate limit exceeded. Please try again later.' },
-          { status: 429 }
-        )
-      }
-
-      if (error.message.includes('Invalid context') || 
-          error.message.includes('Query must be at least') ||
-          error.message.includes('Limit cannot exceed')) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 400 }
-        )
-      }
-    }
-
-    // Generic error response
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    // 🚫 AI FAILURE MUST NEVER THROW - return empty suggestions to prevent breaking navigation
+    console.error('[AI Autocomplete] Non-fatal error:', error)
+    return NextResponse.json({ suggestions: [] })
   }
 }
 
