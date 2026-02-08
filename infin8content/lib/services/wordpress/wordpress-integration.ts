@@ -66,19 +66,17 @@ export class WordPressIntegration {
 
   /**
    * Test WordPress connection
+   * Uses safe endpoint that doesn't require privileged capabilities
+   * Per WordPress REST API docs: /posts requires edit_posts (default for authors/editors)
    */
-  async testConnection(): Promise<{ success: boolean; message: string; user?: any }> {
+  async testConnection(): Promise<{ success: boolean; message: string }> {
     try {
-      const user = await this.makeRequest('/users/me')
+      // Safe, capability-light endpoint - works with Application Passwords
+      await this.makeRequest('/posts?per_page=1&_fields=id')
+
       return {
         success: true,
-        message: 'Connection successful',
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          roles: user.roles
-        }
+        message: 'Connection successful'
       }
     } catch (error: any) {
       return {

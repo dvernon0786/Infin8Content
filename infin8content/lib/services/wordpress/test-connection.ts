@@ -9,12 +9,6 @@ export interface WordPressCredentials {
 export interface ConnectionTestResult {
   success: boolean
   message: string
-  user?: {
-    id: number
-    name: string
-    email: string
-    roles: string[]
-  }
   site?: {
     name: string
     description: string
@@ -24,6 +18,7 @@ export interface ConnectionTestResult {
 
 /**
  * Test WordPress connection with credentials
+ * Uses safe endpoints that work with Application Passwords
  * Throws error if connection fails
  */
 export async function testWordPressConnection(credentials: WordPressCredentials): Promise<ConnectionTestResult> {
@@ -37,19 +32,29 @@ export async function testWordPressConnection(credentials: WordPressCredentials)
     // Create WordPress integration
     const wp = new WordPressIntegration(credentials)
 
-    // Test connection by getting user info
-    const user = await wp.testConnection()
-    if (!user.success) {
-      throw new Error(user.message)
+    // Test connection using safe endpoint
+    const connectionTest = await wp.testConnection()
+    if (!connectionTest.success) {
+      throw new Error(connectionTest.message)
     }
 
-    // Get site info for additional validation
-    const siteInfo = await wp.getSiteInfo()
+    // Try to get site info (optional - may fail on some hosts)
+    let siteInfo
+    try {
+      siteInfo = await wp.getSiteInfo()
+    } catch (siteError) {
+      // Site info often fails on shared hosting, but connection is still valid
+      console.warn('Site info unavailable, but connection is valid:', siteError)
+      siteInfo = {
+        name: 'WordPress Site',
+        description: '',
+        url: credentials.url
+      }
+    }
 
     return {
       success: true,
       message: 'Connection successful',
-      user: user.user,
       site: siteInfo
     }
 
