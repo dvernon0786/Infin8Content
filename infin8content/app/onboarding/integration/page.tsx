@@ -9,14 +9,40 @@ export default function IntegrationStepPage() {
   const router = useRouter()
 
   const handleComplete = async (data: any) => {
-    localStorage.setItem('onboarding-integration', JSON.stringify(data))
-    // Mark onboarding complete and redirect to dashboard
-    localStorage.setItem('onboarding-completed', 'true')
-    router.push('/dashboard')
+    console.log('[IntegrationStepPage] handleComplete called', data)
+
+    try {
+      console.log('[IntegrationStepPage] Sending API request...')
+      const response = await fetch('/api/onboarding/integration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      console.log('[IntegrationStepPage] API response status:', response.status)
+
+      const payload = await response.json()
+      console.log('[IntegrationStepPage] API response payload:', payload)
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to save integration')
+      }
+
+      console.log('[IntegrationStepPage] Integration saved, redirecting to dashboard')
+      // 🎯 NOTE: No localStorage - DB is now authoritative
+      router.push('/dashboard')
+
+    } catch (error) {
+      console.error('[IntegrationStepPage] ERROR:', error)
+      throw error // Re-throw to show error in component
+    }
   }
 
   const handleSkip = () => {
-    localStorage.setItem('onboarding-completed', 'true')
+    console.log('[IntegrationStepPage] Skipping integration, redirecting to dashboard')
+    // 🎯 NOTE: No localStorage - DB is now authoritative
     router.push('/dashboard')
   }
 

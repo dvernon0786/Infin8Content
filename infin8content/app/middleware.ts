@@ -461,7 +461,13 @@ export async function middleware(request: NextRequest) {
     })
 
     if (!onboardingCompleted) {
-      console.log(`[MIDDLEWARE-${requestId}] Onboarding incomplete, redirecting to /onboarding/business`)
+      console.warn(`[MIDDLEWARE-${requestId}] REDIRECTING TO STEP 1`, {
+        onboardingCompleted,
+        pathname,
+        orgId: userRecord.org_id,
+        redirectTo: '/onboarding/business',
+        reason: 'onboarding_incomplete'
+      })
       // Silent redirect to onboarding business step
       const onboardingUrl = new URL('/onboarding/business', request.url);
       return NextResponse.redirect(onboardingUrl);
