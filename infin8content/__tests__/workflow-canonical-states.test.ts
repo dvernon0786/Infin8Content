@@ -23,14 +23,14 @@ declare global {
 // Extend Jest matchers
 expect.extend({
   toBeValidWorkflowState(received: string) {
-    const pass = () => {
+    const pass = (() => {
       try {
         assertValidWorkflowState(received)
         return true
       } catch {
         return false
       }
-    }
+    })()
     return {
       message: () =>
         `expected ${received} to be a valid workflow state`,

@@ -7,13 +7,15 @@ declare global {
     }
   }
   
-  const expect: jest.Expect
-  const describe: jest.Describe
-  const test: jest.It
-  const it: jest.It
-  const beforeAll: jest.Lifecycle
-  const afterAll: jest.Lifecycle
-  const beforeEach: jest.Lifecycle
-  const afterEach: jest.Lifecycle
-  const jest: jest.Jest
+  var expect: jest.Expect
+  var describe: jest.Describe
+  var test: jest.It
+  var it: jest.It
+  var beforeAll: jest.Lifecycle
+  var afterAll: jest.Lifecycle
+  var beforeEach: jest.Lifecycle
+  var afterEach: jest.Lifecycle
+  var jest: jest.Jest
 }
+
+export {};

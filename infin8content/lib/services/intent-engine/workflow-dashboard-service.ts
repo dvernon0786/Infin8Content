@@ -128,6 +128,9 @@ export function formatWorkflows(workflows: IntentWorkflow[]): WorkflowDashboardI
 /**
  * Fetch all workflows for an organization
  */
+// Export the helper functions for use in tests
+export { calculateProgress, getStepDescription }
+
 export async function getWorkflowDashboard(
   supabase: SupabaseClient,
   organizationId: string

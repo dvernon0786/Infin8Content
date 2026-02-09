@@ -72,7 +72,11 @@ describe('Subtopic Parser', () => {
   describe('parseSubtopics', () => {
     it('should parse valid subtopics correctly', () => {
       const response = {
+        status_code: 200,
+        status_message: 'OK',
         tasks: [{
+          status_code: 200,
+          status_message: 'OK',
           result: [
             {
               title: 'Understanding AI Basics',
@@ -112,7 +116,11 @@ describe('Subtopic Parser', () => {
 
     it('should filter out non-subtopic items', () => {
       const response = {
+        status_code: 200,
+        status_message: 'OK',
         tasks: [{
+          status_code: 200,
+          status_message: 'OK',
           result: [
             {
               title: 'Understanding AI Basics',
@@ -144,7 +152,11 @@ describe('Subtopic Parser', () => {
 
     it('should clean and filter keywords', () => {
       const response = {
+        status_code: 200,
+        status_message: 'OK',
         tasks: [{
+          status_code: 200,
+          status_message: 'OK',
           result: [
             {
               title: 'Understanding AI Basics',
@@ -163,7 +175,11 @@ describe('Subtopic Parser', () => {
 
     it('should filter out subtopics with empty titles', () => {
       const response = {
+        status_code: 200,
+        status_message: 'OK',
         tasks: [{
+          status_code: 200,
+          status_message: 'OK',
           result: [
             {
               title: '',
@@ -192,7 +208,11 @@ describe('Subtopic Parser', () => {
 
     it('should filter out subtopics with no valid keywords', () => {
       const response = {
+        status_code: 200,
+        status_message: 'OK',
         tasks: [{
+          status_code: 200,
+          status_message: 'OK',
           result: [
             {
               title: 'Valid Title',
@@ -221,7 +241,11 @@ describe('Subtopic Parser', () => {
 
     it('should return empty array for no valid subtopics', () => {
       const response = {
+        status_code: 200,
+        status_message: 'OK',
         tasks: [{
+          status_code: 200,
+          status_message: 'OK',
           result: [
             {
               title: 'Invalid Type',
@@ -244,8 +268,11 @@ describe('Subtopic Parser', () => {
 
     it('should handle null/undefined result gracefully', () => {
       const response = {
+        status_code: 200,
+        status_message: 'OK',
         tasks: [{
-          result: null
+          status_code: 200,
+          status_message: 'OK'
         }]
       }
 

@@ -31,5 +31,5 @@
     "types/**/*.d.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "__tests__", "tests", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"]
+  "exclude": ["node_modules"]
 }

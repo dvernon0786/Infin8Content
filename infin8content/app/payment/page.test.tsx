@@ -32,7 +32,7 @@ describe('PaymentPage', () => {
   it('should redirect to login if user is not authenticated', async () => {
     vi.mocked(getCurrentUser).mockResolvedValueOnce(null)
 
-    await PaymentPage()
+    await PaymentPage({ searchParams: Promise.resolve({}) })
 
     expect(redirect).toHaveBeenCalledWith('/login')
   })
@@ -42,12 +42,13 @@ describe('PaymentPage', () => {
       user: { id: 'auth-1', email: 'test@example.com' },
       id: 'user-1',
       email: 'test@example.com',
+      first_name: 'Test',
       role: 'owner',
       org_id: null,
       organizations: null,
     })
 
-    await PaymentPage()
+    await PaymentPage({ searchParams: Promise.resolve({}) })
 
     expect(redirect).toHaveBeenCalledWith('/create-organization')
   })
@@ -57,6 +58,7 @@ describe('PaymentPage', () => {
       user: { id: 'auth-1', email: 'test@example.com' },
       id: 'user-1',
       email: 'test@example.com',
+      first_name: 'Test',
       role: 'owner',
       org_id: 'org-1',
       organizations: {
@@ -70,7 +72,7 @@ describe('PaymentPage', () => {
       } as any,
     })
 
-    await PaymentPage()
+    await PaymentPage({ searchParams: Promise.resolve({}) })
 
     expect(redirect).toHaveBeenCalledWith('/dashboard')
   })
@@ -80,6 +82,7 @@ describe('PaymentPage', () => {
       user: { id: 'auth-1', email: 'test@example.com' },
       id: 'user-1',
       email: 'test@example.com',
+      first_name: 'Test',
       role: 'owner',
       org_id: 'org-1',
       organizations: {
@@ -93,7 +96,7 @@ describe('PaymentPage', () => {
       } as any,
     })
 
-    const result = await PaymentPage()
+    const result = await PaymentPage({ searchParams: Promise.resolve({}) })
     const { container } = await import('@testing-library/react').then((m) =>
       m.render(result as any)
     )
@@ -107,6 +110,7 @@ describe('PaymentPage', () => {
       user: { id: 'auth-1', email: 'test@example.com' },
       id: 'user-1',
       email: 'test@example.com',
+      first_name: 'Test',
       role: 'owner',
       org_id: 'org-1',
       organizations: {
@@ -119,7 +123,7 @@ describe('PaymentPage', () => {
       } as any,
     })
 
-    const result = await PaymentPage()
+    const result = await PaymentPage({ searchParams: Promise.resolve({}) })
     const { container } = await import('@testing-library/react').then((m) =>
       m.render(result as any)
     )
