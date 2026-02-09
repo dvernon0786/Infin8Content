@@ -11,6 +11,34 @@ import {
 import { assertValidWorkflowTransition } from '../lib/inngest/workflow-transition-guard'
 import { normalizeWorkflowStatus } from '../lib/utils/normalize-workflow-status'
 
+// Add global Jest types
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toBeValidWorkflowState(): R
+    }
+  }
+}
+
+// Extend Jest matchers
+expect.extend({
+  toBeValidWorkflowState(received: string) {
+    const pass = () => {
+      try {
+        assertValidWorkflowState(received)
+        return true
+      } catch {
+        return false
+      }
+    }
+    return {
+      message: () =>
+        `expected ${received} to be a valid workflow state`,
+      pass,
+    }
+  },
+})
+
 describe('Canonical Workflow States', () => {
   describe('Single Source of Truth', () => {
     test('should have exactly 12 workflow states', () => {
