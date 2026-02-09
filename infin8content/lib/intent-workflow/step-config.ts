@@ -9,6 +9,12 @@ export interface WorkflowStepConfig {
 
 export const WORKFLOW_STEP_CONFIG: WorkflowStepConfig[] = [
   {
+    step: 'step_0_auth',
+    label: 'Generate ICP',
+    endpoint: 'steps/icp-generate',
+    autoAdvance: false,
+  },
+  {
     step: 'step_1_icp',
     label: 'Generate ICP',
     endpoint: 'steps/icp-generate',

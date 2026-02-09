@@ -1,6 +1,6 @@
 # API Contracts - Infin8Content
 
-Generated: 2026-02-09 (MVP Correctness Fixes Complete)  
+Generated: 2026-02-10 (ICP Form Implementation Complete)  
 Framework: Next.js 16.1.1 API Routes  
 Base URL: `/api`
 
@@ -8,9 +8,9 @@ Base URL: `/api`
 
 Infin8Content implements a comprehensive REST API using Next.js App Router with TypeScript, featuring multi-tenant architecture, authentication, payment processing, AI content generation, and a robust workflow state machine.
 
-## System Status (2026-02-09)
+## System Status (2026-02-10)
 
-✅ **MVP SHIP READY - UNCONDITIONAL SIGN-OFF GRANTED**
+✅ **ICP STEP 1 INPUT FORM - FULLY IMPLEMENTED & DEPLOYED**
 - Authentication: Registration and OTP verification working
 - Database: Supabase connected and operational  
 - Email: Brevo OTP delivery active
@@ -18,8 +18,37 @@ Infin8Content implements a comprehensive REST API using Next.js App Router with 
 - Environment: All variables configured
 - 🔥 **Workflow State Machine**: Complete implementation with canonical definitions
 - 🚀 **MVP Correctness**: State machine provably correct, safe, and deterministic
+- ✅ **ICP Input Form**: Complete implementation with three-layer guardrail system
 
-### Latest Implementation: MVP Correctness Fixes
+### Latest Implementation: ICP Step 1 Input Form
+
+**Status**: ✅ **COMPLETE & DEPLOYED** | **Branch**: `test-main-all-mvp-fixes`
+
+Complete ICP input form implementation with comprehensive safety measures:
+
+#### Key Features
+- **Three Required Inputs**: Organization Name, Website URL, LinkedIn URL
+- **Client-Side Validation**: Required fields + URL format validation
+- **API Integration**: POST to `/steps/icp-generate` with proper JSON payload
+- **Three-Layer Guardrails**: UI, API, and Workflow State protection
+
+#### Safety Guarantees
+- **ICP runs without inputs**: ❌ Impossible (Layer 1 + Layer 2)
+- **ICP runs twice**: ❌ Impossible (Layer 3)
+- **ICP hangs silently**: ❌ Impossible (Layer 2 timeout)
+- **ICP called out of order**: ❌ Impossible (Layer 3)
+
+#### Files Modified
+```
+components/dashboard/workflow-dashboard/WorkflowDetailModal.tsx (ICP form)
+lib/intent-workflow/step-config.ts (step_0_auth config)
+app/api/intent/workflows/route.ts (workflow creation fixes)
+app/api/intent/workflows/[workflow_id]/steps/icp-generate/route.ts (guardrails)
+lib/validators/onboarding-validator.ts (audit fixes)
+lib/services/intent-engine/*gate-validator.ts (UUID fixes)
+```
+
+### Previous Implementation: MVP Correctness Fixes
 
 **Status**: ✅ **COMPLETE & SHIP READY** | **Files Modified**: 4 service files
 
