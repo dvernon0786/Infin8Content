@@ -22,7 +22,7 @@ describe('AI Autocomplete API Endpoint', () => {
     it('should return suggestions for valid request', async () => {
       const mockSuggestions = {
         suggestions: [
-          { id: '1', text: 'Test suggestion', category: 'template', source: 'ai' }
+          { id: '1', text: 'Test suggestion', category: 'template' as const, source: 'ai' as const }
         ],
         cached: false,
         processingTime: 100
@@ -237,7 +237,7 @@ describe('AI Autocomplete API Endpoint', () => {
     it('should use default limit when not provided', async () => {
       const mockSuggestions = {
         suggestions: [
-          { id: '1', text: 'Test suggestion', category: 'template', source: 'ai' }
+          { id: '1', text: 'Test suggestion', category: 'template' as const, source: 'ai' as const }
         ],
         cached: false,
         processingTime: 100

@@ -95,7 +95,7 @@ describe('GET /api/articles/[article_id]/progress', () => {
     vi.mocked(getCurrentUser).mockResolvedValue(null)
 
     const request = new Request('http://localhost:3000/api/articles/article-123/progress')
-    const params = { article_id: 'article-123' }
+    const params = Promise.resolve({ article_id: 'article-123' })
 
     const response = await GET(request, { params })
     const data = await response.json()
@@ -109,7 +109,7 @@ describe('GET /api/articles/[article_id]/progress', () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'user-123', org_id: null })
 
     const request = new Request('http://localhost:3000/api/articles/article-123/progress')
-    const params = { article_id: 'article-123' }
+    const params = Promise.resolve({ article_id: 'article-123' })
 
     const response = await GET(request, { params })
     const data = await response.json()
@@ -145,7 +145,7 @@ describe('GET /api/articles/[article_id]/progress', () => {
     })
 
     const request = new Request('http://localhost:3000/api/articles/article-123/progress')
-    const params = { article_id: 'article-123' }
+    const params = Promise.resolve({ article_id: 'article-123' })
 
     const response = await GET(request, { params })
     const data = await response.json()
@@ -167,7 +167,7 @@ describe('GET /api/articles/[article_id]/progress', () => {
     })
 
     const request = new Request('http://localhost:3000/api/articles/article-123/progress')
-    const params = { article_id: 'article-123' }
+    const params = Promise.resolve({ article_id: 'article-123' })
 
     const response = await GET(request, { params })
     const data = await response.json()
@@ -190,7 +190,7 @@ describe('GET /api/articles/[article_id]/progress', () => {
     vi.mocked(calculateArticleProgress).mockReturnValue(mockProgressData)
 
     const request = new Request('http://localhost:3000/api/articles/article-123/progress')
-    const params = { article_id: 'article-123' }
+    const params = Promise.resolve({ article_id: 'article-123' })
 
     const response = await GET(request, { params })
     const data = await response.json()
@@ -221,7 +221,7 @@ describe('GET /api/articles/[article_id]/progress', () => {
     })
 
     const request = new Request('http://localhost:3000/api/articles/article-123/progress')
-    const params = { article_id: 'article-123' }
+    const params = Promise.resolve({ article_id: 'article-123' })
 
     const response = await GET(request, { params })
     const data = await response.json()
@@ -254,7 +254,7 @@ describe('GET /api/articles/[article_id]/progress', () => {
     vi.mocked(calculateArticleProgress).mockReturnValue(failedProgressData)
 
     const request = new Request('http://localhost:3000/api/articles/article-123/progress')
-    const params = { article_id: 'article-123' }
+    const params = Promise.resolve({ article_id: 'article-123' })
 
     const response = await GET(request, { params })
     const data = await response.json()
