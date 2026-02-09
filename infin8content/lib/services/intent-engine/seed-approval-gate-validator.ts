@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
 import { normalizeWorkflowStatus } from '@/lib/utils/normalize-workflow-status'
+import { WORKFLOW_STEP_ORDER } from '@/lib/constants/intent-workflow-steps'
 
 export interface GateResult {
   allowed: boolean
@@ -81,9 +82,8 @@ export class SeedApprovalGateValidator {
       if (workflow.status !== 'step_3_keywords') {
         // If workflow is beyond step_3_keywords, allow (already approved)
         // If workflow is before step_3_keywords, block (keywords not ready yet)
-        const stepOrder = ['step_1_icp', 'step_2_competitors', 'step_3_keywords', 'step_4_longtails']
-        const currentIndex = stepOrder.indexOf(workflow.status)
-        const seedIndex = stepOrder.indexOf('step_3_keywords')
+        const currentIndex = WORKFLOW_STEP_ORDER.indexOf(workflow.status as any)
+        const seedIndex = WORKFLOW_STEP_ORDER.indexOf('step_3_keywords')
         
         if (currentIndex < seedIndex) {
           // Workflow hasn't reached seed step yet
