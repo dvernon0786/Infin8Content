@@ -38,6 +38,7 @@ export const AuditAction = {
     INTENT_WORKFLOW_CREATED: 'intent.workflow.created',
     INTENT_WORKFLOW_UPDATED: 'intent.workflow.updated',
     INTENT_WORKFLOW_DELETED: 'intent.workflow.deleted',
+    WORKFLOW_CANCELLED: 'workflow.cancelled',
 
     // ICP settings actions
     ICP_SETTINGS_CREATED: 'icp.settings.created',
