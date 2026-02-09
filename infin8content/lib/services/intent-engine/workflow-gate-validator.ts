@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
 import { WORKFLOW_STEP_ORDER } from '@/lib/constants/intent-workflow-steps'
+import { normalizeWorkflowStatus } from '@/lib/utils/normalize-workflow-status'
 
 export interface GateResult {
   allowed: boolean
@@ -93,16 +94,20 @@ export class WorkflowGateValidator {
       }
 
       // Use canonical step ordering
-      const currentIndex = WORKFLOW_STEP_ORDER.indexOf(workflow.status as any)
+      const normalizedStatus = normalizeWorkflowStatus(workflow.status)
+      const currentIndex = WORKFLOW_STEP_ORDER.indexOf(normalizedStatus)
       const longtailIndex = WORKFLOW_STEP_ORDER.indexOf('step_4_longtails')
       const clusteringIndex = WORKFLOW_STEP_ORDER.indexOf('step_6_clustering')
 
+      // Handle terminal states - they are beyond all execution steps
+      const effectiveIndex = currentIndex === -1 ? WORKFLOW_STEP_ORDER.length : currentIndex
+
       // Check if workflow has completed both longtails and clustering
-      const longtailsComplete = currentIndex >= longtailIndex
-      const clusteringComplete = currentIndex >= clusteringIndex
+      const longtailsComplete = effectiveIndex >= longtailIndex
+      const clusteringComplete = effectiveIndex >= clusteringIndex
 
       // If workflow is before step_8_subtopics, check prerequisites
-      if (currentIndex < WORKFLOW_STEP_ORDER.indexOf('step_8_subtopics')) {
+      if (effectiveIndex < WORKFLOW_STEP_ORDER.indexOf('step_8_subtopics')) {
         // Workflow hasn't reached subtopic step yet
         const missingPrerequisites = []
 
