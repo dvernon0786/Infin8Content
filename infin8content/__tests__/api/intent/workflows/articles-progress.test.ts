@@ -22,7 +22,7 @@ describe('Article Progress API Endpoint', () => {
       const { getCurrentUser } = await import('@/lib/supabase/get-current-user')
       vi.mocked(getCurrentUser).mockResolvedValue(null)
 
-      const request = mockNextRequest({url: 'http://localhost/api/intent/workflows/test-workflow/articles/progress')
+      const request = mockNextRequest({url: 'http://localhost/api/intent/workflows/test-workflow/articles/progress'})
       const response = await GET(request, { params: { workflow_id: 'test-workflow' } })
 
       expect(response.status).toBe(401)
@@ -40,7 +40,7 @@ describe('Article Progress API Endpoint', () => {
       })
       vi.mocked(validateWorkflowAccess).mockResolvedValue(false)
 
-      const request = mockNextRequest({url: 'http://localhost/api/intent/workflows/test-workflow/articles/progress')
+      const request = mockNextRequest({url: 'http://localhost/api/intent/workflows/test-workflow/articles/progress'})
       const response = await GET(request, { params: { workflow_id: 'test-workflow' } })
 
       expect(response.status).toBe(403)
@@ -55,7 +55,7 @@ describe('Article Progress API Endpoint', () => {
         org_id: 'org-123'
       })
 
-      const request = mockNextRequest({url: 'http://localhost/api/intent/workflows/articles/progress')
+      const request = mockNextRequest({url: 'http://localhost/api/intent/workflows/articles/progress'})
       // @ts-ignore - testing invalid params
       const response = await GET(request, { params: {} })
 
@@ -182,7 +182,7 @@ describe('Article Progress API Endpoint', () => {
       })
       vi.mocked(logActionAsync).mockResolvedValue(undefined)
 
-      const request = mockNextRequest({url: 'http://localhost/api/intent/workflows/test-workflow/articles/progress')
+      const request = mockNextRequest({url: 'http://localhost/api/intent/workflows/test-workflow/articles/progress'})
       const response = await GET(request, { params: { workflow_id: 'test-workflow' } })
 
       expect(response.status).toBe(200)
@@ -261,7 +261,7 @@ describe('Article Progress API Endpoint', () => {
       vi.mocked(getWorkflowArticleProgress).mockRejectedValue(new Error('Database connection failed'))
       vi.mocked(logActionAsync).mockResolvedValue(undefined)
 
-      const request = mockNextRequest({url: 'http://localhost/api/intent/workflows/test-workflow/articles/progress')
+      const request = mockNextRequest({url: 'http://localhost/api/intent/workflows/test-workflow/articles/progress'})
       const response = await GET(request, { params: { workflow_id: 'test-workflow' } })
 
       expect(response.status).toBe(500)
@@ -296,7 +296,7 @@ describe('Article Progress API Endpoint', () => {
       vi.mocked(validateWorkflowAccess).mockResolvedValue(true)
       vi.mocked(getWorkflowArticleProgress).mockRejectedValue(new Error('Service error'))
 
-      const request = mockNextRequest({url: 'http://localhost/api/intent/workflows/test-workflow/articles/progress')
+      const request = mockNextRequest({url: 'http://localhost/api/intent/workflows/test-workflow/articles/progress'})
       const response = await GET(request, { params: { workflow_id: 'test-workflow' } })
 
       expect(response.status).toBe(500)

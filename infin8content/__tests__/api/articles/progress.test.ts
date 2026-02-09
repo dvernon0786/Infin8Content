@@ -95,7 +95,7 @@ describe('GET /api/articles/[article_id]/progress', () => {
   it('returns 401 for unauthenticated requests', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(null)
 
-    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress')
+    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress'})
     const params = Promise.resolve({ article_id: 'article-123' })
 
     const response = await GET(request, { params })
@@ -109,7 +109,7 @@ describe('GET /api/articles/[article_id]/progress', () => {
   it('returns 401 for user without organization', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'user-123', org_id: null })
 
-    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress')
+    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress'})
     const params = Promise.resolve({ article_id: 'article-123' })
 
     const response = await GET(request, { params })
@@ -145,7 +145,7 @@ describe('GET /api/articles/[article_id]/progress', () => {
       error: { code: 'PGRST116' }
     })
 
-    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress')
+    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress'})
     const params = Promise.resolve({ article_id: 'article-123' })
 
     const response = await GET(request, { params })
@@ -167,7 +167,7 @@ describe('GET /api/articles/[article_id]/progress', () => {
       error: null
     })
 
-    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress')
+    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress'})
     const params = Promise.resolve({ article_id: 'article-123' })
 
     const response = await GET(request, { params })
@@ -190,7 +190,7 @@ describe('GET /api/articles/[article_id]/progress', () => {
     })
     vi.mocked(calculateArticleProgress).mockReturnValue(mockProgressData)
 
-    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress')
+    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress'})
     const params = Promise.resolve({ article_id: 'article-123' })
 
     const response = await GET(request, { params })
@@ -221,7 +221,7 @@ describe('GET /api/articles/[article_id]/progress', () => {
       error: { code: 'UNKNOWN_ERROR', message: 'Database connection failed' }
     })
 
-    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress')
+    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress'})
     const params = Promise.resolve({ article_id: 'article-123' })
 
     const response = await GET(request, { params })
@@ -254,7 +254,7 @@ describe('GET /api/articles/[article_id]/progress', () => {
     })
     vi.mocked(calculateArticleProgress).mockReturnValue(failedProgressData)
 
-    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress')
+    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress'})
     const params = Promise.resolve({ article_id: 'article-123' })
 
     const response = await GET(request, { params })
@@ -301,7 +301,7 @@ describe('GET /api/articles/[article_id]/progress', () => {
       }
     })
 
-    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress')
+    const request = mockNextRequest({url: 'http://localhost:3000/api/articles/article-123/progress'})
     const params = { article_id: 'article-123' }
 
     const startTime = performance.now()
