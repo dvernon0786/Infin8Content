@@ -2,6 +2,9 @@
  * Test suite to verify canonical workflow states and prevent regression
  */
 
+// Explicit Jest imports for IDE recognition
+import '@jest/globals'
+
 import { 
   INTENT_WORKFLOW_STEPS,
   WORKFLOW_STEP_ORDER,
