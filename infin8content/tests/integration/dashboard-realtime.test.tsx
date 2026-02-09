@@ -33,9 +33,9 @@ vi.mock('@/lib/supabase/realtime', () => ({
 }));
 
 // Mock fetch for API calls
-global.fetch = vi.fn();
+global.fetch = vi.fn() as any;
 
-const mockFetch = global.fetch as vi.MockedFunction<typeof fetch>;
+const mockFetch = global.fetch as any;
 
 describe('Real-time Dashboard Integration', () => {
   beforeEach(() => {
