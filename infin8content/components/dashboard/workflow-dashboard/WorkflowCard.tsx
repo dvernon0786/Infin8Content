@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { ChevronRight, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 import type { WorkflowDashboardItem } from '@/lib/services/intent-engine/workflow-dashboard-service'
+import { WORKFLOW_STEP_DESCRIPTIONS, WORKFLOW_PROGRESS_MAP, type WorkflowState } from '@/lib/constants/intent-workflow-steps'
 
 interface WorkflowCardProps {
   workflow: WorkflowDashboardItem
@@ -45,13 +46,13 @@ export function WorkflowCard({ workflow, onNavigate }: WorkflowCardProps) {
           <div className="flex-1">
             <CardTitle className="text-lg">{workflow.name}</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              {workflow.current_step}
+              {WORKFLOW_STEP_DESCRIPTIONS[workflow.status as WorkflowState] || 'Unknown'}
             </p>
           </div>
           <Badge className={getStatusColor(workflow.status)}>
             <span className="flex items-center gap-1">
               {getStatusIcon(workflow.status)}
-              {workflow.status.replace('step_', 'Step ').replace(/_/g, ' ')}
+              {WORKFLOW_STEP_DESCRIPTIONS[workflow.status as WorkflowState] || 'Unknown'}
             </span>
           </Badge>
         </div>
@@ -62,9 +63,9 @@ export function WorkflowCard({ workflow, onNavigate }: WorkflowCardProps) {
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Progress</span>
-            <span className="font-semibold">{workflow.progress_percentage}%</span>
+            <span className="font-semibold">{WORKFLOW_PROGRESS_MAP[workflow.status as WorkflowState]}%</span>
           </div>
-          <Progress value={workflow.progress_percentage} className="h-2" />
+          <Progress value={WORKFLOW_PROGRESS_MAP[workflow.status as WorkflowState]} className="h-2" />
         </div>
 
         {/* Metadata */}

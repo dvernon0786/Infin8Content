@@ -34,6 +34,25 @@ import { responsiveCSSVars } from "@/lib/utils/responsive-breakpoints"
 
 const items = [
     {
+        title: "Dashboard",
+        url: "/dashboard",
+        icon: BarChart,
+    },
+    {
+        title: "Articles",
+        url: "/dashboard/articles",
+        icon: FileText,
+    },
+    {
+        title: "Settings",
+        url: "/dashboard/settings",
+        icon: Settings,
+    },
+]
+
+// LEGACY DASHBOARD ITEMS — DISABLED FOR MVP
+/*
+    {
         title: "Write",
         url: "/dashboard/write",
         icon: PenTool,
@@ -49,21 +68,11 @@ const items = [
         icon: Globe,
     },
     {
-        title: "Articles",
-        url: "/dashboard/articles",
-        icon: FileText,
-    },
-    {
         title: "Track",
         url: "/dashboard/track",
         icon: BarChart,
     },
-    {
-        title: "Settings",
-        url: "/dashboard/settings",
-        icon: Settings,
-    },
-]
+*/
 
 export function SidebarNavigation() {
     const pathname = usePathname()
@@ -120,7 +129,7 @@ export function SidebarNavigation() {
                         "font-poppins text-h5 text-neutral-900 transition-opacity duration-200",
                         isMobile && "sr-only" // Hide label on mobile for cleaner look
                     )}>
-                        Production
+                        Navigation
                     </SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>

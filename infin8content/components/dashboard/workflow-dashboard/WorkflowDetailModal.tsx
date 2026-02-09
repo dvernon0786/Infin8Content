@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,11 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { AlertTriangle, X } from 'lucide-react'
 import type { WorkflowDashboardItem } from '@/lib/services/intent-engine/workflow-dashboard-service'
+import { WORKFLOW_STEP_DESCRIPTIONS, type WorkflowState } from '@/lib/constants/intent-workflow-steps'
+import { WORKFLOW_STEP_CONFIG } from '@/lib/intent-workflow/step-config'
 
 interface WorkflowDetailModalProps {
   workflow: WorkflowDashboardItem | null
@@ -28,16 +32,50 @@ export function WorkflowDetailModal({
   open,
   onOpenChange,
 }: WorkflowDetailModalProps) {
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [isCancelling, setIsCancelling] = useState(false)
+  const [isRunningStep, setIsRunningStep] = useState(false)
+  const [stepError, setStepError] = useState<string | null>(null)
+
   if (!workflow) return null
 
-  const steps = [
-    { key: 'step_0_auth', label: 'Authentication', order: 0 },
-    { key: 'step_1_icp', label: 'ICP Generation', order: 1 },
-    { key: 'step_2_competitors', label: 'Competitor Analysis', order: 2 },
-    { key: 'step_3_keywords', label: 'Keyword Research', order: 3 },
-    { key: 'step_4_topics', label: 'Topic Generation', order: 4 },
-    { key: 'step_5_generation', label: 'Article Generation', order: 5 },
-  ]
+  // Check if workflow can be cancelled (not already terminal)
+  const canCancel = workflow.status !== 'completed' && workflow.status !== 'failed'
+  
+  // Detect the active step for execution
+  const activeStep = WORKFLOW_STEP_CONFIG.find(
+    (s) => s.step === workflow.status
+  )
+
+  const handleCancelWorkflow = async () => {
+    setIsCancelling(true)
+    try {
+      const response = await fetch(`/api/intent/workflows/${workflow.id}/cancel`, {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to cancel workflow')
+      }
+
+      // Close modal and refresh parent
+      onOpenChange(false)
+      // Parent will handle refresh via real-time subscription
+    } catch (error) {
+      console.error('Failed to cancel workflow:', error)
+      // TODO: Show error toast
+    } finally {
+      setIsCancelling(false)
+      setShowCancelConfirm(false)
+    }
+  }
+
+  const steps = WORKFLOW_STEP_CONFIG.map((step, index) => ({
+    key: step.step,
+    label: step.label,
+    order: index,
+  }))
 
   const currentStepOrder = steps.find(s => s.key === workflow.status)?.order ?? -1
 
@@ -140,7 +178,7 @@ export function WorkflowDetailModal({
                     Status
                   </p>
                   <p className="text-sm font-medium mt-1">
-                    {workflow.status.replace('step_', 'Step ').replace(/_/g, ' ')}
+                    {WORKFLOW_STEP_DESCRIPTIONS[workflow.status as WorkflowState] || 'Unknown'}
                   </p>
                 </div>
                 <div>
@@ -166,10 +204,99 @@ export function WorkflowDetailModal({
                   </p>
                 </div>
               </div>
+
+              {/* Action Button */}
+              {activeStep && canCancel && (
+                <div className="pt-4 border-t space-y-2">
+                  {stepError && (
+                    <p className="text-sm text-red-600">
+                      {stepError}
+                    </p>
+                  )}
+
+                  <Button
+                    className="w-full"
+                    disabled={isRunningStep}
+                    onClick={async () => {
+                      try {
+                        setIsRunningStep(true)
+                        setStepError(null)
+
+                        const res = await fetch(
+                          `/api/intent/workflows/${workflow.id}/${activeStep.endpoint}`,
+                          { method: 'POST' }
+                        )
+
+                        if (!res.ok) {
+                          const body = await res.json()
+                          throw new Error(body.error || 'Step failed')
+                        }
+
+                        // realtime subscription will refresh workflow
+                      } catch (err: any) {
+                        setStepError(err.message || 'Something went wrong')
+                      } finally {
+                        setIsRunningStep(false)
+                      }
+                    }}
+                  >
+                    {isRunningStep ? 'Running…' : activeStep.label}
+                  </Button>
+                </div>
+              )}
+
+              {/* Cancel Button */}
+              {canCancel && (
+                <div className="pt-4 border-t">
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    onClick={() => setShowCancelConfirm(true)}
+                    disabled={isCancelling}
+                  >
+                    <AlertTriangle className="w-4 h-4 mr-2" />
+                    Cancel workflow
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
       </DialogContent>
+
+      {/* Cancel Confirmation Dialog */}
+      <Dialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Cancel workflow?
+            </DialogTitle>
+            <DialogDescription>
+              This will permanently stop the workflow.
+              You cannot resume it. You can start a new workflow anytime.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelConfirm(false)}
+              disabled={isCancelling}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelWorkflow}
+              disabled={isCancelling}
+              className="flex-1"
+            >
+              {isCancelling ? 'Cancelling...' : 'Yes, cancel workflow'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }

@@ -83,6 +83,30 @@ export async function POST(request: Request) {
         { status: 404 }
       )
     }
+
+    // Auto-enable Intent Engine feature flag for new organizations
+    try {
+      const { error: flagError } = await supabase
+        .from('feature_flags')
+        .upsert(
+          {
+            organization_id: organizationId,
+            flag_key: 'ENABLE_INTENT_ENGINE',
+            enabled: true,
+          },
+          { onConflict: 'organization_id,flag_key' }
+        )
+
+      if (flagError) {
+        console.warn('[Onboarding Complete] Failed to enable Intent Engine flag:', flagError)
+        // Don't fail onboarding - just log the error
+      } else {
+        console.log('[Onboarding Complete] Intent Engine feature flag enabled automatically')
+      }
+    } catch (error) {
+      console.warn('[Onboarding Complete] Error enabling Intent Engine flag:', error)
+      // Don't fail onboarding - just log the error
+    }
     
     console.log('[Onboarding Complete] Onboarding completed successfully')
     
