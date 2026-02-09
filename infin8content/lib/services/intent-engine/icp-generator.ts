@@ -44,6 +44,33 @@ export interface ICPGenerationResult {
 }
 
 /**
+ * Extract JSON from LLM response, handling markdown-wrapped JSON
+ * @param raw - Raw LLM response text
+ * @returns Clean JSON string ready for JSON.parse()
+ * @throws Error if response is not valid JSON
+ */
+function extractJson(raw: string): string {
+  const trimmed = raw.trim()
+
+  // Case 1: Markdown fenced JSON
+  if (trimmed.startsWith('```')) {
+    const match = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+    if (!match) {
+      throw new Error('JSON markdown block malformed')
+    }
+    return match[1].trim()
+  }
+
+  // Case 2: Raw JSON
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    return trimmed
+  }
+
+  // Anything else is invalid
+  throw new Error('Response is not valid JSON')
+}
+
+/**
  * Generate ICP document using Perplexity API via OpenRouter with automatic retry
  * 
  * @param request - Organization profile data for ICP generation
@@ -262,10 +289,11 @@ Return a JSON object with the following structure:
       timeoutPromise
     ])
 
-    // Parse JSON response
+    // Parse JSON response (strip markdown formatting if present)
     let icpData: ICPData
     try {
-      const parsed = JSON.parse(result.content)
+      const jsonString = extractJson(result.content)
+      const parsed = JSON.parse(jsonString)
       icpData = {
         industries: parsed.industries || [],
         buyerRoles: parsed.buyerRoles || [],
