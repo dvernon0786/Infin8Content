@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
+import { WORKFLOW_STEP_ORDER } from '@/lib/constants/intent-workflow-steps'
 
 export interface GateResult {
   allowed: boolean
@@ -91,32 +92,17 @@ export class WorkflowGateValidator {
         }
       }
 
-      // Define step ordering
-      // TODO: Extract to shared constant file (lib/constants/workflow-steps.ts) to avoid duplication
-      // This array is duplicated across multiple gate validators (Story 39.1, 39.2, 39.3, 39.4)
-      // Consolidation will improve maintainability and reduce sync issues
-      const stepOrder = [
-        'step_1_icp',
-        'step_2_competitors',
-        'step_3_seeds',
-        'step_4_longtails',
-        'step_5_filtering',
-        'step_6_clustering',
-        'step_7_validation',
-        'step_8_subtopics',
-        'step_9_articles'
-      ]
-
-      const currentIndex = stepOrder.indexOf(workflow.status)
-      const longtailIndex = stepOrder.indexOf('step_4_longtails')
-      const clusteringIndex = stepOrder.indexOf('step_6_clustering')
+      // Use canonical step ordering
+      const currentIndex = WORKFLOW_STEP_ORDER.indexOf(workflow.status as any)
+      const longtailIndex = WORKFLOW_STEP_ORDER.indexOf('step_4_longtails')
+      const clusteringIndex = WORKFLOW_STEP_ORDER.indexOf('step_6_clustering')
 
       // Check if workflow has completed both longtails and clustering
       const longtailsComplete = currentIndex >= longtailIndex
       const clusteringComplete = currentIndex >= clusteringIndex
 
       // If workflow is before step_8_subtopics, check prerequisites
-      if (currentIndex < stepOrder.indexOf('step_8_subtopics')) {
+      if (currentIndex < WORKFLOW_STEP_ORDER.indexOf('step_8_subtopics')) {
         // Workflow hasn't reached subtopic step yet
         const missingPrerequisites = []
 

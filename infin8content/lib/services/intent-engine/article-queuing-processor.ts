@@ -98,9 +98,9 @@ async function queueApprovedSubtopicsForArticlesImpl(
     const typedWorkflow = workflow as unknown as WorkflowContext
 
     // Validate workflow is at correct step
-    if (typedWorkflow.status !== 'step_8_approval') {
+    if (typedWorkflow.status !== 'step_8_subtopics') {
       throw new Error(
-        `Invalid workflow state: expected step_8_approval, got ${typedWorkflow.status}`
+        `Invalid workflow state: expected step_8_subtopics, got ${typedWorkflow.status}`
       )
     }
 

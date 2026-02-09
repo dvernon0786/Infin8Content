@@ -1,6 +1,6 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
-import { WORKFLOW_STEP_ORDER } from '@/lib/services/intent-engine/workflow-steps'
+import { WORKFLOW_STEP_ORDER } from '@/lib/constants/intent-workflow-steps'
 import { AuditAction } from '@/types/audit'
 
 export interface GateResult {
@@ -78,12 +78,12 @@ export class SubtopicApprovalGateValidator {
         }
       }
 
-      // Workflow must be at step_8_approval to require subtopic approval
-      if (workflow.status !== 'step_8_approval') {
-        // If workflow is beyond step_8_approval, allow (already approved)
-        // If workflow is before step_8_approval, block (subtopics not ready yet)
+      // Workflow must be at step_8_subtopics to require subtopic approval
+      if (workflow.status !== 'step_8_subtopics') {
+        // If workflow is beyond step_8_subtopics, allow (already approved)
+        // If workflow is before step_8_subtopics, block (subtopics not ready yet)
         const currentIndex = WORKFLOW_STEP_ORDER.indexOf(workflow.status as any)
-        const approvalIndex = WORKFLOW_STEP_ORDER.indexOf('step_8_approval')
+        const approvalIndex = WORKFLOW_STEP_ORDER.indexOf('step_8_subtopics')
         
         if (currentIndex < approvalIndex) {
           // Workflow hasn't reached subtopic approval step yet
@@ -103,7 +103,7 @@ export class SubtopicApprovalGateValidator {
           }
         }
         
-        // Workflow is beyond step_8_approval, so approval already happened
+        // Workflow is beyond step_8_subtopics, so approval already happened
         return {
           allowed: true,
           subtopicApprovalStatus: 'not_required',
