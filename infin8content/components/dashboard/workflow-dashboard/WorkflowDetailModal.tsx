@@ -101,7 +101,7 @@ export function WorkflowDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl w-full mx-4 sm:mx-auto sm:w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{workflow.name}</DialogTitle>
           <DialogDescription>
@@ -219,17 +219,21 @@ export function WorkflowDetailModal({
               {activeStep && canCancel && (
                 <div className="pt-4 border-t space-y-2">
                   {stepError && (
-                    <p className="text-sm text-red-600">
-                      {stepError}
-                    </p>
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-md sm:p-2">
+                      <p className="text-sm text-red-800 leading-tight">
+                        {stepError}
+                      </p>
+                    </div>
                   )}
 
                   {/* ICP Input Form - only for step_0_auth */}
                   {workflow.status === 'step_0_auth' ? (
-                    <div className="space-y-4">
-                      <div className="space-y-3">
-                        <div>
-                          <label className="text-sm font-medium">Organization Name *</label>
+                    <div className="space-y-4 sm:space-y-6">
+                      <div className="space-y-4 sm:space-y-6">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Organization Name *
+                          </label>
                           <Input
                             placeholder="Enter organization name"
                             value={icpFormData.organizationName}
@@ -238,10 +242,13 @@ export function WorkflowDetailModal({
                               organizationName: e.target.value
                             }))}
                             disabled={isRunningStep}
+                            className="w-full"
                           />
                         </div>
-                        <div>
-                          <label className="text-sm font-medium">Organization Website *</label>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Organization Website *
+                          </label>
                           <Input
                             type="url"
                             placeholder="https://example.com"
@@ -251,10 +258,13 @@ export function WorkflowDetailModal({
                               organizationUrl: e.target.value
                             }))}
                             disabled={isRunningStep}
+                            className="w-full"
                           />
                         </div>
-                        <div>
-                          <label className="text-sm font-medium">Organization LinkedIn *</label>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Organization LinkedIn *
+                          </label>
                           <Input
                             type="url"
                             placeholder="https://linkedin.com/company/example"
@@ -264,12 +274,13 @@ export function WorkflowDetailModal({
                               organizationLinkedInUrl: e.target.value
                             }))}
                             disabled={isRunningStep}
+                            className="w-full"
                           />
                         </div>
                       </div>
 
                       <Button
-                        className="w-full"
+                        className="w-full min-h-[44px] text-base sm:min-h-[40px] sm:text-sm"
                         disabled={isRunningStep}
                         onClick={async () => {
                           try {
@@ -323,7 +334,7 @@ export function WorkflowDetailModal({
                   ) : (
                     /* Regular action button for other steps */
                     <Button
-                      className="w-full"
+                      className="w-full min-h-[44px] text-base sm:min-h-[40px] sm:text-sm"
                       disabled={isRunningStep}
                       onClick={async () => {
                         try {
