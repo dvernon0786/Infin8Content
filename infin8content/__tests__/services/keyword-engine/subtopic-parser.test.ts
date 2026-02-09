@@ -272,8 +272,7 @@ describe('Subtopic Parser', () => {
         status_message: 'OK',
         tasks: [{
           status_code: 200,
-          status_message: 'OK',
-          result: null
+          status_message: 'OK'
         }]
       }
 
