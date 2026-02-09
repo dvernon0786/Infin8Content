@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
+import { normalizeWorkflowStatus } from '@/lib/utils/normalize-workflow-status'
 
 export interface GateResult {
   allowed: boolean
@@ -76,13 +77,13 @@ export class SeedApprovalGateValidator {
         }
       }
 
-      // Workflow must be at step_3_seeds to require seed approval
-      if (workflow.status !== 'step_3_seeds') {
-        // If workflow is beyond step_3_seeds, allow (already approved)
-        // If workflow is before step_3_seeds, block (seeds not ready yet)
-        const stepOrder = ['step_1_icp', 'step_2_competitors', 'step_3_seeds', 'step_4_longtails']
+      // Workflow must be at step_3_keywords to require seed approval
+      if (workflow.status !== 'step_3_keywords') {
+        // If workflow is beyond step_3_keywords, allow (already approved)
+        // If workflow is before step_3_keywords, block (keywords not ready yet)
+        const stepOrder = ['step_1_icp', 'step_2_competitors', 'step_3_keywords', 'step_4_longtails']
         const currentIndex = stepOrder.indexOf(workflow.status)
-        const seedIndex = stepOrder.indexOf('step_3_seeds')
+        const seedIndex = stepOrder.indexOf('step_3_keywords')
         
         if (currentIndex < seedIndex) {
           // Workflow hasn't reached seed step yet
@@ -102,7 +103,7 @@ export class SeedApprovalGateValidator {
           }
         }
         
-        // Workflow is beyond step_3_seeds, so approval already happened
+        // Workflow is beyond step_3_keywords, so approval already happened
         return {
           allowed: true,
           seedApprovalStatus: 'not_required',

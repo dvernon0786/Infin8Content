@@ -12,8 +12,12 @@ import {
   WORKFLOW_PROGRESS_MAP, 
   WORKFLOW_STEP_DESCRIPTIONS,
   ALL_WORKFLOW_STATES,
+  calculateProgress,
+  getStepDescription,
+  assertValidWorkflowState,
   type WorkflowState 
 } from '@/lib/constants/intent-workflow-steps'
+import { normalizeWorkflowStatus } from '@/lib/utils/normalize-workflow-status'
 
 export interface WorkflowDashboardItem {
   id: string
@@ -44,20 +48,9 @@ export interface DashboardResponse {
 }
 
 /**
- * Calculate progress percentage based on workflow status
- * Uses canonical progress mapping from constants
+ * Progress calculation and step descriptions
+ * Uses canonical functions from constants
  */
-export function calculateProgress(status: string): number {
-  return WORKFLOW_PROGRESS_MAP[status as WorkflowState] || 0
-}
-
-/**
- * Get human-readable step description
- * Uses canonical step descriptions from constants
- */
-export function getStepDescription(status: string): string {
-  return WORKFLOW_STEP_DESCRIPTIONS[status as WorkflowState] || 'Unknown'
-}
 
 /**
  * Calculate summary statistics from workflows
@@ -149,8 +142,12 @@ export async function getWorkflowDashboard(
     throw new Error(`Failed to fetch workflows: ${error.message}`)
   }
 
-  const formattedWorkflows = formatWorkflows(workflows || [])
-  const summary = calculateSummary(workflows || [])
+  const normalizedWorkflows = (workflows || []).map(w => ({
+    ...w,
+    status: normalizeWorkflowStatus(w.status),
+  }))
+  const formattedWorkflows = formatWorkflows(normalizedWorkflows)
+  const summary = calculateSummary(normalizedWorkflows)
 
   return {
     workflows: formattedWorkflows,

@@ -1,10 +1,9 @@
 /**
  * Canonical Intent Engine Workflow Steps
- * 
- * This is the SINGLE source of truth for all workflow step definitions.
- * All other files should import and derive from this constant.
- * 
- * DO NOT modify step names without updating all dependent systems.
+ *
+ * ⚠️ SINGLE SOURCE OF TRUTH
+ * All workflow step names, ordering, progress, and helpers
+ * MUST be defined here and imported everywhere else.
  */
 
 export const INTENT_WORKFLOW_STEPS = {
@@ -22,11 +21,7 @@ export const INTENT_WORKFLOW_STEPS = {
   FAILED: 'failed',
 } as const
 
-export type IntentWorkflowStep = typeof INTENT_WORKFLOW_STEPS[keyof typeof INTENT_WORKFLOW_STEPS]
-
-/**
- * Complete workflow step array in correct order (excluding terminal states)
- */
+/** Ordered execution steps (non-terminal) */
 export const WORKFLOW_STEP_ORDER = [
   INTENT_WORKFLOW_STEPS.AUTH,
   INTENT_WORKFLOW_STEPS.ICP,
@@ -40,9 +35,7 @@ export const WORKFLOW_STEP_ORDER = [
   INTENT_WORKFLOW_STEPS.ARTICLES,
 ] as const
 
-/**
- * All possible workflow states (including terminal states)
- */
+/** All valid workflow states (including terminal states) */
 export const ALL_WORKFLOW_STATES = [
   ...WORKFLOW_STEP_ORDER,
   INTENT_WORKFLOW_STEPS.COMPLETED,
@@ -51,66 +44,71 @@ export const ALL_WORKFLOW_STATES = [
 
 export type WorkflowState = typeof ALL_WORKFLOW_STATES[number]
 
-/**
- * Progress mapping for dashboard display
- */
+/** Progress mapping for dashboard */
 export const WORKFLOW_PROGRESS_MAP: Record<WorkflowState, number> = {
-  [INTENT_WORKFLOW_STEPS.AUTH]: 5,
-  [INTENT_WORKFLOW_STEPS.ICP]: 15,
-  [INTENT_WORKFLOW_STEPS.COMPETITORS]: 25,
-  [INTENT_WORKFLOW_STEPS.KEYWORDS]: 35,
-  [INTENT_WORKFLOW_STEPS.LONGTAILS]: 45,
-  [INTENT_WORKFLOW_STEPS.FILTERING]: 55,
-  [INTENT_WORKFLOW_STEPS.CLUSTERING]: 65,
-  [INTENT_WORKFLOW_STEPS.VALIDATION]: 75,
-  [INTENT_WORKFLOW_STEPS.SUBTOPICS]: 85,
-  [INTENT_WORKFLOW_STEPS.ARTICLES]: 95,
-  [INTENT_WORKFLOW_STEPS.COMPLETED]: 100,
-  [INTENT_WORKFLOW_STEPS.FAILED]: 0,
-} as const
+  step_0_auth: 5,
+  step_1_icp: 15,
+  step_2_competitors: 25,
+  step_3_keywords: 35,
+  step_4_longtails: 45,
+  step_5_filtering: 55,
+  step_6_clustering: 65,
+  step_7_validation: 75,
+  step_8_subtopics: 85,
+  step_9_articles: 95,
+  completed: 100,
+  failed: 0,
+}
 
-/**
- * Human-readable step descriptions
- */
+/** Human-readable labels */
 export const WORKFLOW_STEP_DESCRIPTIONS: Record<WorkflowState, string> = {
-  [INTENT_WORKFLOW_STEPS.AUTH]: 'Authentication',
-  [INTENT_WORKFLOW_STEPS.ICP]: 'ICP Generation',
-  [INTENT_WORKFLOW_STEPS.COMPETITORS]: 'Competitor Analysis',
-  [INTENT_WORKFLOW_STEPS.KEYWORDS]: 'Seed Keyword Extraction',
-  [INTENT_WORKFLOW_STEPS.LONGTAILS]: 'Long-tail Expansion',
-  [INTENT_WORKFLOW_STEPS.FILTERING]: 'Keyword Filtering',
-  [INTENT_WORKFLOW_STEPS.CLUSTERING]: 'Topic Clustering',
-  [INTENT_WORKFLOW_STEPS.VALIDATION]: 'Cluster Validation',
-  [INTENT_WORKFLOW_STEPS.SUBTOPICS]: 'Subtopic Generation',
-  [INTENT_WORKFLOW_STEPS.ARTICLES]: 'Article Generation',
-  [INTENT_WORKFLOW_STEPS.COMPLETED]: 'Completed',
-  [INTENT_WORKFLOW_STEPS.FAILED]: 'Failed',
-} as const
-
-/**
- * Helper functions
- */
-export function getStepIndex(step: string): number {
-  const index = ALL_WORKFLOW_STATES.indexOf(step as WorkflowState)
-  return index === -1 ? -1 : index
+  step_0_auth: 'Authentication',
+  step_1_icp: 'ICP Generation',
+  step_2_competitors: 'Competitor Analysis',
+  step_3_keywords: 'Seed Keyword Extraction',
+  step_4_longtails: 'Long-tail Expansion',
+  step_5_filtering: 'Keyword Filtering',
+  step_6_clustering: 'Topic Clustering',
+  step_7_validation: 'Cluster Validation',
+  step_8_subtopics: 'Subtopic Generation',
+  step_9_articles: 'Article Generation',
+  completed: 'Completed',
+  failed: 'Failed',
 }
 
-export function hasPassedStep(currentStep: string, targetStep: string): boolean {
-  return getStepIndex(currentStep) > getStepIndex(targetStep)
+/** Helper guards */
+export function getStepIndex(step: WorkflowState): number {
+  return ALL_WORKFLOW_STATES.indexOf(step)
 }
 
-export function isAtOrPastStep(currentStep: string, targetStep: string): boolean {
-  return getStepIndex(currentStep) >= getStepIndex(targetStep)
+export function isAtOrPastStep(current: WorkflowState, target: WorkflowState) {
+  return getStepIndex(current) >= getStepIndex(target)
 }
 
-export function isValidWorkflowStep(step: string): step is WorkflowState {
-  return ALL_WORKFLOW_STATES.includes(step as WorkflowState)
+export function hasPassedStep(current: WorkflowState, target: WorkflowState) {
+  return getStepIndex(current) > getStepIndex(target)
 }
 
+export function isValidWorkflowState(value: string): value is WorkflowState {
+  return ALL_WORKFLOW_STATES.includes(value as WorkflowState)
+}
+
+/** Dashboard helpers */
 export function calculateProgress(status: string): number {
   return WORKFLOW_PROGRESS_MAP[status as WorkflowState] || 0
 }
 
 export function getStepDescription(status: string): string {
   return WORKFLOW_STEP_DESCRIPTIONS[status as WorkflowState] || 'Unknown'
+}
+
+/** Runtime assertion to prevent invalid states */
+export function assertValidWorkflowState(
+  status: string
+): asserts status is WorkflowState {
+  if (!ALL_WORKFLOW_STATES.includes(status as WorkflowState)) {
+    throw new Error(
+      `🚨 Invalid workflow status emitted: ${status}` 
+    )
+  }
 }
