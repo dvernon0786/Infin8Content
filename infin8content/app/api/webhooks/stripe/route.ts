@@ -297,6 +297,7 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   // Log audit event for compliance
   logActionAsync({
     orgId,
+    userId: null, // Webhook events have no user context
     action: AuditAction.BILLING_SUBSCRIPTION_CREATED,
     details: {
       plan,
@@ -344,6 +345,7 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
     // Log audit event for compliance
     logActionAsync({
       orgId: organization.id,
+      userId: null, // Webhook events have no user context
       action: AuditAction.BILLING_SUBSCRIPTION_UPDATED,
       details: {
         subscriptionId: subscription.id,
@@ -443,6 +445,7 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
     // Log audit event for compliance
     logActionAsync({
       orgId: organization.id,
+      userId: null, // Webhook events have no user context
       action: AuditAction.BILLING_SUBSCRIPTION_CANCELED,
       details: {
         subscriptionId: subscription.id,
@@ -562,6 +565,7 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
       // Log audit event for compliance
       logActionAsync({
         orgId: organization.id,
+        userId: null, // Webhook events have no user context
         action: AuditAction.BILLING_PAYMENT_FAILED,
         details: {
           invoiceId: invoice.id,
@@ -684,6 +688,7 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
     // Log audit event for compliance
     logActionAsync({
       orgId: organization.id,
+      userId: null, // Webhook events have no user context
       action: AuditAction.BILLING_PAYMENT_SUCCEEDED,
       details: {
         invoiceId: invoice.id,

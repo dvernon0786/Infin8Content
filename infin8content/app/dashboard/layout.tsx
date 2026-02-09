@@ -3,6 +3,7 @@ import { SidebarNavigation } from "@/components/dashboard/sidebar-navigation"
 import { TopNavigation } from "@/components/dashboard/top-navigation"
 import { ResponsiveLayoutProvider } from "@/components/dashboard/responsive-layout-provider"
 import { getCurrentUser } from "@/lib/supabase/get-current-user"
+import { checkOnboardingStatus } from "@/lib/guards/onboarding-guard"
 import { redirect } from "next/navigation"
 import { PaymentGuard } from "@/components/guards/payment-guard"
 
@@ -15,6 +16,24 @@ export default async function DashboardLayout({
 
     if (!currentUser) {
         redirect("/login")
+    }
+
+    // CHECK ONBOARDING STATUS - HARD GATE
+    if (currentUser.org_id) {
+        const onboardingCompleted = await checkOnboardingStatus(currentUser.org_id)
+        
+        // 🔥 ABSOLUTE LOCK-IN - Invariant violation check
+        if (process.env.NODE_ENV === 'development' && !onboardingCompleted) {
+            throw new Error(
+                'Dashboard rendered without onboarding completion — invariant violated. ' +
+                'This should be impossible due to middleware enforcement. ' +
+                'Check middleware.ts and onboarding-guard.ts for bypass attempts.'
+            )
+        }
+        
+        if (!onboardingCompleted) {
+            redirect('/onboarding')  // ← MANDATORY REDIRECT
+        }
     }
 
     return (

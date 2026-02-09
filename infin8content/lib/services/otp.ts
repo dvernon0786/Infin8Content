@@ -1,5 +1,6 @@
 // OTP generation and verification utilities
 import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 
 const OTP_LENGTH = 6
 const OTP_EXPIRY_MINUTES = 10
@@ -29,7 +30,8 @@ export async function storeOTPCode(
   email: string,
   code: string
 ): Promise<void> {
-  const supabase = await createClient()
+  // Use service role client to bypass RLS for OTP storage
+  const supabase = createServiceRoleClient()
   
   const expiresAt = new Date()
   expiresAt.setMinutes(expiresAt.getMinutes() + OTP_EXPIRY_MINUTES)

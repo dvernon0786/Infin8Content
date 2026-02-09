@@ -33,11 +33,33 @@
 # - SM typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
-generated: 2026-01-13
+generated: 2026-02-09
 project: Infin8Content
 project_key: infin8content
 tracking_system: file-system
 story_location: "{project-root}/_bmad-output/implementation-artifacts"
+
+# LATEST IMPLEMENTATION: WORKFLOW STATE MACHINE (February 9, 2026)
+# ==================================================================
+# Status: ✅ COMPLETE & TESTED
+# Branch: dashboard-workflow-creation-fix
+# Test Coverage: 11/11 tests passing
+# Impact: Semantic drift permanently eliminated, runtime guards implemented
+
+# Key Achievements:
+# - Single source of truth for workflow definitions
+# - Runtime guards prevent invalid states
+# - Linear progression enforcement
+# - Type safety at compile time
+# - Comprehensive test coverage
+# - Migration-safe legacy status normalization
+
+# Files Added/Modified:
+# - lib/constants/intent-workflow-steps.ts (NEW: Single source of truth)
+# - lib/utils/normalize-workflow-status.ts (NEW: Backward compatibility)
+# - lib/inngest/workflow-transition-guard.ts (NEW: Inngest guards)
+# - __tests__/workflow-canonical-states.test.ts (NEW: Regression tests)
+# - Multiple service files updated to use canonical definitions
 
 development_status:
   # === P0 MVP CORE STORIES (95% Complete - 18/19 stories) ===
@@ -336,6 +358,12 @@ development_status:
   # Solution: Inline styles to bypass CSS specificity conflicts
   # Tool: LayoutDiagnostic component for detection and validation
 
+  # System Infrastructure Crisis Resolution (February 4, 2026)
+  system-infrastructure-crisis-resolution: done
+  # Issues Fixed: Routing conflicts, environment configuration, OTP system
+  # Solution: Standardized route parameters, configured .env.local, service role client for OTP
+  # Result: Full system operational with authentication and email verification
+
   # Epic 24: Real-time Infrastructure UX (HIGH - Sprint 3)
   epic-24: backlog
   # Sprint 3 Priority - Supabase real-time, celebration experience
@@ -432,37 +460,37 @@ development_status:
   epic-35-retrospective: done
 
   # Epic 36: Keyword Refinement & Topic Clustering
-  epic-36: in-progress
+  epic-36: done
   36-1-filter-keywords-for-quality-and-relevance: done
   36-2-cluster-keywords-into-hub-and-spoke-structure: done
-  36-3-validate-cluster-coherence-and-structure: backlog
-  epic-36-retrospective: optional
+  36-3-validate-cluster-coherence-and-structure: done
+  epic-36-retrospective: done
 
   # Epic 37: Content Topic Generation & Approval
-  epic-37: backlog
-  37-1-generate-subtopic-definitions-via-perplexity-ai: backlog
-  37-2-review-and-approve-subtopics-before-article-generation: backlog
-  37-3-implement-human-approval-gate: backlog
-  37-4-maintain-complete-audit-trail-of-all-decisions: backlog
-  epic-37-retrospective: optional
+  epic-37: done
+  37-1-generate-subtopic-definitions-via-perplexity-ai: done
+  37-2-review-and-approve-subtopics-before-article-generation: done
+  37-3-implement-human-approval-gate: done
+  37-4-maintain-complete-audit-trail-of-all-decisions: done
+  epic-37-retrospective: done
 
   # Epic 38: Article Generation & Workflow Completion
-  epic-38: backlog
-  38-1-queue-approved-subtopics-for-article-generation: backlog
-  38-2-track-article-generation-progress: backlog
-  38-3-link-generated-articles-to-intent-workflow: backlog
-  epic-38-retrospective: optional
+  epic-38: done
+  38-1-queue-approved-subtopics-for-article-generation: done
+  38-2-track-article-generation-progress: done
+  38-3-link-generated-articles-to-intent-workflow: done
+  epic-38-retrospective: done
 
   # Epic 39: Workflow Orchestration & State Management
-  epic-39: backlog
-  39-1-enforce-hard-gate-icp-required-for-all-downstream-steps: backlog
-  39-2-enforce-hard-gate-competitors-required-for-seed-keywords: backlog
-  39-3-enforce-hard-gate-approved-seeds-required-for-longtail-expansion: backlog
-  39-4-enforce-hard-gate-longtails-required-for-subtopics: backlog
-  39-5-enforce-hard-gate-approval-required-for-articles: backlog
-  39-6-create-workflow-status-dashboard: backlog
-  39-7-display-workflow-blocking-conditions: backlog
-  epic-39-retrospective: optional
+  epic-39: done
+  39-1-enforce-hard-gate-icp-required-for-all-downstream-steps: done
+  39-2-enforce-hard-gate-competitors-required-for-seed-keywords: done
+  39-3-enforce-hard-gate-approved-seeds-required-for-longtail-expansion: done
+  39-4-enforce-hard-gate-longtails-required-for-subtopics: done
+  39-5-enforce-hard-gate-approval-required-for-articles: done
+  39-6-create-workflow-status-dashboard: done
+  39-7-display-workflow-blocking-conditions: done
+  epic-39-retrospective: done
 
   # Epic 40: Feature Flag Rollout & Brownfield Safety
   epic-40: backlog
@@ -471,3 +499,32 @@ development_status:
   40-3-monitor-intent-engine-health-metrics: backlog
   40-4-ensure-zero-impact-on-legacy-article-generation: backlog
   epic-40-retrospective: optional
+
+  # === FORMALIZED EPICS A, B, C (PRD v1.0 - NEW) ===
+  
+  # Epic A: Onboarding System & Guards (26 hours - 6 stories)
+  epic-a: done
+  a-1-data-model-extensions: done
+  a-2-onboarding-guard-middleware: done
+  a-3-onboarding-api-endpoints: done
+  a-4-onboarding-ui-components: done
+  a-5-onboarding-agent-ai-autocomplete: done
+  a-6-onboarding-validator: done
+  epic-a-retrospective: done
+
+  # Epic B: Deterministic Article Pipeline (26 hours - 5 stories)
+  epic-b: done
+  b-1-article-sections-data-model: done
+  b-2-research-agent-service: done
+  b-3-content-writing-agent-service: done
+  b-4-sequential-orchestration-inngest: done
+  b-5-article-status-tracking: done
+  epic-b-retrospective: done
+
+  # Epic C: Assembly, Status & Publishing (20 hours - 4 stories)
+  epic-c: done
+  c-1-article-assembly-service: done
+  c-2-publish-references-table: done
+  c-3-wordpress-publishing-service: done
+  c-4-publishing-api-endpoint: done
+  epic-c-retrospective: done

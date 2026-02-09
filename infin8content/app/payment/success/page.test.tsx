@@ -47,7 +47,7 @@ describe('PaymentSuccessPage', () => {
     vi.mocked(getCurrentUser).mockResolvedValue(null)
 
     await PaymentSuccessPage({
-      searchParams: { session_id: 'cs_test_123' },
+      searchParams: Promise.resolve({ session_id: 'cs_test_123' }),
     })
 
     expect(redirect).toHaveBeenCalledWith('/login')
@@ -55,8 +55,11 @@ describe('PaymentSuccessPage', () => {
 
   it('should show error if session_id is missing', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({
+      user: { id: 'auth-1', email: 'test@example.com' },
       id: 'user-id',
       email: 'test@example.com',
+      first_name: 'Test',
+      role: 'owner',
       org_id: 'org-id',
       organizations: {
         id: 'org-id',
@@ -66,7 +69,7 @@ describe('PaymentSuccessPage', () => {
     })
 
     const result = await PaymentSuccessPage({
-      searchParams: {},
+      searchParams: Promise.resolve({}),
     })
 
     const { container } = render(result)
@@ -76,8 +79,11 @@ describe('PaymentSuccessPage', () => {
 
   it('should show error if Stripe session is not found', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({
+      user: { id: 'auth-1', email: 'test@example.com' },
       id: 'user-id',
       email: 'test@example.com',
+      first_name: 'Test',
+      role: 'owner',
       org_id: 'org-id',
       organizations: {
         id: 'org-id',
@@ -91,7 +97,7 @@ describe('PaymentSuccessPage', () => {
     )
 
     const result = await PaymentSuccessPage({
-      searchParams: { session_id: 'cs_test_123' },
+      searchParams: Promise.resolve({ session_id: 'cs_test_123' }),
     })
 
     const { container } = render(result)
@@ -100,8 +106,11 @@ describe('PaymentSuccessPage', () => {
 
   it('should show success message and redirect if payment_status is active', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({
+      user: { id: 'auth-1', email: 'test@example.com' },
       id: 'user-id',
       email: 'test@example.com',
+      first_name: 'Test',
+      role: 'owner',
       org_id: 'org-id',
       organizations: {
         id: 'org-id',
@@ -140,7 +149,7 @@ describe('PaymentSuccessPage', () => {
     vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
 
     const result = await PaymentSuccessPage({
-      searchParams: { session_id: 'cs_test_123' },
+      searchParams: Promise.resolve({ session_id: 'cs_test_123' }),
     })
 
     const { container } = render(result)
@@ -151,8 +160,11 @@ describe('PaymentSuccessPage', () => {
 
   it('should show processing message if payment_status is pending_payment but session is paid', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({
+      user: { id: 'auth-1', email: 'test@example.com' },
       id: 'user-id',
       email: 'test@example.com',
+      first_name: 'Test',
+      role: 'owner',
       org_id: 'org-id',
       organizations: {
         id: 'org-id',
@@ -191,7 +203,7 @@ describe('PaymentSuccessPage', () => {
     vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
 
     const result = await PaymentSuccessPage({
-      searchParams: { session_id: 'cs_test_123' },
+      searchParams: Promise.resolve({ session_id: 'cs_test_123' }),
     })
 
     const { container } = render(result)
@@ -201,8 +213,11 @@ describe('PaymentSuccessPage', () => {
 
   it('should show error if session payment_status is not paid', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({
+      user: { id: 'auth-1', email: 'test@example.com' },
       id: 'user-id',
       email: 'test@example.com',
+      first_name: 'Test',
+      role: 'owner',
       org_id: 'org-id',
       organizations: {
         id: 'org-id',
@@ -218,7 +233,7 @@ describe('PaymentSuccessPage', () => {
     } as any)
 
     const result = await PaymentSuccessPage({
-      searchParams: { session_id: 'cs_test_123' },
+      searchParams: Promise.resolve({ session_id: 'cs_test_123' }),
     })
 
     const { container } = render(result)

@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LayoutDiagnostic } from '@/components/layout-diagnostic'
 
 export default function CreateOrganizationForm() {
   const [name, setName] = useState('')
@@ -140,7 +139,6 @@ export default function CreateOrganizationForm() {
           </button>
         </form>
       </div>
-      <LayoutDiagnostic />
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
 import { getPaymentAccessStatus, checkGracePeriodExpired } from "@/lib/utils/payment-status";
 import { sendSuspensionEmail } from "@/lib/services/payment-notifications";
+import { checkOnboardingStatus } from "@/lib/guards/onboarding-guard";
 
 export async function middleware(request: NextRequest) {
   // Add comprehensive logging for debugging paywall issues
@@ -415,6 +416,86 @@ export async function middleware(request: NextRequest) {
     }
   } else {
     console.log(`[MIDDLEWARE-${requestId}] Payment route check bypassed or no org_id, allowing access`)
+  }
+
+  // Check onboarding status for protected routes
+  const onboardingProtectedRoutes = [
+    '/dashboard',
+    '/articles', 
+    '/keywords',
+    '/intent/workflows',
+    '/intent'
+  ];
+  
+  const onboardingAllowedRoutes = [
+    '/onboarding',
+    '/billing',
+    '/settings/profile',
+    '/logout'
+  ];
+
+  const isOnboardingProtectedRoute = onboardingProtectedRoutes.some(route => 
+    request.nextUrl.pathname.startsWith(route)
+  );
+  
+  const isOnboardingAllowedRoute = onboardingAllowedRoutes.some(route => 
+    request.nextUrl.pathname.startsWith(route)
+  );
+
+  console.log(`[MIDDLEWARE-${requestId}] Onboarding route classification:`, {
+    pathname,
+    isOnboardingProtectedRoute,
+    isOnboardingAllowedRoute
+  })
+
+  // Check onboarding status for protected routes (only if user has org_id)
+  if (isOnboardingProtectedRoute && userRecord.org_id) {
+    // 🔍 COOKIE SNAPSHOT - Prove what Edge actually sees
+    const allCookies = request.cookies.getAll()
+    
+    console.log(`[MIDDLEWARE-${requestId}] COOKIE SNAPSHOT`, {
+      cookies: allCookies.map(c => ({
+        name: c.name,
+        value: c.value,
+      })),
+    })
+    
+    // ⏱️ Edge replica lag bridge — MUST run FIRST before any redirect decisions
+    const justCompleted = request.cookies.get('onboarding_just_completed')
+    
+    console.log(`[MIDDLEWARE-${requestId}] Cookie onboarding_just_completed`, {
+      exists: !!justCompleted,
+      value: justCompleted?.value,
+    })
+
+    if (justCompleted?.value === 'true') {
+      console.log(`[MIDDLEWARE-${requestId}] Allowing protected route (onboarding just completed via cookie)`)
+      return response
+    }
+
+    // Now run normal onboarding logic
+    if (!isOnboardingAllowedRoute) {
+      console.log(`[MIDDLEWARE-${requestId}] Starting onboarding status check for org: ${userRecord.org_id}`)
+
+      const onboardingCompleted = await checkOnboardingStatus(userRecord.org_id);
+
+      console.log(`[MIDDLEWARE-${requestId}] Onboarding status determined:`, {
+        onboardingCompleted,
+        pathname,
+        orgId: userRecord.org_id
+      })
+
+      if (!onboardingCompleted) {
+        console.log(`[MIDDLEWARE-${requestId}] Onboarding incomplete, redirecting to /onboarding/business`)
+        // Silent redirect to onboarding business step
+        const onboardingUrl = new URL('/onboarding/business', request.url);
+        return NextResponse.redirect(onboardingUrl);
+      } else {
+        console.log(`[MIDDLEWARE-${requestId}] Onboarding completed, allowing access`)
+      }
+    }
+  } else {
+    console.log(`[MIDDLEWARE-${requestId}] Onboarding check bypassed - allowed route or no org_id`)
   }
 
   console.log(`[MIDDLEWARE-${requestId}] Final decision - allowing access to: ${pathname}`)

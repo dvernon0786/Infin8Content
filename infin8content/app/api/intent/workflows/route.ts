@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { logIntentActionAsync } from '@/lib/services/intent-engine/intent-audit-logger'
 import { AuditAction } from '@/types/audit'
 import { isFeatureFlagEnabled } from '@/lib/utils/feature-flags'
 import { FEATURE_FLAG_KEYS } from '@/lib/types/feature-flag'
+import { validateOnboardingComplete } from '@/lib/validators/onboarding-validator'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 import type { 
@@ -111,6 +113,21 @@ export async function POST(request: Request) {
       )
     }
 
+    // --- Onboarding validation gate (A-6)
+    const validation = await validateOnboardingComplete(targetOrgId)
+
+    if (!validation.isValid) {
+      return NextResponse.json(
+        {
+          error: 'ONBOARDING_INCOMPLETE',
+          details: validation.errors,
+          missingSteps: validation.missingSteps,
+          suggestedAction: 'Complete onboarding at /onboarding'
+        },
+        { status: 403 }
+      )
+    }
+
     const supabase = await createClient()
 
     // Check for duplicate workflow name within the organization
@@ -191,6 +208,27 @@ export async function POST(request: Request) {
     } catch (logError) {
       // Don't fail the request if logging fails
       console.error('Failed to log workflow creation:', logError)
+    }
+
+    // Log the Intent audit trail entry (Story 37.4)
+    try {
+      logIntentActionAsync({
+        organizationId: targetOrgId,
+        workflowId: workflow.id,
+        entityType: 'workflow',
+        entityId: workflow.id,
+        actorId: currentUser.id,
+        action: AuditAction.WORKFLOW_CREATED,
+        details: {
+          workflow_name: workflow.name,
+          workflow_status: workflow.status,
+        },
+        ipAddress: extractIpAddress(request.headers),
+        userAgent: extractUserAgent(request.headers),
+      })
+    } catch (intentLogError) {
+      // Don't fail the request if intent logging fails
+      console.error('Failed to log intent audit entry:', intentLogError)
     }
 
     // Return success response

@@ -35,7 +35,8 @@ describe('Outline Generator', () => {
   }
 
   it('should generate outline with correct structure', async () => {
-    const outline = await generateOutline(mockKeyword, mockKeywordResearch, mockSerpAnalysis)
+    const result = await generateOutline(mockKeyword, mockKeywordResearch, mockSerpAnalysis)
+    const outline = result.outline
 
     expect(outline).toHaveProperty('introduction')
     expect(outline.introduction).toHaveProperty('title')
@@ -54,16 +55,18 @@ describe('Outline Generator', () => {
   })
 
   it('should generate 5-10 H2 sections', async () => {
-    const outline = await generateOutline(mockKeyword, mockKeywordResearch, mockSerpAnalysis)
+    const result = await generateOutline(mockKeyword, mockKeywordResearch, mockSerpAnalysis)
+    const outline = result.outline
 
     expect(outline.h2_sections.length).toBeGreaterThanOrEqual(5)
     expect(outline.h2_sections.length).toBeLessThanOrEqual(10)
   })
 
   it('should generate 2-4 H3 subsections per H2', async () => {
-    const outline = await generateOutline(mockKeyword, mockKeywordResearch, mockSerpAnalysis)
+    const result = await generateOutline(mockKeyword, mockKeywordResearch, mockSerpAnalysis)
+    const outline = result.outline
 
-    outline.h2_sections.forEach(h2Section => {
+    outline.h2_sections.forEach((h2Section: any) => {
       expect(h2Section.h3_subsections.length).toBeGreaterThanOrEqual(2)
       expect(h2Section.h3_subsections.length).toBeLessThanOrEqual(4)
     })
@@ -71,14 +74,16 @@ describe('Outline Generator', () => {
 
   it('should include FAQ for high-volume keywords', async () => {
     const highVolumeResearch = { ...mockKeywordResearch, searchVolume: 10000 }
-    const outline = await generateOutline(mockKeyword, highVolumeResearch, mockSerpAnalysis)
+    const result = await generateOutline(mockKeyword, highVolumeResearch, mockSerpAnalysis)
+    const outline = result.outline
 
     expect(outline.faq).not.toBeNull()
     expect(outline.faq?.included).toBe(true)
   })
 
   it('should handle null keyword research gracefully', async () => {
-    const outline = await generateOutline(mockKeyword, null, mockSerpAnalysis)
+    const result = await generateOutline(mockKeyword, null, mockSerpAnalysis)
+    const outline = result.outline
 
     expect(outline).toHaveProperty('introduction')
     expect(outline).toHaveProperty('h2_sections')
