@@ -126,7 +126,7 @@ export class BlockingConditionResolver {
         required_action: 'Analyze competitors',
         action_link_template: '/workflows/{workflow_id}/steps/analyze-competitors',
       },
-      step_3_seeds: {
+      step_3_keywords: {
         gate_id: 'gate_seeds_approval_required',
         blocking_reason: 'Seed keywords must be approved before longtail expansion',
         required_action: 'Review and approve seeds',

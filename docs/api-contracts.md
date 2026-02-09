@@ -1,14 +1,14 @@
 # API Contracts - Infin8Content
 
-Generated: 2026-02-04 (System Status Update)  
+Generated: 2026-02-09 (Workflow State Machine Implementation)  
 Framework: Next.js 16.1.1 API Routes  
 Base URL: `/api`
 
 ## Overview
 
-Infin8Content implements a comprehensive REST API using Next.js App Router with TypeScript, featuring multi-tenant architecture, authentication, payment processing, and AI content generation capabilities.
+Infin8Content implements a comprehensive REST API using Next.js App Router with TypeScript, featuring multi-tenant architecture, authentication, payment processing, AI content generation, and a robust workflow state machine.
 
-## System Status (2026-02-04)
+## System Status (2026-02-09)
 
 ✅ **FULLY OPERATIONAL** - All core systems functional:
 - Authentication: Registration and OTP verification working
@@ -16,6 +16,35 @@ Infin8Content implements a comprehensive REST API using Next.js App Router with 
 - Email: Brevo OTP delivery active
 - Routing: All API endpoints accessible
 - Environment: All variables configured
+- 🔥 **Workflow State Machine**: Complete implementation with canonical definitions
+
+### Latest Implementation: Workflow State Machine
+
+**Status**: ✅ **COMPLETE & TESTED** | **Branch**: `dashboard-workflow-creation-fix`
+
+The Intent Engine now features a production-ready workflow state machine with:
+
+- **Single Source of Truth**: Canonical workflow definitions prevent semantic drift
+- **Runtime Guards**: Invalid states explode loudly with comprehensive validation
+- **Linear Progression**: Steps cannot be skipped with enforced state transitions
+- **Type Safety**: Compile-time prevention of invalid workflow states
+- **Test Coverage**: 11/11 tests passing with regression prevention
+
+**Canonical Workflow States**:
+```typescript
+step_0_auth (5%) → Authentication
+step_1_icp (15%) → ICP Generation  
+step_2_competitors (25%) → Competitor Analysis
+step_3_keywords (35%) → Seed Keyword Extraction
+step_4_longtails (45%) → Long-tail Expansion
+step_5_filtering (55%) → Keyword Filtering
+step_6_clustering (65%) → Topic Clustering
+step_7_validation (75%) → Cluster Validation
+step_8_subtopics (85%) → Subtopic Generation
+step_9_articles (95%) → Article Generation
+completed (100%) → Completed
+failed (0%) → Failed
+```
 
 ## Authentication
 

@@ -20,7 +20,7 @@ export interface SeedApprovalRequest {
 export interface SeedApprovalResponse {
   success: boolean
   approval_id: string
-  workflow_status: 'step_3_seeds'
+  workflow_status: 'step_3_keywords'
   message: string
 }
 
@@ -79,9 +79,9 @@ export async function processSeedApproval(
     organization_id: string
   }
 
-  // Validate workflow is at step_3_seeds
-  if (workflow.status !== 'step_3_seeds') {
-    throw new Error('Workflow must be at step_3_seeds for seed approval')
+  // Validate workflow is at step_3_keywords
+  if (workflow.status !== 'step_3_keywords') {
+    throw new Error('Workflow must be at step_3_keywords for seed approval')
   }
 
   // Validate user belongs to the same organization as the workflow
@@ -156,7 +156,7 @@ export async function processSeedApproval(
   return {
     success: true,
     approval_id: approval.id,
-    workflow_status: 'step_3_seeds', // Status unchanged - this is a governance gate
+    workflow_status: 'step_3_keywords', // Status unchanged - this is a governance gate
     message,
   }
 }

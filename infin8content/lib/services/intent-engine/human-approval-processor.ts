@@ -122,11 +122,11 @@ export async function processHumanApproval(
     throw new Error('Access denied: workflow belongs to different organization')
   }
 
-  // Start the approval process by setting workflow to step_8_approval
+  // Start the approval process by setting workflow to step_8_subtopics
   const updateResult = await supabase
     .from('intent_workflows')
     .update({ 
-      status: 'step_8_approval',
+      status: 'step_8_subtopics',
       updated_at: new Date().toISOString()
     })
     .eq('id', workflowId)
