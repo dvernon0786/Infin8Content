@@ -1,3 +1,4 @@
+import { mockSupabase } from "@/tests/factories/supabase"
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
@@ -37,7 +38,7 @@ describe('Onboarding Guard Middleware Integration', () => {
     from: vi.fn()
   }
 
-  const mockServiceSupabase = {
+  const mockSupabase() = {
     from: vi.fn()
   }
 
@@ -51,7 +52,7 @@ describe('Onboarding Guard Middleware Integration', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     vi.mocked(createServerClient).mockReturnValue(mockSupabaseClient)
-    vi.mocked(createServiceRoleClient).mockReturnValue(mockServiceSupabase)
+    vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase())
     vi.mocked(checkOnboardingStatus).mockResolvedValue(true) // Default: onboarding completed
     
     // Import and mock updateSession
@@ -92,7 +93,7 @@ describe('Onboarding Guard Middleware Integration', () => {
       })
 
       // Mock organization with active payment
-      mockServiceSupabase.from.mockReturnValue({
+      mockSupabase().from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -146,7 +147,7 @@ describe('Onboarding Guard Middleware Integration', () => {
       })
 
       // Mock organization with active payment but incomplete onboarding
-      mockServiceSupabase.from.mockReturnValue({
+      mockSupabase().from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -199,7 +200,7 @@ describe('Onboarding Guard Middleware Integration', () => {
       })
 
       // Mock organization with active payment
-      mockServiceSupabase.from.mockReturnValue({
+      mockSupabase().from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -296,7 +297,7 @@ describe('Onboarding Guard Middleware Integration', () => {
         })
 
         // Mock organization
-        mockServiceSupabase.from.mockReturnValue({
+        mockSupabase().from.mockReturnValue({
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               single: vi.fn().mockResolvedValue({
@@ -497,7 +498,7 @@ describe('Onboarding Guard Middleware Integration', () => {
       })
 
       // Mock organization
-      mockServiceSupabase.from.mockReturnValue({
+      mockSupabase().from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({

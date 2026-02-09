@@ -1,3 +1,4 @@
+import { mockNextRequest } from "@/tests/factories/next-request"
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '@/app/api/articles/[article_id]/sections/[section_id]/write/route';
 import { getCurrentUser } from '@/lib/supabase/get-current-user';
@@ -32,7 +33,7 @@ describe('POST /api/articles/[article_id]/sections/[section_id]/write', () => {
   it('requires authentication', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(null);
 
-    const request = new Request('http://localhost:3000/api/articles/article-123/sections/section-123/write', {
+    const request = mockNextRequest({'http://localhost:3000/api/articles/article-123/sections/section-123/write', {
       method: 'POST',
       body: JSON.stringify({})
     });
@@ -47,7 +48,7 @@ describe('POST /api/articles/[article_id]/sections/[section_id]/write', () => {
   it('validates section exists and belongs to organization', async () => {
     mockSupabase.single.mockResolvedValue({ data: null, error: { message: 'Not found' } });
 
-    const request = new Request('http://localhost:3000/api/articles/article-123/sections/section-123/write', {
+    const request = mockNextRequest({'http://localhost:3000/api/articles/article-123/sections/section-123/write', {
       method: 'POST',
       body: JSON.stringify({})
     });
@@ -71,7 +72,7 @@ describe('POST /api/articles/[article_id]/sections/[section_id]/write', () => {
       error: null
     });
 
-    const request = new Request('http://localhost:3000/api/articles/article-123/sections/section-123/write', {
+    const request = mockNextRequest({'http://localhost:3000/api/articles/article-123/sections/section-123/write', {
       method: 'POST',
       body: JSON.stringify({})
     });
@@ -126,7 +127,7 @@ describe('POST /api/articles/[article_id]/sections/[section_id]/write', () => {
     // Mock status update
     mockSupabase.update.mockResolvedValueOnce({ error: null });
 
-    const request = new Request('http://localhost:3000/api/articles/article-123/sections/section-123/write', {
+    const request = mockNextRequest({'http://localhost:3000/api/articles/article-123/sections/section-123/write', {
       method: 'POST',
       body: JSON.stringify({})
     });
@@ -180,7 +181,7 @@ describe('POST /api/articles/[article_id]/sections/[section_id]/write', () => {
     // Mock status update to failed
     mockSupabase.update.mockResolvedValueOnce({ error: null });
 
-    const request = new Request('http://localhost:3000/api/articles/article-123/sections/section-123/write', {
+    const request = mockNextRequest({'http://localhost:3000/api/articles/article-123/sections/section-123/write', {
       method: 'POST',
       body: JSON.stringify({})
     });

@@ -1,3 +1,4 @@
+import { mockNextRequest } from "@/tests/factories/next-request"
 /**
  * Integration Tests for Competitor Gate Enforcement
  * Story 39.2: Enforce Hard Gate - Competitors Required for Seed Keywords
@@ -69,7 +70,7 @@ describe('Seed Extract API - Competitor Gate Integration', () => {
     updateMock.mockResolvedValue({ error: null })
 
     // Mock request
-    const request = new Request('http://localhost/api/intent/workflows/test-workflow-id/steps/seed-extract', {
+    const request = mockNextRequest({'http://localhost/api/intent/workflows/test-workflow-id/steps/seed-extract', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -100,7 +101,7 @@ describe('Seed Extract API - Competitor Gate Integration', () => {
     vi.mocked(enforceCompetitorGate).mockResolvedValue(gateResponse as any)
     
     // Mock request
-    const request = new Request('http://localhost/api/intent/workflows/test-workflow-id/steps/seed-extract', {
+    const request = mockNextRequest({'http://localhost/api/intent/workflows/test-workflow-id/steps/seed-extract', {
       method: 'POST'
     })
     
@@ -122,7 +123,7 @@ describe('Seed Extract API - Competitor Gate Integration', () => {
     vi.mocked(enforceICPGate).mockResolvedValue(gateResponse as any)
     
     // Mock request
-    const request = new Request('http://localhost/api/intent/workflows/test-workflow-id/steps/seed-extract', {
+    const request = mockNextRequest({'http://localhost/api/intent/workflows/test-workflow-id/steps/seed-extract', {
       method: 'POST'
     })
     
@@ -152,7 +153,7 @@ describe('Seed Extract API - Competitor Gate Integration', () => {
     singleMock.mockResolvedValue({ data: mockWorkflow, error: null })
     
     // Mock request
-    const request = new Request('http://localhost/api/intent/workflows/test-workflow-id/steps/seed-extract', {
+    const request = mockNextRequest({'http://localhost/api/intent/workflows/test-workflow-id/steps/seed-extract', {
       method: 'POST'
     })
     
@@ -188,7 +189,7 @@ describe('Seed Extract API - Competitor Gate Integration', () => {
     keywordsMock.mockResolvedValue({ data: [], error: null }) // No keywords
     
     // Mock request
-    const request = new Request('http://localhost/api/intent/workflows/test-workflow-id/steps/seed-extract', {
+    const request = mockNextRequest({'http://localhost/api/intent/workflows/test-workflow-id/steps/seed-extract', {
       method: 'POST'
     })
     
@@ -212,7 +213,7 @@ describe('Seed Extract API - Competitor Gate Integration', () => {
     vi.mocked(getCurrentUser).mockResolvedValue(null)
     
     // Mock request
-    const request = new Request('http://localhost/api/intent/workflows/test-workflow-id/steps/seed-extract', {
+    const request = mockNextRequest({'http://localhost/api/intent/workflows/test-workflow-id/steps/seed-extract', {
       method: 'POST'
     })
     

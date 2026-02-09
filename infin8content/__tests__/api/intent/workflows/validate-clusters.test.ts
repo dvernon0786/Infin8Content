@@ -1,3 +1,4 @@
+import { mockNextRequest } from "@/tests/factories/next-request"
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { POST } from '@/app/api/intent/workflows/[workflow_id]/steps/validate-clusters/route'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'

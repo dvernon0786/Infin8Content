@@ -1,3 +1,4 @@
+import { mockNextRequest } from "@/tests/factories/next-request"
 /**
  * Integration Tests: Human Approval API Endpoints
  * Story 37.3: Implement Human Approval Gate (Workflow-Level)
@@ -31,7 +32,7 @@ describe('Human Approval API Endpoints', () => {
 
       vi.mocked(processHumanApproval).mockResolvedValue(mockResponse)
 
-      const request = new Request('http://localhost:3000', {
+      const request = mockNextRequest({'http://localhost:3000', {
         method: 'POST',
         body: JSON.stringify({
           decision: 'approved',
@@ -64,7 +65,7 @@ describe('Human Approval API Endpoints', () => {
 
       vi.mocked(processHumanApproval).mockResolvedValue(mockResponse)
 
-      const request = new Request('http://localhost:3000', {
+      const request = mockNextRequest({'http://localhost:3000', {
         method: 'POST',
         body: JSON.stringify({
           decision: 'rejected',
@@ -90,7 +91,7 @@ describe('Human Approval API Endpoints', () => {
     })
 
     it('should return 400 for invalid decision', async () => {
-      const request = new Request('http://localhost:3000', {
+      const request = mockNextRequest({'http://localhost:3000', {
         method: 'POST',
         body: JSON.stringify({
           decision: 'invalid'
@@ -110,7 +111,7 @@ describe('Human Approval API Endpoints', () => {
     })
 
     it('should return 400 for missing reset_to_step when rejected', async () => {
-      const request = new Request('http://localhost:3000', {
+      const request = mockNextRequest({'http://localhost:3000', {
         method: 'POST',
         body: JSON.stringify({
           decision: 'rejected',
@@ -131,7 +132,7 @@ describe('Human Approval API Endpoints', () => {
     })
 
     it('should return 400 for invalid reset_to_step range', async () => {
-      const request = new Request('http://localhost:3000', {
+      const request = mockNextRequest({'http://localhost:3000', {
         method: 'POST',
         body: JSON.stringify({
           decision: 'rejected',
@@ -153,7 +154,7 @@ describe('Human Approval API Endpoints', () => {
     })
 
     it('should return 400 for invalid feedback type', async () => {
-      const request = new Request('http://localhost:3000', {
+      const request = mockNextRequest({'http://localhost:3000', {
         method: 'POST',
         body: JSON.stringify({
           decision: 'approved',
@@ -176,7 +177,7 @@ describe('Human Approval API Endpoints', () => {
     it('should return 401 for authentication errors', async () => {
       vi.mocked(processHumanApproval).mockRejectedValue(new Error('Authentication required'))
 
-      const request = new Request('http://localhost:3000', {
+      const request = mockNextRequest({'http://localhost:3000', {
         method: 'POST',
         body: JSON.stringify({
           decision: 'approved'
@@ -197,7 +198,7 @@ describe('Human Approval API Endpoints', () => {
     it('should return 403 for authorization errors', async () => {
       vi.mocked(processHumanApproval).mockRejectedValue(new Error('Admin access required'))
 
-      const request = new Request('http://localhost:3000', {
+      const request = mockNextRequest({'http://localhost:3000', {
         method: 'POST',
         body: JSON.stringify({
           decision: 'approved'
@@ -218,7 +219,7 @@ describe('Human Approval API Endpoints', () => {
     it('should return 400 for validation errors', async () => {
       vi.mocked(processHumanApproval).mockRejectedValue(new Error('Workflow must be at step_7_subtopics for human approval'))
 
-      const request = new Request('http://localhost:3000', {
+      const request = mockNextRequest({'http://localhost:3000', {
         method: 'POST',
         body: JSON.stringify({
           decision: 'approved'
@@ -239,7 +240,7 @@ describe('Human Approval API Endpoints', () => {
     it('should return 500 for database errors', async () => {
       vi.mocked(processHumanApproval).mockRejectedValue(new Error('Failed to process approval'))
 
-      const request = new Request('http://localhost:3000', {
+      const request = mockNextRequest({'http://localhost:3000', {
         method: 'POST',
         body: JSON.stringify({
           decision: 'approved'
@@ -260,7 +261,7 @@ describe('Human Approval API Endpoints', () => {
     it('should return 500 for generic errors', async () => {
       vi.mocked(processHumanApproval).mockRejectedValue(new Error('Unknown error'))
 
-      const request = new Request('http://localhost:3000', {
+      const request = mockNextRequest({'http://localhost:3000', {
         method: 'POST',
         body: JSON.stringify({
           decision: 'approved'
@@ -305,7 +306,7 @@ describe('Human Approval API Endpoints', () => {
 
       vi.mocked(getWorkflowSummary).mockResolvedValue(mockSummary)
 
-      const request = new Request('http://localhost:3000')
+      const request = mockNextRequest({'http://localhost:3000')
       const params = Promise.resolve({ workflow_id: mockWorkflowId })
       const response = await GET(request, { params })
       const data = await response.json()
@@ -318,7 +319,7 @@ describe('Human Approval API Endpoints', () => {
     it('should return 401 for authentication errors', async () => {
       vi.mocked(getWorkflowSummary).mockRejectedValue(new Error('Authentication required'))
 
-      const request = new Request('http://localhost:3000')
+      const request = mockNextRequest({'http://localhost:3000')
       const params = Promise.resolve({ workflow_id: mockWorkflowId })
       const response = await GET(request, { params })
       const data = await response.json()
@@ -330,7 +331,7 @@ describe('Human Approval API Endpoints', () => {
     it('should return 403 for authorization errors', async () => {
       vi.mocked(getWorkflowSummary).mockRejectedValue(new Error('Access denied: workflow belongs to different organization'))
 
-      const request = new Request('http://localhost:3000')
+      const request = mockNextRequest({'http://localhost:3000')
       const params = Promise.resolve({ workflow_id: mockWorkflowId })
       const response = await GET(request, { params })
       const data = await response.json()
@@ -342,7 +343,7 @@ describe('Human Approval API Endpoints', () => {
     it('should return 400 for validation errors', async () => {
       vi.mocked(getWorkflowSummary).mockRejectedValue(new Error('Workflow not found'))
 
-      const request = new Request('http://localhost:3000')
+      const request = mockNextRequest({'http://localhost:3000')
       const params = Promise.resolve({ workflow_id: mockWorkflowId })
       const response = await GET(request, { params })
       const data = await response.json()
@@ -354,7 +355,7 @@ describe('Human Approval API Endpoints', () => {
     it('should return 500 for generic errors', async () => {
       vi.mocked(getWorkflowSummary).mockRejectedValue(new Error('Unknown error'))
 
-      const request = new Request('http://localhost:3000')
+      const request = mockNextRequest({'http://localhost:3000')
       const params = Promise.resolve({ workflow_id: mockWorkflowId })
       const response = await GET(request, { params })
       const data = await response.json()

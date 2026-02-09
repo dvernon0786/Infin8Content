@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { 
-  assertTemplateIntegrity, 
+  assertPromptIntegrity, 
   assertNoUnresolvedPlaceholders,
   PromptIntegrityError,
   hashPrompt 
@@ -16,7 +16,7 @@ describe('Prompt Integrity System', () => {
 
   it('should pass template integrity check for unchanged template', () => {
     expect(() => {
-      assertTemplateIntegrity(originalPrompt, originalHash, 'TestPrompt');
+      assertPromptIntegrity(originalPrompt, originalHash, 'TestPrompt');
     }).not.toThrow();
   });
 
@@ -24,7 +24,7 @@ describe('Prompt Integrity System', () => {
     const modifiedPrompt = originalPrompt + ' Modified content';
     
     expect(() => {
-      assertTemplateIntegrity(modifiedPrompt, originalHash, 'TestPrompt');
+      assertPromptIntegrity(modifiedPrompt, originalHash, 'TestPrompt');
     }).toThrow(PromptIntegrityError);
   });
 
@@ -32,7 +32,7 @@ describe('Prompt Integrity System', () => {
     const modifiedPrompt = originalPrompt + ' Modified';
     
     try {
-      assertTemplateIntegrity(modifiedPrompt, originalHash, 'TestPrompt');
+      assertPromptIntegrity(modifiedPrompt, originalHash, 'TestPrompt');
       expect.fail('Expected PromptIntegrityError to be thrown');
     } catch (error) {
       expect(error).toBeInstanceOf(PromptIntegrityError);
