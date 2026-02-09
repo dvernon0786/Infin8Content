@@ -201,7 +201,7 @@ export class WorkflowGateValidator {
         workflowId,
         entityType: 'workflow',
         entityId: workflowId,
-        actorId: 'system',
+        actorId: '00000000-0000-0000-0000-000000000000', // System actor UUID
         action,
         details: {
           attempted_step: stepName,

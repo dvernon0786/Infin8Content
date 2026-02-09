@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { AlertTriangle, X } from 'lucide-react'
 import type { WorkflowDashboardItem } from '@/lib/services/intent-engine/workflow-dashboard-service'
 import { WORKFLOW_STEP_DESCRIPTIONS, type WorkflowState } from '@/lib/constants/intent-workflow-steps'
@@ -36,6 +37,13 @@ export function WorkflowDetailModal({
   const [isCancelling, setIsCancelling] = useState(false)
   const [isRunningStep, setIsRunningStep] = useState(false)
   const [stepError, setStepError] = useState<string | null>(null)
+  
+  // ICP form state
+  const [icpFormData, setIcpFormData] = useState({
+    organizationName: '',
+    organizationUrl: '',
+    organizationLinkedInUrl: '',
+  })
 
   if (!workflow) return null
 
@@ -71,11 +79,13 @@ export function WorkflowDetailModal({
     }
   }
 
-  const steps = WORKFLOW_STEP_CONFIG.map((step, index) => ({
-    key: step.step,
-    label: step.label,
-    order: index,
-  }))
+  const steps = WORKFLOW_STEP_CONFIG
+    .filter(step => !step.hidden) // Hide internal steps from UI
+    .map((step, index) => ({
+      key: step.step,
+      label: step.label,
+      order: index,
+    }))
 
   const currentStepOrder = steps.find(s => s.key === workflow.status)?.order ?? -1
 
@@ -91,7 +101,7 @@ export function WorkflowDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl w-full mx-4 sm:mx-auto sm:w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{workflow.name}</DialogTitle>
           <DialogDescription>
@@ -205,43 +215,153 @@ export function WorkflowDetailModal({
                 </div>
               </div>
 
-              {/* Action Button */}
+              {/* Action Button / ICP Form */}
               {activeStep && canCancel && (
                 <div className="pt-4 border-t space-y-2">
                   {stepError && (
-                    <p className="text-sm text-red-600">
-                      {stepError}
-                    </p>
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-md sm:p-2">
+                      <p className="text-sm text-red-800 leading-tight">
+                        {stepError}
+                      </p>
+                    </div>
                   )}
 
-                  <Button
-                    className="w-full"
-                    disabled={isRunningStep}
-                    onClick={async () => {
-                      try {
-                        setIsRunningStep(true)
-                        setStepError(null)
+                  {/* ICP Input Form - only for step_0_auth */}
+                  {workflow.status === 'step_0_auth' ? (
+                    <div className="space-y-4 sm:space-y-6">
+                      <div className="space-y-4 sm:space-y-6">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Organization Name *
+                          </label>
+                          <Input
+                            placeholder="Enter organization name"
+                            value={icpFormData.organizationName}
+                            onChange={(e) => setIcpFormData(prev => ({
+                              ...prev,
+                              organizationName: e.target.value
+                            }))}
+                            disabled={isRunningStep}
+                            className="w-full"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Organization Website *
+                          </label>
+                          <Input
+                            type="url"
+                            placeholder="https://example.com"
+                            value={icpFormData.organizationUrl}
+                            onChange={(e) => setIcpFormData(prev => ({
+                              ...prev,
+                              organizationUrl: e.target.value
+                            }))}
+                            disabled={isRunningStep}
+                            className="w-full"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Organization LinkedIn *
+                          </label>
+                          <Input
+                            type="url"
+                            placeholder="https://linkedin.com/company/example"
+                            value={icpFormData.organizationLinkedInUrl}
+                            onChange={(e) => setIcpFormData(prev => ({
+                              ...prev,
+                              organizationLinkedInUrl: e.target.value
+                            }))}
+                            disabled={isRunningStep}
+                            className="w-full"
+                          />
+                        </div>
+                      </div>
 
-                        const res = await fetch(
-                          `/api/intent/workflows/${workflow.id}/${activeStep.endpoint}`,
-                          { method: 'POST' }
-                        )
+                      <Button
+                        className="w-full min-h-[44px] text-base sm:min-h-[40px] sm:text-sm"
+                        disabled={isRunningStep}
+                        onClick={async () => {
+                          try {
+                            setIsRunningStep(true)
+                            setStepError(null)
 
-                        if (!res.ok) {
-                          const body = await res.json()
-                          throw new Error(body.error || 'Step failed')
+                            // Validate form inputs
+                            if (!icpFormData.organizationName || !icpFormData.organizationUrl || !icpFormData.organizationLinkedInUrl) {
+                              setStepError('All fields are required to generate ICP')
+                              return
+                            }
+
+                            // Validate URL format
+                            try {
+                              new URL(icpFormData.organizationUrl)
+                              new URL(icpFormData.organizationLinkedInUrl)
+                            } catch {
+                              setStepError('Please enter valid URLs')
+                              return
+                            }
+
+                            const res = await fetch(
+                              `/api/intent/workflows/${workflow.id}/${activeStep.endpoint}`,
+                              {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  organization_name: icpFormData.organizationName,
+                                  organization_url: icpFormData.organizationUrl,
+                                  organization_linkedin_url: icpFormData.organizationLinkedInUrl,
+                                }),
+                              }
+                            )
+
+                            if (!res.ok) {
+                              const body = await res.json()
+                              throw new Error(body.error || 'Step failed')
+                            }
+
+                            // realtime subscription will refresh workflow
+                          } catch (err: any) {
+                            setStepError(err.message || 'Something went wrong')
+                          } finally {
+                            setIsRunningStep(false)
+                          }
+                        }}
+                      >
+                        {isRunningStep ? 'Generating ICP…' : activeStep.label}
+                      </Button>
+                    </div>
+                  ) : (
+                    /* Regular action button for other steps */
+                    <Button
+                      className="w-full min-h-[44px] text-base sm:min-h-[40px] sm:text-sm"
+                      disabled={isRunningStep}
+                      onClick={async () => {
+                        try {
+                          setIsRunningStep(true)
+                          setStepError(null)
+
+                          const res = await fetch(
+                            `/api/intent/workflows/${workflow.id}/${activeStep.endpoint}`,
+                            { method: 'POST' }
+                          )
+
+                          if (!res.ok) {
+                            const body = await res.json()
+                            throw new Error(body.error || 'Step failed')
+                          }
+
+                          // realtime subscription will refresh workflow
+                        } catch (err: any) {
+                          setStepError(err.message || 'Something went wrong')
+                        } finally {
+                          setIsRunningStep(false)
                         }
-
-                        // realtime subscription will refresh workflow
-                      } catch (err: any) {
-                        setStepError(err.message || 'Something went wrong')
-                      } finally {
-                        setIsRunningStep(false)
-                      }
-                    }}
-                  >
-                    {isRunningStep ? 'Running…' : activeStep.label}
-                  </Button>
+                      }}
+                    >
+                      {isRunningStep ? 'Running…' : activeStep.label}
+                    </Button>
+                  )}
                 </div>
               )}
 

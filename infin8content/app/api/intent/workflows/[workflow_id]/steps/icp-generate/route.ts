@@ -8,6 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { checkRateLimit, type RateLimitConfig } from '@/lib/services/rate-limiting/persistent-rate-limiter'
@@ -25,21 +26,15 @@ const RATE_LIMIT_CONFIG: RateLimitConfig = {
   keyPrefix: 'icp_generation'
 }
 
-// Concurrent retry prevention: Track in-progress ICP generations per workflow
-// Key: workflow_id, Value: true if generation is in progress
-const inProgressMap = new Map<string, boolean>()
+// Schema for ICP generation request
+const icpGenerationSchema = z.object({
+  organization_name: z.string().min(1, 'Organization name is required'),
+  organization_url: z.string().url('Invalid website URL format'),
+  organization_linkedin_url: z.string().url('Invalid LinkedIn URL format'),
+})
 
-function isGenerationInProgress(workflowId: string): boolean {
-  return inProgressMap.has(workflowId) && inProgressMap.get(workflowId) === true
-}
-
-function markGenerationInProgress(workflowId: string): void {
-  inProgressMap.set(workflowId, true)
-}
-
-function clearGenerationInProgress(workflowId: string): void {
-  inProgressMap.delete(workflowId)
-}
+// Concurrent prevention handled by database status gate (step_0_auth only)
+// This provides multi-instance safety and restart resilience
 
 export async function POST(
   request: NextRequest,
@@ -61,18 +56,7 @@ export async function POST(
 
     organizationId = currentUser.org_id
 
-    // Check for concurrent retry prevention
-    if (isGenerationInProgress(workflowId)) {
-      return NextResponse.json(
-        {
-          error: 'Generation in progress',
-          message: 'ICP generation is already in progress for this workflow'
-        },
-        { status: 409 }
-      )
-    }
-
-    // Check persistent rate limit
+    // Rate limiting check persistent rate limit
     const rateLimit = await checkRateLimit(organizationId, RATE_LIMIT_CONFIG)
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -85,23 +69,27 @@ export async function POST(
       )
     }
 
-    // Parse request body
+    // Parse and validate request body
     const body = await request.json()
-    const icpRequest: ICPGenerationRequest = {
-      organizationName: body.organization_name,
-      organizationUrl: body.organization_url,
-      organizationLinkedInUrl: body.organization_linkedin_url
-    }
-
-    // Validate request
-    if (!icpRequest.organizationName || !icpRequest.organizationUrl || !icpRequest.organizationLinkedInUrl) {
+    const validationResult = icpGenerationSchema.safeParse(body)
+    
+    if (!validationResult.success) {
       return NextResponse.json(
         {
-          error: 'Invalid request',
-          message: 'organization_name, organization_url, and organization_linkedin_url are required'
+          error: 'INVALID_ICP_INPUT',
+          details: validationResult.error.flatten().fieldErrors,
         },
         { status: 400 }
       )
+    }
+
+    const icpRequest = validationResult.data
+
+    // Map to expected interface format
+    const mappedRequest: ICPGenerationRequest = {
+      organizationName: icpRequest.organization_name,
+      organizationUrl: icpRequest.organization_url,
+      organizationLinkedInUrl: icpRequest.organization_linkedin_url,
     }
 
     // Verify workflow exists and belongs to user's organization
@@ -124,13 +112,13 @@ export async function POST(
     const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string }
 
     // Check if workflow is in correct state for ICP generation
-    if (typedWorkflow.status !== 'step_0_auth' && typedWorkflow.status !== 'step_1_icp') {
+    if (typedWorkflow.status !== 'step_0_auth') {
       return NextResponse.json(
         {
-          error: 'Invalid workflow state',
-          message: `Workflow must be in step_0_auth or step_1_icp state, currently in ${typedWorkflow.status}`
+          error: 'ICP_ALREADY_RUN_OR_INVALID_STATE',
+          message: `ICP generation can only run from step_0_auth, currently in ${typedWorkflow.status}`
         },
-        { status: 400 }
+        { status: 409 }
       )
     }
 
@@ -156,17 +144,11 @@ export async function POST(
       })
     }
 
-    // Mark generation as in-progress
-    markGenerationInProgress(workflowId)
-
     // Generate ICP document with automatic retry
-    const icpResult = await generateICPDocument(icpRequest, organizationId, 300000, undefined, workflowId)
+    const icpResult = await generateICPDocument(mappedRequest, organizationId, 300000, undefined, workflowId)
 
     // Store result in workflow with retry metadata (consolidated in single update)
     await storeICPGenerationResult(workflowId, organizationId, icpResult)
-
-    // Clear in-progress flag on success
-    clearGenerationInProgress(workflowId)
 
     // Emit analytics event for workflow step completion
     try {
@@ -209,9 +191,6 @@ export async function POST(
       }
     })
   } catch (error) {
-    // Clear in-progress flag on error
-    clearGenerationInProgress(workflowId)
-
     // Log error
     console.error(`[ICP-Generate] Error generating ICP:`, error)
 

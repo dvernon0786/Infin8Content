@@ -184,7 +184,58 @@ FROM intent_workflows
 GROUP BY status;
 
 -- ==========================================
--- 6. TROUBLESHOOTING QUERIES
+-- 7. AUDIT LOG VERIFICATION (IF TABLE EXISTS)
+-- ==========================================
+
+-- Check if audit_logs table exists and has recent entries
+SELECT 
+    'audit_logs_table_exists' as check_name,
+    CASE 
+        WHEN EXISTS (
+            SELECT 1 FROM information_schema.tables 
+            WHERE table_name = 'audit_logs'
+        ) THEN 'YES'
+        ELSE 'NO'
+    END as result
+
+UNION ALL
+
+-- Check for any recent workflow-related audit entries
+SELECT 
+    'recent_workflow_audit_entries' as check_name,
+    CASE 
+        WHEN EXISTS (
+            SELECT 1 FROM audit_logs 
+            WHERE created_at >= NOW() - INTERVAL '7 days'
+            AND (details::text LIKE '%workflow%' OR details::text LIKE '%intent%')
+            LIMIT 1
+        ) THEN 'YES'
+        ELSE 'NO'
+    END as result;
+
+-- ==========================================
+-- 8. ORGANIZATION DATA VERIFICATION
+-- ==========================================
+
+-- Check organization details needed for ICP generation
+SELECT 
+    o.id,
+    o.name,
+    o.website_url,
+    o.business_description,
+    o.onboarding_completed,
+    o.onboarding_completed_at,
+    CASE 
+        WHEN o.website_url IS NULL OR o.website_url = '' THEN 'MISSING_WEBSITE'
+        WHEN o.business_description IS NULL OR o.business_description = '' THEN 'MISSING_DESCRIPTION'
+        ELSE 'DATA_COMPLETE'
+    END as icp_readiness
+FROM organizations o
+WHERE o.onboarding_completed = true
+ORDER BY o.onboarding_completed_at DESC;
+
+-- ==========================================
+-- 9. TROUBLESHOOTING QUERIES
 -- ==========================================
 
 -- Find organizations with feature flags but no onboarding (shouldn't happen)

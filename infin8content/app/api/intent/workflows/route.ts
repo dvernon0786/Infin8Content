@@ -5,7 +5,6 @@ import { logIntentActionAsync } from '@/lib/services/intent-engine/intent-audit-
 import { AuditAction } from '@/types/audit'
 import { isFeatureFlagEnabled } from '@/lib/utils/feature-flags'
 import { FEATURE_FLAG_KEYS } from '@/lib/types/feature-flag'
-import { validateOnboardingComplete } from '@/lib/validators/onboarding-validator'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 import type { 
@@ -113,22 +112,26 @@ export async function POST(request: Request) {
       )
     }
 
-    // --- Onboarding validation gate (A-6)
-    const validation = await validateOnboardingComplete(targetOrgId)
+    const supabase = await createClient()
 
-    if (!validation.isValid) {
+    // --- MVP Onboarding Check (simplified for workflow creation)
+    // Only check if onboarding is marked complete, not all detailed fields
+    const { data: org, error: orgError } = await supabase
+      .from('organizations')
+      .select('onboarding_completed')
+      .eq('id', targetOrgId)
+      .single()
+
+    if (orgError || !org || !(org as any).onboarding_completed) {
       return NextResponse.json(
         {
           error: 'ONBOARDING_INCOMPLETE',
-          details: validation.errors,
-          missingSteps: validation.missingSteps,
+          details: ['Onboarding must be completed before creating workflows'],
           suggestedAction: 'Complete onboarding at /onboarding'
         },
         { status: 403 }
       )
     }
-
-    const supabase = await createClient()
 
     // Check for duplicate workflow name within the organization
     const { data: existingWorkflow, error: checkError } = await supabase
