@@ -37,7 +37,7 @@ describe('Prompt Integrity System', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(PromptIntegrityError);
       expect((error as PromptIntegrityError).code).toBe('PROMPT_MUTATION_DETECTED');
-      expect(error.message).toContain('TestPrompt system prompt template has been modified at runtime');
+      expect((error as Error).message).toContain('TestPrompt system prompt template has been modified at runtime');
     }
   });
 

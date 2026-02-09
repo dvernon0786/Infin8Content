@@ -1,3 +1,4 @@
+import { mockCurrentUser } from "@/tests/factories/current-user"
 /**
  * Link Articles API Endpoint Tests
  * Story 38.3: Link Generated Articles to Intent Workflow
@@ -64,7 +65,7 @@ describe('Link Articles API Endpoint', () => {
     })
 
     it('should return 401 when user lacks organization', async () => {
-      vi.mocked(getCurrentUser).mockResolvedValue({
+      vi.mocked(getCurrentUser).mockResolvedValue(mockCurrentUser(
         id: 'user-123',
         org_id: null
       })
@@ -79,7 +80,7 @@ describe('Link Articles API Endpoint', () => {
 
   describe('Authorization', () => {
     beforeEach(() => {
-      vi.mocked(getCurrentUser).mockResolvedValue({
+      vi.mocked(getCurrentUser).mockResolvedValue(mockCurrentUser(
         id: 'user-123',
         org_id: 'org-123'
       })
@@ -128,7 +129,7 @@ describe('Link Articles API Endpoint', () => {
 
   describe('Article Linking', () => {
     beforeEach(() => {
-      vi.mocked(getCurrentUser).mockResolvedValue({
+      vi.mocked(getCurrentUser).mockResolvedValue(mockCurrentUser(
         id: 'user-123',
         org_id: 'org-123'
       })
@@ -212,7 +213,7 @@ describe('Link Articles API Endpoint', () => {
 
   describe('Audit Logging', () => {
     beforeEach(() => {
-      vi.mocked(getCurrentUser).mockResolvedValue({
+      vi.mocked(getCurrentUser).mockResolvedValue(mockCurrentUser(
         id: 'user-123',
         org_id: 'org-123'
       })
@@ -348,7 +349,7 @@ describe('Link Articles API Endpoint', () => {
 
   describe('Error Handling', () => {
     beforeEach(() => {
-      vi.mocked(getCurrentUser).mockResolvedValue({
+      vi.mocked(getCurrentUser).mockResolvedValue(mockCurrentUser(
         id: 'user-123',
         org_id: 'org-123'
       })

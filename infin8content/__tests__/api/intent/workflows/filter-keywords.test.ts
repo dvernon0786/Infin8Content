@@ -1,3 +1,4 @@
+import { mockCurrentUser } from "@/tests/factories/current-user"
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { POST } from '@/app/api/intent/workflows/[workflow_id]/steps/filter-keywords/route'
 import { NextRequest } from 'next/server'
