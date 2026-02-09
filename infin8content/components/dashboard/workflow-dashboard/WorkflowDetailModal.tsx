@@ -223,7 +223,7 @@ export function WorkflowDetailModal({
                   )}
 
                   {/* ICP Input Form - only for step_0_auth */}
-                  {workflow.status === 'step_0_auth' && activeStep.step === 'step_1_icp' ? (
+                  {workflow.status === 'step_0_auth' ? (
                     <div className="space-y-4">
                       <div className="space-y-3">
                         <div>
