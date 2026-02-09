@@ -95,11 +95,11 @@ export class WorkflowGateValidator {
 
       // Use canonical step ordering
       const normalizedStatus = normalizeWorkflowStatus(workflow.status)
-      const currentIndex = WORKFLOW_STEP_ORDER.indexOf(normalizedStatus)
+      
+      // Handle terminal states - they are beyond all execution steps
+      const currentIndex = WORKFLOW_STEP_ORDER.indexOf(normalizedStatus as any)
       const longtailIndex = WORKFLOW_STEP_ORDER.indexOf('step_4_longtails')
       const clusteringIndex = WORKFLOW_STEP_ORDER.indexOf('step_6_clustering')
-
-      // Handle terminal states - they are beyond all execution steps
       const effectiveIndex = currentIndex === -1 ? WORKFLOW_STEP_ORDER.length : currentIndex
 
       // Check if workflow has completed both longtails and clustering

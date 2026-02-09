@@ -83,10 +83,10 @@ export class SeedApprovalGateValidator {
         // If workflow is beyond step_3_keywords, allow (already approved)
         // If workflow is before step_3_keywords, block (keywords not ready yet)
         const normalizedStatus = normalizeWorkflowStatus(workflow.status)
-        const currentIndex = WORKFLOW_STEP_ORDER.indexOf(normalizedStatus)
-        const seedIndex = WORKFLOW_STEP_ORDER.indexOf('step_3_keywords')
         
         // Handle terminal states - they are beyond all execution steps
+        const currentIndex = WORKFLOW_STEP_ORDER.indexOf(normalizedStatus as any)
+        const seedIndex = WORKFLOW_STEP_ORDER.indexOf('step_3_keywords')
         const effectiveIndex = currentIndex === -1 ? WORKFLOW_STEP_ORDER.length : currentIndex
         
         if (effectiveIndex < seedIndex) {

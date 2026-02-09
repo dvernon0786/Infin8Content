@@ -84,10 +84,10 @@ export class SubtopicApprovalGateValidator {
         // If workflow is beyond step_8_subtopics, allow (already approved)
         // If workflow is before step_8_subtopics, block (subtopics not ready yet)
         const normalizedStatus = normalizeWorkflowStatus(workflow.status)
-        const currentIndex = WORKFLOW_STEP_ORDER.indexOf(normalizedStatus)
-        const approvalIndex = WORKFLOW_STEP_ORDER.indexOf('step_8_subtopics')
         
         // Handle terminal states - they are beyond all execution steps
+        const currentIndex = WORKFLOW_STEP_ORDER.indexOf(normalizedStatus as any)
+        const approvalIndex = WORKFLOW_STEP_ORDER.indexOf('step_8_subtopics')
         const effectiveIndex = currentIndex === -1 ? WORKFLOW_STEP_ORDER.length : currentIndex
         
         if (effectiveIndex < approvalIndex) {
