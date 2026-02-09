@@ -1,15 +1,16 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "noEmit": true,
-    "types": ["vitest", "node"]
+    "types": ["jest", "node"]
   },
   "include": [
-    "__tests__",
+    "**/*.ts",
+    "**/*.tsx", 
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.spec.ts",
-    "**/*.spec.tsx"
+    "**/*.spec.tsx",
+    "types/**/*.d.ts"
   ],
-  "exclude": []
+  "exclude": ["node_modules"]
 }
