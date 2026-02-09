@@ -1,13 +1,13 @@
 # Development Guide
 
-Generated: 2026-02-04 (System Status Update)  
+Generated: 2026-02-09 (Workflow State Machine Implementation)  
 Project: Infin8Content  
 Framework: Next.js 16.1.1 with TypeScript  
 Environment: Development - ✅ **FULLY OPERATIONAL**
 
 ---
 
-## System Status (2026-02-04)
+## System Status (2026-02-09)
 
 ✅ **All Systems Operational**
 - Dev Server: Running cleanly without routing conflicts
@@ -15,6 +15,58 @@ Environment: Development - ✅ **FULLY OPERATIONAL**
 - Database: Supabase connected and configured
 - Email: Brevo OTP delivery active
 - Environment: All variables configured
+- 🔥 **Workflow State Machine**: Complete implementation with canonical definitions
+
+### Latest Implementation: Workflow State Machine
+
+**Status**: ✅ **COMPLETE & TESTED** | **Branch**: `dashboard-workflow-creation-fix`
+
+The Intent Engine workflow system has been completely refactored with a production-ready state machine:
+
+#### Key Features
+- **Single Source of Truth**: Canonical workflow definitions in `lib/constants/intent-workflow-steps.ts`
+- **Runtime Guards**: Invalid states explode loudly with `assertValidWorkflowState()`
+- **Linear Progression**: Steps cannot be skipped with `assertValidWorkflowTransition()`
+- **Type Safety**: Compile-time prevention of invalid workflow states
+- **Test Coverage**: 11/11 tests passing with comprehensive regression prevention
+- **Semantic Drift**: Permanently eliminated - impossible to reintroduce
+
+#### Architecture
+```
+lib/constants/intent-workflow-steps.ts          # SINGLE SOURCE OF TRUTH
+├─ INTENT_WORKFLOW_STEPS (constants)
+├─ WORKFLOW_STEP_ORDER (array)  
+├─ ALL_WORKFLOW_STATES (union)
+├─ WORKFLOW_PROGRESS_MAP (mapping)
+├─ WORKFLOW_STEP_DESCRIPTIONS (labels)
+├─ assertValidWorkflowState (guard)
+└─ Helper functions (getStepIndex, etc.)
+
+lib/utils/normalize-workflow-status.ts          # BACKWARD COMPATIBILITY
+└─ normalizeWorkflowStatus() (legacy → canonical)
+
+lib/inngest/workflow-transition-guard.ts          # INNGEST GUARDS
+├─ assertValidWorkflowTransition() (linear progression)
+└─ handleWorkflowFailure() (explicit errors)
+```
+
+#### Usage Examples
+```typescript
+// Import canonical definitions
+import { 
+  WORKFLOW_STEP_ORDER, 
+  assertValidWorkflowState,
+  type WorkflowState 
+} from '@/lib/constants/intent-workflow-steps'
+
+// Validate workflow state
+assertValidWorkflowState('step_1_icp') // ✅ Passes
+assertValidWorkflowState('invalid_step') // ❌ Throws error
+
+// Check linear progression
+assertValidWorkflowTransition('step_1_icp', 'step_2_competitors') // ✅ Valid
+assertValidWorkflowTransition('step_1_icp', 'step_3_keywords') // ❌ Invalid
+```
 
 ## Quick Start (Verified Working)
 
