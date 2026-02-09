@@ -87,6 +87,8 @@ export async function POST(
       .from('intent_workflows')
       .update({
         status: 'failed',
+        cancelled_at: new Date().toISOString(),
+        cancelled_by: currentUser.id,
         workflow_data: {
           cancel_reason: 'cancelled_by_user',
           cancelled_at: new Date().toISOString(),
@@ -154,7 +156,9 @@ export async function POST(
     return NextResponse.json({
       success: true,
       status: 'failed',
-      workflow_id: workflowId
+      workflow_id: workflowId,
+      cancelled_at: new Date().toISOString(),
+      cancelled_by: currentUser.id
     })
 
   } catch (error) {
