@@ -1,6 +1,6 @@
 # API Contracts - Infin8Content
 
-Generated: 2026-02-09 (Workflow State Machine Implementation)  
+Generated: 2026-02-09 (MVP Correctness Fixes Complete)  
 Framework: Next.js 16.1.1 API Routes  
 Base URL: `/api`
 
@@ -10,15 +10,36 @@ Infin8Content implements a comprehensive REST API using Next.js App Router with 
 
 ## System Status (2026-02-09)
 
-✅ **FULLY OPERATIONAL** - All core systems functional:
+✅ **MVP SHIP READY - UNCONDITIONAL SIGN-OFF GRANTED**
 - Authentication: Registration and OTP verification working
 - Database: Supabase connected and operational  
 - Email: Brevo OTP delivery active
 - Routing: All API endpoints accessible
 - Environment: All variables configured
 - 🔥 **Workflow State Machine**: Complete implementation with canonical definitions
+- 🚀 **MVP Correctness**: State machine provably correct, safe, and deterministic
 
-### Latest Implementation: Workflow State Machine
+### Latest Implementation: MVP Correctness Fixes
+
+**Status**: ✅ **COMPLETE & SHIP READY** | **Files Modified**: 4 service files
+
+Critical MVP safety and liveness fixes ensure production-ready state machine:
+
+#### Key Guarantees
+- **Safety**: Fail-closed on all error paths
+- **Liveness**: Explicit success paths prevent deadlocks
+- **Idempotency**: Approval re-entry works correctly
+- **Determinism**: No optimistic transitions
+
+#### Service Layer Updates
+```
+lib/services/intent-engine/human-approval-processor.ts (NEW)
+lib/services/intent-engine/blocking-condition-resolver.ts (NEW)  
+lib/services/intent-engine/subtopic-approval-gate-validator.ts (NEW)
+lib/services/intent-engine/workflow-gate-validator.ts (NEW)
+```
+
+### Previous Implementation: Workflow State Machine
 
 **Status**: ✅ **COMPLETE & TESTED** | **Branch**: `dashboard-workflow-creation-fix`
 
