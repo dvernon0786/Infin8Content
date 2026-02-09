@@ -6,10 +6,10 @@ import {
   INTENT_WORKFLOW_STEPS,
   WORKFLOW_STEP_ORDER,
   ALL_WORKFLOW_STATES,
-  assertValidWorkflowState,
-  normalizeWorkflowStatus
-} from '@/lib/constants/intent-workflow-steps'
-import { assertValidWorkflowTransition } from '@/lib/inngest/workflow-transition-guard'
+  assertValidWorkflowState
+} from '../lib/constants/intent-workflow-steps'
+import { assertValidWorkflowTransition } from '../lib/inngest/workflow-transition-guard'
+import { normalizeWorkflowStatus } from '../lib/utils/normalize-workflow-status'
 
 describe('Canonical Workflow States', () => {
   describe('Single Source of Truth', () => {
