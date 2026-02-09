@@ -280,6 +280,15 @@ export function WorkflowDetailModal({
                               return
                             }
 
+                            // Validate URL format
+                            try {
+                              new URL(icpFormData.organizationUrl)
+                              new URL(icpFormData.organizationLinkedInUrl)
+                            } catch {
+                              setStepError('Please enter valid URLs')
+                              return
+                            }
+
                             const res = await fetch(
                               `/api/intent/workflows/${workflow.id}/${activeStep.endpoint}`,
                               {
