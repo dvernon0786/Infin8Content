@@ -1,7 +1,7 @@
 # Infin8Content Workflow System Guide
 
-**Generated:** 2026-02-06  
-**Version:** v2.0  
+**Generated:** 2026-02-09  
+**Version:** v2.1  
 **System:** Intent Engine Workflow Orchestration
 
 ## Overview
@@ -37,10 +37,24 @@ Project → Epics → Stories → Tasks → Implementation
 ### Primary Workflow Flow
 
 ```
-step_1_icp_generation → step_2_competitor_analysis → step_3_seed_keywords → 
+step_0_auth → step_1_icp → step_2_competitors → step_3_keywords → 
 step_4_longtails → step_5_filtering → step_6_clustering → step_7_validation → 
 step_8_subtopics → step_9_articles → completed
 ```
+
+**Canonical State Definitions (v2.1):**
+- `step_0_auth` (5%) - Authentication setup
+- `step_1_icp` (15%) - ICP Generation  
+- `step_2_competitors` (25%) - Competitor Analysis
+- `step_3_keywords` (35%) - Seed Keyword Extraction
+- `step_4_longtails` (45%) - Long-tail Expansion
+- `step_5_filtering` (55%) - Keyword Filtering
+- `step_6_clustering` (65%) - Topic Clustering
+- `step_7_validation` (75%) - Cluster Validation
+- `step_8_subtopics` (85%) - Subtopic Generation
+- `step_9_articles` (95%) - Article Generation
+- `completed` (100%) - Completed
+- `failed` (0%) - Failed
 
 ### Detailed State Breakdown
 

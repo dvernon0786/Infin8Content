@@ -1,7 +1,7 @@
 # Infin8Content API Reference
 
-**Generated:** 2026-02-06  
-**Version:** v2.0  
+**Generated:** 2026-02-09  
+**Version:** v2.1  
 **Base URL:** `https://your-domain.com/api`
 
 ## Authentication

@@ -1,7 +1,7 @@
 # Infin8Content Database Schema Documentation
 
-**Generated:** 2026-02-06  
-**Version:** v2.0  
+**Generated:** 2026-02-09  
+**Version:** v2.1  
 **Database:** PostgreSQL via Supabase
 
 ## Overview
@@ -388,6 +388,58 @@ DROP POLICY IF EXISTS policy_name ON table_name;
 
 #### Rollback Scripts
 Each migration includes corresponding rollback capability.
+
+### 11. Publish References
+
+Idempotent publishing tracking for WordPress integration.
+
+```sql
+CREATE TABLE publish_references (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  article_id UUID NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  platform TEXT NOT NULL CHECK (platform IN ('wordpress')),
+  platform_post_id TEXT NOT NULL,
+  platform_url TEXT NOT NULL,
+  published_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (article_id, platform),
+  UNIQUE (platform, platform_post_id)
+);
+```
+
+**Key Features:**
+- Idempotent publishing guarantees
+- Platform-agnostic design
+- Duplicate prevention
+- Publication tracking
+
+### 12. Article Sections
+
+Granular section tracking for article generation pipeline.
+
+```sql
+CREATE TABLE article_sections (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  article_id UUID NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  section_index INTEGER NOT NULL,
+  section_type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  content TEXT,
+  word_count INTEGER DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'pending',
+  research_data JSONB DEFAULT '{}',
+  generation_metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(article_id, section_index)
+);
+```
+
+**Key Features:**
+- Section-level progress tracking
+- Research data storage
+- Generation metadata
+- Status management
 
 ## Data Flow Patterns
 
