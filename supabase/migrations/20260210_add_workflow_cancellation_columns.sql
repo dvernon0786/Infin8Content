@@ -1,7 +1,19 @@
 -- Add cancellation support to intent_workflows table
 -- Enables proper workflow cancellation with audit trail
 
--- Add cancellation tracking columns
+-- Drop existing columns if they exist (handle migration rerun)
+DO $$
+BEGIN
+    -- Drop indexes first if they exist
+    DROP INDEX IF EXISTS idx_intent_workflows_cancelled_at;
+    DROP INDEX IF EXISTS idx_intent_workflows_cancelled_by;
+    
+    -- Drop columns if they exist
+    ALTER TABLE intent_workflows DROP COLUMN IF EXISTS cancelled_at;
+    ALTER TABLE intent_workflows DROP COLUMN IF EXISTS cancelled_by;
+END $$;
+
+-- Add cancellation tracking columns with correct foreign key
 ALTER TABLE intent_workflows 
 ADD COLUMN cancelled_at TIMESTAMP WITH TIME ZONE,
 ADD COLUMN cancelled_by UUID REFERENCES users(id);
