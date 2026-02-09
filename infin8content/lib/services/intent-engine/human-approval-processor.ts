@@ -8,8 +8,20 @@
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
+import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
+import { type WorkflowState, assertValidWorkflowState } from '@/lib/constants/intent-workflow-steps'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction, AuditActionType } from '@/types/audit'
+
+const CANONICAL_RESET_MAP: Record<string, WorkflowState> = {
+  1: 'step_1_icp',
+  2: 'step_2_competitors',
+  3: 'step_3_keywords',
+  4: 'step_4_longtails',
+  5: 'step_5_filtering',
+  6: 'step_6_clustering',
+  7: 'step_7_validation',
+};
 
 export interface HumanApprovalRequest {
   decision: 'approved' | 'rejected'
@@ -112,9 +124,9 @@ export async function processHumanApproval(
     competitor_analysis: any
   }
 
-  // Validate workflow is at step_7_subtopics
-  if (workflow.status !== 'step_7_subtopics') {
-    throw new Error('Workflow must be at step_7_subtopics for human approval')
+  // Validate workflow is at step_8_subtopics
+  if (workflow.status !== 'step_8_subtopics') {
+    throw new Error('Workflow must be at step_8_subtopics for human approval')
   }
 
   // Validate user belongs to the same organization as the workflow
@@ -165,11 +177,15 @@ export async function processHumanApproval(
   }
 
   // Update workflow status based on decision
-  let finalStatus: string
+  let finalStatus: WorkflowState
   if (decision === 'approved') {
     finalStatus = 'step_9_articles'
   } else {
-    finalStatus = `step_${reset_to_step}`
+    if (!reset_to_step || !CANONICAL_RESET_MAP[reset_to_step.toString()]) {
+      throw new Error('Invalid reset_to_step: must be 1-7')
+    }
+    finalStatus = CANONICAL_RESET_MAP[reset_to_step.toString()]
+    assertValidWorkflowState(finalStatus)
   }
 
   // Update workflow to final status
@@ -368,7 +384,7 @@ export async function isHumanApprovalRequired(workflowId: string): Promise<boole
     status: string
   }
 
-  return workflow.status === 'step_7_subtopics'
+  return workflow.status === 'step_8_subtopics'
 }
 
 /**

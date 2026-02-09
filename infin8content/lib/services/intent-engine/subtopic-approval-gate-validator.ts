@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
 import { WORKFLOW_STEP_ORDER } from '@/lib/constants/intent-workflow-steps'
+import { normalizeWorkflowStatus } from '@/lib/utils/normalize-workflow-status'
 import { AuditAction } from '@/types/audit'
 
 export interface GateResult {
@@ -82,10 +83,14 @@ export class SubtopicApprovalGateValidator {
       if (workflow.status !== 'step_8_subtopics') {
         // If workflow is beyond step_8_subtopics, allow (already approved)
         // If workflow is before step_8_subtopics, block (subtopics not ready yet)
-        const currentIndex = WORKFLOW_STEP_ORDER.indexOf(workflow.status as any)
-        const approvalIndex = WORKFLOW_STEP_ORDER.indexOf('step_8_subtopics')
+        const normalizedStatus = normalizeWorkflowStatus(workflow.status)
         
-        if (currentIndex < approvalIndex) {
+        // Handle terminal states - they are beyond all execution steps
+        const currentIndex = WORKFLOW_STEP_ORDER.indexOf(normalizedStatus as any)
+        const approvalIndex = WORKFLOW_STEP_ORDER.indexOf('step_8_subtopics')
+        const effectiveIndex = currentIndex === -1 ? WORKFLOW_STEP_ORDER.length : currentIndex
+        
+        if (effectiveIndex < approvalIndex) {
           // Workflow hasn't reached subtopic approval step yet
           return {
             allowed: false,
