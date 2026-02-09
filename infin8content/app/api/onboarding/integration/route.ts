@@ -115,7 +115,7 @@ export async function POST(request: Request) {
               connected_at: new Date().toISOString(),
               last_validated_at: new Date().toISOString(),
               site_name: connectionResult.site?.name,
-              user_name: connectionResult.user?.name
+              user_name: 'WordPress User'
             }
           }
         },

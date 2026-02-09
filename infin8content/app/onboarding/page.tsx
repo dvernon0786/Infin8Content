@@ -28,7 +28,7 @@ export default function OnboardingPage() {
   }
 
   const handleComplete = async (data: any) => {
-    console.log("🔥🔥🔥 OLD ONBOARDING HANDLE COMPLETE CALLED 🔥🔥🔥", data)
+    console.log("[Onboarding] handleComplete invoked", data)
     
     setOnboardingData(prev => ({ ...prev, ...data }))
     
@@ -39,21 +39,21 @@ export default function OnboardingPage() {
         body: JSON.stringify(data),
       })
 
-      console.log("🔥🔥🔥 OLD ONBOARDING API RESPONSE STATUS 🔥🔥🔥", res.status)
+      console.log("[Onboarding] API response status", res.status)
 
       if (!res.ok) {
         const error = await res.json()
-        console.error("🔥🔥🔥 OLD ONBOARDING API FAILED 🔥🔥🔥", error)
+        console.error("[Onboarding] API failed", error)
         throw new Error(error?.error || "Integration failed")
       }
 
       const result = await res.json()
-      console.log("🔥🔥🔥 OLD ONBOARDING API SUCCESS 🔥🔥🔥", result)
+      console.log("[Onboarding] API success", result)
       
       // Handle completion - redirect to dashboard
       window.location.href = "/dashboard"
     } catch (error) {
-      console.error("🔥🔥🔥 OLD ONBOARDING COMPLETE FAILED 🔥🔥🔥", error)
+      console.error("[Onboarding] complete failed", error)
       throw error
     }
   }
@@ -72,8 +72,6 @@ export default function OnboardingPage() {
         return <StepKeywordSettings onNext={handleNext} onSkip={handleSkip} />
       case 6:
         return <StepIntegration onComplete={handleComplete} onSkip={() => handleComplete({})} />
-      default:
-        return <StepCompletion onStart={() => window.location.href = "/dashboard"} />
     }
   }
 

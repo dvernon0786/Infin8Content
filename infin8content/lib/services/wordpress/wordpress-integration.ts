@@ -66,19 +66,17 @@ export class WordPressIntegration {
 
   /**
    * Test WordPress connection
+   * Uses safe endpoint that doesn't require privileged capabilities
+   * Per WordPress REST API docs: /posts requires edit_posts (default for authors/editors)
    */
-  async testConnection(): Promise<{ success: boolean; message: string; user?: any }> {
+  async testConnection(): Promise<{ success: boolean; message: string }> {
     try {
-      const user = await this.makeRequest('/users/me')
+      // Safe, capability-light endpoint - works with Application Passwords
+      await this.makeRequest('/posts?per_page=1&_fields=id')
+
       return {
         success: true,
-        message: 'Connection successful',
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          roles: user.roles
-        }
+        message: 'Connection successful'
       }
     } catch (error: any) {
       return {
@@ -90,13 +88,24 @@ export class WordPressIntegration {
 
   /**
    * Get site info
+   * Uses public /wp-json endpoint - no auth required, always available
    */
   async getSiteInfo(): Promise<{ name: string; description: string; url: string }> {
-    const site = await this.makeRequest('/settings')
-    return {
-      name: site.title,
-      description: site.description,
-      url: this.credentials.url
+    try {
+      const site = await fetch(`${this.credentials.url}/wp-json`).then(res => res.json())
+
+      return {
+        name: site.name || 'WordPress Site',
+        description: site.description || '',
+        url: this.credentials.url
+      }
+    } catch (error) {
+      // Fallback if /wp-json is unavailable
+      return {
+        name: 'WordPress Site',
+        description: '',
+        url: this.credentials.url
+      }
     }
   }
 

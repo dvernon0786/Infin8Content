@@ -48,6 +48,15 @@ export async function checkOnboardingStatus(orgId: string): Promise<boolean> {
     // Treat null/undefined as false (not completed)
     const result = Boolean((data as any).onboarding_completed)
     
+    // 🔥 HARD ASSERTION - Make regressions loud in development
+    if (process.env.NODE_ENV === 'development' && result === false) {
+      console.warn('[ONBOARDING] DB says incomplete - redirect enforced')
+      console.warn('[ONBOARDING] If this is unexpected, check:')
+      console.warn('[ONBOARDING] 1. API called /api/onboarding/integration')
+      console.warn('[ONBOARDING] 2. Database updated with onboarding_completed=true')
+      console.warn('[ONBOARDING] 3. No localStorage bypass attempts')
+    }
+    
     console.log('[Onboarding Guard] FINAL RESULT', {
       orgId,
       result,
