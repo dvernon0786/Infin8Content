@@ -33,21 +33,8 @@ const icpGenerationSchema = z.object({
   organization_linkedin_url: z.string().url('Invalid LinkedIn URL format'),
 })
 
-// Concurrent retry prevention: Track in-progress ICP generations per workflow
-// Key: workflow_id, Value: true if generation is in progress
-const inProgressMap = new Map<string, boolean>()
-
-function isGenerationInProgress(workflowId: string): boolean {
-  return inProgressMap.has(workflowId) && inProgressMap.get(workflowId) === true
-}
-
-function markGenerationInProgress(workflowId: string): void {
-  inProgressMap.set(workflowId, true)
-}
-
-function clearGenerationInProgress(workflowId: string): void {
-  inProgressMap.delete(workflowId)
-}
+// Concurrent prevention handled by database status gate (step_0_auth only)
+// This provides multi-instance safety and restart resilience
 
 export async function POST(
   request: NextRequest,
@@ -69,18 +56,7 @@ export async function POST(
 
     organizationId = currentUser.org_id
 
-    // Check for concurrent retry prevention
-    if (isGenerationInProgress(workflowId)) {
-      return NextResponse.json(
-        {
-          error: 'Generation in progress',
-          message: 'ICP generation is already in progress for this workflow'
-        },
-        { status: 409 }
-      )
-    }
-
-    // Check persistent rate limit
+    // Rate limiting check persistent rate limit
     const rateLimit = await checkRateLimit(organizationId, RATE_LIMIT_CONFIG)
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -168,17 +144,11 @@ export async function POST(
       })
     }
 
-    // Mark generation as in-progress
-    markGenerationInProgress(workflowId)
-
     // Generate ICP document with automatic retry
     const icpResult = await generateICPDocument(mappedRequest, organizationId, 300000, undefined, workflowId)
 
     // Store result in workflow with retry metadata (consolidated in single update)
     await storeICPGenerationResult(workflowId, organizationId, icpResult)
-
-    // Clear in-progress flag on success
-    clearGenerationInProgress(workflowId)
 
     // Emit analytics event for workflow step completion
     try {
@@ -221,9 +191,6 @@ export async function POST(
       }
     })
   } catch (error) {
-    // Clear in-progress flag on error
-    clearGenerationInProgress(workflowId)
-
     // Log error
     console.error(`[ICP-Generate] Error generating ICP:`, error)
 

@@ -5,6 +5,7 @@ export interface WorkflowStepConfig {
   label: string
   endpoint: string
   autoAdvance: boolean
+  hidden?: boolean // Add hidden flag for internal steps
 }
 
 export const WORKFLOW_STEP_CONFIG: WorkflowStepConfig[] = [
@@ -13,6 +14,7 @@ export const WORKFLOW_STEP_CONFIG: WorkflowStepConfig[] = [
     label: 'Generate ICP',
     endpoint: 'steps/icp-generate',
     autoAdvance: false,
+    hidden: true, // Hide from UI progress - execution-only step
   },
   {
     step: 'step_1_icp',

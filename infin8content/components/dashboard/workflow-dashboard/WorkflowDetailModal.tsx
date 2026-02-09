@@ -79,11 +79,13 @@ export function WorkflowDetailModal({
     }
   }
 
-  const steps = WORKFLOW_STEP_CONFIG.map((step, index) => ({
-    key: step.step,
-    label: step.label,
-    order: index,
-  }))
+  const steps = WORKFLOW_STEP_CONFIG
+    .filter(step => !step.hidden) // Hide internal steps from UI
+    .map((step, index) => ({
+      key: step.step,
+      label: step.label,
+      order: index,
+    }))
 
   const currentStepOrder = steps.find(s => s.key === workflow.status)?.order ?? -1
 
