@@ -1,3 +1,4 @@
+import { mockNextRequest } from "@/tests/factories/next-request"
 /**
  * ICP Generation API Integration Tests
  * Story 34.1: Generate ICP Document via Perplexity AI
@@ -58,7 +59,7 @@ describe('ICP Generation API Endpoint', () => {
     it('should return 429 if rate limit exceeded', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser as any)
 
-      const request = new Request('http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
         method: 'POST',
         body: JSON.stringify({
           organization_name: 'TechCorp Inc',
@@ -97,7 +98,7 @@ describe('ICP Generation API Endpoint', () => {
       vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
       vi.mocked(generateICPDocument).mockResolvedValue(mockICPResult)
 
-      const request = new Request('http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
         method: 'POST',
         body: JSON.stringify({
           organization_name: 'TechCorp Inc',
@@ -120,7 +121,7 @@ describe('ICP Generation API Endpoint', () => {
     it('should return 401 if user is not authenticated', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null)
 
-      const request = new Request('http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
         method: 'POST',
         body: JSON.stringify({
           organization_name: 'TechCorp Inc',
@@ -151,7 +152,7 @@ describe('ICP Generation API Endpoint', () => {
 
       vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
 
-      const request = new Request('http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
         method: 'POST',
         body: JSON.stringify({
           organization_name: 'TechCorp Inc'
@@ -181,7 +182,7 @@ describe('ICP Generation API Endpoint', () => {
 
       vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
 
-      const request = new Request('http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
         method: 'POST',
         body: JSON.stringify({
           organization_name: 'TechCorp Inc',
@@ -218,7 +219,7 @@ describe('ICP Generation API Endpoint', () => {
 
       vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
 
-      const request = new Request('http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
         method: 'POST',
         body: JSON.stringify({
           organization_name: 'TechCorp Inc',
@@ -254,7 +255,7 @@ describe('ICP Generation API Endpoint', () => {
         new Error('OpenRouter API timeout')
       )
 
-      const request = new Request('http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
         method: 'POST',
         body: JSON.stringify({
           organization_name: 'TechCorp Inc',
@@ -289,7 +290,7 @@ describe('ICP Generation API Endpoint', () => {
       vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
       vi.mocked(generateICPDocument).mockResolvedValue(mockICPResult)
 
-      const request = new Request('http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
         method: 'POST',
         body: JSON.stringify({
           organization_name: 'TechCorp Inc',
@@ -338,7 +339,7 @@ describe('ICP Generation API Endpoint', () => {
 
       vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
 
-      const request = new Request('http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/intent/workflows/test-workflow-id/steps/icp-generate', {
         method: 'POST',
         body: JSON.stringify({
           organization_name: 'TechCorp Inc',

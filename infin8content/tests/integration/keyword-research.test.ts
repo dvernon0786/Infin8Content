@@ -1,3 +1,4 @@
+import { mockNextRequest } from "@/tests/factories/next-request"
 /**
  * Keyword Research API Integration Tests
  * 
@@ -53,7 +54,7 @@ describe('Keyword Research API Route', () => {
     it('should return 401 if user is not authenticated', async () => {
       mockGetCurrentUser.mockResolvedValue(null)
 
-      const request = new Request('http://localhost/api/research/keywords', {
+      const request = mockNextRequest({url: ''http://localhost/api/research/keywords', {
         method: 'POST',
         body: JSON.stringify({ keyword: 'test keyword' }),
       })
@@ -72,7 +73,7 @@ describe('Keyword Research API Route', () => {
         organizations: { plan: 'starter' },
       })
 
-      const request = new Request('http://localhost/api/research/keywords', {
+      const request = mockNextRequest({url: ''http://localhost/api/research/keywords', {
         method: 'POST',
         body: JSON.stringify({ keyword: '' }),
       })
@@ -93,7 +94,7 @@ describe('Keyword Research API Route', () => {
 
       const longKeyword = 'a'.repeat(201)
 
-      const request = new Request('http://localhost/api/research/keywords', {
+      const request = mockNextRequest({url: ''http://localhost/api/research/keywords', {
         method: 'POST',
         body: JSON.stringify({ keyword: longKeyword }),
       })
@@ -128,7 +129,7 @@ describe('Keyword Research API Route', () => {
         select: vi.fn().mockReturnValue(mockUsageChain),
       })
 
-      const request = new Request('http://localhost/api/research/keywords', {
+      const request = mockNextRequest({url: ''http://localhost/api/research/keywords', {
         method: 'POST',
         body: JSON.stringify({ keyword: 'test keyword' }),
       })
@@ -216,7 +217,7 @@ describe('Keyword Research API Route', () => {
         update: () => mockCacheUpdate,
       })
 
-      const request = new Request('http://localhost/api/research/keywords', {
+      const request = mockNextRequest({url: ''http://localhost/api/research/keywords', {
         method: 'POST',
         body: JSON.stringify({ keyword: 'test keyword' }),
       })
@@ -314,7 +315,7 @@ describe('Keyword Research API Route', () => {
         cost: 0.001,
       })
 
-      const request = new Request('http://localhost/api/research/keywords', {
+      const request = mockNextRequest({url: ''http://localhost/api/research/keywords', {
         method: 'POST',
         body: JSON.stringify({ keyword: 'test keyword' }),
       })
@@ -381,7 +382,7 @@ describe('Keyword Research API Route', () => {
       const mockSearchKeywords = vi.mocked(searchKeywords)
       mockSearchKeywords.mockRejectedValue(new Error('API error'))
 
-      const request = new Request('http://localhost/api/research/keywords', {
+      const request = mockNextRequest({url: ''http://localhost/api/research/keywords', {
         method: 'POST',
         body: JSON.stringify({ keyword: 'test keyword' }),
       })

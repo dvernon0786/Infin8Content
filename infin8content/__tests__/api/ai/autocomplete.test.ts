@@ -1,3 +1,4 @@
+import { mockNextRequest } from "@/tests/factories/next-request"
 /**
  * Tests for AI Autocomplete API Endpoint
  * Story A-5: Onboarding Agent AI Autocomplete
@@ -30,7 +31,7 @@ describe('AI Autocomplete API Endpoint', () => {
 
       vi.mocked(generateAutocompleteSuggestions).mockResolvedValue(mockSuggestions)
 
-      const request = new Request('http://localhost:3000/api/ai/autocomplete', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/ai/autocomplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -53,7 +54,7 @@ describe('AI Autocomplete API Endpoint', () => {
     })
 
     it('should reject requests without query', async () => {
-      const request = new Request('http://localhost:3000/api/ai/autocomplete', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/ai/autocomplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -69,7 +70,7 @@ describe('AI Autocomplete API Endpoint', () => {
     })
 
     it('should reject requests with invalid query type', async () => {
-      const request = new Request('http://localhost:3000/api/ai/autocomplete', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/ai/autocomplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -86,7 +87,7 @@ describe('AI Autocomplete API Endpoint', () => {
     })
 
     it('should reject requests without context', async () => {
-      const request = new Request('http://localhost:3000/api/ai/autocomplete', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/ai/autocomplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -102,7 +103,7 @@ describe('AI Autocomplete API Endpoint', () => {
     })
 
     it('should reject requests with invalid context', async () => {
-      const request = new Request('http://localhost:3000/api/ai/autocomplete', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/ai/autocomplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -119,7 +120,7 @@ describe('AI Autocomplete API Endpoint', () => {
     })
 
     it('should reject requests with invalid limit', async () => {
-      const request = new Request('http://localhost:3000/api/ai/autocomplete', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/ai/autocomplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -141,7 +142,7 @@ describe('AI Autocomplete API Endpoint', () => {
         new Error('Authentication required')
       )
 
-      const request = new Request('http://localhost:3000/api/ai/autocomplete', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/ai/autocomplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -162,7 +163,7 @@ describe('AI Autocomplete API Endpoint', () => {
         new Error('Rate limit exceeded. Maximum 10 requests per 60 seconds.')
       )
 
-      const request = new Request('http://localhost:3000/api/ai/autocomplete', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/ai/autocomplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -183,7 +184,7 @@ describe('AI Autocomplete API Endpoint', () => {
         new Error('Query must be at least 2 characters')
       )
 
-      const request = new Request('http://localhost:3000/api/ai/autocomplete', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/ai/autocomplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -204,7 +205,7 @@ describe('AI Autocomplete API Endpoint', () => {
         new Error('AI service unavailable')
       )
 
-      const request = new Request('http://localhost:3000/api/ai/autocomplete', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/ai/autocomplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -221,7 +222,7 @@ describe('AI Autocomplete API Endpoint', () => {
     })
 
     it('should handle malformed JSON', async () => {
-      const request = new Request('http://localhost:3000/api/ai/autocomplete', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/ai/autocomplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: 'invalid json'
@@ -245,7 +246,7 @@ describe('AI Autocomplete API Endpoint', () => {
 
       vi.mocked(generateAutocompleteSuggestions).mockResolvedValue(mockSuggestions)
 
-      const request = new Request('http://localhost:3000/api/ai/autocomplete', {
+      const request = mockNextRequest({url: ''http://localhost:3000/api/ai/autocomplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

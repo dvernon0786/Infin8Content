@@ -1,3 +1,4 @@
+import { mockNextRequest } from "@/tests/factories/next-request"
 /**
  * Article Generation API Integration Tests
  * Story 4a-1: Article Generation Initiation and Queue Setup
@@ -89,7 +90,7 @@ describe('Article Generation API', () => {
   })
 
   it('should validate request body', async () => {
-    const request = new Request('http://localhost/api/articles/generate', {
+    const request = mockNextRequest({url: ''http://localhost/api/articles/generate', {
       method: 'POST',
       body: JSON.stringify({
         keyword: '', // Invalid: empty keyword
@@ -111,7 +112,7 @@ describe('Article Generation API', () => {
       error: null,
     })
 
-    const request = new Request('http://localhost/api/articles/generate', {
+    const request = mockNextRequest({url: ''http://localhost/api/articles/generate', {
       method: 'POST',
       body: JSON.stringify({
         keyword: 'test keyword',
@@ -130,7 +131,7 @@ describe('Article Generation API', () => {
   })
 
   it('should create article record and queue Inngest event', async () => {
-    const request = new Request('http://localhost/api/articles/generate', {
+    const request = mockNextRequest({url: ''http://localhost/api/articles/generate', {
       method: 'POST',
       body: JSON.stringify({
         keyword: 'test keyword',
@@ -160,7 +161,7 @@ describe('Article Generation API', () => {
   it('should handle Inngest event failure', async () => {
     mockInngest.send.mockRejectedValueOnce(new Error('Inngest error'))
 
-    const request = new Request('http://localhost/api/articles/generate', {
+    const request = mockNextRequest({url: ''http://localhost/api/articles/generate', {
       method: 'POST',
       body: JSON.stringify({
         keyword: 'test keyword',
@@ -184,7 +185,7 @@ describe('Article Generation API', () => {
       error: { code: 'PGRST116' },
     })
 
-    const request = new Request('http://localhost/api/articles/generate', {
+    const request = mockNextRequest({url: ''http://localhost/api/articles/generate', {
       method: 'POST',
       body: JSON.stringify({
         keyword: 'test keyword',
@@ -201,7 +202,7 @@ describe('Article Generation API', () => {
   })
 
   it('should increment usage tracking after successful queue', async () => {
-    const request = new Request('http://localhost/api/articles/generate', {
+    const request = mockNextRequest({url: ''http://localhost/api/articles/generate', {
       method: 'POST',
       body: JSON.stringify({
         keyword: 'test keyword',
@@ -233,7 +234,7 @@ describe('Article Generation API', () => {
     }
     vi.mocked(getCurrentUser).mockResolvedValue(agencyUser as any)
 
-    const request = new Request('http://localhost/api/articles/generate', {
+    const request = mockNextRequest({url: ''http://localhost/api/articles/generate', {
       method: 'POST',
       body: JSON.stringify({
         keyword: 'test keyword',
