@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { AlertTriangle, X } from 'lucide-react'
 import type { WorkflowDashboardItem } from '@/lib/services/intent-engine/workflow-dashboard-service'
 import { WORKFLOW_STEP_DESCRIPTIONS, type WorkflowState } from '@/lib/constants/intent-workflow-steps'
+import { WORKFLOW_STEP_CONFIG } from '@/lib/intent-workflow/step-config'
 
 interface WorkflowDetailModalProps {
   workflow: WorkflowDashboardItem | null
@@ -33,11 +34,18 @@ export function WorkflowDetailModal({
 }: WorkflowDetailModalProps) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [isCancelling, setIsCancelling] = useState(false)
+  const [isRunningStep, setIsRunningStep] = useState(false)
+  const [stepError, setStepError] = useState<string | null>(null)
 
   if (!workflow) return null
 
   // Check if workflow can be cancelled (not already terminal)
   const canCancel = workflow.status !== 'completed' && workflow.status !== 'failed'
+  
+  // Detect the active step for execution
+  const activeStep = WORKFLOW_STEP_CONFIG.find(
+    (s) => s.step === workflow.status
+  )
 
   const handleCancelWorkflow = async () => {
     setIsCancelling(true)
@@ -63,14 +71,11 @@ export function WorkflowDetailModal({
     }
   }
 
-  const steps = [
-    { key: 'step_0_auth', label: 'Authentication', order: 0 },
-    { key: 'step_1_icp', label: 'ICP Generation', order: 1 },
-    { key: 'step_2_competitors', label: 'Competitor Analysis', order: 2 },
-    { key: 'step_3_keywords', label: 'Keyword Research', order: 3 },
-    { key: 'step_4_topics', label: 'Topic Generation', order: 4 },
-    { key: 'step_5_generation', label: 'Article Generation', order: 5 },
-  ]
+  const steps = WORKFLOW_STEP_CONFIG.map((step, index) => ({
+    key: step.step,
+    label: step.label,
+    order: index,
+  }))
 
   const currentStepOrder = steps.find(s => s.key === workflow.status)?.order ?? -1
 
@@ -199,6 +204,46 @@ export function WorkflowDetailModal({
                   </p>
                 </div>
               </div>
+
+              {/* Action Button */}
+              {activeStep && canCancel && (
+                <div className="pt-4 border-t space-y-2">
+                  {stepError && (
+                    <p className="text-sm text-red-600">
+                      {stepError}
+                    </p>
+                  )}
+
+                  <Button
+                    className="w-full"
+                    disabled={isRunningStep}
+                    onClick={async () => {
+                      try {
+                        setIsRunningStep(true)
+                        setStepError(null)
+
+                        const res = await fetch(
+                          `/api/intent/workflows/${workflow.id}/${activeStep.endpoint}`,
+                          { method: 'POST' }
+                        )
+
+                        if (!res.ok) {
+                          const body = await res.json()
+                          throw new Error(body.error || 'Step failed')
+                        }
+
+                        // realtime subscription will refresh workflow
+                      } catch (err: any) {
+                        setStepError(err.message || 'Something went wrong')
+                      } finally {
+                        setIsRunningStep(false)
+                      }
+                    }}
+                  >
+                    {isRunningStep ? 'Running…' : activeStep.label}
+                  </Button>
+                </div>
+              )}
 
               {/* Cancel Button */}
               {canCancel && (

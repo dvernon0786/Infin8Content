@@ -5,7 +5,15 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Loader2, RefreshCw, AlertCircle } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
 import type { DashboardResponse, WorkflowDashboardItem } from '@/lib/services/intent-engine/workflow-dashboard-service'
 import { WorkflowCard } from './WorkflowCard'
@@ -29,6 +37,10 @@ export function WorkflowDashboard() {
   const [selectedCreator, setSelectedCreator] = useState<string | null>(null)
   const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowDashboardItem | null>(null)
   const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
+  const [name, setName] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
   const subscriptionRef = useRef<any>(null)
 
   useEffect(() => {
@@ -161,10 +173,15 @@ export function WorkflowDashboard() {
             Track the progress of your intent workflows
           </p>
         </div>
-        <Button onClick={fetchDashboard} variant="outline" size="sm">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowCreate(true)}>
+            Create workflow
+          </Button>
+          <Button onClick={fetchDashboard} variant="outline" size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -270,6 +287,62 @@ export function WorkflowDashboard() {
         open={detailModalOpen}
         onOpenChange={setDetailModalOpen}
       />
+
+      {/* Create Workflow Dialog */}
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create workflow</DialogTitle>
+            <DialogDescription>
+              Start a new intent workflow
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Input
+              placeholder="Workflow name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+
+            {createError && (
+              <p className="text-sm text-red-600">{createError}</p>
+            )}
+
+            <Button
+              disabled={creating || !name.trim()}
+              onClick={async () => {
+                try {
+                  setCreating(true)
+                  setCreateError(null)
+
+                  const res = await fetch('/api/intent/workflows', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name }),
+                  })
+
+                  if (!res.ok) {
+                    const body = await res.json()
+                    throw new Error(body.error || 'Failed to create workflow')
+                  }
+
+                  setShowCreate(false)
+                  setName('')
+                  // realtime subscription will update list
+                } catch (e: any) {
+                  setCreateError(e.message)
+                } finally {
+                  setCreating(false)
+                }
+              }}
+              className="w-full"
+            >
+              {creating ? 'Creating…' : 'Create workflow'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
