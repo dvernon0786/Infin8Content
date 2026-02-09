@@ -327,7 +327,7 @@ export async function storeICPGenerationResult(
 
   const updateData: any = {
     icp_data: icpResult.icp_data,
-    status: 'step_1_icp',
+    status: 'step_2_competitors',
     workflow_data: {
       icp_generation: {
         tokensUsed: icpResult.tokensUsed,
