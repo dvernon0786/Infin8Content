@@ -1,15 +1,15 @@
 # Development Guide
 
-Generated: 2026-02-10 (MVP Verification Complete)  
+Generated: 2026-02-10 (ICP Form Implementation Complete)  
 Project: Infin8Content  
 Framework: Next.js 16.1.1 with TypeScript  
-Environment: Development - ✅ **MVP FULLY FUNCTIONAL**
+Environment: Development - ✅ **ICP STEP 1 INPUT FORM DEPLOYED**
 
 ---
 
 ## System Status (2026-02-10)
 
-✅ **MVP FULLY FUNCTIONAL - DATABASE VERIFIED**
+✅ **ICP STEP 1 INPUT FORM - FULLY IMPLEMENTED & DEPLOYED**
 - Dev Server: Running cleanly without routing conflicts
 - Authentication: Registration and OTP verification working
 - Database: Supabase connected and verified
@@ -20,8 +20,43 @@ Environment: Development - ✅ **MVP FULLY FUNCTIONAL**
 - 🚀 **MVP Correctness**: State machine provably correct, safe, and deterministic
 - 🎯 **MVP Execution**: Complete UI exposure with database verification
 - 📊 **Database Health**: Feature flag automation and workflow creation verified
+- ✅ **ICP Input Form**: Complete implementation with three-layer guardrail system
 
-### Latest Implementation: MVP Database Verification Complete
+### Latest Implementation: ICP Step 1 Input Form
+
+**Status**: ✅ **COMPLETE & DEPLOYED** | **Branch**: `test-main-all-mvp-fixes`
+
+Complete ICP input form implementation resolving critical workflow creation and execution issues:
+
+#### Critical Issues Resolved
+- **Workflow Creation 403 Error**: Fixed MVP validation logic
+- **Audit UUID Errors**: Fixed system actor IDs with valid UUIDs  
+- **Missing step_0_auth Config**: Added config entry for form rendering
+- **Impossible Render Condition**: Fixed logical condition bug
+
+#### ICP Form Implementation
+- **Three Required Inputs**: Organization Name, Website URL, LinkedIn URL
+- **Client-Side Validation**: Required fields + URL format validation
+- **API Integration**: POST to `/steps/icp-generate` with proper JSON payload
+- **Loading States**: Reuses existing loading/error handling
+- **Conditional Rendering**: Only shows for `step_0_auth` status
+
+#### Three-Layer Guardrail System
+- **Layer 1 (UI)**: URL validation, required field checks, immediate feedback
+- **Layer 2 (API)**: Zod schema validation, hard-fail on invalid inputs, type-safe mapping
+- **Layer 3 (Workflow)**: Status gate (step_0_auth only), duplicate prevention, replay protection
+
+#### Files Modified
+```
+components/dashboard/workflow-dashboard/WorkflowDetailModal.tsx (ICP form)
+lib/intent-workflow/step-config.ts (step_0_auth config)
+app/api/intent/workflows/route.ts (workflow creation fixes)
+app/api/intent/workflows/[workflow_id]/steps/icp-generate/route.ts (guardrails)
+lib/validators/onboarding-validator.ts (audit fixes)
+lib/services/intent-engine/*gate-validator.ts (UUID fixes)
+```
+
+### Previous Implementation: MVP Database Verification Complete
 
 **Status**: ✅ **VERIFIED & SHIP READY** | **Database Health**: 100%
 
