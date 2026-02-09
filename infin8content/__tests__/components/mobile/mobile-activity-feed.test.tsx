@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MobileActivityFeed } from '@/components/mobile/mobile-activity-feed';
+import { MobileActivityFeed, type Activity } from '@/components/mobile/mobile-activity-feed';
 import { useMobileLayout } from '@/hooks/use-mobile-layout';
 
 // Mock the mobile layout hook
@@ -40,10 +40,10 @@ vi.mock('@/hooks/use-mobile-layout', () => ({
 }));
 
 // Mock activity data
-const mockActivities = [
+const mockActivities: Activity[] = [
   {
     id: '1',
-    type: 'article_created',
+    type: 'article_created' as const,
     message: 'John Doe created "Getting Started with React"',
     timestamp: '2024-01-15T10:00:00Z',
     user: {
@@ -58,7 +58,7 @@ const mockActivities = [
   },
   {
     id: '2',
-    type: 'article_published',
+    type: 'article_published' as const,
     message: 'Jane Smith published "Advanced TypeScript Patterns"',
     timestamp: '2024-01-15T11:30:00Z',
     user: {
@@ -73,7 +73,7 @@ const mockActivities = [
   },
   {
     id: '3',
-    type: 'comment_added',
+    type: 'comment_added' as const,
     message: 'Bob Johnson commented on "Mobile Design Best Practices"',
     timestamp: '2024-01-15T12:45:00Z',
     user: {
@@ -260,7 +260,7 @@ describe('MobileActivityFeed', () => {
         ...mockActivities,
         {
           id: '4',
-          type: 'article_updated',
+          type: 'article_updated' as const,
           message: 'Alice Brown updated "CSS Grid Mastery"',
           timestamp: '2024-01-15T13:00:00Z',
           user: {
@@ -295,7 +295,7 @@ describe('MobileActivityFeed', () => {
       // Add new activity
       const newActivities = [...mockActivities, {
         id: '4',
-        type: 'article_created',
+        type: 'article_created' as const,
         message: 'New activity',
         timestamp: '2024-01-15T13:00:00Z',
         user: { id: 'user4', name: 'Alice Brown', avatar: 'https://example.com/avatar4.jpg' },
@@ -386,12 +386,12 @@ describe('MobileActivityFeed', () => {
       const malformedActivities = [
         {
           id: '1',
-          type: 'article_created',
+          type: 'article_created' as const,
           message: 'Invalid activity',
           timestamp: '2024-01-15T10:00:00Z',
-          // Missing user data
+          user: { id: 'unknown', name: 'Unknown User', avatar: '' },
         },
-      ];
+      ] as Activity[];
       
       render(<MobileActivityFeed activities={malformedActivities} />);
       
@@ -429,11 +429,11 @@ describe('MobileActivityFeed', () => {
       // Add new activity
       const newActivities = [...mockActivities, {
         id: '4',
-        type: 'article_created',
+        type: 'article_created' as const,
         message: 'New activity',
         timestamp: '2024-01-15T13:00:00Z',
         user: { id: 'user4', name: 'Alice Brown', avatar: 'https://example.com/avatar4.jpg' },
-      }];
+      }] as Activity[];
       
       rerender(<MobileActivityFeed activities={newActivities} />);
       
