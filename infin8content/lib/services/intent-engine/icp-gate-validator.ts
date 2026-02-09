@@ -153,7 +153,7 @@ export class ICPGateValidator {
         workflowId,
         entityType: 'workflow',
         entityId: workflowId,
-        actorId: 'system', // Will be overridden by middleware
+        actorId: '00000000-0000-0000-0000-000000000000', // System actor UUID
         action: result.allowed ? AuditAction.WORKFLOW_GATE_ICP_ALLOWED : AuditAction.WORKFLOW_GATE_ICP_BLOCKED,
         details: {
           attempted_step: stepName,

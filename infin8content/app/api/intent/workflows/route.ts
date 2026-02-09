@@ -5,7 +5,6 @@ import { logIntentActionAsync } from '@/lib/services/intent-engine/intent-audit-
 import { AuditAction } from '@/types/audit'
 import { isFeatureFlagEnabled } from '@/lib/utils/feature-flags'
 import { FEATURE_FLAG_KEYS } from '@/lib/types/feature-flag'
-import { validateOnboardingComplete } from '@/lib/validators/onboarding-validator'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 import type { 
