@@ -38,7 +38,7 @@ describe('Onboarding Guard Middleware Integration', () => {
     from: vi.fn()
   }
 
-  const mockSupabase() = {
+  vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase())
     from: vi.fn()
   }
 
