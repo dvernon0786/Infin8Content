@@ -8,6 +8,12 @@
 
 import { SupabaseClient } from '@supabase/supabase-js'
 import type { IntentWorkflow } from '@/lib/types/intent-workflow'
+import { 
+  WORKFLOW_PROGRESS_MAP, 
+  WORKFLOW_STEP_DESCRIPTIONS,
+  ALL_WORKFLOW_STATES,
+  type WorkflowState 
+} from '@/lib/constants/intent-workflow-steps'
 
 export interface WorkflowDashboardItem {
   id: string
@@ -39,46 +45,18 @@ export interface DashboardResponse {
 
 /**
  * Calculate progress percentage based on workflow status
- * Maps workflow steps to percentage completion
- * Covers all 11 workflow steps in the intent engine pipeline
+ * Uses canonical progress mapping from constants
  */
 export function calculateProgress(status: string): number {
-  const progressMap: Record<string, number> = {
-    'step_0_auth': 5,
-    'step_1_icp': 15,
-    'step_2_competitors': 25,
-    'step_3_keywords': 35,
-    'step_4_longtails': 45,
-    'step_5_filtering': 55,
-    'step_6_clustering': 65,
-    'step_7_validation': 75,
-    'step_8_subtopics': 85,
-    'step_9_articles': 95,
-    'completed': 100,
-    'failed': 0,
-  }
-  return progressMap[status] || 0
+  return WORKFLOW_PROGRESS_MAP[status as WorkflowState] || 0
 }
 
 /**
  * Get human-readable step description
+ * Uses canonical step descriptions from constants
  */
 export function getStepDescription(status: string): string {
-  const descriptionMap: Record<string, string> = {
-    'step_0_auth': 'Authentication',
-    'step_1_icp': 'ICP Generation',
-    'step_2_competitors': 'Competitor Analysis',
-    'step_3_keywords': 'Seed Keyword Extraction',
-    'step_4_longtails': 'Long-tail Expansion',
-    'step_5_filtering': 'Keyword Filtering',
-    'step_6_clustering': 'Topic Clustering',
-    'step_7_validation': 'Cluster Validation',
-    'step_8_subtopics': 'Subtopic Generation',
-    'step_9_articles': 'Article Generation',
-    'completed': 'Completed',
-    'failed': 'Failed',
-  }
-  return descriptionMap[status] || 'Unknown'
+  return WORKFLOW_STEP_DESCRIPTIONS[status as WorkflowState] || 'Unknown'
 }
 
 /**
@@ -177,7 +155,7 @@ export async function getWorkflowDashboard(
   return {
     workflows: formattedWorkflows,
     filters: {
-      statuses: ['step_0_auth', 'step_1_icp', 'step_2_competitors', 'step_3_keywords', 'step_4_longtails', 'step_5_filtering', 'step_6_clustering', 'step_7_validation', 'step_8_subtopics', 'step_9_articles', 'completed', 'failed'],
+      statuses: [...ALL_WORKFLOW_STATES],
       date_ranges: ['today', 'this_week', 'this_month', 'all_time'],
     },
     summary,
