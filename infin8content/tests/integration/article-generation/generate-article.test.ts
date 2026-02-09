@@ -139,7 +139,11 @@ describe('Article Generation Integration', () => {
     
     // Setup service mocks
     vi.mocked(analyzeSerpStructure).mockResolvedValue(mockSerpAnalysis)
-    vi.mocked(generateOutline).mockResolvedValue(mockOutline)
+    vi.mocked(generateOutline).mockResolvedValue({
+      outline: mockOutline,
+      cost: 0.01,
+      tokensUsed: 100
+    })
     
     // Mock processSection to handle multiple calls with different section indices
     vi.mocked(processSection).mockImplementation(async (articleId: string, sectionIndex: number, outline: any) => {

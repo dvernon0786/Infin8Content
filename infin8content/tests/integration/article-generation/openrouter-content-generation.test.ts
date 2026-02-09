@@ -30,7 +30,7 @@ describe('OpenRouter Content Generation Integration', () => {
   const mockKeyword = 'best running shoes'
   
   const mockOutline: Outline = {
-    introduction: { title: 'Introduction to Running Shoes' },
+    introduction: { title: 'Introduction to Running Shoes', h3_subsections: [] },
     h2_sections: [
       {
         title: 'Types of Running Shoes',
@@ -38,7 +38,7 @@ describe('OpenRouter Content Generation Integration', () => {
       }
     ],
     conclusion: { title: 'Conclusion' },
-    faq: { included: false }
+    faq: { title: 'Frequently Asked Questions', included: false }
   }
 
   const mockResearchSources: TavilySource[] = [
@@ -79,13 +79,10 @@ Trail running shoes provide superior grip and protection for off-road adventures
           id: mockArticleId,
           org_id: mockOrgId,
           keyword: mockKeyword,
-          sections: [],
-          keyword: mockKeyword
+          sections: []
         },
         error: null
-      }),
-      update: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockResolvedValue({ error: null })
+      })
     }
     
     vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)

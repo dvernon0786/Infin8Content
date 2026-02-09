@@ -36,6 +36,7 @@ describe('OrganizationSettingsPage', () => {
       user: { id: 'auth-1', email: 'test@example.com' },
       id: 'user-1',
       email: 'test@example.com',
+      first_name: 'Test',
       role: 'owner',
       org_id: null,
       organizations: null,
@@ -67,6 +68,7 @@ describe('OrganizationSettingsPage', () => {
       user: { id: 'auth-1', email: 'test@example.com' },
       id: 'user-1',
       email: 'test@example.com',
+      first_name: 'Test',
       role: 'owner',
       org_id: 'org-1',
       organizations: null, // Organization data missing
@@ -86,6 +88,7 @@ describe('OrganizationSettingsPage', () => {
       user: { id: 'auth-1', email: 'test@example.com' },
       id: 'user-1',
       email: 'test@example.com',
+      first_name: 'Test',
       role: 'owner',
       org_id: 'org-1',
       organizations: {
