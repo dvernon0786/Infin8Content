@@ -81,7 +81,7 @@ export default function OnboardingPage() {
       case 4:
         return <StepContentDefaults onNext={handleNext} />
       case 5:
-        return <StepIntegration onNext={handleNext} onSkip={handleSkip} />
+        return <StepIntegration onNext={handleNext} />
     }
   }
 }
