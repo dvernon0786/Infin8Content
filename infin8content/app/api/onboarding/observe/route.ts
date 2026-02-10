@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { validateOnboarding } from '@/lib/onboarding/onboarding-validator'
+import { getCurrentUser } from '@/lib/supabase/get-current-user'
 
 /**
  * READ-ONLY onboarding observer
@@ -11,15 +12,17 @@ import { validateOnboarding } from '@/lib/onboarding/onboarding-validator'
  * System Law: Tests observe. Endpoints persist. Validators decide. Flags are derived.
  */
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const orgId = searchParams.get('orgId')
-
-  if (!orgId) {
+  // 🔒 Get org from auth, not query parameter
+  const currentUser = await getCurrentUser()
+  
+  if (!currentUser || !currentUser.org_id) {
     return NextResponse.json(
-      { error: 'orgId parameter required' },
-      { status: 400 }
+      { error: 'User not authenticated or missing organization' },
+      { status: 401 }
     )
   }
+  
+  const orgId = currentUser.org_id
 
   const supabase = createServiceRoleClient()
 

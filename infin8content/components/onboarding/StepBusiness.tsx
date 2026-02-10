@@ -159,7 +159,9 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
         throw new Error('User not authenticated or missing organization')
       }
       
-      const observerRes = await fetch('/api/onboarding/observe?orgId=' + user.org_id)
+      const observerRes = await fetch('/api/onboarding/observe', {
+        method: 'GET',
+      })
       console.log('[StepBusiness] Observer response status:', observerRes.status)
       
       if (!observerRes.ok) {
