@@ -12,21 +12,24 @@ Infin8Content implements a comprehensive REST API using Next.js App Router with 
 
 🎯 **SYSTEM STATUS**
 
-### **Current State: v2 SYSTEM LAW - CANONICAL IMPLEMENTATION COMPLETE**
-- **Onboarding System Law**: ✅ **v2 PRODUCTION READY** - Build errors resolved, canonical redirect implemented
-- **Auth System**: ✅ **STABILIZED** - Database trigger errors resolved
+### **Current State: v2 SYSTEM LAW - FULLY IMPLEMENTED & POLISHED**
+- **Onboarding System Law**: ✅ **v2 PRODUCTION READY** - All critical issues resolved, URL normalization added
+- **Auth System**: ✅ **STABILIZED** - Database trigger errors resolved, audit logging fixed
 - **Component Interfaces**: ✅ **FIXED** - All prop interfaces corrected (onNext vs onComplete)
-- **Observe API**: ✅ **GET-ONLY** - All calls use GET method, auth-derived org
+- **Observe API**: ✅ **GET-ONLY** - All calls use GET method, auth-derived org, step derivation added
 - **Build Status**: ✅ **PASSING** - All TypeScript compilation errors resolved
-- **Branch**: `system-law-onboarding-completion`  
+- **URL Normalization**: ✅ **IMPLEMENTED** - Auto-normalizes WordPress site URLs
+- **Payment UX**: ✅ **CLEANED** - Removed debug components from payment success page
+- **Branch**: `onboarding-system-law-complete`  
 
 ### **Critical Components**
 - **Validator Authority**: `validateOnboarding()` is only decision maker
 - **Single Writer**: `/api/onboarding/persist` is only data writer  
-- **Read-Only Observer**: `/api/onboarding/observe` (GET-only, auth-derived)
+- **Read-Only Observer**: `/api/onboarding/observe` (GET-only, auth-derived, step derivation)
 - **Canonical Redirect**: Observer-driven Step 5 → dashboard termination
+- **URL Normalization**: `normalizeSiteUrl()` in StepIntegration component
 - **UI Authority**: ❌ **REMOVED** - No step derivation in frontend
-- **Latest Commit**: `2cab3ec` - "fix: Remove all POST calls to observe API - use GET everywhere"
+- **Latest Commit**: `b10c8f3` - "fix: Auto-normalize WordPress site URLs in StepIntegration"
 
 ### **Production Readiness: 100%**
 - **Safety**: ✅ Guaranteed (fail-closed on errors + invariant test)
