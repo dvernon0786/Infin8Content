@@ -2,10 +2,10 @@
 
 ## 🔒 ONBOARDING SYSTEM LAW - PRODUCTION READY (February 11, 2026)
 
-**Date**: 2026-02-11T08:43:00+11:00  
-**Status**: ✅ **v2 SYSTEM LAW - COMPLETE IMPLEMENTATION WITH ROUTE GUARDS**  
-**Latest Task: Implement Route Guard & Dashboard Empty State - **COMPLETED**  
-**Result: Complete onboarding system with proper termination, route protection, and user guidance
+**Date**: 2026-02-11T09:51:00+11:00  
+**Status**: ✅ **v2 SYSTEM LAW - COMPLETE WITH WORKFLOW CREATION**  
+**Latest Task: Implement Canonical Workflow Creation System - **COMPLETED**  
+**Result: Complete onboarding system with proper termination, route protection, workflow creation, and user guidance
 
 ### 📊 **FINAL SYSTEM LAW COMPLIANCE**
 
@@ -20,6 +20,7 @@
 - ✅ **Completion Detection**: Uses `validation.valid` for termination
 - ✅ **Route Guard**: Server-side protection against onboarding re-entry
 - ✅ **Empty State**: Dashboard guidance for first workflow creation
+- ✅ **Workflow Creation**: Real `/workflows/new` page with backend gate
 - ✅ **Workflow Gate**: Backend enforcement via `requireOnboardingComplete()`
 - ✅ **Invariant Tests**: 6 invariants enforce System Law with irreversibility
 - ✅ **DB Constraint**: CHECK constraint prevents flag corruption
@@ -59,6 +60,8 @@ DATA → VALIDATOR → PERMISSION → TERMINATION
 - ✅ **Payment Success Cleaned**: Removed LayoutDiagnostic from payment success page
 - ✅ **Route Guard Implemented**: Server-side protection against onboarding re-entry
 - ✅ **Dashboard Empty State**: Professional "Create First Workflow" guidance
+- ✅ **Workflow Creation Page**: Real `/workflows/new` page with backend gate
+- ✅ **Server/Client Boundary Fixed**: No event handlers across component boundary
 - ✅ **Complete User Flow**: Onboarding → Dashboard → Workflow Creation
 - ✅ **UI Authority Removed**: No step derivation in frontend
 - ✅ **System Law Enforced**: Observer is single source of truth
@@ -71,6 +74,8 @@ DATA → VALIDATOR → PERMISSION → TERMINATION
 - ✅ **Removed LayoutDiagnostic** from payment success page
 - ✅ **Implemented onboarding route guard** in `app/onboarding/layout.tsx`
 - ✅ **Added dashboard empty state** with professional copy and CTA
+- ✅ **Created workflow creation page** with proper server/client boundary
+- ✅ **Fixed server component error** by removing event handler props
 - ✅ **Prepared test data deletion scripts** for clean testing
 
 #### **Files Modified (Final Session)**:
@@ -81,7 +86,10 @@ DATA → VALIDATOR → PERMISSION → TERMINATION
 - `app/payment/success/page.tsx` - Removed LayoutDiagnostic component
 - `app/onboarding/layout.tsx` - Server-side route guard implementation
 - `app/dashboard/page.tsx` - Empty state with workflow creation CTA
-- `delete-test-user-data-v2.sql` - Created for clean testing
+- `app/workflows/new/page.tsx` - Real workflow creation page with backend gate
+- `components/workflows/CreateWorkflowForm.tsx` - Client component with proper navigation
+- `components/dashboard/workflow-dashboard/WorkflowDashboard.tsx` - Removed modal, added navigation
+- `delete-test-user-data-v3.sql` - Created for clean testing
 - Documentation updates across project
 
 #### **Technical Details**:
@@ -90,6 +98,13 @@ DATA → VALIDATOR → PERMISSION → TERMINATION
 - **Fix**: All observe calls now use GET method with auth-derived org
 - **Result**: Clean onboarding flow, no JSON parse errors
 - **Verification**: Build passes, deployment ready
+
+#### **Technical Details (Workflow Creation)**:
+- **Issue**: Server component error when passing event handlers to client components
+- **Root Cause**: onSuccess prop passed from server component to client component
+- **Fix**: Removed onSuccess prop, added useRouter to client component for navigation
+- **Implementation**: CreateWorkflowForm handles its own redirect logic
+- **Result**: Clean server/client boundary, no 500 errors, production-ready
 
 #### **Technical Details (Route Guard & Empty State)**:
 - **Issue**: Users could re-enter onboarding after completion, no guidance for next steps
