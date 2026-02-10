@@ -1,78 +1,62 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard"
 import { StepBusiness } from "@/components/onboarding/StepBusiness"
 import { StepCompetitors } from "@/components/onboarding/StepCompetitors"
-import { StepBlog } from "@/components/onboarding/StepBlog"
 import { StepContentDefaults } from "@/components/onboarding/StepContentDefaults"
 import { StepKeywordSettings } from "@/components/onboarding/StepKeywordSettings"
 import { StepIntegration } from "@/components/onboarding/StepIntegration"
 import { StepCompletion } from "@/components/onboarding/StepCompletion"
 
 export default function OnboardingPage() {
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
-  const [onboardingData, setOnboardingData] = useState({})
+  const [observerState, setObserverState] = useState<any>(null)
 
-  const handleNext = (stepData: any) => {
-    setOnboardingData(prev => ({ ...prev, ...stepData }))
-    if (currentStep < 6) {
-      setCurrentStep(currentStep + 1)
-    }
+  // 🎯 DERIVE NEXT STEP FROM CANONICAL STATE
+  const deriveStepFromCanonicalState = (state: any): number => {
+    const c = state.canonical_state
+    console.log('[Onboarding] Deriving step from canonical state:', c)
+
+    if (!c?.website_url) return 1
+    if (!c?.business_description) return 1
+    if (c?.target_audiences_count === 0) return 1
+    if (c?.competitors === 0) return 2
+    if (!c?.keyword_settings_present) return 3
+    if (!c?.content_defaults_present) return 4
+
+    return 5 // Integration step
   }
+
+  const handleNext = async (observerState: any) => {
+    // 🔒 SINGLE SOURCE OF TRUTH
+    setObserverState(observerState)
+    
+    // 🎯 DERIVE NEXT STEP FROM CANONICAL STATE ONLY
+    const nextStep = deriveStepFromCanonicalState(observerState)
+    console.log('[Onboarding] Derived next step:', nextStep, 'from observer state:', observerState)
+    setCurrentStep(nextStep)
+  }
+
+  // 🔒 TERMINATE ONBOARDING FOREVER WHEN COMPLETE
+  useEffect(() => {
+    if (observerState?.onboarding_completed === true) {
+      console.log('[Onboarding] Onboarding completed - redirecting to dashboard')
+      router.replace('/dashboard')
+    }
+  }, [observerState?.onboarding_completed, router])
 
   const handleSkip = () => {
-    if (currentStep < 6) {
-      setCurrentStep(currentStep + 1)
-    }
+    // 🎯 NO OPTIMISTIC ADVANCEMENT
+    // Skip should still persist something or validate current state
+    console.warn('Skip not implemented - all steps required for System Law compliance')
   }
 
-  const handleComplete = async (data: any) => {
-    console.log("[Onboarding] handleComplete invoked", data)
-    
-    setOnboardingData(prev => ({ ...prev, ...data }))
-    
-    try {
-      const res = await fetch("/api/onboarding/integration", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-
-      console.log("[Onboarding] API response status", res.status)
-
-      if (!res.ok) {
-        const error = await res.json()
-        console.error("[Onboarding] API failed", error)
-        throw new Error(error?.error || "Integration failed")
-      }
-
-      const result = await res.json()
-      console.log("[Onboarding] API success", result)
-      
-      // Handle completion - redirect to dashboard
-      window.location.href = "/dashboard"
-    } catch (error) {
-      console.error("[Onboarding] complete failed", error)
-      throw error
-    }
-  }
-
-  const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return <StepBusiness onNext={handleNext} onSkip={handleSkip} />
-      case 2:
-        return <StepCompetitors onNext={handleNext} onSkip={handleSkip} />
-      case 3:
-        return <StepBlog onNext={handleNext} onSkip={handleSkip} />
-      case 4:
-        return <StepContentDefaults onNext={handleNext} onSkip={handleSkip} />
-      case 5:
-        return <StepKeywordSettings onNext={handleNext} onSkip={handleSkip} />
-      case 6:
-        return <StepIntegration onComplete={handleComplete} onSkip={() => handleComplete({})} />
-    }
+  // 🔒 PREVENT ONBOARDING UI FLASH WHEN COMPLETE
+  if (observerState?.onboarding_completed === true) {
+    return null // Terminate onboarding UI
   }
 
   return (
@@ -85,4 +69,19 @@ export default function OnboardingPage() {
       </div>
     </div>
   )
+
+  function renderStep() {
+    switch (currentStep) {
+      case 1:
+        return <StepBusiness onNext={handleNext} onSkip={handleSkip} />
+      case 2:
+        return <StepCompetitors onNext={handleNext} onSkip={handleSkip} />
+      case 3:
+        return <StepKeywordSettings onNext={handleNext} onSkip={handleSkip} />
+      case 4:
+        return <StepContentDefaults onNext={handleNext} />
+      case 5:
+        return <StepIntegration onNext={handleNext} />
+    }
+  }
 }

@@ -5,29 +5,40 @@ import { validateOnboarding } from '@/lib/onboarding/onboarding-validator'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 
 const onboardingSchema = z.object({
-  website_url: z.string().url(),
-  business_description: z.string().min(20),
-  target_audiences: z.array(z.string().min(2)),
+  website_url: z.string().url().optional(),
+  business_description: z.string().min(20).optional(),
+  target_audiences: z.array(z.string().min(2)).optional(),
   keyword_settings: z.object({
     target_region: z.string().min(2),
     language_code: z.string().min(2),
     auto_generate_keywords: z.boolean(),
     monthly_keyword_limit: z.number().min(1).max(1000)
-  }),
+  }).optional(),
   content_defaults: z.object({
     language: z.string().min(2),
     tone: z.enum(['professional', 'casual', 'formal', 'friendly']),
     style: z.enum(['informative', 'persuasive', 'educational']),
     target_word_count: z.number().min(500).max(10000),
     auto_publish: z.boolean()
-  }),
+  }).optional(),
+  integration: z.object({
+    type: z.enum(['wordpress']),
+    site_url: z.string().url(),
+    username: z.string().min(1),
+    application_password: z.string().min(1)
+  }).optional(),
   competitors: z.array(
     z.object({
       name: z.string().min(1),
       url: z.string().url(),
       description: z.string().optional()
     })
-  ).min(1)
+  ).min(1).optional()
+}).refine(data => {
+  // At least one field must be provided
+  return Object.keys(data).length > 0
+}, {
+  message: "At least one field must be provided"
 })
 
 /**
@@ -41,36 +52,55 @@ const onboardingSchema = z.object({
  * Flow: Validate → Persist → Re-validate → Return truth
  */
 export async function POST(req: Request) {
-  const user = await getCurrentUser()
-  if (!user?.org_id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  console.log('[Persist API] before getCurrentUser')
+  
+  try {
+    const user = await getCurrentUser()
+    console.log('[Persist API] getCurrentUser success:', user?.id)
 
-  // 1️⃣ Parse and validate full onboarding payload
-  const body = onboardingSchema.parse(await req.json())
+    if (!user?.org_id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // 1️⃣ Parse and validate full onboarding payload
+    const body = onboardingSchema.parse(await req.json())
+    console.log('[Persist API] Received payload:', body)
+  
   const supabase = createServiceRoleClient()
 
   try {
-    // 2️⃣ Persist data to canonical fields (NO JSON dumping)
+    // 2️⃣ Persist data to canonical fields (only update provided fields)
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    }
+    
+    // Only add fields that are provided
+    if (body.website_url !== undefined) updateData.website_url = body.website_url
+    if (body.business_description !== undefined) updateData.business_description = body.business_description
+    if (body.target_audiences !== undefined) updateData.target_audiences = body.target_audiences
+    if (body.keyword_settings !== undefined) updateData.keyword_settings = body.keyword_settings
+    if (body.content_defaults !== undefined) updateData.content_defaults = body.content_defaults
+    if (body.integration !== undefined) updateData.integration = body.integration
+    
+    console.log('[Persist API] Update data:', updateData)
+
+    console.log('[Persist API] About to update organizations table...')
     await supabase
       .from('organizations')
-      .update({
-        website_url: body.website_url,
-        business_description: body.business_description,
-        target_audiences: body.target_audiences,
-        keyword_settings: body.keyword_settings,
-        content_defaults: body.content_defaults,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', user.org_id)
+    
+    console.log('[Persist API] Organizations table updated successfully')
 
     // 3️⃣ Replace competitors deterministically (delete then insert)
-    await supabase
-      .from('organization_competitors')
-      .delete()
-      .eq('organization_id', user.org_id)
+    if (body.competitors && body.competitors.length > 0) {
+      // Delete existing competitors first
+      await supabase
+        .from('organization_competitors')
+        .delete()
+        .eq('organization_id', user.org_id)
 
-    if (body.competitors.length > 0) {
+      // Insert new competitors
       await supabase
         .from('organization_competitors')
         .insert(
@@ -87,8 +117,10 @@ export async function POST(req: Request) {
         )
     }
 
+    console.log('[Persist API] About to call validateOnboarding...')
     // 4️⃣ Validate onboarding truth (DERIVE completion)
     const validation = await validateOnboarding(user.org_id)
+    console.log('[Persist API] Validation completed:', validation)
 
     // 5️⃣ Set completion flag ONLY if validation passes (cache the derived truth)
     const completedAt = new Date().toISOString()
@@ -137,6 +169,7 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error('[Onboarding Persist] Error:', error)
+    console.error('[Onboarding Persist] Error stack:', error.stack)
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -145,8 +178,32 @@ export async function POST(req: Request) {
       )
     }
 
+    // Safely extract error details
+    const errorMessage = error?.message || String(error)
+    const errorStack = error?.stack || ''
+
     return NextResponse.json(
-      { error: 'INTERNAL_ERROR', details: error.message },
+      { error: 'INTERNAL_ERROR', details: errorMessage, stack: errorStack },
+      { status: 500 }
+    )
+  }
+  } catch (error: any) {
+    console.error('[Onboarding Persist] Error:', error)
+    console.error('[Onboarding Persist] Error stack:', error.stack)
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'VALIDATION_ERROR', details: error.issues },
+        { status: 400 }
+      )
+    }
+
+    // Safely extract error details
+    const errorMessage = error?.message || String(error)
+    const errorStack = error?.stack || ''
+
+    return NextResponse.json(
+      { error: 'INTERNAL_ERROR', details: errorMessage, stack: errorStack },
       { status: 500 }
     )
   }
