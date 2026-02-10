@@ -12,14 +12,16 @@ Infin8Content implements a comprehensive REST API using Next.js App Router with 
 
 🎯 **SYSTEM STATUS**
 
-### **Current State: v2 SYSTEM LAW - FULLY IMPLEMENTED & POLISHED**
-- **Onboarding System Law**: ✅ **v2 PRODUCTION READY** - All critical issues resolved, URL normalization added
+### **Current State: v2 SYSTEM LAW - COMPLETE WITH ROUTE GUARDS**
+- **Onboarding System Law**: ✅ **v2 PRODUCTION READY** - All critical issues resolved, route protection implemented
 - **Auth System**: ✅ **STABILIZED** - Database trigger errors resolved, audit logging fixed
 - **Component Interfaces**: ✅ **FIXED** - All prop interfaces corrected (onNext vs onComplete)
 - **Observe API**: ✅ **GET-ONLY** - All calls use GET method, auth-derived org, step derivation added
 - **Build Status**: ✅ **PASSING** - All TypeScript compilation errors resolved
+- **Route Protection**: ✅ **IMPLEMENTED** - Server-side onboarding guard and dashboard empty state
 - **URL Normalization**: ✅ **IMPLEMENTED** - Auto-normalizes WordPress site URLs
 - **Payment UX**: ✅ **CLEANED** - Removed debug components from payment success page
+- **Complete Flow**: ✅ **IMPLEMENTED** - Onboarding → Dashboard → Workflow Creation
 - **Branch**: `onboarding-system-law-complete`  
 
 ### **Critical Components**
@@ -27,9 +29,12 @@ Infin8Content implements a comprehensive REST API using Next.js App Router with 
 - **Single Writer**: `/api/onboarding/persist` is only data writer  
 - **Read-Only Observer**: `/api/onboarding/observe` (GET-only, auth-derived, step derivation)
 - **Canonical Redirect**: Observer-driven Step 5 → dashboard termination
+- **Route Guard**: Server-side protection in `app/onboarding/layout.tsx`
+- **Empty State**: Dashboard guidance with "Create First Workflow" CTA
 - **URL Normalization**: `normalizeSiteUrl()` in StepIntegration component
+- **Workflow Gate**: `requireOnboardingComplete()` backend enforcement
 - **UI Authority**: ❌ **REMOVED** - No step derivation in frontend
-- **Latest Commit**: `b10c8f3` - "fix: Auto-normalize WordPress site URLs in StepIntegration"
+- **Latest Commit**: `d902f55` - "feat: Implement onboarding route guard and dashboard empty state"
 
 ### **Production Readiness: 100%**
 - **Safety**: ✅ Guaranteed (fail-closed on errors + invariant test)
