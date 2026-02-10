@@ -10,7 +10,8 @@ import { StepContentDefaults } from "@/components/onboarding/StepContentDefaults
 import { StepIntegration } from "@/components/onboarding/StepIntegration"
 
 type OnboardingObserverState = {
-  onboarding_completed: boolean
+  orgId: string
+  onboarding_completed?: boolean
   current_step: number
   canonical_state: {
     website_url: boolean
@@ -19,6 +20,10 @@ type OnboardingObserverState = {
     competitors: number
     keyword_settings_present: boolean
     content_defaults_present: boolean
+  }
+  validation: {
+    valid: boolean
+    missing: string[]
   }
 }
 
@@ -49,15 +54,16 @@ export default function OnboardingPage() {
    * 🔒 TERMINATE ONBOARDING FOREVER
    */
   useEffect(() => {
-    if (observerState?.onboarding_completed) {
+    if (observerState?.validation?.valid === true) {
+      console.log('[Onboarding] Complete → redirecting to dashboard')
       router.replace("/dashboard")
     }
-  }, [observerState?.onboarding_completed, router])
+  }, [observerState?.validation?.valid, router])
 
   /**
    * 🔒 Prevent onboarding UI flash after completion
    */
-  if (observerState?.onboarding_completed) {
+  if (observerState?.validation?.valid === true) {
     return null
   }
 
