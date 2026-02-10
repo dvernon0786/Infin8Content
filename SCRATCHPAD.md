@@ -1,11 +1,11 @@
 # Infin8Content Development Scratchpad
 
-## 🔒 ONBOARDING SYSTEM LAW - FROZEN & ENFORCED (February 10, 2026)
+## 🔒 ONBOARDING SYSTEM LAW - PRODUCTION READY (February 11, 2026)
 
-**Date**: 2026-02-10T12:02:00+11:00  
-**Status**: ✅ **v1 SYSTEM LAW - PRODUCTION READY**  
-**Latest Task**: Complete System Law Implementation & Cleanup - **COMPLETED**  
-**Result**: Deterministic onboarding system with single authority, no regressions, invariant tests enforced
+**Date**: 2026-02-11T02:18:00+11:00  
+**Status**: ✅ **v2 SYSTEM LAW - CANONICAL IMPLEMENTATION COMPLETE**  
+**Latest Task**: Fix Build Errors & Canonical Redirect - **COMPLETED**  
+**Result**: Mathematically sealed onboarding system with proper termination, build errors resolved, deployment ready
 
 ### 📊 **FINAL SYSTEM LAW COMPLIANCE**
 
@@ -15,10 +15,11 @@
 #### **Critical Components Implemented**: COMPLETE ✅
 - ✅ **Validator Authority**: `validateOnboarding()` is only decision maker
 - ✅ **Single Writer**: `/api/onboarding/persist` is only data writer
-- ✅ **Read-Only Observer**: `/api/onboarding/observe` for status checking
-- ✅ **Invariant Tests**: 6 invariants enforce System Law
+- ✅ **Read-Only Observer**: `/api/onboarding/observe` for status checking (GET-only, auth-derived)
+- ✅ **Invariant Tests**: 6 invariants enforce System Law with irreversibility
 - ✅ **DB Constraint**: CHECK constraint prevents flag corruption
 - ✅ **Guard Updates**: Uses validator, not flags
+- ✅ **Canonical Redirect**: Observer-driven termination to dashboard
 
 #### **Violations Eliminated**: COMPLETE ✅
 - ❌ **DELETED**: `/api/onboarding/complete` (illegal flag writer)
@@ -26,28 +27,45 @@
 - ❌ **FIXED**: `/api/onboarding/integration` (removed illegal flag setting)
 - ❌ **DELETED**: Legacy test files violating System Law
 - ❌ **REMOVED**: All hardcoded org IDs and org-specific thinking
+- ❌ **FIXED**: All POST calls to observe API - now GET-only everywhere
+- ❌ **FIXED**: Component prop interfaces (onNext vs onComplete)
+- ❌ **REMOVED**: UI step derivation - backend observer decides everything
 
 #### **System Architecture**: DETERMINISTIC ✅
 ```
-DATA → VALIDATOR → PERMISSION
+DATA → VALIDATOR → PERMISSION → TERMINATION
 ```
 - No flags trusted
 - No UI state authority
 - No workflow status shortcuts
 - No org-specific logic
+- No POST to observe (GET-only)
+- No premature completion (all steps required)
 
-### 🔧 AUTH SYSTEM FIXES: COMPLETE ✅
-- ✅ **Service Role Client Fixed**: Added detectSessionInUrl: false to prevent refresh token attempts
-- ✅ **Database Trigger Fixed**: Removed NEW.first_name reference from log_user_joined_trigger
-- ✅ **Root Cause Identified**: Trigger trying to access non-existent first_name column in users table
-- ✅ **Schema Alignment**: Activities table uses organization_id, users table uses org_id (correct)
-- ✅ **Error Handling**: Added exception handling to prevent user creation failures
+### 🔧 LATEST FIXES: BUILD & CANONICAL COMPLETION ✅
+- ✅ **Build Errors Fixed**: All TypeScript compilation errors resolved
+- ✅ **Component Props Fixed**: StepIntegration uses onNext, not onComplete
+- ✅ **Observe API Fixed**: All calls use GET method, auth-derived org
+- ✅ **Canonical Redirect**: Step 5 → dashboard redirect implemented
+- ✅ **Type Safety**: Removed any types, added proper interfaces
+- ✅ **UI Authority Removed**: No step derivation in frontend
+- ✅ **System Law Enforced**: Observer is single source of truth
 
-#### **Files Modified:**
-- `lib/supabase/server.ts` - Added detectSessionInUrl: false to service role client
-- `fix-user-joined-trigger.sql` - Created fix for problematic database trigger
+#### **Files Modified (Latest Session)**:
+- `app/onboarding/page.tsx` - Canonical implementation with observer-driven state
+- `app/onboarding/integration/page.tsx` - Fixed props to use onNext
+- `app/api/onboarding/observe/route.ts` - GET-only, auth-derived org
+- `components/onboarding/Step*.tsx` - All updated to use GET for observe
+- `tsconfig.json` - Added path mapping for @/ imports
 
-#### **Technical Details:**
+#### **Technical Details**:
+- **Issue**: POST calls to observe API causing 405 Method Not Allowed
+- **Root Cause**: Main onboarding page and step components using POST
+- **Fix**: All observe calls now use GET method with auth-derived org
+- **Result**: Clean onboarding flow, no JSON parse errors
+- **Verification**: Build passes, deployment ready
+
+#### **Technical Details (Auth System)**:
 - Issue: log_user_joined_trigger referenced NEW.first_name (non-existent column)
 - Solution: Removed first_name reference, added exception handling
 - Impact: User registration now works without "record has no field" errors

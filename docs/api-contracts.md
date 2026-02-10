@@ -1,6 +1,6 @@
 # API Contracts - Infin8Content
 
-Generated: 2026-02-10 (System Law Enforcement + Auth Fixes)  
+Generated: 2026-02-11 (v2 System Law - Canonical Implementation Complete)  
 Framework: Next.js 16.1.1 API Routes  
 Base URL: `/api`
 
@@ -8,26 +8,31 @@ Base URL: `/api`
 
 Infin8Content implements a comprehensive REST API using Next.js App Router with TypeScript, featuring multi-tenant architecture, authentication, payment processing, AI content generation, and a robust workflow state machine.
 
-## System Status (2026-02-10)
+## System Status (2026-02-11)
 
 🎯 **SYSTEM STATUS**
 
-### **Current State: SYSTEM LAW ENFORCED + AUTH STABILIZED**
-- **Onboarding System Law**: ✅ **FROZEN v1** - Data-derived validation only
-- **Auth Registration**: ✅ **FIXED** - Database trigger errors resolved
-- **Service Role Client**: ✅ **CONFIGURED** - No refresh token attempts
-- **Invariant Tests**: ✅ **ACTIVE** - 6 tests enforcing System Law
-- **Branch**: `feat/onboarding-system-law`  
+### **Current State: v2 SYSTEM LAW - CANONICAL IMPLEMENTATION COMPLETE**
+- **Onboarding System Law**: ✅ **v2 PRODUCTION READY** - Build errors resolved, canonical redirect implemented
+- **Auth System**: ✅ **STABILIZED** - Database trigger errors resolved
+- **Component Interfaces**: ✅ **FIXED** - All prop interfaces corrected (onNext vs onComplete)
+- **Observe API**: ✅ **GET-ONLY** - All calls use GET method, auth-derived org
+- **Build Status**: ✅ **PASSING** - All TypeScript compilation errors resolved
+- **Branch**: `system-law-onboarding-completion`  
 
 ### **Critical Components**
 - **Validator Authority**: `validateOnboarding()` is only decision maker
 - **Single Writer**: `/api/onboarding/persist` is only data writer  
-- **Read-Only Observer**: `/api/onboarding/observe` for status checking
-- **Auth Flow**: Registration now works without schema errors  
-- **Latest Commit**: `03814eb` - "fix: resolve LLM output hygiene issue with markdown-wrapped JSON"
+- **Read-Only Observer**: `/api/onboarding/observe` (GET-only, auth-derived)
+- **Canonical Redirect**: Observer-driven Step 5 → dashboard termination
+- **UI Authority**: ❌ **REMOVED** - No step derivation in frontend
+- **Latest Commit**: `2cab3ec` - "fix: Remove all POST calls to observe API - use GET everywhere"
 
 ### **Production Readiness: 100%**
 - **Safety**: ✅ Guaranteed (fail-closed on errors + invariant test)
+- **Build**: ✅ All TypeScript errors resolved
+- **Deployment**: ✅ Ready for production
+- **System Law**: ✅ Mathematically enforced with irreversibility
 - **Liveness**: ✅ Guaranteed (explicit success paths)
 - **Idempotency**: ✅ Guaranteed (approval re-entry works)
 - **Determinism**: ✅ Guaranteed (no optimistic transitions)
