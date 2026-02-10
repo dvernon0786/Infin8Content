@@ -1,15 +1,13 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
 
-interface CreateWorkflowFormProps {
-  onSuccess: () => void
-}
-
-export function CreateWorkflowForm({ onSuccess }: CreateWorkflowFormProps) {
+export function CreateWorkflowForm() {
+  const router = useRouter()
   const [name, setName] = useState('')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -34,7 +32,7 @@ export function CreateWorkflowForm({ onSuccess }: CreateWorkflowFormProps) {
         throw new Error(body.error || 'Failed to create workflow')
       }
 
-      onSuccess()
+      router.push('/dashboard')
     } catch (e: any) {
       setError(e.message)
     } finally {

@@ -18,11 +18,7 @@ export default async function NewWorkflowPage() {
       </p>
 
       <div className="mt-6">
-        <CreateWorkflowForm
-          onSuccess={() => {
-            redirect("/dashboard")
-          }}
-        />
+        <CreateWorkflowForm />
       </div>
     </div>
   )
