@@ -37,9 +37,7 @@ export default function OnboardingPage() {
   const handleNext = async (stepData: any) => {
     // Call observer API to get canonical state
     const response = await fetch('/api/onboarding/observe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(stepData)
+      method: 'GET',
     })
     
     const observerState = await response.json()
