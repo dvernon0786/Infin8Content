@@ -13,6 +13,14 @@ import {
 import { cn } from "@/lib/utils"
 import { useCurrentUser } from "@/lib/hooks/use-current-user"
 
+/**
+ * Normalize site URL by removing trailing slash
+ * Users can type https://example.com/ and we'll store https://example.com
+ */
+function normalizeSiteUrl(url: string): string {
+  return url.endsWith("/") ? url.slice(0, -1) : url
+}
+
 interface StepIntegrationProps {
   className?: string
   onNext: (state: any) => void
@@ -63,11 +71,18 @@ function StepIntegration({ className, onNext }: StepIntegrationProps) {
     setIsSubmitting(true)
 
     try {
-      // 1️⃣ Persist integration
+      // 1️⃣ Persist integration with normalized URL
+      const payload: IntegrationPayload = {
+        integration: {
+          ...formData.integration,
+          site_url: normalizeSiteUrl(formData.integration.site_url),
+        },
+      }
+
       const persistRes = await fetch("/api/onboarding/persist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
       if (!persistRes.ok) {
