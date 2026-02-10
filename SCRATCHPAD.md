@@ -42,21 +42,35 @@ DATA → VALIDATOR → PERMISSION → TERMINATION
 - No POST to observe (GET-only)
 - No premature completion (all steps required)
 
-### 🔧 LATEST FIXES: BUILD & CANONICAL COMPLETION ✅
+### 🔧 LATEST FIXES: COMPLETE ONBOARDING SYSTEM ✅
 - ✅ **Build Errors Fixed**: All TypeScript compilation errors resolved
 - ✅ **Component Props Fixed**: StepIntegration uses onNext, not onComplete
 - ✅ **Observe API Fixed**: All calls use GET method, auth-derived org
-- ✅ **Canonical Redirect**: Step 5 → dashboard redirect implemented
-- ✅ **Type Safety**: Removed any types, added proper interfaces
+- ✅ **Blank Screen Fixed**: Observer now returns derived `current_step`
+- ✅ **Step 5 Redirect Fixed**: Uses `validation.valid` for completion detection
+- ✅ **Type Safety Updated**: OnboardingObserverState includes validation field
+- ✅ **Audit Logging Fixed**: Uses service role client to bypass RLS
+- ✅ **URL Normalization Added**: Auto-normalizes WordPress site URLs (removes trailing slash)
+- ✅ **Payment Success Cleaned**: Removed LayoutDiagnostic from payment success page
 - ✅ **UI Authority Removed**: No step derivation in frontend
 - ✅ **System Law Enforced**: Observer is single source of truth
 
-#### **Files Modified (Latest Session)**:
-- `app/onboarding/page.tsx` - Canonical implementation with observer-driven state
-- `app/onboarding/integration/page.tsx` - Fixed props to use onNext
-- `app/api/onboarding/observe/route.ts` - GET-only, auth-derived org
-- `components/onboarding/Step*.tsx` - All updated to use GET for observe
-- `tsconfig.json` - Added path mapping for @/ imports
+#### **Critical Fixes Applied**:
+- ✅ **Added `deriveStepFromCanonicalState()` function** to observe endpoint
+- ✅ **Updated redirect condition** from `onboarding_completed` to `validation.valid`
+- ✅ **Fixed audit logger** to use `createServiceRoleClient()` instead of regular client
+- ✅ **Added URL normalization** to StepIntegration component
+- ✅ **Removed LayoutDiagnostic** from payment success page
+- ✅ **Prepared test data deletion scripts** for clean testing
+
+#### **Files Modified (Final Session)**:
+- `app/onboarding/page.tsx` - Updated redirect condition and type definition
+- `app/api/onboarding/observe/route.ts` - Added step derivation function
+- `lib/services/audit-logger.ts` - Fixed to use service role client
+- `components/onboarding/StepIntegration.tsx` - Added URL normalization
+- `app/payment/success/page.tsx` - Removed LayoutDiagnostic component
+- `delete-test-user-data-v2.sql` - Created for clean testing
+- Documentation updates across project
 
 #### **Technical Details**:
 - **Issue**: POST calls to observe API causing 405 Method Not Allowed
@@ -64,6 +78,21 @@ DATA → VALIDATOR → PERMISSION → TERMINATION
 - **Fix**: All observe calls now use GET method with auth-derived org
 - **Result**: Clean onboarding flow, no JSON parse errors
 - **Verification**: Build passes, deployment ready
+
+#### **Technical Details (URL Normalization)**:
+- **Issue**: Users naturally type URLs with trailing slashes (https://example.com/)
+- **Root Cause**: WordPress integration expects clean URLs without trailing slashes
+- **Fix**: Added `normalizeSiteUrl()` function in StepIntegration component
+- **Implementation**: Normalization applied at submit time, not during typing
+- **Result**: Users can type naturally, backend receives canonical data
+- **UX Impact**: No validation errors, silent normalization improves experience
+
+#### **Technical Details (Payment Success Page)**:
+- **Issue**: LayoutDiagnostic component showing on production payment success page
+- **Root Cause**: Debug component left in production code
+- **Fix**: Removed LayoutDiagnostic import and all 3 usage instances
+- **Result**: Clean, professional payment success page without debug overlay
+- **Impact**: Better user experience on payment completion
 
 #### **Technical Details (Auth System)**:
 - Issue: log_user_joined_trigger referenced NEW.first_name (non-existent column)

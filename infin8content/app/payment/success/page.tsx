@@ -5,7 +5,6 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import PaymentSuccessClient from './payment-success-client'
 import { validateRedirect } from '@/lib/utils/validate-redirect'
-import { LayoutDiagnostic } from '@/components/layout-diagnostic'
 
 interface PaymentSuccessPageProps {
   searchParams: Promise<{ session_id?: string }>
@@ -59,7 +58,6 @@ export default async function PaymentSuccessPage({
             Go to Payment Page
           </Link>
         </div>
-        <LayoutDiagnostic />
       </div>
     )
   }
@@ -104,7 +102,6 @@ export default async function PaymentSuccessPage({
             Go to Payment Page
           </Link>
         </div>
-        <LayoutDiagnostic />
       </div>
     )
   }
@@ -263,7 +260,6 @@ export default async function PaymentSuccessPage({
             Refresh Page
           </button>
         </div>
-        <LayoutDiagnostic />
       </div>
     )
   }
