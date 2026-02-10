@@ -52,8 +52,8 @@ export async function GET(request: Request) {
       website_url: !!(org as any).website_url,
       business_description: !!(org as any).business_description,
       target_audiences_count: (org as any).target_audiences?.length ?? 0,
-      keyword_settings_present: !!(org as any).keyword_settings,
-      content_defaults_present: !!(org as any).content_defaults,
+      keyword_settings_present: !!(org as any).keyword_settings && Object.keys((org as any).keyword_settings).length > 0,
+      content_defaults_present: !!(org as any).content_defaults && Object.keys((org as any).content_defaults).length > 0,
       competitors: competitorCount ?? 0
     },
     validation

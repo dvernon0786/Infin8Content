@@ -11,6 +11,7 @@ interface OrganizationData {
   target_audiences: string[] | null
   keyword_settings: Record<string, any> | null
   content_defaults: Record<string, any> | null
+  integration: Record<string, any> | null
 }
 
 /**
@@ -27,7 +28,8 @@ export async function validateOnboarding(orgId: string): Promise<OnboardingValid
       business_description,
       target_audiences,
       keyword_settings,
-      content_defaults
+      content_defaults,
+      integration
     `)
     .eq('id', orgId)
     .single() as { data: OrganizationData | null, error: any }
@@ -77,6 +79,10 @@ export async function validateOnboarding(orgId: string): Promise<OnboardingValid
     missing.push('content_defaults')
   }
   
+  if (!org.integration || typeof org.integration !== 'object' || Object.keys(org.integration).length === 0) {
+    missing.push('integration')
+  }
+  
   if (!competitorCount || competitorCount < 1) {
     missing.push('competitors')
   }
@@ -84,5 +90,43 @@ export async function validateOnboarding(orgId: string): Promise<OnboardingValid
   return {
     valid: missing.length === 0,
     missing
+  }
+}
+
+/**
+ * Derive and update onboarding completion status based on canonical data
+ * This is the single source of truth for onboarding completion
+ * 
+ * IMPORTANT: Once onboarding_completed is true, it can never be set back to false
+ * This ensures forward-only progression and prevents workflow corruption
+ */
+export async function deriveOnboardingState(orgId: string): Promise<void> {
+  const supabase = createServiceRoleClient()
+  
+  // Check current completion state first
+  const { data: currentOrg } = await supabase
+    .from('organizations')
+    .select('onboarding_completed')
+    .eq('id', orgId)
+    .single() as { data: { onboarding_completed: boolean } | null, error: any }
+  
+  // If already completed, never allow reversal (System Law: irreversible)
+  if (currentOrg?.onboarding_completed) {
+    return
+  }
+  
+  // Validate current state
+  const validation = await validateOnboarding(orgId)
+  
+  // Update completion status based on validation (only if not already completed)
+  if (validation.valid) {
+    await supabase
+      .from('organizations')
+      .update({
+        onboarding_completed: true,
+        onboarding_completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', orgId)
   }
 }
