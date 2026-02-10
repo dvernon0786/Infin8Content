@@ -7,8 +7,9 @@ import { validateOnboarding } from '@/lib/onboarding/onboarding-validator'
  * They ensure data-derived validation, not flag-based completion
  */
 
+const TEST_ORG_ID = '00000000-0000-0000-0000-000000000000'
+
 describe('Onboarding Invariant Tests', () => {
-  const TEST_ORG_ID = '00000000-0000-0000-0000-000000000000'
 
   test('onboarding cannot be completed without required fields', async () => {
     const result = await validateOnboarding(TEST_ORG_ID)
