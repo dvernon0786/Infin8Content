@@ -55,6 +55,7 @@ export function createServiceRoleClient() {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
+      detectSessionInUrl: false,
     },
   })
 }

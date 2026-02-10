@@ -36,6 +36,23 @@ DATA → VALIDATOR → PERMISSION
 - No workflow status shortcuts
 - No org-specific logic
 
+### 🔧 AUTH SYSTEM FIXES: COMPLETE ✅
+- ✅ **Service Role Client Fixed**: Added detectSessionInUrl: false to prevent refresh token attempts
+- ✅ **Database Trigger Fixed**: Removed NEW.first_name reference from log_user_joined_trigger
+- ✅ **Root Cause Identified**: Trigger trying to access non-existent first_name column in users table
+- ✅ **Schema Alignment**: Activities table uses organization_id, users table uses org_id (correct)
+- ✅ **Error Handling**: Added exception handling to prevent user creation failures
+
+#### **Files Modified:**
+- `lib/supabase/server.ts` - Added detectSessionInUrl: false to service role client
+- `fix-user-joined-trigger.sql` - Created fix for problematic database trigger
+
+#### **Technical Details:**
+- Issue: log_user_joined_trigger referenced NEW.first_name (non-existent column)
+- Solution: Removed first_name reference, added exception handling
+- Impact: User registration now works without "record has no field" errors
+- System Law: Onboarding authority remains deterministic and unaffected
+
 ### 🔧 TEST FIXES APPLIED: COMPLETE ✅
 - ✅ **TypeScript Error Fixed**: TEST_ORG_ID scope issue resolved
 - ✅ **Invariant Tests**: All describe blocks now have proper access

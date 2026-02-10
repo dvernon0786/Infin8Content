@@ -1,6 +1,6 @@
 # API Contracts - Infin8Content
 
-Generated: 2026-02-10 (ICP Form Production-Correct with Invariant Test)  
+Generated: 2026-02-10 (System Law Enforcement + Auth Fixes)  
 Framework: Next.js 16.1.1 API Routes  
 Base URL: `/api`
 
@@ -12,12 +12,18 @@ Infin8Content implements a comprehensive REST API using Next.js App Router with 
 
 🎯 **SYSTEM STATUS**
 
-### **Current State: PRODUCTION-CORRECT WITH LLM HYGIENE FIX**
-- **ICP Step 1 Input Form**: ✅ **PRODUCTION-CORRECT** with mathematical safety guarantees
-- **LLM Output Parsing**: ✅ **FIXED** - Handles markdown-wrapped JSON deterministically  
-- **Execution Model**: ✅ **OPTION B CONFIRMED** - UI-driven, explicit execution
-- **Regression Protection**: ✅ **ACTIVE** - Automated invariant tests
-- **Branch**: `feature/icp-production-ready`  
+### **Current State: SYSTEM LAW ENFORCED + AUTH STABILIZED**
+- **Onboarding System Law**: ✅ **FROZEN v1** - Data-derived validation only
+- **Auth Registration**: ✅ **FIXED** - Database trigger errors resolved
+- **Service Role Client**: ✅ **CONFIGURED** - No refresh token attempts
+- **Invariant Tests**: ✅ **ACTIVE** - 6 tests enforcing System Law
+- **Branch**: `feat/onboarding-system-law`  
+
+### **Critical Components**
+- **Validator Authority**: `validateOnboarding()` is only decision maker
+- **Single Writer**: `/api/onboarding/persist` is only data writer  
+- **Read-Only Observer**: `/api/onboarding/observe` for status checking
+- **Auth Flow**: Registration now works without schema errors  
 - **Latest Commit**: `03814eb` - "fix: resolve LLM output hygiene issue with markdown-wrapped JSON"
 
 ### **Production Readiness: 100%**
