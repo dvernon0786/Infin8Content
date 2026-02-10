@@ -23,7 +23,7 @@ export default async function DashboardPage() {
           href="/workflows/new"
           className="inline-block mt-6 rounded-md bg-primary px-6 py-3 text-white"
         >
-          Create First Workflow
+          Create your first workflow
         </Link>
       </div>
     )
