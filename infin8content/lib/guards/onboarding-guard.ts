@@ -1,75 +1,41 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { validateOnboarding, type OnboardingValidationResult } from '@/lib/onboarding/onboarding-validator'
 
 /**
- * Checks if an organization has completed onboarding
+ * AUTHORITATIVE onboarding guard
+ * 
+ * This is the single source of truth for onboarding validation
+ * Uses data-derived validation, not flag-based checks
  * 
  * @param orgId - The organization ID to check
- * @returns Promise<boolean> - true if onboarding is completed, false otherwise
- * 
- * This function performs a server-side check of the organizations.onboarding_completed field.
- * It uses the service role client to bypass RLS and ensure accurate status checking.
- * 
- * Error handling: Any database errors or missing organizations return false (fail-safe approach)
- * to prevent unauthorized access if the guard cannot verify onboarding status.
+ * @returns Promise<OnboardingValidationResult> - validation result with missing fields
  */
-export async function checkOnboardingStatus(orgId: string): Promise<boolean> {
-  console.log('[Onboarding Guard] Checking onboarding status', {
-    orgId,
-  })
-  
+export async function checkOnboardingStatus(orgId: string): Promise<OnboardingValidationResult> {
   try {
-    const supabase = createServiceRoleClient()
+    // Use the validator as the single source of truth
+    const validation = await validateOnboarding(orgId)
     
-    const { data, error } = await supabase
-      .from('organizations')
-      .select('onboarding_completed, onboarding_completed_at')
-      .eq('id', orgId)
-      .single()
-    
-    console.log('[Onboarding Guard] DB RESULT', {
-      orgId,
-      onboarding_completed: (data as any)?.onboarding_completed,
-      onboarding_completed_at: (data as any)?.onboarding_completed_at,
-      error: error?.message,
-      hasData: !!data
-    })
-    
-    // If there's an error or no data found, default to false (fail-safe)
-    if (error || !data) {
-      console.error('Onboarding guard check failed:', {
-        orgId,
-        error: error?.message,
-        hasData: !!data
-      })
-      return false
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Onboarding Guard] Validation for org ${orgId}:`, validation)
     }
     
-    // Return the onboarding_completed status (boolean, null, or undefined)
-    // Treat null/undefined as false (not completed)
-    const result = Boolean((data as any).onboarding_completed)
+    return validation
+  } catch (error) {
+    console.error('[Onboarding Guard] Error checking onboarding status:', error)
     
-    // 🔥 HARD ASSERTION - Make regressions loud in development
-    if (process.env.NODE_ENV === 'development' && result === false) {
-      console.warn('[ONBOARDING] DB says incomplete - redirect enforced')
-      console.warn('[ONBOARDING] If this is unexpected, check:')
-      console.warn('[ONBOARDING] 1. API called /api/onboarding/integration')
-      console.warn('[ONBOARDING] 2. Database updated with onboarding_completed=true')
-      console.warn('[ONBOARDING] 3. No localStorage bypass attempts')
+    // Fail-safe: if validator fails, assume onboarding is incomplete
+    return {
+      valid: false,
+      missing: ['validation_error']
     }
-    
-    console.log('[Onboarding Guard] FINAL RESULT', {
-      orgId,
-      result,
-      onboarding_completed: (data as any)?.onboarding_completed,
-    })
-    
-    return result
-  } catch (exception) {
-    // Handle any unexpected errors (database connection, etc.)
-    console.error('Onboarding guard exception:', {
-      orgId,
-      error: exception instanceof Error ? exception.message : String(exception)
-    })
-    return false
   }
+}
+
+/**
+ * Legacy boolean interface for backward compatibility
+ * @deprecated Use checkOnboardingStatus() for detailed validation
+ */
+export async function isOnboardingComplete(orgId: string): Promise<boolean> {
+  const validation = await checkOnboardingStatus(orgId)
+  return validation.valid
 }

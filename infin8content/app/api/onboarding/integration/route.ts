@@ -143,69 +143,9 @@ export async function POST(request: Request) {
     
     console.log('[WordPress Integration] Integration saved successfully')
     
-    // 🎉 Mark onboarding as completed in database using SERVICE ROLE
-    console.log('[Integration API] Writing onboarding_completed (service role)')
-    const adminSupabase = createServiceRoleClient()
-
-    const { error: completionError } = await adminSupabase
-      .from('organizations')
-      .update({
-        onboarding_completed: true,
-        onboarding_completed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', currentUser.org_id)
-
-    if (completionError) {
-      console.error('[Integration API] Failed to mark onboarding completed:', completionError)
-      throw new Error(`Failed to mark onboarding completed: ${completionError.message}`)
-    }
-
-    // 🔍 VERIFY the write was successful
-    const { data: verify } = await adminSupabase
-      .from('organizations')
-      .select('onboarding_completed')
-      .eq('id', currentUser.org_id)
-      .single() as any
-
-    console.log('[Integration API] VERIFY onboarding_completed:', verify?.onboarding_completed)
-
-    if (!verify?.onboarding_completed) {
-      throw new Error('Onboarding completion write failed - verification failed')
-    }
-
-    console.log('[Integration API] Onboarding marked complete in DB (service role)')
-    
-    const response = NextResponse.json({
-      success: true,
-      organization: {
-        id: organization.id,
-        blog_config: organization.blog_config || {},
-        onboarding_completed: verify?.onboarding_completed,
-        onboarding_completed_at: new Date().toISOString(),
-      },
-    })
-    
-    // ⏱️ One-time onboarding completion signal to bridge Edge replica lag
-    response.cookies.set('onboarding_just_completed', 'true', {
-      path: '/',
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 10, // seconds - very short-lived
-    })
-    
-    console.log('[Integration API] Set cookie onboarding_just_completed', {
-      name: 'onboarding_just_completed',
-      value: 'true',
-      path: '/',
-      maxAge: 10,
-    })
-    
-    console.log('[Integration API] Response headers:', {
-      setCookie: response.headers.get('set-cookie'),
-    })
-    
-    return response
+    // ✅ System Law: Onboarding completion is derived from data, not set here
+    // This endpoint only handles WordPress integration setup
+    return NextResponse.json({ success: true })
     
   } catch (error: any) {
     console.error('[WordPress Integration] Error occurred:', {
