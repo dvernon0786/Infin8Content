@@ -79,7 +79,13 @@ export function StepContentDefaults({
       }
 
       // 2️⃣ Observe canonical truth
-      const observeRes = await fetch("/api/onboarding/observe?orgId=" + user.org_id)
+      if (!user?.org_id) {
+        throw new Error('User not authenticated or missing organization')
+      }
+      
+      const observeRes = await fetch("/api/onboarding/observe", {
+        method: 'GET',
+      })
 
       if (!observeRes.ok) {
         throw new Error("Failed to observe onboarding state")
