@@ -120,7 +120,13 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
       console.log('[StepCompetitors] All competitors persisted successfully:', persistResult)
 
       // 🎯 OBSERVE TRUTH FROM DB
-      const observerRes = await fetch('/api/onboarding/observe?orgId=' + user.org_id)
+      if (!user?.org_id) {
+        throw new Error('User not authenticated or missing organization')
+      }
+      
+      const observerRes = await fetch('/api/onboarding/observe', {
+        method: 'GET',
+      })
       console.log('[StepCompetitors] Observer response status:', observerRes.status)
       
       if (!observerRes.ok) {
