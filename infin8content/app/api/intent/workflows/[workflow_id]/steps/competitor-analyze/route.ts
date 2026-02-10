@@ -48,8 +48,30 @@ export async function POST(
       return gateResponse
     }
 
-    // Verify workflow exists and belongs to user's organization
+    // Create service client for database operations
     const supabase = createServiceRoleClient()
+
+    // 🔒 ENFORCE COMPETITOR GATE - Check if competitors exist
+    const { count: competitorCount } = await supabase
+      .from('organization_competitors')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', organizationId)
+      .eq('is_active', true)
+
+    if (!competitorCount || competitorCount < 1) {
+      return NextResponse.json(
+        {
+          error: 'NO_COMPETITORS_PRESENT',
+          message: 'Cannot run competitor analysis without competitors. Please complete onboarding first.',
+          competitor_count: competitorCount
+        },
+        { status: 400 }
+      )
+    }
+
+    console.log(`[CompetitorAnalyze] Found ${competitorCount} competitors for analysis`)
+
+    // Verify workflow exists and belongs to user's organization
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
       .select('id, status, organization_id')

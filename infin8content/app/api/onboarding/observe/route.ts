@@ -1,0 +1,61 @@
+import { NextResponse } from 'next/server'
+import { createServiceRoleClient } from '@/lib/supabase/server'
+import { validateOnboarding } from '@/lib/onboarding/onboarding-validator'
+
+/**
+ * READ-ONLY onboarding observer
+ * 
+ * This endpoint ONLY observes and reports onboarding state
+ * It NEVER mutates data - that's what /api/onboarding/persist is for
+ * 
+ * System Law: Tests observe. Endpoints persist. Validators decide. Flags are derived.
+ */
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const orgId = searchParams.get('orgId')
+
+  if (!orgId) {
+    return NextResponse.json(
+      { error: 'orgId parameter required' },
+      { status: 400 }
+    )
+  }
+
+  const supabase = createServiceRoleClient()
+
+  const { data: org, error } = await supabase
+    .from('organizations')
+    .select(
+      'id, website_url, business_description, target_audiences, keyword_settings, content_defaults'
+    )
+    .eq('id', orgId)
+    .single()
+
+  if (error || !org) {
+    return NextResponse.json(
+      { error: 'Organization not found' },
+      { status: 404 }
+    )
+  }
+
+  const { count: competitorCount } = await supabase
+    .from('organization_competitors')
+    .select('*', { count: 'exact', head: true })
+    .eq('organization_id', orgId)
+    .eq('is_active', true)
+
+  const validation = await validateOnboarding(orgId)
+
+  return NextResponse.json({
+    orgId,
+    canonical_state: {
+      website_url: !!(org as any).website_url,
+      business_description: !!(org as any).business_description,
+      target_audiences_count: (org as any).target_audiences?.length ?? 0,
+      keyword_settings_present: !!(org as any).keyword_settings,
+      content_defaults_present: !!(org as any).content_defaults,
+      competitors: competitorCount ?? 0
+    },
+    validation
+  })
+}
