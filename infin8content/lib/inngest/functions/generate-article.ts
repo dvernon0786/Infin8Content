@@ -252,6 +252,13 @@ export const generateArticle = inngest.createFunction(
         .from('articles')
         .update({ status: 'completed' })
         .eq('id', articleId)
+
+      // CANONICAL COMPLETION: Check if all articles are done and mark workflow terminal
+      // This is the deterministic moment where workflow completion is triggered
+      const workflowId = (event.data as any).workflowId
+      if (workflowId) {
+        await checkAndCompleteWorkflow(supabase, workflowId)
+      }
     })
 
     /* -------------------------------------------------- */
@@ -265,3 +272,70 @@ export const generateArticle = inngest.createFunction(
     return { success: true, articleId }
   }
 )
+
+/**
+ * Check if all articles for a workflow are completed and mark workflow as terminal
+ * 
+ * This function is called immediately after an article is marked completed.
+ * It checks if all articles in the workflow have status = 'completed'.
+ * If so, it atomically updates the workflow to terminal state (current_step: 10, status: 'completed').
+ * 
+ * This is the canonical completion trigger for the workflow state machine.
+ * Completion is only driven by the article generation pipeline, not by the queuing layer.
+ */
+async function checkAndCompleteWorkflow(
+  supabase: any,
+  workflowId: string
+): Promise<void> {
+  try {
+    // Guard: Only complete if workflow is in Step 9 execution phase
+    const { data: workflow } = await supabase
+      .from('intent_workflows')
+      .select('current_step')
+      .eq('id', workflowId)
+      .single()
+
+    if (!workflow) {
+      console.warn(`[WorkflowCompletion] Workflow not found: ${workflowId}`)
+      return
+    }
+
+    // CANONICAL GUARD: Only proceed if workflow is at step 9
+    if (workflow.current_step !== 9) {
+      console.log(`[WorkflowCompletion] Workflow ${workflowId} not at step 9 (current: ${workflow.current_step}), skipping completion check`)
+      return
+    }
+
+    // Check if all articles are completed
+    const { data: incompleteArticles } = await supabase
+      .from('articles')
+      .select('id')
+      .eq('intent_workflow_id', workflowId)
+      .neq('status', 'completed')
+
+    // If no incomplete articles, mark workflow as completed (terminal state)
+    if (!incompleteArticles || incompleteArticles.length === 0) {
+      console.log(`[WorkflowCompletion] All articles completed for workflow ${workflowId}, marking workflow as completed`)
+
+      const { error: updateError } = await supabase
+        .from('intent_workflows')
+        .update({
+          current_step: 10,
+          status: 'completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', workflowId)
+
+      if (updateError) {
+        console.error(`[WorkflowCompletion] Failed to mark workflow as completed: ${updateError.message}`)
+      } else {
+        console.log(`[WorkflowCompletion] Workflow ${workflowId} successfully marked as completed (terminal state)`)
+      }
+    } else {
+      console.log(`[WorkflowCompletion] Workflow ${workflowId} has ${incompleteArticles.length} incomplete articles, not completing yet`)
+    }
+  } catch (error) {
+    console.error(`[WorkflowCompletion] Error checking workflow completion:`, error)
+    // Non-blocking: completion check failure should not fail the article generation
+  }
+}

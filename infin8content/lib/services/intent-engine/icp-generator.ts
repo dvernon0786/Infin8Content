@@ -402,10 +402,14 @@ export async function handleICPGenerationFailure(
 ): Promise<void> {
   const supabase = createServiceRoleClient()
 
+  // CANONICAL FAILURE STATE: Retryable failure keeps current_step = 1
+  // Failure ≠ terminal. Terminal is only successful completion (current_step = 10).
+  // This allows users to retry the step without workflow regression.
   const { error: updateError } = await supabase
     .from('intent_workflows')
     .update({
       status: 'failed',
+      current_step: 1,  // Keep at step 1 for retry, not terminal
       step_1_icp_error_message: error.message,
       retry_count: retryCount,
       step_1_icp_last_error_message: lastErrorMessage || error.message,
