@@ -76,7 +76,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .single()
 
       expect(error).toBeNull()
-      expect(workflow).toBeDefined()
+      assertWorkflow(workflow)
       expect(workflow.current_step).toBe(1)
       expect(workflow.status).toBe('step_1_icp')
 
@@ -344,6 +344,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .select('id')
         .single()
 
+      assertWorkflow(workflow)
       failureWorkflowId = workflow.id
     })
 
@@ -432,6 +433,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .select('id')
         .single()
 
+      assertWorkflow(workflow)
       regressionWorkflowId = workflow.id
     })
 
@@ -519,6 +521,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .select('id')
         .single()
 
+      assertWorkflow(workflow)
       guardTestWorkflowId = workflow.id
     })
 
