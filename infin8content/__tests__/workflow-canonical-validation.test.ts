@@ -141,6 +141,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
           .eq('id', workflowId)
           .single()
 
+        assertWorkflow(workflow)
         expect(workflow.current_step).toBe(step)
         // Guard check: if (workflow.current_step !== step) throw
         expect(workflow.current_step === step).toBe(true)
@@ -165,6 +166,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
           .eq('id', workflowId)
           .single()
 
+        assertWorkflow(workflow)
         expect(workflow.current_step).toBe(nextStep)
         expect(workflow.status).toBe(status)
       })
@@ -179,6 +181,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('id', workflowId)
         .single()
 
+      assertWorkflow(workflow)
       expect(workflow.current_step).toBe(9)
       expect(workflow.current_step === 9).toBe(true)
     })
@@ -201,6 +204,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('id', workflowId)
         .single()
 
+      assertWorkflow(workflow)
       expect(workflow.current_step).toBe(9)
       expect(workflow.status).toBe('step_9_articles')
     })
@@ -212,6 +216,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('id', workflowId)
         .single()
 
+      assertWorkflow(workflow)
       // Queue layer should NOT transition to current_step = 10
       expect(workflow.current_step).toBe(9)
       expect(workflow.status).toBe('step_9_articles')
@@ -226,6 +231,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('id', workflowId)
         .single()
 
+      assertWorkflow(workflow)
       // Guard: if (workflow.current_step !== 9) return
       expect(workflow.current_step).toBe(9)
     })
@@ -258,6 +264,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('id', workflowId)
         .single()
 
+      assertWorkflow(workflow)
       expect(workflow.current_step).toBe(9)
       expect(workflow.status).toBe('step_9_articles')
     })
@@ -278,8 +285,9 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('intent_workflow_id', workflowId)
         .neq('status', 'completed')
 
+      expect(incompleteArticles).toBeDefined()
       // All articles should be completed
-      expect(incompleteArticles.length).toBe(0)
+      expect(incompleteArticles!.length).toBe(0)
 
       // Manually transition to terminal state (simulating Inngest pipeline)
       const { error: completeError } = await supabase
@@ -300,6 +308,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('id', workflowId)
         .single()
 
+      assertWorkflow(workflow)
       expect(workflow.current_step).toBe(10)
       expect(workflow.status).toBe('completed')
     })
@@ -311,6 +320,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('id', workflowId)
         .single()
 
+      assertWorkflow(workflow)
       // Step 10 is terminal, no further execution allowed
       expect(workflow.current_step).toBe(10)
       expect(workflow.current_step === 10).toBe(true)
@@ -355,6 +365,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('id', failureWorkflowId)
         .single()
 
+      assertWorkflow(workflow)
       expect(workflow.status).toBe('failed')
       expect(workflow.current_step).toBe(1)
     })
@@ -366,6 +377,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('id', failureWorkflowId)
         .single()
 
+      assertWorkflow(workflow)
       // Failure keeps current_step = 1, not terminal (10)
       expect(workflow.current_step).toBe(1)
       expect(workflow.current_step !== 10).toBe(true)
@@ -389,6 +401,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('id', failureWorkflowId)
         .single()
 
+      assertWorkflow(workflow)
       expect(workflow.current_step).toBe(2)
       expect(workflow.status).toBe('step_1_icp')
     })
@@ -440,6 +453,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('id', regressionWorkflowId)
         .single()
 
+      assertWorkflow(workflow)
       expect(workflow.current_step).toBe(3)
       expect(workflow.status).toBe('step_3_keywords')
     })
@@ -451,6 +465,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('id', regressionWorkflowId)
         .single()
 
+      assertWorkflow(workflow)
       // Both fields updated together, no intermediate mismatch
       expect(workflow.current_step).toBe(3)
       expect(workflow.status).toBe('step_3_keywords')
@@ -474,6 +489,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('id', regressionWorkflowId)
         .single()
 
+      assertWorkflow(workflow)
       expect(workflow.current_step).toBe(4)
     })
 
@@ -513,6 +529,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('id', guardTestWorkflowId)
         .single()
 
+      assertWorkflow(workflow)
       // Attempt to execute Step 5 when current_step = 1
       // Guard: if (workflow.current_step !== 5) throw INVALID_STEP_ORDER
       expect(workflow.current_step === 5).toBe(false)
@@ -526,6 +543,7 @@ describe('Canonical State Machine - Step-by-Step Functional Validation', () => {
         .eq('id', guardTestWorkflowId)
         .single()
 
+      assertWorkflow(workflow)
       // State should be unchanged after guard rejection
       expect(workflow.current_step).toBe(1)
       expect(workflow.status).toBe('step_1_icp')
