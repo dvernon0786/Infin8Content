@@ -480,6 +480,67 @@ All gate enforcement attempts are logged with:
 - `workflow.gate.competitors_blocked` - when access is denied
 - `workflow.gate.competitors_error` - when validation encounters errors
 
+#### POST /api/intent/workflows/{workflow_id}/steps/icp-generate
+Generates ICP document using Perplexity Sonar Deep Research model (Story 34.1). This endpoint represents the initial ICP generation step that establishes the target audience profile for the workflow.
+
+**Authentication:** Required (401 if not authenticated)  
+**Authorization:** User must belong to workflow organization (404 if not)
+**Rate Limiting:** 10 requests per hour per organization (429 if exceeded)
+
+**Path Parameters:**
+```typescript
+{
+  workflow_id: string; // UUID of intent workflow
+}
+```
+
+**Request Body:**
+```typescript
+{
+  organization_name: string;
+  organization_url: string;
+  organization_linkedin_url: string;
+}
+```
+
+**Response:** 200 OK
+```typescript
+{
+  success: boolean;
+  workflow_id: string;
+  status: 'step_1_icp';
+  icp_data: {
+    industries: string[];
+    buyerRoles: string[];
+    painPoints: string[];
+    valueProposition: string;
+  };
+  metadata: {
+    tokens_used: number;
+    model_used: string; // 'perplexity/sonar-deep-research'
+    generated_at: string;
+    retry_count: number;
+  };
+}
+```
+
+**Error Responses:**
+- 400 Bad Request: Invalid input data or workflow not at correct step
+- 401 Unauthorized: Authentication required
+- 404 Not Found: Workflow not found or belongs to different organization
+- 429 Too Many Requests: Rate limit exceeded
+- 500 Internal Server Error: ICP generation failed
+
+**Analytics Events:**
+- `workflow_step_completed` - on successful ICP generation
+- `workflow_step_failed` - on ICP generation failure
+
+**Model Configuration:**
+- **Model**: `perplexity/sonar-deep-research` (deterministic, no fallbacks)
+- **Temperature**: 0.4 (analytical consistency)
+- **Max Tokens**: 1500 (structured JSON safe ceiling)
+- **Timeout**: 5 minutes (300000ms)
+
 #### POST /api/intent/workflows/{workflow_id}/steps/seed-extract
 Transitions workflow from competitor analysis completion to seed keyword readiness (Story 39.2). This endpoint represents the seed keyword extraction step that requires competitor analysis to be complete.
 

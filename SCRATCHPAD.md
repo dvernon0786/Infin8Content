@@ -4406,6 +4406,27 @@ Successfully implemented seed keyword extraction feature for Epic 34 with **idem
 **Code Review**: ✅ PASSED - All issues resolved (5 CRITICAL + 4 MEDIUM = 9/9 fixed, 0 remaining)  
 **Test Results**: ✅ 19/19 tests passing (10 unit + 9 integration)
 
+### 🚀 PRODUCTION UPDATE (February 12, 2026)
+
+**Model Configuration Lockdown**: Updated to deterministic Perplexity Sonar Deep Research
+- **Model**: `perplexity/sonar-deep-research` (research-grade, multi-step retrieval)
+- **Temperature**: `0.4` (analytical consistency, reduced hallucination)
+- **Max Tokens**: `1500` (structured JSON safe ceiling, cost control)
+- **Max Retries**: `0` (fail loudly, no silent retries)
+- **Fallback**: `disableFallback: true` (no Gemini/Llama drift)
+- **Guardrails**: Model drift detection and logging enforcement
+
+**Files Updated**:
+- `lib/services/intent-engine/icp-generator.ts` - Production configuration and guardrails
+- `lib/services/openrouter/openrouter-client.ts` - Added disableFallback option
+
+**Benefits**:
+- 🔒 **Deterministic**: No silent model switching or quality drift
+- 📊 **Research-Grade**: Multi-step retrieval and reasoning for ICP
+- 💰 **Cost Controlled**: 1500 token cap prevents runaway usage
+- 🛑 **Fail Loudly**: Proper error handling if Perplexity fails
+- 🧪 **Validated**: Model drift detection ensures expected behavior
+
 ### 🎯 Implementation Summary
 
 Successfully implemented ICP generation feature for Epic 34 with **5-minute timeout enforcement**, **per-organization rate limiting**, **idempotency checks**, **analytics event emission**, and **URL validation**. Fixed all code review issues identified in adversarial review.
@@ -4538,13 +4559,15 @@ Successfully implemented ICP generation feature for Epic 34 with **5-minute time
 
 | AC | Requirement | Implementation | Status |
 |----|-------------|-----------------|--------|
-| AC1 | Perplexity API integration | `generateContent()` with Perplexity model | ✅ |
+| AC1 | Perplexity Sonar Deep Research integration | `generateContent()` with deterministic `perplexity/sonar-deep-research` model | ✅ |
 | AC2 | 5-minute timeout | `Promise.race()` with 300000ms limit | ✅ |
 | AC3 | ICP includes all fields | `validateICPData()` checks all 4 fields | ✅ |
 | AC4 | ICP stored in workflow | `storeICPGenerationResult()` updates DB | ✅ |
 | AC5 | Workflow status → step_1_icp | Status set in `storeICPGenerationResult()` | ✅ |
 | AC6 | Completion timestamp | `step_1_icp_completed_at` set | ✅ |
 | AC7 | Analytics emission | `workflow_step_completed` event logged | ✅ |
+| AC8 | Model drift prevention | `disableFallback: true` + model validation guardrails | ✅ |
+| AC9 | Cost control | `maxTokens: 1500` + `temperature: 0.4` for structured output | ✅ |
 
 ### 🧪 Test Coverage
 
@@ -4559,11 +4582,14 @@ Successfully implemented ICP generation feature for Epic 34 with **5-minute time
 - ✅ All 5 CRITICAL issues fixed and verified
 - ✅ All 4 MEDIUM issues fixed and verified
 - ✅ 19 comprehensive tests passing
-- ✅ All 7 acceptance criteria satisfied
+- ✅ All 9 acceptance criteria satisfied (including model drift prevention)
 - ✅ Security: Multi-layered protection implemented
 - ✅ Performance: Timeout enforcement prevents hanging requests
 - ✅ Reliability: Idempotency prevents duplicate API calls
 - ✅ Observability: Analytics event emission for monitoring
+- ✅ **Deterministic**: Locked to Perplexity Sonar Deep Research model
+- ✅ **Cost Control**: 1500 token cap and optimized temperature
+- ✅ **Model Drift Prevention**: disableFallback + validation guardrails
 
 ### 📊 Impact
 
@@ -4571,6 +4597,8 @@ Successfully implemented ICP generation feature for Epic 34 with **5-minute time
 - **Security**: Enterprise-grade rate limiting and validation
 - **Reliability**: Timeout enforcement and idempotency ensure stable operation
 - **Observability**: Analytics events enable monitoring and debugging
+- **Deterministic Quality**: Research-grade ICP generation with no model drift
+- **Cost Efficiency**: Controlled token usage and optimized configuration
 
 ### 📚 Documentation Updated
 

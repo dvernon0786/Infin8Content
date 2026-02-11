@@ -49,12 +49,14 @@ So that I have a clear definition of my target audience before planning content.
 
 **Given** I have created an intent workflow and configured organization settings  
 **When** I trigger ICP generation (Step 1)  
-**Then** the system calls Perplexity API with organization profile data  
+**Then** the system calls Perplexity Sonar Deep Research API with organization profile data  
 **And** the ICP generation completes within 5 minutes  
 **And** the generated ICP includes industries, buyer roles, pain points, and value proposition  
 **And** the ICP is stored in the workflow's icp_data field  
 **And** the workflow status updates to 'step_1_icp'  
-**And** the step is marked as completed with timestamp
+**And** the step is marked as completed with timestamp  
+**And** the system uses deterministic model configuration with no fallbacks  
+**And** the model drift is prevented with validation guardrails
 
 ## Tasks / Subtasks
 
@@ -357,6 +359,27 @@ Cascade SWE-1.5 (January 2026)
 - `infin8content/lib/types/intent-workflow.ts` (existing, compatible)
 
 ## Change Log
+
+### 2026-02-12 - Production Configuration Lockdown
+- **Status**: Production-ready with deterministic model configuration
+- **Model Update**: Locked to Perplexity Sonar Deep Research for research-grade ICP generation
+- **Configuration Changes**:
+  - ✅ Model: `perplexity/sonar-deep-research` (multi-step retrieval + reasoning)
+  - ✅ Temperature: `0.4` (analytical consistency, reduced hallucination)
+  - ✅ Max Tokens: `1500` (structured JSON safe ceiling, cost control)
+  - ✅ Max Retries: `0` (fail loudly, no silent retries)
+  - ✅ Fallback: `disableFallback: true` (no Gemini/Llama drift)
+  - ✅ Guardrails: Model drift detection and logging enforcement
+- **Files Updated**:
+  - `lib/services/intent-engine/icp-generator.ts` - Production configuration and guardrails
+  - `lib/services/openrouter/openrouter-client.ts` - Added disableFallback option
+- **Benefits**:
+  - 🔒 **Deterministic**: No silent model switching or quality drift
+  - 📊 **Research-Grade**: Multi-step retrieval and reasoning for ICP
+  - 💰 **Cost Controlled**: 1500 token cap prevents runaway usage
+  - 🛑 **Fail Loudly**: Proper error handling if Perplexity fails
+  - 🧪 **Validated**: Model drift detection ensures expected behavior
+- **Acceptance Criteria**: All 9 ACs fully satisfied (including model drift prevention)
 
 ### 2026-01-31 - Code Review Complete & All Issues Fixed
 - **Status**: Ready for deployment
