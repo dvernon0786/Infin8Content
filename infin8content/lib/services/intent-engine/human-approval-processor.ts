@@ -189,12 +189,22 @@ export async function processHumanApproval(
   }
 
   // Update workflow to final status
+  const updateData: any = { 
+    status: finalStatus,
+    updated_at: new Date().toISOString()
+  }
+  
+  // If approved, advance to Step 9
+  if (decision === 'approved') {
+    updateData.current_step = 9
+  } else if (decision === 'rejected' && reset_to_step) {
+    // If rejected, reset to specified step
+    updateData.current_step = reset_to_step
+  }
+  
   const finalUpdateResult = await supabase
     .from('intent_workflows')
-    .update({ 
-      status: finalStatus,
-      updated_at: new Date().toISOString()
-    })
+    .update(updateData)
     .eq('id', workflowId)
 
   if (finalUpdateResult.error) {

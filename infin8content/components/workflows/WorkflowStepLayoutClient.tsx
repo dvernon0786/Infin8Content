@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { WorkflowState } from '@/lib/guards/workflow-step-gate'
+import { cn } from '@/lib/utils'
 
 interface WorkflowStepLayoutClientProps {
   workflow: WorkflowState
@@ -12,17 +13,29 @@ interface WorkflowStepLayoutClientProps {
   children: React.ReactNode
 }
 
-const STEP_LABELS = {
-  1: 'Generate ICP',
-  2: 'Analyze Competitors',
-  3: 'Extract Seeds',
-  4: 'Expand Longtails',
-  5: 'Filter Keywords',
-  6: 'Cluster Topics',
-  7: 'Validate Clusters',
-  8: 'Generate Subtopics',
-  9: 'Queue Articles',
-} as const
+const STEP_NARRATIVE = [
+  'ICP',
+  'Competitors',
+  'Seeds',
+  'Longtails',
+  'Filtering',
+  'Clustering',
+  'Validation',
+  'Subtopics',
+  'Articles',
+]
+
+const PROGRESS_WIDTH = [
+  'w-[11%]',
+  'w-[22%]',
+  'w-[33%]',
+  'w-[44%]',
+  'w-[55%]',
+  'w-[66%]',
+  'w-[77%]',
+  'w-[88%]',
+  'w-full',
+]
 
 export function WorkflowStepLayoutClient({
   workflow,
@@ -30,114 +43,121 @@ export function WorkflowStepLayoutClient({
   children,
 }: WorkflowStepLayoutClientProps) {
   const router = useRouter()
+  const stepIndex = workflow.current_step - 1
 
-  // Calculate progress bar width based on current step
-  const progressClass =
-    workflow.current_step === 1 ? 'w-[11%]' :
-    workflow.current_step === 2 ? 'w-[22%]' :
-    workflow.current_step === 3 ? 'w-[33%]' :
-    workflow.current_step === 4 ? 'w-[44%]' :
-    workflow.current_step === 5 ? 'w-[55%]' :
-    workflow.current_step === 6 ? 'w-[66%]' :
-    workflow.current_step === 7 ? 'w-[77%]' :
-    workflow.current_step === 8 ? 'w-[88%]' :
-    'w-full'
-
-  // Fire page-view analytics on mount
+  // Analytics: page viewed
   useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).analytics) {
-      (window as any).analytics.track('workflow_step_viewed', {
-        workflow_id: workflow.id,
-        step,
-      })
+    ;(window as any)?.analytics?.track('workflow_step_viewed', {
+      workflow_id: workflow.id,
+      step: workflow.current_step,
+    })
+  }, [workflow.id, workflow.current_step])
+
+  // Auto-advance if backend progressed beyond current step
+  useEffect(() => {
+    if (workflow.current_step > step) {
+      router.replace(`/workflows/${workflow.id}/steps/${workflow.current_step}`)
     }
-  }, [workflow.id, step])
-
-  const handleBack = () => {
-    router.push('/dashboard')
-  }
-
-  const handleNext = () => {
-    router.push(`/workflows/${workflow.id}/steps/${workflow.current_step}`)
-  }
+  }, [workflow.current_step, step, router])
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Breadcrumbs */}
+      {/* Top bar */}
       <div className="border-b bg-muted/30">
-        <div className="mx-auto max-w-3xl px-4 py-3 text-sm text-muted-foreground">
-          <nav className="flex items-center gap-2">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="hover:text-foreground transition-colors"
-            >
-              Dashboard
-            </button>
-            <span>›</span>
-            <button
-              onClick={() => router.push(`/workflows/${workflow.id}`)}
-              className="hover:text-foreground transition-colors"
-            >
-              {workflow.name}
-            </button>
-            <span>›</span>
-            <span className="text-foreground font-medium">
-              Step {step}: {STEP_LABELS[step as keyof typeof STEP_LABELS]}
-            </span>
-          </nav>
+        <div className="mx-auto max-w-3xl px-6 py-3 text-sm text-muted-foreground flex items-center justify-between">
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="hover:text-foreground transition"
+          >
+            ← Back to dashboard
+          </button>
+
+          <span className="font-medium text-foreground">
+            {workflow.name}
+          </span>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="mx-auto max-w-3xl px-4 py-10 space-y-8">
-        {/* Step Header */}
-        <header className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground">
-              Step {workflow.current_step} of 9
-            </span>
-            <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-              <div
-                className={`h-full bg-primary transition-all ${progressClass}`}
-                role="progressbar"
-                aria-valuenow={workflow.current_step}
-                aria-valuemin={1}
-                aria-valuemax={9}
-              />
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold">
-            {STEP_LABELS[step as keyof typeof STEP_LABELS]}
+      {/* Main */}
+      <div className="mx-auto max-w-3xl px-6 py-12 space-y-10">
+        {/* Step header */}
+        <header className="space-y-3">
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {STEP_NARRATIVE[step - 1]}
           </h1>
+
+          {/* Narrative progress */}
+          <div className="flex flex-wrap gap-x-2 text-sm text-muted-foreground">
+            {STEP_NARRATIVE.map((label, i) => (
+              <span
+                key={label}
+                className={cn(
+                  i === step - 1 && 'font-medium text-foreground',
+                  i !== step - 1 && 'opacity-70'
+                )}
+              >
+                {label}
+                {i < STEP_NARRATIVE.length - 1 && ' →'}
+              </span>
+            ))}
+          </div>
+
+          {/* Progress bar */}
+          <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className={cn(
+                'h-1 rounded-full bg-primary transition-all',
+                PROGRESS_WIDTH[step - 1] ?? 'w-[11%]'
+              )}
+              role="progressbar"
+              aria-valuenow={workflow.current_step}
+              aria-valuemin={1}
+              aria-valuemax={9}
+            />
+          </div>
         </header>
 
-        {/* Step Content */}
-        <div className="space-y-6">
-          {children}
-        </div>
+        {/* Failure state */}
+        {workflow.status === 'failed' && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+            <p className="text-sm font-medium">
+              This step failed
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              An error occurred while processing this step. Please try again or contact support if the issue persists.
+            </p>
+          </div>
+        )}
 
-        {/* Navigation Footer */}
-        <footer className="flex justify-between items-center pt-6 border-t">
+        {/* Step content */}
+        <section className="space-y-8">
+          {children}
+        </section>
+
+        {/* Footer */}
+        <footer className="flex items-center justify-between pt-6 border-t">
           <Button
-            variant="outline"
-            onClick={handleBack}
-            className="gap-2"
+            variant="ghost"
+            onClick={() => router.push('/dashboard')}
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Exit
           </Button>
 
-          <div className="text-sm text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             Step {workflow.current_step} of 9
-          </div>
+          </span>
 
           <Button
-            onClick={handleNext}
+            onClick={() =>
+              router.push(
+                `/workflows/${workflow.id}/steps/${workflow.current_step}` 
+              )
+            }
             disabled={workflow.current_step >= 9}
-            className="gap-2"
           >
             Continue
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </footer>
       </div>
