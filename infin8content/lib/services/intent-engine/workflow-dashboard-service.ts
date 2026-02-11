@@ -118,13 +118,16 @@ export function calculateEstimatedCompletion(
  */
 export function formatWorkflows(workflows: IntentWorkflow[]): WorkflowDashboardItem[] {
   return workflows.map(workflow => {
-    const progress = calculateProgress(workflow.status)
+    // CANONICAL: Derive progress from current_step, not status
+    const currentStep = workflow.current_step || 1
+    const progress = currentStep >= 10 ? 100 : ((currentStep - 1) / 9) * 100
+    
     return {
       id: workflow.id,
       name: workflow.name,
       status: workflow.status,
       progress_percentage: progress,
-      current_step: STEP_TO_INDEX[workflow.status] ?? 1,
+      current_step: currentStep,
       created_at: workflow.created_at,
       updated_at: workflow.updated_at,
       created_by: workflow.created_by,

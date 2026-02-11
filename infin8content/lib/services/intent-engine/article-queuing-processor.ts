@@ -256,7 +256,7 @@ async function queueApprovedSubtopicsForArticlesImpl(
 }
 
 /**
- * Update workflow status
+ * Update workflow status to step 9 (articles queued)
  */
 async function updateWorkflowStatus(
   supabase: ReturnType<typeof createServiceRoleClient>,
@@ -266,8 +266,8 @@ async function updateWorkflowStatus(
   const { error } = await supabase
     .from('intent_workflows')
     .update({
-      status,
-      current_step: 9,  // Step 9 is the final step
+      status: 'step_9_articles',  // Reflect step just completed
+      current_step: 9,           // Step 9 active
       updated_at: new Date().toISOString()
     })
     .eq('id', workflowId)
@@ -276,5 +276,29 @@ async function updateWorkflowStatus(
     throw new Error(`Failed to update workflow status: ${error.message}`)
   }
 
-  console.log(`[ArticleQueuing] Updated workflow ${workflowId} status to ${status}, current_step set to 9`)
+  console.log(`[ArticleQueuing] Updated workflow ${workflowId} status to step_9_articles, current_step set to 9`)
+}
+
+/**
+ * Mark workflow as completed (terminal state)
+ * Only called after all articles are successfully generated
+ */
+async function markWorkflowCompleted(
+  supabase: ReturnType<typeof createServiceRoleClient>,
+  workflowId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('intent_workflows')
+    .update({
+      status: 'completed',
+      current_step: 10,  // Terminal state
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', workflowId)
+
+  if (error) {
+    throw new Error(`Failed to mark workflow as completed: ${error.message}`)
+  }
+
+  console.log(`[ArticleQueuing] Workflow ${workflowId} marked as completed (terminal state)`)
 }

@@ -122,11 +122,12 @@ export async function processHumanApproval(
     updated_at: string
     icp_document: any
     competitor_analysis: any
+    current_step: number
   }
 
-  // Validate workflow is at step_8_subtopics
-  if (workflow.status !== 'step_8_subtopics') {
-    throw new Error('Workflow must be at step_8_subtopics for human approval')
+  // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 8 when current_step = 8
+  if (workflow.current_step !== 8) {
+    throw new Error(`Workflow must be at step 8 (human approval), currently at step ${workflow.current_step}`)
   }
 
   // Validate user belongs to the same organization as the workflow
@@ -194,11 +195,21 @@ export async function processHumanApproval(
     updated_at: new Date().toISOString()
   }
   
-  // If approved, advance to Step 9
+  // CANONICAL TRANSITION: Update current_step based on decision
   if (decision === 'approved') {
+    // Approved: Advance to Step 9 (Article Generation)
     updateData.current_step = 9
   } else if (decision === 'rejected' && reset_to_step) {
-    // If rejected, reset to specified step
+    // 
+    // 🔁 REGRESSION EXCEPTION: Human approval can reset workflow
+    // 
+    // This is the ONLY place where regression is allowed:
+    // - Only admins can trigger via rejection
+    // - Only steps 1-7 allowed as reset targets
+    // - Must update both current_step and status consistently
+    // 
+    // All other steps 1-7,9: No regression allowed
+    //
     updateData.current_step = reset_to_step
   }
   

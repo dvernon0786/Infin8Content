@@ -96,7 +96,7 @@ export async function POST(
     const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id')
+      .select('id, status, organization_id, current_step')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
       .single()
@@ -109,16 +109,16 @@ export async function POST(
     }
 
     // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string }
+    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string; current_step: number }
 
-    // Check if workflow is in correct state for ICP generation
-    if (typedWorkflow.status !== 'step_0_auth') {
+    // CANONICAL GUARD: Only allow step 1 when current_step = 1
+    if (typedWorkflow.current_step !== 1) {
       return NextResponse.json(
         {
-          error: 'ICP_ALREADY_RUN_OR_INVALID_STATE',
-          message: `ICP generation can only run from step_0_auth, currently in ${typedWorkflow.status}`
+          error: 'INVALID_STEP_ORDER',
+          message: `Workflow must be at step 1 (ICP generation), currently at step ${typedWorkflow.current_step}`
         },
-        { status: 409 }
+        { status: 400 }
       )
     }
 

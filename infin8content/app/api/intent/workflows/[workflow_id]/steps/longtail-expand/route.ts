@@ -57,7 +57,7 @@ export async function POST(
     const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id')
+      .select('id, status, organization_id, current_step')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
       .single()
@@ -70,14 +70,14 @@ export async function POST(
     }
 
     // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string }
+    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string; current_step: number }
 
-    // Check if workflow is in correct state for long-tail expansion
-    if (typedWorkflow.status !== 'step_3_seeds') {
+    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 4 when current_step = 4
+    if (typedWorkflow.current_step !== 4) {
       return NextResponse.json(
         {
-          error: 'Invalid workflow state',
-          message: `Workflow must be in step_3_seeds state, currently in ${typedWorkflow.status}`
+          error: 'INVALID_STEP_ORDER',
+          message: `Workflow must be at step 4 (longtail expansion), currently at step ${typedWorkflow.current_step}`
         },
         { status: 400 }
       )
