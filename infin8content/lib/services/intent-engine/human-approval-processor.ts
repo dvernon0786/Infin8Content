@@ -135,20 +135,6 @@ export async function processHumanApproval(
     throw new Error('Access denied: workflow belongs to different organization')
   }
 
-  // Start the approval process by setting workflow to step_8_subtopics
-  const updateResult = await supabase
-    .from('intent_workflows')
-    .update({ 
-      status: 'step_8_subtopics',
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', workflowId)
-
-  if (updateResult.error) {
-    console.error('Failed to update workflow status:', updateResult.error)
-    throw new Error('Failed to update workflow status')
-  }
-
   // Create or update approval record (idempotent)
   const approvalData = {
     workflow_id: workflowId,

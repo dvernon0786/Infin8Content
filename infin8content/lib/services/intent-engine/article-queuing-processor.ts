@@ -44,6 +44,7 @@ export interface WorkflowContext {
   icp_document?: string
   competitor_urls?: string[]
   status: string
+  current_step: number
 }
 
 export interface ArticleQueueingResult {
@@ -87,7 +88,7 @@ async function queueApprovedSubtopicsForArticlesImpl(
     // Fetch workflow context
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, organization_id, icp_document, competitor_urls, status')
+      .select('id, organization_id, icp_document, competitor_urls, status, current_step')
       .eq('id', workflowId)
       .single()
 
@@ -97,10 +98,17 @@ async function queueApprovedSubtopicsForArticlesImpl(
 
     const typedWorkflow = workflow as unknown as WorkflowContext
 
-    // Validate workflow is at correct step
-    if (typedWorkflow.status !== 'step_8_subtopics') {
+    // CANONICAL GUARD: Only allow step 9 when current_step = 9
+    // No defaults, no fallbacks - throw immediately if undefined
+    if (typedWorkflow.current_step === undefined || typedWorkflow.current_step === null) {
       throw new Error(
-        `Invalid workflow state: expected step_8_subtopics, got ${typedWorkflow.status}`
+        `Workflow state corrupted: current_step is undefined for workflow ${workflowId}`
+      )
+    }
+
+    if (typedWorkflow.current_step !== 9) {
+      throw new Error(
+        `Invalid step order: workflow must be at step 9 (article queuing), currently at step ${typedWorkflow.current_step}`
       )
     }
 

@@ -108,12 +108,14 @@ export async function POST(
 
     console.log(`[QueueArticles] Completed queuing in ${duration}ms`)
 
-    // FINAL STEP LOCK: Verify articles were successfully queued before completing
+    // QUEUE LAYER: Only responsible for queuing articles at step 9
+    // Terminal completion is driven by the article generation pipeline, not here
+    // Verify articles were successfully queued
     if (queueingResult.articles_created === 0) {
       return NextResponse.json(
         {
           error: 'NO_ARTICLES_QUEUED',
-          message: 'Cannot complete workflow step 9 - no articles were queued for generation'
+          message: 'Cannot proceed with step 9 - no articles were queued for generation'
         },
         { status: 400 }
       )
@@ -127,38 +129,6 @@ export async function POST(
         },
         { status: 500 }
       )
-    }
-
-    // TERMINAL COMPLETION CHECK: Verify all articles are completed before marking workflow done
-    const { data: incompleteArticles, error: completionCheckError } = await supabase
-      .from('articles')
-      .select('id')
-      .eq('intent_workflow_id', workflowId)
-      .neq('status', 'completed')
-      .limit(1)
-
-    if (completionCheckError) {
-      console.error('Error checking article completion status:', completionCheckError)
-      // Continue anyway - don't block on completion check failure
-    }
-
-    // If all articles are completed, mark workflow as completed (terminal state)
-    if (!completionCheckError && (!incompleteArticles || incompleteArticles.length === 0)) {
-      console.log(`[QueueArticles] All articles completed for workflow ${workflowId}, marking as completed`)
-      
-      const { error: completionError } = await supabase
-        .from('intent_workflows')
-        .update({
-          status: 'completed',
-          current_step: 10,  // Terminal state
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', workflowId)
-
-      if (completionError) {
-        console.error('Failed to mark workflow as completed:', completionError)
-        // Continue anyway - step 9 is still complete
-      }
     }
 
     // Log completion
