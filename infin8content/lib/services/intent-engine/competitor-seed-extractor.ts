@@ -479,12 +479,14 @@ export async function updateWorkflowStatus(
 
   if (status === 'step_2_competitors') {
     updateData.step_2_competitor_completed_at = new Date().toISOString()
+    // Advance to next step (Step 3)
+    updateData.current_step = 3
     // Preserve retry metadata on successful completion
     if (retryCount && retryCount > 0) {
       updateData.step_2_competitors_retry_count = retryCount
     }
   } else if (status === 'failed' && errorMessage) {
-    updateData.step_2_competitors_last_error_message = errorMessage
+    updateData.step_2_competitor_last_error_message = errorMessage
     // Update retry metadata on failure
     if (retryCount !== undefined) {
       updateData.step_2_competitors_retry_count = retryCount
@@ -502,7 +504,7 @@ export async function updateWorkflowStatus(
     throw new Error(`Failed to update workflow status: ${error.message}`)
   }
 
-  console.log(`[CompetitorSeedExtractor] Workflow ${workflowId} status updated to ${status}`)
+  console.log(`[CompetitorSeedExtractor] Workflow ${workflowId} status updated to ${status}, current_step advanced to ${updateData.current_step}`)
 }
 
 /**
