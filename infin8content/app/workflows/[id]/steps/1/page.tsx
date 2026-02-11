@@ -3,11 +3,12 @@ import { WorkflowStepLayoutClient } from '@/components/workflows/WorkflowStepLay
 import { Step1ICPForm } from '@/components/workflows/steps/Step1ICPForm'
 
 interface PageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function Step1Page({ params }: PageProps) {
-  const workflow = await requireWorkflowStepAccess(params.id, 1)
+  const { id } = await params
+  const workflow = await requireWorkflowStepAccess(id, 1)
 
   return (
     <WorkflowStepLayoutClient workflow={workflow} step={1}>

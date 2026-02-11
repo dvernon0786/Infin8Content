@@ -31,6 +31,18 @@ export function WorkflowStepLayoutClient({
 }: WorkflowStepLayoutClientProps) {
   const router = useRouter()
 
+  // Calculate progress bar width based on current step
+  const progressClass =
+    workflow.current_step === 1 ? 'w-[11%]' :
+    workflow.current_step === 2 ? 'w-[22%]' :
+    workflow.current_step === 3 ? 'w-[33%]' :
+    workflow.current_step === 4 ? 'w-[44%]' :
+    workflow.current_step === 5 ? 'w-[55%]' :
+    workflow.current_step === 6 ? 'w-[66%]' :
+    workflow.current_step === 7 ? 'w-[77%]' :
+    workflow.current_step === 8 ? 'w-[88%]' :
+    'w-full'
+
   // Fire page-view analytics on mount
   useEffect(() => {
     if (typeof window !== 'undefined' && (window as any).analytics) {
@@ -86,12 +98,11 @@ export function WorkflowStepLayoutClient({
             </span>
             <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-primary transition-all"
+                className={`h-full bg-primary transition-all ${progressClass}`}
                 role="progressbar"
                 aria-valuenow={workflow.current_step}
                 aria-valuemin={1}
                 aria-valuemax={9}
-                data-progress={Math.round((workflow.current_step / 9) * 100)}
               />
             </div>
           </div>
@@ -125,7 +136,7 @@ export function WorkflowStepLayoutClient({
             disabled={workflow.current_step >= 9}
             className="gap-2"
           >
-            Next Step
+            Continue
             <ArrowRight className="w-4 h-4" />
           </Button>
         </footer>
