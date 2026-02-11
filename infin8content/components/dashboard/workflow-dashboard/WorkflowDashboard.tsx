@@ -135,19 +135,22 @@ export function WorkflowDashboard() {
         <EmptyState />
       ) : (
         <div className="divide-y rounded-xl border bg-background">
-          {data?.workflows.map((workflow, i) => (
-            <WorkflowRow
-              key={workflow.id}
-              workflow={workflow}
-              isFocused={i === focusedIndex}
-              onFocus={() => setFocusedIndex(i)}
-              onContinue={() =>
-                router.push(
-                  `/workflows/${workflow.id}/steps/${workflow.current_step}`
-                )
-              }
-            />
-          ))}
+          {data?.workflows.map((workflow, i) => {
+            const stepNumber = parseInt(workflow.current_step, 10) || 1
+            return (
+              <WorkflowRow
+                key={workflow.id}
+                workflow={workflow}
+                isFocused={i === focusedIndex}
+                onFocus={() => setFocusedIndex(i)}
+                onContinue={() =>
+                  router.push(
+                    `/workflows/${workflow.id}/steps/${stepNumber}`
+                  )
+                }
+              />
+            )
+          })}
         </div>
       )}
     </div>
