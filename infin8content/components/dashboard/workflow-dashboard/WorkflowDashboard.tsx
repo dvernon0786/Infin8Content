@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type {
   DashboardResponse,
   WorkflowDashboardItem,
@@ -22,6 +23,33 @@ const STEP_NARRATIVE = [
   'Subtopics',
   'Articles',
 ]
+
+function getNarrative(step: number) {
+  return STEP_NARRATIVE.map((label, i) => ({
+    label,
+    state:
+      i + 1 < step ? 'done' :
+      i + 1 === step ? 'current' :
+      'upcoming',
+  }))
+}
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-32 text-center">
+      <h2 className="text-xl font-medium tracking-tight">
+        No workflows yet
+      </h2>
+      <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+        Create your first intent workflow to start discovering
+        topics worth ranking for.
+      </p>
+      <Button className="mt-6" onClick={() => window.location.href = '/workflows/new'}>
+        Create workflow
+      </Button>
+    </div>
+  )
+}
 export function WorkflowDashboard() {
   const router = useRouter()
   const supabase = createClient()
@@ -29,6 +57,7 @@ export function WorkflowDashboard() {
 
   const [data, setData] = useState<DashboardResponse | null>(null)
   const [loading, setLoading] = useState(true)
+  const [focusedIndex, setFocusedIndex] = useState(0)
 
   useEffect(() => {
     fetchDashboard()
@@ -38,6 +67,23 @@ export function WorkflowDashboard() {
       subscriptionRef.current?.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (!data?.workflows.length) return
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setFocusedIndex(i => Math.min(i + 1, data.workflows.length - 1))
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setFocusedIndex(i => Math.max(i - 1, 0))
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [data])
 
   async function fetchDashboard() {
     setLoading(true)
@@ -85,19 +131,25 @@ export function WorkflowDashboard() {
       </header>
 
       {/* List */}
-      <div className="divide-y rounded-xl border bg-background">
-        {data?.workflows.map((workflow) => (
-          <WorkflowRow
-            key={workflow.id}
-            workflow={workflow}
-            onContinue={() =>
-              router.push(
-                `/workflows/${workflow.id}/steps/${workflow.current_step}`
-              )
-            }
-          />
-        ))}
-      </div>
+      {data?.workflows.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <div className="divide-y rounded-xl border bg-background">
+          {data?.workflows.map((workflow, i) => (
+            <WorkflowRow
+              key={workflow.id}
+              workflow={workflow}
+              isFocused={i === focusedIndex}
+              onFocus={() => setFocusedIndex(i)}
+              onContinue={() =>
+                router.push(
+                  `/workflows/${workflow.id}/steps/${workflow.current_step}`
+                )
+              }
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -105,57 +157,95 @@ export function WorkflowDashboard() {
 function WorkflowRow({
   workflow,
   onContinue,
+  isFocused,
+  onFocus,
 }: {
   workflow: WorkflowDashboardItem
   onContinue: () => void
+  isFocused: boolean
+  onFocus: () => void
 }) {
+  const [hovered, setHovered] = useState(false)
   const stepNumber = parseInt(workflow.current_step, 10) || 1
-  const currentIndex = Math.max(0, stepNumber - 1)
+  const narrative = getNarrative(stepNumber)
   const progress = Math.round((stepNumber / 9) * 100)
+  const showExpanded = hovered || isFocused
 
   return (
-    <div className="flex items-center justify-between px-6 py-5 hover:bg-muted/30 transition">
-      {/* Left */}
-      <div className="space-y-2 max-w-[70%]">
-        <h2 className="font-medium text-base">
-          {workflow.name}
-        </h2>
+    <div
+      tabIndex={0}
+      onFocus={onFocus}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onKeyDown={(e) => e.key === 'Enter' && onContinue()}
+      className={cn(
+        'group relative px-6 py-5 outline-none transition',
+        'hover:bg-muted/30 focus:bg-muted/30',
+        'focus-visible:ring-1 focus-visible:ring-muted-foreground/20'
+      )}
+    >
+      <div className="flex items-start justify-between gap-6">
+        {/* LEFT */}
+        <div className="space-y-2 max-w-[70%]">
+          <h3 className="font-medium leading-tight">
+            {workflow.name}
+          </h3>
 
-        {/* Narrative Progress */}
-        <div className="flex items-center gap-2 text-sm">
-          {STEP_NARRATIVE.slice(0, 3).map((label, i) => (
-            <span
-              key={label}
-              className={
-                i === currentIndex
-                  ? 'font-medium text-foreground'
-                  : 'text-muted-foreground'
-              }
-            >
-              {label}
-              {i < 2 && <span className="mx-1">→</span>}
-            </span>
-          ))}
+          {/* Narrative */}
+          <div className="flex flex-wrap gap-x-2 gap-y-1 text-sm">
+            {narrative
+              .slice(0, showExpanded ? narrative.length : 3)
+              .map((step, i) => (
+                <span
+                  key={step.label}
+                  className={cn(
+                    step.state === 'current' && 'font-medium text-foreground',
+                    step.state !== 'current' && 'text-muted-foreground'
+                  )}
+                >
+                  {step.label}
+                  {i < narrative.length - 1 && ' →'}
+                </span>
+              ))}
+
+            {!showExpanded && narrative.length > 3 && (
+              <span className="text-muted-foreground">…</span>
+            )}
+          </div>
+
+          {/* Hover detail */}
+          {showExpanded && (
+            <p className="text-xs text-muted-foreground">
+              Currently working on <strong>{STEP_NARRATIVE[stepNumber - 1]}</strong>
+            </p>
+          )}
+
+          {/* Progress bar */}
+          <div className="h-1 w-full rounded-full bg-muted">
+            <div
+              className="h-1 rounded-full bg-primary transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="h-1 w-full rounded-full bg-muted">
-          <div
-            className="h-1 rounded-full bg-primary transition-all"
-            style={{ width: `${progress}%` }}
-          />
+        {/* RIGHT */}
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <span className="text-xs text-muted-foreground">
+            Updated {new Date(workflow.updated_at).toLocaleDateString()}
+          </span>
+
+          <button
+            onClick={onContinue}
+            className={cn(
+              'text-sm font-medium',
+              'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
+              'transition-opacity'
+            )}
+          >
+            Continue →
+          </button>
         </div>
-      </div>
-
-      {/* Right */}
-      <div className="flex flex-col items-end gap-2">
-        <span className="text-xs text-muted-foreground">
-          Updated {new Date(workflow.updated_at).toLocaleDateString()}
-        </span>
-
-        <Button size="sm" onClick={onContinue}>
-          Continue
-        </Button>
       </div>
     </div>
   )
