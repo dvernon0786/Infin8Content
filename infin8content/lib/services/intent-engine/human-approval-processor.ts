@@ -195,11 +195,21 @@ export async function processHumanApproval(
     updated_at: new Date().toISOString()
   }
   
-  // If approved, advance to Step 9
+  // CANONICAL TRANSITION: Update current_step based on decision
   if (decision === 'approved') {
+    // Approved: Advance to Step 9 (Article Generation)
     updateData.current_step = 9
   } else if (decision === 'rejected' && reset_to_step) {
-    // If rejected, reset to specified step
+    // 
+    // 🔁 REGRESSION EXCEPTION: Human approval can reset workflow
+    // 
+    // This is the ONLY place where regression is allowed:
+    // - Only admins can trigger via rejection
+    // - Only steps 1-7 allowed as reset targets
+    // - Must update both current_step and status consistently
+    // 
+    // All other steps 1-7,9: No regression allowed
+    //
     updateData.current_step = reset_to_step
   }
   

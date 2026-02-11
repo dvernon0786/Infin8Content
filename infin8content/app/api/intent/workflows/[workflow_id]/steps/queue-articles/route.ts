@@ -129,6 +129,38 @@ export async function POST(
       )
     }
 
+    // TERMINAL COMPLETION CHECK: Verify all articles are completed before marking workflow done
+    const { data: incompleteArticles, error: completionCheckError } = await supabase
+      .from('articles')
+      .select('id')
+      .eq('intent_workflow_id', workflowId)
+      .neq('status', 'completed')
+      .limit(1)
+
+    if (completionCheckError) {
+      console.error('Error checking article completion status:', completionCheckError)
+      // Continue anyway - don't block on completion check failure
+    }
+
+    // If all articles are completed, mark workflow as completed (terminal state)
+    if (!completionCheckError && (!incompleteArticles || incompleteArticles.length === 0)) {
+      console.log(`[QueueArticles] All articles completed for workflow ${workflowId}, marking as completed`)
+      
+      const { error: completionError } = await supabase
+        .from('intent_workflows')
+        .update({
+          status: 'completed',
+          current_step: 10,  // Terminal state
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', workflowId)
+
+      if (completionError) {
+        console.error('Failed to mark workflow as completed:', completionError)
+        // Continue anyway - step 9 is still complete
+      }
+    }
+
     // Log completion
     try {
       await logActionAsync({
