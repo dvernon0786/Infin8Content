@@ -51,7 +51,7 @@ export async function POST(
     const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id')
+      .select('id, status, organization_id, current_step')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
       .single()
@@ -63,15 +63,14 @@ export async function POST(
       )
     }
 
-    // Validate workflow state - must be at step_4_longtails
-    if ((workflow as any).status !== 'step_4_longtails') {
+    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 5 when current_step = 5
+    if ((workflow as any).current_step !== 5) {
       return NextResponse.json(
         { 
-          error: 'Invalid workflow state',
-          message: 'Expected workflow status: step_4_longtails',
-          current_status: (workflow as any).status
+          error: 'INVALID_STEP_ORDER',
+          message: `Workflow must be at step 5 (keyword filtering), currently at step ${(workflow as any).current_step}`
         },
-        { status: 409 }
+        { status: 400 }
       )
     }
 

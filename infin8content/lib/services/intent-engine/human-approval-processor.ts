@@ -122,11 +122,12 @@ export async function processHumanApproval(
     updated_at: string
     icp_document: any
     competitor_analysis: any
+    current_step: number
   }
 
-  // Validate workflow is at step_8_subtopics
-  if (workflow.status !== 'step_8_subtopics') {
-    throw new Error('Workflow must be at step_8_subtopics for human approval')
+  // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 8 when current_step = 8
+  if (workflow.current_step !== 8) {
+    throw new Error(`Workflow must be at step 8 (human approval), currently at step ${workflow.current_step}`)
   }
 
   // Validate user belongs to the same organization as the workflow

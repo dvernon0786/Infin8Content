@@ -55,7 +55,7 @@ export async function POST(
     const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id')
+      .select('id, status, organization_id, current_step')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
       .single()
@@ -68,17 +68,16 @@ export async function POST(
     }
 
     // Type guard: ensure workflow is properly typed
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string }
+    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string; current_step: number }
 
-    // Validate workflow state - must be at step_6_clustering
-    if (typedWorkflow.status !== 'step_6_clustering') {
+    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 7 when current_step = 7
+    if (typedWorkflow.current_step !== 7) {
       return NextResponse.json(
         { 
-          error: 'Invalid workflow state',
-          current_status: typedWorkflow.status,
-          required_status: 'step_6_clustering'
+          error: 'INVALID_STEP_ORDER',
+          message: `Workflow must be at step 7 (cluster validation), currently at step ${typedWorkflow.current_step}`
         },
-        { status: 409 }
+        { status: 400 }
       )
     }
 

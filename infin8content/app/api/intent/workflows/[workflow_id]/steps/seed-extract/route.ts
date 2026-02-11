@@ -53,7 +53,7 @@ export async function POST(
     const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id')
+      .select('id, status, organization_id, current_step')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
       .single()
@@ -66,14 +66,14 @@ export async function POST(
     }
 
     // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string }
+    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string; current_step: number }
 
-    // Check if workflow is in correct state for seed extraction
-    if (typedWorkflow.status !== 'step_2_competitors') {
+    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 3 when current_step = 3
+    if (typedWorkflow.current_step !== 3) {
       return NextResponse.json(
         {
-          error: 'Invalid workflow state',
-          message: `Workflow must be in step_2_competitors state, currently in ${typedWorkflow.status}`
+          error: 'INVALID_STEP_ORDER',
+          message: `Workflow must be at step 3 (seed extraction), currently at step ${typedWorkflow.current_step}`
         },
         { status: 400 }
       )

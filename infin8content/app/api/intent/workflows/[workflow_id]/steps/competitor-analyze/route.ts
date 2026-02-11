@@ -74,7 +74,7 @@ export async function POST(
     // Verify workflow exists and belongs to user's organization
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id')
+      .select('id, status, organization_id, current_step')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
       .single()
@@ -87,14 +87,14 @@ export async function POST(
     }
 
     // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string }
+    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string; current_step: number }
 
-    // Check if workflow is in correct state for competitor analysis
-    if (typedWorkflow.status !== 'step_1_icp' && typedWorkflow.status !== 'step_2_competitors') {
+    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 2 when current_step = 2
+    if (typedWorkflow.current_step !== 2) {
       return NextResponse.json(
         {
-          error: 'Invalid workflow state',
-          message: `Workflow must be in step_1_icp or step_2_competitors state, currently in ${typedWorkflow.status}`
+          error: 'INVALID_STEP_ORDER',
+          message: `Workflow must be at step 2 (competitor analysis), currently at step ${typedWorkflow.current_step}`
         },
         { status: 400 }
       )

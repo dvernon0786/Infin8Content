@@ -55,7 +55,7 @@ export async function POST(
     const supabase = await createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id')
+      .select('id, status, organization_id, current_step')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
       .single()
@@ -68,14 +68,14 @@ export async function POST(
     }
 
     // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string }
+    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string; current_step: number }
 
-    // Check if workflow is in correct state for article queuing
-    if (typedWorkflow.status !== 'step_8_approval') {
+    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 9 when current_step = 9
+    if (typedWorkflow.current_step !== 9) {
       return NextResponse.json(
         {
-          error: 'Invalid workflow state',
-          message: `Workflow must be in step_8_approval state, currently in ${typedWorkflow.status}`
+          error: 'INVALID_STEP_ORDER',
+          message: `Workflow must be at step 9 (article queuing), currently at step ${typedWorkflow.current_step}`
         },
         { status: 400 }
       )
@@ -107,6 +107,27 @@ export async function POST(
     const duration = Date.now() - startTime
 
     console.log(`[QueueArticles] Completed queuing in ${duration}ms`)
+
+    // FINAL STEP LOCK: Verify articles were successfully queued before completing
+    if (queueingResult.articles_created === 0) {
+      return NextResponse.json(
+        {
+          error: 'NO_ARTICLES_QUEUED',
+          message: 'Cannot complete workflow step 9 - no articles were queued for generation'
+        },
+        { status: 400 }
+      )
+    }
+
+    if (queueingResult.errors.length > 0 && queueingResult.articles_created === 0) {
+      return NextResponse.json(
+        {
+          error: 'QUEUING_FAILED',
+          message: 'All article queuing attempts failed - workflow cannot proceed'
+        },
+        { status: 500 }
+      )
+    }
 
     // Log completion
     try {
