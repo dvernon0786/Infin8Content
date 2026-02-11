@@ -286,27 +286,3 @@ async function updateWorkflowStatus(
 
   console.log(`[ArticleQueuing] Updated workflow ${workflowId} status to step_9_articles, current_step set to 9`)
 }
-
-/**
- * Mark workflow as completed (terminal state)
- * Only called after all articles are successfully generated
- */
-async function markWorkflowCompleted(
-  supabase: ReturnType<typeof createServiceRoleClient>,
-  workflowId: string
-): Promise<void> {
-  const { error } = await supabase
-    .from('intent_workflows')
-    .update({
-      status: 'completed',
-      current_step: 10,  // Terminal state
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', workflowId)
-
-  if (error) {
-    throw new Error(`Failed to mark workflow as completed: ${error.message}`)
-  }
-
-  console.log(`[ArticleQueuing] Workflow ${workflowId} marked as completed (terminal state)`)
-}
