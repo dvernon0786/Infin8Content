@@ -1,11 +1,11 @@
 # Infin8Content Development Scratchpad
 
-## 🔒 ONBOARDING SYSTEM LAW - PRODUCTION READY (February 11, 2026)
+## 🔒 CANONICAL STATE MACHINE - MATHEMATICALLY LOCKED (February 11, 2026)
 
-**Date**: 2026-02-11T12:53:00+11:00  
-**Status**: ✅ **v2 SYSTEM LAW - COMPLETE WITH FULL WORKFLOW ENGINE**  
-**Latest Task**: Implement Complete Workflow Steps 2-9 with Production-Grade Enhancements - **COMPLETED**  
-**Result**: Complete 9-step workflow engine with Linear-grade UX, auto-advance, and mechanical scalability
+**Date**: 2026-02-11T20:37:00+11:00  
+**Status**: ✅ **CANONICAL STATE MACHINE - COMPLETE WITH REAL E2E VALIDATION**  
+**Latest Task**: Implement Real E2E Behavioral Validation Tests - **COMPLETED**  
+**Result**: True behavioral validation framework with real HTTP requests, real database mutations, and real guard enforcement
 
 ### 📊 **FINAL SYSTEM LAW COMPLIANCE**
 
@@ -48,6 +48,78 @@ DATA → VALIDATOR → PERMISSION → TERMINATION
 - No flags trusted
 - No UI state authority
 - No workflow status shortcuts
+
+---
+
+## 🧮 CANONICAL STATE MACHINE IMPLEMENTATION
+
+### **Core Principle**: `current_step` is Canonical Authority
+- ✅ **Single Source of Truth**: `current_step` numeric field only
+- ✅ **Exact Guard Enforcement**: `current_step === N` for step N execution
+- ✅ **Deterministic Transitions**: `current_step = N + 1` for step completion
+- ✅ **Terminal Completion**: `current_step = 10` (non-executable)
+- ✅ **Atomic Updates**: Both `current_step` and `status` updated together
+
+### **Phases Implemented**: COMPLETE ✅
+- ✅ **Phase 2**: Step 9 guard fixed (uses `current_step !== 9`)
+- ✅ **Phase 3**: Terminal completion wired into article pipeline
+- ✅ **Phase 4**: Queue-layer completion removed (single authority)
+- ✅ **Phase 5**: Failure state synchronized (`current_step = 1` for retry)
+- ✅ **Phase 6**: Human approval atomic update (no transient state)
+- ✅ **Phase 7**: Dead code removal (`markWorkflowCompleted` eliminated)
+
+### **State Machine Model**: MATHEMATICALLY LOCKED ✅
+```
+1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 (terminal)
+```
+
+### **Critical Rules Enforced**: COMPLETE ✅
+- ✅ No defaults: throw if `current_step` undefined
+- ✅ Atomic updates: all state changes in single `.update()`
+- ✅ Synchronous completion: `checkAndCompleteWorkflow()` called immediately
+- ✅ Idempotent checks: safe for concurrent article completions
+- ✅ No transient state: status and `current_step` never mismatched
+- ✅ No status guards: all executable logic uses `current_step` only
+
+### **Real E2E Validation**: COMPLETE ✅
+- ✅ **Real HTTP requests** to live API endpoints (no mocking)
+- ✅ **Real database mutations** via Supabase REST API
+- ✅ **Real service layer execution** (no fake responses)
+- ✅ **Real guard enforcement** behavior validation
+- ✅ **Real state transitions** with atomic updates
+
+### **Files Modified**:
+- `lib/services/intent-engine/article-queuing-processor.ts` - Step 9 guard
+- `lib/inngest/functions/generate-article.ts` - Terminal completion
+- `app/api/intent/workflows/[workflow_id]/steps/queue-articles/route.ts` - Queue cleanup
+- `lib/services/intent-engine/icp-generator.ts` - Failure state
+- `lib/services/intent-engine/human-approval-processor.ts` - Atomic update
+- `lib/types/intent-workflow.ts` - Type system
+- `__tests__/e2e/real-step-1-to-2.test.ts` - Real behavioral validation
+
+### **Regression Exception**: DOCUMENTED ✅
+- ✅ Only human approval rejection can regress workflow
+- ✅ Only steps 1-7 allowed as reset targets
+- ✅ Atomic update: both `current_step` and `status` together
+- ✅ No other regression allowed in steps 1-7,9
+
+### **Dashboard Progress**: DERIVED FROM `current_step` ✅
+- ✅ Dashboard progress calculation uses `current_step` only
+- ✅ No status-based progress derivation
+- ✅ Formula: `progress = currentStep >= 10 ? 100 : ((currentStep - 1) / 9) * 100`
+
+### **Mathematical Determinism**: ACHIEVED ✅
+- ✅ Single source of truth (`current_step`)
+- ✅ Exact guard enforcement (`current_step === N`)
+- ✅ Deterministic transitions (`current_step = N + 1`)
+- ✅ Terminal completion reachable (`current_step = 10`)
+- ✅ No split-brain state
+- ✅ No ambiguity or drift
+- ✅ No regression (except documented exception)
+- ✅ Atomic updates (no transient state)
+- ✅ Idempotent completion (safe for concurrency)
+
+---
 - No org-specific logic
 - No POST to observe (GET-only)
 - No premature completion (all steps required)
