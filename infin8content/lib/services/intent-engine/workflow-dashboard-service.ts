@@ -20,16 +20,15 @@ import {
 import { normalizeWorkflowStatus } from '@/lib/utils/normalize-workflow-status'
 
 const STEP_TO_INDEX: Record<string, number> = {
-  step_0_auth: 1,
-  step_1_icp: 2,
-  step_2_competitors: 3,
-  step_3_keywords: 4,
-  step_4_longtails: 5,
-  step_5_filtering: 6,
-  step_6_clustering: 7,
-  step_7_validation: 8,
-  step_8_subtopics: 9,
-  step_9_articles: 10,
+  step_1_icp: 1,
+  step_2_competitors: 2,
+  step_3_keywords: 3,
+  step_4_longtails: 4,
+  step_5_filtering: 5,
+  step_6_clustering: 6,
+  step_7_validation: 7,
+  step_8_subtopics: 8,
+  step_9_articles: 9,
 }
 
 export interface WorkflowDashboardItem {

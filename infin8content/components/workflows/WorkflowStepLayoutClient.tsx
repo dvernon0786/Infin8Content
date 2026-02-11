@@ -53,6 +53,13 @@ export function WorkflowStepLayoutClient({
     })
   }, [workflow.id, workflow.current_step])
 
+  // Auto-advance if backend progressed beyond current step
+  useEffect(() => {
+    if (workflow.current_step > step) {
+      router.replace(`/workflows/${workflow.id}/steps/${workflow.current_step}`)
+    }
+  }, [workflow.current_step, step, router])
+
   return (
     <div className="min-h-screen bg-background">
       {/* Top bar */}
@@ -109,6 +116,18 @@ export function WorkflowStepLayoutClient({
             />
           </div>
         </header>
+
+        {/* Failure state */}
+        {workflow.status === 'failed' && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+            <p className="text-sm font-medium">
+              This step failed
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              An error occurred while processing this step. Please try again or contact support if the issue persists.
+            </p>
+          </div>
+        )}
 
         {/* Step content */}
         <section className="space-y-8">
