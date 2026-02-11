@@ -9,6 +9,11 @@ console.log("🔥🔥🔥 INTEGRATION PAGE LOADED 🔥🔥🔥")
 export default function IntegrationStepPage() {
   const router = useRouter()
 
+  // 🔥 System Law: onNext calls handleComplete for integration
+  const handleNext = async (data: any) => {
+    await handleComplete(data)
+  }
+
   const handleComplete = async (data: any) => {
     console.log("🔥🔥🔥 HANDLE COMPLETE CALLED 🔥🔥🔥", data)
 
@@ -46,7 +51,7 @@ export default function IntegrationStepPage() {
         <div className="mb-8">
           <OnboardingWizard currentStep={6} />
         </div>
-        <StepIntegration onComplete={handleComplete} onSkip={handleSkip} />
+        <StepIntegration onNext={handleNext} />
       </div>
     </div>
   )

@@ -1,159 +1,181 @@
 "use client"
 
+import * as React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Globe, Key } from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { cn } from "@/lib/utils"
+import { useCurrentUser } from "@/lib/hooks/use-current-user"
 
-interface WordPressIntegrationData {
-  wordpress: {
-    url: string
+/**
+ * Normalize site URL by removing trailing slash
+ * Users can type https://example.com/ and we'll store https://example.com
+ */
+function normalizeSiteUrl(url: string): string {
+  return url.endsWith("/") ? url.slice(0, -1) : url
+}
+
+interface StepIntegrationProps {
+  className?: string
+  onNext: (state: any) => void
+}
+
+type IntegrationPayload = {
+  integration: {
+    type: "wordpress"
+    site_url: string
     username: string
     application_password: string
   }
 }
 
-interface StepIntegrationProps {
-  onComplete: (data: WordPressIntegrationData) => Promise<void>
-  onSkip?: () => void
-  className?: string
-}
+function StepIntegration({ className, onNext }: StepIntegrationProps) {
+  const { user } = useCurrentUser()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-export function StepIntegration({ onComplete, onSkip, className }: StepIntegrationProps) {
-  const [data, setData] = useState<WordPressIntegrationData>({
-    wordpress: {
-      url: "",
+  const [formData, setFormData] = useState<IntegrationPayload>({
+    integration: {
+      type: "wordpress",
+      site_url: "",
       username: "",
       application_password: "",
     },
   })
 
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const update = (
-    field: keyof WordPressIntegrationData["wordpress"],
-    value: string
-  ) => {
-    setData(prev => ({
-      wordpress: { ...prev.wordpress, [field]: value },
+  function updateField<K extends keyof IntegrationPayload["integration"]>(
+    key: K,
+    value: IntegrationPayload["integration"][K]
+  ) {
+    setFormData((prev) => ({
+      integration: {
+        ...prev.integration,
+        [key]: value,
+      },
     }))
-    if (error) setError(null)
   }
 
-  const submit = async () => {
-    // 🔒 HARD VALIDATION (NON-NEGOTIABLE)
-    const { url, username, application_password } = data.wordpress
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
 
-    if (!url || !username || !application_password) {
-      setError("All WordPress fields are required")
+    if (!user?.org_id) {
+      console.error("[StepIntegration] Missing org context")
       return
     }
 
-    setLoading(true)
-    setError(null)
-
-    console.log("[StepIntegration] Test & Connect clicked")
-    console.log("[StepIntegration] Payload:", data)
+    setIsSubmitting(true)
 
     try {
-      console.log("[StepIntegration] Calling onComplete()")
-      await onComplete(data)
-      console.log("[StepIntegration] onComplete SUCCESS")
-    } catch (e: any) {
-      console.error("[StepIntegration] onComplete FAILED", e)
-      setError(e?.message || "Failed to connect to WordPress")
+      // 1️⃣ Persist integration with normalized URL
+      const payload: IntegrationPayload = {
+        integration: {
+          ...formData.integration,
+          site_url: normalizeSiteUrl(formData.integration.site_url),
+        },
+      }
+
+      const persistRes = await fetch("/api/onboarding/persist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      if (!persistRes.ok) {
+        throw new Error("Failed to persist integration")
+      }
+
+      // 2️⃣ Observe canonical truth
+      if (!user?.org_id) {
+        throw new Error('User not authenticated or missing organization')
+      }
+      
+      const observeRes = await fetch("/api/onboarding/observe", {
+        method: 'GET',
+      })
+
+      if (!observeRes.ok) {
+        throw new Error("Failed to observe onboarding state")
+      }
+
+      const state = await observeRes.json()
+
+      // 3️⃣ Bubble up canonical state
+      onNext(state)
+    } catch (err) {
+      console.error("[StepIntegration] Submission error:", err)
     } finally {
-      setLoading(false)
+      setIsSubmitting(false)
     }
   }
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Globe className="h-5 w-5" />
-          Connect WordPress
-        </CardTitle>
-      </CardHeader>
+    <main className={cn("mx-auto w-full max-w-2xl", className)}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Integration</CardTitle>
+        </CardHeader>
 
-      <CardContent className="space-y-4">
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Site URL */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">WordPress Site URL</label>
+              <Input
+                type="url"
+                placeholder="https://yoursite.com"
+                value={formData.integration.site_url}
+                onChange={(e) => updateField("site_url", e.target.value)}
+                required
+              />
+            </div>
 
-        <div className="space-y-3">
-          <div>
-            <label className="text-sm font-medium mb-1 block">
-              WordPress Site URL
-            </label>
-            <Input
-              placeholder="https://your-site.com"
-              value={data.wordpress.url}
-              onChange={e => update("url", e.target.value)}
-              disabled={loading}
-            />
-          </div>
+            {/* Username */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">WordPress Username</label>
+              <Input
+                type="text"
+                placeholder="admin"
+                value={formData.integration.username}
+                onChange={(e) => updateField("username", e.target.value)}
+                required
+              />
+            </div>
 
-          <div>
-            <label className="text-sm font-medium mb-1 block">
-              Username
-            </label>
-            <Input
-              placeholder="WordPress username"
-              value={data.wordpress.username}
-              onChange={e => update("username", e.target.value)}
-              disabled={loading}
-            />
-          </div>
+            {/* Application Password */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Application Password</label>
+              <Input
+                type="password"
+                placeholder="xxxx xxxx xxxx xxxx xxxx"
+                value={formData.integration.application_password}
+                onChange={(e) =>
+                  updateField("application_password", e.target.value)
+                }
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Generate this in WordPress → Users → Profile → Application Passwords
+              </p>
+            </div>
 
-          <div>
-            <label className="text-sm font-medium mb-1 block">
-              Application Password
-            </label>
-            <Input
-              type="password"
-              placeholder="WordPress application password"
-              value={data.wordpress.application_password}
-              onChange={e => update("application_password", e.target.value)}
-              disabled={loading}
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              WordPress → Users → Profile → Application Passwords
-            </p>
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <Button
-            onClick={submit}
-            disabled={loading}
-            className="flex-1"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Connecting…
-              </>
-            ) : (
-              <>
-                <Key className="h-4 w-4 mr-2" />
-                Test & Connect
-              </>
-            )}
-          </Button>
-
-          {/* 🚫 SKIP SHOULD NOT COMPLETE ONBOARDING */}
-          {onSkip && (
+            {/* Submit */}
             <Button
-              variant="ghost"
-              onClick={onSkip}
-              disabled={loading}
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full"
             >
-              Skip
+              {isSubmitting ? "Connecting…" : "Test & Complete Setup"}
             </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+          </form>
+        </CardContent>
+      </Card>
+    </main>
   )
 }
+
+export { StepIntegration }

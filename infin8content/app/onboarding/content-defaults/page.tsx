@@ -37,7 +37,7 @@ export default function ContentDefaultsStepPage() {
         <div className="mb-8">
           <OnboardingWizard currentStep={4} />
         </div>
-        <StepContentDefaults onNext={handleNext} onSkip={handleSkip} />
+        <StepContentDefaults onNext={handleNext} />
       </div>
     </div>
   )

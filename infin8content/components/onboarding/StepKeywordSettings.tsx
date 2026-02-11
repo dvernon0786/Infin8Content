@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { useCurrentUser } from '@/lib/hooks/use-current-user'
 
 interface StepKeywordSettingsProps {
   className?: string
@@ -14,34 +15,38 @@ interface StepKeywordSettingsProps {
 }
 
 interface KeywordSettingsData {
-  region: string
-  generation_rules: {
-    max_keywords_per_month: number
-    competition_threshold: number
-    search_volume_min: number
+  keyword_settings: {
+    target_region: string
+    language_code: string
+    auto_generate_keywords: boolean
+    monthly_keyword_limit: number
   }
 }
 
 export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSettingsProps) {
   const [formData, setFormData] = useState<KeywordSettingsData>({
-    region: "us",
-    generation_rules: {
-      max_keywords_per_month: 50,
-      competition_threshold: 0.5,
-      search_volume_min: 100
+    keyword_settings: {
+      target_region: "United States",
+      language_code: "en",
+      auto_generate_keywords: true,
+      monthly_keyword_limit: 100
     }
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { user } = useCurrentUser()
 
-  const handleInputChange = (field: keyof KeywordSettingsData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+  // Form validation
+  const isFormValid =
+    formData.keyword_settings.target_region.length >= 2 &&
+    formData.keyword_settings.language_code.length >= 2 &&
+    formData.keyword_settings.monthly_keyword_limit >= 10 &&
+    formData.keyword_settings.monthly_keyword_limit <= 1000
 
-  const handleRulesChange = (field: keyof KeywordSettingsData['generation_rules'], value: any) => {
+  const handleInputChange = (field: keyof KeywordSettingsData['keyword_settings'], value: any) => {
     setFormData(prev => ({
       ...prev,
-      generation_rules: {
-        ...prev.generation_rules,
+      keyword_settings: {
+        ...prev.keyword_settings,
         [field]: value
       }
     }))
@@ -49,16 +54,76 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    console.log('[StepKeywordSettings] User data:', user)
+    console.log('[StepKeywordSettings] User org_id:', user?.org_id)
+    
+    if (!user?.org_id) {
+      console.error('[StepKeywordSettings] User not authenticated')
+      return
+    }
+
     setIsSubmitting(true)
     try {
-      await onNext?.(formData)
+      console.log('[StepKeywordSettings] Attempting to persist keyword settings:', formData)
+      console.log('[StepKeywordSettings] Payload JSON:', JSON.stringify(formData, null, 2))
+      
+      // 🎯 PERSIST KEYWORD SETTINGS TO DATABASE
+      const res = await fetch('/api/onboarding/persist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error('[StepKeywordSettings] Persist failed:', errorText)
+        console.error('[StepKeywordSettings] Persist status:', res.status)
+        
+        let errorData: { error?: string } = {}
+        try {
+          errorData = JSON.parse(errorText)
+        } catch (e) {
+          // If not JSON, use the raw text
+          errorData = { error: errorText }
+        }
+        
+        throw new Error(errorData.error || `Failed to save keyword settings (${res.status})`)
+      }
+
+      const persistResult = await res.json()
+      console.log('[StepKeywordSettings] Persist success:', persistResult)
+
+      // 🎯 OBSERVE TRUTH FROM DB
+      if (!user?.org_id) {
+        throw new Error('User not authenticated or missing organization')
+      }
+      
+      const observerRes = await fetch('/api/onboarding/observe', {
+        method: 'GET',
+      })
+      console.log('[StepKeywordSettings] Observer response status:', observerRes.status)
+      
+      if (!observerRes.ok) {
+        throw new Error('Failed to observe onboarding state')
+      }
+
+      const state = await observerRes.json()
+      console.log('[StepKeywordSettings] Observer state:', state)
+
+      // 🎯 PASS VALIDATED STATE UP (NOT RAW FORM DATA)
+      await onNext?.(state)
+    } catch (error) {
+      console.error('[StepKeywordSettings] Complete error:', error)
+      // Don't advance step on failure
+      return
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleSkip = () => {
-    onSkip?.()
+    console.warn('Skip not implemented - all steps required for System Law compliance')
   }
 
   return (
@@ -82,83 +147,81 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Region */}
+            {/* Target Region */}
             <div className="space-y-2">
-              <label htmlFor="region" className="text-sm font-medium">
+              <label htmlFor="target_region" className="text-sm font-medium">
                 Target Region <span className="text-destructive">*</span>
               </label>
               <select
-                id="region"
-                value={formData.region}
-                onChange={(e) => handleInputChange('region', e.target.value)}
+                id="target_region"
+                value={formData.keyword_settings.target_region}
+                onChange={(e) => handleInputChange('target_region', e.target.value)}
                 className="w-full h-9 rounded-md border bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <option value="us">United States</option>
-                <option value="uk">United Kingdom</option>
-                <option value="ca">Canada</option>
-                <option value="au">Australia</option>
-                <option value="de">Germany</option>
-                <option value="fr">France</option>
-                <option value="es">Spain</option>
-                <option value="it">Italy</option>
-                <option value="jp">Japan</option>
-                <option value="global">Global</option>
+                <option value="United States">United States</option>
+                <option value="United Kingdom">United Kingdom</option>
+                <option value="Canada">Canada</option>
+                <option value="Australia">Australia</option>
+                <option value="Germany">Germany</option>
+                <option value="France">France</option>
+                <option value="Spain">Spain</option>
+                <option value="Italy">Italy</option>
+                <option value="Japan">Japan</option>
+                <option value="Global">Global</option>
               </select>
             </div>
 
-            {/* Generation Rules */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium">Generation Rules</h3>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Max Keywords Per Month */}
-                <div className="space-y-2">
-                  <label htmlFor="max_keywords_per_month" className="text-sm font-medium">
-                    Max Keywords/Month <span className="text-destructive">*</span>
-                  </label>
-                  <Input
-                    id="max_keywords_per_month"
-                    type="number"
-                    min="1"
-                    max="500"
-                    value={formData.generation_rules.max_keywords_per_month}
-                    onChange={(e) => handleRulesChange('max_keywords_per_month', parseInt(e.target.value) || 50)}
-                  />
-                </div>
+            {/* Language Code */}
+            <div className="space-y-2">
+              <label htmlFor="language_code" className="text-sm font-medium">
+                Language <span className="text-destructive">*</span>
+              </label>
+              <select
+                id="language_code"
+                value={formData.keyword_settings.language_code}
+                onChange={(e) => handleInputChange('language_code', e.target.value)}
+                className="w-full h-9 rounded-md border bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="it">Italian</option>
+                <option value="ja">Japanese</option>
+              </select>
+            </div>
 
-                {/* Competition Threshold */}
-                <div className="space-y-2">
-                  <label htmlFor="competition_threshold" className="text-sm font-medium">
-                    Competition Threshold <span className="text-destructive">*</span>
-                  </label>
-                  <Input
-                    id="competition_threshold"
-                    type="number"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value={formData.generation_rules.competition_threshold}
-                    onChange={(e) => handleRulesChange('competition_threshold', parseFloat(e.target.value) || 0.5)}
-                  />
-                  <p className="text-xs text-muted-foreground">0 (low) to 1 (high)</p>
-                </div>
-
-                {/* Search Volume Min */}
-                <div className="space-y-2">
-                  <label htmlFor="search_volume_min" className="text-sm font-medium">
-                    Min Search Volume <span className="text-destructive">*</span>
-                  </label>
-                  <Input
-                    id="search_volume_min"
-                    type="number"
-                    min="10"
-                    max="100000"
-                    value={formData.generation_rules.search_volume_min}
-                    onChange={(e) => handleRulesChange('search_volume_min', parseInt(e.target.value) || 100)}
-                  />
-                  <p className="text-xs text-muted-foreground">Monthly searches</p>
-                </div>
+            {/* Auto Generate Keywords */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Auto Generate Keywords</label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="auto_generate_keywords"
+                  checked={formData.keyword_settings.auto_generate_keywords}
+                  onChange={(e) => handleInputChange('auto_generate_keywords', e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <label htmlFor="auto_generate_keywords" className="text-sm text-muted-foreground">
+                  Automatically generate keywords based on your business and competitors
+                </label>
               </div>
+            </div>
+
+            {/* Monthly Keyword Limit */}
+            <div className="space-y-2">
+              <label htmlFor="monthly_keyword_limit" className="text-sm font-medium">
+                Monthly Keyword Limit <span className="text-destructive">*</span>
+              </label>
+              <Input
+                id="monthly_keyword_limit"
+                type="number"
+                min="10"
+                max="1000"
+                value={formData.keyword_settings.monthly_keyword_limit}
+                onChange={(e) => handleInputChange('monthly_keyword_limit', parseInt(e.target.value) || 100)}
+              />
+              <p className="text-xs text-muted-foreground">Maximum keywords to generate per month (10-1000)</p>
             </div>
 
             {/* Action Buttons */}
@@ -167,8 +230,7 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
                 type="submit"
                 variant="primary"
                 size="default"
-                disabled={isSubmitting}
-                loading={isSubmitting}
+                disabled={!isFormValid || isSubmitting}
                 className="flex-1"
               >
                 {isSubmitting ? "Saving..." : "Next Step"}

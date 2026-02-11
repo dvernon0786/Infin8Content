@@ -7,21 +7,24 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AIEnhancedInput } from "@/components/onboarding/ai-enhanced-input"
 import { cn } from "@/lib/utils"
+import { useCurrentUser } from '@/lib/hooks/use-current-user'
 
 interface StepCompetitorsProps {
   className?: string
-  onNext?: (data: CompetitorsData) => void
+  onNext?: (data: any) => void
   onSkip?: () => void
 }
 
-interface CompetitorsData {
-  competitors: string[]
+interface CompetitorInput {
+  url: string
+  name?: string
 }
 
 export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsProps) {
-  const [competitors, setCompetitors] = useState<string[]>([""])
+  const [competitors, setCompetitors] = useState<CompetitorInput[]>([{ url: "", name: "" }])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { user } = useCurrentUser()
 
   const validateUrl = (url: string): boolean => {
     try {
@@ -34,16 +37,16 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
-    const validCompetitors = competitors.filter(c => c.trim())
+    const validCompetitors = competitors.filter(c => c.url.trim())
 
-    if (validCompetitors.length < 3) {
-      newErrors.competitors = "Please add at least 3 competitors"
+    if (validCompetitors.length < 1) {
+      newErrors.competitors = "Please add at least 1 competitor"
     } else if (validCompetitors.length > 7) {
       newErrors.competitors = "Maximum 7 competitors allowed"
     } else {
       // Validate each URL
       validCompetitors.forEach((competitor, index) => {
-        if (!validateUrl(competitor)) {
+        if (!validateUrl(competitor.url)) {
           newErrors[`competitor_${index}`] = "Please enter a valid URL"
         }
       })
@@ -55,18 +58,18 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
 
   const addCompetitor = () => {
     if (competitors.length < 7) {
-      setCompetitors([...competitors, ""])
+      setCompetitors([...competitors, { url: "", name: "" }])
     }
   }
 
   const removeCompetitor = (index: number) => {
     const newCompetitors = competitors.filter((_, i) => i !== index)
-    setCompetitors(newCompetitors.length > 0 ? newCompetitors : [""])
+    setCompetitors(newCompetitors.length > 0 ? newCompetitors : [{ url: "", name: "" }])
   }
 
-  const updateCompetitor = (index: number, value: string) => {
+  const updateCompetitor = (index: number, field: keyof CompetitorInput, value: string) => {
     const newCompetitors = [...competitors]
-    newCompetitors[index] = value
+    newCompetitors[index] = { ...newCompetitors[index], [field]: value }
     setCompetitors(newCompetitors)
 
     // Clear error for this field
@@ -79,24 +82,77 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
     e.preventDefault()
     
     if (!validateForm()) {
+      console.error('[StepCompetitors] Form validation failed')
+      return
+    }
+
+    if (!user?.org_id) {
+      console.error('[StepCompetitors] User not authenticated')
       return
     }
 
     setIsSubmitting(true)
     try {
-      const validCompetitors = competitors.filter(c => c.trim())
-      await onNext?.({ competitors: validCompetitors })
+      console.log('[StepCompetitors] Attempting to persist competitors:', competitors)
+      
+      // 🎯 PERSIST COMPETITORS TO DATABASE (BULK OPERATION)
+      const validCompetitors = competitors.filter(c => c.url.trim())
+      
+      // Call bulk competitors API
+      const res = await fetch(`/api/organizations/${user.org_id}/competitors`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          competitors: validCompetitors.map(c => ({
+            url: c.url,
+            name: c.name || c.url
+          }))
+        }),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        console.error('[StepCompetitors] Competitor persist failed:', errorData)
+        throw new Error(errorData?.error || `Failed to save competitors`)
+      }
+
+      const persistResult = await res.json()
+      console.log('[StepCompetitors] All competitors persisted successfully:', persistResult)
+
+      // 🎯 OBSERVE TRUTH FROM DB
+      if (!user?.org_id) {
+        throw new Error('User not authenticated or missing organization')
+      }
+      
+      const observerRes = await fetch('/api/onboarding/observe', {
+        method: 'GET',
+      })
+      console.log('[StepCompetitors] Observer response status:', observerRes.status)
+      
+      if (!observerRes.ok) {
+        throw new Error('Failed to observe onboarding state')
+      }
+
+      const state = await observerRes.json()
+      console.log('[StepCompetitors] Observer state:', state)
+
+      // 🎯 PASS VALIDATED STATE UP (NOT RAW FORM DATA)
+      await onNext?.(state)
+    } catch (error) {
+      console.error('[StepCompetitors] Complete error:', error)
+      // Don't advance step on failure
+      return
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleSkip = () => {
-    onSkip?.()
+    console.warn('Skip not implemented - all steps required for System Law compliance')
   }
 
-  const validCompetitorsCount = competitors.filter(c => c.trim()).length
-  const isFormValid = validCompetitorsCount >= 3 && validCompetitorsCount <= 7
+  const validCompetitorsCount = competitors.filter(c => c.url.trim()).length
+  const isFormValid = validCompetitorsCount >= 1 && validCompetitorsCount <= 7
 
   return (
     <main className={cn("w-full max-w-2xl mx-auto", className)}>
@@ -122,21 +178,31 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
             {/* Competitor Inputs */}
             <div className="space-y-4">
               <div className="text-sm font-medium">
-                Competitor Websites <span className="text-muted-foreground">(Optional)</span>
+                Competitor Websites <span className="text-destructive">*</span>
               </div>
               {competitors.map((competitor, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <div className="flex-1 space-y-2">
                     <label className="text-sm font-medium">
-                      Competitor {index + 1} URL <span className="text-muted-foreground">(Optional)</span>
+                      Competitor {index + 1} URL <span className="text-destructive">*</span>
                     </label>
-                    <AIEnhancedInput
-                      value={competitor}
-                      onChange={(value) => updateCompetitor(index, value)}
-                      context="competitors"
+                    <Input
+                      type="url"
+                      value={competitor.url}
+                      onChange={(e) => updateCompetitor(index, 'url', e.target.value)}
                       placeholder={`Competitor ${index + 1} URL`}
-                      error={errors[`competitor_${index}`]}
-                      aria-label={`Competitor ${index + 1} URL with AI suggestions`}
+                      className={cn(errors[`competitor_${index}`] && "border-destructive")}
+                      aria-label={`Competitor ${index + 1} URL`}
+                    />
+                    <label className="text-sm font-medium">
+                      Competitor {index + 1} Name <span className="text-muted-foreground">(Optional)</span>
+                    </label>
+                    <Input
+                      type="text"
+                      value={competitor.name || ""}
+                      onChange={(e) => updateCompetitor(index, 'name', e.target.value)}
+                      placeholder={`Competitor ${index + 1} Name`}
+                      aria-label={`Competitor ${index + 1} Name`}
                     />
                   </div>
                   {competitors.length > 1 && (

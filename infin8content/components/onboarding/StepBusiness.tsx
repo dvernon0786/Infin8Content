@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { validateBusinessDescription, validateTargetAudiences } from "@/lib/validation/onboarding-profile-schema"
+import { useCurrentUser } from '@/lib/hooks/use-current-user'
 
 interface StepBusinessProps {
   className?: string
@@ -28,6 +29,7 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { user } = useCurrentUser()
 
   const validateUrl = (url: string): boolean => {
     try {
@@ -41,8 +43,10 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
 
-    // Website URL validation (optional)
-    if (formData.website_url && !validateUrl(formData.website_url)) {
+    // Website URL validation (required)
+    if (!formData.website_url) {
+      newErrors.website_url = "Website URL is required"
+    } else if (!validateUrl(formData.website_url)) {
       newErrors.website_url = "Please enter a valid URL (e.g., https://example.com)"
     }
 
@@ -76,6 +80,7 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
   }
 
   const handleInputChange = (field: keyof BusinessData, value: string | string[]) => {
+    console.log('[StepBusiness] handleInputChange:', field, value)
     setFormData(prev => ({ ...prev, [field]: value }))
     
     // Clear error for this field when user starts typing
@@ -123,12 +128,55 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
     e.preventDefault()
     
     if (!validateForm()) {
+      console.error('[StepBusiness] Form validation failed')
       return
     }
 
     setIsSubmitting(true)
     try {
-      await onNext?.(formData)
+      console.log('[StepBusiness] Attempting to persist:', formData)
+      
+      // 🎯 PERSIST TO DATABASE FIRST
+      const res = await fetch('/api/onboarding/persist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      console.log('[StepBusiness] Persist response status:', res.status)
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        console.error('[StepBusiness] Persist failed:', errorData)
+        throw new Error(errorData?.error || `Failed with status ${res.status}`)
+      }
+
+      const persistResult = await res.json()
+      console.log('[StepBusiness] Persist success:', persistResult)
+
+      // 🎯 OBSERVE TRUTH FROM DB
+      if (!user?.org_id) {
+        throw new Error('User not authenticated or missing organization')
+      }
+      
+      const observerRes = await fetch('/api/onboarding/observe', {
+        method: 'GET',
+      })
+      console.log('[StepBusiness] Observer response status:', observerRes.status)
+      
+      if (!observerRes.ok) {
+        throw new Error('Failed to observe onboarding state')
+      }
+
+      const state = await observerRes.json()
+      console.log('[StepBusiness] Observer state:', state)
+
+      // 🎯 PASS VALIDATED STATE UP (NOT RAW FORM DATA)
+      await onNext?.(state)
+    } catch (error) {
+      console.error('[StepBusiness] Complete error:', error)
+      // Don't advance step on failure
+      return
     } finally {
       setIsSubmitting(false)
     }
@@ -188,7 +236,7 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
             {/* Website URL */}
             <div className="space-y-2">
               <label htmlFor="website_url" className="text-sm font-medium">
-                Website URL <span className="text-muted-foreground">(Optional)</span>
+                Website URL <span className="text-destructive">*</span>
               </label>
               <Input
                 id="website_url"

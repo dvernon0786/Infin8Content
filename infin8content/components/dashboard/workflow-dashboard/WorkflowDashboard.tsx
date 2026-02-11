@@ -1,348 +1,267 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Loader2, RefreshCw, AlertCircle } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
-import type { DashboardResponse, WorkflowDashboardItem } from '@/lib/services/intent-engine/workflow-dashboard-service'
-import { WorkflowCard } from './WorkflowCard'
-import { WorkflowFilters } from './WorkflowFilters'
-import { WorkflowDetailModal } from './WorkflowDetailModal'
+import { Button } from '@/components/ui/button'
+import { Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import type {
+  DashboardResponse,
+  WorkflowDashboardItem,
+} from '@/lib/services/intent-engine/workflow-dashboard-service'
 
-/**
- * Workflow Dashboard Component
- * Story 39.6: Create Workflow Status Dashboard
- * 
- * Main container for displaying all workflows with real-time status,
- * progress tracking, and filtering capabilities.
- */
+const STEP_NARRATIVE = [
+  'Authentication',
+  'ICP',
+  'Competitors',
+  'Seeds',
+  'Longtails',
+  'Filtering',
+  'Clustering',
+  'Validation',
+  'Subtopics',
+  'Articles',
+]
+
+const PROGRESS_WIDTH = [
+  'w-[11%]',
+  'w-[22%]',
+  'w-[33%]',
+  'w-[44%]',
+  'w-[55%]',
+  'w-[66%]',
+  'w-[77%]',
+  'w-[88%]',
+  'w-full',
+]
+
+function getNarrative(step: number) {
+  return STEP_NARRATIVE.map((label, i) => ({
+    label,
+    state:
+      i + 1 < step ? 'done' :
+      i + 1 === step ? 'current' :
+      'upcoming',
+  }))
+}
+
+function EmptyState() {
+  const router = useRouter()
+  return (
+    <div className="flex flex-col items-center justify-center py-32 text-center">
+      <h2 className="text-xl font-medium tracking-tight">
+        No workflows yet
+      </h2>
+      <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+        Create your first intent workflow to start discovering
+        topics worth ranking for.
+      </p>
+      <Button className="mt-6" onClick={() => router.push('/workflows/new')}>
+        Create workflow
+      </Button>
+    </div>
+  )
+}
 export function WorkflowDashboard() {
   const router = useRouter()
-  const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
-  const [selectedDateRange, setSelectedDateRange] = useState<string | null>(null)
-  const [selectedCreator, setSelectedCreator] = useState<string | null>(null)
-  const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowDashboardItem | null>(null)
-  const [detailModalOpen, setDetailModalOpen] = useState(false)
-  const [showCreate, setShowCreate] = useState(false)
-  const [name, setName] = useState('')
-  const [creating, setCreating] = useState(false)
-  const [createError, setCreateError] = useState<string | null>(null)
+  const supabase = createClient()
   const subscriptionRef = useRef<any>(null)
+
+  const [data, setData] = useState<DashboardResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [focusedIndex, setFocusedIndex] = useState(0)
 
   useEffect(() => {
     fetchDashboard()
-    setupRealtimeSubscription()
+    setupRealtime()
 
     return () => {
-      if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe()
-      }
+      subscriptionRef.current?.unsubscribe()
     }
   }, [])
 
-  const fetchDashboard = async () => {
-    try {
-      setLoading(true)
-      setError(null)
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (!data?.workflows.length) return
       
-      const response = await fetch('/api/intent/workflows/dashboard')
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to fetch dashboard')
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setFocusedIndex(i => Math.min(i + 1, data.workflows.length - 1))
       }
-      
-      const data = await response.json()
-      setDashboardData(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const setupRealtimeSubscription = async () => {
-    try {
-      const supabase = createClient()
-      
-      subscriptionRef.current = supabase
-        .channel('intent_workflows_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'intent_workflows',
-          },
-          () => {
-            fetchDashboard()
-          }
-        )
-        .subscribe((status) => {
-          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-            console.warn('Realtime subscription failed, dashboard will use polling fallback')
-            setError(null)
-          }
-        })
-    } catch (err) {
-      console.error('Failed to setup realtime subscription:', err)
-      setError(null)
-    }
-  }
-
-  const filteredWorkflows = dashboardData?.workflows.filter(workflow => {
-    if (selectedStatus && workflow.status !== selectedStatus) return false
-    if (selectedCreator && workflow.created_by !== selectedCreator) return false
-    
-    if (selectedDateRange) {
-      const now = new Date()
-      const createdDate = new Date(workflow.created_at)
-      const daysDiff = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24))
-      
-      switch (selectedDateRange) {
-        case 'today':
-          if (daysDiff >= 1) return false
-          break
-        case 'this_week':
-          if (daysDiff > 7) return false
-          break
-        case 'this_month':
-          if (daysDiff > 30) return false
-          break
-        case 'all_time':
-          break
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setFocusedIndex(i => Math.max(i - 1, 0))
       }
     }
-    
-    return true
-  }) || []
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [data])
 
-  const creators = Array.from(new Set(dashboardData?.workflows.map(w => w.created_by) || []))
+  async function fetchDashboard() {
+    setLoading(true)
+    const res = await fetch('/api/intent/workflows/dashboard')
+    const json = await res.json()
+    setData(json)
+    setLoading(false)
+  }
+
+  function setupRealtime() {
+    subscriptionRef.current = supabase
+      .channel('intent_workflows_dashboard')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'intent_workflows' },
+        fetchDashboard
+      )
+      .subscribe()
+  }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-6 p-4">
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <AlertCircle className="w-5 h-5" />
-              Error Loading Dashboard
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">{error}</p>
-            <Button onClick={fetchDashboard} variant="outline">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="flex h-[60vh] items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="mx-auto max-w-4xl px-6 py-10 space-y-10">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Workflow Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Track the progress of your intent workflows
+      <header className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Workflows
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Ongoing intent research pipelines
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setShowCreate(true)}>
-            Create workflow
-          </Button>
-          <Button onClick={fetchDashboard} variant="outline" size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-        </div>
-      </div>
 
-      {/* Summary Cards */}
-      {dashboardData && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Workflows
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {dashboardData.summary.total_workflows}
-              </div>
-            </CardContent>
-          </Card>
+        <Button onClick={() => router.push('/workflows/new')}>
+          Create workflow
+        </Button>
+      </header>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                In Progress
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {dashboardData.summary.in_progress_workflows}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Completed
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {dashboardData.summary.completed_workflows}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Failed
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {dashboardData.summary.failed_workflows}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Filters */}
-      {dashboardData && (
-        <WorkflowFilters
-          statuses={dashboardData.filters.statuses}
-          selectedStatus={selectedStatus}
-          onStatusChange={setSelectedStatus}
-          creators={creators}
-          selectedCreator={selectedCreator}
-          onCreatorChange={setSelectedCreator}
-          selectedDateRange={selectedDateRange}
-          onDateRangeChange={setSelectedDateRange}
-        />
-      )}
-
-      {/* Workflows List */}
-      <div className="space-y-4">
-        {filteredWorkflows.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground">
-                {selectedStatus
-                  ? `No workflows with status "${selectedStatus}"`
-                  : 'No workflows found'}
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredWorkflows.map(workflow => (
-            <WorkflowCard
+      {/* List */}
+      {data?.workflows.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <div className="divide-y rounded-xl border bg-background">
+          {data?.workflows.map((workflow, i) => (
+            <WorkflowRow
               key={workflow.id}
               workflow={workflow}
-              onNavigate={() => {
-                setSelectedWorkflow(workflow)
-                setDetailModalOpen(true)
-              }}
+              isFocused={i === focusedIndex}
+              onFocus={() => setFocusedIndex(i)}
+              onContinue={() =>
+                router.push(
+                  `/workflows/${workflow.id}/steps/${workflow.current_step}`
+                )
+              }
             />
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
-      {/* Detail Modal */}
-      <WorkflowDetailModal
-        workflow={selectedWorkflow}
-        open={detailModalOpen}
-        onOpenChange={setDetailModalOpen}
-      />
+function WorkflowRow({
+  workflow,
+  onContinue,
+  isFocused,
+  onFocus,
+}: {
+  workflow: WorkflowDashboardItem
+  onContinue: () => void
+  isFocused: boolean
+  onFocus: () => void
+}) {
+  const [hovered, setHovered] = useState(false)
+  const stepNumber = workflow.current_step
+  const narrative = getNarrative(stepNumber)
+  const progress = Math.round((stepNumber / 9) * 100)
+  const showExpanded = hovered || isFocused
 
-      {/* Create Workflow Dialog */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create workflow</DialogTitle>
-            <DialogDescription>
-              Start a new intent workflow
-            </DialogDescription>
-          </DialogHeader>
+  return (
+    <div
+      tabIndex={0}
+      onFocus={onFocus}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onKeyDown={(e) => e.key === 'Enter' && onContinue()}
+      className={cn(
+        'group relative px-6 py-5 outline-none transition',
+        'hover:bg-muted/30 focus:bg-muted/30',
+        'focus-visible:ring-1 focus-visible:ring-muted-foreground/20'
+      )}
+    >
+      <div className="flex items-start justify-between gap-6">
+        {/* LEFT */}
+        <div className="space-y-2 max-w-[70%]">
+          <h3 className="font-medium leading-tight">
+            {workflow.name}
+          </h3>
 
-          <div className="space-y-4">
-            <Input
-              placeholder="Workflow name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+          {/* Narrative */}
+          <div className="flex flex-wrap gap-x-2 gap-y-1 text-sm">
+            {narrative
+              .slice(0, showExpanded ? narrative.length : 3)
+              .map((step, i) => (
+                <span
+                  key={step.label}
+                  className={cn(
+                    step.state === 'current' && 'font-medium text-foreground',
+                    step.state !== 'current' && 'text-muted-foreground'
+                  )}
+                >
+                  {step.label}
+                  {i < narrative.length - 1 && ' →'}
+                </span>
+              ))}
 
-            {createError && (
-              <p className="text-sm text-red-600">{createError}</p>
+            {!showExpanded && narrative.length > 3 && (
+              <span className="text-muted-foreground">…</span>
             )}
-
-            <Button
-              disabled={creating || !name.trim()}
-              onClick={async () => {
-                try {
-                  setCreating(true)
-                  setCreateError(null)
-
-                  const res = await fetch('/api/intent/workflows', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name }),
-                  })
-
-                  if (!res.ok) {
-                    const body = await res.json()
-                    throw new Error(body.error || 'Failed to create workflow')
-                  }
-
-                  setShowCreate(false)
-                  setName('')
-                  // realtime subscription will update list
-                } catch (e: any) {
-                  setCreateError(e.message)
-                } finally {
-                  setCreating(false)
-                }
-              }}
-              className="w-full"
-            >
-              {creating ? 'Creating…' : 'Create workflow'}
-            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+
+          {/* Hover detail */}
+          {showExpanded && (
+            <p className="text-xs text-muted-foreground">
+              Currently working on <strong>{STEP_NARRATIVE[stepNumber - 1]}</strong>
+            </p>
+          )}
+
+          {/* Progress bar */}
+          <div className="h-1 w-full rounded-full bg-muted">
+            <div
+              className={cn(
+                'h-1 rounded-full bg-primary transition-all',
+                PROGRESS_WIDTH[stepNumber - 1] ?? 'w-[11%]'
+              )}
+            />
+          </div>
+        </div>
+
+        {/* RIGHT */}
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <span className="text-xs text-muted-foreground">
+            Updated {new Date(workflow.updated_at).toLocaleDateString()}
+          </span>
+
+          <button
+            onClick={onContinue}
+            className={cn(
+              'text-sm font-medium',
+              'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
+              'transition-opacity'
+            )}
+          >
+            Continue →
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

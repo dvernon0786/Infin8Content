@@ -1,20 +1,23 @@
 # Development Guide
 
-Generated: 2026-02-10 (ICP Form Production-Correct with Invariant Test)  
+Generated: 2026-02-10 (System Law Enforcement + Auth Fixes)  
 Project: Infin8Content  
 Framework: Next.js 16.1.1 with TypeScript  
-Environment: Development - ✅ **ICP STEP 1 INPUT FORM PRODUCTION-CORRECT**
+Environment: Development - ✅ **SYSTEM LAW ENFORCED + AUTH STABILIZED**
 
 ---
 
 ## System Status (2026-02-10)
 
-✅ **ICP STEP 1 INPUT FORM - PRODUCTION-CORRECT WITH INVARIANT TEST**
-- Dev Server: Running cleanly without routing conflicts
-- Authentication: Registration and OTP verification working
-- Database: Supabase connected and verified
-- Email: Brevo OTP delivery active
-- Environment: All variables configured
+✅ **SYSTEM LAW ENFORCED + AUTH STABILIZED**
+- **Onboarding System Law**: ✅ **FROZEN v1** - Data-derived validation only
+- **Auth Registration**: ✅ **FIXED** - Database trigger errors resolved
+- **Service Role Client**: ✅ **CONFIGURED** - No refresh token attempts
+- **Invariant Tests**: ✅ **ACTIVE** - 6 tests enforcing System Law
+- **Database Schema**: ✅ **ALIGNED** - All column references correct
+- **Dev Server**: Running cleanly without routing conflicts
+- **Authentication**: Registration and OTP verification working
+- **Environment**: All variables configured
 - 🔥 **Workflow State Machine**: Complete implementation with canonical definitions
 - 🧪 **Test Suite Refactoring**: Complete - 300+ → 0 TypeScript errors, honest types enforced
 - 🚀 **MVP Correctness**: State machine provably correct, safe, and deterministic

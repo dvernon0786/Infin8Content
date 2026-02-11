@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
@@ -22,34 +22,30 @@ const createCompetitorSchema = z.object({
     .optional()
 })
 
+const bulkCompetitorsSchema = z.object({
+  competitors: z.array(createCompetitorSchema).min(1, 'At least one competitor required')
+})
+
 /**
  * POST /api/organizations/[orgId]/competitors
  * 
- * Creates a new competitor URL for an organization.
- * Validates URL format, checks for duplicates, and stores with proper organization isolation.
+ * Creates multiple competitor URLs for an organization (atomic operation).
+ * Deletes existing competitors, validates URLs, checks for duplicates, and stores all new competitors.
  * 
- * @param request - HTTP request containing competitor URL and optional name
+ * @param request - HTTP request containing competitors array
  * @param params - Route parameters containing organization ID
  * @returns JSON response with competitor details, or error details
  * 
  * Request Body:
- * - url: string (required, valid URL format)
- * - name: string (optional, max 100 characters)
+ * - competitors: array of { url: string, name?: string }
  * 
  * Response (Success - 200):
- * - id: string (UUID)
- * - organization_id: string (UUID)
- * - url: string (normalized HTTPS URL)
- * - domain: string (extracted domain)
- * - name: string (optional)
- * - is_active: boolean
- * - created_at: string (ISO timestamp)
+ * - competitors: array of created competitor objects
  * 
  * Response (Error):
  * - 401: Authentication required
  * - 403: Insufficient permissions
  * - 400: Validation error
- * - 409: Duplicate competitor domain
  * - 500: Server error
  */
 export async function POST(
@@ -88,7 +84,7 @@ export async function POST(
 
     // Parse and validate request body
     const body = await request.json()
-    const validationResult = createCompetitorSchema.safeParse(body)
+    const validationResult = bulkCompetitorsSchema.safeParse(body)
     
     if (!validationResult.success) {
       return NextResponse.json(
@@ -100,85 +96,61 @@ export async function POST(
       )
     }
 
-    const { url, name } = validationResult.data
+    const { competitors } = validationResult.data
+    const supabase = createServiceRoleClient()
 
-    // Validate and normalize URL
-    const normalizedUrl = validateAndNormalizeUrl(url)
-    if (!normalizedUrl) {
-      return NextResponse.json(
-        { error: 'Invalid URL format' },
-        { status: 400 }
-      )
-    }
-
-    // Extract domain
-    const domain = extractDomain(normalizedUrl)
-
-    const supabase = await createClient()
-
-    // Check for existing competitor with same domain
-    const { data: existingCompetitor, error: checkError } = await supabase
-      .from('organization_competitors')
-      .select('id')
-      .eq('organization_id', targetOrgId)
-      .eq('domain', domain)
-      .single()
-
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = not found
-      return NextResponse.json(
-        { error: 'Database error checking existing competitor' },
-        { status: 500 }
-      )
-    }
-
-    if (existingCompetitor) {
-      return NextResponse.json(
-        { error: 'Competitor already exists' },
-        { status: 409 }
-      )
-    }
-
-    // Create new competitor
-    const { data: competitor, error: insertError } = await supabase
-      .from('organization_competitors')
-      .insert({
-        organization_id: targetOrgId,
-        url: normalizedUrl,
-        domain,
-        name,
-        created_by: currentUser.id
-      })
-      .select()
-      .single()
-
-    if (insertError || !competitor) {
-      console.error('Error creating competitor:', insertError)
-      return NextResponse.json(
-        { error: 'Failed to create competitor' },
-        { status: 500 }
-      )
-    }
-
-    // Log the competitor creation action
+    // Atomic operation: delete existing competitors, then insert all new ones
     try {
-      await logActionAsync({
-        orgId: targetOrgId,
-        userId: currentUser.id,
-        action: AuditAction.COMPETITOR_CREATED,
-        details: {
-          competitor_id: (competitor as any).id,
-          domain: (competitor as any).domain,
-          has_name: !!(competitor as any).name
-        },
-        ipAddress: extractIpAddress(request.headers),
-        userAgent: extractUserAgent(request.headers),
-      })
-    } catch (logError) {
-      // Don't fail the request if logging fails
-      console.error('Failed to log competitor creation:', logError)
-    }
+      // Delete all existing competitors for this organization
+      await supabase
+        .from('organization_competitors')
+        .delete()
+        .eq('organization_id', targetOrgId)
 
-    return NextResponse.json(competitor, { status: 200 })
+      // Process and insert all new competitors
+      const processedCompetitors = competitors.map(competitor => {
+        const normalizedUrl = validateAndNormalizeUrl(competitor.url)
+        if (!normalizedUrl) {
+          throw new Error(`Invalid URL format: ${competitor.url}`)
+        }
+        
+        const domain = extractDomain(normalizedUrl)
+        
+        return {
+          organization_id: targetOrgId,
+          url: normalizedUrl,
+          domain,
+          name: competitor.name || competitor.url,
+          created_by: currentUser.user.id
+        }
+      })
+
+      // Insert all competitors
+      const { data: insertedCompetitors, error: insertError } = await supabase
+        .from('organization_competitors')
+        .insert(processedCompetitors)
+        .select()
+
+      if (insertError) {
+        console.error('Error inserting competitors:', insertError)
+        return NextResponse.json(
+          { error: 'Failed to create competitors', details: insertError.message },
+          { status: 500 }
+        )
+      }
+
+      return NextResponse.json({
+        success: true,
+        competitors: insertedCompetitors
+      })
+
+    } catch (error) {
+      console.error('Bulk competitor operation failed:', error)
+      return NextResponse.json(
+        { error: 'Failed to process competitors', details: error instanceof Error ? error.message : 'Unknown error' },
+        { status: 500 }
+      )
+    }
 
   } catch (error) {
     console.error('Unexpected error in POST /api/organizations/[orgId]/competitors:', error)
@@ -232,7 +204,7 @@ export async function GET(
       )
     }
 
-    const supabase = await createClient()
+    const supabase = createServiceRoleClient()
 
     // Get all competitors for the organization
     const { data: competitors, error } = await supabase
