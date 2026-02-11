@@ -109,8 +109,9 @@ function WorkflowRow({
   workflow: WorkflowDashboardItem
   onContinue: () => void
 }) {
-  const currentIndex = Math.max(0, workflow.current_step - 1)
-  const progress = Math.round((workflow.current_step / 9) * 100)
+  const stepNumber = parseInt(workflow.current_step, 10) || 1
+  const currentIndex = Math.max(0, stepNumber - 1)
+  const progress = Math.round((stepNumber / 9) * 100)
 
   return (
     <div className="flex items-center justify-between px-6 py-5 hover:bg-muted/30 transition">
