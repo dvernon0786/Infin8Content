@@ -1,10 +1,15 @@
 /**
  * ICP Generator Service
- * Story 34.1: Generate ICP Document via Perplexity AI
- * Story 34.3: Harden ICP Generation with Automatic Retry & Failure Recovery
- * 
- * Generates Ideal Customer Profile (ICP) documents using OpenRouter Perplexity API
- * based on organization profile data, with automatic retry logic for transient failures.
+ *
+ * Uses Perplexity Sonar Deep Research exclusively.
+ * No fallback models allowed.
+ *
+ * Deterministic research-grade ICP generation.
+ *
+ * Model: perplexity/sonar-deep-research
+ * Temperature: 0.4
+ * Max Tokens: 1500
+ * Fallback: Disabled
  */
 
 import { generateContent, type OpenRouterMessage } from '@/lib/services/openrouter/openrouter-client'
@@ -281,13 +286,21 @@ Return a JSON object with the following structure:
 
     const result = await Promise.race([
       generateContent(messages, {
-        maxTokens: 2000,
-        temperature: 0.7,
-        maxRetries: 2,
-        model: 'perplexity/llama-3.1-sonar-small-128k-online'
+        model: 'perplexity/sonar-deep-research',
+        maxTokens: 1500,
+        temperature: 0.4,
+        maxRetries: 0,
+        disableFallback: true
       }),
       timeoutPromise
     ])
+
+    // Validate model used matches expected deterministic model
+    if (result.modelUsed !== 'perplexity/sonar-deep-research') {
+      throw new Error(`Model drift detected: expected perplexity/sonar-deep-research, got ${result.modelUsed}`)
+    }
+
+    console.log(`[ICP] Model Used: ${result.modelUsed}, Tokens: ${result.tokensUsed}`)
 
     // Parse JSON response (strip markdown formatting if present)
     let icpData: ICPData

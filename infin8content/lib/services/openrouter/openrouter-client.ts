@@ -38,6 +38,7 @@ export interface OpenRouterResponse {
 export interface OpenRouterGenerationOptions {
   maxRetries?: number
   retryDelay?: number
+  disableFallback?: boolean
 }
 
 export interface OpenRouterGenerationResult {
@@ -85,11 +86,21 @@ export async function generateContent(
   const maxTokens = options.maxTokens ?? 2000
   const temperature = options.temperature ?? 0.7
   const requestedModel = options.model
+  const disableFallback = options.disableFallback ?? false
 
-  // Model selection with fallback chain
-  const modelsToTry = requestedModel 
-    ? [requestedModel, ...FREE_MODELS]
-    : [...FREE_MODELS]
+  // Model selection with optional fallback chain
+  let modelsToTry: string[]
+  
+  if (disableFallback && requestedModel) {
+    // Only use the requested model, no fallbacks
+    modelsToTry = [requestedModel]
+  } else if (requestedModel) {
+    // Try requested model first, then fallbacks
+    modelsToTry = [requestedModel, ...FREE_MODELS]
+  } else {
+    // No specific model requested, use fallback chain
+    modelsToTry = [...FREE_MODELS]
+  }
 
   let lastError: Error | null = null
 
