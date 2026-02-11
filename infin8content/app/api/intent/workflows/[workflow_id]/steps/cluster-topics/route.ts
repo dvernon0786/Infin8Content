@@ -100,6 +100,7 @@ export async function POST(
       .from('intent_workflows')
       .update({
         status: 'step_6_clustering',
+        current_step: 7,  // Advance to Step 7
         step_6_clustering_completed_at: new Date().toISOString(),
         cluster_count: clusterResult.cluster_count,
         keywords_clustered: clusterResult.keywords_clustered

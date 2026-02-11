@@ -174,6 +174,7 @@ export async function POST(
       .from('intent_workflows')
       .update({
         status: 'step_7_validation',
+        current_step: 8,  // Advance to Step 8
         step_7_validation_completed_at: new Date().toISOString(),
         valid_cluster_count: validationSummary.valid_clusters,
         invalid_cluster_count: validationSummary.invalid_clusters

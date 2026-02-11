@@ -575,7 +575,8 @@ export async function expandSeedKeywordsToLongtails(workflowId: string): Promise
   // Update workflow status
   const completionTime = new Date().toISOString()
   await updateWorkflowStatus(workflowId, organizationId, 'step_4_longtails', {
-    step_4_longtails_completed_at: completionTime
+    step_4_longtails_completed_at: completionTime,
+    current_step: 5  // Advance to Step 5
   })
   
   console.log(`[LongtailExpander] Completed expansion. Created ${totalLongtailsCreated} long-tails from ${seedKeywords.length} seeds`)

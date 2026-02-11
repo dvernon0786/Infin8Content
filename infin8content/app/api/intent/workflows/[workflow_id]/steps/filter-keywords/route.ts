@@ -106,6 +106,7 @@ export async function POST(
       .from('intent_workflows')
       .update({
         status: 'step_5_filtering',
+        current_step: 6,  // Advance to Step 6
         step_5_filtering_completed_at: new Date().toISOString(),
         filtered_keywords_count: filterResult.filtered_keywords_count
       })

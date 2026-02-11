@@ -267,6 +267,7 @@ async function updateWorkflowStatus(
     .from('intent_workflows')
     .update({
       status,
+      current_step: 9,  // Step 9 is the final step
       updated_at: new Date().toISOString()
     })
     .eq('id', workflowId)
@@ -275,5 +276,5 @@ async function updateWorkflowStatus(
     throw new Error(`Failed to update workflow status: ${error.message}`)
   }
 
-  console.log(`[ArticleQueuing] Updated workflow ${workflowId} status to ${status}`)
+  console.log(`[ArticleQueuing] Updated workflow ${workflowId} status to ${status}, current_step set to 9`)
 }

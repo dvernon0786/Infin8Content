@@ -132,6 +132,7 @@ export async function POST(
       .from('intent_workflows')
       .update({ 
         status: 'step_3_seeds',
+        current_step: 4,  // Advance to Step 4
         updated_at: new Date().toISOString()
       })
       .eq('id', workflowId)
