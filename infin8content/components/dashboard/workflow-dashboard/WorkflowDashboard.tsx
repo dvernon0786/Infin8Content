@@ -10,7 +10,6 @@ import { createClient } from '@/lib/supabase/client'
 import type { DashboardResponse, WorkflowDashboardItem } from '@/lib/services/intent-engine/workflow-dashboard-service'
 import { WorkflowCard } from './WorkflowCard'
 import { WorkflowFilters } from './WorkflowFilters'
-import { WorkflowDetailModal } from './WorkflowDetailModal'
 
 /**
  * Workflow Dashboard Component
@@ -27,8 +26,6 @@ export function WorkflowDashboard() {
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
   const [selectedDateRange, setSelectedDateRange] = useState<string | null>(null)
   const [selectedCreator, setSelectedCreator] = useState<string | null>(null)
-  const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowDashboardItem | null>(null)
-  const [detailModalOpen, setDetailModalOpen] = useState(false)
   const subscriptionRef = useRef<any>(null)
 
   useEffect(() => {
@@ -260,21 +257,10 @@ export function WorkflowDashboard() {
             <WorkflowCard
               key={workflow.id}
               workflow={workflow}
-              onNavigate={() => {
-                setSelectedWorkflow(workflow)
-                setDetailModalOpen(true)
-              }}
             />
           ))
         )}
       </div>
-
-      {/* Detail Modal */}
-      <WorkflowDetailModal
-        workflow={selectedWorkflow}
-        open={detailModalOpen}
-        onOpenChange={setDetailModalOpen}
-      />
     </div>
   )
 }

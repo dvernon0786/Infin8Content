@@ -77,7 +77,11 @@ export function WorkflowStepLayout({
             <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
               <div
                 className="h-full bg-primary transition-all"
-                style={{ width: `${(workflow.current_step / 9) * 100}%` }}
+                role="progressbar"
+                aria-valuenow={workflow.current_step}
+                aria-valuemin={1}
+                aria-valuemax={9}
+                data-progress={Math.round((workflow.current_step / 9) * 100)}
               />
             </div>
           </div>

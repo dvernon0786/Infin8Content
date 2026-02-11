@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -11,7 +12,7 @@ import { WORKFLOW_STEP_DESCRIPTIONS, WORKFLOW_PROGRESS_MAP, type WorkflowState }
 
 interface WorkflowCardProps {
   workflow: WorkflowDashboardItem
-  onNavigate: () => void
+  onNavigate?: () => void
 }
 
 /**
@@ -19,6 +20,12 @@ interface WorkflowCardProps {
  * Displays individual workflow status, progress, and actions
  */
 export function WorkflowCard({ workflow, onNavigate }: WorkflowCardProps) {
+  const router = useRouter()
+
+  const handleNavigate = () => {
+    router.push(`/workflows/${workflow.id}/steps/1`)
+  }
+
   const getStatusColor = (status: string) => {
     if (status === 'completed') return 'bg-green-100 text-green-800'
     if (status === 'failed') return 'bg-red-100 text-red-800'
@@ -40,7 +47,7 @@ export function WorkflowCard({ workflow, onNavigate }: WorkflowCardProps) {
   }
 
   return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={onNavigate}>
+    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleNavigate}>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -87,10 +94,10 @@ export function WorkflowCard({ workflow, onNavigate }: WorkflowCardProps) {
           className="w-full justify-between"
           onClick={(e) => {
             e.stopPropagation()
-            onNavigate()
+            handleNavigate()
           }}
         >
-          <span>View Details</span>
+          <span>Go to Step 1</span>
           <ChevronRight className="w-4 h-4" />
         </Button>
       </CardContent>
