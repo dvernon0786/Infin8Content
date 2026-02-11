@@ -24,6 +24,18 @@ const STEP_NARRATIVE = [
   'Articles',
 ]
 
+const PROGRESS_WIDTH = [
+  'w-[11%]',
+  'w-[22%]',
+  'w-[33%]',
+  'w-[44%]',
+  'w-[55%]',
+  'w-[66%]',
+  'w-[77%]',
+  'w-[88%]',
+  'w-full',
+]
+
 function getNarrative(step: number) {
   return STEP_NARRATIVE.map((label, i) => ({
     label,
@@ -35,6 +47,7 @@ function getNarrative(step: number) {
 }
 
 function EmptyState() {
+  const router = useRouter()
   return (
     <div className="flex flex-col items-center justify-center py-32 text-center">
       <h2 className="text-xl font-medium tracking-tight">
@@ -44,7 +57,7 @@ function EmptyState() {
         Create your first intent workflow to start discovering
         topics worth ranking for.
       </p>
-      <Button className="mt-6" onClick={() => window.location.href = '/workflows/new'}>
+      <Button className="mt-6" onClick={() => router.push('/workflows/new')}>
         Create workflow
       </Button>
     </div>
@@ -135,22 +148,19 @@ export function WorkflowDashboard() {
         <EmptyState />
       ) : (
         <div className="divide-y rounded-xl border bg-background">
-          {data?.workflows.map((workflow, i) => {
-            const stepNumber = parseInt(workflow.current_step, 10) || 1
-            return (
-              <WorkflowRow
-                key={workflow.id}
-                workflow={workflow}
-                isFocused={i === focusedIndex}
-                onFocus={() => setFocusedIndex(i)}
-                onContinue={() =>
-                  router.push(
-                    `/workflows/${workflow.id}/steps/${stepNumber}`
-                  )
-                }
-              />
-            )
-          })}
+          {data?.workflows.map((workflow, i) => (
+            <WorkflowRow
+              key={workflow.id}
+              workflow={workflow}
+              isFocused={i === focusedIndex}
+              onFocus={() => setFocusedIndex(i)}
+              onContinue={() =>
+                router.push(
+                  `/workflows/${workflow.id}/steps/${workflow.current_step}`
+                )
+              }
+            />
+          ))}
         </div>
       )}
     </div>
@@ -169,7 +179,7 @@ function WorkflowRow({
   onFocus: () => void
 }) {
   const [hovered, setHovered] = useState(false)
-  const stepNumber = parseInt(workflow.current_step, 10) || 1
+  const stepNumber = workflow.current_step
   const narrative = getNarrative(stepNumber)
   const progress = Math.round((stepNumber / 9) * 100)
   const showExpanded = hovered || isFocused
@@ -226,8 +236,10 @@ function WorkflowRow({
           {/* Progress bar */}
           <div className="h-1 w-full rounded-full bg-muted">
             <div
-              className="h-1 rounded-full bg-primary transition-all"
-              style={{ width: `${progress}%` }}
+              className={cn(
+                'h-1 rounded-full bg-primary transition-all',
+                PROGRESS_WIDTH[stepNumber - 1] ?? 'w-[11%]'
+              )}
             />
           </div>
         </div>
