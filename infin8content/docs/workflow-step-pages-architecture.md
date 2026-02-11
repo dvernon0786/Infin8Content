@@ -1,14 +1,21 @@
 # Workflow Step Pages Architecture
 
 **Date**: February 11, 2026  
-**Status**: ✅ Production Ready  
-**Version**: 1.0
+**Status**: ✅ Production Complete - All 9 Steps Implemented  
+**Version**: 2.0
 
 ---
 
 ## Overview
 
-The workflow step pages system implements a canonical, backend-authoritative architecture for executing the 9-step Intent Engine workflow. Each step is a real page with server-side guards, not a modal or transient UI.
+The workflow step pages system implements a canonical, backend-authoritative architecture for executing the complete 9-step Intent Engine workflow. Each step is a real page with server-side guards, premium UX, and auto-advance functionality. The system is now production-complete with Linear-grade user experience.
+
+### Implementation Status
+- ✅ **Step 1**: ICP Generation (previously implemented)
+- ✅ **Steps 2-9**: Complete mechanical implementation (February 11, 2026)
+- ✅ **Auto-Advance**: Backend step progression triggers UI navigation
+- ✅ **Production UX**: Narrative progress, optimistic states, failure recovery
+- ✅ **Complete Telemetry**: 3 events per step (viewed, started, completed/failed)
 
 ---
 
@@ -206,6 +213,57 @@ Each additional step requires:
 
 ---
 
+## Complete Implementation (Steps 2-9)
+
+### Mechanical Pattern Applied
+All steps 2-9 were implemented using identical mechanical pattern:
+
+#### 1. **Step Forms** (8 components)
+- `Step2CompetitorsForm.tsx` through `Step9ArticlesForm.tsx`
+- Identical structure: optimistic states, telemetry, API calls
+- No navigation logic (layout handles this)
+- Production-grade error handling
+
+#### 2. **Step Pages** (8 pages)  
+- `/steps/2/page.tsx` through `/steps/9/page.tsx`
+- Identical template: guard + layout + form
+- Zero design decisions required
+- Backend authority enforced
+
+#### 3. **API Endpoint Fixes** (7 endpoints)
+- All endpoints now advance `current_step` on completion
+- Step 2 → 3, Step 3 → 4, ..., Step 8 → 9
+- Enables auto-advance functionality
+- Proper error handling maintained
+
+### Production-Grade Enhancements
+
+#### Auto-Advance System
+```tsx
+useEffect(() => {
+  if (workflow.current_step > step) {
+    router.replace(`/workflows/${workflow.id}/steps/${workflow.current_step}`)
+  }
+}, [workflow.current_step, step, router])
+```
+
+#### Narrative Progress
+```
+ICP → Competitors → Seeds → Longtails → Filtering → Clustering → Validation → Subtopics → Articles
+```
+
+#### Complete Telemetry
+- `workflow_step_viewed` (page load)
+- `workflow_step_started` (user clicks run)
+- `workflow_step_completed/failed` (API result)
+
+#### Failure Recovery
+- Clean error display in layout
+- Retry functionality preserved
+- No dead ends or broken states
+
+---
+
 ## Testing Strategy
 
 ### Guard Logic
@@ -213,18 +271,21 @@ Each additional step requires:
 - ✅ Cannot access completed workflow steps
 - ✅ Refresh maintains correct step
 - ✅ Redirect to current step if accessing future step
+- ✅ Auto-advance works for async operations
 
 ### Navigation
 - ✅ Back button routes to dashboard
-- ✅ Next button uses backend state
-- ✅ Modal navigation uses router.push()
+- ✅ Continue button uses backend state
+- ✅ SPA navigation throughout
 - ✅ No full page reloads
+- ✅ Auto-advance to next step
 
 ### Analytics
 - ✅ Page view fires once per mount
-- ✅ Submit success fires completion event
-- ✅ Submit failure fires failure event
+- ✅ Step started fires on user action
+- ✅ Step completed/failed fires on API result
 - ✅ No duplicate events
+- ✅ Complete audit trail
 
 ---
 

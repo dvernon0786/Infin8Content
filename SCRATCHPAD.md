@@ -2,10 +2,10 @@
 
 ## 🔒 ONBOARDING SYSTEM LAW - PRODUCTION READY (February 11, 2026)
 
-**Date**: 2026-02-11T11:35:00+11:00  
-**Status**: ✅ **v2 SYSTEM LAW - COMPLETE WITH WORKFLOW STEP PAGES**  
-**Latest Task**: Implement Canonical Workflow Step Pages (Step 1: Generate ICP) - **COMPLETED**  
-**Result**: Complete workflow step architecture with backend guards, page-based execution, and linear progression enforcement
+**Date**: 2026-02-11T12:53:00+11:00  
+**Status**: ✅ **v2 SYSTEM LAW - COMPLETE WITH FULL WORKFLOW ENGINE**  
+**Latest Task**: Implement Complete Workflow Steps 2-9 with Production-Grade Enhancements - **COMPLETED**  
+**Result**: Complete 9-step workflow engine with Linear-grade UX, auto-advance, and mechanical scalability
 
 ### 📊 **FINAL SYSTEM LAW COMPLIANCE**
 
@@ -26,6 +26,10 @@
 - ✅ **DB Constraint**: CHECK constraint prevents flag corruption
 - ✅ **Guard Updates**: Uses validator, not flags
 - ✅ **Canonical Redirect**: Observer-driven termination to dashboard
+- ✅ **Complete Workflow Engine**: 9-step page-based architecture with backend guards
+- ✅ **Linear Progression**: `requireWorkflowStepAccess()` enforces step-by-step execution
+- ✅ **Auto-Advance**: Backend step progression triggers UI navigation automatically
+- ✅ **Production-Grade UX**: Narrative progress, optimistic states, failure recovery
 
 #### **Violations Eliminated**: COMPLETE ✅
 - ❌ **DELETED**: `/api/onboarding/complete` (illegal flag writer)
@@ -48,7 +52,7 @@ DATA → VALIDATOR → PERMISSION → TERMINATION
 - No POST to observe (GET-only)
 - No premature completion (all steps required)
 
-### 🔧 LATEST FIXES: COMPLETE ONBOARDING SYSTEM ✅
+### 🔧 LATEST FIXES: COMPLETE WORKFLOW ENGINE ✅
 - ✅ **Build Errors Fixed**: All TypeScript compilation errors resolved
 - ✅ **Component Props Fixed**: StepIntegration uses onNext, not onComplete
 - ✅ **Observe API Fixed**: All calls use GET method, auth-derived org
@@ -65,6 +69,12 @@ DATA → VALIDATOR → PERMISSION → TERMINATION
 - ✅ **Complete User Flow**: Onboarding → Dashboard → Workflow Creation
 - ✅ **UI Authority Removed**: No step derivation in frontend
 - ✅ **System Law Enforced**: Observer is single source of truth
+- ✅ **Steps 2-9 Implemented**: Complete 9-step workflow with mechanical pattern
+- ✅ **API Step Advancement**: All endpoints now advance current_step correctly
+- ✅ **Auto-Advance Feature**: Backend progression triggers UI navigation
+- ✅ **Production-Grade UX**: Narrative progress, optimistic states, failure recovery
+- ✅ **Complete Telemetry**: 3 events per step (viewed, started, completed/failed)
+- ✅ **Bookmarkable URLs**: Direct access to any step with proper guards
 
 #### **Critical Fixes Applied**:
 - ✅ **Added `deriveStepFromCanonicalState()` function** to observe endpoint
@@ -77,6 +87,13 @@ DATA → VALIDATOR → PERMISSION → TERMINATION
 - ✅ **Created workflow creation page** with proper server/client boundary
 - ✅ **Fixed server component error** by removing event handler props
 - ✅ **Prepared test data deletion scripts** for clean testing
+- ✅ **Implemented complete workflow steps 2-9** with mechanical repetition pattern
+- ✅ **Fixed step count normalization** (9 steps total, auth excluded)
+- ✅ **Added auto-advance logic** to WorkflowStepLayoutClient
+- ✅ **Fixed all API endpoints** to advance current_step on completion
+- ✅ **Added failure recovery UI** with clean error display
+- ✅ **Implemented complete telemetry** for all workflow steps
+- ✅ **Created production-grade step forms** with optimistic states
 
 #### **Files Modified (Final Session)**:
 - `app/onboarding/page.tsx` - Updated redirect condition and type definition
@@ -92,6 +109,30 @@ DATA → VALIDATOR → PERMISSION → TERMINATION
 - `delete-test-user-data-v3.sql` - Created for clean testing
 - Documentation updates across project
 
+#### **Workflow Engine Files Created/Modified**:
+- `components/workflows/WorkflowStepLayoutClient.tsx` - Premium layout with auto-advance
+- `components/workflows/steps/Step2CompetitorsForm.tsx` - Step 2 form with telemetry
+- `components/workflows/steps/Step3SeedsForm.tsx` - Step 3 form with telemetry
+- `components/workflows/steps/Step4LongtailsForm.tsx` - Step 4 form with telemetry
+- `components/workflows/steps/Step5FilteringForm.tsx` - Step 5 form with telemetry
+- `components/workflows/steps/Step6ClusteringForm.tsx` - Step 6 form with telemetry
+- `components/workflows/steps/Step7ValidationForm.tsx` - Step 7 form with telemetry
+- `components/workflows/steps/Step8SubtopicsForm.tsx` - Step 8 form with telemetry
+- `components/workflows/steps/Step9ArticlesForm.tsx` - Step 9 form with telemetry
+- `app/workflows/[id]/steps/2/page.tsx` - Step 2 page with guard
+- `app/workflows/[id]/steps/3/page.tsx` - Step 3 page with guard
+- `app/workflows/[id]/steps/4/page.tsx` - Step 4 page with guard
+- `app/workflows/[id]/steps/5/page.tsx` - Step 5 page with guard
+- `app/workflows/[id]/steps/6/page.tsx` - Step 6 page with guard
+- `app/workflows/[id]/steps/7/page.tsx` - Step 7 page with guard
+- `app/workflows/[id]/steps/8/page.tsx` - Step 8 page with guard
+- `app/workflows/[id]/steps/9/page.tsx` - Step 9 page with guard
+- `lib/services/intent-engine/competitor-seed-extractor.ts` - Step 2 advancement fix
+- `lib/services/intent-engine/longtail-keyword-expander.ts` - Step 4 advancement fix
+- `lib/services/intent-engine/article-queuing-processor.ts` - Step 9 advancement fix
+- `lib/services/intent-engine/human-approval-processor.ts` - Step 8 advancement fix
+- Multiple API route files - Step advancement fixes for steps 3-7
+
 #### **Technical Details**:
 - **Issue**: POST calls to observe API causing 405 Method Not Allowed
 - **Root Cause**: Main onboarding page and step components using POST
@@ -102,9 +143,33 @@ DATA → VALIDATOR → PERMISSION → TERMINATION
 #### **Technical Details (Workflow Creation)**:
 - **Issue**: Server component error when passing event handlers to client components
 - **Root Cause**: onSuccess prop passed from server component to client component
-- **Fix**: Removed onSuccess prop, added useRouter to client component for navigation
-- **Implementation**: CreateWorkflowForm handles its own redirect logic
-- **Result**: Clean server/client boundary, no 500 errors, production-ready
+- **Fix**: Move event handler logic to client component, pass only data props
+- **Result**: Clean server/client boundary, proper navigation
+- **Verification**: Build passes, navigation works
+
+#### **Technical Details (Workflow Engine)**:
+- **Issue**: 404 errors when clicking "Continue" on dashboard
+- **Root Cause**: workflow.current_step was string, not number for URL construction
+- **Fix**: Normalize current_step to number at API boundary, remove parseInt() in UI
+- **Result**: Clean navigation to correct step URLs
+- **Verification**: All steps accessible, auto-advance works
+
+#### **Workflow Engine Architecture**:
+- **Backend Authority**: Only backend advances current_step via API endpoints
+- **Linear Progression**: requireWorkflowStepAccess() enforces step-by-step execution
+- **Auto-Advance**: useEffect monitors workflow.current_step changes, triggers navigation
+- **Telemetry**: 3 events per step (viewed, started, completed/failed)
+- **Error Recovery**: Clean error display, retry functionality, no dead ends
+- **SPA Navigation**: All router.push(), no page reloads
+- **Bookmarkable URLs**: Direct access to any step with proper guards
+
+#### **Production-Grade Features**:
+- **Narrative Progress**: "ICP → Competitors → Seeds → …" instead of numbers
+- **Optimistic States**: Running/disabled states, spinners, no UI lying
+- **Failure Recovery**: Errors are states, not dead ends, retry works
+- **Mechanical Pattern**: All steps follow identical form/page template
+- **Type Safety**: All interfaces aligned, no parseInt() needed in UI
+- **CI Compliance**: No inline styles, all Tailwind utilities
 
 #### **Technical Details (Route Guard & Empty State)**:
 - **Issue**: Users could re-enter onboarding after completion, no guidance for next steps
