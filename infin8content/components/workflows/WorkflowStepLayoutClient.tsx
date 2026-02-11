@@ -14,7 +14,6 @@ interface WorkflowStepLayoutClientProps {
 }
 
 const STEP_NARRATIVE = [
-  'Authentication',
   'ICP',
   'Competitors',
   'Seeds',
