@@ -12,9 +12,10 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
-import {
+import { 
   extractSeedKeywords,
-  type ExtractSeedKeywordsRequest
+  type ExtractSeedKeywordsRequest,
+  type CompetitorData
 } from '@/lib/services/intent-engine/competitor-seed-extractor'
 import { getWorkflowCompetitors } from '@/lib/services/competitor-workflow-integration'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
@@ -167,6 +168,14 @@ export async function POST(
     const existingUrls = new Set(workflowCompetitors.map(c => c.url))
     const newCompetitors = additionalCompetitors.filter(url => !existingUrls.has(url))
 
+    // Format workflow competitors to match CompetitorData interface
+    const workflowFormatted = workflowCompetitors.map(c => ({
+      id: c.id,
+      url: c.url,
+      domain: c.domain,
+      is_active: c.is_active
+    }))
+
     // Format additional competitors
     const extraFormatted = newCompetitors
       .filter((url) => typeof url === 'string' && url.trim().length > 0)
@@ -174,10 +183,10 @@ export async function POST(
         id: crypto.randomUUID(),
         url: url.trim(),
         domain: url.trim(),
-        is_active: true,
+        is_active: true
       }))
 
-    const allCompetitors = [...workflowCompetitors, ...extraFormatted]
+    const allCompetitors: CompetitorData[] = [...workflowFormatted, ...extraFormatted]
 
     if (allCompetitors.length === 0) {
       return NextResponse.json(

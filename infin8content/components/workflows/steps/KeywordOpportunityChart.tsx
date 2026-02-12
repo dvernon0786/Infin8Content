@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import {
   BarChart,
   Bar,
@@ -24,29 +25,36 @@ interface Props {
 }
 
 export function KeywordOpportunityChart({ keywords }: Props) {
-  if (!keywords || keywords.length === 0) return null
+  const top10 = useMemo(() => {
+    if (!keywords || keywords.length === 0) return []
 
-  const maxVolume = Math.max(...keywords.map(k => k.search_volume || 0))
-  const maxCpc = Math.max(...keywords.map(k => k.cpc || 0))
+    const maxVolume = Math.max(...keywords.map(k => k.search_volume || 0))
+    const maxCpc = Math.max(...keywords.map(k => k.cpc || 0))
 
-  const normalize = (value: number, max: number) =>
-    max === 0 ? 0 : value / max
+    const normalize = (value: number, max: number) =>
+      max === 0 ? 0 : value / max
 
-  const scored = keywords.map(k => {
-    const score =
-      normalize(k.search_volume, maxVolume) * 0.5 +
-      normalize(k.cpc || 0, maxCpc) * 0.3 -
-      (k.competition_index || 0) * 0.2
+    const scored = keywords.map(k => {
+      const scoreRaw =
+        normalize(k.search_volume, maxVolume) * 0.5 +
+        normalize(k.cpc || 0, maxCpc) * 0.3 -
+        (k.competition_index || 0) * 0.2
 
-    return {
-      ...k,
-      opportunity_score: Number(score.toFixed(3))
-    }
-  })
+      // Clamp score to 0-1 range
+      const score = Math.max(0, Math.min(scoreRaw, 1))
 
-  const top10 = scored
-    .sort((a, b) => b.opportunity_score - a.opportunity_score)
-    .slice(0, 10)
+      return {
+        ...k,
+        opportunity_score: Number(score.toFixed(3))
+      }
+    })
+
+    return scored
+      .sort((a, b) => b.opportunity_score - a.opportunity_score)
+      .slice(0, 10)
+  }, [keywords])
+
+  if (!top10 || top10.length === 0) return null
 
   // Custom tooltip
   const CustomTooltip = ({ active, payload }: any) => {

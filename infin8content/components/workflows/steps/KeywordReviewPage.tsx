@@ -305,7 +305,7 @@ export default function KeywordReviewPage({
       </div>
 
       {/* Opportunity Chart */}
-      <KeywordOpportunityChart keywords={keywords} />
+      <KeywordOpportunityChart keywords={filtered} />
 
       {/* Footer */}
       <div className="flex justify-between items-center pt-4 border-t">

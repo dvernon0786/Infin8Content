@@ -33,6 +33,18 @@ export interface SeedKeywordData {
   competition_index: number
   keyword_difficulty: number
   cpc?: number
+  
+  // AI Copilot metadata fields
+  detected_language?: string
+  is_foreign_language?: boolean
+  main_intent?: string
+  is_navigational?: boolean
+  foreign_intent?: string[]
+  ai_suggested?: boolean
+  user_selected?: boolean
+  decision_confidence?: number
+  selection_source?: string
+  selection_timestamp?: string
 }
 
 export interface DataForSEOKeywordResult {
@@ -96,6 +108,10 @@ export async function extractSeedKeywords(
     throw new Error('Organization ID is required for seed keyword extraction')
   }
 
+  if (!workflowId) {
+    throw new Error('Workflow ID is required for seed keyword extraction')
+  }
+
   console.log(`[CompetitorSeedExtractor] Starting extraction for ${competitors.length} competitors`)
 
   const results: CompetitorSeedExtractionResult[] = []
@@ -108,7 +124,7 @@ export async function extractSeedKeywords(
   const perCompetitorTimeoutMs = Math.floor((timeoutMs * 0.9) / competitors.length)
   const startTime = Date.now()
 
-  for (const competitor of competitors) {
+  for (const competitor of competitors as CompetitorData[]) {
     try {
       // Check if we've exceeded overall timeout
       const elapsedMs = Date.now() - startTime
@@ -126,7 +142,12 @@ export async function extractSeedKeywords(
         organizationId
       )
 
-      await persistSeedKeywords(organizationId, competitor.id, keywords)
+      const competitorId = competitor.id as string
+      if (!competitorId) {
+        throw new Error(`Competitor ID is required for ${competitor.url}`)
+      }
+
+      await persistSeedKeywords(organizationId, workflowId, competitorId, keywords)
       totalKeywordsCreated += keywords.length
       competitorsProcessed++
 
@@ -153,19 +174,6 @@ export async function extractSeedKeywords(
     }
   }
 
-  if (totalKeywordsCreated === 0) {
-    console.warn(`[CompetitorSeedExtractor] No keywords extracted from any competitor`)
-    
-    // Return structured error - NO state mutation here
-    return {
-      total_keywords_created: 0,
-      competitors_processed: competitorsProcessed,
-      competitors_failed: competitorsFailed,
-      results,
-      error: 'NO_KEYWORDS_FOUND'
-    }
-  }
-
   // Log partial success for visibility
   if (competitorsFailed > 0) {
     console.log(`[CompetitorSeedExtractor] Partial success: ${competitorsProcessed}/${competitors.length} competitors processed successfully`)
@@ -176,7 +184,7 @@ export async function extractSeedKeywords(
     `[CompetitorSeedExtractor] Extraction completed in ${totalElapsedMs}ms: ${totalKeywordsCreated} keywords created`
   )
 
-  // Return success data - NO state mutation here
+  // Return neutral result - service layer is pure data collection
   return {
     total_keywords_created: totalKeywordsCreated,
     competitors_processed: competitorsProcessed,
@@ -377,10 +385,11 @@ async function extractKeywordsFromCompetitor(
 }
 
 /**
- * Persist seed keywords to database
+ * Persist seed keywords to database with AI metadata
  */
 export async function persistSeedKeywords(
   organizationId: string,
+  workflowId: string,
   competitorUrlId: string,
   keywords: SeedKeywordData[]
 ): Promise<number> {
@@ -391,49 +400,55 @@ export async function persistSeedKeywords(
     return 0
   }
 
-  // Delete existing keywords for this competitor (idempotency)
-  const { error: deleteError } = await supabase
-    .from('keywords')
-    .delete()
-    .eq('organization_id', organizationId)
-    .eq('competitor_url_id', competitorUrlId)
-
-  if (deleteError) {
-    throw new Error(`Failed to delete existing keywords for competitor ${competitorUrlId}: ${deleteError.message}`)
-  }
-
-  // Insert new keywords
+  // Create keyword records with ALL AI metadata fields
   const keywordRecords = keywords
     .filter(keyword => keyword.seed_keyword && keyword.seed_keyword.trim().length > 0)
     .map(keyword => ({
-    organization_id: organizationId,
-    competitor_url_id: competitorUrlId,
-    seed_keyword: keyword.seed_keyword.trim(),
-    keyword: keyword.seed_keyword.trim(), // Same as seed_keyword at this stage
-    search_volume: keyword.search_volume,
-    competition_level: keyword.competition_level,
-    competition_index: keyword.competition_index,
-    keyword_difficulty: keyword.keyword_difficulty,
-    cpc: keyword.cpc,
-    longtail_status: 'not_started',
-    subtopics_status: 'not_started',
-    article_status: 'not_started',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }))
+      organization_id: organizationId,
+      workflow_id: workflowId,
+      competitor_url_id: competitorUrlId,
+      seed_keyword: keyword.seed_keyword.trim(),
+      keyword: keyword.seed_keyword.trim(), // Same as seed_keyword at this stage
+      search_volume: keyword.search_volume,
+      competition_level: keyword.competition_level,
+      competition_index: keyword.competition_index,
+      keyword_difficulty: keyword.keyword_difficulty,
+      cpc: keyword.cpc,
+      longtail_status: 'not_started',
+      subtopics_status: 'not_started',
+      article_status: 'not_started',
+      
+      // AI Copilot metadata fields
+      detected_language: keyword.detected_language,
+      is_foreign_language: keyword.is_foreign_language,
+      main_intent: keyword.main_intent,
+      is_navigational: keyword.is_navigational,
+      foreign_intent: keyword.foreign_intent,
+      ai_suggested: keyword.ai_suggested,
+      user_selected: keyword.user_selected,
+      decision_confidence: keyword.decision_confidence,
+      selection_source: keyword.selection_source,
+      selection_timestamp: keyword.selection_timestamp,
+      
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }))
 
   if (keywordRecords.length === 0) {
     console.warn(`[persistSeedKeywords] No valid keyword records after filtering for competitor ${competitorUrlId}`)
     return 0
   }
 
-  const { error: insertError, data } = await supabase
+  // Use upsert instead of delete+insert to preserve audit trail
+  const { error: upsertError, data } = await supabase
     .from('keywords')
-    .insert(keywordRecords)
+    .upsert(keywordRecords, {
+      onConflict: 'organization_id,workflow_id,seed_keyword'
+    })
     .select('id')
 
-  if (insertError) {
-    throw new Error(`Failed to persist seed keywords: ${insertError.message}`)
+  if (upsertError) {
+    throw new Error(`Failed to persist seed keywords: ${upsertError.message}`)
   }
 
   return data?.length || 0

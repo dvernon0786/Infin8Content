@@ -115,6 +115,15 @@ export class KeywordClusterer {
       // Load filtered keywords for workflow
       const keywords = await this.loadFilteredKeywords(workflowId, options.userSelectedOnly)
       
+      // Enterprise compute guards
+      if (keywords.length < 2) {
+        throw new Error(`Insufficient keywords for clustering: ${keywords.length} < 2`)
+      }
+      
+      if (keywords.length > 100) {
+        throw new Error(`Keyword limit exceeded for clustering: ${keywords.length} > 100`)
+      }
+      
       if (keywords.length < minClusterSize) {
         throw new Error(`Insufficient keywords for clustering: ${keywords.length} < ${minClusterSize}`)
       }
@@ -185,11 +194,12 @@ export class KeywordClusterer {
         // Type guard: ensure workflow is properly typed
         const typedWorkflow = workflow as unknown as { organization_id: string }
 
-        // Then get keywords for that organization
+        // Then get keywords for that organization and workflow
         let query = this.supabase
           .from('keywords')
           .select('*')
           .eq('organization_id', typedWorkflow.organization_id)
+          .eq('workflow_id', workflowId) // CRITICAL: Add workflow isolation
           .eq('is_filtered_out', false)
         
         // Add user_selected filter if specified
