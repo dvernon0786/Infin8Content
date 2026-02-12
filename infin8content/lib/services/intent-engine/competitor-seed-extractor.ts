@@ -452,23 +452,43 @@ export async function persistSeedKeywords(
     throw new Error(`Failed to persist seed keywords: ${upsertError.message}`)
   }
 
-  // Enterprise safety: Log when we might overwrite human decisions
-  const existingKeywords = keywordRecords.map(k => k.seed_keyword)
+  // Enterprise safety: Detect actual database conflicts, not assumed reruns
+  const keywordSeeds = keywordRecords.map(k => k.seed_keyword)
   
-  if (existingKeywords.length > 0) {
-    console.log(`[persistSeedKeywords] Processing ${existingKeywords.length} existing keywords for workflow ${workflowId}`)
-    
-    // CRITICAL: Log potential human decision overwrite
-    console.warn(`[persistSeedKeywords] STEP 2 RERUN DETECTED - May overwrite human decisions`)
-    console.warn(`[persistSeedKeywords] Workflow: ${workflowId}, Organization: ${organizationId}`)
-    console.warn(`[persistSeedKeywords] Keywords affected: ${existingKeywords.join(', ')}`)
-    
-    // TODO: Implement human decision preservation
-    // For now, we log the risk and proceed
-    // In production, add logic to only update AI fields for selection_source = 'ai'
-    console.warn(`[persistSeedKeywords] NOTE: Step 2 rerun may overwrite human decisions. Consider implementing decision preservation.`)
-  } else {
-    console.log(`[persistSeedKeywords] All ${keywordRecords.length} keywords are new for workflow ${workflowId}`)
+  if (keywordSeeds.length > 0) {
+    try {
+      // Check for actual existing keywords in database
+      const { data: existingKeywords, error: checkError } = await supabase
+        .from('keywords')
+        .select('seed_keyword, selection_source, user_selected, decision_confidence')
+        .in('seed_keyword', keywordSeeds)
+        .eq('organization_id', organizationId)
+        .eq('workflow_id', workflowId)
+
+      if (checkError) {
+        console.warn(`[persistSeedKeywords] Failed to check existing keywords: ${checkError.message}`)
+      } else if (existingKeywords && Array.isArray(existingKeywords) && existingKeywords.length > 0) {
+        // TRUE RERUN DETECTED: Actual database conflicts found
+        console.warn(`[persistSeedKeywords] STEP 2 RERUN DETECTED - ${existingKeywords.length} existing keywords found`)
+        console.warn(`[persistSeedKeywords] Workflow: ${workflowId}, Organization: ${organizationId}`)
+        
+        // Check for human decisions that could be overwritten
+        const humanDecisions = existingKeywords.filter((k: any) => k.selection_source === 'user')
+        if (humanDecisions.length > 0) {
+          console.error(`[persistSeedKeywords] CRITICAL: ${humanDecisions.length} human decisions at risk of overwrite`)
+          console.error(`[persistSeedKeywords] Keywords with human decisions: ${humanDecisions.map((k: any) => k.seed_keyword).join(', ')}`)
+        } else {
+          console.log(`[persistSeedKeywords] All existing keywords are AI-suggested - safe to update`)
+        }
+        
+        // TODO: Implement conflict-safe upsert to preserve human decisions
+        console.warn(`[persistSeedKeywords] NOTE: Human decision preservation not yet implemented - decisions may be overwritten`)
+      } else {
+        console.log(`[persistSeedKeywords] All ${keywordRecords.length} keywords are new for workflow ${workflowId}`)
+      }
+    } catch (error) {
+      console.warn(`[persistSeedKeywords] Error checking existing keywords: ${error}`)
+    }
   }
 
   return data?.length || 0
