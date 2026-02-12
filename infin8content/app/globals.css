@@ -18,6 +18,16 @@
   /* Core Brand Colors */
   --brand-electric-blue: #217CEB;
   --brand-infinite-purple: #4A42CC;
+  
+  /* === UX DESIGN SYSTEM TYPOGRAPHY === */
+  --font-poppins: var(--font-poppins), 'Poppins', sans-serif;
+  --font-lato: var(--font-lato), 'Lato', sans-serif;
+  
+  /* === UX DESIGN SYSTEM COLORS === */
+  
+  /* Core Brand Colors */
+  --brand-electric-blue: #217CEB;
+  --brand-infinite-purple: #4A42CC;
   --brand-deep-charcoal: #2C2C2E;
   --brand-soft-light-gray: #F4F4F6;
   --brand-white: #FFFFFF;
@@ -266,6 +276,30 @@
   --color-primary-blue: #217CEB;
   --color-primary-purple: #4A42CC;
 }
+
+/* === DYNAMIC CONFIDENCE BARS === */
+/* Design system approved: Dynamic widths for data visualization */
+.confidence-0 { width: 0%; }
+.confidence-5 { width: 5%; }
+.confidence-10 { width: 10%; }
+.confidence-15 { width: 15%; }
+.confidence-20 { width: 20%; }
+.confidence-25 { width: 25%; }
+.confidence-30 { width: 30%; }
+.confidence-35 { width: 35%; }
+.confidence-40 { width: 40%; }
+.confidence-45 { width: 45%; }
+.confidence-50 { width: 50%; }
+.confidence-55 { width: 55%; }
+.confidence-60 { width: 60%; }
+.confidence-65 { width: 65%; }
+.confidence-70 { width: 70%; }
+.confidence-75 { width: 75%; }
+.confidence-80 { width: 80%; }
+.confidence-85 { width: 85%; }
+.confidence-90 { width: 90%; }
+.confidence-95 { width: 95%; }
+.confidence-100 { width: 100%; }
 
 .dark {
   --background: oklch(0.141 0.005 285.823);

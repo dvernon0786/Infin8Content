@@ -50,6 +50,7 @@ export interface ClusterOptions {
   similarityThreshold?: number  // Default: 0.6
   maxSpokesPerHub?: number     // Default: 8
   minClusterSize?: number      // Default: 3 (1 hub + 2 spokes)
+  userSelectedOnly?: boolean   // Default: false - if true, only cluster user_selected keywords
 }
 
 export interface ClusterResult {
@@ -87,32 +88,17 @@ export class KeywordClusterer {
     const minClusterSize = options.minClusterSize ?? 3
 
     try {
-      // Get organization context first
-      const { data: workflow, error: workflowError } = await this.supabase
-        .from('intent_workflows')
-        .select('organization_id')
-        .eq('id', workflowId)
-        .single()
-        
-      if (workflowError || !workflow) {
-        throw new Error(`Workflow not found: ${workflowId}`)
+      // Load filtered keywords for workflow (includes organization lookup)
+      const keywords = await this.loadFilteredKeywords(workflowId, options.userSelectedOnly)
+      
+      // Enterprise compute guards
+      if (keywords.length < 2) {
+        throw new Error(`Insufficient keywords for clustering: ${keywords.length} < 2`)
       }
-
-      // Type guard: ensure workflow is properly typed
-      const typedWorkflow = workflow as unknown as { organization_id: string }
-
-      // Emit start event
-      emitAnalyticsEvent({
-        event_type: 'workflow.topic_clustering.started',
-        timestamp: new Date().toISOString(),
-        organization_id: typedWorkflow.organization_id,
-        workflow_id: workflowId,
-        similarity_threshold: similarityThreshold,
-        max_spokes_per_hub: maxSpokesPerHub
-      })
-
-      // Load filtered keywords for workflow
-      const keywords = await this.loadFilteredKeywords(workflowId)
+      
+      if (keywords.length > 100) {
+        throw new Error(`Keyword limit exceeded for clustering: ${keywords.length} > 100`)
+      }
       
       if (keywords.length < minClusterSize) {
         throw new Error(`Insufficient keywords for clustering: ${keywords.length} < ${minClusterSize}`)
@@ -141,11 +127,23 @@ export class KeywordClusterer {
         completed_at: new Date().toISOString()
       }
 
+      // Emit start event
+      if (keywords.length > 0) {
+        emitAnalyticsEvent({
+          event_type: 'workflow.topic_clustering.started',
+          timestamp: new Date().toISOString(),
+          organization_id: keywords[0].organization_id,
+          workflow_id: workflowId,
+          similarity_threshold: similarityThreshold,
+          max_spokes_per_hub: maxSpokesPerHub
+        })
+      }
+
       // Emit completion event
       emitAnalyticsEvent({
         event_type: 'workflow.topic_clustering.completed',
         timestamp: new Date().toISOString(),
-        organization_id: typedWorkflow.organization_id,
+        organization_id: keywords[0].organization_id,
         workflow_id: workflowId,
         total_keywords: keywords.length,
         cluster_count: result.cluster_count,
@@ -167,7 +165,7 @@ export class KeywordClusterer {
   /**
    * Load filtered keywords for the workflow
    */
-  private async loadFilteredKeywords(workflowId: string): Promise<Keyword[]> {
+  private async loadFilteredKeywords(workflowId: string, userSelectedOnly: boolean = false): Promise<Keyword[]> {
     return await retryWithPolicy(
       async () => {
         // First get organization_id from workflow
@@ -184,12 +182,20 @@ export class KeywordClusterer {
         // Type guard: ensure workflow is properly typed
         const typedWorkflow = workflow as unknown as { organization_id: string }
 
-        // Then get keywords for that organization
-        const { data, error } = await this.supabase
+        // Then get keywords for that organization and workflow
+        let query = this.supabase
           .from('keywords')
           .select('*')
           .eq('organization_id', typedWorkflow.organization_id)
+          .eq('workflow_id', workflowId) // CRITICAL: Add workflow isolation
           .eq('is_filtered_out', false)
+        
+        // Add user_selected filter if specified
+        if (userSelectedOnly) {
+          query = query.eq('user_selected', true)
+        }
+        
+        const { data, error } = await query
           .order('search_volume', { ascending: false })
 
         if (error || !data) {

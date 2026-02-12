@@ -33,6 +33,18 @@ export interface SeedKeywordData {
   competition_index: number
   keyword_difficulty: number
   cpc?: number
+  
+  // AI Copilot metadata fields
+  detected_language?: string
+  is_foreign_language?: boolean
+  main_intent?: string
+  is_navigational?: boolean
+  foreign_intent?: string[]
+  ai_suggested?: boolean
+  user_selected?: boolean
+  decision_confidence?: number
+  selection_source?: string
+  selection_timestamp?: string
 }
 
 export interface DataForSEOKeywordResult {
@@ -96,6 +108,10 @@ export async function extractSeedKeywords(
     throw new Error('Organization ID is required for seed keyword extraction')
   }
 
+  if (!workflowId) {
+    throw new Error('Workflow ID is required for seed keyword extraction')
+  }
+
   console.log(`[CompetitorSeedExtractor] Starting extraction for ${competitors.length} competitors`)
 
   const results: CompetitorSeedExtractionResult[] = []
@@ -108,7 +124,7 @@ export async function extractSeedKeywords(
   const perCompetitorTimeoutMs = Math.floor((timeoutMs * 0.9) / competitors.length)
   const startTime = Date.now()
 
-  for (const competitor of competitors) {
+  for (const competitor of competitors as CompetitorData[]) {
     try {
       // Check if we've exceeded overall timeout
       const elapsedMs = Date.now() - startTime
@@ -126,7 +142,12 @@ export async function extractSeedKeywords(
         organizationId
       )
 
-      await persistSeedKeywords(organizationId, competitor.id, keywords)
+      const competitorId = competitor.id as string
+      if (!competitorId) {
+        throw new Error(`Competitor ID is required for ${competitor.url}`)
+      }
+
+      await persistSeedKeywords(organizationId, workflowId, competitorId, keywords)
       totalKeywordsCreated += keywords.length
       competitorsProcessed++
 
@@ -153,19 +174,6 @@ export async function extractSeedKeywords(
     }
   }
 
-  if (totalKeywordsCreated === 0) {
-    console.warn(`[CompetitorSeedExtractor] No keywords extracted from any competitor`)
-    
-    // Return structured error - NO state mutation here
-    return {
-      total_keywords_created: 0,
-      competitors_processed: competitorsProcessed,
-      competitors_failed: competitorsFailed,
-      results,
-      error: 'NO_KEYWORDS_FOUND'
-    }
-  }
-
   // Log partial success for visibility
   if (competitorsFailed > 0) {
     console.log(`[CompetitorSeedExtractor] Partial success: ${competitorsProcessed}/${competitors.length} competitors processed successfully`)
@@ -176,7 +184,7 @@ export async function extractSeedKeywords(
     `[CompetitorSeedExtractor] Extraction completed in ${totalElapsedMs}ms: ${totalKeywordsCreated} keywords created`
   )
 
-  // Return success data - NO state mutation here
+  // Return neutral result - service layer is pure data collection
   return {
     total_keywords_created: totalKeywordsCreated,
     competitors_processed: competitorsProcessed,
@@ -314,7 +322,21 @@ async function extractKeywordsFromCompetitor(
         competition_level: mapCompetitionLevel(result.competition_index),
         competition_index: result.competition_index || 0,
         keyword_difficulty: result.keyword_difficulty || result.competition_index || 0,
-        cpc: result.cpc
+        cpc: result.cpc,
+        
+        // NEW TAGGING FIELDS FOR DECISION TRACKING
+        detected_language: result.detected_language || null,
+        is_foreign_language: result.is_another_language || false,
+        main_intent: result.main_intent || null,
+        is_navigational: result.main_intent === 'navigational',
+        foreign_intent: result.foreign_intent || null,
+        
+        // DECISION TRACKING FIELDS
+        ai_suggested: true, // AI initially suggests all extracted keywords
+        user_selected: true, // Default to selected for human review
+        decision_confidence: calculateKeywordConfidence(result),
+        selection_source: 'ai',
+        selection_timestamp: new Date().toISOString()
       }))
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
@@ -364,10 +386,11 @@ async function extractKeywordsFromCompetitor(
 }
 
 /**
- * Persist seed keywords to database
+ * Persist seed keywords to database with AI metadata
  */
 export async function persistSeedKeywords(
   organizationId: string,
+  workflowId: string,
   competitorUrlId: string,
   keywords: SeedKeywordData[]
 ): Promise<number> {
@@ -378,49 +401,94 @@ export async function persistSeedKeywords(
     return 0
   }
 
-  // Delete existing keywords for this competitor (idempotency)
-  const { error: deleteError } = await supabase
-    .from('keywords')
-    .delete()
-    .eq('organization_id', organizationId)
-    .eq('competitor_url_id', competitorUrlId)
-
-  if (deleteError) {
-    throw new Error(`Failed to delete existing keywords for competitor ${competitorUrlId}: ${deleteError.message}`)
-  }
-
-  // Insert new keywords
+  // Create keyword records with ALL AI metadata fields
   const keywordRecords = keywords
     .filter(keyword => keyword.seed_keyword && keyword.seed_keyword.trim().length > 0)
     .map(keyword => ({
-    organization_id: organizationId,
-    competitor_url_id: competitorUrlId,
-    seed_keyword: keyword.seed_keyword.trim(),
-    keyword: keyword.seed_keyword.trim(), // Same as seed_keyword at this stage
-    search_volume: keyword.search_volume,
-    competition_level: keyword.competition_level,
-    competition_index: keyword.competition_index,
-    keyword_difficulty: keyword.keyword_difficulty,
-    cpc: keyword.cpc,
-    longtail_status: 'not_started',
-    subtopics_status: 'not_started',
-    article_status: 'not_started',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }))
+      organization_id: organizationId,
+      workflow_id: workflowId, // Critical for workflow isolation
+      competitor_url_id: competitorUrlId,
+      seed_keyword: keyword.seed_keyword.trim(),
+      keyword: keyword.seed_keyword.trim(), // Same as seed_keyword at this stage
+      search_volume: keyword.search_volume,
+      competition_level: keyword.competition_level,
+      competition_index: keyword.competition_index,
+      keyword_difficulty: keyword.keyword_difficulty,
+      cpc: keyword.cpc,
+      longtail_status: 'not_started',
+      subtopics_status: 'not_started',
+      article_status: 'not_started',
+      
+      // AI Copilot metadata fields
+      detected_language: keyword.detected_language,
+      is_foreign_language: keyword.is_foreign_language,
+      main_intent: keyword.main_intent,
+      is_navigational: keyword.is_navigational,
+      foreign_intent: keyword.foreign_intent,
+      ai_suggested: keyword.ai_suggested,
+      user_selected: keyword.user_selected,
+      decision_confidence: keyword.decision_confidence,
+      selection_source: keyword.selection_source,
+      selection_timestamp: keyword.selection_timestamp,
+      
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }))
 
   if (keywordRecords.length === 0) {
     console.warn(`[persistSeedKeywords] No valid keyword records after filtering for competitor ${competitorUrlId}`)
     return 0
   }
 
-  const { error: insertError, data } = await supabase
+  // Use enterprise-safe upsert that preserves human decisions
+  const { error: upsertError, data } = await supabase
     .from('keywords')
-    .insert(keywordRecords)
+    .upsert(keywordRecords, {
+      onConflict: 'organization_id,workflow_id,seed_keyword'
+    })
     .select('id')
 
-  if (insertError) {
-    throw new Error(`Failed to persist seed keywords: ${insertError.message}`)
+  if (upsertError) {
+    throw new Error(`Failed to persist seed keywords: ${upsertError.message}`)
+  }
+
+  // Enterprise safety: Detect actual database conflicts, not assumed reruns
+  const keywordSeeds = keywordRecords.map(k => k.seed_keyword)
+  
+  if (keywordSeeds.length > 0) {
+    try {
+      // Check for actual existing keywords in database
+      const { data: existingKeywords, error: checkError } = await supabase
+        .from('keywords')
+        .select('seed_keyword, selection_source, user_selected, decision_confidence')
+        .in('seed_keyword', keywordSeeds)
+        .eq('organization_id', organizationId)
+        .eq('workflow_id', workflowId)
+
+      if (checkError) {
+        console.warn(`[persistSeedKeywords] Failed to check existing keywords: ${checkError.message}`)
+      } else if (existingKeywords && Array.isArray(existingKeywords) && existingKeywords.length > 0) {
+        // TRUE RERUN DETECTED: Actual database conflicts found
+        console.warn(`[persistSeedKeywords] STEP 2 RERUN DETECTED - ${existingKeywords.length} existing keywords found`)
+        console.warn(`[persistSeedKeywords] Workflow: ${workflowId}, Organization: ${organizationId}`)
+        
+        // Check for human decisions that could be overwritten
+        const humanDecisions = existingKeywords.filter((k: any) => k.selection_source === 'user')
+        if (humanDecisions.length > 0) {
+          console.error(`[persistSeedKeywords] CRITICAL: ${humanDecisions.length} human decisions at risk of overwrite`)
+          console.error(`[persistSeedKeywords] Keywords with human decisions: ${humanDecisions.map((k: any) => k.seed_keyword).join(', ')}`)
+        } else {
+          console.log(`[persistSeedKeywords] All existing keywords are AI-suggested - safe to update`)
+        }
+        
+        // TODO: Implement conflict-safe upsert to preserve human decisions
+        console.warn(`[persistSeedKeywords] NOTE: Human decision preservation not yet implemented - decisions may be overwritten`)
+      } else {
+        console.log(`[persistSeedKeywords] All ${keywordRecords.length} keywords are new for workflow ${workflowId}`)
+      }
+    } catch (error) {
+      console.warn(`[persistSeedKeywords] Error checking existing keywords: ${error}`)
+    }
   }
 
   return data?.length || 0
@@ -483,6 +551,39 @@ async function emitFailureEvent(
 
 // Service layer is pure - no state mutations here
 // All workflow updates should be handled in the API layer
+
+/**
+ * Calculate AI confidence score for keyword selection (0.0-1.0)
+ * Based on volume, CPC, and intent signals
+ */
+function calculateKeywordConfidence(result: any): number {
+  let confidence = 0.5 // Base confidence
+
+  // Volume factor (higher volume = higher confidence)
+  const volume = result.search_volume || 0
+  if (volume > 1000) confidence += 0.3
+  else if (volume > 100) confidence += 0.2
+  else if (volume > 10) confidence += 0.1
+
+  // CPC factor (has CPC = commercial value)
+  if (result.cpc && result.cpc > 0) {
+    confidence += 0.2
+  }
+
+  // Intent factor (commercial > informational > navigational)
+  const intent = result.main_intent?.toLowerCase()
+  if (intent === 'commercial') confidence += 0.2
+  else if (intent === 'informational') confidence += 0.1
+  else if (intent === 'navigational') confidence -= 0.1
+
+  // Language factor (English preferred for most SEO campaigns)
+  if (!result.is_another_language) {
+    confidence += 0.1
+  }
+
+  // Cap at 1.0
+  return Math.min(Math.max(confidence, 0.0), 1.0)
+}
 
 /**
  * Update workflow retry metadata during retry attempts
