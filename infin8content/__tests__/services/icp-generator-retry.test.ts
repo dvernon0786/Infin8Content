@@ -55,7 +55,8 @@ describe('ICP Generator - Retry Logic', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         promptTokens: 800,
-        completionTokens: 700
+        completionTokens: 700,
+        cost: 0.0022
       })
 
       const result = await generateICPDocument(mockICPRequest, mockOrganizationId)
@@ -79,7 +80,8 @@ describe('ICP Generator - Retry Logic', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         promptTokens: 800,
-        completionTokens: 700
+        completionTokens: 700,
+        cost: 0.0022
       })
 
       const result = await generateICPDocument(mockICPRequest, mockOrganizationId)
@@ -103,7 +105,8 @@ describe('ICP Generator - Retry Logic', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         promptTokens: 800,
-        completionTokens: 700
+        completionTokens: 700,
+        cost: 0.0022
       })
 
       const result = await generateICPDocument(mockICPRequest, mockOrganizationId)
@@ -127,7 +130,8 @@ describe('ICP Generator - Retry Logic', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         promptTokens: 800,
-        completionTokens: 700
+        completionTokens: 700,
+        cost: 0.0022
       })
 
       const result = await generateICPDocument(mockICPRequest, mockOrganizationId)
@@ -151,7 +155,8 @@ describe('ICP Generator - Retry Logic', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         promptTokens: 800,
-        completionTokens: 700
+        completionTokens: 700,
+        cost: 0.0022
       })
 
       const result = await generateICPDocument(mockICPRequest, mockOrganizationId)
@@ -179,7 +184,8 @@ describe('ICP Generator - Retry Logic', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         promptTokens: 800,
-        completionTokens: 700
+        completionTokens: 700,
+        cost: 0.0022
       })
 
       const result = await generateICPDocument(mockICPRequest, mockOrganizationId)
@@ -309,7 +315,8 @@ describe('ICP Generator - Retry Logic', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         promptTokens: 800,
-        completionTokens: 700
+        completionTokens: 700,
+        cost: 0.0022
       })
 
       const customPolicy = {
@@ -349,7 +356,10 @@ describe('ICP Generator - Retry Logic', () => {
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         generatedAt: new Date().toISOString(),
         retryCount: 1,
-        lastError: 'Timeout on first attempt'
+        lastError: 'Timeout on first attempt',
+        promptTokens: 800,
+        completionTokens: 700,
+        cost: 0.0022
       }
 
       await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult)

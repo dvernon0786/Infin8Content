@@ -12,6 +12,7 @@ import { z } from 'zod'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { checkRateLimit, type RateLimitConfig } from '@/lib/services/rate-limiting/persistent-rate-limiter'
+import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import {
   generateICPDocument,
   storeICPGenerationResult,
@@ -161,12 +162,14 @@ export async function POST(
         metadata: {
           tokens_used: icpResult.tokensUsed,
           model_used: icpResult.modelUsed,
+          ai_cost: icpResult.cost,
           generated_at: icpResult.generatedAt,
           retry_count: icpResult.retryCount || 0
         },
         timestamp: new Date().toISOString()
       }
-      console.log(`[ICP-Generate] Analytics event: ${JSON.stringify(analyticsEvent)}`)
+      await emitAnalyticsEvent(analyticsEvent)
+      console.log(`[ICP-Generate] Analytics event emitted: ${JSON.stringify(analyticsEvent)}`)
     } catch (analyticsError) {
       console.error(`[ICP-Generate] Failed to emit analytics event:`, analyticsError)
     }
