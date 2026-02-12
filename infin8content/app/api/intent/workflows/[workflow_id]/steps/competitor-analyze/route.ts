@@ -17,41 +17,97 @@ import {
   type ExtractSeedKeywordsRequest,
   type CompetitorData
 } from '@/lib/services/intent-engine/competitor-seed-extractor'
+import type { SeedExtractor } from '@/lib/services/intent-engine/seed-extractor.interface'
+import { DeterministicFakeExtractor } from '@/lib/services/intent-engine/deterministic-fake-extractor'
 import { getWorkflowCompetitors } from '@/lib/services/competitor-workflow-integration'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
 
-// Inline workflow status update function for API layer control
-async function updateWorkflowStatus(
+// Pure dependency injection factory - no global state
+function createExtractor(): SeedExtractor {
+  // In test mode, inject fake extractor
+  // In production, use real extractor wrapper
+  if (process.env.NODE_ENV === 'test') {
+    return new DeterministicFakeExtractor()
+  }
+  
+  // Real extractor wrapper for production
+  return {
+    async extract(request: ExtractSeedKeywordsRequest) {
+      return extractSeedKeywords(request)
+    },
+    getExtractorType() {
+      return 'dataforseo-real'
+    }
+  }
+}
+
+// Atomic workflow transition with database-level locking
+async function atomicWorkflowTransition(
   workflowId: string,
   organizationId: string,
   status: 'step_2_competitors' | 'failed',
   errorMessage?: string
-): Promise<void> {
+): Promise<{ success: boolean; workflow?: any }> {
   const supabase = createServiceRoleClient()
   
-  const updateData: any = {
-    updated_at: new Date().toISOString()
-  }
-
   if (status === 'step_2_competitors') {
-    updateData.step_2_competitor_completed_at = new Date().toISOString()
-    // Advance to next step (Step 3)
-    updateData.current_step = 3
-  } else if (status === 'failed') {
-    updateData.step_2_competitor_error_message = errorMessage
+    // ATOMIC TRANSITION: Only proceed if currently at step 2
+    const updateData = {
+      status: 'step_2_competitors',
+      current_step: 3, // Advance to Step 3
+      step_2_competitor_completed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
+    // Database-level atomic update with WHERE clause
+    const { data: workflow, error } = await supabase
+      .from('intent_workflows')
+      .update(updateData)
+      .eq('id', workflowId)
+      .eq('organization_id', organizationId)
+      .eq('current_step', 2) // CRITICAL: Only update if still at step 2
+      .select('id, current_step, status')
+      .single()
+
+    if (error) {
+      console.error('[CompetitorAnalyze] Atomic transition failed:', error)
+      return { success: false }
+    }
+
+    if (!workflow) {
+      console.warn('[CompetitorAnalyze] Atomic transition: Workflow not found or not at step 2')
+      return { success: false }
+    }
+
+    console.log(`[CompetitorAnalyze] Atomic transition successful: ${(workflow as any).id} → step 3`)
+    return { success: true, workflow }
   }
 
-  const { error } = await supabase
-    .from('intent_workflows')
-    .update(updateData)
-    .eq('id', workflowId)
-    .eq('organization_id', organizationId)
+  if (status === 'failed') {
+    const updateData = {
+      status: 'failed',
+      step_2_competitor_error_message: errorMessage,
+      updated_at: new Date().toISOString()
+    }
 
-  if (error) {
-    throw new Error(`Failed to update workflow status: ${error.message}`)
+    const { data: workflow, error } = await supabase
+      .from('intent_workflows')
+      .update(updateData)
+      .eq('id', workflowId)
+      .eq('organization_id', organizationId)
+      .eq('current_step', 2)
+      .select('id, current_step, status')
+      .single()
+
+    if (error) {
+      console.error('[CompetitorAnalyze] Atomic failure update failed:', error)
+      return { success: false }
+    }
+
+    return { success: true, workflow }
   }
 
-  console.log(`[CompetitorAnalyze] Workflow ${workflowId} status updated to ${status}, current_step advanced to ${updateData.current_step}`)
+  return { success: false }
 }
 
 export async function POST(
@@ -223,7 +279,7 @@ export async function POST(
 
     console.log(`[CompetitorAnalyze] Step 2 immutability check passed - no existing keywords found for workflow ${workflowId}`)
 
-    // Extract seed keywords from competitors
+    // Extract seed keywords from competitors using dependency injection
     const extractionRequest: ExtractSeedKeywordsRequest = {
       competitors: allCompetitors,
       organizationId,
@@ -234,14 +290,27 @@ export async function POST(
       timeoutMs: 600000 // 10 minutes
     }
 
-    const result = await extractSeedKeywords(extractionRequest)
+    const extractor = createExtractor()
+    console.log(`[CompetitorAnalyze] Using extractor: ${extractor.getExtractorType()}`)
+    
+    const result = await extractor.extract(extractionRequest)
 
     // API LAYER: Always succeed if extraction API worked (pure data collection)
     // We no longer fail on 0 keywords - human curation happens in Step 3
     console.log(`[CompetitorAnalyze] Extraction completed: ${result.total_keywords_created} keywords from ${allCompetitors.length} competitors`)
 
-    // SUCCESS PATH - Update workflow status and advance step
-    await updateWorkflowStatus(workflowId, organizationId, 'step_2_competitors')
+    // SUCCESS PATH - Atomic workflow transition
+    const transitionResult = await atomicWorkflowTransition(workflowId, organizationId, 'step_2_competitors')
+    
+    if (!transitionResult.success) {
+      return NextResponse.json(
+        { 
+          error: 'STEP_TRANSITION_FAILED',
+          message: 'Workflow was already in transition or not in correct state'
+        },
+        { status: 409 } // Conflict - another request won the race
+      )
+    }
 
     // Log action completion
     try {
@@ -281,7 +350,7 @@ export async function POST(
     if (workflowId && organizationId) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       try {
-        await updateWorkflowStatus(workflowId, organizationId, 'failed', errorMessage)
+        await atomicWorkflowTransition(workflowId, organizationId, 'failed', errorMessage)
         
         // Emit terminal failure analytics event (AC 8)
         emitAnalyticsEvent({
