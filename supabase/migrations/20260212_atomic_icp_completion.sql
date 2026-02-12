@@ -11,13 +11,15 @@ CREATE OR REPLACE FUNCTION record_usage_increment_and_complete_step(
   p_cost NUMERIC,
   p_icp_data JSONB,
   p_tokens_used INTEGER,
-  p_generated_at TIMESTAMPTZ
+  p_generated_at TIMESTAMPTZ,
+  p_idempotency_key UUID DEFAULT gen_random_uuid()
 )
 RETURNS void
 LANGUAGE plpgsql
 AS $$
 DECLARE
   v_existing_workflow_data JSONB;
+  v_ledger_inserted BOOLEAN;
 BEGIN
   -- 🔒 Lock workflow row to prevent concurrent mutation
   SELECT workflow_data
@@ -30,7 +32,7 @@ BEGIN
     RAISE EXCEPTION 'Workflow not found: %', p_workflow_id;
   END IF;
 
-  -- 1️⃣ Financial settlement (ledger is append-only truth)
+  -- 1️⃣ Financial settlement with idempotency protection
   INSERT INTO ai_usage_ledger (
     id,
     workflow_id,
@@ -39,6 +41,7 @@ BEGIN
     prompt_tokens,
     completion_tokens,
     cost,
+    idempotency_key,
     created_at
   )
   VALUES (
@@ -49,8 +52,15 @@ BEGIN
     p_prompt_tokens,
     p_completion_tokens,
     p_cost,
+    p_idempotency_key,
     NOW()
-  );
+  )
+  ON CONFLICT (workflow_id, idempotency_key) 
+  DO NOTHING
+  RETURNING id INTO v_ledger_inserted;
+
+  -- Only update workflow if ledger insertion actually happened (idempotency)
+  IF v_ledger_inserted IS NOT NULL THEN
 
   -- 2️⃣ Update workflow atomically in same transaction
   UPDATE intent_workflows
@@ -78,7 +88,15 @@ BEGIN
     step_1_icp_last_error_message = NULL,
     step_1_icp_completed_at = NOW(),
     updated_at = NOW()
-  WHERE id = p_workflow_id;
+  WHERE id = p_workflow_id
+    AND organization_id = p_organization_id;
+
+  -- Verify workflow was found and belongs to organization
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Workflow not found or tenant mismatch: %', p_workflow_id;
+  END IF;
+
+  END IF; -- Close idempotency conditional
 
 END;
 $$;

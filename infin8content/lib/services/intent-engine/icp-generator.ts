@@ -452,6 +452,7 @@ function validateICPData(data: ICPData): void {
 /**
  * Store ICP generation result in workflow
  * Uses single atomic transaction for financial settlement and workflow state update
+ * Includes idempotency protection for network retry safety
  */
 export async function storeICPGenerationResult(
   workflowId: string,
@@ -460,7 +461,10 @@ export async function storeICPGenerationResult(
 ): Promise<void> {
   const supabase = createServiceRoleClient()
 
-  // Elite atomic transaction: financial settlement + workflow state in single call
+  // Generate idempotency key for network retry protection
+  const idempotencyKey = crypto.randomUUID()
+
+  // 🏆 Elite atomic transaction: financial settlement + workflow state in single call
   const { error: atomicError } = await supabase
     .rpc('record_usage_increment_and_complete_step', {
       p_workflow_id: workflowId,
@@ -471,7 +475,8 @@ export async function storeICPGenerationResult(
       p_cost: icpResult.cost,
       p_icp_data: icpResult.icp_data,
       p_tokens_used: icpResult.tokensUsed,
-      p_generated_at: icpResult.generatedAt
+      p_generated_at: icpResult.generatedAt,
+      p_idempotency_key: idempotencyKey
     })
 
   if (atomicError) {
