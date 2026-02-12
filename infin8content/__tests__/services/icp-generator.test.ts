@@ -187,7 +187,8 @@ describe('ICP Generator Service', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         promptTokens: 800,
-        completionTokens: 700
+        completionTokens: 700,
+        cost: 0.0022
       })
 
       await expect(
