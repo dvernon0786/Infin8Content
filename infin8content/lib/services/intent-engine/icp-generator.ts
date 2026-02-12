@@ -1,13 +1,17 @@
 /**
  * ICP Generator Service
- * Story 34.1: Generate ICP Document via Perplexity AI
- * Story 34.3: Harden ICP Generation with Automatic Retry & Failure Recovery
- * 
- * Generates Ideal Customer Profile (ICP) documents using OpenRouter Perplexity API
- * based on organization profile data, with automatic retry logic for transient failures.
+ *
+ * Production Configuration
+ * Primary Model: perplexity/sonar
+ * Fallback Model: openai/gpt-4o-mini
+ * Temperature: 0.3
+ * Max Tokens: 700 (optimized for structured JSON)
+ * Fallback: Enabled (controlled)
+ * Cost Tracking: Enabled
+ * Model Normalization: Enabled
  */
 
-import { generateContent, type OpenRouterMessage } from '@/lib/services/openrouter/openrouter-client'
+import { generateContent, type OpenRouterMessage, MODEL_PRICING } from '@/lib/services/openrouter/openrouter-client'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import {
@@ -37,8 +41,11 @@ export interface ICPGenerationRequest {
 export interface ICPGenerationResult {
   icp_data: ICPData
   tokensUsed: number
+  promptTokens: number
+  completionTokens: number
   modelUsed: string
   generatedAt: string
+  cost: number
   retryCount?: number
   lastError?: string
 }
@@ -91,7 +98,7 @@ export async function generateICPDocument(
 
   for (let attempt = 0; attempt < retryPolicy.maxAttempts; attempt++) {
     try {
-      const result = await generateICPDocumentAttempt(request, organizationId, timeoutMs)
+      const result = await generateICPDocumentAttempt(request, organizationId, timeoutMs, retryCount, workflowId)
       
       // Success on first attempt or after retry
       if (attempt > 0) {
@@ -157,14 +164,82 @@ export async function generateICPDocument(
 }
 
 /**
+ * Get current AI cost for a workflow (fallback method)
+ */
+async function getWorkflowCurrentCost(workflowId: string): Promise<number> {
+  const supabase = createServiceRoleClient()
+  const { data: existing } = await supabase
+    .from('intent_workflows')
+    .select('workflow_data')
+    .eq('id', workflowId)
+    .single()
+  
+  if (!existing) {
+    return 0
+  }
+  
+  return (existing as any)?.workflow_data?.total_ai_cost ?? 0
+}
+
+/**
+ * Atomically check if workflow can accept additional cost (no update)
+ */
+async function checkWorkflowCostLimit(
+  workflowId: string, 
+  estimatedCost: number, 
+  maxCost: number = 1.00
+): Promise<boolean> {
+  const supabase = createServiceRoleClient()
+  
+  const { data, error } = await supabase
+    .rpc('check_workflow_cost_limit', {
+      p_workflow_id: workflowId,
+      p_additional_cost: estimatedCost,
+      p_max_cost: maxCost
+    })
+  
+  if (error) {
+    console.error('Cost limit check failed:', error)
+    throw new Error('Cost enforcement system error')
+  }
+  
+  return data === true
+}
+
+/**
  * Single attempt at ICP generation (internal)
  */
 async function generateICPDocumentAttempt(
   request: ICPGenerationRequest,
   organizationId: string,
-  timeoutMs: number
+  timeoutMs: number = 300000,
+  retryCount: number = 0,
+  workflowId?: string
 ): Promise<ICPGenerationResult> {
   const startTime = Date.now()
+
+  // Pre-call atomic cost guard to prevent spending before API call
+  if (workflowId) {
+    // Calculate estimated max cost based on centralized pricing table
+    const maxInputTokens = 800 // Conservative estimate for prompt
+    const maxOutputTokens = 700 // Max tokens allowed
+    const sonarPricing = MODEL_PRICING['perplexity/sonar']
+    
+    const estimatedMaxCost = (
+      (maxInputTokens / 1000) * sonarPricing.inputPer1k +
+      (maxOutputTokens / 1000) * sonarPricing.outputPer1k
+    )
+    
+    const canProceed = await checkWorkflowCostLimit(
+      workflowId, 
+      estimatedMaxCost, 
+      1.00 // $1.00 max per workflow
+    )
+    
+    if (!canProceed) {
+      throw new Error(`Workflow AI cost limit exceeded (estimated: $${estimatedMaxCost.toFixed(4)})`)
+    }
+  }
 
   // Validate inputs
   if (!request.organizationName || !request.organizationUrl || !request.organizationLinkedInUrl) {
@@ -256,13 +331,23 @@ Generate a comprehensive ICP analysis with the following five sections:
 - If conflicting information is found across sources, prioritize the most recent and authoritative data
 - If the company appears to serve multiple market segments, identify the primary ICP and note secondary segments
 
-## Output Format
-Return a JSON object with the following structure:
+## Output Rules (CRITICAL)
+
+You MUST return STRICT JSON only.
+
+- Do NOT wrap in markdown.
+- Do NOT include commentary.
+- Do NOT include explanations.
+- Do NOT include section headings.
+- Output must be valid JSON parsable by JSON.parse().
+
+Return EXACTLY:
+
 {
-  "industries": ["industry1", "industry2", ...],
-  "buyerRoles": ["role1", "role2", ...],
-  "painPoints": ["pain point 1", "pain point 2", ...],
-  "valueProposition": "Clear statement of value proposition for the ICP"
+  "industries": string[],
+  "buyerRoles": string[],
+  "painPoints": string[],
+  "valueProposition": string
 }`
 
   // Call OpenRouter API with Perplexity model
@@ -281,13 +366,26 @@ Return a JSON object with the following structure:
 
     const result = await Promise.race([
       generateContent(messages, {
-        maxTokens: 2000,
-        temperature: 0.7,
-        maxRetries: 2,
-        model: 'perplexity/llama-3.1-sonar-small-128k-online'
+        model: 'perplexity/sonar',
+        maxTokens: 700,
+        temperature: 0.3,
+        maxRetries: 1,
+        disableFallback: false
       }),
       timeoutPromise
     ])
+
+    // Validate model used is in our allowed set (using normalized comparison)
+    const allowedModels = ['perplexity/sonar', 'openai/gpt-4o-mini']
+    const normalizedUsedModel = result.modelUsed.startsWith('perplexity/sonar') ? 'perplexity/sonar' :
+                               result.modelUsed.startsWith('openai/gpt-4o-mini') ? 'openai/gpt-4o-mini' :
+                               result.modelUsed
+
+    if (!allowedModels.includes(normalizedUsedModel)) {
+      throw new Error(`Model drift detected: expected one of ${allowedModels.join(', ')}, got ${result.modelUsed}`)
+    }
+
+    console.log(`[ICP] Model Used: ${result.modelUsed}, Cost: $${result.cost}`)
 
     // Parse JSON response (strip markdown formatting if present)
     let icpData: ICPData
@@ -315,8 +413,11 @@ Return a JSON object with the following structure:
     return {
       icp_data: icpData,
       tokensUsed: result.tokensUsed,
+      promptTokens: result.promptTokens,
+      completionTokens: result.completionTokens,
       modelUsed: result.modelUsed,
-      generatedAt: new Date().toISOString()
+      generatedAt: new Date().toISOString(),
+      cost: result.cost
     }
   } catch (error) {
     const duration = Date.now() - startTime
@@ -353,14 +454,42 @@ export async function storeICPGenerationResult(
 ): Promise<void> {
   const supabase = createServiceRoleClient()
 
+  // Bank-grade atomic transaction: record usage AND increment workflow cost together
+  const { error: atomicError } = await supabase
+    .rpc('record_usage_and_increment', {
+      p_workflow_id: workflowId,
+      p_organization_id: organizationId,
+      p_model: icpResult.modelUsed,
+      p_prompt_tokens: icpResult.promptTokens,
+      p_completion_tokens: icpResult.completionTokens,
+      p_cost: icpResult.cost
+    })
+
+  if (atomicError) {
+    console.error('Failed to record usage and increment cost:', atomicError)
+    throw new Error('Financial recording failed')
+  }
+
+  // Update workflow with ICP data and progress
+  // First fetch existing workflow_data to preserve other keys
+  const { data: existingWorkflow } = await supabase
+    .from('intent_workflows')
+    .select('workflow_data')
+    .eq('id', workflowId)
+    .single()
+
+  const existingData = (existingWorkflow as any)?.workflow_data || {}
+
   const updateData: any = {
     icp_data: icpResult.icp_data,
     status: 'step_1_icp',  // Reflect step just completed
     current_step: 2,       // Enable step 2 execution
     workflow_data: {
+      ...existingData,  // Preserve all existing workflow_data keys
       icp_generation: {
         tokensUsed: icpResult.tokensUsed,
         modelUsed: icpResult.modelUsed,
+        cost: icpResult.cost,
         generatedAt: icpResult.generatedAt
       }
     }

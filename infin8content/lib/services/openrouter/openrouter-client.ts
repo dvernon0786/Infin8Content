@@ -38,6 +38,7 @@ export interface OpenRouterResponse {
 export interface OpenRouterGenerationOptions {
   maxRetries?: number
   retryDelay?: number
+  disableFallback?: boolean
 }
 
 export interface OpenRouterGenerationResult {
@@ -46,6 +47,7 @@ export interface OpenRouterGenerationResult {
   modelUsed: string
   promptTokens: number
   completionTokens: number
+  cost: number
 }
 
 /**
@@ -59,6 +61,44 @@ export const FREE_MODELS = [
   // Removed: 'nvidia/nemotron-3-demo-70b' - no longer valid model ID
   // Removed: 'tns-standard/tns-standard-8-7.5-chimera' - replaced with better model
 ] as const
+
+export const MODEL_PRICING: Record<string, {
+  inputPer1k: number
+  outputPer1k: number
+}> = {
+  'perplexity/sonar': {
+    inputPer1k: 0.001,     // $0.001 per 1k input tokens
+    outputPer1k: 0.002     // $0.002 per 1k output tokens
+  },
+  'openai/gpt-4o-mini': {
+    inputPer1k: 0.00015,   // $0.00015 per 1k input tokens
+    outputPer1k: 0.0006     // $0.0006 per 1k output tokens
+  }
+}
+
+function normalizeModel(model: string): string {
+  if (model.startsWith('perplexity/sonar')) return 'perplexity/sonar'
+  if (model.startsWith('openai/gpt-4o-mini')) return 'openai/gpt-4o-mini'
+  return model
+}
+
+function calculateCost(
+  model: string,
+  promptTokens: number,
+  completionTokens: number
+): number {
+  const normalized = normalizeModel(model)
+  const pricing = MODEL_PRICING[normalized]
+  if (!pricing) {
+    console.error(`Missing pricing configuration for model: ${model} (normalized: ${normalized})`)
+    throw new Error('AI pricing configuration error')
+  }
+
+  const inputCost = (promptTokens / 1000) * pricing.inputPer1k
+  const outputCost = (completionTokens / 1000) * pricing.outputPer1k
+
+  return Number((inputCost + outputCost).toFixed(6))
+}
 
 /**
  * Generate content using OpenRouter API
@@ -190,12 +230,19 @@ export async function generateContent(
           break // Try next model
         }
 
+        const cost = calculateCost(
+          data.model,
+          data.usage.prompt_tokens,
+          data.usage.completion_tokens
+        )
+
         return {
           content,
           tokensUsed: data.usage.total_tokens,
           modelUsed: data.model,
           promptTokens: data.usage.prompt_tokens,
-          completionTokens: data.usage.completion_tokens
+          completionTokens: data.usage.completion_tokens,
+          cost
         }
       } catch (error) {
         // If it's a 401 error, don't retry
