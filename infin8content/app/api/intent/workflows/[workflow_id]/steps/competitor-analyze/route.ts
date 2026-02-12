@@ -204,6 +204,7 @@ export async function POST(
     const extractionRequest: ExtractSeedKeywordsRequest = {
       competitors: allCompetitors,
       organizationId,
+      workflowId, // Critical: Pass workflowId for proper persistence and retry tracking
       maxSeedsPerCompetitor: 25, // Increased from 3 for richer data collection
       locationCode: 2840, // US default
       languageCode: 'en',

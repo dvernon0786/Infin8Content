@@ -88,31 +88,7 @@ export class KeywordClusterer {
     const minClusterSize = options.minClusterSize ?? 3
 
     try {
-      // Get organization context first
-      const { data: workflow, error: workflowError } = await this.supabase
-        .from('intent_workflows')
-        .select('organization_id')
-        .eq('id', workflowId)
-        .single()
-        
-      if (workflowError || !workflow) {
-        throw new Error(`Workflow not found: ${workflowId}`)
-      }
-
-      // Type guard: ensure workflow is properly typed
-      const typedWorkflow = workflow as unknown as { organization_id: string }
-
-      // Emit start event
-      emitAnalyticsEvent({
-        event_type: 'workflow.topic_clustering.started',
-        timestamp: new Date().toISOString(),
-        organization_id: typedWorkflow.organization_id,
-        workflow_id: workflowId,
-        similarity_threshold: similarityThreshold,
-        max_spokes_per_hub: maxSpokesPerHub
-      })
-
-      // Load filtered keywords for workflow
+      // Load filtered keywords for workflow (includes organization lookup)
       const keywords = await this.loadFilteredKeywords(workflowId, options.userSelectedOnly)
       
       // Enterprise compute guards
@@ -151,11 +127,23 @@ export class KeywordClusterer {
         completed_at: new Date().toISOString()
       }
 
+      // Emit start event
+      if (keywords.length > 0) {
+        emitAnalyticsEvent({
+          event_type: 'workflow.topic_clustering.started',
+          timestamp: new Date().toISOString(),
+          organization_id: keywords[0].organization_id,
+          workflow_id: workflowId,
+          similarity_threshold: similarityThreshold,
+          max_spokes_per_hub: maxSpokesPerHub
+        })
+      }
+
       // Emit completion event
       emitAnalyticsEvent({
         event_type: 'workflow.topic_clustering.completed',
         timestamp: new Date().toISOString(),
-        organization_id: typedWorkflow.organization_id,
+        organization_id: keywords[0].organization_id,
         workflow_id: workflowId,
         total_keywords: keywords.length,
         cluster_count: result.cluster_count,
