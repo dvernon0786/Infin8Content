@@ -23,7 +23,7 @@ export function Step2CompetitorsForm({ workflowId }: Step2CompetitorsFormProps) 
       })
 
       const res = await fetch(
-        `/api/intent/workflows/${workflowId}/competitor-analyze`,
+        `/api/intent/workflows/${workflowId}/steps/competitor-analyze`,
         { method: 'POST' }
       )
 
