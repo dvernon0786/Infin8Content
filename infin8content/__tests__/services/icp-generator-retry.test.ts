@@ -59,7 +59,7 @@ describe('ICP Generator - Retry Logic', () => {
         cost: 0.0022
       })
 
-      const result = await generateICPDocument(mockICPRequest, mockOrganizationId)
+      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
 
       expect(result.icp_data.industries).toEqual(mockICPData.industries)
       expect(result.retryCount).toBeUndefined()
@@ -84,7 +84,7 @@ describe('ICP Generator - Retry Logic', () => {
         cost: 0.0022
       })
 
-      const result = await generateICPDocument(mockICPRequest, mockOrganizationId)
+      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
 
       expect(result.icp_data.industries).toEqual(mockICPData.industries)
       expect(result.retryCount).toBe(1)
@@ -109,7 +109,7 @@ describe('ICP Generator - Retry Logic', () => {
         cost: 0.0022
       })
 
-      const result = await generateICPDocument(mockICPRequest, mockOrganizationId)
+      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
 
       expect(result.icp_data.industries).toEqual(mockICPData.industries)
       expect(result.retryCount).toBe(1)
@@ -134,7 +134,7 @@ describe('ICP Generator - Retry Logic', () => {
         cost: 0.0022
       })
 
-      const result = await generateICPDocument(mockICPRequest, mockOrganizationId)
+      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
 
       expect(result.icp_data.industries).toEqual(mockICPData.industries)
       expect(result.retryCount).toBe(1)
@@ -159,7 +159,7 @@ describe('ICP Generator - Retry Logic', () => {
         cost: 0.0022
       })
 
-      const result = await generateICPDocument(mockICPRequest, mockOrganizationId)
+      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
 
       expect(result.icp_data.industries).toEqual(mockICPData.industries)
       expect(result.retryCount).toBe(1)
@@ -188,7 +188,7 @@ describe('ICP Generator - Retry Logic', () => {
         cost: 0.0022
       })
 
-      const result = await generateICPDocument(mockICPRequest, mockOrganizationId)
+      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
 
       expect(result.icp_data.industries).toEqual(mockICPData.industries)
       expect(result.icp_data.buyerRoles).toEqual(mockICPData.buyerRoles)
@@ -205,7 +205,7 @@ describe('ICP Generator - Retry Logic', () => {
       )
 
       try {
-        await generateICPDocument(mockICPRequest, mockOrganizationId)
+        await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
         expect.fail('Should have thrown')
       } catch (error) {
         expect(error).toBeInstanceOf(Error)
@@ -232,7 +232,7 @@ describe('ICP Generator - Retry Logic', () => {
       )
 
       try {
-        await generateICPDocument(mockICPRequest, mockOrganizationId)
+        await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
         expect.fail('Should have thrown')
       } catch (error) {
         expect(error).toBeInstanceOf(Error)
@@ -255,7 +255,7 @@ describe('ICP Generator - Retry Logic', () => {
       )
 
       try {
-        await generateICPDocument(mockICPRequest, mockOrganizationId)
+        await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
         expect.fail('Should have thrown')
       } catch (error) {
         // Error should be thrown after all attempts
@@ -288,7 +288,9 @@ describe('ICP Generator - Retry Logic', () => {
           mockICPRequest,
           mockOrganizationId,
           300000,
-          customPolicy
+          customPolicy,
+          mockWorkflowId,
+          `${mockWorkflowId}:step_1_icp`
         )
         expect.fail('Should have thrown')
       } catch (error) {
@@ -330,7 +332,9 @@ describe('ICP Generator - Retry Logic', () => {
         mockICPRequest,
         mockOrganizationId,
         300000,
-        customPolicy
+        customPolicy,
+        mockWorkflowId,
+        `${mockWorkflowId}:step_1_icp`
       )
 
       expect(result.icp_data.industries).toEqual(['SaaS', 'Enterprise Software'])

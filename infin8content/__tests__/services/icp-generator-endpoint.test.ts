@@ -124,7 +124,7 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
         cost: 0.0022
       })
 
-      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId)
+      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
 
       expect(result.icp_data.industries).toEqual(mockICPData.industries)
       expect(result.retryCount).toBeUndefined()
@@ -149,7 +149,7 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
         cost: 0.0022
       })
 
-      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId)
+      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
 
       expect(result.icp_data.industries).toEqual(mockICPData.industries)
       expect(result.retryCount).toBe(1)
@@ -163,7 +163,7 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
       )
 
       try {
-        await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId)
+        await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
         expect.fail('Should have thrown')
       } catch (error) {
         expect(error).toBeInstanceOf(Error)
@@ -188,7 +188,7 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
       )
 
       try {
-        await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId)
+        await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
         expect.fail('Should have thrown')
       } catch (error) {
         expect(error).toBeInstanceOf(Error)
@@ -330,7 +330,8 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
         mockOrganizationId,
         300000,
         undefined,
-        mockWorkflowId
+        mockWorkflowId,
+        `${mockWorkflowId}:step_1_icp`
       )
 
       expect(result.retryCount).toBe(1)
@@ -357,7 +358,8 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
           mockOrganizationId,
           300000,
           undefined,
-          mockWorkflowId
+          mockWorkflowId,
+          `${mockWorkflowId}:step_1_icp`
         )
       } catch (error) {
         // Expected to fail
