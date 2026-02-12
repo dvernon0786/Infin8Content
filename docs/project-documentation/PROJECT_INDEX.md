@@ -1,12 +1,27 @@
 # Infin8Content Project Documentation Index
 
-**Generated:** 2026-02-09  
-**Version:** v2.1  
-**Status:** Complete Documentation Set with Latest Updates
+**Generated:** 2026-02-13  
+**Version:** v2.2 - AI Copilot Architecture Complete  
+**Status:** Enterprise-Grade AI-Assisted Decision Platform
 
 ## Overview
 
-This is the master index for all Infin8Content platform documentation. The Infin8Content platform is a comprehensive AI-powered content generation system that combines SEO optimization, workflow orchestration, and publishing automation.
+This is the master index for all Infin8Content platform documentation. The Infin8Content platform is a comprehensive **AI-powered content generation system** that combines **SEO optimization, workflow orchestration, and publishing automation** with **AI Copilot decision intelligence**.
+
+## 🎯 Major Architecture Update (February 2026)
+
+### **AI Copilot Transformation Complete**
+The platform has evolved from an AI automation pipeline to an **AI-assisted decision platform** with:
+
+- **Step 2:** Pure data collection (25 keywords/competitor) with AI suggestions
+- **Step 3:** Human curation with visual opportunity scoring and traceable decisions  
+- **Step 4:** User-selected keyword clustering with enterprise safety bounds
+
+### **Key Features Added**
+- ✅ **Decision Tracking:** `ai_suggested`, `user_selected`, `decision_confidence` fields
+- ✅ **Visual Intelligence:** Opportunity scoring charts with Recharts
+- ✅ **Enterprise Safety:** Multi-workflow isolation, compute bounds (2-100 keywords)
+- ✅ **Audit Trail:** Complete decision history with UPSERT persistence
 
 ## Documentation Structure
 
@@ -43,18 +58,23 @@ This is the master index for all Infin8Content platform documentation. The Infin
 
 ### Core Systems
 
-#### Intent Engine Workflow System
-The heart of Infin8Content - a sophisticated 9-step workflow that guides users through structured content creation:
+#### Intent Engine Workflow System (AI Copilot Enhanced)
+The heart of Infin8Content - a sophisticated 9-step workflow with **AI Copilot decision intelligence**:
 
 1. **ICP Generation** - Ideal Customer Profile creation via Perplexity AI
-2. **Competitor Analysis** - Seed keyword extraction from competitor URLs  
-3. **Seed Keywords** - Human approval gate for quality control
+2. **Competitor Analysis** - **AI Copilot:** Extract 25 keywords/competitor with confidence scoring
+3. **Keyword Review** - **AI Copilot:** Human curation with visual opportunity scoring and traceable decisions
 4. **Long-tail Expansion** - Multi-source keyword expansion via DataForSEO
 5. **Keyword Filtering** - Quality and relevance filtering
-6. **Topic Clustering** - Semantic hub-and-spoke clustering
+6. **Topic Clustering** - **AI Copilot:** User-selected keyword clustering with enterprise safety bounds
 7. **Cluster Validation** - Structural and semantic validation
 8. **Subtopic Generation** - Blog topic ideas via DataForSEO
 9. **Article Generation** - AI-powered content creation
+
+**AI Copilot Architecture:**
+- **AI Suggests:** Confidence scoring, opportunity assessment
+- **Human Decides:** Visual charts, bulk actions, final authority
+- **System Executes:** Deterministic clustering, bounded compute
 
 #### Article Generation Pipeline
 Deterministic, fault-tolerant content generation system:

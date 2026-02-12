@@ -12,9 +12,10 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
-import {
+import { 
   extractSeedKeywords,
-  type ExtractSeedKeywordsRequest
+  type ExtractSeedKeywordsRequest,
+  type CompetitorData
 } from '@/lib/services/intent-engine/competitor-seed-extractor'
 import { getWorkflowCompetitors } from '@/lib/services/competitor-workflow-integration'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
@@ -167,6 +168,14 @@ export async function POST(
     const existingUrls = new Set(workflowCompetitors.map(c => c.url))
     const newCompetitors = additionalCompetitors.filter(url => !existingUrls.has(url))
 
+    // Format workflow competitors to match CompetitorData interface
+    const workflowFormatted = workflowCompetitors.map(c => ({
+      id: c.id,
+      url: c.url,
+      domain: c.domain,
+      is_active: c.is_active
+    }))
+
     // Format additional competitors
     const extraFormatted = newCompetitors
       .filter((url) => typeof url === 'string' && url.trim().length > 0)
@@ -174,10 +183,10 @@ export async function POST(
         id: crypto.randomUUID(),
         url: url.trim(),
         domain: url.trim(),
-        is_active: true,
+        is_active: true
       }))
 
-    const allCompetitors = [...workflowCompetitors, ...extraFormatted]
+    const allCompetitors: CompetitorData[] = [...workflowFormatted, ...extraFormatted]
 
     if (allCompetitors.length === 0) {
       return NextResponse.json(
@@ -195,7 +204,7 @@ export async function POST(
     const extractionRequest: ExtractSeedKeywordsRequest = {
       competitors: allCompetitors,
       organizationId,
-      maxSeedsPerCompetitor: 3,
+      maxSeedsPerCompetitor: 25, // Increased from 3 for richer data collection
       locationCode: 2840, // US default
       languageCode: 'en',
       timeoutMs: 600000 // 10 minutes
@@ -203,24 +212,9 @@ export async function POST(
 
     const result = await extractSeedKeywords(extractionRequest)
 
-    // API LAYER: Decide success/failure and update state ONCE
-    if (result.total_keywords_created === 0) {
-      // Update workflow to failed state
-      await updateWorkflowStatus(
-        workflowId,
-        organizationId,
-        'failed',
-        'No keywords found from provided competitors.'
-      )
-
-      return NextResponse.json(
-        {
-          error: 'No keywords found from provided competitors. Please add more competitor URLs.',
-          code: 'NO_KEYWORDS_FOUND'
-        },
-        { status: 400 }
-      )
-    }
+    // API LAYER: Always succeed if extraction API worked (pure data collection)
+    // We no longer fail on 0 keywords - human curation happens in Step 3
+    console.log(`[CompetitorAnalyze] Extraction completed: ${result.total_keywords_created} keywords from ${allCompetitors.length} competitors`)
 
     // SUCCESS PATH - Update workflow status and advance step
     await updateWorkflowStatus(workflowId, organizationId, 'step_2_competitors')

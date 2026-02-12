@@ -1,80 +1,112 @@
 'use client'
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { useState, useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
+import KeywordReviewPage from './KeywordReviewPage'
 
 interface Step3SeedsFormProps {
   workflowId: string
 }
 
 export function Step3SeedsForm({ workflowId }: Step3SeedsFormProps) {
-  const [state, setState] = useState<'idle' | 'running' | 'error'>('idle')
+  const [keywords, setKeywords] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  async function runStep() {
+  // Load keywords on mount
+  useEffect(() => {
+    loadKeywords()
+  }, [workflowId])
+
+  async function loadKeywords() {
     try {
-      setState('running')
+      setLoading(true)
       setError(null)
 
-      ;(window as any)?.analytics?.track('workflow_step_started', {
-        workflow_id: workflowId,
-        step: 3,
-      })
-
       const res = await fetch(
-        `/api/intent/workflows/${workflowId}/seed-extract`,
-        { method: 'POST' }
+        `/api/intent/workflows/${workflowId}/seed-extract?page=1&limit=50`
       )
 
       if (!res.ok) {
         const body = await res.json()
-        throw new Error(body.error || 'Step failed')
+        throw new Error(body.error || 'Failed to load keywords')
       }
 
-      ;(window as any)?.analytics?.track('workflow_step_completed', {
-        workflow_id: workflowId,
-        step: 3,
-      })
+      const data = await res.json()
+      setKeywords(data.data?.keywords || [])
     } catch (err: any) {
-      setState('error')
       setError(err.message)
-
-      ;(window as any)?.analytics?.track('workflow_step_failed', {
-        workflow_id: workflowId,
-        step: 3,
-        error: err.message,
-      })
+    } finally {
+      setLoading(false)
     }
   }
 
+  async function handleToggleKeyword(keywordId: string, selected: boolean) {
+    // This would call the bulk selection endpoint
+    // For now, we'll handle this optimistically
+    setKeywords(prev => prev.map(k => 
+      k.id === keywordId ? { ...k, user_selected: selected } : k
+    ))
+  }
+
+  async function handleBulkAction(action: string, keywordIds?: string[]) {
+    // This would call bulk action endpoints
+    console.log('Bulk action:', action, keywordIds)
+  }
+
+  async function handleContinue(selectedIds: string[]) {
+    try {
+      const res = await fetch(
+        `/api/intent/workflows/${workflowId}/seed-extract`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ selectedKeywordIds: selectedIds })
+        }
+      )
+
+      if (!res.ok) {
+        const body = await res.json()
+        throw new Error(body.error || 'Failed to save selection')
+      }
+
+      // Redirect to next step or show success
+      window.location.href = `/workflows/${workflowId}?step=4`
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading keywords...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-red-600 mb-4">Error: {error}</div>
+        <button 
+          onClick={loadKeywords}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Retry
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-6">
-      <p className="text-sm text-muted-foreground">
-        Extract seed keywords from competitor analysis results.
-        This step processes the competitor data to identify foundational keywords for your SEO strategy.
-      </p>
-
-      {error && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
-          {error}
-        </div>
-      )}
-
-      <Button
-        onClick={runStep}
-        disabled={state === 'running'}
-        className="min-w-[160px]"
-      >
-        {state === 'running' ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Extracting seeds…
-          </>
-        ) : (
-          'Extract seeds'
-        )}
-      </Button>
-    </div>
+    <KeywordReviewPage
+      keywords={keywords}
+      onContinue={handleContinue}
+      onToggleKeyword={handleToggleKeyword}
+      onBulkAction={handleBulkAction}
+      loading={loading}
+    />
   )
 }
