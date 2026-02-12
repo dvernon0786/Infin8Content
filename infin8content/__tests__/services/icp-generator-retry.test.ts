@@ -362,7 +362,7 @@ describe('ICP Generator - Retry Logic', () => {
         cost: 0.0022
       }
 
-      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult)
+      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult, `${mockWorkflowId}:step_1_icp`)
 
       expect(mockSupabase.from).toHaveBeenCalledWith('intent_workflows')
       expect(mockSupabase.update).toHaveBeenCalled()
