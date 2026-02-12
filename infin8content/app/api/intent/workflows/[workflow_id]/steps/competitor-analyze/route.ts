@@ -19,6 +19,7 @@ import {
 } from '@/lib/services/intent-engine/competitor-seed-extractor'
 import type { SeedExtractor } from '@/lib/services/intent-engine/seed-extractor.interface'
 import { DeterministicFakeExtractor } from '@/lib/services/intent-engine/deterministic-fake-extractor'
+import { transitionWorkflow } from '@/lib/services/intent-engine/workflow-state-engine'
 import { getWorkflowCompetitors } from '@/lib/services/competitor-workflow-integration'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
 
@@ -39,75 +40,6 @@ function createExtractor(): SeedExtractor {
       return 'dataforseo-real'
     }
   }
-}
-
-// Atomic workflow transition with database-level locking
-async function atomicWorkflowTransition(
-  workflowId: string,
-  organizationId: string,
-  status: 'step_2_competitors' | 'failed',
-  errorMessage?: string
-): Promise<{ success: boolean; workflow?: any }> {
-  const supabase = createServiceRoleClient()
-  
-  if (status === 'step_2_competitors') {
-    // ATOMIC TRANSITION: Only proceed if currently at step 2
-    const updateData = {
-      status: 'step_2_competitors',
-      current_step: 3, // Advance to Step 3
-      step_2_competitor_completed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-
-    // Database-level atomic update with WHERE clause
-    const { data: workflow, error } = await supabase
-      .from('intent_workflows')
-      .update(updateData)
-      .eq('id', workflowId)
-      .eq('organization_id', organizationId)
-      .eq('current_step', 2) // CRITICAL: Only update if still at step 2
-      .select('id, current_step, status')
-      .single()
-
-    if (error) {
-      console.error('[CompetitorAnalyze] Atomic transition failed:', error)
-      return { success: false }
-    }
-
-    if (!workflow) {
-      console.warn('[CompetitorAnalyze] Atomic transition: Workflow not found or not at step 2')
-      return { success: false }
-    }
-
-    console.log(`[CompetitorAnalyze] Atomic transition successful: ${(workflow as any).id} → step 3`)
-    return { success: true, workflow }
-  }
-
-  if (status === 'failed') {
-    const updateData = {
-      status: 'failed',
-      step_2_competitor_error_message: errorMessage,
-      updated_at: new Date().toISOString()
-    }
-
-    const { data: workflow, error } = await supabase
-      .from('intent_workflows')
-      .update(updateData)
-      .eq('id', workflowId)
-      .eq('organization_id', organizationId)
-      .eq('current_step', 2)
-      .select('id, current_step, status')
-      .single()
-
-    if (error) {
-      console.error('[CompetitorAnalyze] Atomic failure update failed:', error)
-      return { success: false }
-    }
-
-    return { success: true, workflow }
-  }
-
-  return { success: false }
 }
 
 export async function POST(
@@ -279,6 +211,32 @@ export async function POST(
 
     console.log(`[CompetitorAnalyze] Step 2 immutability check passed - no existing keywords found for workflow ${workflowId}`)
 
+    // TRANSITION-FIRST PATTERN: Acquire lock BEFORE side effects
+    // This prevents duplicate extraction and keyword persistence under concurrency
+    // Extract idempotency key from request headers for retry safety
+    const idempotencyKey = request.headers.get('Idempotency-Key') || undefined
+    
+    const transitionResult = await transitionWorkflow({
+      workflowId,
+      organizationId,
+      fromStep: 2,
+      toStep: 3,
+      status: 'step_2_competitors',
+      idempotencyKey
+    })
+    
+    if (!transitionResult.success) {
+      // Another request won the race - return immediately without extracting
+      return NextResponse.json(
+        { 
+          error: 'STEP_TRANSITION_FAILED',
+          message: 'Workflow was already in transition or not in correct state'
+        },
+        { status: 409 } // Conflict - another request won the race
+      )
+    }
+
+    // ONLY WINNER EXECUTES: Side effects happen after lock is acquired
     // Extract seed keywords from competitors using dependency injection
     const extractionRequest: ExtractSeedKeywordsRequest = {
       competitors: allCompetitors,
@@ -298,19 +256,6 @@ export async function POST(
     // API LAYER: Always succeed if extraction API worked (pure data collection)
     // We no longer fail on 0 keywords - human curation happens in Step 3
     console.log(`[CompetitorAnalyze] Extraction completed: ${result.total_keywords_created} keywords from ${allCompetitors.length} competitors`)
-
-    // SUCCESS PATH - Atomic workflow transition
-    const transitionResult = await atomicWorkflowTransition(workflowId, organizationId, 'step_2_competitors')
-    
-    if (!transitionResult.success) {
-      return NextResponse.json(
-        { 
-          error: 'STEP_TRANSITION_FAILED',
-          message: 'Workflow was already in transition or not in correct state'
-        },
-        { status: 409 } // Conflict - another request won the race
-      )
-    }
 
     // Log action completion
     try {
@@ -350,7 +295,14 @@ export async function POST(
     if (workflowId && organizationId) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       try {
-        await atomicWorkflowTransition(workflowId, organizationId, 'failed', errorMessage)
+        await transitionWorkflow({
+          workflowId,
+          organizationId,
+          fromStep: 2,
+          toStep: 2, // Stay at step 2 on failure
+          status: 'failed',
+          idempotencyKey: request.headers.get('Idempotency-Key') || undefined
+        })
         
         // Emit terminal failure analytics event (AC 8)
         emitAnalyticsEvent({
