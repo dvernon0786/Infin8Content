@@ -43,7 +43,7 @@ export function Step1ICPForm({ workflowId }: Step1ICPFormProps) {
       }
 
       const res = await fetch(
-        `/api/intent/workflows/${workflowId}/step_0_auth`,
+        `/api/intent/workflows/${workflowId}/steps/icp-generate`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -56,8 +56,17 @@ export function Step1ICPForm({ workflowId }: Step1ICPFormProps) {
       )
 
       if (!res.ok) {
-        const body = await res.json()
-        throw new Error(body.error || 'Failed to generate ICP')
+        let message = 'Failed to generate ICP'
+
+        try {
+          const body = await res.json()
+          message = body.error || body.message || message
+        } catch {
+          const text = await res.text()
+          message = text || message
+        }
+
+        throw new Error(message)
       }
 
       // Fire analytics event on success
