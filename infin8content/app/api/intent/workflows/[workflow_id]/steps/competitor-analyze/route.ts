@@ -14,11 +14,44 @@ import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import {
   extractSeedKeywords,
-  updateWorkflowStatus,
   type ExtractSeedKeywordsRequest
 } from '@/lib/services/intent-engine/competitor-seed-extractor'
 import { getWorkflowCompetitors } from '@/lib/services/competitor-workflow-integration'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
+
+// Inline workflow status update function for API layer control
+async function updateWorkflowStatus(
+  workflowId: string,
+  organizationId: string,
+  status: 'step_2_competitors' | 'failed',
+  errorMessage?: string
+): Promise<void> {
+  const supabase = createServiceRoleClient()
+  
+  const updateData: any = {
+    updated_at: new Date().toISOString()
+  }
+
+  if (status === 'step_2_competitors') {
+    updateData.step_2_competitor_completed_at = new Date().toISOString()
+    // Advance to next step (Step 3)
+    updateData.current_step = 3
+  } else if (status === 'failed') {
+    updateData.step_2_competitor_error_message = errorMessage
+  }
+
+  const { error } = await supabase
+    .from('intent_workflows')
+    .update(updateData)
+    .eq('id', workflowId)
+    .eq('organization_id', organizationId)
+
+  if (error) {
+    throw new Error(`Failed to update workflow status: ${error.message}`)
+  }
+
+  console.log(`[CompetitorAnalyze] Workflow ${workflowId} status updated to ${status}, current_step advanced to ${updateData.current_step}`)
+}
 
 export async function POST(
   request: NextRequest,
@@ -91,10 +124,14 @@ export async function POST(
 
     // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 2 when current_step = 2
     if (typedWorkflow.current_step !== 2) {
+      const errorMessage = typedWorkflow.current_step > 2 
+        ? 'Cannot re-run Step 2 after clustering has started. Please create a new workflow.'
+        : `Workflow must be at step 2 (competitor analysis), currently at step ${typedWorkflow.current_step}`
+      
       return NextResponse.json(
         {
           error: 'INVALID_STEP_ORDER',
-          message: `Workflow must be at step 2 (competitor analysis), currently at step ${typedWorkflow.current_step}`
+          message: errorMessage
         },
         { status: 400 }
       )
@@ -120,30 +157,43 @@ export async function POST(
 
     // Load competitors for the workflow
     console.log(`[CompetitorAnalyze] Loading competitors for workflow ${workflowId}`)
-    const competitors = await getWorkflowCompetitors(workflowId)
+    const workflowCompetitors = await getWorkflowCompetitors(workflowId)
 
-    if (competitors.length === 0) {
-      await updateWorkflowStatus(
-        workflowId,
-        organizationId,
-        'failed',
-        'No active competitors configured for this organization'
-      )
+    // Get additional competitors from request body (only NEW ones)
+    const body = await request.json().catch(() => ({}))
+    const additionalCompetitors: string[] = body?.additionalCompetitors || []
 
+    // Filter out duplicates from existing competitors
+    const existingUrls = new Set(workflowCompetitors.map(c => c.url))
+    const newCompetitors = additionalCompetitors.filter(url => !existingUrls.has(url))
+
+    // Format additional competitors
+    const extraFormatted = newCompetitors
+      .filter((url) => typeof url === 'string' && url.trim().length > 0)
+      .map((url) => ({
+        id: crypto.randomUUID(),
+        url: url.trim(),
+        domain: url.trim(),
+        is_active: true,
+      }))
+
+    const allCompetitors = [...workflowCompetitors, ...extraFormatted]
+
+    if (allCompetitors.length === 0) {
       return NextResponse.json(
         {
-          error: 'No competitors found',
-          message: 'Organization must have at least one active competitor configured'
+          error: 'No competitors available to analyze.',
+          message: 'Please add at least one competitor URL.'
         },
         { status: 400 }
       )
     }
 
-    console.log(`[CompetitorAnalyze] Found ${competitors.length} competitors for workflow ${workflowId}`)
+    console.log(`[CompetitorAnalyze] Found ${workflowCompetitors.length} workflow + ${extraFormatted.length} additional = ${allCompetitors.length} total competitors`)
 
     // Extract seed keywords from competitors
     const extractionRequest: ExtractSeedKeywordsRequest = {
-      competitors,
+      competitors: allCompetitors,
       organizationId,
       maxSeedsPerCompetitor: 3,
       locationCode: 2840, // US default
@@ -153,7 +203,26 @@ export async function POST(
 
     const result = await extractSeedKeywords(extractionRequest)
 
-    // Update workflow status to step_2_competitors
+    // API LAYER: Decide success/failure and update state ONCE
+    if (result.total_keywords_created === 0) {
+      // Update workflow to failed state
+      await updateWorkflowStatus(
+        workflowId,
+        organizationId,
+        'failed',
+        'No keywords found from provided competitors.'
+      )
+
+      return NextResponse.json(
+        {
+          error: 'No keywords found from provided competitors. Please add more competitor URLs.',
+          code: 'NO_KEYWORDS_FOUND'
+        },
+        { status: 400 }
+      )
+    }
+
+    // SUCCESS PATH - Update workflow status and advance step
     await updateWorkflowStatus(workflowId, organizationId, 'step_2_competitors')
 
     // Log action completion
@@ -180,14 +249,11 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      warning: result.competitors_failed > 0 ? `${result.competitors_failed} competitor(s) failed during analysis` : undefined,
-      data: {
-        seed_keywords_created: result.total_keywords_created,
-        step_2_competitor_completed_at: new Date().toISOString(),
-        competitors_processed: result.competitors_processed,
-        competitors_failed: result.competitors_failed,
-        results: result.results
-      }
+      seed_keywords_created: result.total_keywords_created,
+      total_keywords_created: result.total_keywords_created,
+      competitors_processed: result.competitors_processed,
+      competitors_failed: result.competitors_failed,
+      warning: result.competitors_failed > 0 ? `${result.competitors_failed} competitor(s) failed during analysis` : undefined
     })
   } catch (error) {
     // Log error

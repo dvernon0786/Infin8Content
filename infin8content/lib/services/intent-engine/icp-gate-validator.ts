@@ -14,7 +14,7 @@ export interface WorkflowData {
   id: string
   status: string
   organization_id: string
-  icp_completed_at: string | null
+  step_1_icp_completed_at: string | null
 }
 
 export class ICPGateValidator {
@@ -30,7 +30,7 @@ export class ICPGateValidator {
       // Query workflow status and ICP completion
       const { data: workflow, error } = await supabase
         .from('intent_workflows')
-        .select('id, status, organization_id, icp_completed_at')
+        .select('id, status, organization_id, step_1_icp_completed_at')
         .eq('id', workflowId)
         .single() as { data: WorkflowData | null, error: any }
 
@@ -73,8 +73,9 @@ export class ICPGateValidator {
         }
       }
 
-      // Check if ICP is complete (status must be step_2_icp_complete or later)
+      // Check if ICP is complete (status must be step_1_icp or later)
       const icpCompleteStatuses = [
+        'step_1_icp',
         'step_2_icp_complete',
         'step_3_competitors',
         'step_4_longtails',
@@ -97,7 +98,7 @@ export class ICPGateValidator {
             error: `ICP completion required before ${workflow.status}`,
             workflowStatus: workflow.status,
             icpStatus: workflow.status,
-            requiredAction: 'Complete ICP generation (step 2) before proceeding',
+            requiredAction: 'Complete ICP generation (step 1) before proceeding',
             currentStep: workflow.status,
             blockedAt: new Date().toISOString()
           }

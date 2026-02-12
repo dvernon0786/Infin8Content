@@ -86,6 +86,34 @@ export async function POST(
       userAgent: extractUserAgent(request.headers),
     })
 
+    // DEFENSE IN DEPTH: Verify sufficient keywords exist for clustering
+    const { count: keywordCount, error: keywordError } = await supabase
+      .from('keywords')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', organizationId)
+      .eq('workflow_id', workflowId)
+      .is('parent_seed_keyword_id', null)  // Match Step 3 filter - only seed keywords
+
+    if (keywordError) {
+      return NextResponse.json(
+        { error: 'Failed to verify keyword count for clustering' },
+        { status: 500 }
+      )
+    }
+
+    if (!keywordCount || keywordCount < 2) {
+      return NextResponse.json(
+        {
+          error: 'Insufficient keywords for clustering',
+          message: 'At least 2 seed keywords are required for clustering. Please ensure Step 3 completed successfully.',
+          code: 'INSUFFICIENT_KEYWORDS_FOR_CLUSTERING'
+        },
+        { status: 400 }
+      )
+    }
+
+    console.log(`[ClusterTopics] Found ${keywordCount} seed keywords available for clustering`)
+
     // Initialize clusterer and perform clustering
     const clusterer = new KeywordClusterer()
     const clusterResult = await clusterer.clusterKeywords(workflowId, {
@@ -93,6 +121,18 @@ export async function POST(
       maxSpokesPerHub: 8,
       minClusterSize: 3
     })
+
+    // BLOCK advancement if no clusters created
+    if (clusterResult.cluster_count === 0) {
+      return NextResponse.json(
+        {
+          error: 'No clusters created',
+          message: 'Clustering produced no valid clusters. Try adjusting clustering parameters or adding more diverse keywords.',
+          code: 'NO_CLUSTERS_CREATED'
+        },
+        { status: 400 }
+      )
+    }
 
     // Update workflow status to step_6_clustering
     const { error: updateError } = await supabase
@@ -105,10 +145,18 @@ export async function POST(
         keywords_clustered: clusterResult.keywords_clustered
       })
       .eq('id', workflowId)
+      .eq('organization_id', organizationId)  // CRITICAL: Add tenant isolation
 
     if (updateError) {
       console.error('Failed to update workflow status:', updateError)
-      // Don't fail the request, but log the error
+      return NextResponse.json(
+        {
+          error: 'Failed to update workflow status',
+          message: 'Clustering completed but workflow state could not be updated.',
+          code: 'WORKFLOW_UPDATE_FAILED'
+        },
+        { status: 500 }
+      )
     }
 
     // Log completion audit action
@@ -155,7 +203,7 @@ export async function POST(
     }
 
     // Update workflow with error state
-    if (workflowId) {
+    if (workflowId && organizationId) {
       const supabase = createServiceRoleClient()
       await supabase
         .from('intent_workflows')
@@ -163,6 +211,7 @@ export async function POST(
           step_6_clustering_error_message: error instanceof Error ? error.message : 'Unknown error'
         })
         .eq('id', workflowId)
+        .eq('organization_id', organizationId)  // CRITICAL: Add tenant isolation to error path
     }
 
     // Return appropriate error response

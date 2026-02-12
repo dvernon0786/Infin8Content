@@ -33,7 +33,7 @@ vi.mock('@/lib/services/competitor-workflow-integration', () => ({
 
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
-import { extractSeedKeywords, updateWorkflowStatus } from '@/lib/services/intent-engine/competitor-seed-extractor'
+import { extractSeedKeywords } from '@/lib/services/intent-engine/competitor-seed-extractor'
 import { getWorkflowCompetitors } from '@/lib/services/competitor-workflow-integration'
 
 describe('POST /api/intent/workflows/[workflow_id]/steps/competitor-analyze', () => {
