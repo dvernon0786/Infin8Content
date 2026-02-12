@@ -84,6 +84,7 @@ function extractJson(raw: string): string {
  * @param organizationId - Organization ID for tracking and storage
  * @param timeoutMs - Timeout per attempt in milliseconds
  * @param retryPolicy - Retry configuration (uses defaults if not provided)
+ * @param idempotencyKey - Idempotency key for retry safety (generated at request boundary)
  * @returns Generated ICP data with metadata including retry information
  */
 export async function generateICPDocument(
@@ -91,7 +92,8 @@ export async function generateICPDocument(
   organizationId: string,
   timeoutMs: number = 300000, // 5 minutes default
   retryPolicy: RetryPolicy = DEFAULT_RETRY_POLICY,
-  workflowId: string = ''
+  workflowId: string = '',
+  idempotencyKey: string = `${workflowId}:step_1_icp`
 ): Promise<ICPGenerationResult> {
   let lastError: Error | null = null
   let retryCount = 0
@@ -453,16 +455,19 @@ function validateICPData(data: ICPData): void {
  * Store ICP generation result in workflow
  * Uses single atomic transaction for financial settlement and workflow state update
  * Includes idempotency protection for network retry safety
+ * 
+ * @param workflowId - Workflow ID
+ * @param organizationId - Organization ID
+ * @param icpResult - ICP generation result with metadata
+ * @param idempotencyKey - Idempotency key for retry safety (generated at request boundary)
  */
 export async function storeICPGenerationResult(
   workflowId: string,
   organizationId: string,
-  icpResult: ICPGenerationResult
+  icpResult: ICPGenerationResult,
+  idempotencyKey: string
 ): Promise<void> {
   const supabase = createServiceRoleClient()
-
-  // Generate idempotency key for network retry protection
-  const idempotencyKey = crypto.randomUUID()
 
   // 🏆 Elite atomic transaction: financial settlement + workflow state in single call
   const { error: atomicError } = await supabase

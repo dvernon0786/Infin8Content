@@ -62,6 +62,23 @@ BEGIN
   -- Only update workflow if ledger insertion actually happened (idempotency)
   IF v_ledger_inserted IS NOT NULL THEN
 
+  -- 🔒 Elite cost cap enforcement inside transaction (prevents race conditions)
+  DECLARE
+    v_current_total_cost NUMERIC;
+    v_max_cost NUMERIC DEFAULT 1.00; -- $1.00 hard cap per workflow
+  BEGIN
+    SELECT COALESCE((workflow_data->>'total_ai_cost')::numeric, 0)
+    INTO v_current_total_cost
+    FROM intent_workflows
+    WHERE id = p_workflow_id
+    AND organization_id = p_organization_id;
+    
+    IF (v_current_total_cost + p_cost) > v_max_cost THEN
+      RAISE EXCEPTION 'Workflow cost limit exceeded: current=%, additional=%, limit=%', 
+                   v_current_total_cost, p_cost, v_max_cost;
+    END IF;
+  END;
+
   -- 2️⃣ Update workflow atomically in same transaction
   UPDATE intent_workflows
   SET
