@@ -200,6 +200,29 @@ export async function POST(
 
     console.log(`[CompetitorAnalyze] Found ${workflowCompetitors.length} workflow + ${extraFormatted.length} additional = ${allCompetitors.length} total competitors`)
 
+    // ENTERPRISE IMMUTABILITY: Lock Step 2 after first successful run
+    // This prevents overwriting human decisions and ensures deterministic workflow behavior
+    const { data: existingKeywords } = await supabase
+      .from('keywords')
+      .select('id')
+      .eq('workflow_id', workflowId)
+      .limit(1)
+
+    if (existingKeywords && existingKeywords.length > 0) {
+      console.warn(`[CompetitorAnalyze] STEP 2 RERUN BLOCKED - ${existingKeywords.length} keywords already exist for workflow ${workflowId}`)
+      return NextResponse.json(
+        { 
+          error: 'STEP_ALREADY_COMPLETED',
+          message: 'Step 2 (competitor analysis) has already been completed for this workflow. Create a new workflow to re-run analysis.',
+          workflow_id: workflowId,
+          existing_keyword_count: existingKeywords.length
+        },
+        { status: 409 } // Conflict - resource already exists
+      )
+    }
+
+    console.log(`[CompetitorAnalyze] Step 2 immutability check passed - no existing keywords found for workflow ${workflowId}`)
+
     // Extract seed keywords from competitors
     const extractionRequest: ExtractSeedKeywordsRequest = {
       competitors: allCompetitors,
