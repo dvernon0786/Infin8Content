@@ -406,7 +406,7 @@ export async function persistSeedKeywords(
     .filter(keyword => keyword.seed_keyword && keyword.seed_keyword.trim().length > 0)
     .map(keyword => ({
       organization_id: organizationId,
-      workflow_id: workflowId,
+      workflow_id: workflowId, // Critical for workflow isolation
       competitor_url_id: competitorUrlId,
       seed_keyword: keyword.seed_keyword.trim(),
       keyword: keyword.seed_keyword.trim(), // Same as seed_keyword at this stage
