@@ -4,11 +4,10 @@
  */
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { 
+import {
   extractSeedKeywords,
-  updateWorkflowStatus,
-  ExtractSeedKeywordsRequest,
-  CompetitorData
+  type ExtractSeedKeywordsRequest,
+  type CompetitorData
 } from '../competitor-seed-extractor'
 import { isRetryableError, calculateBackoffDelay, classifyErrorType } from '../retry-utils'
 
