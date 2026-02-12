@@ -52,18 +52,9 @@ $$ LANGUAGE plpgsql;
 -- Enable RLS on workflow_transitions
 ALTER TABLE workflow_transitions ENABLE ROW LEVEL SECURITY;
 
--- RLS policy: Users can only see transitions for their organization
-CREATE POLICY workflow_transitions_org_isolation 
+-- RLS policy: Service role can access all transitions
+CREATE POLICY workflow_transitions_service_role 
   ON workflow_transitions 
-  FOR SELECT 
-  USING (organization_id = auth.uid()::uuid OR EXISTS (
-    SELECT 1 FROM organizations 
-    WHERE id = organization_id 
-    AND auth.uid() = ANY(member_ids)
-  ));
-
--- RLS policy: Only service role can insert transitions
-CREATE POLICY workflow_transitions_insert 
-  ON workflow_transitions 
-  FOR INSERT 
-  WITH CHECK (true);
+  FOR ALL 
+  USING (auth.role() = 'service_role')
+  WITH CHECK (auth.role() = 'service_role');
