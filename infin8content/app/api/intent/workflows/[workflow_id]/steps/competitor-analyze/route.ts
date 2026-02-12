@@ -17,8 +17,26 @@ import {
   type ExtractSeedKeywordsRequest,
   type CompetitorData
 } from '@/lib/services/intent-engine/competitor-seed-extractor'
+import type { SeedExtractor } from '@/lib/services/intent-engine/seed-extractor.interface'
+import { DeterministicFakeExtractor } from '@/lib/services/intent-engine/deterministic-fake-extractor'
 import { getWorkflowCompetitors } from '@/lib/services/competitor-workflow-integration'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
+
+// Dependency injection: Use fake extractor in test mode
+const getExtractor = (): SeedExtractor => {
+  if (process.env.NODE_ENV === 'test' || process.env.USE_DETERMINISTIC_EXTRACTOR === 'true') {
+    return new DeterministicFakeExtractor()
+  }
+  // Return real extractor wrapper for production
+  return {
+    async extract(request: ExtractSeedKeywordsRequest) {
+      return extractSeedKeywords(request)
+    },
+    getExtractorType() {
+      return 'dataforseo-real'
+    }
+  }
+}
 
 // Inline workflow status update function for API layer control
 async function updateWorkflowStatus(
@@ -223,7 +241,7 @@ export async function POST(
 
     console.log(`[CompetitorAnalyze] Step 2 immutability check passed - no existing keywords found for workflow ${workflowId}`)
 
-    // Extract seed keywords from competitors
+    // Extract seed keywords from competitors using dependency injection
     const extractionRequest: ExtractSeedKeywordsRequest = {
       competitors: allCompetitors,
       organizationId,
@@ -234,7 +252,10 @@ export async function POST(
       timeoutMs: 600000 // 10 minutes
     }
 
-    const result = await extractSeedKeywords(extractionRequest)
+    const extractor = getExtractor()
+    console.log(`[CompetitorAnalyze] Using extractor: ${extractor.getExtractorType()}`)
+    
+    const result = await extractor.extract(extractionRequest)
 
     // API LAYER: Always succeed if extraction API worked (pure data collection)
     // We no longer fail on 0 keywords - human curation happens in Step 3

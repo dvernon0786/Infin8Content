@@ -1,6 +1,7 @@
 /**
  * Deterministic E2E Test: Step 1 → Step 2 Workflow Execution
  * Tests actual API endpoints, guard enforcement, and state transitions
+ * Uses deterministic fake extractor for repeatable results
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
@@ -18,6 +19,9 @@ async function getWorkflow(id: string) {
 describe('E2E: Step 1 → Step 2 Deterministic Execution', () => {
 
   beforeAll(async () => {
+    // Set environment for deterministic testing
+    process.env.USE_DETERMINISTIC_EXTRACTOR = 'true'
+    
     // 1️⃣ Create fresh workflow via API (NOT DB insert)
     const res = await fetch(`${BASE_URL}/api/internal/test-create-workflow`, {
       method: 'POST'
@@ -204,12 +208,26 @@ describe('E2E: Step 1 → Step 2 Deterministic Execution', () => {
     expect(workflow.workflow.current_step).toBe(3) // unchanged
   })
 
+  it('Step 2 returns deterministic keyword results', async () => {
+    const workflow = await getWorkflow(workflowId)
+    
+    // DETERMINISTIC: Exactly 4 keywords (2 per competitor)
+    expect(workflow.keywords.count).toBe(4)
+    
+    // DETERMINISTIC: Specific keyword names from fake extractor
+    const res = await fetch(`${BASE_URL}/api/internal/test-get-workflow?id=${workflowId}`)
+    const data = await res.json()
+    
+    // Verify keywords were created with deterministic data
+    expect(data.keywords.count).toBe(4)
+  })
+
   it('Step 2 immutability protects human decisions', async () => {
     // Verify keywords exist and are protected
     const workflow = await getWorkflow(workflowId)
     
-    // Should have keywords from Step 2 execution
-    expect(workflow.keywords.count).toBeGreaterThan(0)
+    // Should have exactly 4 keywords from deterministic extractor
+    expect(workflow.keywords.count).toBe(4)
     
     // Attempt to re-run Step 2 should be blocked
     const res = await fetch(
@@ -235,6 +253,10 @@ describe('E2E: Step 1 → Step 2 Deterministic Execution', () => {
 
     expect(res.status).toBe(409)
     expect((await res.json()).error).toBe('STEP_ALREADY_COMPLETED')
+    
+    // DETERMINISTIC: Still exactly 4 keywords (no change)
+    const finalWorkflow = await getWorkflow(workflowId)
+    expect(finalWorkflow.keywords.count).toBe(4)
   })
 
 })

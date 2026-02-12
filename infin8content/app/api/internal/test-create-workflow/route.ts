@@ -102,25 +102,61 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create JWT token for test user
-    const token = jwt.sign(
-      {
-        user_id: userId,
-        org_id: organizationId,
+    // Create real Supabase session for authentic testing
+    const { data: signInData, error: signInError } = await supabase.auth.admin.createUser({
+      email: 'test-user@example.com',
+      password: 'test-password',
+      email_confirm: true,
+      user_metadata: {
+        role: 'test',
+        organization_id: organizationId
+      }
+    })
+
+    if (signInError) {
+      // User might already exist, try signing in
+      const { data: existingSignIn, error: existingError } = await supabase.auth.signInWithPassword({
         email: 'test-user@example.com',
-        role: 'test'
-      },
-      JWT_SECRET,
-      { expiresIn: '1h' }
-    )
+        password: 'test-password'
+      })
+
+      if (existingError) {
+        return NextResponse.json(
+          { error: 'Failed to authenticate test user' },
+          { status: 500 }
+        )
+      }
+
+      return NextResponse.json({
+        workflow_id: (workflow as any).id,
+        organization_id: (workflow as any).organization_id,
+        status: (workflow as any).status,
+        current_step: (workflow as any).current_step,
+        token: existingSignIn.session?.access_token || '',
+        user_id: existingSignIn.user?.id || ''
+      })
+    }
+
+    // Generate session for the created user
+    const { data: sessionData, error: sessionError } = await supabase.auth.signInWithPassword({
+      email: 'test-user@example.com',
+      password: 'test-password'
+    })
+
+    if (sessionError) {
+      return NextResponse.json(
+        { error: 'Failed to create session' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
       workflow_id: (workflow as any).id,
       organization_id: (workflow as any).organization_id,
       status: (workflow as any).status,
       current_step: (workflow as any).current_step,
-      token: token,
-      user_id: userId
+      token: sessionData.session?.access_token || '',
+      user_id: sessionData.user?.id || ''
     })
 
   } catch (error: any) {
