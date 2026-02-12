@@ -209,30 +209,6 @@ export async function POST(
       )
     }
 
-    console.log(`[CompetitorAnalyze] Step 2 immutability check passed - no existing keywords found for workflow ${workflowId}`)
-
-    // TRANSITION-FIRST PATTERN: Acquire lock BEFORE side effects
-    // This prevents duplicate extraction and keyword persistence under concurrency
-    const transitionResult = await transitionWorkflow({
-      workflowId,
-      organizationId,
-      fromStep: 2,
-      toStep: 3,
-      status: 'step_2_competitors'
-    })
-    
-    if (!transitionResult.success) {
-      // Another request won the race - return immediately without extracting
-      return NextResponse.json(
-        { 
-          error: 'STEP_TRANSITION_FAILED',
-          message: 'Workflow was already in transition or not in correct state'
-        },
-        { status: 409 } // Conflict - another request won the race
-      )
-    }
-
-    // ONLY WINNER EXECUTES: Side effects happen after lock is acquired
     // Extract seed keywords from competitors using dependency injection
     const extractionRequest: ExtractSeedKeywordsRequest = {
       competitors: allCompetitors,
@@ -252,6 +228,27 @@ export async function POST(
     // API LAYER: Always succeed if extraction API worked (pure data collection)
     // We no longer fail on 0 keywords - human curation happens in Step 3
     console.log(`[CompetitorAnalyze] Extraction completed: ${result.total_keywords_created} keywords from ${allCompetitors.length} competitors`)
+
+    // TRANSITION AFTER SUCCESS: Only transition after side effects complete
+    // This ensures state machine purity - if state says "step 3", work is actually done
+    const transitionResult = await transitionWorkflow({
+      workflowId,
+      organizationId,
+      fromStep: 2,
+      toStep: 3,
+      status: 'step_2_competitors'
+    })
+    
+    if (!transitionResult.success) {
+      // Another request already transitioned this workflow
+      // Keywords were already extracted, return success anyway
+      console.log(`[CompetitorAnalyze] Workflow already transitioned to step 3 (concurrent request won race)`)
+      return NextResponse.json({
+        success: true,
+        message: 'Step 2 already completed by concurrent request',
+        workflow_id: workflowId
+      })
+    }
 
     // Log action completion
     try {
