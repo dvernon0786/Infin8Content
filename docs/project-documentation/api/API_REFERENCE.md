@@ -1,8 +1,19 @@
 # Infin8Content API Reference
 
-**Generated:** 2026-02-09  
-**Version:** v2.1  
+**Generated:** 2026-02-13  
+**Version:** v2.2 - AI Copilot Architecture Complete  
 **Base URL:** `https://your-domain.com/api`
+
+## 🎯 AI Copilot APIs
+
+The platform now includes **AI Copilot decision APIs** that enable human-AI collaboration:
+
+### **Keyword Review API**
+- `GET /api/intent/workflows/[workflow_id]/steps/seed-extract` - Load keywords for review with AI suggestions
+- `POST /api/intent/workflows/[workflow_id]/steps/seed-extract` - Update user selections and advance workflow
+
+### **Enhanced Clustering API**  
+- `POST /api/intent/workflows/[workflow_id]/steps/cluster-topics` - Cluster user-selected keywords only
 
 ## Authentication
 
@@ -24,12 +35,14 @@ Authorization: 'Bearer <jwt_token>'
 - `GET /api/intent/workflows/[workflow_id]/blocking-conditions` - Check workflow blockers
 - `GET /api/intent/workflows/[workflow_id]/articles/progress` - Track article generation progress
 
-#### Workflow Steps
+#### Workflow Steps (AI Copilot Enhanced)
 - `POST /api/intent/workflows/[workflow_id]/steps/generate-icp` - Generate ICP document
-- `POST /api/intent/workflows/[workflow_id]/steps/competitor-analyze` - Analyze competitors
+- `POST /api/intent/workflows/[workflow_id]/steps/competitor-analyze` - **AI Copilot:** Extract 25 keywords/competitor with AI metadata
+- `GET /api/intent/workflows/[workflow_id]/steps/seed-extract` - **AI Copilot:** Load keywords for review with AI suggestions
+- `POST /api/intent/workflows/[workflow_id]/steps/seed-extract` - **AI Copilot:** Update user selections and advance workflow
 - `POST /api/intent/workflows/[workflow_id]/steps/longtail-expand` - Expand keywords
 - `POST /api/intent/workflows/[workflow_id]/steps/filter-keywords` - Filter keywords
-- `POST /api/intent/workflows/[workflow_id]/steps/cluster-topics` - Cluster topics
+- `POST /api/intent/workflows/[workflow_id]/steps/cluster-topics` - **AI Copilot:** Cluster user-selected keywords only
 - `POST /api/intent/workflows/[workflow_id]/steps/validate-clusters` - Validate clusters
 - `POST /api/intent/workflows/[workflow_id]/steps/approve-seeds` - Approve seed keywords
 

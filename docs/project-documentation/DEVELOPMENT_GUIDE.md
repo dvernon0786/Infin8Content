@@ -1,8 +1,21 @@
 # Infin8Content Development Guide
 
-**Generated:** 2026-02-09  
-**Version:** v2.1  
-**Target Audience:** Intermediate to Advanced Developers
+**Generated:** 2026-02-13  
+**Version:** v2.2 - AI Copilot Architecture Complete  
+**Target Audience:** Intermediate to Advanced Developers  
+**Platform:** Enterprise AI-Assisted Decision Platform
+
+## 🎯 AI Copilot Architecture Overview
+
+The Infin8Content platform has evolved into an **AI Copilot system** that combines:
+- **AI Suggestions:** Confidence scoring, opportunity assessment
+- **Human Decisions:** Visual charts, traceable selections
+- **System Execution:** Bounded compute, deterministic clustering
+
+### Key Architectural Changes
+- **Step 2:** Pure data collection (25 keywords/competitor) with AI metadata
+- **Step 3:** Human curation with visual opportunity scoring
+- **Step 4:** User-selected clustering with enterprise safety bounds
 
 ## Getting Started
 
