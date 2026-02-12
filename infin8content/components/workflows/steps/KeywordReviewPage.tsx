@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2, Search, Filter } from 'lucide-react'
+import { KeywordOpportunityChart } from './KeywordOpportunityChart'
 
 export interface Keyword {
   id: string
@@ -302,6 +303,9 @@ export default function KeywordReviewPage({
           </tbody>
         </table>
       </div>
+
+      {/* Opportunity Chart */}
+      <KeywordOpportunityChart keywords={keywords} />
 
       {/* Footer */}
       <div className="flex justify-between items-center pt-4 border-t">
