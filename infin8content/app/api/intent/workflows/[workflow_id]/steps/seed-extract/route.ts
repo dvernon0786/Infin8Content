@@ -100,14 +100,13 @@ export async function POST(
 
     console.log(`[SeedExtract] Starting seed extraction transition for workflow ${workflowId}`)
 
-    // Count existing seed keywords to verify they exist
-    const { data: seedKeywords, error: seedError } = await supabase
+    // Count existing seed keywords for THIS WORKFLOW ONLY
+    const { count: keywordCount, error: seedError } = await supabase
       .from('keywords')
-      .select('id')
-      .eq('workflow_id', workflowId)
-      .eq('organization_id', organizationId)
-      .is('parent_seed_keyword_id', null) // Seed keywords have no parent
-      .limit(1)
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', organizationId)        // Tenant isolation
+      .eq('workflow_id', workflowId)               // Workflow isolation  
+      .is('parent_seed_keyword_id', null)          // Seed keywords only
 
     if (seedError) {
       console.error('Error checking seed keywords:', seedError)
@@ -117,11 +116,24 @@ export async function POST(
       )
     }
 
-    if (!seedKeywords || seedKeywords.length === 0) {
+    if (!keywordCount || keywordCount === 0) {
       return NextResponse.json(
         {
           error: 'No seed keywords found',
-          message: 'Competitor analysis must be completed first to generate seed keywords'
+          message: 'Step 3 cannot run because no seed keywords exist for this workflow. Please re-run Step 2 and add more competitors.',
+          code: 'NO_SEED_KEYWORDS'
+        },
+        { status: 400 }
+      )
+    }
+
+    // Require minimum 2 keywords for meaningful clustering
+    if (keywordCount < 2) {
+      return NextResponse.json(
+        {
+          error: 'Insufficient seed keywords',
+          message: 'At least 2 seed keywords are required for clustering. Please re-run Step 2 with more competitors.',
+          code: 'INSUFFICIENT_SEED_KEYWORDS'
         },
         { status: 400 }
       )

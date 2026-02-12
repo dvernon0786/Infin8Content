@@ -153,17 +153,22 @@ export async function extractSeedKeywords(
     }
   }
 
-  if (competitorsProcessed === 0) {
-    // Update workflow status to failed with retry metadata
-    if (workflowId) {
-      await updateWorkflowStatus(workflowId, organizationId, 'failed', 'All competitors failed during seed keyword extraction', totalRetryCount)
+  if (totalKeywordsCreated === 0) {
+    console.warn(`[CompetitorSeedExtractor] No keywords extracted from any competitor`)
+    
+    // Return structured error - NO state mutation here
+    return {
+      total_keywords_created: 0,
+      competitors_processed: competitorsProcessed,
+      competitors_failed: competitorsFailed,
+      results,
+      error: 'NO_KEYWORDS_FOUND'
     }
-    throw new Error('All competitors failed during seed keyword extraction')
   }
 
-  // Update workflow status to success with retry metadata
-  if (workflowId) {
-    await updateWorkflowStatus(workflowId, organizationId, 'step_2_competitors', undefined, totalRetryCount)
+  // Log partial success for visibility
+  if (competitorsFailed > 0) {
+    console.log(`[CompetitorSeedExtractor] Partial success: ${competitorsProcessed}/${competitors.length} competitors processed successfully`)
   }
 
   const totalElapsedMs = Date.now() - startTime
@@ -171,6 +176,7 @@ export async function extractSeedKeywords(
     `[CompetitorSeedExtractor] Extraction completed in ${totalElapsedMs}ms: ${totalKeywordsCreated} keywords created`
   )
 
+  // Return success data - NO state mutation here
   return {
     total_keywords_created: totalKeywordsCreated,
     competitors_processed: competitorsProcessed,
@@ -293,10 +299,18 @@ async function extractKeywordsFromCompetitor(
         .sort((a: any, b: any) => (b.search_volume || 0) - (a.search_volume || 0))
         .slice(0, maxKeywords)
 
-      // Map to seed keyword format
-      return sortedKeywords.map((result: any) => ({
-        seed_keyword: result.keyword,
-        search_volume: result.search_volume || 0,
+      // DEBUG: Log the raw DataForSEO response
+      console.log(`[DataForSEO DEBUG] Raw response for ${url}:`, JSON.stringify(taskResults.slice(0, 3), null, 2))
+
+      // Filter out null/undefined keywords and map to seed keyword format
+      const validKeywords = sortedKeywords
+        .filter((result: any) => result.keyword && typeof result.keyword === 'string' && result.keyword.trim().length > 0)
+      
+      console.log(`[DataForSEO DEBUG] Filtered ${validKeywords.length} valid keywords from ${sortedKeywords.length} total`)
+
+      return validKeywords.map((result: any) => ({
+          seed_keyword: result.keyword.trim(),
+          search_volume: result.search_volume || 0,
         competition_level: mapCompetitionLevel(result.competition_index),
         competition_index: result.competition_index || 0,
         keyword_difficulty: result.keyword_difficulty || result.competition_index || 0,
@@ -352,7 +366,7 @@ async function extractKeywordsFromCompetitor(
 /**
  * Persist seed keywords to database
  */
-async function persistSeedKeywords(
+export async function persistSeedKeywords(
   organizationId: string,
   competitorUrlId: string,
   keywords: SeedKeywordData[]
@@ -360,6 +374,7 @@ async function persistSeedKeywords(
   const supabase = createServiceRoleClient()
 
   if (keywords.length === 0) {
+    console.warn(`[persistSeedKeywords] No valid keywords to persist for competitor ${competitorUrlId}`)
     return 0
   }
 
@@ -375,11 +390,13 @@ async function persistSeedKeywords(
   }
 
   // Insert new keywords
-  const keywordRecords = keywords.map(keyword => ({
+  const keywordRecords = keywords
+    .filter(keyword => keyword.seed_keyword && keyword.seed_keyword.trim().length > 0)
+    .map(keyword => ({
     organization_id: organizationId,
     competitor_url_id: competitorUrlId,
-    seed_keyword: keyword.seed_keyword,
-    keyword: keyword.seed_keyword, // Same as seed_keyword at this stage
+    seed_keyword: keyword.seed_keyword.trim(),
+    keyword: keyword.seed_keyword.trim(), // Same as seed_keyword at this stage
     search_volume: keyword.search_volume,
     competition_level: keyword.competition_level,
     competition_index: keyword.competition_index,
@@ -391,6 +408,11 @@ async function persistSeedKeywords(
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }))
+
+  if (keywordRecords.length === 0) {
+    console.warn(`[persistSeedKeywords] No valid keyword records after filtering for competitor ${competitorUrlId}`)
+    return 0
+  }
 
   const { error: insertError, data } = await supabase
     .from('keywords')
@@ -459,53 +481,8 @@ async function emitFailureEvent(
   })
 }
 
-
-/**
- * Update workflow status after seed keyword extraction
- */
-export async function updateWorkflowStatus(
-  workflowId: string,
-  organizationId: string,
-  status: 'step_2_competitors' | 'failed',
-  errorMessage?: string,
-  retryCount?: number
-): Promise<void> {
-  const supabase = createServiceRoleClient()
-
-  const updateData: any = {
-    status,
-    updated_at: new Date().toISOString()
-  }
-
-  if (status === 'step_2_competitors') {
-    updateData.step_2_competitor_completed_at = new Date().toISOString()
-    // Advance to next step (Step 3)
-    updateData.current_step = 3
-    // Preserve retry metadata on successful completion
-    if (retryCount && retryCount > 0) {
-      updateData.step_2_competitors_retry_count = retryCount
-    }
-  } else if (status === 'failed' && errorMessage) {
-    updateData.step_2_competitor_last_error_message = errorMessage
-    // Update retry metadata on failure
-    if (retryCount !== undefined) {
-      updateData.step_2_competitors_retry_count = retryCount
-      updateData.step_2_competitors_last_error_message = errorMessage
-    }
-  }
-
-  const { error } = await supabase
-    .from('intent_workflows')
-    .update(updateData)
-    .eq('id', workflowId)
-    .eq('organization_id', organizationId)
-
-  if (error) {
-    throw new Error(`Failed to update workflow status: ${error.message}`)
-  }
-
-  console.log(`[CompetitorSeedExtractor] Workflow ${workflowId} status updated to ${status}, current_step advanced to ${updateData.current_step}`)
-}
+// Service layer is pure - no state mutations here
+// All workflow updates should be handled in the API layer
 
 /**
  * Update workflow retry metadata during retry attempts
@@ -519,12 +496,11 @@ export async function updateWorkflowRetryMetadata(
   const supabase = createServiceRoleClient()
 
   const updateData: any = {
-    step_2_competitors_retry_count: retryCount,
     updated_at: new Date().toISOString()
   }
 
   if (lastErrorMessage) {
-    updateData.step_2_competitors_last_error_message = lastErrorMessage
+    updateData.step_2_competitor_error_message = lastErrorMessage
   }
 
   const { error } = await supabase

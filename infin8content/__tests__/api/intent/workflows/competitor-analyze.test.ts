@@ -22,9 +22,11 @@ vi.mock('@/lib/services/audit-logger', () => ({
   extractUserAgent: vi.fn(() => 'test-agent')
 }))
 
+// Mock updateWorkflowStatus since it's now inline in the API route
+const mockUpdateWorkflowStatus = vi.fn()
 vi.mock('@/lib/services/intent-engine/competitor-seed-extractor', () => ({
   extractSeedKeywords: vi.fn(),
-  updateWorkflowStatus: vi.fn()
+  updateWorkflowStatus: mockUpdateWorkflowStatus
 }))
 
 vi.mock('@/lib/services/competitor-workflow-integration', () => ({
@@ -33,7 +35,7 @@ vi.mock('@/lib/services/competitor-workflow-integration', () => ({
 
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
-import { extractSeedKeywords, updateWorkflowStatus } from '@/lib/services/intent-engine/competitor-seed-extractor'
+import { extractSeedKeywords } from '@/lib/services/intent-engine/competitor-seed-extractor'
 import { getWorkflowCompetitors } from '@/lib/services/competitor-workflow-integration'
 
 describe('POST /api/intent/workflows/[workflow_id]/steps/competitor-analyze', () => {
@@ -160,8 +162,7 @@ describe('POST /api/intent/workflows/[workflow_id]/steps/competitor-analyze', ()
     ;(createServiceRoleClient as any).mockReturnValue(mockSupabase)
     ;(getWorkflowCompetitors as any).mockResolvedValue(mockCompetitors)
     ;(extractSeedKeywords as any).mockResolvedValue(mockExtractionResult)
-    ;(updateWorkflowStatus as any).mockResolvedValue(undefined)
-
+    
     const request = new NextRequest('http://localhost:3000/api/intent/workflows/workflow-123/steps/competitor-analyze', {
       method: 'POST'
     })
@@ -286,8 +287,7 @@ describe('POST /api/intent/workflows/[workflow_id]/steps/competitor-analyze', ()
 
     ;(createServiceRoleClient as any).mockReturnValue(mockSupabase)
     ;(getWorkflowCompetitors as any).mockResolvedValue([])
-    ;(updateWorkflowStatus as any).mockResolvedValue(undefined)
-
+    
     const request = new NextRequest('http://localhost:3000/api/intent/workflows/workflow-123/steps/competitor-analyze', {
       method: 'POST'
     })
@@ -299,7 +299,7 @@ describe('POST /api/intent/workflows/[workflow_id]/steps/competitor-analyze', ()
     expect(response.status).toBe(400)
     const data = await response.json()
     expect(data.error).toBe('No competitors found')
-    expect(updateWorkflowStatus).toHaveBeenCalledWith(
+    expect(mockUpdateWorkflowStatus).toHaveBeenCalledWith(
       mockWorkflowId,
       mockOrganizationId,
       'failed',
@@ -328,8 +328,7 @@ describe('POST /api/intent/workflows/[workflow_id]/steps/competitor-analyze', ()
     ;(createServiceRoleClient as any).mockReturnValue(mockSupabase)
     ;(getWorkflowCompetitors as any).mockResolvedValue(mockCompetitors)
     ;(extractSeedKeywords as any).mockResolvedValue(mockExtractionResult)
-    ;(updateWorkflowStatus as any).mockResolvedValue(undefined)
-
+    
     const request = new NextRequest('http://localhost:3000/api/intent/workflows/workflow-123/steps/competitor-analyze', {
       method: 'POST'
     })
@@ -338,10 +337,11 @@ describe('POST /api/intent/workflows/[workflow_id]/steps/competitor-analyze', ()
       params: Promise.resolve({ workflow_id: mockWorkflowId })
     })
 
-    expect(updateWorkflowStatus).toHaveBeenCalledWith(
-      mockWorkflowId,
-      mockOrganizationId,
-      'step_2_competitors'
+    expect(mockSupabase.from().update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'step_2_competitors',
+        current_step: 3
+      })
     )
   })
 
@@ -366,8 +366,7 @@ describe('POST /api/intent/workflows/[workflow_id]/steps/competitor-analyze', ()
     ;(createServiceRoleClient as any).mockReturnValue(mockSupabase)
     ;(getWorkflowCompetitors as any).mockResolvedValue(mockCompetitors)
     ;(extractSeedKeywords as any).mockRejectedValue(new Error('DataForSEO API error'))
-    ;(updateWorkflowStatus as any).mockResolvedValue(undefined)
-
+    
     const request = new NextRequest('http://localhost:3000/api/intent/workflows/workflow-123/steps/competitor-analyze', {
       method: 'POST'
     })
@@ -379,7 +378,7 @@ describe('POST /api/intent/workflows/[workflow_id]/steps/competitor-analyze', ()
     expect(response.status).toBe(500)
     const data = await response.json()
     expect(data.error).toBe('Seed keyword extraction failed')
-    expect(updateWorkflowStatus).toHaveBeenCalledWith(
+    expect(mockUpdateWorkflowStatus).toHaveBeenCalledWith(
       mockWorkflowId,
       mockOrganizationId,
       'failed',
@@ -408,8 +407,7 @@ describe('POST /api/intent/workflows/[workflow_id]/steps/competitor-analyze', ()
     ;(createServiceRoleClient as any).mockReturnValue(mockSupabase)
     ;(getWorkflowCompetitors as any).mockResolvedValue(mockCompetitors)
     ;(extractSeedKeywords as any).mockResolvedValue(mockExtractionResult)
-    ;(updateWorkflowStatus as any).mockResolvedValue(undefined)
-
+    
     const request = new NextRequest('http://localhost:3000/api/intent/workflows/workflow-123/steps/competitor-analyze', {
       method: 'POST'
     })
@@ -467,8 +465,7 @@ describe('POST /api/intent/workflows/[workflow_id]/steps/competitor-analyze', ()
     ;(createServiceRoleClient as any).mockReturnValue(mockSupabase)
     ;(getWorkflowCompetitors as any).mockResolvedValue(mockCompetitors)
     ;(extractSeedKeywords as any).mockResolvedValue(partialResult)
-    ;(updateWorkflowStatus as any).mockResolvedValue(undefined)
-
+    
     const request = new NextRequest('http://localhost:3000/api/intent/workflows/workflow-123/steps/competitor-analyze', {
       method: 'POST'
     })
