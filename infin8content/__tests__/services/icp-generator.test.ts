@@ -241,7 +241,7 @@ describe('ICP Generator Service', () => {
         cost: 0.0022
       }
 
-      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult)
+      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult, `${mockWorkflowId}:step_1_icp`)
 
       expect(mockSupabase.from).toHaveBeenCalledWith('intent_workflows')
       expect(mockSupabase.update).toHaveBeenCalled()
@@ -272,7 +272,7 @@ describe('ICP Generator Service', () => {
       }
 
       await expect(
-        storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult)
+        storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult, `${mockWorkflowId}:step_1_icp`)
       ).rejects.toThrow('Failed to store ICP generation result')
     })
 
@@ -296,7 +296,7 @@ describe('ICP Generator Service', () => {
         cost: 0.0022
       }
 
-      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult)
+      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult, `${mockWorkflowId}:step_1_icp`)
 
       const updateCall = mockSupabase.update.mock.calls[0][0]
       expect(updateCall.status).toBe('step_1_icp')

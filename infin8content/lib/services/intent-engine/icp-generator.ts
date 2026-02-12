@@ -84,6 +84,7 @@ function extractJson(raw: string): string {
  * @param organizationId - Organization ID for tracking and storage
  * @param timeoutMs - Timeout per attempt in milliseconds
  * @param retryPolicy - Retry configuration (uses defaults if not provided)
+ * @param idempotencyKey - Idempotency key for retry safety (generated at request boundary)
  * @returns Generated ICP data with metadata including retry information
  */
 export async function generateICPDocument(
@@ -91,7 +92,8 @@ export async function generateICPDocument(
   organizationId: string,
   timeoutMs: number = 300000, // 5 minutes default
   retryPolicy: RetryPolicy = DEFAULT_RETRY_POLICY,
-  workflowId: string = ''
+  workflowId: string = '',
+  idempotencyKey: string = `${workflowId}:step_1_icp`
 ): Promise<ICPGenerationResult> {
   let lastError: Error | null = null
   let retryCount = 0
@@ -129,12 +131,14 @@ export async function generateICPDocument(
         )
 
         // Emit retry analytics event
-        emitRetryAnalyticsEvent({
-          workflowId,
-          organizationId,
-          attemptNumber: attempt + 1,
-          errorType,
-          delayBeforeRetryMs: delayMs
+        emitAnalyticsEvent({
+          event_type: 'workflow_step_retry',
+          organization_id: organizationId,
+          workflow_id: workflowId,
+          attempt_number: attempt + 1,
+          error_type: errorType,
+          delay_before_retry_ms: delayMs,
+          timestamp: new Date().toISOString()
         })
 
         await sleep(delayMs)
@@ -153,11 +157,14 @@ export async function generateICPDocument(
   )
 
   // Emit terminal failure analytics event
-  emitTerminalFailureAnalyticsEvent({
-    workflowId,
-    organizationId,
-    totalAttempts: retryCount,
-    finalErrorMessage: finalError.message
+  emitAnalyticsEvent({
+    event_type: 'workflow_step_terminal_failure',
+    organization_id: organizationId,
+    workflow_id: workflowId,
+    total_attempts: retryCount,
+    final_error_type: errorType,
+    final_error_message: finalError.message,
+    timestamp: new Date().toISOString()
   })
 
   throw finalError
@@ -446,77 +453,43 @@ function validateICPData(data: ICPData): void {
 
 /**
  * Store ICP generation result in workflow
+ * Uses single atomic transaction for financial settlement and workflow state update
+ * Includes idempotency protection for network retry safety
+ * 
+ * @param workflowId - Workflow ID
+ * @param organizationId - Organization ID
+ * @param icpResult - ICP generation result with metadata
+ * @param idempotencyKey - Idempotency key for retry safety (generated at request boundary)
  */
 export async function storeICPGenerationResult(
   workflowId: string,
   organizationId: string,
-  icpResult: ICPGenerationResult
+  icpResult: ICPGenerationResult,
+  idempotencyKey: string
 ): Promise<void> {
   const supabase = createServiceRoleClient()
 
-  // Bank-grade atomic transaction: record usage AND increment workflow cost together
+  // 🏆 Elite atomic transaction: financial settlement + workflow state in single call
   const { error: atomicError } = await supabase
-    .rpc('record_usage_and_increment', {
+    .rpc('record_usage_increment_and_complete_step', {
       p_workflow_id: workflowId,
       p_organization_id: organizationId,
       p_model: icpResult.modelUsed,
       p_prompt_tokens: icpResult.promptTokens,
       p_completion_tokens: icpResult.completionTokens,
-      p_cost: icpResult.cost
+      p_cost: icpResult.cost,
+      p_icp_data: icpResult.icp_data,
+      p_tokens_used: icpResult.tokensUsed,
+      p_generated_at: icpResult.generatedAt,
+      p_idempotency_key: idempotencyKey
     })
 
   if (atomicError) {
-    console.error('Failed to record usage and increment cost:', atomicError)
-    throw new Error('Financial recording failed')
+    console.error('Failed to record usage and complete ICP step:', atomicError)
+    throw new Error('Financial recording and workflow update failed')
   }
 
-  // Update workflow with ICP data and progress
-  // First fetch existing workflow_data to preserve other keys
-  const { data: existingWorkflow } = await supabase
-    .from('intent_workflows')
-    .select('workflow_data')
-    .eq('id', workflowId)
-    .single()
-
-  const existingData = (existingWorkflow as any)?.workflow_data || {}
-
-  const updateData: any = {
-    icp_data: icpResult.icp_data,
-    status: 'step_1_icp',  // Reflect step just completed
-    current_step: 2,       // Enable step 2 execution
-    workflow_data: {
-      ...existingData,  // Preserve all existing workflow_data keys
-      icp_generation: {
-        tokensUsed: icpResult.tokensUsed,
-        modelUsed: icpResult.modelUsed,
-        cost: icpResult.cost,
-        generatedAt: icpResult.generatedAt
-      }
-    }
-  }
-
-  // Only set completion timestamp on first successful attempt, not on retries
-  if (!icpResult.retryCount || icpResult.retryCount === 0) {
-    updateData.step_1_icp_completed_at = new Date().toISOString()
-  }
-
-  // Include retry metadata if this was a retry
-  if (icpResult.retryCount && icpResult.retryCount > 0) {
-    updateData.retry_count = icpResult.retryCount
-    updateData.step_1_icp_last_error_message = icpResult.lastError || null
-  }
-
-  const { error } = await supabase
-    .from('intent_workflows')
-    .update(updateData)
-    .eq('id', workflowId)
-    .eq('organization_id', organizationId)
-
-  if (error) {
-    throw new Error(`Failed to store ICP generation result: ${error.message}`)
-  }
-
-  console.log(`[ICP-Generator] ICP result stored for workflow ${workflowId}`)
+  console.log(`[ICPGenerator] Successfully completed ICP generation for workflow ${workflowId}`)
 }
 
 /**

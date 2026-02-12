@@ -145,11 +145,14 @@ export async function POST(
       })
     }
 
+    // Generate deterministic idempotency key at request boundary
+    const idempotencyKey = `${workflowId}:step_1_icp`
+
     // Generate ICP document with automatic retry
-    const icpResult = await generateICPDocument(mappedRequest, organizationId, 300000, undefined, workflowId)
+    const icpResult = await generateICPDocument(mappedRequest, organizationId, 300000, undefined, workflowId, idempotencyKey)
 
     // Store result in workflow with retry metadata (consolidated in single update)
-    await storeICPGenerationResult(workflowId, organizationId, icpResult)
+    await storeICPGenerationResult(workflowId, organizationId, icpResult, idempotencyKey)
 
     // Emit analytics event for workflow step completion
     try {

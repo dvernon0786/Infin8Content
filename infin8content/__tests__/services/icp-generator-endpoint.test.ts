@@ -222,7 +222,7 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
         cost: 0.0022
       }
 
-      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult)
+      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult, `${mockWorkflowId}:step_1_icp`)
 
       expect(mockSupabase.from).toHaveBeenCalledWith('intent_workflows')
       expect(mockSupabase.update).toHaveBeenCalled()
@@ -253,7 +253,7 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
         cost: 0.0022
       }
 
-      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, result1)
+      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, result1, `${mockWorkflowId}:step_1_icp`)
       const updateCall1 = mockSupabase.update.mock.calls[0][0]
       expect(updateCall1.step_1_icp_completed_at).toBeDefined()
 
@@ -272,7 +272,7 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
         cost: 0.0022
       }
 
-      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, result2)
+      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, result2, `${mockWorkflowId}:step_1_icp`)
       const updateCall2 = mockSupabase.update.mock.calls[0][0]
       expect(updateCall2.step_1_icp_completed_at).toBeUndefined()
     })
