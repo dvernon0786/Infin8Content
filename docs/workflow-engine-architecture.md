@@ -1,8 +1,9 @@
 # Enterprise Workflow Engine Architecture
 
 **Status:** A+ Distributed-Safe Infrastructure  
-**Last Updated:** 2026-02-13  
-**Grade:** Production Ready
+**Last Updated:** 2026-02-13 10:37 UTC+11  
+**Grade:** Production Ready  
+**Migration:** ✅ Fixed and Validated
 
 ## Overview
 
@@ -86,24 +87,58 @@ UNIQUE(workflow_id, idempotency_key)
 ### workflow_transitions Table
 ```sql
 CREATE TABLE workflow_transitions (
-  id UUID PRIMARY KEY,
-  workflow_id UUID NOT NULL,
-  organization_id UUID NOT NULL,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  workflow_id UUID NOT NULL REFERENCES intent_workflows(id) ON DELETE CASCADE,
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   idempotency_key TEXT NOT NULL,
   from_step INTEGER NOT NULL,
   to_step INTEGER NOT NULL,
   status TEXT NOT NULL,
-  created_at TIMESTAMP,
-  UNIQUE(workflow_id, idempotency_key)
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(workflow_id, idempotency_key),
+  CONSTRAINT valid_step_transition CHECK (to_step > from_step)
 )
 ```
 
+**Indexes:**
+- `idx_workflow_transitions_idempotency` on (workflow_id, idempotency_key)
+- `idx_workflow_transitions_workflow` on (workflow_id, created_at DESC)
+
 ### intent_workflows Enhancements
 ```sql
-ALTER TABLE intent_workflows ADD COLUMN version INTEGER DEFAULT 1;
+ALTER TABLE intent_workflows ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 1;
 ```
 
 **Version Column:** Enables optimistic concurrency control for future enhancements.
+
+**increment_version() Function:**
+```sql
+CREATE OR REPLACE FUNCTION increment_version(workflow_id UUID)
+RETURNS INTEGER AS $$
+DECLARE
+  new_version INTEGER;
+BEGIN
+  UPDATE intent_workflows 
+  SET version = version + 1
+  WHERE id = workflow_id
+  RETURNING version INTO new_version;
+  RETURN new_version;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### RLS Policies
+```sql
+-- Service role can access all transitions
+CREATE POLICY workflow_transitions_service_role 
+  ON workflow_transitions 
+  FOR ALL 
+  USING (auth.role() = 'service_role')
+  WITH CHECK (auth.role() = 'service_role');
+```
+
+**Migration Status:** ✅ Fixed and Validated (2026-02-13)
 
 ## Step Progression
 
