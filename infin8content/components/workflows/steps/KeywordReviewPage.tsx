@@ -284,9 +284,9 @@ export default function KeywordReviewPage({
                 </td>
                 <td className="p-3">
                   <div className="flex items-center gap-1">
-                    <div className="w-12 bg-muted rounded-full h-2">
+                    <div className="w-12 bg-muted rounded-full h-2 overflow-hidden">
                       <div 
-                        className="bg-blue-500 h-2 rounded-full" 
+                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${(keyword.decision_confidence || 0) * 100}%` }}
                       />
                     </div>

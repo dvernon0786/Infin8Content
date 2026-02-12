@@ -64,7 +64,7 @@ export function KeywordOpportunityChart({ keywords }: Props) {
         <div className="bg-gray-900 text-white p-3 rounded-lg shadow-lg border border-gray-700">
           <p className="font-semibold text-sm mb-2">{data.seed_keyword}</p>
           <div className="space-y-1 text-xs">
-            <p>Opportunity Score: <span className="text-green-400">{(data.opportunity_score * 100).toFixed(1)}%</span></p>
+            <p>Opportunity Score: <span className="text-emerald-400">{(data.opportunity_score * 100).toFixed(1)}%</span></p>
             <p>Volume: {data.search_volume.toLocaleString()}</p>
             {data.cpc && <p>CPC: ${data.cpc}</p>}
             {data.competition_index && <p>Competition: {data.competition_index}</p>}
@@ -107,7 +107,7 @@ export function KeywordOpportunityChart({ keywords }: Props) {
             <Tooltip content={<CustomTooltip />} />
             <Bar
               dataKey="opportunity_score"
-              fill="#3b82f6"
+              fill="hsl(var(--primary))"
               radius={[0, 4, 4, 0]}
             />
           </BarChart>
