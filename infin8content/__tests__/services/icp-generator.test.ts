@@ -9,7 +9,8 @@ import {
   storeICPGenerationResult,
   handleICPGenerationFailure,
   type ICPGenerationRequest,
-  type ICPData
+  type ICPData,
+  type ICPGenerationResult
 } from '@/lib/services/intent-engine/icp-generator'
 import { generateContent } from '@/lib/services/openrouter/openrouter-client'
 import { createServiceRoleClient } from '@/lib/supabase/server'
@@ -57,7 +58,8 @@ describe('ICP Generator Service', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         promptTokens: 800,
-        completionTokens: 700
+        completionTokens: 700,
+        cost: 0.0022
       })
 
       const result = await generateICPDocument(mockICPRequest, mockOrganizationId)
@@ -82,7 +84,8 @@ describe('ICP Generator Service', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         promptTokens: 800,
-        completionTokens: 700
+        completionTokens: 700,
+        cost: 0.0022
       })
 
       await expect(
@@ -133,7 +136,8 @@ describe('ICP Generator Service', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         promptTokens: 800,
-        completionTokens: 700
+        completionTokens: 700,
+        cost: 0.0022
       })
 
       await expect(
@@ -159,7 +163,8 @@ describe('ICP Generator Service', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         promptTokens: 800,
-        completionTokens: 700
+        completionTokens: 700,
+        cost: 0.0022
       })
 
       await generateICPDocument(mockICPRequest, mockOrganizationId)
@@ -225,11 +230,14 @@ describe('ICP Generator Service', () => {
 
       vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
 
-      const icpResult = {
+      const icpResult: ICPGenerationResult = {
         icp_data: mockICPData,
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
+        promptTokens: 800,
+        completionTokens: 700,
+        cost: 0.0022
       }
 
       await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult)
@@ -252,11 +260,14 @@ describe('ICP Generator Service', () => {
 
       vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
 
-      const icpResult = {
+      const icpResult: ICPGenerationResult = {
         icp_data: mockICPData,
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
+        promptTokens: 800,
+        completionTokens: 700,
+        cost: 0.0022
       }
 
       await expect(
@@ -274,11 +285,14 @@ describe('ICP Generator Service', () => {
 
       vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
 
-      const icpResult = {
+      const icpResult: ICPGenerationResult = {
         icp_data: mockICPData,
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
+        promptTokens: 800,
+        completionTokens: 700,
+        cost: 0.0022
       }
 
       await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult)
