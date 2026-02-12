@@ -93,7 +93,7 @@ export async function generateICPDocument(
   timeoutMs: number = 300000, // 5 minutes default
   retryPolicy: RetryPolicy = DEFAULT_RETRY_POLICY,
   workflowId: string = '',
-  idempotencyKey: string = `${workflowId}:step_1_icp`
+  idempotencyKey: string
 ): Promise<ICPGenerationResult> {
   let lastError: Error | null = null
   let retryCount = 0
