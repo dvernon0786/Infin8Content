@@ -213,16 +213,12 @@ export async function POST(
 
     // TRANSITION-FIRST PATTERN: Acquire lock BEFORE side effects
     // This prevents duplicate extraction and keyword persistence under concurrency
-    // Extract idempotency key from request headers for retry safety
-    const idempotencyKey = request.headers.get('Idempotency-Key') || undefined
-    
     const transitionResult = await transitionWorkflow({
       workflowId,
       organizationId,
       fromStep: 2,
       toStep: 3,
-      status: 'step_2_competitors',
-      idempotencyKey
+      status: 'step_2_competitors'
     })
     
     if (!transitionResult.success) {
@@ -300,8 +296,7 @@ export async function POST(
           organizationId,
           fromStep: 2,
           toStep: 2, // Stay at step 2 on failure
-          status: 'failed',
-          idempotencyKey: request.headers.get('Idempotency-Key') || undefined
+          status: 'failed'
         })
         
         // Emit terminal failure analytics event (AC 8)

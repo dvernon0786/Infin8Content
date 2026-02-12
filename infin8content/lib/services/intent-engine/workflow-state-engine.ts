@@ -1,6 +1,6 @@
 /**
- * Workflow State Engine - Centralized Deterministic State Machine
- * Handles all workflow transitions with idempotency, atomicity, and versioning
+ * Workflow State Engine - Centralized Atomic State Machine
+ * Handles all workflow transitions with database-level atomicity
  * 
  * This is the single source of truth for workflow state progression.
  * All steps must use this engine for transitions.
@@ -14,7 +14,6 @@ export interface WorkflowTransitionRequest {
   fromStep: number
   toStep: number
   status: string
-  idempotencyKey?: string
 }
 
 export interface WorkflowTransitionResult {
@@ -23,71 +22,40 @@ export interface WorkflowTransitionResult {
     id: string
     current_step: number
     status: string
-    version: number
   }
   error?: string
-  isDuplicate?: boolean // True if this is a retry of a previous successful transition
 }
 
 /**
- * Centralized atomic workflow transition with idempotency support
+ * Centralized atomic workflow transition
  * 
  * Pattern:
- * 1. Check idempotency key (if provided) - return cached result if exists
- * 2. Attempt atomic transition with version check
- * 3. Store idempotency key result for future retries
+ * 1. Attempt atomic transition with WHERE clause
+ * 2. If 0 rows updated → another request won the race
+ * 3. If 1 row updated → you won the race, execute side effects
  * 
  * This prevents:
- * - Duplicate state transitions
- * - Duplicate side effects
- * - Cost waste from retry storms
+ * - Concurrent requests from advancing simultaneously
+ * - Race conditions in state progression
  */
 export async function transitionWorkflow(
   request: WorkflowTransitionRequest
 ): Promise<WorkflowTransitionResult> {
   const supabase = createServiceRoleClient()
 
-  // IDEMPOTENCY CHECK: If client provides idempotency key, check if we've seen it before
-  if (request.idempotencyKey) {
-    const { data: existingTransition, error: lookupError } = await supabase
-      .from('workflow_transitions')
-      .select('workflow_id, from_step, to_step, status, created_at')
-      .eq('workflow_id', request.workflowId)
-      .eq('idempotency_key', request.idempotencyKey)
-      .single()
-
-    if (!lookupError && existingTransition) {
-      // This is a retry - return the cached result
-      console.log(`[WorkflowStateEngine] Idempotency hit: ${request.workflowId} with key ${request.idempotencyKey}`)
-      
-      // Fetch current workflow state
-      const { data: workflow } = await supabase
-        .from('intent_workflows')
-        .select('id, current_step, status, version')
-        .eq('id', request.workflowId)
-        .single()
-
-      return {
-        success: true,
-        workflow: workflow as any,
-        isDuplicate: true
-      }
-    }
-  }
-
   // ATOMIC TRANSITION: Only update if workflow is at expected step
+  // WHERE clause ensures only one request can advance at a time
   const { data: workflow, error: updateError } = await supabase
     .from('intent_workflows')
     .update({
       current_step: request.toStep,
       status: request.status,
-      version: supabase.rpc('increment_version', { workflow_id: request.workflowId }),
       updated_at: new Date().toISOString()
     })
     .eq('id', request.workflowId)
     .eq('organization_id', request.organizationId)
     .eq('current_step', request.fromStep)
-    .select('id, current_step, status, version')
+    .select('id, current_step, status')
     .single()
 
   if (updateError || !workflow) {
@@ -98,32 +66,11 @@ export async function transitionWorkflow(
     }
   }
 
-  // STORE IDEMPOTENCY KEY: Record this successful transition for future retries
-  if (request.idempotencyKey) {
-    const { error: recordError } = await supabase
-      .from('workflow_transitions')
-      .insert({
-        workflow_id: request.workflowId,
-        organization_id: request.organizationId,
-        idempotency_key: request.idempotencyKey,
-        from_step: request.fromStep,
-        to_step: request.toStep,
-        status: request.status,
-        created_at: new Date().toISOString()
-      })
-
-    if (recordError) {
-      console.warn('[WorkflowStateEngine] Failed to record idempotency key:', recordError)
-      // Don't fail the transition if we can't record the key - the transition succeeded
-    }
-  }
-
   console.log(`[WorkflowStateEngine] Transition successful: ${request.workflowId} ${request.fromStep} → ${request.toStep}`)
 
   return {
     success: true,
-    workflow: workflow as any,
-    isDuplicate: false
+    workflow: workflow as any
   }
 }
 
