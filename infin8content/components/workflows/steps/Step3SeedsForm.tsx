@@ -24,7 +24,7 @@ export function Step3SeedsForm({ workflowId }: Step3SeedsFormProps) {
       setError(null)
 
       const res = await fetch(
-        `/api/intent/workflows/${workflowId}/seed-extract?page=1&limit=50`
+        `/api/intent/workflows/${workflowId}/steps/seed-extract?page=1&limit=50`
       )
 
       if (!res.ok) {
@@ -57,7 +57,7 @@ export function Step3SeedsForm({ workflowId }: Step3SeedsFormProps) {
   async function handleContinue(selectedIds: string[]) {
     try {
       const res = await fetch(
-        `/api/intent/workflows/${workflowId}/seed-extract`,
+        `/api/intent/workflows/${workflowId}/steps/seed-extract`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
