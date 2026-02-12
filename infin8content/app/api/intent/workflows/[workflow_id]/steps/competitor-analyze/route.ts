@@ -195,7 +195,7 @@ export async function POST(
     const extractionRequest: ExtractSeedKeywordsRequest = {
       competitors: allCompetitors,
       organizationId,
-      maxSeedsPerCompetitor: 3,
+      maxSeedsPerCompetitor: 25, // Increased from 3 for richer data collection
       locationCode: 2840, // US default
       languageCode: 'en',
       timeoutMs: 600000 // 10 minutes
@@ -203,24 +203,9 @@ export async function POST(
 
     const result = await extractSeedKeywords(extractionRequest)
 
-    // API LAYER: Decide success/failure and update state ONCE
-    if (result.total_keywords_created === 0) {
-      // Update workflow to failed state
-      await updateWorkflowStatus(
-        workflowId,
-        organizationId,
-        'failed',
-        'No keywords found from provided competitors.'
-      )
-
-      return NextResponse.json(
-        {
-          error: 'No keywords found from provided competitors. Please add more competitor URLs.',
-          code: 'NO_KEYWORDS_FOUND'
-        },
-        { status: 400 }
-      )
-    }
+    // API LAYER: Always succeed if extraction API worked (pure data collection)
+    // We no longer fail on 0 keywords - human curation happens in Step 3
+    console.log(`[CompetitorAnalyze] Extraction completed: ${result.total_keywords_created} keywords from ${allCompetitors.length} competitors`)
 
     // SUCCESS PATH - Update workflow status and advance step
     await updateWorkflowStatus(workflowId, organizationId, 'step_2_competitors')

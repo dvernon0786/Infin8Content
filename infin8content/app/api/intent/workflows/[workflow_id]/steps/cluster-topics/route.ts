@@ -86,12 +86,13 @@ export async function POST(
       userAgent: extractUserAgent(request.headers),
     })
 
-    // DEFENSE IN DEPTH: Verify sufficient keywords exist for clustering
+    // DEFENSE IN DEPTH: Verify sufficient user-selected keywords exist for clustering
     const { count: keywordCount, error: keywordError } = await supabase
       .from('keywords')
       .select('id', { count: 'exact', head: true })
       .eq('organization_id', organizationId)
       .eq('workflow_id', workflowId)
+      .eq('user_selected', true) // CRITICAL: Only cluster user-selected keywords
       .is('parent_seed_keyword_id', null)  // Match Step 3 filter - only seed keywords
 
     if (keywordError) {
@@ -101,12 +102,26 @@ export async function POST(
       )
     }
 
+    // ENTERPRISE GUARD: Cap clustering input to prevent compute explosion
     if (!keywordCount || keywordCount < 2) {
       return NextResponse.json(
         {
           error: 'Insufficient keywords for clustering',
-          message: 'At least 2 seed keywords are required for clustering. Please ensure Step 3 completed successfully.',
+          message: 'At least 2 selected keywords are required for clustering. Please select more keywords in Step 3.',
           code: 'INSUFFICIENT_KEYWORDS_FOR_CLUSTERING'
+        },
+        { status: 400 }
+      )
+    }
+
+    if (keywordCount > 100) {
+      return NextResponse.json(
+        {
+          error: 'Too many keywords selected for clustering',
+          message: 'Maximum 100 keywords can be selected for clustering. Please deselect some keywords or use bulk actions to select top keywords by volume.',
+          code: 'TOO_MANY_KEYWORDS_SELECTED',
+          maxAllowed: 100,
+          currentSelected: keywordCount
         },
         { status: 400 }
       )
@@ -114,12 +129,13 @@ export async function POST(
 
     console.log(`[ClusterTopics] Found ${keywordCount} seed keywords available for clustering`)
 
-    // Initialize clusterer and perform clustering
+    // Initialize clusterer and perform clustering on user-selected keywords only
     const clusterer = new KeywordClusterer()
     const clusterResult = await clusterer.clusterKeywords(workflowId, {
       similarityThreshold: 0.6,
       maxSpokesPerHub: 8,
-      minClusterSize: 3
+      minClusterSize: 3,
+      userSelectedOnly: true // CRITICAL: Only cluster user-selected keywords
     })
 
     // BLOCK advancement if no clusters created

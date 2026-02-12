@@ -50,6 +50,7 @@ export interface ClusterOptions {
   similarityThreshold?: number  // Default: 0.6
   maxSpokesPerHub?: number     // Default: 8
   minClusterSize?: number      // Default: 3 (1 hub + 2 spokes)
+  userSelectedOnly?: boolean   // Default: false - if true, only cluster user_selected keywords
 }
 
 export interface ClusterResult {
@@ -112,7 +113,7 @@ export class KeywordClusterer {
       })
 
       // Load filtered keywords for workflow
-      const keywords = await this.loadFilteredKeywords(workflowId)
+      const keywords = await this.loadFilteredKeywords(workflowId, options.userSelectedOnly)
       
       if (keywords.length < minClusterSize) {
         throw new Error(`Insufficient keywords for clustering: ${keywords.length} < ${minClusterSize}`)
@@ -167,7 +168,7 @@ export class KeywordClusterer {
   /**
    * Load filtered keywords for the workflow
    */
-  private async loadFilteredKeywords(workflowId: string): Promise<Keyword[]> {
+  private async loadFilteredKeywords(workflowId: string, userSelectedOnly: boolean = false): Promise<Keyword[]> {
     return await retryWithPolicy(
       async () => {
         // First get organization_id from workflow
@@ -185,11 +186,18 @@ export class KeywordClusterer {
         const typedWorkflow = workflow as unknown as { organization_id: string }
 
         // Then get keywords for that organization
-        const { data, error } = await this.supabase
+        let query = this.supabase
           .from('keywords')
           .select('*')
           .eq('organization_id', typedWorkflow.organization_id)
           .eq('is_filtered_out', false)
+        
+        // Add user_selected filter if specified
+        if (userSelectedOnly) {
+          query = query.eq('user_selected', true)
+        }
+        
+        const { data, error } = await query
           .order('search_volume', { ascending: false })
 
         if (error || !data) {

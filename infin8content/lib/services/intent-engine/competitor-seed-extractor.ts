@@ -314,7 +314,20 @@ async function extractKeywordsFromCompetitor(
         competition_level: mapCompetitionLevel(result.competition_index),
         competition_index: result.competition_index || 0,
         keyword_difficulty: result.keyword_difficulty || result.competition_index || 0,
-        cpc: result.cpc
+        cpc: result.cpc,
+        
+        // NEW TAGGING FIELDS FOR DECISION TRACKING
+        detected_language: result.detected_language || null,
+        is_foreign_language: result.is_another_language || false,
+        main_intent: result.main_intent || null,
+        is_navigational: result.main_intent === 'navigational',
+        foreign_intent: result.foreign_intent || null,
+        
+        // DECISION TRACKING FIELDS
+        ai_suggested: true, // AI initially suggests all extracted keywords
+        decision_confidence: calculateKeywordConfidence(result),
+        selection_source: 'ai',
+        selection_timestamp: new Date().toISOString()
       }))
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
@@ -483,6 +496,39 @@ async function emitFailureEvent(
 
 // Service layer is pure - no state mutations here
 // All workflow updates should be handled in the API layer
+
+/**
+ * Calculate AI confidence score for keyword selection (0.0-1.0)
+ * Based on volume, CPC, and intent signals
+ */
+function calculateKeywordConfidence(result: any): number {
+  let confidence = 0.5 // Base confidence
+
+  // Volume factor (higher volume = higher confidence)
+  const volume = result.search_volume || 0
+  if (volume > 1000) confidence += 0.3
+  else if (volume > 100) confidence += 0.2
+  else if (volume > 10) confidence += 0.1
+
+  // CPC factor (has CPC = commercial value)
+  if (result.cpc && result.cpc > 0) {
+    confidence += 0.2
+  }
+
+  // Intent factor (commercial > informational > navigational)
+  const intent = result.main_intent?.toLowerCase()
+  if (intent === 'commercial') confidence += 0.2
+  else if (intent === 'informational') confidence += 0.1
+  else if (intent === 'navigational') confidence -= 0.1
+
+  // Language factor (English preferred for most SEO campaigns)
+  if (!result.is_another_language) {
+    confidence += 0.1
+  }
+
+  // Cap at 1.0
+  return Math.min(Math.max(confidence, 0.0), 1.0)
+}
 
 /**
  * Update workflow retry metadata during retry attempts
