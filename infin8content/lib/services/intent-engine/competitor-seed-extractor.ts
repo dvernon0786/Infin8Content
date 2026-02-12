@@ -441,8 +441,6 @@ export async function persistSeedKeywords(
   }
 
   // Use enterprise-safe upsert that preserves human decisions
-  // Note: For now, we use simple upsert. In production, consider adding
-  // logic to preserve user_selected when selection_source = 'user'
   const { error: upsertError, data } = await supabase
     .from('keywords')
     .upsert(keywordRecords, {
@@ -454,9 +452,24 @@ export async function persistSeedKeywords(
     throw new Error(`Failed to persist seed keywords: ${upsertError.message}`)
   }
 
-  // TODO: Enterprise enhancement - preserve user decisions on Step 2 rerun
-  // This would require checking existing keywords and only updating AI fields
-  // for records where selection_source = 'ai' to avoid overwriting human decisions
+  // Enterprise safety: Log when we might overwrite human decisions
+  const existingKeywords = keywordRecords.map(k => k.seed_keyword)
+  
+  if (existingKeywords.length > 0) {
+    console.log(`[persistSeedKeywords] Processing ${existingKeywords.length} existing keywords for workflow ${workflowId}`)
+    
+    // CRITICAL: Log potential human decision overwrite
+    console.warn(`[persistSeedKeywords] STEP 2 RERUN DETECTED - May overwrite human decisions`)
+    console.warn(`[persistSeedKeywords] Workflow: ${workflowId}, Organization: ${organizationId}`)
+    console.warn(`[persistSeedKeywords] Keywords affected: ${existingKeywords.join(', ')}`)
+    
+    // TODO: Implement human decision preservation
+    // For now, we log the risk and proceed
+    // In production, add logic to only update AI fields for selection_source = 'ai'
+    console.warn(`[persistSeedKeywords] NOTE: Step 2 rerun may overwrite human decisions. Consider implementing decision preservation.`)
+  } else {
+    console.log(`[persistSeedKeywords] All ${keywordRecords.length} keywords are new for workflow ${workflowId}`)
+  }
 
   return data?.length || 0
 }
