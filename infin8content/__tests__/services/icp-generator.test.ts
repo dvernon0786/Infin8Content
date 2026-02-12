@@ -62,7 +62,7 @@ describe('ICP Generator Service', () => {
         cost: 0.0022
       })
 
-      const result = await generateICPDocument(mockICPRequest, mockOrganizationId)
+      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
 
       expect(result.icp_data).toEqual(mockICPData)
       expect(result.tokensUsed).toBe(1500)
@@ -89,7 +89,7 @@ describe('ICP Generator Service', () => {
       })
 
       await expect(
-        generateICPDocument(mockICPRequest, mockOrganizationId)
+        generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
       ).rejects.toThrow('ICP data must include at least one industry')
     })
 
@@ -101,7 +101,7 @@ describe('ICP Generator Service', () => {
       }
 
       await expect(
-        generateICPDocument(invalidRequest, mockOrganizationId)
+        generateICPDocument(invalidRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
       ).rejects.toThrow('Organization name, URL, and LinkedIn URL are required')
     })
 
@@ -113,7 +113,7 @@ describe('ICP Generator Service', () => {
       }
 
       await expect(
-        generateICPDocument(invalidRequest, mockOrganizationId)
+        generateICPDocument(invalidRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
       ).rejects.toThrow('Organization name, URL, and LinkedIn URL are required')
     })
 
@@ -125,7 +125,7 @@ describe('ICP Generator Service', () => {
       }
 
       await expect(
-        generateICPDocument(invalidRequest, mockOrganizationId)
+        generateICPDocument(invalidRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
       ).rejects.toThrow('Organization name, URL, and LinkedIn URL are required')
     })
 
@@ -141,7 +141,7 @@ describe('ICP Generator Service', () => {
       })
 
       await expect(
-        generateICPDocument(mockICPRequest, mockOrganizationId)
+        generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
       ).rejects.toThrow('Failed to parse ICP response')
     })
 
@@ -152,7 +152,7 @@ describe('ICP Generator Service', () => {
       )
 
       await expect(
-        generateICPDocument(mockICPRequest, mockOrganizationId)
+        generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
       ).rejects.toThrow('OpenRouter API error: 429 Too Many Requests')
     })
 
@@ -167,7 +167,7 @@ describe('ICP Generator Service', () => {
         cost: 0.0022
       })
 
-      await generateICPDocument(mockICPRequest, mockOrganizationId)
+      await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
 
       const callArgs = mockGenerateContent.mock.calls[0]
       expect(callArgs[1]?.model).toBe('perplexity/llama-3.1-sonar-small-128k-online')
@@ -192,7 +192,7 @@ describe('ICP Generator Service', () => {
       })
 
       await expect(
-        generateICPDocument(mockICPRequest, mockOrganizationId)
+        generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
       ).rejects.toThrow('ICP data must include at least one buyer role')
     })
 
@@ -203,7 +203,7 @@ describe('ICP Generator Service', () => {
       )
 
       await expect(
-        generateICPDocument(mockICPRequest, mockOrganizationId, 5000) // 5 second timeout for test
+        generateICPDocument(mockICPRequest, mockOrganizationId, 5000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`) // 5 second timeout for test
       ).rejects.toThrow('ICP generation timeout')
     })
 
@@ -215,92 +215,121 @@ describe('ICP Generator Service', () => {
       }
 
       await expect(
-        generateICPDocument(invalidRequest, mockOrganizationId)
+        generateICPDocument(invalidRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
       ).rejects.toThrow('Invalid URL format')
     })
   })
 
-  describe('storeICPGenerationResult', () => {
-    it('should store ICP result in workflow', async () => {
+  describe('storeICPGenerationResult (RPC-based)', () => {
+    const mockWorkflowId = 'test-workflow-id'
+    const mockOrganizationId = 'test-org-id'
+    const mockIdempotencyKey = `${mockWorkflowId}:step_1_icp`
+
+    const mockICPResult: ICPGenerationResult = {
+      icp_data: mockICPData,
+      tokensUsed: 1500,
+      modelUsed: 'perplexity/sonar',
+      generatedAt: new Date().toISOString(),
+      promptTokens: 800,
+      completionTokens: 700,
+      cost: 0.0022
+    }
+
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('should call atomic RPC with correct parameters', async () => {
       const mockSupabase = {
-        from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ error: null })
+        rpc: vi.fn().mockResolvedValue({ error: null })
       }
 
       vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
 
-      const icpResult: ICPGenerationResult = {
-        icp_data: mockICPData,
-        tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        generatedAt: new Date().toISOString(),
-        promptTokens: 800,
-        completionTokens: 700,
-        cost: 0.0022
-      }
+      await storeICPGenerationResult(
+        mockWorkflowId,
+        mockOrganizationId,
+        mockICPResult,
+        mockIdempotencyKey
+      )
 
-      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult, `${mockWorkflowId}:step_1_icp`)
-
-      expect(mockSupabase.from).toHaveBeenCalledWith('intent_workflows')
-      expect(mockSupabase.update).toHaveBeenCalled()
-      expect(mockSupabase.eq).toHaveBeenCalledWith('id', mockWorkflowId)
-      expect(mockSupabase.eq).toHaveBeenCalledWith('organization_id', mockOrganizationId)
+      expect(mockSupabase.rpc).toHaveBeenCalledTimes(1)
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        'record_usage_increment_and_complete_step',
+        {
+          p_workflow_id: mockWorkflowId,
+          p_organization_id: mockOrganizationId,
+          p_model: mockICPResult.modelUsed,
+          p_prompt_tokens: mockICPResult.promptTokens,
+          p_completion_tokens: mockICPResult.completionTokens,
+          p_cost: mockICPResult.cost,
+          p_icp_data: mockICPResult.icp_data,
+          p_tokens_used: mockICPResult.tokensUsed,
+          p_generated_at: mockICPResult.generatedAt,
+          p_idempotency_key: mockIdempotencyKey
+        }
+      )
     })
 
-    it('should throw error if storage fails', async () => {
+    it('should throw if RPC returns error', async () => {
       const mockSupabase = {
-        from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          error: { message: 'Database error' }
+        rpc: vi.fn().mockResolvedValue({
+          error: { message: 'Database failure' }
         })
       }
 
       vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
 
-      const icpResult: ICPGenerationResult = {
-        icp_data: mockICPData,
-        tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        generatedAt: new Date().toISOString(),
-        promptTokens: 800,
-        completionTokens: 700,
-        cost: 0.0022
-      }
-
       await expect(
-        storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult, `${mockWorkflowId}:step_1_icp`)
-      ).rejects.toThrow('Failed to store ICP generation result')
+        storeICPGenerationResult(
+          mockWorkflowId,
+          mockOrganizationId,
+          mockICPResult,
+          mockIdempotencyKey
+        )
+      ).rejects.toThrow(
+        'Financial recording and workflow update failed'
+      )
+
+      expect(mockSupabase.rpc).toHaveBeenCalledTimes(1)
     })
 
-    it('should update workflow status to step_1_icp', async () => {
+    it('should pass idempotency key correctly', async () => {
       const mockSupabase = {
-        from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ error: null })
+        rpc: vi.fn().mockResolvedValue({ error: null })
       }
 
       vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
 
-      const icpResult: ICPGenerationResult = {
-        icp_data: mockICPData,
-        tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        generatedAt: new Date().toISOString(),
-        promptTokens: 800,
-        completionTokens: 700,
-        cost: 0.0022
+      await storeICPGenerationResult(
+        mockWorkflowId,
+        mockOrganizationId,
+        mockICPResult,
+        mockIdempotencyKey
+      )
+
+      const rpcArgs = mockSupabase.rpc.mock.calls[0][1]
+      expect(rpcArgs.p_idempotency_key).toBe(mockIdempotencyKey)
+    })
+
+    it('should NOT call .from() or .update() (prevents regression)', async () => {
+      const mockSupabase = {
+        rpc: vi.fn().mockResolvedValue({ error: null }),
+        from: vi.fn(),
+        update: vi.fn()
       }
 
-      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult, `${mockWorkflowId}:step_1_icp`)
+      vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
 
-      const updateCall = mockSupabase.update.mock.calls[0][0]
-      expect(updateCall.status).toBe('step_1_icp')
-      expect(updateCall.step_1_icp_completed_at).toBeDefined()
+      await storeICPGenerationResult(
+        mockWorkflowId,
+        mockOrganizationId,
+        mockICPResult,
+        mockIdempotencyKey
+      )
+
+      expect(mockSupabase.from).not.toHaveBeenCalled()
+      expect(mockSupabase.update).not.toHaveBeenCalled()
     })
   })
 
