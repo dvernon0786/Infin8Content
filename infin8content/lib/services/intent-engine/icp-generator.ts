@@ -480,12 +480,17 @@ export async function storeICPGenerationResult(
 
   const existingData = (existingWorkflow as any)?.workflow_data || {}
 
+  // Clean up any previous failure state for operational hygiene
+  const { icp_generation_error, ...cleanExistingData } = existingData
+
   const updateData: any = {
     icp_data: icpResult.icp_data,
     status: 'step_1_icp',  // Reflect step just completed
     current_step: 2,       // Enable step 2 execution
+    step_1_icp_error_message: null,  // Clear stale error state
+    step_1_icp_last_error_message: null,  // Clear stale error state
     workflow_data: {
-      ...existingData,  // Preserve all existing workflow_data keys
+      ...cleanExistingData,  // Preserve all existing workflow_data keys except failures
       icp_generation: {
         tokensUsed: icpResult.tokensUsed,
         modelUsed: icpResult.modelUsed,
