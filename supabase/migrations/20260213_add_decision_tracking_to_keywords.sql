@@ -19,7 +19,12 @@ CREATE INDEX IF NOT EXISTS idx_keywords_decision_confidence ON keywords(decision
 -- Users can only modify their own organization's keyword decisions
 CREATE POLICY "Users can update keyword decisions for their organization" ON keywords
 FOR UPDATE USING (
-  organization_id = auth.org()
+  organization_id = (
+    SELECT org_id 
+    FROM users 
+    WHERE auth_user_id = auth.uid()
+    LIMIT 1
+  )
 );
 
 -- Add comment explaining the decision tracking system
