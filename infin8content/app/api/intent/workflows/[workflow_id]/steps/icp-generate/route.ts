@@ -145,8 +145,8 @@ export async function POST(
       })
     }
 
-    // Generate deterministic idempotency key at request boundary
-    const idempotencyKey = `${workflowId}:step_1_icp`
+    // Generate UUID idempotency key at request boundary
+    const idempotencyKey = crypto.randomUUID()
 
     // Generate ICP document with automatic retry
     const icpResult = await generateICPDocument(mappedRequest, organizationId, 300000, undefined, workflowId, idempotencyKey)
