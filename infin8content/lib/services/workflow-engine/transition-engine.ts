@@ -18,6 +18,7 @@ import {
   isTerminalState,
   isProcessingState 
 } from '@/types/workflow-state'
+import { logWorkflowTransition } from './workflow-audit'
 
 export interface TransitionRequest {
   workflowId: string
@@ -98,7 +99,7 @@ export async function transitionWorkflow(
     .select('id, state')
     .single()
 
-  if (updateError) {
+  if (updateError || !workflow) {
     console.error('[TransitionEngine] Database transition failed:', updateError)
     return {
       success: false,
@@ -106,14 +107,19 @@ export async function transitionWorkflow(
     }
   }
 
-  if (!workflow) {
-    // Either workflow doesn't exist, org mismatch, or not in expected state
-    // Most likely: concurrent request already transitioned
-    console.log(`[TransitionEngine] Transition failed - likely concurrent race: ${workflowId} ${from} → ${to}`)
-    return {
-      success: false,
-      error: 'TRANSITION_FAILED'
-    }
+  // 🔒 REQUIRED: Audit logging must succeed
+  try {
+    await logWorkflowTransition({
+      workflow_id: workflowId,
+      organization_id: organizationId,
+      previous_state: from,
+      new_state: to,
+      transition_reason: 'workflow_transition',
+      transitioned_at: new Date().toISOString(),
+    })
+  } catch (auditError) {
+    console.error('CRITICAL: Transition occurred but audit log failed:', auditError)
+    throw new Error('Workflow transition audit failure')
   }
 
   console.log(`[TransitionEngine] Transition successful: ${workflowId} ${from} → ${to}`)
