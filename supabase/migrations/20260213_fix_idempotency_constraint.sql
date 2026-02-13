@@ -122,7 +122,7 @@ BEGIN
 
     UPDATE intent_workflows
     SET
-      state = 'STEP_1_COMPLETED',
+      state = 'ICP_COMPLETED',
       workflow_data =
         COALESCE(v_existing_workflow_data, '{}'::jsonb)
         - 'icp_generation_error'
