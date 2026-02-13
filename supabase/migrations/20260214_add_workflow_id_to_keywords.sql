@@ -35,4 +35,6 @@ WHERE workflow_id IS NULL;
 
 -- Add comments for documentation
 COMMENT ON COLUMN keywords.workflow_id IS 'Workflow for isolation and Step 3 keyword retrieval';
-COMMENT ON CONSTRAINT keywords_workflow_unique IS 'Ensures unique keywords per workflow within organization';
+
+-- Note: Constraint comments are not supported in PostgreSQL
+-- The constraint purpose is documented in the migration header
