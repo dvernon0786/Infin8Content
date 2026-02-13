@@ -9,13 +9,27 @@
 import { WorkflowState } from '@/types/workflow-state'
 
 /**
+ * Symbolic workflow step enumeration
+ * Prevents accidental reordering bugs and provides semantic meaning
+ */
+export enum WorkflowStep {
+  ICP = 1,
+  COMPETITORS = 2,
+  KEYWORDS = 3,
+  TOPICS = 4,
+  VALIDATION = 5,
+  ARTICLE = 6,
+  PUBLISH = 7
+}
+
+/**
  * Declarative workflow step definitions
  * This is the single configuration source for all state-to-step mappings
  * Adding new states or modifying progression only requires editing this array
  */
 export const WORKFLOW_STEPS = [
   {
-    step: 1,
+    step: WorkflowStep.ICP,
     label: 'step_1_icp',
     states: [
       WorkflowState.CREATED,
@@ -25,7 +39,7 @@ export const WORKFLOW_STEPS = [
     ]
   },
   {
-    step: 2,
+    step: WorkflowStep.COMPETITORS,
     label: 'step_2_competitors',
     states: [
       WorkflowState.ICP_COMPLETED,
@@ -35,7 +49,7 @@ export const WORKFLOW_STEPS = [
     ]
   },
   {
-    step: 3,
+    step: WorkflowStep.KEYWORDS,
     label: 'step_3_keywords',
     states: [
       WorkflowState.COMPETITOR_COMPLETED,
@@ -47,14 +61,14 @@ export const WORKFLOW_STEPS = [
     ]
   },
   {
-    step: 4,
+    step: WorkflowStep.TOPICS,
     label: 'step_4_topics',
     states: [
       WorkflowState.CLUSTERING_COMPLETED
     ]
   },
   {
-    step: 5,
+    step: WorkflowStep.VALIDATION,
     label: 'step_5_generation',
     states: [
       WorkflowState.VALIDATION_PENDING,
@@ -64,7 +78,7 @@ export const WORKFLOW_STEPS = [
     ]
   },
   {
-    step: 6,
+    step: WorkflowStep.ARTICLE,
     label: 'step_6_generation',
     states: [
       WorkflowState.ARTICLE_PENDING,
@@ -74,14 +88,13 @@ export const WORKFLOW_STEPS = [
     ]
   },
   {
-    step: 7,
+    step: WorkflowStep.PUBLISH,
     label: 'completed',
     states: [
       WorkflowState.PUBLISH_PENDING,
       WorkflowState.PUBLISH_PROCESSING,
       WorkflowState.PUBLISH_COMPLETED,
-      WorkflowState.PUBLISH_FAILED,
-      WorkflowState.COMPLETED
+      WorkflowState.PUBLISH_FAILED
     ]
   }
 ]
@@ -249,5 +262,74 @@ export function validateStateCoverage(): { valid: boolean; uncoveredStates: Work
   return {
     valid: uncoveredStates.length === 0,
     uncoveredStates
+  }
+}
+
+/**
+ * Validates that each state appears exactly once across all steps
+ * Critical for enterprise engines to prevent nondeterministic routing
+ */
+export function validateUniqueStateAssignment(): { valid: boolean; duplicateStates: WorkflowState[] } {
+  const allAssignedStates = WORKFLOW_STEPS.flatMap(step => step.states)
+  const stateCounts = new Map<WorkflowState, number>()
+  
+  // Count occurrences of each state
+  allAssignedStates.forEach(state => {
+    stateCounts.set(state, (stateCounts.get(state) || 0) + 1)
+  })
+  
+  // Find duplicates (states that appear more than once)
+  const duplicateStates = Array.from(stateCounts.entries())
+    .filter(([_, count]) => count > 1)
+    .map(([state, _]) => state)
+  
+  return {
+    valid: duplicateStates.length === 0,
+    duplicateStates
+  }
+}
+
+/**
+ * Comprehensive enterprise validation of the workflow state graph
+ * Ensures both completeness and uniqueness
+ */
+export function validateWorkflowGraph(): { 
+  valid: boolean; 
+  errors: string[] 
+} {
+  const errors: string[] = []
+  
+  // Test 1: State coverage
+  const coverage = validateStateCoverage()
+  if (!coverage.valid) {
+    errors.push(`Uncovered states: ${coverage.uncoveredStates.join(', ')}`)
+  }
+  
+  // Test 2: Unique assignment
+  const uniqueness = validateUniqueStateAssignment()
+  if (!uniqueness.valid) {
+    errors.push(`Duplicate state assignments: ${uniqueness.duplicateStates.join(', ')}`)
+  }
+  
+  // Test 3: Step continuity (no gaps in step numbers)
+  const stepNumbers = WORKFLOW_STEPS.map(s => s.step).sort((a, b) => a - b)
+  for (let i = 1; i < stepNumbers.length; i++) {
+    if (stepNumbers[i] - stepNumbers[i-1] !== 1) {
+      errors.push(`Step number gap: missing step between ${stepNumbers[i-1]} and ${stepNumbers[i]}`)
+    }
+  }
+  
+  // Test 4: Terminal state consistency
+  const allAssignedStates = WORKFLOW_STEPS.flatMap(step => step.states)
+  const terminalStates = Object.keys(TERMINAL_STATE_MAPPING) as WorkflowState[]
+  terminalStates.forEach(terminalState => {
+    if (allAssignedStates.includes(terminalState)) {
+      errors.push(`Terminal state ${terminalState} should not appear in step definitions`)
+    }
+  })
+  
+  return {
+    valid: errors.length === 0,
+    errors
   }
 }
