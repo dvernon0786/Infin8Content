@@ -68,23 +68,15 @@ export async function GET(
       .from('keywords')
       .select(`
         id,
-        seed_keyword,
+        keyword,
         search_volume,
         cpc,
         competition_level,
         competition_index,
         keyword_difficulty,
-        detected_language,
-        is_foreign_language,
-        main_intent,
-        is_navigational,
-        foreign_intent,
-        ai_suggested,
-        decision_confidence,
-        selection_source,
-        selection_timestamp,
-        user_selected,
-        competitor_url_id
+        longtail_status,
+        subtopics_status,
+        article_status
       `, { count: 'exact' })
       .eq('organization_id', organizationId)
       .eq('workflow_id', workflowId)
