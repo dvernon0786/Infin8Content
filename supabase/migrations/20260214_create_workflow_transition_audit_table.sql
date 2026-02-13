@@ -29,20 +29,35 @@ CREATE INDEX IF NOT EXISTS idx_workflow_transition_audit_transitioned_at
 -- RLS (Row Level Security) for organization isolation
 ALTER TABLE workflow_transition_audit ENABLE ROW LEVEL SECURITY;
 
--- RLS Policy: Organizations can only see their own audit logs
-CREATE POLICY "Organizations can view their own workflow audit logs" 
-  ON workflow_transition_audit FOR SELECT 
-  USING (organization_id IN (SELECT id FROM organizations WHERE id = auth.uid()));
+-- RLS Policy: Organizations can only see their own audit logs (if not exists)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM pg_policies 
+        WHERE tablename = 'workflow_transition_audit' 
+        AND policyname = 'Organizations can view their own workflow audit logs'
+    ) THEN
+        CREATE POLICY "Organizations can view their own workflow audit logs" 
+        ON workflow_transition_audit FOR SELECT 
+        USING (organization_id IN (SELECT id FROM organizations WHERE id = auth.uid()));
+    END IF;
+END $$;
 
--- RLS Policy: Service role can insert audit logs
-CREATE POLICY "Service role can insert workflow audit logs" 
-  ON workflow_transition_audit FOR INSERT 
-  WITH CHECK (true);
-
--- RLS Policy: Organizations can view their own audit logs
-CREATE POLICY "Organizations can view their own audit logs" 
-  ON workflow_transition_audit FOR SELECT 
-  USING (organization_id IN (SELECT id FROM organizations WHERE id = auth.uid()));
+-- RLS Policy: Service role can insert audit logs (if not exists)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM pg_policies 
+        WHERE tablename = 'workflow_transition_audit' 
+        AND policyname = 'Service role can insert workflow audit logs'
+    ) THEN
+        CREATE POLICY "Service role can insert workflow audit logs" 
+        ON workflow_transition_audit FOR INSERT 
+        WITH CHECK (true);
+    END IF;
+END $$;
 
 -- Grant permissions
 GRANT SELECT, INSERT ON workflow_transition_audit TO authenticated;
