@@ -333,12 +333,12 @@ async function extractKeywordsFromCompetitor(
       const validKeywords = sortedKeywords
         .filter((result: any) => result.keyword && typeof result.keyword === 'string' && result.keyword.trim().length > 0)
       
-      console.log(`[DataForSEO DEBUG] Filtered ${validKeywords.length} valid keywords from ${sortedKeywords.length} total`)
+      console.log(`[DataForSEO DEBUG] Filtered ${validKeywords.length} valid keywords from ${taskResults.length} total (maxKeywords: ${maxKeywords})`)
 
       return validKeywords.map((result: any) => ({
           seed_keyword: result.keyword.trim(),
           search_volume: result.keyword_info?.search_volume ?? 0,
-          competition_level: result.keyword_info?.competition_level ?? 'low',
+          competition_level: (result.keyword_info?.competition_level || 'LOW').toLowerCase() as 'low' | 'medium' | 'high',
           competition_index: result.keyword_info?.competition_index ?? 0,
           keyword_difficulty: result.keyword_properties?.keyword_difficulty ?? result.keyword_info?.competition_index ?? 0,
           cpc: result.keyword_info?.cpc ?? null,
