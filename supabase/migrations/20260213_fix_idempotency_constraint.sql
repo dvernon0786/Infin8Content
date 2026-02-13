@@ -11,7 +11,32 @@ ADD CONSTRAINT unique_idempotency_key
 UNIQUE (idempotency_key);
 
 -- Update the atomic function to use the correct constraint
-DROP FUNCTION IF EXISTS record_usage_increment_and_complete_step;
+-- Drop all versions of the function by specifying the exact signature
+DROP FUNCTION IF EXISTS record_usage_increment_and_complete_step(
+  p_workflow_id UUID,
+  p_organization_id UUID,
+  p_model TEXT,
+  p_prompt_tokens INTEGER,
+  p_completion_tokens INTEGER,
+  p_cost NUMERIC,
+  p_icp_data JSONB,
+  p_tokens_used INTEGER,
+  p_generated_at TIMESTAMPTZ,
+  p_idempotency_key UUID
+);
+
+-- Also drop the version without idempotency_key parameter if it exists
+DROP FUNCTION IF EXISTS record_usage_increment_and_complete_step(
+  p_workflow_id UUID,
+  p_organization_id UUID,
+  p_model TEXT,
+  p_prompt_tokens INTEGER,
+  p_completion_tokens INTEGER,
+  p_cost NUMERIC,
+  p_icp_data JSONB,
+  p_tokens_used INTEGER,
+  p_generated_at TIMESTAMPTZ
+);
 
 CREATE OR REPLACE FUNCTION record_usage_increment_and_complete_step(
   p_workflow_id UUID,
