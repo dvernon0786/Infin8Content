@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
+import { WorkflowState } from '@/types/workflow-state'
 
 export interface GateResult {
   allowed: boolean
@@ -11,9 +12,8 @@ export interface GateResult {
 
 export interface WorkflowData {
   id: string
-  status: string
+  state: WorkflowState
   organization_id: string
-  competitor_completed_at: string | null
 }
 
 export class CompetitorGateValidator {
@@ -26,12 +26,12 @@ export class CompetitorGateValidator {
     try {
       const supabase = createServiceRoleClient()
       
-      // Query workflow status and competitor completion
+      // Query workflow state and competitor completion
       const { data: workflow, error } = await supabase
         .from('intent_workflows')
-        .select('id, status, organization_id, competitor_completed_at')
+        .select('id, state, organization_id')
         .eq('id', workflowId)
-        .single() as { data: WorkflowData | null, error: any }
+        .single<WorkflowData>()
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -72,32 +72,45 @@ export class CompetitorGateValidator {
         }
       }
 
-      // Check if competitor analysis is complete (status must be step_3_competitors or later)
-      const competitorCompleteStatuses = [
-        'step_3_competitors',
-        'step_4_longtails',
-        'step_5_filtering',
-        'step_6_clustering',
-        'step_7_validation',
-        'step_8_subtopics',
-        'step_9_articles',
-        'completed'
+      // Check if competitor analysis is complete
+      // Allowed states: COMPETITOR_COMPLETED or any state after it
+      const competitorCompleteStates = [
+        WorkflowState.COMPETITOR_COMPLETED,
+        WorkflowState.SEED_REVIEW_PENDING,
+        WorkflowState.SEED_REVIEW_COMPLETED,
+        WorkflowState.CLUSTERING_PENDING,
+        WorkflowState.CLUSTERING_PROCESSING,
+        WorkflowState.CLUSTERING_COMPLETED,
+        WorkflowState.CLUSTERING_FAILED,
+        WorkflowState.VALIDATION_PENDING,
+        WorkflowState.VALIDATION_PROCESSING,
+        WorkflowState.VALIDATION_COMPLETED,
+        WorkflowState.VALIDATION_FAILED,
+        WorkflowState.ARTICLE_PENDING,
+        WorkflowState.ARTICLE_PROCESSING,
+        WorkflowState.ARTICLE_COMPLETED,
+        WorkflowState.ARTICLE_FAILED,
+        WorkflowState.PUBLISH_PENDING,
+        WorkflowState.PUBLISH_PROCESSING,
+        WorkflowState.PUBLISH_COMPLETED,
+        WorkflowState.PUBLISH_FAILED,
+        WorkflowState.COMPLETED
       ]
 
-      const isCompetitorComplete = competitorCompleteStatuses.includes(workflow.status)
+      const isCompetitorComplete = competitorCompleteStates.includes(workflow.state)
 
       if (!isCompetitorComplete) {
         return {
           allowed: false,
-          competitorStatus: workflow.status,
-          workflowStatus: workflow.status,
+          competitorStatus: workflow.state,
+          workflowStatus: workflow.state,
           error: 'Competitor analysis required before seed keywords',
           errorResponse: {
             error: 'Competitor analysis required before seed keywords',
-            workflowStatus: workflow.status,
+            workflowStatus: workflow.state,
             competitorStatus: 'not_complete',
             requiredAction: 'Complete competitor analysis (step 2) before proceeding',
-            currentStep: workflow.status,
+            currentStep: workflow.state,
             blockedAt: new Date().toISOString()
           }
         }
@@ -106,8 +119,8 @@ export class CompetitorGateValidator {
       // Competitor analysis is complete - allow access
       return {
         allowed: true,
-        competitorStatus: workflow.status,
-        workflowStatus: workflow.status
+        competitorStatus: workflow.state,
+        workflowStatus: workflow.state
       }
 
     } catch (error) {
