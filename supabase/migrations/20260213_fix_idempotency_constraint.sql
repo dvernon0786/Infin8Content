@@ -1,6 +1,42 @@
--- Atomic ICP Generation Completion Function
--- Combines financial settlement and workflow state update in single transaction
--- Eliminates split-brain risk and ensures deterministic behavior
+-- Fix idempotency constraint to use UUID-only keys
+-- The previous implementation used composite strings which violated UUID column type
+
+-- Drop the old composite constraint
+ALTER TABLE ai_usage_ledger
+DROP CONSTRAINT IF EXISTS unique_workflow_idempotency;
+
+-- Add proper UUID-only constraint on idempotency_key
+ALTER TABLE ai_usage_ledger
+ADD CONSTRAINT unique_idempotency_key
+UNIQUE (idempotency_key);
+
+-- Update the atomic function to use the correct constraint
+-- Drop all versions of the function by specifying the exact signature
+DROP FUNCTION IF EXISTS record_usage_increment_and_complete_step(
+  p_workflow_id UUID,
+  p_organization_id UUID,
+  p_model TEXT,
+  p_prompt_tokens INTEGER,
+  p_completion_tokens INTEGER,
+  p_cost NUMERIC,
+  p_icp_data JSONB,
+  p_tokens_used INTEGER,
+  p_generated_at TIMESTAMPTZ,
+  p_idempotency_key UUID
+);
+
+-- Also drop the version without idempotency_key parameter if it exists
+DROP FUNCTION IF EXISTS record_usage_increment_and_complete_step(
+  p_workflow_id UUID,
+  p_organization_id UUID,
+  p_model TEXT,
+  p_prompt_tokens INTEGER,
+  p_completion_tokens INTEGER,
+  p_cost NUMERIC,
+  p_icp_data JSONB,
+  p_tokens_used INTEGER,
+  p_generated_at TIMESTAMPTZ
+);
 
 CREATE OR REPLACE FUNCTION record_usage_increment_and_complete_step(
   p_workflow_id UUID,
@@ -117,3 +153,6 @@ BEGIN
 
 END;
 $$;
+
+-- Comment on function
+COMMENT ON FUNCTION record_usage_increment_and_complete_step IS 'Atomically records AI usage and increments workflow cost with proper UUID idempotency';
