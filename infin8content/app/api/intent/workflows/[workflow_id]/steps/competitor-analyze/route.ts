@@ -166,17 +166,24 @@ export async function POST(
     // Insert additional competitors into organization_competitors first
     let extraFormatted: CompetitorData[] = []
 
+    // Helper function to normalize URLs for consistent storage
+    function normalizeUrl(input: string): string {
+      const url = new URL(input.startsWith('http') ? input : `https://${input}`)
+      return url.hostname.replace(/^www\./, '').toLowerCase()
+    }
+
     for (const url of newCompetitors) {
       if (typeof url !== 'string' || url.trim().length === 0) continue
 
       const cleanUrl = url.trim()
+      const normalizedDomain = normalizeUrl(cleanUrl)
 
       const { data, error } = await supabase
         .from('organization_competitors')
         .upsert({
           organization_id: organizationId,
-          url: cleanUrl,
-          domain: cleanUrl,
+          url: normalizedDomain,
+          domain: normalizedDomain,
           is_active: true,
           created_by: userId
         }, {
