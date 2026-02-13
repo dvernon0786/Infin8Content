@@ -292,28 +292,30 @@ async function extractKeywordsFromCompetitor(
         throw new Error(`DataForSEO API error: ${task?.status_message || 'Unknown error'}`)
       }
 
-      const taskResults = task.result
-      if (!Array.isArray(taskResults)) {
-        throw new Error(`DataForSEO API error: Invalid result format - expected array, got ${typeof taskResults}`)
-      }
-      
-      if (taskResults.length === 0) {
-        console.warn(`No keyword results returned from DataForSEO for ${url}`)
+      // Extract actual keyword items from nested DataForSEO structure
+      const taskResults = task.result?.flatMap((r: any) => r.items || []) || []
+
+      if (!Array.isArray(taskResults) || taskResults.length === 0) {
+        console.warn(`No keyword items returned from DataForSEO for ${url}`)
         return []
       }
 
-      // Sort by search volume (descending) and take top N
+      // Sort by keyword_info.search_volume (nested structure)
       const sortedKeywords = taskResults
-        .sort((a: any, b: any) => (b.search_volume || 0) - (a.search_volume || 0))
+        .sort((a: any, b: any) => 
+          (b.keyword_info?.search_volume || 0) - (a.keyword_info?.search_volume || 0)
+        )
         .slice(0, maxKeywords)
 
-      // DEBUG: Log the raw DataForSEO response
-      console.log(`[DataForSEO DEBUG] Raw response for ${url}:`, JSON.stringify(taskResults.slice(0, 3), null, 2))
+      console.log(`[DataForSEO DEBUG] Extracted ${taskResults.length} keyword items from DataForSEO response`)
+
+      // DEBUG: Log the raw DataForSEO response structure
+      console.log(`[DataForSEO DEBUG] Raw item structure for ${url}:`, JSON.stringify(taskResults.slice(0, 2), null, 2))
       
       // DEBUG: Log each result to understand filtering
-      console.log(`[DataForSEO DEBUG] Analyzing ${taskResults.length} results for filtering:`)
+      console.log(`[DataForSEO DEBUG] Analyzing ${taskResults.length} keyword items for filtering:`)
       taskResults.forEach((result: any, index: number) => {
-        console.log(`[DataForSEO DEBUG] Result ${index}:`, {
+        console.log(`[DataForSEO DEBUG] Item ${index}:`, {
           keyword: result.keyword,
           keywordType: typeof result.keyword,
           keywordLength: result.keyword?.length,
@@ -321,7 +323,9 @@ async function extractKeywordsFromCompetitor(
           keywordTrimmedLength: result.keyword?.trim()?.length,
           hasKeyword: !!result.keyword,
           isString: typeof result.keyword === 'string',
-          passesLengthCheck: result.keyword && typeof result.keyword === 'string' && result.keyword.trim().length > 0
+          passesLengthCheck: result.keyword && typeof result.keyword === 'string' && result.keyword.trim().length > 0,
+          searchVolume: result.keyword_info?.search_volume,
+          competitionLevel: result.keyword_info?.competition_level
         })
       })
 
@@ -333,26 +337,26 @@ async function extractKeywordsFromCompetitor(
 
       return validKeywords.map((result: any) => ({
           seed_keyword: result.keyword.trim(),
-          search_volume: result.search_volume || 0,
-        competition_level: mapCompetitionLevel(result.competition_index),
-        competition_index: result.competition_index || 0,
-        keyword_difficulty: result.keyword_difficulty || result.competition_index || 0,
-        cpc: result.cpc,
-        
-        // NEW TAGGING FIELDS FOR DECISION TRACKING
-        detected_language: result.detected_language || null,
-        is_foreign_language: result.is_another_language || false,
-        main_intent: result.main_intent || null,
-        is_navigational: result.main_intent === 'navigational',
-        foreign_intent: result.foreign_intent || null,
-        
-        // DECISION TRACKING FIELDS
-        ai_suggested: true, // AI initially suggests all extracted keywords
-        user_selected: true, // Default to selected for human review
-        decision_confidence: calculateKeywordConfidence(result),
-        selection_source: 'ai',
-        selection_timestamp: new Date().toISOString()
-      }))
+          search_volume: result.keyword_info?.search_volume ?? 0,
+          competition_level: result.keyword_info?.competition_level ?? 'low',
+          competition_index: result.keyword_info?.competition_index ?? 0,
+          keyword_difficulty: result.keyword_properties?.keyword_difficulty ?? result.keyword_info?.competition_index ?? 0,
+          cpc: result.keyword_info?.cpc ?? null,
+          
+          // NEW TAGGING FIELDS FOR DECISION TRACKING
+          detected_language: result.keyword_properties?.detected_language ?? null,
+          is_foreign_language: result.keyword_properties?.is_another_language ?? false,
+          main_intent: result.search_intent_info?.main_intent ?? null,
+          is_navigational: result.search_intent_info?.main_intent === 'navigational',
+          foreign_intent: result.search_intent_info?.foreign_intent ?? null,
+          
+          // DECISION TRACKING FIELDS
+          ai_suggested: true, // AI initially suggests all extracted keywords
+          user_selected: true, // Default to selected for human review
+          decision_confidence: calculateKeywordConfidence(result),
+          selection_source: 'ai',
+          selection_timestamp: new Date().toISOString()
+        }))
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
 
