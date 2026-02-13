@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "test:hammer": "cd infin8content && npx ts-node ../tests/workflow-engine/hammer-test.ts"
+  },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@types/node": "^25.2.2"
