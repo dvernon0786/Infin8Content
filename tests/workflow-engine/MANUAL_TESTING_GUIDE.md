@@ -38,7 +38,27 @@ updated_at: <current timestamp>
 
 ---
 
-## Step 2: Start Local Services
+## Step 2: Get Authentication Token
+
+**Get your Supabase service role key:**
+
+1. Go to your Supabase project dashboard
+2. Navigate to Settings → API
+3. Copy the **Service Role Key** (not the anon key)
+4. Set it as an environment variable:
+
+```bash
+export SUPABASE_KEY="your-service-role-key-here"
+```
+
+Or add it to your `.env.local`:
+```
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+```
+
+---
+
+## Step 3: Start Local Services
 
 **Terminal 1 - Start API Server:**
 ```bash
@@ -50,26 +70,48 @@ Wait for: `✓ Ready in XXXms`
 
 ---
 
-## Step 3: Test 1 - Atomicity (3 Concurrent Calls)
+## Step 4: Test 1 - Atomicity (3 Concurrent Calls)
+
+**Important:** All curl requests require the `Authorization: Bearer $SUPABASE_KEY` header
 
 **What it proves:** Only one request can win the transition, others get 409 conflict
+
+**Important:** The API requires authentication. Use the service role key to bypass auth for testing.
 
 **Terminal 2, 3, 4 - Fire 3 concurrent requests:**
 
 ```bash
+# Set your Supabase service role key
+export SUPABASE_KEY="your-service-role-key-here"
+
 # Terminal 2
 curl -X POST http://localhost:3000/api/intent/workflows/63fc648d-1518-405a-8e17-05973c608c71/steps/competitor-analyze \
   -H "Content-Type: application/json" \
-  -w "\nStatus: %{http_code}\n"
+  -H "Authorization: Bearer $SUPABASE_KEY" \
+  -w "\nStatus: %{http_code}\n" &
 
 # Terminal 3 (same time)
 curl -X POST http://localhost:3000/api/intent/workflows/63fc648d-1518-405a-8e17-05973c608c71/steps/competitor-analyze \
   -H "Content-Type: application/json" \
-  -w "\nStatus: %{http_code}\n"
+  -H "Authorization: Bearer $SUPABASE_KEY" \
+  -w "\nStatus: %{http_code}\n" &
 
 # Terminal 4 (same time)
 curl -X POST http://localhost:3000/api/intent/workflows/63fc648d-1518-405a-8e17-05973c608c71/steps/competitor-analyze \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $SUPABASE_KEY" \
+  -w "\nStatus: %{http_code}\n" &
+
+wait
+```
+
+**Alternative: Use curl with Supabase auth cookie**
+
+If you have a valid session, you can use:
+```bash
+curl -X POST http://localhost:3000/api/intent/workflows/63fc648d-1518-405a-8e17-05973c608c71/steps/competitor-analyze \
+  -H "Content-Type: application/json" \
+  -b "sb-auth-token=your-session-token" \
   -w "\nStatus: %{http_code}\n"
 ```
 
@@ -181,9 +223,13 @@ WHERE workflow_id = '63fc648d-1518-405a-8e17-05973c608c71';
 
 **Terminal 2 - Fire 20 concurrent requests:**
 ```bash
+# Set your Supabase service role key
+export SUPABASE_KEY="your-service-role-key-here"
+
 for i in {1..20}; do
   curl -X POST http://localhost:3000/api/intent/workflows/63fc648d-1518-405a-8e17-05973c608c71/steps/competitor-analyze \
     -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $SUPABASE_KEY" \
     -w "Request $i: %{http_code}\n" &
 done
 wait
