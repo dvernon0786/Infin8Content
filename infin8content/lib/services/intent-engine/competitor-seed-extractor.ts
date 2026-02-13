@@ -309,6 +309,21 @@ async function extractKeywordsFromCompetitor(
 
       // DEBUG: Log the raw DataForSEO response
       console.log(`[DataForSEO DEBUG] Raw response for ${url}:`, JSON.stringify(taskResults.slice(0, 3), null, 2))
+      
+      // DEBUG: Log each result to understand filtering
+      console.log(`[DataForSEO DEBUG] Analyzing ${taskResults.length} results for filtering:`)
+      taskResults.forEach((result: any, index: number) => {
+        console.log(`[DataForSEO DEBUG] Result ${index}:`, {
+          keyword: result.keyword,
+          keywordType: typeof result.keyword,
+          keywordLength: result.keyword?.length,
+          keywordTrimmed: result.keyword?.trim(),
+          keywordTrimmedLength: result.keyword?.trim()?.length,
+          hasKeyword: !!result.keyword,
+          isString: typeof result.keyword === 'string',
+          passesLengthCheck: result.keyword && typeof result.keyword === 'string' && result.keyword.trim().length > 0
+        })
+      })
 
       // Filter out null/undefined keywords and map to seed keyword format
       const validKeywords = sortedKeywords
