@@ -10,22 +10,24 @@ import { WorkflowState } from '@/types/workflow-state'
 
 /**
  * Symbolic workflow step enumeration
+ * Used for semantic meaning only - ordering derived from WORKFLOW_STEPS
  * Prevents accidental reordering bugs and provides semantic meaning
  */
 export enum WorkflowStep {
-  ICP = 1,
-  COMPETITORS = 2,
-  KEYWORDS = 3,
-  TOPICS = 4,
-  VALIDATION = 5,
-  ARTICLE = 6,
-  PUBLISH = 7
+  ICP = 'icp',
+  COMPETITORS = 'competitors', 
+  KEYWORDS = 'keywords',
+  TOPICS = 'topics',
+  VALIDATION = 'validation',
+  ARTICLE = 'article',
+  PUBLISH = 'publish'
 }
 
 /**
  * Declarative workflow step definitions
  * This is the single configuration source for all state-to-step mappings
- * Adding new states or modifying progression only requires editing this array
+ * Step ordering is derived from array index, not hardcoded enum values
+ * Adding new steps requires only inserting into this array
  */
 export const WORKFLOW_STEPS = [
   {
@@ -100,6 +102,24 @@ export const WORKFLOW_STEPS = [
 ]
 
 /**
+ * Gets step number from configuration index
+ * Allows mid-production step insertion without breaking analytics
+ */
+export function getStepNumber(stepKey: WorkflowStep): number {
+  const index = WORKFLOW_STEPS.findIndex(s => s.step === stepKey)
+  return index >= 0 ? index + 1 : 1
+}
+
+/**
+ * Gets step key from step number
+ * Provides reverse mapping for UI compatibility
+ */
+export function getStepKey(stepNumber: number): WorkflowStep {
+  const step = WORKFLOW_STEPS[stepNumber - 1]
+  return step?.step ?? WorkflowStep.ICP
+}
+
+/**
  * Terminal state handling configuration
  * Defines how terminal states map to steps for navigation purposes
  */
@@ -123,7 +143,8 @@ export function getStepFromState(state: WorkflowState): number {
     step.states.includes(state)
   )
   
-  return stepDefinition?.step ?? 1
+  // Return step number derived from configuration index
+  return stepDefinition ? getStepNumber(stepDefinition.step) : 1
 }
 
 /**
@@ -231,11 +252,11 @@ export function getStepLabel(step: number): string {
 }
 
 /**
- * Gets all states for a given step
+ * Gets all states for a given step number
  * Useful for testing and validation
  */
 export function getStatesForStep(stepNumber: number): WorkflowState[] {
-  const stepDefinition = WORKFLOW_STEPS.find(step => step.step === stepNumber)
+  const stepDefinition = WORKFLOW_STEPS.find(step => getStepNumber(step.step) === stepNumber)
   return stepDefinition ? [...stepDefinition.states] : []
 }
 
@@ -312,7 +333,7 @@ export function validateWorkflowGraph(): {
   }
   
   // Test 3: Step continuity (no gaps in step numbers)
-  const stepNumbers = WORKFLOW_STEPS.map(s => s.step).sort((a, b) => a - b)
+  const stepNumbers = WORKFLOW_STEPS.map(s => getStepNumber(s.step)).sort((a, b) => a - b)
   for (let i = 1; i < stepNumbers.length; i++) {
     if (stepNumbers[i] - stepNumbers[i-1] !== 1) {
       errors.push(`Step number gap: missing step between ${stepNumbers[i-1]} and ${stepNumbers[i]}`)
