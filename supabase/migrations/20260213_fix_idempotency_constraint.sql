@@ -48,27 +48,31 @@ CREATE OR REPLACE FUNCTION record_usage_increment_and_complete_step(
   p_icp_data JSONB,
   p_tokens_used INTEGER,
   p_generated_at TIMESTAMPTZ,
-  p_idempotency_key UUID DEFAULT gen_random_uuid()
+  p_idempotency_key UUID
 )
 RETURNS void
 LANGUAGE plpgsql
 AS $$
 DECLARE
   v_existing_workflow_data JSONB;
-  v_ledger_inserted BOOLEAN;
+  v_ledger_inserted_id UUID;
+  v_current_total_cost NUMERIC;
+  v_max_cost NUMERIC DEFAULT 1.00;
 BEGIN
-  -- 🔒 Lock workflow row to prevent concurrent mutation
+
+  -- 🔒 Tenant-scoped row lock
   SELECT workflow_data
   INTO v_existing_workflow_data
   FROM intent_workflows
   WHERE id = p_workflow_id
+  AND organization_id = p_organization_id
   FOR UPDATE;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Workflow not found: %', p_workflow_id;
+    RAISE EXCEPTION 'Workflow not found or tenant mismatch: %', p_workflow_id;
   END IF;
 
-  -- 1️⃣ Financial settlement with idempotency protection
+  -- 1️⃣ Idempotent ledger insert
   INSERT INTO ai_usage_ledger (
     id,
     workflow_id,
@@ -91,65 +95,51 @@ BEGIN
     p_idempotency_key,
     NOW()
   )
-  ON CONFLICT (idempotency_key) 
+  ON CONFLICT (workflow_id, idempotency_key)
   DO NOTHING
-  RETURNING id INTO v_ledger_inserted;
+  RETURNING id INTO v_ledger_inserted_id;
 
-  -- Only update workflow if ledger insertion actually happened (idempotency)
-  IF v_ledger_inserted IS NOT NULL THEN
+  -- Only mutate workflow if ledger insert actually happened
+  IF v_ledger_inserted_id IS NOT NULL THEN
 
-  -- 🔒 Elite cost cap enforcement inside transaction (prevents race conditions)
-  DECLARE
-    v_current_total_cost NUMERIC;
-    v_max_cost NUMERIC DEFAULT 1.00; -- $1.00 hard cap per workflow
-  BEGIN
-    SELECT COALESCE((workflow_data->>'total_ai_cost')::numeric, 0)
-    INTO v_current_total_cost
-    FROM intent_workflows
+    v_current_total_cost :=
+      COALESCE((v_existing_workflow_data->>'total_ai_cost')::numeric, 0);
+
+    IF (v_current_total_cost + p_cost) > v_max_cost THEN
+      RAISE EXCEPTION
+        'Workflow cost limit exceeded: current=%, additional=%, limit=%',
+        v_current_total_cost, p_cost, v_max_cost;
+    END IF;
+
+    UPDATE intent_workflows
+    SET
+      workflow_data =
+        COALESCE(v_existing_workflow_data, '{}'::jsonb)
+        - 'icp_generation_error'
+        || jsonb_build_object(
+             'total_ai_cost',
+             v_current_total_cost + p_cost
+           )
+        || jsonb_build_object(
+             'icp_generation',
+             jsonb_build_object(
+               'tokensUsed', p_tokens_used,
+               'modelUsed', p_model,
+               'cost', p_cost,
+               'generatedAt', p_generated_at
+             )
+           ),
+      icp_data = p_icp_data,
+      status = 'step_1_icp',
+      current_step = 2,
+      step_1_icp_error_message = NULL,
+      step_1_icp_last_error_message = NULL,
+      step_1_icp_completed_at = NOW(),
+      updated_at = NOW()
     WHERE id = p_workflow_id
     AND organization_id = p_organization_id;
-    
-    IF (v_current_total_cost + p_cost) > v_max_cost THEN
-      RAISE EXCEPTION 'Workflow cost limit exceeded: current=%, additional=%, limit=%', 
-                   v_current_total_cost, p_cost, v_max_cost;
-    END IF;
-  END;
 
-  -- 2️⃣ Update workflow atomically in same transaction
-  UPDATE intent_workflows
-  SET
-    workflow_data =
-      COALESCE(v_existing_workflow_data, '{}'::jsonb)
-      - 'icp_generation_error'                      -- remove stale error
-      || jsonb_build_object(
-           'total_ai_cost',
-           COALESCE((v_existing_workflow_data->>'total_ai_cost')::numeric, 0) + p_cost
-         )
-      || jsonb_build_object(
-           'icp_generation',
-           jsonb_build_object(
-             'tokensUsed', p_tokens_used,
-             'modelUsed', p_model,
-             'cost', p_cost,
-             'generatedAt', p_generated_at
-           )
-         ),
-    icp_data = p_icp_data,
-    status = 'step_1_icp',
-    current_step = 2,
-    step_1_icp_error_message = NULL,
-    step_1_icp_last_error_message = NULL,
-    step_1_icp_completed_at = NOW(),
-    updated_at = NOW()
-  WHERE id = p_workflow_id
-    AND organization_id = p_organization_id;
-
-  -- Verify workflow was found and belongs to organization
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Workflow not found or tenant mismatch: %', p_workflow_id;
   END IF;
-
-  END IF; -- Close idempotency conditional
 
 END;
 $$;
