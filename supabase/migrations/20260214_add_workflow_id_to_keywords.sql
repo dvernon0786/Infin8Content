@@ -1,16 +1,36 @@
 -- Add workflow_id to keywords table for proper workflow isolation
 -- This is critical for Step 3 to work correctly
 
--- Add workflow_id column
-ALTER TABLE keywords ADD COLUMN workflow_id UUID REFERENCES intent_workflows(id) ON DELETE CASCADE;
+-- Add workflow_id column (if not already exists)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_name='keywords' 
+        AND column_name='workflow_id'
+    ) THEN
+        ALTER TABLE keywords ADD COLUMN workflow_id UUID REFERENCES intent_workflows(id) ON DELETE CASCADE;
+    END IF;
+END $$;
 
 -- Update the unique constraint to include workflow_id for proper isolation
 DROP INDEX IF EXISTS keywords_organization_competitor_seed_unique;
 ALTER TABLE keywords DROP CONSTRAINT IF EXISTS keywords_organization_competitor_seed_keyword_unique;
 
--- Add new composite unique constraint with workflow_id
-ALTER TABLE keywords ADD CONSTRAINT keywords_workflow_unique 
-  UNIQUE(organization_id, workflow_id, seed_keyword);
+-- Add new composite unique constraint with workflow_id (if not exists)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM information_schema.table_constraints 
+        WHERE table_name='keywords' 
+        AND constraint_name='keywords_workflow_unique'
+    ) THEN
+        ALTER TABLE keywords ADD CONSTRAINT keywords_workflow_unique 
+          UNIQUE(organization_id, workflow_id, seed_keyword);
+    END IF;
+END $$;
 
 -- Add index for workflow-based queries
 CREATE INDEX IF NOT EXISTS idx_keywords_workflow_id 
