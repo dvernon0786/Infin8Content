@@ -1,136 +1,138 @@
 /**
- * Workflow Progression Mapping - Deterministic State-to-Step Derivation
+ * Workflow Progression Mapping - Declarative State-to-Step Derivation
  * 
  * This file provides the single source of truth for converting workflow states
- * to UI step numbers and status labels. No stored fields needed - everything
- * is derived mathematically from the state machine.
+ * to UI step numbers and status labels using a declarative configuration model.
+ * No stored fields needed - everything is derived mathematically from the state machine.
  */
 
 import { WorkflowState } from '@/types/workflow-state'
 
 /**
- * Maps workflow state to UI step number (1-7)
- * This is the canonical mapping - all UI routing uses this function
+ * Declarative workflow step definitions
+ * This is the single configuration source for all state-to-step mappings
+ * Adding new states or modifying progression only requires editing this array
  */
-export function getStepFromState(state: WorkflowState): number {
-  switch (state) {
-    // Step 1: ICP Generation
-    case WorkflowState.CREATED:
-    case WorkflowState.ICP_PENDING:
-    case WorkflowState.ICP_PROCESSING:
-      return 1
-
-    // Step 2: Competitor Analysis  
-    case WorkflowState.ICP_COMPLETED:
-    case WorkflowState.COMPETITOR_PENDING:
-    case WorkflowState.COMPETITOR_PROCESSING:
-      return 2
-
-    // Step 3: Keyword Processing
-    case WorkflowState.COMPETITOR_COMPLETED:
-    case WorkflowState.CLUSTERING_PENDING:
-    case WorkflowState.CLUSTERING_PROCESSING:
-      return 3
-
-    // Step 4: Clustering Complete
-    case WorkflowState.CLUSTERING_COMPLETED:
-      return 4
-
-    // Step 5: Validation
-    case WorkflowState.VALIDATION_COMPLETED:
-      return 5
-
-    // Step 6: Article Generation
-    case WorkflowState.ARTICLE_COMPLETED:
-      return 6
-
-    // Step 7: Publishing
-    case WorkflowState.PUBLISH_COMPLETED:
-      return 7
-
-    // Terminal states - show final step
-    case WorkflowState.COMPLETED:
-      return 7
-
-    // Failed states - show current step based on failure point
-    case WorkflowState.ICP_FAILED:
-      return 1
-    case WorkflowState.COMPETITOR_FAILED:
-      return 2
-    case WorkflowState.CLUSTERING_FAILED:
-      return 3
-    case WorkflowState.VALIDATION_FAILED:
-      return 4
-    case WorkflowState.ARTICLE_FAILED:
-      return 5
-    case WorkflowState.PUBLISH_FAILED:
-      return 6
-
-    // Special states
-    case WorkflowState.CANCELLED:
-      return 1
-
-    default:
-      return 1
+export const WORKFLOW_STEPS = [
+  {
+    step: 1,
+    label: 'step_1_icp',
+    states: [
+      WorkflowState.CREATED,
+      WorkflowState.ICP_PENDING,
+      WorkflowState.ICP_PROCESSING,
+      WorkflowState.ICP_FAILED
+    ]
+  },
+  {
+    step: 2,
+    label: 'step_2_competitors',
+    states: [
+      WorkflowState.ICP_COMPLETED,
+      WorkflowState.COMPETITOR_PENDING,
+      WorkflowState.COMPETITOR_PROCESSING,
+      WorkflowState.COMPETITOR_FAILED
+    ]
+  },
+  {
+    step: 3,
+    label: 'step_3_keywords',
+    states: [
+      WorkflowState.COMPETITOR_COMPLETED,
+      WorkflowState.SEED_REVIEW_PENDING,
+      WorkflowState.SEED_REVIEW_COMPLETED,
+      WorkflowState.CLUSTERING_PENDING,
+      WorkflowState.CLUSTERING_PROCESSING,
+      WorkflowState.CLUSTERING_FAILED
+    ]
+  },
+  {
+    step: 4,
+    label: 'step_4_topics',
+    states: [
+      WorkflowState.CLUSTERING_COMPLETED
+    ]
+  },
+  {
+    step: 5,
+    label: 'step_5_generation',
+    states: [
+      WorkflowState.VALIDATION_PENDING,
+      WorkflowState.VALIDATION_PROCESSING,
+      WorkflowState.VALIDATION_COMPLETED,
+      WorkflowState.VALIDATION_FAILED
+    ]
+  },
+  {
+    step: 6,
+    label: 'step_6_generation',
+    states: [
+      WorkflowState.ARTICLE_PENDING,
+      WorkflowState.ARTICLE_PROCESSING,
+      WorkflowState.ARTICLE_COMPLETED,
+      WorkflowState.ARTICLE_FAILED
+    ]
+  },
+  {
+    step: 7,
+    label: 'completed',
+    states: [
+      WorkflowState.PUBLISH_PENDING,
+      WorkflowState.PUBLISH_PROCESSING,
+      WorkflowState.PUBLISH_COMPLETED,
+      WorkflowState.PUBLISH_FAILED,
+      WorkflowState.COMPLETED
+    ]
   }
+]
+
+/**
+ * Terminal state handling configuration
+ * Defines how terminal states map to steps for navigation purposes
+ */
+const TERMINAL_STATE_MAPPING: Record<string, number> = {
+  [WorkflowState.CANCELLED]: 1, // Maps to first step for navigation reset
+  [WorkflowState.COMPLETED]: 7  // Maps to final step
 }
 
 /**
- * Maps workflow state to status string for UI display
+ * Maps workflow state to UI step number using declarative configuration
+ * This is the canonical mapping - all UI routing uses this function
+ */
+export function getStepFromState(state: WorkflowState): number {
+  // Check terminal state mappings first
+  if (state in TERMINAL_STATE_MAPPING) {
+    return TERMINAL_STATE_MAPPING[state]
+  }
+
+  // Find step definition that contains this state
+  const stepDefinition = WORKFLOW_STEPS.find(step =>
+    step.states.includes(state)
+  )
+  
+  return stepDefinition?.step ?? 1
+}
+
+/**
+ * Maps workflow state to status string for UI display using declarative configuration
  * Maintains backward compatibility with existing UI expectations
  */
 export function getStatusFromState(state: WorkflowState): string {
-  switch (state) {
-    // Step 1 statuses
-    case WorkflowState.CREATED:
-    case WorkflowState.ICP_PENDING:
-    case WorkflowState.ICP_PROCESSING:
-      return 'step_1_icp'
-    case WorkflowState.ICP_FAILED:
-      return 'step_1_icp'
-
-    // Step 2 statuses  
-    case WorkflowState.ICP_COMPLETED:
-    case WorkflowState.COMPETITOR_PENDING:
-    case WorkflowState.COMPETITOR_PROCESSING:
-    case WorkflowState.COMPETITOR_FAILED:
-      return 'step_2_competitors'
-
-    // Step 3 statuses
-    case WorkflowState.COMPETITOR_COMPLETED:
-    case WorkflowState.CLUSTERING_PENDING:
-    case WorkflowState.CLUSTERING_PROCESSING:
-    case WorkflowState.CLUSTERING_FAILED:
-      return 'step_3_keywords'
-
-    // Step 4 statuses
-    case WorkflowState.CLUSTERING_COMPLETED:
-      return 'step_4_topics'
-
-    // Step 5 statuses
-    case WorkflowState.VALIDATION_COMPLETED:
-    case WorkflowState.VALIDATION_FAILED:
-      return 'step_5_generation'
-
-    // Step 6 statuses
-    case WorkflowState.ARTICLE_COMPLETED:
-    case WorkflowState.ARTICLE_FAILED:
-      return 'step_6_generation'
-
-    // Step 7 statuses
-    case WorkflowState.PUBLISH_COMPLETED:
-    case WorkflowState.PUBLISH_FAILED:
-      return 'completed'
-
-    // Terminal states
-    case WorkflowState.COMPLETED:
-      return 'completed'
-    case WorkflowState.CANCELLED:
-      return 'cancelled'
-
-    default:
-      return 'step_1_icp'
+  // Handle terminal states specially
+  if (state === WorkflowState.CANCELLED) {
+    return 'cancelled'
   }
+  
+  if (state === WorkflowState.COMPLETED) {
+    return 'completed'
+  }
+
+  // Find step definition that contains this state
+  const stepDefinition = WORKFLOW_STEPS.find(step =>
+    step.states.includes(state)
+  )
+  
+  return stepDefinition?.label ?? 'step_1_icp'
 }
 
 /**
@@ -212,5 +214,40 @@ export function getStepLabel(step: number): string {
     case 6: return 'Article Generation'
     case 7: return 'Publishing'
     default: return 'Unknown Step'
+  }
+}
+
+/**
+ * Gets all states for a given step
+ * Useful for testing and validation
+ */
+export function getStatesForStep(stepNumber: number): WorkflowState[] {
+  const stepDefinition = WORKFLOW_STEPS.find(step => step.step === stepNumber)
+  return stepDefinition ? [...stepDefinition.states] : []
+}
+
+/**
+ * Validates that all workflow states are covered in the configuration
+ * Used for development-time validation
+ */
+export function validateStateCoverage(): { valid: boolean; uncoveredStates: WorkflowState[] } {
+  const allStates = Object.values(WorkflowState)
+  const coveredStates = new Set<WorkflowState>()
+  
+  // Add all states from step definitions
+  WORKFLOW_STEPS.forEach(step => {
+    step.states.forEach(state => coveredStates.add(state))
+  })
+  
+  // Add terminal state mappings
+  Object.keys(TERMINAL_STATE_MAPPING).forEach(state => {
+    coveredStates.add(state as WorkflowState)
+  })
+  
+  const uncoveredStates = allStates.filter(state => !coveredStates.has(state))
+  
+  return {
+    valid: uncoveredStates.length === 0,
+    uncoveredStates
   }
 }
