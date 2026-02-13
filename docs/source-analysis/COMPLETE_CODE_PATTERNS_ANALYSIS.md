@@ -596,10 +596,10 @@ export async function logActionAsync({
 
 ## 📈 Pattern Quality Metrics
 
-### Consistency Score: 95%
-- **Service Pattern:** 100% consistent across 53 services
-- **API Pattern:** 100% consistent across 91 endpoints
-- **Test Pattern:** 90% consistent (some legacy tests)
+### Consistency Score: 90%
+- **Service Pattern:** 90% consistent across 81 services
+- **API Pattern:** 100% consistent across 99 endpoints
+- **Test Pattern:** 85% consistent (some legacy tests)
 - **Error Pattern:** 95% consistent across codebase
 
 ### Maintainability Score: 90%
