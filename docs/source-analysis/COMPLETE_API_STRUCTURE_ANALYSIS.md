@@ -9,10 +9,10 @@
 ## 🔌 API Architecture Overview
 
 ### Architecture Summary
-The Infin8Content API is a **comprehensive RESTful API** with 91+ endpoints organized into 13 categories, providing complete access to the Intent Engine workflow, article generation, and platform management features.
+The Infin8Content API is a **comprehensive RESTful API** with 99 endpoints organized into 13 categories, providing complete access to the Intent Engine workflow, article generation, and platform management features.
 
 ### Endpoint Distribution
-- **Core Business Logic:** 43 endpoints (intent, keywords, articles, workflows)
+- **Core Business Logic:** 51 endpoints (intent, keywords, articles, workflows)
 - **Platform Services:** 27 endpoints (auth, organizations, user, team, payment, analytics)
 - **External Integrations:** 11 endpoints (research, seo, publishing)
 - **System Management:** 10 endpoints (admin, internal, debug)

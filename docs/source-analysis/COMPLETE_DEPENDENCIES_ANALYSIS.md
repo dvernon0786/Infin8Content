@@ -8,9 +8,9 @@
 
 ## 📦 Dependency Overview
 
-### Total Dependencies: 85
-- **Production Dependencies:** 62
-- **Development Dependencies:** 23
+### Total Dependencies: 74
+- **Production Dependencies:** 35
+- **Development Dependencies:** 39
 - **External Services:** 7
 - **Database Dependencies:** 1 (Supabase)
 

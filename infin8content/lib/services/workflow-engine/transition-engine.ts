@@ -85,6 +85,7 @@ export async function transitionWorkflow(
 
   // ATOMIC TRANSITION: Only update if workflow is in expected state
   // WHERE clause ensures only one request can advance at a time
+  // Pure state machine - no UI field synchronization needed
   const { data: workflow, error: updateError } = await supabase
     .from('intent_workflows')
     .update({
