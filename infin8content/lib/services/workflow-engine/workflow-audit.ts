@@ -66,7 +66,12 @@ export async function getWorkflowTransitionHistory(
     return []
   }
   
-  return (data || []) as WorkflowTransitionAudit[]
+  // Type guard to ensure data is an array of expected objects
+  if (!data || !Array.isArray(data)) {
+    return []
+  }
+  
+  return data as unknown as WorkflowTransitionAudit[]
 }
 
 /**
@@ -126,10 +131,13 @@ export async function getWorkflowFunnelAnalytics(
   
   // Count workflows per step
   const stepCounts = new Map<number, number>()
-  if (workflows) {
-    workflows.forEach(workflow => {
-      const step = getStepFromState(workflow.state as WorkflowState)
-      stepCounts.set(step, (stepCounts.get(step) || 0) + 1)
+  if (workflows && Array.isArray(workflows)) {
+    workflows.forEach((workflow: any) => {
+      // Type guard to ensure workflow has state property
+      if (workflow && typeof workflow === 'object' && 'state' in workflow) {
+        const step = getStepFromState(workflow.state as WorkflowState)
+        stepCounts.set(step, (stepCounts.get(step) || 0) + 1)
+      }
     })
   }
   
