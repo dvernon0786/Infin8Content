@@ -163,15 +163,40 @@ export async function POST(
       is_active: c.is_active
     }))
 
-    // Format additional competitors
-    const extraFormatted = newCompetitors
-      .filter((url) => typeof url === 'string' && url.trim().length > 0)
-      .map((url) => ({
-        id: crypto.randomUUID(),
-        url: url.trim(),
-        domain: url.trim(),
-        is_active: true
-      }))
+    // Insert additional competitors into organization_competitors first
+    let extraFormatted: CompetitorData[] = []
+
+    for (const url of newCompetitors) {
+      if (typeof url !== 'string' || url.trim().length === 0) continue
+
+      const cleanUrl = url.trim()
+
+      const { data, error } = await supabase
+        .from('organization_competitors')
+        .upsert({
+          organization_id: organizationId,
+          url: cleanUrl,
+          domain: cleanUrl,
+          is_active: true,
+          created_by: userId
+        }, {
+          onConflict: 'organization_id,url'
+        })
+        .select('id, url, domain, is_active')
+        .single() as { data: { id: string; url: string; domain: string; is_active: boolean } | null; error: any }
+
+      if (error || !data) {
+        console.error('Failed to insert additional competitor:', error)
+        continue
+      }
+
+      extraFormatted.push({
+        id: data.id,
+        url: data.url,
+        domain: data.domain,
+        is_active: data.is_active
+      })
+    }
 
     const allCompetitors: CompetitorData[] = [...workflowFormatted, ...extraFormatted]
 
