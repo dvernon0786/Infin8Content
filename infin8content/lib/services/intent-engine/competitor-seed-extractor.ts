@@ -333,12 +333,12 @@ async function extractKeywordsFromCompetitor(
       const validKeywords = sortedKeywords
         .filter((result: any) => result.keyword && typeof result.keyword === 'string' && result.keyword.trim().length > 0)
       
-      console.log(`[DataForSEO DEBUG] Filtered ${validKeywords.length} valid keywords from ${sortedKeywords.length} total`)
+      console.log(`[DataForSEO DEBUG] Filtered ${validKeywords.length} valid keywords from ${taskResults.length} total (maxKeywords: ${maxKeywords})`)
 
       return validKeywords.map((result: any) => ({
           seed_keyword: result.keyword.trim(),
           search_volume: result.keyword_info?.search_volume ?? 0,
-          competition_level: result.keyword_info?.competition_level ?? 'low',
+          competition_level: (result.keyword_info?.competition_level || 'LOW').toLowerCase() as 'low' | 'medium' | 'high',
           competition_index: result.keyword_info?.competition_index ?? 0,
           keyword_difficulty: result.keyword_properties?.keyword_difficulty ?? result.keyword_info?.competition_index ?? 0,
           cpc: result.keyword_info?.cpc ?? null,
@@ -579,24 +579,26 @@ function calculateKeywordConfidence(result: any): number {
   let confidence = 0.5 // Base confidence
 
   // Volume factor (higher volume = higher confidence)
-  const volume = result.search_volume || 0
+  const volume = result.keyword_info?.search_volume ?? 0
   if (volume > 1000) confidence += 0.3
   else if (volume > 100) confidence += 0.2
   else if (volume > 10) confidence += 0.1
 
   // CPC factor (has CPC = commercial value)
-  if (result.cpc && result.cpc > 0) {
+  const cpc = result.keyword_info?.cpc ?? 0
+  if (cpc > 0) {
     confidence += 0.2
   }
 
   // Intent factor (commercial > informational > navigational)
-  const intent = result.main_intent?.toLowerCase()
+  const intent = result.search_intent_info?.main_intent?.toLowerCase()
   if (intent === 'commercial') confidence += 0.2
   else if (intent === 'informational') confidence += 0.1
   else if (intent === 'navigational') confidence -= 0.1
 
   // Language factor (English preferred for most SEO campaigns)
-  if (!result.is_another_language) {
+  const isForeign = result.keyword_properties?.is_another_language ?? false
+  if (!isForeign) {
     confidence += 0.1
   }
 
