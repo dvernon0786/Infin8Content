@@ -13,7 +13,9 @@ import {
   validateUniqueStateAssignment,
   validateWorkflowGraph,
   WORKFLOW_STEPS,
-  WorkflowStep
+  WorkflowStep,
+  getStepNumber,
+  getStepKey
 } from './infin8content/lib/services/workflow-engine/workflow-progression'
 
 console.log('🏛 Testing Enterprise Workflow Graph Validation\n')
@@ -38,24 +40,25 @@ if (!uniqueness.valid) {
 // Test 3: Semantic step enumeration
 console.log('\n🏷️ Semantic Step Tests:')
 const semanticTests = [
-  { state: WorkflowState.CREATED, expectedStep: WorkflowStep.ICP },
-  { state: WorkflowState.ICP_COMPLETED, expectedStep: WorkflowStep.COMPETITORS },
-  { state: WorkflowState.COMPETITOR_COMPLETED, expectedStep: WorkflowStep.KEYWORDS },
-  { state: WorkflowState.CLUSTERING_COMPLETED, expectedStep: WorkflowStep.TOPICS },
-  { state: WorkflowState.VALIDATION_COMPLETED, expectedStep: WorkflowStep.VALIDATION },
-  { state: WorkflowState.ARTICLE_COMPLETED, expectedStep: WorkflowStep.ARTICLE },
-  { state: WorkflowState.PUBLISH_COMPLETED, expectedStep: WorkflowStep.PUBLISH }
+  { state: WorkflowState.CREATED, expectedStep: getStepNumber(WorkflowStep.ICP) },
+  { state: WorkflowState.ICP_COMPLETED, expectedStep: getStepNumber(WorkflowStep.COMPETITORS) },
+  { state: WorkflowState.COMPETITOR_COMPLETED, expectedStep: getStepNumber(WorkflowStep.KEYWORDS) },
+  { state: WorkflowState.CLUSTERING_COMPLETED, expectedStep: getStepNumber(WorkflowStep.TOPICS) },
+  { state: WorkflowState.VALIDATION_COMPLETED, expectedStep: getStepNumber(WorkflowStep.VALIDATION) },
+  { state: WorkflowState.ARTICLE_COMPLETED, expectedStep: getStepNumber(WorkflowStep.ARTICLE) },
+  { state: WorkflowState.PUBLISH_COMPLETED, expectedStep: getStepNumber(WorkflowStep.PUBLISH) }
 ]
 
 semanticTests.forEach(({ state, expectedStep }) => {
   const actualStep = getStepFromState(state)
   const matches = actualStep === expectedStep
-  console.log(`${matches ? '✅' : '❌'} ${state} → Step ${actualStep} (${WorkflowStep[expectedStep]})`)
+  const stepKey = getStepKey(expectedStep)
+  console.log(`${matches ? '✅' : '❌'} ${state} → Step ${actualStep} (${stepKey})`)
 })
 
 // Test 4: Step continuity validation
 console.log('\n📏 Step Continuity Tests:')
-const stepNumbers = WORKFLOW_STEPS.map(s => s.step).sort((a, b) => a - b)
+const stepNumbers = WORKFLOW_STEPS.map(s => getStepNumber(s.step)).sort((a, b) => a - b)
 const expectedSteps = [1, 2, 3, 4, 5, 6, 7]
 const continuityMatches = JSON.stringify(stepNumbers) === JSON.stringify(expectedSteps)
 console.log(`${continuityMatches ? '✅' : '❌'} Step continuity: ${stepNumbers.join(', ')}`)
@@ -89,7 +92,7 @@ const safetyChecks = [
   {
     name: 'Step numbers are sequential',
     check: () => {
-      const steps = WORKFLOW_STEPS.map(s => s.step).sort((a, b) => a - b)
+      const steps = WORKFLOW_STEPS.map(s => getStepNumber(s.step))
       return steps.every((step, i) => step === i + 1)
     }
   },

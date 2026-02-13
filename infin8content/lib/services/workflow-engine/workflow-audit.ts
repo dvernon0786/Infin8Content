@@ -66,7 +66,7 @@ export async function getWorkflowTransitionHistory(
     return []
   }
   
-  return data as WorkflowTransitionAudit[]
+  return (data || []) as WorkflowTransitionAudit[]
 }
 
 /**
@@ -126,10 +126,12 @@ export async function getWorkflowFunnelAnalytics(
   
   // Count workflows per step
   const stepCounts = new Map<number, number>()
-  workflows.forEach(workflow => {
-    const step = getStepFromState(workflow.state)
-    stepCounts.set(step, (stepCounts.get(step) || 0) + 1)
-  })
+  if (workflows) {
+    workflows.forEach(workflow => {
+      const step = getStepFromState(workflow.state as WorkflowState)
+      stepCounts.set(step, (stepCounts.get(step) || 0) + 1)
+    })
+  }
   
   // Calculate drop-off rates
   const totalWorkflows = workflows.length
@@ -161,7 +163,12 @@ export async function transitionWithAudit(
   const { transitionWorkflow } = await import('./transition-engine')
   
   // Perform the transition
-  const result = await transitionWorkflow(workflowId, organizationId, fromState, toState)
+  const result = await transitionWorkflow({
+    workflowId,
+    organizationId,
+    from: fromState,
+    to: toState
+  })
   
   if (result.success) {
     // Log the transition for audit
