@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { WorkflowState } from '@/lib/guards/workflow-step-gate'
+import { getStepFromState } from '@/lib/services/workflow-engine/workflow-progression'
 import { cn } from '@/lib/utils'
 
 interface WorkflowStepLayoutClientProps {
@@ -43,22 +44,23 @@ export function WorkflowStepLayoutClient({
   children,
 }: WorkflowStepLayoutClientProps) {
   const router = useRouter()
-  const stepIndex = workflow.current_step - 1
+  const currentStep = getStepFromState(workflow.state)
+  const stepIndex = currentStep - 1
 
   // Analytics: page viewed
   useEffect(() => {
     ;(window as any)?.analytics?.track('workflow_step_viewed', {
       workflow_id: workflow.id,
-      step: workflow.current_step,
+      step: currentStep,
     })
-  }, [workflow.id, workflow.current_step])
+  }, [workflow.id, currentStep])
 
   // Auto-advance if backend progressed beyond current step
   useEffect(() => {
-    if (workflow.current_step > step) {
-      router.replace(`/workflows/${workflow.id}/steps/${workflow.current_step}`)
+    if (currentStep > step) {
+      router.replace(`/workflows/${workflow.id}/steps/${currentStep}`)
     }
-  }, [workflow.current_step, step, router])
+  }, [currentStep, step, router])
 
   return (
     <div className="min-h-screen bg-background">
@@ -110,7 +112,7 @@ export function WorkflowStepLayoutClient({
                 PROGRESS_WIDTH[step - 1] ?? 'w-[11%]'
               )}
               role="progressbar"
-              aria-valuenow={workflow.current_step}
+              aria-valuenow={currentStep}
               aria-valuemin={1}
               aria-valuemax={9}
             />
@@ -118,7 +120,7 @@ export function WorkflowStepLayoutClient({
         </header>
 
         {/* Failure state */}
-        {workflow.status === 'failed' && (
+        {workflow.state.includes('_FAILED') && (
           <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
             <p className="text-sm font-medium">
               This step failed
@@ -145,16 +147,16 @@ export function WorkflowStepLayoutClient({
           </Button>
 
           <span className="text-sm text-muted-foreground">
-            Step {workflow.current_step} of 9
+            Step {currentStep} of 9
           </span>
 
           <Button
             onClick={() =>
               router.push(
-                `/workflows/${workflow.id}/steps/${workflow.current_step}` 
+                `/workflows/${workflow.id}/steps/${currentStep}` 
               )
             }
-            disabled={workflow.current_step >= 9}
+            disabled={currentStep >= 9}
           >
             Continue
             <ArrowRight className="w-4 h-4 ml-2" />
