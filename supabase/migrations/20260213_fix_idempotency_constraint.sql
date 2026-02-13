@@ -5,10 +5,19 @@
 ALTER TABLE ai_usage_ledger
 DROP CONSTRAINT IF EXISTS unique_workflow_idempotency;
 
--- Add proper UUID-only constraint on idempotency_key
-ALTER TABLE ai_usage_ledger
-ADD CONSTRAINT unique_idempotency_key
-UNIQUE (idempotency_key);
+-- Add proper UUID-only constraint on idempotency_key (if not exists)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'unique_idempotency_key' 
+        AND conrelid = 'ai_usage_ledger'::regclass
+    ) THEN
+        ALTER TABLE ai_usage_ledger
+        ADD CONSTRAINT unique_idempotency_key
+        UNIQUE (idempotency_key);
+    END IF;
+END $$;
 
 -- Update the atomic function to use the correct constraint
 -- Drop all versions of the function by specifying the exact signature
@@ -95,7 +104,7 @@ BEGIN
     p_idempotency_key,
     NOW()
   )
-  ON CONFLICT (workflow_id, idempotency_key)
+  ON CONFLICT (idempotency_key)
   DO NOTHING
   RETURNING id INTO v_ledger_inserted_id;
 
