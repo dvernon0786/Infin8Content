@@ -20,7 +20,9 @@ export enum WorkflowStep {
   TOPICS = 'topics',
   VALIDATION = 'validation',
   ARTICLE = 'article',
-  PUBLISH = 'publish'
+  PUBLISH = 'publish',
+  SUBTOPICS = 'subtopics',
+  ARTICLES = 'articles'
 }
 
 /**
@@ -78,6 +80,20 @@ export const WORKFLOW_STEPS = [
     states: [
       WorkflowState.step_7_validation
     ]
+  },
+  {
+    step: WorkflowStep.SUBTOPICS,
+    label: 'step_8_subtopics',
+    states: [
+      WorkflowState.step_8_subtopics
+    ]
+  },
+  {
+    step: WorkflowStep.ARTICLES,
+    label: 'step_9_articles',
+    states: [
+      WorkflowState.step_9_articles
+    ]
   }
 ]
 
@@ -109,15 +125,6 @@ const TERMINAL_STATE_MAPPING: Record<string, number> = {
 }
 
 /**
- * Additional step mappings for extended workflow
- * These handle steps 8-9 that aren't in the main WORKFLOW_STEPS array
- */
-const EXTENDED_STEP_MAPPING: Record<string, number> = {
-  [WorkflowState.step_8_subtopics]: 8,
-  [WorkflowState.step_9_articles]: 9
-}
-
-/**
  * Maps workflow state to UI step number using declarative configuration
  * This is the canonical mapping - all UI routing uses this function
  */
@@ -125,11 +132,6 @@ export function getStepFromState(state: WorkflowState): number {
   // Check terminal state mappings first
   if (state in TERMINAL_STATE_MAPPING) {
     return TERMINAL_STATE_MAPPING[state]
-  }
-
-  // Check extended step mappings (steps 8-9)
-  if (state in EXTENDED_STEP_MAPPING) {
-    return EXTENDED_STEP_MAPPING[state]
   }
 
   // Find step definition that contains this state
