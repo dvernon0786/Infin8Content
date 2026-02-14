@@ -19,6 +19,7 @@ import {
   retryWithPolicy 
 } from './retry-utils'
 import { emitAnalyticsEvent } from '../analytics/event-emitter'
+import { resolveLocationCode, resolveLanguageCode } from '@/lib/config/dataforseo-geo'
 
 export const LONGTAIL_RETRY_POLICY: RetryPolicy = {
   maxAttempts: 3,        // initial + 2 retries
@@ -429,30 +430,26 @@ async function updateSeedKeywordStatus(seedKeywordId: string): Promise<void> {
 async function getOrganizationSettings(organizationId: string): Promise<{ locationCode: number; languageCode: string }> {
   const supabase = createServiceRoleClient()
   
-  const { data: org, error } = await supabase
+  const { data: orgData } = await supabase
     .from('organizations')
-    .select('default_location_code, default_language_code')
+    .select('keyword_settings')
     .eq('id', organizationId)
     .single()
-  
-  if (error || !org) {
-    throw new Error(`Failed to get organization settings: ${error?.message || 'Organization not found'}`)
+
+  if (!orgData) {
+    throw new Error(`Organization not found: ${organizationId}`)
   }
-  
-  const locationCode = (org as any).default_location_code
-  const languageCode = (org as any).default_language_code
-  
-  // Validate that organization has configured settings
-  if (!locationCode || !languageCode) {
-    console.warn(
-      `[LongtailExpander] Organization ${organizationId} missing location/language settings. ` +
-      `Using defaults: locationCode=${locationCode || 2840}, languageCode=${languageCode || 'en'}`
-    )
-  }
-  
+
+  const keywordSettings = (orgData as any)?.keyword_settings || {}
+
+  const locationCode = resolveLocationCode(keywordSettings.target_region)
+  const languageCode = resolveLanguageCode(keywordSettings.language_code)
+
+  console.log(`[LongtailExpander] Using location ${locationCode} and language ${languageCode} for region "${keywordSettings.target_region}"`)
+
   return {
-    locationCode: locationCode || 2840, // Default to United States
-    languageCode: languageCode || 'en'   // Default to English
+    locationCode,
+    languageCode
   }
 }
 

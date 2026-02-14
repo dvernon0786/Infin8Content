@@ -7,6 +7,13 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import { LOCATION_CODE_MAP, SUPPORTED_LANGUAGE_CODES } from '@/lib/config/dataforseo-geo'
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  en: 'English', de: 'German', fr: 'French', es: 'Spanish', it: 'Italian', ja: 'Japanese',
+  ar: 'Arabic', nl: 'Dutch', pt: 'Portuguese', ru: 'Russian', sv: 'Swedish',
+  ko: 'Korean', hi: 'Hindi', tr: 'Turkish', pl: 'Polish'
+}
 
 interface StepKeywordSettingsProps {
   className?: string
@@ -158,16 +165,12 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
                 onChange={(e) => handleInputChange('target_region', e.target.value)}
                 className="w-full h-9 rounded-md border bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <option value="United States">United States</option>
-                <option value="United Kingdom">United Kingdom</option>
-                <option value="Canada">Canada</option>
-                <option value="Australia">Australia</option>
-                <option value="Germany">Germany</option>
-                <option value="France">France</option>
-                <option value="Spain">Spain</option>
-                <option value="Italy">Italy</option>
-                <option value="Japan">Japan</option>
-                <option value="Global">Global</option>
+                {['United States', ...Object.keys(LOCATION_CODE_MAP)
+                  .filter(r => r !== 'United States')
+                  .sort((a, b) => a.localeCompare(b))]
+                  .map(region => (
+                    <option key={region} value={region}>{region}</option>
+                  ))}
               </select>
             </div>
 
@@ -182,12 +185,13 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
                 onChange={(e) => handleInputChange('language_code', e.target.value)}
                 className="w-full h-9 rounded-md border bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <option value="en">English</option>
-                <option value="es">Spanish</option>
-                <option value="fr">French</option>
-                <option value="de">German</option>
-                <option value="it">Italian</option>
-                <option value="ja">Japanese</option>
+                {Array.from(SUPPORTED_LANGUAGE_CODES)
+                  .sort()
+                  .map(code => (
+                    <option key={code} value={code}>
+                      {LANGUAGE_LABELS[code] || code.toUpperCase()}
+                    </option>
+                  ))}
               </select>
             </div>
 
