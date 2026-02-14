@@ -250,12 +250,12 @@ export async function POST(
       )
     }
 
-    if (workflow.state !== WorkflowState.SEED_REVIEW_PENDING) {
+    if (workflow.state !== WorkflowState.step_3_seeds) {
       return NextResponse.json(
         {
           error: 'Illegal workflow transition',
           currentState: workflow.state,
-          expectedState: WorkflowState.SEED_REVIEW_PENDING
+          expectedState: WorkflowState.step_3_seeds
         },
         { status: 409 }
       )
@@ -306,8 +306,8 @@ export async function POST(
       await advanceWorkflow({
         workflowId,
         organizationId,
-        expectedState: WorkflowState.SEED_REVIEW_PENDING,
-        nextState: WorkflowState.SEED_REVIEW_COMPLETED
+        expectedState: WorkflowState.step_3_seeds,
+        nextState: WorkflowState.step_4_longtails
       })
     } catch (error) {
       if (error instanceof WorkflowTransitionError) {
@@ -337,7 +337,7 @@ export async function POST(
         workflow_id: workflowId,
         step: 3,
         selected_count: selectedKeywordIds.length,
-        new_state: WorkflowState.SEED_REVIEW_COMPLETED
+        new_state: WorkflowState.step_4_longtails
       },
       ipAddress: extractIpAddress(request.headers),
       userAgent: extractUserAgent(request.headers),
@@ -351,7 +351,7 @@ export async function POST(
       data: {
         keywordsSelected: selectedKeywordIds.length,
         message: 'Step 3 completed successfully',
-        nextState: WorkflowState.SEED_REVIEW_COMPLETED
+        nextState: WorkflowState.step_4_longtails
       }
     })
 
