@@ -14,6 +14,8 @@
 import { generateContent, type OpenRouterMessage, MODEL_PRICING } from '@/lib/services/openrouter/openrouter-client'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
+import { advanceWorkflow, WorkflowTransitionError } from '@/lib/services/workflow/advanceWorkflow'
+import { WorkflowState } from '@/types/workflow-state'
 import {
   isRetryableError,
   calculateBackoffDelay,
@@ -171,25 +173,7 @@ export async function generateICPDocument(
 }
 
 /**
- * Get current AI cost for a workflow (fallback method)
- */
-async function getWorkflowCurrentCost(workflowId: string): Promise<number> {
-  const supabase = createServiceRoleClient()
-  const { data: existing } = await supabase
-    .from('intent_workflows')
-    .select('workflow_data')
-    .eq('id', workflowId)
-    .single()
-  
-  if (!existing) {
-    return 0
-  }
-  
-  return (existing as any)?.workflow_data?.total_ai_cost ?? 0
-}
-
-/**
- * Atomically check if workflow can accept additional cost (no update)
+ * Validate ICP data structure before storage
  */
 async function checkWorkflowCostLimit(
   workflowId: string, 
@@ -452,14 +436,14 @@ function validateICPData(data: ICPData): void {
 }
 
 /**
- * Store ICP generation result in workflow
- * Uses single atomic transaction for financial settlement and workflow state update
- * Includes idempotency protection for network retry safety
+ * Store ICP generation result with clean separation of concerns
+ * Uses three separate operations: usage tracking, ICP data storage, state transition
+ * Accepts non-atomicity with proper failure handling and idempotency
  * 
  * @param workflowId - Workflow ID
  * @param organizationId - Organization ID
  * @param icpResult - ICP generation result with metadata
- * @param idempotencyKey - Idempotency key for retry safety (generated at request boundary)
+ * @param idempotencyKey - Idempotency key for retry safety
  */
 export async function storeICPGenerationResult(
   workflowId: string,
@@ -469,8 +453,8 @@ export async function storeICPGenerationResult(
 ): Promise<void> {
   const supabase = createServiceRoleClient()
 
-  // 🏆 Elite atomic transaction: financial settlement + workflow state in single call
-  const { error: atomicError } = await supabase
+  // 1️⃣ Record usage (idempotent - AI cost already incurred)
+  const { error: usageError } = await supabase
     .rpc('record_usage_increment_and_complete_step', {
       p_workflow_id: workflowId,
       p_organization_id: organizationId,
@@ -478,22 +462,58 @@ export async function storeICPGenerationResult(
       p_prompt_tokens: icpResult.promptTokens,
       p_completion_tokens: icpResult.completionTokens,
       p_cost: icpResult.cost,
-      p_icp_data: icpResult.icp_data,
-      p_tokens_used: icpResult.tokensUsed,
-      p_generated_at: icpResult.generatedAt,
       p_idempotency_key: idempotencyKey
     })
 
-  if (atomicError) {
-    console.error('Failed to record usage and complete ICP step:', atomicError)
-    throw new Error('Financial recording and workflow update failed')
+  if (usageError) {
+    console.error('Failed to record usage:', usageError)
+    throw new Error('Failed to record usage')
+  }
+
+  // 2️⃣ Store ICP data in dedicated table (upsert for idempotency)
+  const { error: icpError } = await supabase
+    .from('workflow_icp_data')
+    .upsert({
+      workflow_id: workflowId,
+      organization_id: organizationId,
+      industries: icpResult.icp_data.industries,
+      buyer_roles: icpResult.icp_data.buyerRoles,
+      pain_points: icpResult.icp_data.painPoints,
+      value_proposition: icpResult.icp_data.valueProposition,
+      generated_at: icpResult.generatedAt
+    }, {
+      onConflict: 'workflow_id'
+    })
+
+  if (icpError) {
+    console.error('Failed to store ICP data:', icpError)
+    throw new Error('Failed to store ICP data')
+  }
+
+  // 3️⃣ Advance workflow state (can fail with 409 - that's ok)
+  try {
+    await advanceWorkflow({
+      workflowId,
+      organizationId,
+      expectedState: WorkflowState.step_1_icp,
+      nextState: WorkflowState.step_2_competitors
+    })
+  } catch (error: any) {
+    if (error instanceof WorkflowTransitionError) {
+      // State already advanced (race condition) - this is fine
+      console.log(`[ICPGenerator] Workflow already advanced: ${error.message}`)
+      return
+    }
+    throw error
   }
 
   console.log(`[ICPGenerator] Successfully completed ICP generation for workflow ${workflowId}`)
 }
 
 /**
- * Handle ICP generation failure
+ * Handle ICP generation failure - logging only
+ * Does NOT mutate workflow state - workflow remains in step_1_icp for retry
+ * Clean separation: failure handling doesn't affect orchestration state
  */
 export async function handleICPGenerationFailure(
   workflowId: string,
@@ -502,36 +522,40 @@ export async function handleICPGenerationFailure(
   retryCount: number = 0,
   lastErrorMessage: string | null = null
 ): Promise<void> {
-  const supabase = createServiceRoleClient()
+  // Log failure for debugging and analytics
+  console.error(
+    `[ICPGenerator] ICP generation failed for workflow ${workflowId} (attempt ${retryCount + 1}):`,
+    {
+      error: error.message,
+      workflowId,
+      organizationId,
+      retryCount,
+      lastErrorMessage,
+      timestamp: new Date().toISOString()
+    }
+  )
 
-  // CANONICAL FAILURE STATE: Retryable failure keeps current_step = 1
-  // Failure ≠ terminal. Terminal is only successful completion (current_step = 10).
-  // This allows users to retry the step without workflow regression.
-  const { error: updateError } = await supabase
-    .from('intent_workflows')
-    .update({
-      status: 'failed',
-      current_step: 1,  // Keep at step 1 for retry, not terminal
-      step_1_icp_error_message: error.message,
-      retry_count: retryCount,
-      step_1_icp_last_error_message: lastErrorMessage || error.message,
-      workflow_data: {
-        icp_generation_error: {
-          message: error.message,
-          timestamp: new Date().toISOString(),
-          retryCount,
-          lastErrorMessage
-        }
+  // Emit analytics event for monitoring
+  try {
+    await emitAnalyticsEvent({
+      event_type: 'icp_generation_failed',
+      timestamp: new Date().toISOString(),
+      organization_id: organizationId,
+      properties: {
+        workflow_id: workflowId,
+        error_message: error.message,
+        retry_count: retryCount,
+        last_error_message: lastErrorMessage
       }
     })
-    .eq('id', workflowId)
-    .eq('organization_id', organizationId)
-
-  if (updateError) {
-    console.error(`Failed to update workflow error status: ${updateError.message}`)
+  } catch (analyticsError) {
+    // Analytics failure shouldn't break the error handling
+    console.error('Failed to emit analytics event:', analyticsError)
   }
 
-  console.log(`[ICPGenerator] ICP generation failure recorded for workflow ${workflowId}`)
+  // NOTE: Workflow state is NOT mutated
+  // Workflow remains in step_1_icp for user to retry
+  // This prevents state drift and keeps unified engine clean
 }
 
 /**
