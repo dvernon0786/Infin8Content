@@ -2,11 +2,11 @@
 
 ## Overview
 
-The Keyword Research System is a specialized subsystem that handles SEO keyword intelligence, extraction, expansion, and semantic organization. It consists of 4 core service files implementing the hub-and-spoke keyword model with DataForSEO integration.
+The Keyword Research System is a specialized subsystem that handles SEO keyword intelligence, extraction, expansion, and semantic organization. It consists of 8 core service files implementing the hub-and-spoke keyword model with DataForSEO integration.
 
 ## Service Architecture
 
-### Core Services (4 files)
+### Core Services (8 files)
 
 #### 1. DataForSEO Client Integration
 - **dataforseo-client.ts** (7,224 bytes)
@@ -78,6 +78,36 @@ async extractSubtopicMetadata(subtopic: any): Promise<SubtopicMetadata>
   - Updates keyword status
   - Maintains audit trail
   - Supports idempotent operations
+
+#### 5. Subtopic Generation
+- **subtopic-generator.ts** (4,892 bytes)
+  - Generates subtopics for keywords
+  - Uses DataForSEO subtopic endpoint
+  - Implements subtopic validation
+  - Handles subtopic deduplication
+  - Manages subtopic metadata
+
+#### 6. Subtopic Parsing
+- **subtopic-parser.ts** (2,876 bytes)
+  - Parses DataForSEO subtopic responses
+  - Extracts structured data
+  - Validates response format
+  - Handles parsing errors
+
+#### 7. Geo Configuration
+- **dataforseo-geo.ts** (1,845 bytes)
+  - Unified geo configuration for all services
+  - 94 location mappings with DataForSEO codes
+  - 48 supported language codes
+  - Case-insensitive resolution functions
+  - Safe fallbacks for missing geo data
+
+#### 8. Approval Gate Validation
+- **subtopic-approval-gate-validator.ts** (3,234 bytes)
+  - Validates subtopic approval prerequisites
+  - Checks workflow state requirements
+  - Verifies approval eligibility
+  - Enforces approval gate logic
 
 **Key Methods:**
 ```typescript

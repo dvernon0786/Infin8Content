@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Infin8Content API consists of 48 endpoints organized across 8 major domains. The API follows RESTful patterns with consistent authentication, error handling, and response formatting. All endpoints enforce organization-based multi-tenancy via Row Level Security.
+The Infin8Content API consists of 48 endpoints organized across 10 major domains. The API follows RESTful patterns with consistent authentication, error handling, and response formatting. All endpoints enforce organization-based multi-tenancy via Row Level Security.
 
 ## API Organization
 
