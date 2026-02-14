@@ -28,6 +28,7 @@ import {
 import { WorkflowState } from '@/types/workflow-state'
 import { getWorkflowCompetitors } from '@/lib/services/competitor-workflow-integration'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
+import { resolveLocationCode, resolveLanguageCode } from '@/lib/config/dataforseo-geo'
 
 // Pure dependency injection factory - no global state
 function createExtractor(): SeedExtractor {
@@ -166,24 +167,30 @@ export async function POST(
     // Insert additional competitors into organization_competitors first
     let extraFormatted: CompetitorData[] = []
 
-    // Helper function to normalize URLs for consistent storage
-    function normalizeUrl(input: string): string {
+    // Helper functions for URL handling
+    function normalizeDomain(input: string): string {
       const url = new URL(input.startsWith('http') ? input : `https://${input}`)
       return url.hostname.replace(/^www\./, '').toLowerCase()
+    }
+
+    function toFullUrl(input: string): string {
+      const url = new URL(input.startsWith('http') ? input : `https://${input}`)
+      return `https://${url.hostname.replace(/^www\./, '').toLowerCase()}` 
     }
 
     for (const url of newCompetitors) {
       if (typeof url !== 'string' || url.trim().length === 0) continue
 
       const cleanUrl = url.trim()
-      const normalizedDomain = normalizeUrl(cleanUrl)
+      const domain = normalizeDomain(cleanUrl)
+      const fullUrl = toFullUrl(cleanUrl)
 
       const { data, error } = await supabase
         .from('organization_competitors')
         .upsert({
           organization_id: organizationId,
-          url: normalizedDomain,
-          domain: normalizedDomain,
+          url: fullUrl,   // ✅ MUST be full URL
+          domain: domain, // domain only
           is_active: true,
           created_by: userId
         }, {
@@ -219,6 +226,23 @@ export async function POST(
 
     console.log(`[CompetitorAnalyze] Found ${workflowCompetitors.length} workflow + ${extraFormatted.length} additional = ${allCompetitors.length} total competitors`)
 
+    // Read user's onboarding keyword settings
+    const { data: orgData } = await supabase
+      .from('organizations')
+      .select('keyword_settings')
+      .eq('id', organizationId)
+      .single()
+
+    const keywordSettings = (orgData as any)?.keyword_settings || {}
+
+    // Map onboarding region to DataForSEO location code, default to US
+    const locationCode = resolveLocationCode(keywordSettings.target_region)
+
+    // Validate language code against supported set, default to English
+    const languageCode = resolveLanguageCode(keywordSettings.language_code)
+
+    console.log(`[CompetitorAnalyze] Using location ${locationCode} and language ${languageCode} for region "${keywordSettings.target_region}"`)
+
     // STATE ENGINE: Transition to processing state first
     // This prevents concurrent processing and ensures clean state machine
     const processingResult = await transitionWorkflow({
@@ -247,8 +271,8 @@ export async function POST(
       organizationId,
       workflowId, // Critical: Pass workflowId for proper persistence and retry tracking
       maxSeedsPerCompetitor: 25, // Increased from 3 for richer data collection
-      locationCode: 2840, // US default
-      languageCode: 'en',
+      locationCode,
+      languageCode,
       timeoutMs: 600000 // 10 minutes
     }
 

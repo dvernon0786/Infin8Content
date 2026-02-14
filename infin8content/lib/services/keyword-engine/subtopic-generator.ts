@@ -3,6 +3,7 @@
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { generateSubtopics, KeywordSubtopic } from './dataforseo-client'
+import { resolveLocationCode, resolveLanguageCode } from '@/lib/config/dataforseo-geo'
 
 export interface KeywordRecord {
   id: string
@@ -119,15 +120,15 @@ export class KeywordSubtopicGenerator {
    * Get organization settings for DataForSEO API
    */
   private async getOrganizationSettings(organizationId: string): Promise<OrganizationSettings> {
-    // Get organization settings from icp_settings table
-    const { data, error } = await this.supabase
-      .from('icp_settings')
-      .select('location_code, language_code')
-      .eq('organization_id', organizationId)
+    // Get organization settings from keyword_settings
+    const { data: orgData } = await this.supabase
+      .from('organizations')
+      .select('keyword_settings')
+      .eq('id', organizationId)
       .single()
 
-    if (error || !data) {
-      console.warn('Organization settings not found, using defaults:', error)
+    if (!orgData) {
+      console.warn('Organization settings not found, using defaults')
       // Use defaults based on story requirements
       return {
         locationCode: 2840, // United States
@@ -135,9 +136,16 @@ export class KeywordSubtopicGenerator {
       }
     }
 
+    const keywordSettings = (orgData as any)?.keyword_settings || {}
+
+    const locationCode = resolveLocationCode(keywordSettings.target_region)
+    const languageCode = resolveLanguageCode(keywordSettings.language_code)
+
+    console.log(`[SubtopicGenerator] Using location ${locationCode} and language ${languageCode} for region "${keywordSettings.target_region}"`)
+
     return {
-      locationCode: (data as any).location_code || 2840,
-      languageCode: (data as any).language_code || 'en'
+      locationCode,
+      languageCode
     }
   }
 }

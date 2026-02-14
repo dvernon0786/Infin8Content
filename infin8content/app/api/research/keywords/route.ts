@@ -2,6 +2,7 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { validateSupabaseEnv } from '@/lib/supabase/env'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { searchKeywords } from '@/lib/services/dataforseo'
+import { resolveLocationCode, resolveLanguageCode } from '@/lib/config/dataforseo-geo'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 
@@ -154,11 +155,28 @@ export async function POST(request: Request) {
       }
     }
 
+    // Read user's onboarding keyword settings
+    const { data: orgData } = await supabase
+      .from('organizations')
+      .select('keyword_settings')
+      .eq('id', organizationId)
+      .single()
+
+    const keywordSettings = (orgData as any)?.keyword_settings || {}
+
+    // Map onboarding region to DataForSEO location code, default to US
+    const locationCode = resolveLocationCode(keywordSettings.target_region)
+
+    // Validate language code against supported set, default to English
+    const languageCode = resolveLanguageCode(keywordSettings.language_code)
+
+    console.log(`[ResearchKeywords] Using location ${locationCode} and language ${languageCode} for region "${keywordSettings.target_region}"`)
+
     // Cache miss - call DataForSEO API
     const apiResponse = await searchKeywords({
       keywords: [keyword!], // keyword is guaranteed to be set at this point
-      locationCode: 2840, // United States
-      languageCode: 'en',
+      locationCode,
+      languageCode,
     })
 
     if (!apiResponse.success) {
