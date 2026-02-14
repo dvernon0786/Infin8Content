@@ -26,8 +26,7 @@ export enum WorkflowStep {
 /**
  * Declarative workflow step definitions
  * This is the single configuration source for all state-to-step mappings
- * Step ordering is derived from array index, not hardcoded enum values
- * Adding new steps requires only inserting into this array
+ * Updated for unified step_* states - no processing states
  */
 export const WORKFLOW_STEPS = [
   {
@@ -35,68 +34,49 @@ export const WORKFLOW_STEPS = [
     label: 'step_1_icp',
     states: [
       WorkflowState.CREATED,
-      WorkflowState.ICP_PENDING,
-      WorkflowState.ICP_PROCESSING,
-      WorkflowState.ICP_FAILED
+      WorkflowState.step_1_icp
     ]
   },
   {
     step: WorkflowStep.COMPETITORS,
     label: 'step_2_competitors',
     states: [
-      WorkflowState.ICP_COMPLETED,
-      WorkflowState.COMPETITOR_PENDING,
-      WorkflowState.COMPETITOR_PROCESSING,
-      WorkflowState.COMPETITOR_FAILED
+      WorkflowState.step_2_competitors
     ]
   },
   {
     step: WorkflowStep.KEYWORDS,
-    label: 'step_3_keywords',
+    label: 'step_3_seeds',
     states: [
-      WorkflowState.COMPETITOR_COMPLETED,
-      WorkflowState.SEED_REVIEW_PENDING,
-      WorkflowState.SEED_REVIEW_COMPLETED,
-      WorkflowState.CLUSTERING_PENDING,
-      WorkflowState.CLUSTERING_PROCESSING,
-      WorkflowState.CLUSTERING_FAILED
+      WorkflowState.step_3_seeds
     ]
   },
   {
     step: WorkflowStep.TOPICS,
-    label: 'step_4_topics',
+    label: 'step_4_longtails',
     states: [
-      WorkflowState.CLUSTERING_COMPLETED
+      WorkflowState.step_4_longtails
     ]
   },
   {
     step: WorkflowStep.VALIDATION,
-    label: 'step_5_generation',
+    label: 'step_5_filtering',
     states: [
-      WorkflowState.VALIDATION_PENDING,
-      WorkflowState.VALIDATION_PROCESSING,
-      WorkflowState.VALIDATION_COMPLETED,
-      WorkflowState.VALIDATION_FAILED
+      WorkflowState.step_5_filtering
     ]
   },
   {
     step: WorkflowStep.ARTICLE,
-    label: 'step_6_generation',
+    label: 'step_6_clustering',
     states: [
-      WorkflowState.ARTICLE_PENDING,
-      WorkflowState.ARTICLE_PROCESSING,
-      WorkflowState.ARTICLE_COMPLETED,
-      WorkflowState.ARTICLE_FAILED
+      WorkflowState.step_6_clustering
     ]
   },
   {
     step: WorkflowStep.PUBLISH,
-    label: 'completed',
+    label: 'step_7_validation',
     states: [
-      WorkflowState.PUBLISH_PENDING,
-      WorkflowState.PUBLISH_PROCESSING,
-      WorkflowState.PUBLISH_COMPLETED,
-      WorkflowState.PUBLISH_FAILED
+      WorkflowState.step_7_validation
     ]
   }
 ]
@@ -125,7 +105,16 @@ export function getStepKey(stepNumber: number): WorkflowStep {
  */
 const TERMINAL_STATE_MAPPING: Record<string, number> = {
   [WorkflowState.CANCELLED]: 1, // Maps to first step for navigation reset
-  [WorkflowState.COMPLETED]: 7  // Maps to final step
+  [WorkflowState.COMPLETED]: 9  // Maps to final step
+}
+
+/**
+ * Additional step mappings for extended workflow
+ * These handle steps 8-9 that aren't in the main WORKFLOW_STEPS array
+ */
+const EXTENDED_STEP_MAPPING: Record<string, number> = {
+  [WorkflowState.step_8_subtopics]: 8,
+  [WorkflowState.step_9_articles]: 9
 }
 
 /**
@@ -136,6 +125,11 @@ export function getStepFromState(state: WorkflowState): number {
   // Check terminal state mappings first
   if (state in TERMINAL_STATE_MAPPING) {
     return TERMINAL_STATE_MAPPING[state]
+  }
+
+  // Check extended step mappings (steps 8-9)
+  if (state in EXTENDED_STEP_MAPPING) {
+    return EXTENDED_STEP_MAPPING[state]
   }
 
   // Find step definition that contains this state
