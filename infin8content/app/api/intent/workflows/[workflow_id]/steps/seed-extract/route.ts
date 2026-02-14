@@ -241,7 +241,7 @@ export async function POST(
       .select('id, state')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single()
+      .single() as { data: { id: string; state: WorkflowState } | null; error: any }
 
     if (workflowFetchError || !workflow) {
       return NextResponse.json(
