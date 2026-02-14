@@ -480,6 +480,42 @@ All gate enforcement attempts are logged with:
 - `workflow.gate.competitors_blocked` - when access is denied
 - `workflow.gate.competitors_error` - when validation encounters errors
 
+#### POST /api/intent/workflows/{workflow_id}/steps/competitor-analyze
+**Status**: ✅ UPDATED - Stateless Implementation
+**Description**: Extract seed keywords from competitor URLs using stateless processing
+**Method**: POST
+**Authentication**: Required
+**Request Body**:
+```json
+{
+  "additionalCompetitors": ["https://example1.com", "https://example2.com"]
+}
+```
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "seed_keywords_created": 25,
+    "competitors_processed": 2,
+    "competitors_failed": 0
+  }
+}
+```
+**Error Codes**:
+- `MIN_1_COMPETITOR_REQUIRED` (400): No competitors provided
+- `MAX_3_COMPETITORS_ALLOWED` (400): More than 3 competitors provided
+- `INVALID_WORKFLOW_STATE` (400): Workflow not in correct state
+**Notes**: 
+- Stateless implementation - no database dependencies on organization_competitors
+- Requires 1-3 competitor URLs
+- Keywords owned by workflow, not competitor entities
+- Database migration required for FK constraint removal
+
+**Authentication:** Required (401 if not authenticated)  
+**Authorization:** User must belong to workflow organization (404 if not)
+**Gate Enforcement:** Protected by both ICP and Competitor gates (423 if blocked)
+
 #### POST /api/intent/workflows/{workflow_id}/steps/seed-extract
 Transitions workflow from competitor analysis completion to seed keyword readiness (Story 39.2). This endpoint represents the seed keyword extraction step that requires competitor analysis to be complete.
 

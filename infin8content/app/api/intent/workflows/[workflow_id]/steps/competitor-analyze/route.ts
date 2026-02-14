@@ -26,7 +26,6 @@ import {
   getWorkflowState 
 } from '@/lib/services/workflow-engine/transition-engine'
 import { WorkflowState } from '@/types/workflow-state'
-import { getWorkflowCompetitors } from '@/lib/services/competitor-workflow-integration'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
 import { resolveLocationCode, resolveLanguageCode } from '@/lib/config/dataforseo-geo'
 
@@ -110,11 +109,14 @@ export async function POST(
       )
     }
 
-    // STATE ENGINE ENFORCEMENT: Only allow from COMPETITOR_PENDING
-    if (currentState !== WorkflowState.COMPETITOR_PENDING) {
+    // STATE ENGINE ENFORCEMENT: Allow from COMPETITOR_PENDING or COMPETITOR_FAILED (retry)
+    if (
+      currentState !== WorkflowState.COMPETITOR_PENDING &&
+      currentState !== WorkflowState.COMPETITOR_FAILED
+    ) {
       const errorMessage = currentState === WorkflowState.COMPETITOR_COMPLETED
         ? 'Cannot re-run competitor analysis after completion. Please create a new workflow.'
-        : `Workflow must be in COMPETITOR_PENDING state, currently in ${currentState}`
+        : `Workflow must be in COMPETITOR_PENDING or COMPETITOR_FAILED state, currently in ${currentState}`
       
       return NextResponse.json(
         {
@@ -144,87 +146,38 @@ export async function POST(
       // Continue anyway - logging is non-blocking
     }
 
-    // Load competitors for the workflow
-    console.log(`[CompetitorAnalyze] Loading competitors for workflow ${workflowId}`)
-    const workflowCompetitors = await getWorkflowCompetitors(workflowId)
-
-    // Get additional competitors from request body (only NEW ones)
+    // Get competitors from request body only (stateless)
+    console.log(`[CompetitorAnalyze] Processing competitors for workflow ${workflowId}`)
     const body = await request.json().catch(() => ({}))
     const additionalCompetitors: string[] = body?.additionalCompetitors || []
 
-    // Filter out duplicates from existing competitors
-    const existingUrls = new Set(workflowCompetitors.map(c => c.url))
-    const newCompetitors = additionalCompetitors.filter(url => !existingUrls.has(url))
-
-    // Format workflow competitors to match CompetitorData interface
-    const workflowFormatted = workflowCompetitors.map(c => ({
-      id: c.id,
-      url: c.url,
-      domain: c.domain,
-      is_active: c.is_active
-    }))
-
-    // Insert additional competitors into organization_competitors first
-    let extraFormatted: CompetitorData[] = []
-
-    // Helper functions for URL handling
-    function normalizeDomain(input: string): string {
-      const url = new URL(input.startsWith('http') ? input : `https://${input}`)
-      return url.hostname.replace(/^www\./, '').toLowerCase()
-    }
-
-    function toFullUrl(input: string): string {
-      const url = new URL(input.startsWith('http') ? input : `https://${input}`)
-      return `https://${url.hostname.replace(/^www\./, '').toLowerCase()}` 
-    }
-
-    for (const url of newCompetitors) {
-      if (typeof url !== 'string' || url.trim().length === 0) continue
-
-      const cleanUrl = url.trim()
-      const domain = normalizeDomain(cleanUrl)
-      const fullUrl = toFullUrl(cleanUrl)
-
-      const { data, error } = await supabase
-        .from('organization_competitors')
-        .upsert({
-          organization_id: organizationId,
-          url: fullUrl,   // ✅ MUST be full URL
-          domain: domain, // domain only
-          is_active: true,
-          created_by: userId
-        }, {
-          onConflict: 'organization_id,url'
-        })
-        .select('id, url, domain, is_active')
-        .single() as { data: { id: string; url: string; domain: string; is_active: boolean } | null; error: any }
-
-      if (error || !data) {
-        console.error('Failed to insert additional competitor:', error)
-        continue
-      }
-
-      extraFormatted.push({
-        id: data.id,
-        url: data.url,
-        domain: data.domain,
-        is_active: data.is_active
-      })
-    }
-
-    const allCompetitors: CompetitorData[] = [...workflowFormatted, ...extraFormatted]
-
-    if (allCompetitors.length === 0) {
+    // Enforce mandatory 1–3 competitors
+    if (additionalCompetitors.length < 1) {
       return NextResponse.json(
-        {
-          error: 'No competitors available to analyze.',
-          message: 'Please add at least one competitor URL.'
-        },
+        { error: 'MIN_1_COMPETITOR_REQUIRED' },
         { status: 400 }
       )
     }
 
-    console.log(`[CompetitorAnalyze] Found ${workflowCompetitors.length} workflow + ${extraFormatted.length} additional = ${allCompetitors.length} total competitors`)
+    if (additionalCompetitors.length > 3) {
+      return NextResponse.json(
+        { error: 'MAX_3_COMPETITORS_ALLOWED' },
+        { status: 400 }
+      )
+    }
+
+    // Normalize and create runtime competitor objects
+    const competitors = additionalCompetitors.map(url => {
+      const normalizedUrl = url.startsWith('http') ? url : `https://${url}` 
+      return {
+        id: crypto.randomUUID(), // runtime only
+        url: normalizedUrl,
+        domain: new URL(normalizedUrl).hostname.replace(/^www\./, ''),
+        is_active: true
+      }
+    })
+
+    console.log(`[CompetitorAnalyze] Processing ${competitors.length} competitors from request body only`)
 
     // Read user's onboarding keyword settings
     const { data: orgData } = await supabase
@@ -248,7 +201,7 @@ export async function POST(
     const processingResult = await transitionWorkflow({
       workflowId,
       organizationId,
-      from: WorkflowState.COMPETITOR_PENDING,
+      from: currentState, // Use dynamic state (PENDING or FAILED)
       to: WorkflowState.COMPETITOR_PROCESSING
     })
 
@@ -267,7 +220,7 @@ export async function POST(
 
     // Extract seed keywords from competitors using dependency injection
     const extractionRequest: ExtractSeedKeywordsRequest = {
-      competitors: allCompetitors,
+      competitors: competitors,
       organizationId,
       workflowId, // Critical: Pass workflowId for proper persistence and retry tracking
       maxSeedsPerCompetitor: 25, // Increased from 3 for richer data collection
@@ -283,7 +236,26 @@ export async function POST(
 
     // API LAYER: Always succeed if extraction API worked (pure data collection)
     // We no longer fail on 0 keywords - human curation happens in Step 3
-    console.log(`[CompetitorAnalyze] Extraction completed: ${result.total_keywords_created} keywords from ${allCompetitors.length} competitors`)
+    console.log(`[CompetitorAnalyze] Extraction completed: ${result.total_keywords_created} keywords from ${competitors.length} competitors`)
+
+    if (result.total_keywords_created === 0) {
+      // Transition to FAILED state (not PENDING) to maintain state machine integrity
+      await transitionWorkflow({
+        workflowId,
+        organizationId,
+        from: WorkflowState.COMPETITOR_PROCESSING,
+        to: WorkflowState.COMPETITOR_FAILED
+      })
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'NO_KEYWORDS_FOUND',
+          message: 'No keywords found from provided competitors. Try adding competitors with stronger SEO presence.'
+        },
+        { status: 400 }
+      )
+    }
 
     // TRANSITION AFTER SUCCESS: Only transition after side effects complete
     // This ensures state machine purity - if state says "COMPLETED", work is actually done

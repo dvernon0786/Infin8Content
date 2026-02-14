@@ -12,10 +12,11 @@ import {
 
 interface Keyword {
   id: string
-  seed_keyword: string
+  keyword: string
   search_volume: number
   cpc?: number
   competition_index?: number
+  keyword_difficulty?: number
   ai_suggested?: boolean
   user_selected?: boolean
 }
@@ -25,6 +26,8 @@ interface Props {
 }
 
 export function KeywordOpportunityChart({ keywords }: Props) {
+  console.log('Chart component rendering with keywords:', keywords?.length)
+  
   const top10 = useMemo(() => {
     if (!keywords || keywords.length === 0) return []
 
@@ -35,10 +38,15 @@ export function KeywordOpportunityChart({ keywords }: Props) {
       max === 0 ? 0 : value / max
 
     const scored = keywords.map(k => {
+      // Use keyword_difficulty as fallback if competition_index is 0
+      const competitionScore = (k.competition_index || 0) > 0 
+        ? (k.competition_index || 0) / 100 
+        : (k.keyword_difficulty || 0) / 100
+
       const scoreRaw =
         normalize(k.search_volume, maxVolume) * 0.5 +
         normalize(k.cpc || 0, maxCpc) * 0.3 -
-        (k.competition_index || 0) * 0.2
+        competitionScore * 0.2
 
       // Clamp score to 0-1 range
       const score = Math.max(0, Math.min(scoreRaw, 1))
@@ -49,12 +57,30 @@ export function KeywordOpportunityChart({ keywords }: Props) {
       }
     })
 
-    return scored
+    const result = scored
       .sort((a, b) => b.opportunity_score - a.opportunity_score)
       .slice(0, 10)
+    
+    console.log('Chart top10 result:', result.length)
+    return result
   }, [keywords])
 
-  if (!top10 || top10.length === 0) return null
+  console.log('Chart top10 after useMemo:', top10?.length)
+
+  if (!top10 || top10.length === 0) {
+    return (
+      <div className="mt-8 rounded-xl border bg-white p-6 shadow-sm">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Keyword Opportunity Score
+          </h3>
+        </div>
+        <div className="text-center py-8 text-gray-500">
+          No data available for opportunity chart
+        </div>
+      </div>
+    )
+  }
 
   // Custom tooltip
   const CustomTooltip = ({ active, payload }: any) => {
@@ -62,7 +88,7 @@ export function KeywordOpportunityChart({ keywords }: Props) {
       const data = payload[0].payload
       return (
         <div className="bg-gray-900 text-white p-3 rounded-lg shadow-lg border border-gray-700">
-          <p className="font-semibold text-sm mb-2">{data.seed_keyword}</p>
+          <p className="font-semibold text-sm mb-2">{data.keyword}</p>
           <div className="space-y-1 text-xs">
             <p>Opportunity Score: <span className="text-emerald-400">{(data.opportunity_score * 100).toFixed(1)}%</span></p>
             <p>Volume: {data.search_volume.toLocaleString()}</p>
@@ -76,7 +102,7 @@ export function KeywordOpportunityChart({ keywords }: Props) {
   }
 
   return (
-    <div className="mt-8 rounded-xl border bg-white p-6 shadow-sm">
+    <div className="mt-8 rounded-xl border bg-white p-6 shadow-sm min-h-[400px]">
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900">
           Keyword Opportunity Score
@@ -87,8 +113,8 @@ export function KeywordOpportunityChart({ keywords }: Props) {
         </p>
       </div>
 
-      <div className="h-[350px]">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="h-[350px] w-full min-w-[300px]">
+        <ResponsiveContainer width="100%" height={350}>
           <BarChart data={top10} layout="horizontal" margin={{ top: 5, right: 30, left: 180, bottom: 5 }}>
             <XAxis 
               type="number" 
@@ -99,7 +125,7 @@ export function KeywordOpportunityChart({ keywords }: Props) {
             />
             <YAxis
               type="category"
-              dataKey="seed_keyword"
+              dataKey="keyword"
               width={180}
               tick={{ fontSize: 12 }}
               tickLine={false}

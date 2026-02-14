@@ -10,7 +10,7 @@ import { KeywordOpportunityChart } from './KeywordOpportunityChart'
 
 export interface Keyword {
   id: string
-  seed_keyword: string
+  keyword: string
   search_volume: number
   cpc?: number
   competition_level?: string
@@ -51,7 +51,7 @@ export default function KeywordReviewPage({
   const filtered = useMemo(() => {
     return keywords.filter(keyword => {
       // Search filter
-      if (search && !keyword.seed_keyword.toLowerCase().includes(search.toLowerCase())) {
+      if (search && !keyword.keyword.toLowerCase().includes(search.toLowerCase())) {
         return false
       }
 
@@ -266,7 +266,7 @@ export default function KeywordReviewPage({
                   />
                 </td>
                 <td className="p-3 font-medium">
-                  {keyword.seed_keyword}
+                  {keyword.keyword}
                 </td>
                 <td className="p-3">
                   {keyword.search_volume.toLocaleString()}
@@ -295,7 +295,7 @@ export default function KeywordReviewPage({
                   </div>
                 </td>
                 <td className="p-3 text-muted-foreground text-xs">
-                  {keyword.source ? new URL(keyword.source).hostname : 'Unknown'}
+                  Competitor
                 </td>
               </tr>
             ))}
