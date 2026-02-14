@@ -76,7 +76,16 @@ export async function GET(
         keyword_difficulty,
         longtail_status,
         subtopics_status,
-        article_status
+        article_status,
+        detected_language,
+        is_foreign_language,
+        main_intent,
+        is_navigational,
+        ai_suggested,
+        user_selected,
+        decision_confidence,
+        selection_source,
+        selection_timestamp
       `, { count: 'exact' })
       .eq('organization_id', organizationId)
       .eq('workflow_id', workflowId)
@@ -85,7 +94,7 @@ export async function GET(
 
     // Apply filters
     if (search) {
-      query = query.ilike('seed_keyword', `%${search}%`)
+      query = query.ilike('keyword', `%${search}%`)
     }
     if (intentFilter && intentFilter !== 'all') {
       query = query.eq('main_intent', intentFilter)

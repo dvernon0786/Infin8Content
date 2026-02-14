@@ -147,7 +147,7 @@ export async function extractSeedKeywords(
         throw new Error(`Competitor ID is required for ${competitor.url}`)
       }
 
-      await persistSeedKeywords(organizationId, workflowId, competitorId, keywords)
+      await persistSeedKeywords(organizationId, workflowId, competitor.id, keywords)
       totalKeywordsCreated += keywords.length
       competitorsProcessed++
 
@@ -420,13 +420,17 @@ export async function persistSeedKeywords(
     return 0
   }
 
+  // Step 2 is now fully stateless - always set competitor_url_id to NULL
+  // Keywords are owned by workflow_id, not by competitor entities
+  console.log(`[persistSeedKeywords] Processing ${keywords.length} keywords for workflow ${workflowId} (stateless mode)`)
+
   // Create keyword records with ALL AI metadata fields
   const keywordRecords = keywords
     .filter(keyword => keyword.seed_keyword && keyword.seed_keyword.trim().length > 0)
     .map(keyword => ({
       organization_id: organizationId,
       workflow_id: workflowId, // Critical for workflow isolation
-      competitor_url_id: competitorUrlId,
+      competitor_url_id: null, // ALWAYS NULL for stateless Step 2
       seed_keyword: keyword.seed_keyword.trim(),
       keyword: keyword.seed_keyword.trim(), // Same as seed_keyword at this stage
       search_volume: keyword.search_volume,

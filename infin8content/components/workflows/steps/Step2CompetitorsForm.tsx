@@ -18,25 +18,11 @@ interface Step2CompetitorsFormProps {
 export function Step2CompetitorsForm({ workflowId }: Step2CompetitorsFormProps) {
   const [state, setState] = useState<'idle' | 'running' | 'success' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
-  const [existingCompetitors, setExistingCompetitors] = useState<Competitor[]>([])
   const [newCompetitor, setNewCompetitor] = useState('')
   const [additionalCompetitors, setAdditionalCompetitors] = useState<string[]>([])
 
-  // Load existing competitors on mount
-  useEffect(() => {
-    const loadCompetitors = async () => {
-      try {
-        const response = await fetch(`/api/organizations/competitors`)
-        if (response.ok) {
-          const data = await response.json()
-          setExistingCompetitors(data.competitors || [])
-        }
-      } catch (err) {
-        console.error('Failed to load competitors:', err)
-      }
-    }
-    loadCompetitors()
-  }, [])
+  // Note: Removed broken API call to /api/organizations/competitors (returns 404)
+  // Backend handles competitor validation during analysis
 
   async function runStep() {
     try {
@@ -63,7 +49,7 @@ export function Step2CompetitorsForm({ workflowId }: Step2CompetitorsFormProps) 
         const body = await res.json()
         
         // Handle NO_KEYWORDS_FOUND specifically for UX
-        if (body.code === 'NO_KEYWORDS_FOUND') {
+        if (body.error === 'NO_KEYWORDS_FOUND') {
           setState('error')
           setError('No keywords found from provided competitors. Try adding competitors with stronger SEO presence.')
           return
@@ -123,8 +109,6 @@ export function Step2CompetitorsForm({ workflowId }: Step2CompetitorsFormProps) 
     setAdditionalCompetitors(additionalCompetitors.filter((_, i) => i !== index))
   }
 
-  const allCompetitors = [...existingCompetitors.map(c => c.url), ...additionalCompetitors]
-
   return (
     <div className="space-y-6">
       <div>
@@ -135,24 +119,9 @@ export function Step2CompetitorsForm({ workflowId }: Step2CompetitorsFormProps) 
         </p>
       </div>
 
-      {/* Existing Competitors */}
-      {existingCompetitors.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium">Current Competitors ({existingCompetitors.length})</h4>
-          <div className="space-y-1">
-            {existingCompetitors.map((competitor) => (
-              <div key={competitor.id} className="text-sm text-muted-foreground flex items-center gap-2">
-                • {competitor.url}
-                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Add Additional Competitors */}
+      {/* Add Competitors */}
       <div className="space-y-2">
-        <h4 className="text-sm font-medium">Add More Competitors (max 3 additional)</h4>
+        <h4 className="text-sm font-medium">Add Competitors (1-3 required)</h4>
         <div className="flex gap-2">
           <input
             type="text"
@@ -213,25 +182,25 @@ export function Step2CompetitorsForm({ workflowId }: Step2CompetitorsFormProps) 
       {/* Action Button */}
       <Button
         onClick={runStep}
-        disabled={state === 'running' || state === 'success' || allCompetitors.length === 0}
+        disabled={state === 'running' || state === 'success' || additionalCompetitors.length < 1}
         className="min-w-[160px]"
       >
         {state === 'running' ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Analyzing {allCompetitors.length} competitors…
+            Analyzing {additionalCompetitors.length} competitors…
           </>
         ) : state === 'success' ? (
           <>
             ✓ Completed
           </>
         ) : (
-          `Analyze ${allCompetitors.length} competitor${allCompetitors.length !== 1 ? 's' : ''}`
+          `Analyze ${additionalCompetitors.length} competitor${additionalCompetitors.length !== 1 ? 's' : ''}`
         )}
       </Button>
 
       {/* Info */}
-      {allCompetitors.length === 0 && (
+      {additionalCompetitors.length === 0 && (
         <div className="text-xs text-muted-foreground">
           Add at least one competitor URL to begin analysis.
         </div>
