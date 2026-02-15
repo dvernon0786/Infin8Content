@@ -34,7 +34,7 @@ const STEP_TO_INDEX: Record<string, number> = {
 export interface WorkflowDashboardItem {
   id: string
   name: string
-  status: string
+  state: string
   progress_percentage: number
   current_step: number
   created_at: string
@@ -76,9 +76,9 @@ export function calculateSummary(workflows: IntentWorkflow[]): DashboardSummary 
   }
 
   workflows.forEach(workflow => {
-    if (workflow.status === 'completed') {
+    if (workflow.state === 'completed') {
       summary.completed_workflows++
-    } else if (workflow.status === 'failed') {
+    } else if (workflow.state === 'failed') {
       summary.failed_workflows++
     } else {
       summary.in_progress_workflows++
@@ -118,16 +118,17 @@ export function calculateEstimatedCompletion(
  */
 export function formatWorkflows(workflows: IntentWorkflow[]): WorkflowDashboardItem[] {
   return workflows.map(workflow => {
-    // CANONICAL: Derive progress from current_step, not status
-    const currentStep = workflow.current_step || 1
-    const progress = currentStep >= 10 ? 100 : ((currentStep - 1) / 9) * 100
+    // CANONICAL: Derive progress from state, not current_step
+    const stepOrder = ['step_0_auth', 'step_1_icp', 'step_2_competitors', 'step_3_keywords', 'step_4_longtails', 'step_5_filtering', 'step_6_clustering', 'step_7_validation', 'step_8_subtopics', 'step_9_articles']
+    const currentStepIndex = stepOrder.indexOf(workflow.state) + 1
+    const progress = currentStepIndex >= 10 ? 100 : ((currentStepIndex - 1) / 9) * 100
     
     return {
       id: workflow.id,
       name: workflow.name,
-      status: workflow.status,
+      state: workflow.state,
       progress_percentage: progress,
-      current_step: currentStep,
+      current_step: currentStepIndex,
       created_at: workflow.created_at,
       updated_at: workflow.updated_at,
       created_by: workflow.created_by,
