@@ -13,6 +13,8 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { checkRateLimit, type RateLimitConfig } from '@/lib/services/rate-limiting/persistent-rate-limiter'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
+import { advanceWorkflow, WorkflowTransitionError } from '@/lib/services/workflow/advanceWorkflow'
+import { WorkflowState } from '@/types/workflow-state'
 import {
   generateICPDocument,
   storeICPGenerationResult,
@@ -95,12 +97,14 @@ export async function POST(
 
     // Verify workflow exists and belongs to user's organization
     const supabase = createServiceRoleClient()
+
+    // Get workflow and verify state
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, state, organization_id') // Use unified state instead of legacy status/current_step
+      .select('id, state, organization_id')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single()
+      .single() as { data: { id: string; state: string; organization_id: string } | null, error: any }
 
     if (workflowError || !workflow) {
       return NextResponse.json(
@@ -109,15 +113,12 @@ export async function POST(
       )
     }
 
-    // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string; current_step: number }
-
-    // CANONICAL GUARD: Only allow step 1 when current_step = 1
-    if (typedWorkflow.current_step !== 1) {
+    // FSM GUARD: Only allow ICP generation when in step_1_icp state
+    if (workflow.state !== 'step_1_icp') {
       return NextResponse.json(
         {
-          error: 'INVALID_STEP_ORDER',
-          message: `Workflow must be at step 1 (ICP generation), currently at step ${typedWorkflow.current_step}`
+          error: 'INVALID_STATE',
+          message: `Workflow must be in step_1_icp state. Current state: ${workflow.state}`
         },
         { status: 400 }
       )
@@ -126,22 +127,19 @@ export async function POST(
     // Check for idempotency - if ICP already generated, return existing result
     const { data: existingWorkflow, error: fetchError } = await supabase
       .from('intent_workflows')
-      .select('icp_data, step_1_icp_completed_at')
+      .select('icp_data')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single()
+      .single() as { data: { icp_data: any } | null, error: any }
 
-    if (!fetchError && existingWorkflow && (existingWorkflow as any).icp_data) {
+    if (!fetchError && existingWorkflow && existingWorkflow.icp_data) {
       console.log(`[ICP-Generate] ICP already exists for workflow ${workflowId}, returning cached result`)
       return NextResponse.json({
         success: true,
         workflow_id: workflowId,
         status: 'step_1_icp',
-        icp_data: (existingWorkflow as any).icp_data,
-        cached: true,
-        metadata: {
-          generated_at: (existingWorkflow as any).step_1_icp_completed_at
-        }
+        icp_data: existingWorkflow.icp_data,
+        cached: true
       })
     }
 
@@ -153,6 +151,25 @@ export async function POST(
 
     // Store result in workflow with retry metadata (consolidated in single update)
     await storeICPGenerationResult(workflowId, organizationId, icpResult, idempotencyKey)
+
+    // 4️⃣ Advance workflow state - LAST operation in API route
+    try {
+      await advanceWorkflow({
+        workflowId,
+        organizationId,
+        expectedState: WorkflowState.step_1_icp,
+        nextState: WorkflowState.step_2_competitors
+      })
+    } catch (error: any) {
+      if (error instanceof WorkflowTransitionError) {
+        console.error(`[ICP-Generate] Workflow transition failed: ${error.message}`)
+        return NextResponse.json(
+          { error: 'Workflow transition failed', details: error.message },
+          { status: 409 }
+        )
+      }
+      throw error
+    }
 
     // Emit analytics event for workflow step completion
     try {
