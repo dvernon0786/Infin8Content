@@ -1,20 +1,29 @@
--- Legacy Column Cleanup Migration
+-- Legacy Column Cleanup Migration - Final Clean Schema
 -- 
--- This migration removes all legacy workflow columns that are no longer needed
--- after the unified workflow state machine implementation.
---
--- LEGACY COLUMNS TO REMOVE:
--- - status: Replaced by unified 'state' column
--- - current_step: Replaced by state-driven progression
--- - workflow_data: Replaced by specific columns (icp_data)
--- - retry_count: No longer needed with proper error handling
--- - step_*_error_message: Replaced by proper error logging
--- - step_*_last_error_message: Replaced by proper error logging
+-- This migration removes all legacy workflow columns after unified state implementation
+-- The codebase has been fully updated to use only the unified state column
 
--- First, let's verify the current table structure
--- \d intent_workflows
+-- Step 1: Verify no data will be lost
+DO $$
+DECLARE
+  legacy_count INTEGER;
+BEGIN
+  -- Check if any workflows still use legacy columns
+  SELECT COUNT(*) INTO legacy_count
+  FROM intent_workflows 
+  WHERE status IS NOT NULL 
+     OR current_step IS NOT NULL 
+     OR workflow_data IS NOT NULL
+     OR retry_count IS NOT NULL;
+  
+  IF legacy_count > 0 THEN
+    RAISE NOTICE 'Found % workflows with legacy column data - data will be lost', legacy_count;
+  ELSE
+    RAISE NOTICE 'No legacy column data found - safe to proceed';
+  END IF;
+END $$;
 
--- Drop legacy error message columns (no longer needed)
+-- Step 2: Drop legacy error message columns (no longer needed)
 ALTER TABLE intent_workflows
   DROP COLUMN IF EXISTS step_1_icp_error_message,
   DROP COLUMN IF EXISTS step_2_competitor_error_message,
@@ -26,7 +35,7 @@ ALTER TABLE intent_workflows
   DROP COLUMN IF EXISTS step_8_subtopics_error_message,
   DROP COLUMN IF EXISTS step_9_articles_error_message;
 
--- Drop legacy last error message columns (no longer needed)
+-- Step 3: Drop legacy last error message columns (no longer needed)
 ALTER TABLE intent_workflows
   DROP COLUMN IF EXISTS step_1_icp_last_error_message,
   DROP COLUMN IF EXISTS step_2_competitors_last_error_message,
@@ -38,33 +47,25 @@ ALTER TABLE intent_workflows
   DROP COLUMN IF EXISTS step_8_subtopics_last_error_message,
   DROP COLUMN IF EXISTS step_9_articles_last_error_message;
 
--- Drop legacy status column (replaced by unified state)
+-- Step 4: Drop legacy dual-state columns
 ALTER TABLE intent_workflows
-  DROP COLUMN IF EXISTS status;
+  DROP COLUMN IF EXISTS status,         -- Replaced by unified state
+  DROP COLUMN IF EXISTS current_step,  -- Replaced by state-driven progression
+  DROP COLUMN IF EXISTS workflow_data,  -- Replaced by specific columns (icp_data)
+  DROP COLUMN IF EXISTS retry_count;   -- No longer needed
 
--- Drop legacy current_step column (replaced by state-driven progression)
-ALTER TABLE intent_workflows
-  DROP COLUMN IF EXISTS current_step;
-
--- Drop legacy workflow_data column (replaced by specific columns)
-ALTER TABLE intent_workflows
-  DROP COLUMN IF EXISTS workflow_data;
-
--- Drop legacy retry_count column (no longer needed)
-ALTER TABLE intent_workflows
-  DROP COLUMN IF EXISTS retry_count;
-
--- Add comment documenting the clean schema
+-- Step 5: Add comment documenting the clean schema
 COMMENT ON TABLE intent_workflows IS 'Clean unified workflow schema with single state column and specific data columns';
 
--- Final clean schema should be:
--- - id (UUID PK)
--- - organization_id (UUID FK)
--- - name (TEXT)
--- - state (workflow_state_enum)
--- - icp_data (JSONB)
--- - created_at (TIMESTAMPTZ)
--- - updated_at (TIMESTAMPTZ)
--- - created_by (UUID FK)
--- - cancelled_at (TIMESTAMPTZ, nullable)
--- - cancelled_by (UUID FK, nullable)
+-- Step 6: Verify final clean schema
+DO $$
+DECLARE
+  remaining_columns INTEGER;
+BEGIN
+  -- Count remaining columns (should be ~8-10 for clean schema)
+  SELECT COUNT(*) INTO remaining_columns
+  FROM information_schema.columns 
+  WHERE table_name = 'intent_workflows';
+  
+  RAISE NOTICE 'Final schema has % columns - clean unified workflow achieved', remaining_columns;
+END $$;

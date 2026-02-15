@@ -12,12 +12,11 @@ export interface IntentWorkflow {
   id: string
   organization_id: string
   name: string
-  state: WorkflowState // Unified state column (replaces legacy status)
-  current_step: number // Legacy column (deprecated)
+  state: WorkflowState // Unified state column ONLY
   created_at: string
   created_by: string
   updated_at: string
-  workflow_data: Record<string, any>
+  icp_data?: Record<string, any> // Specific domain data only
 }
 
 export type IntentWorkflowStatus = WorkflowState
@@ -41,20 +40,17 @@ export interface IntentWorkflowError {
   details?: Record<string, any>
 }
 
-// Database types for Supabase
+// Database types for Supabase - Clean unified version
 export interface IntentWorkflowInsert {
-  id?: string
   organization_id: string
   name: string
-  status?: IntentWorkflowStatus
+  state: WorkflowState
   created_by: string
-  workflow_data?: Record<string, any>
 }
 
 export interface IntentWorkflowUpdate {
   name?: string
-  status?: IntentWorkflowStatus
-  workflow_data?: Record<string, any>
+  state?: WorkflowState
 }
 
 // Validation schemas

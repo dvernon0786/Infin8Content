@@ -167,8 +167,7 @@ export async function POST(request: Request) {
       name: name.trim(),
       organization_id: targetOrgId,
       created_by: currentUser.id,
-      state: 'step_1_icp', // Start directly in step_1_icp for clean linear progression
-      workflow_data: {}
+      state: 'step_1_icp' // Start directly in step_1_icp for clean linear progression
     }
 
     const { data: workflowData, error: insertError } = await supabase
@@ -239,7 +238,7 @@ export async function POST(request: Request) {
       id: workflow.id,
       name: workflow.name,
       organization_id: workflow.organization_id,
-      status: workflow.state, // Migrate from legacy status to unified state
+      status: workflow.state, // Map unified state to API status for compatibility
       created_at: workflow.created_at
     }
 
@@ -313,7 +312,10 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
-      workflows: workflows || [],
+      workflows: (workflows || []).map((wf: any) => ({
+        ...wf,
+        status: wf.state // Map unified state to API status for consistency
+      })),
       total: count || 0,
       page,
       limit,
