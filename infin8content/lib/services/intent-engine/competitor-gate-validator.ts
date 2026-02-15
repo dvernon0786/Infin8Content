@@ -73,27 +73,15 @@ export class CompetitorGateValidator {
       }
 
       // Check if competitor analysis is complete
-      // Allowed states: COMPETITOR_COMPLETED or any state after it
+      // Allowed states: step_3_seeds or any state after it (unified workflow)
       const competitorCompleteStates = [
-        WorkflowState.COMPETITOR_COMPLETED,
-        WorkflowState.SEED_REVIEW_PENDING,
-        WorkflowState.SEED_REVIEW_COMPLETED,
-        WorkflowState.CLUSTERING_PENDING,
-        WorkflowState.CLUSTERING_PROCESSING,
-        WorkflowState.CLUSTERING_COMPLETED,
-        WorkflowState.CLUSTERING_FAILED,
-        WorkflowState.VALIDATION_PENDING,
-        WorkflowState.VALIDATION_PROCESSING,
-        WorkflowState.VALIDATION_COMPLETED,
-        WorkflowState.VALIDATION_FAILED,
-        WorkflowState.ARTICLE_PENDING,
-        WorkflowState.ARTICLE_PROCESSING,
-        WorkflowState.ARTICLE_COMPLETED,
-        WorkflowState.ARTICLE_FAILED,
-        WorkflowState.PUBLISH_PENDING,
-        WorkflowState.PUBLISH_PROCESSING,
-        WorkflowState.PUBLISH_COMPLETED,
-        WorkflowState.PUBLISH_FAILED,
+        WorkflowState.step_3_seeds,
+        WorkflowState.step_4_longtails,
+        WorkflowState.step_5_filtering,
+        WorkflowState.step_6_clustering,
+        WorkflowState.step_7_validation,
+        WorkflowState.step_8_subtopics,
+        WorkflowState.step_9_articles,
         WorkflowState.COMPLETED
       ]
 

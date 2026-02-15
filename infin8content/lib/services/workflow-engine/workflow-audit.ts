@@ -167,18 +167,18 @@ export async function transitionWithAudit(
   userId?: string,
   metadata?: Record<string, any>
 ): Promise<{ success: boolean; error?: string }> {
-  // Import transition engine
-  const { transitionWorkflow } = await import('./transition-engine')
+  // Import unified workflow engine
+  const { advanceWorkflow } = await import('../workflow/advanceWorkflow')
   
-  // Perform the transition
-  const result = await transitionWorkflow({
-    workflowId,
-    organizationId,
-    from: fromState,
-    to: toState
-  })
-  
-  if (result.success) {
+  // Perform the transition using unified engine
+  try {
+    await advanceWorkflow({
+      workflowId,
+      organizationId,
+      expectedState: fromState,
+      nextState: toState
+    })
+    
     // Log the transition for audit
     await logWorkflowTransition({
       workflow_id: workflowId,
@@ -190,7 +190,12 @@ export async function transitionWithAudit(
       user_id: userId,
       metadata: metadata
     })
+    
+    return { success: true }
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }
   }
-  
-  return result
 }

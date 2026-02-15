@@ -22,9 +22,9 @@ import {
 import type { SeedExtractor } from '@/lib/services/intent-engine/seed-extractor.interface'
 import { DeterministicFakeExtractor } from '@/lib/services/intent-engine/deterministic-fake-extractor'
 import { 
-  transitionWorkflow, 
-  getWorkflowState 
-} from '@/lib/services/workflow-engine/transition-engine'
+  advanceWorkflow,
+  WorkflowTransitionError
+} from '@/lib/services/workflow/advanceWorkflow'
 import { WorkflowState } from '@/types/workflow-state'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
 import { resolveLocationCode, resolveLanguageCode } from '@/lib/config/dataforseo-geo'
@@ -100,29 +100,31 @@ export async function POST(
     console.log(`[CompetitorAnalyze] Found ${competitorCount} competitors for analysis`)
 
     // Get current workflow state
-    const currentState = await getWorkflowState(workflowId, organizationId)
+    const { data: workflow, error: workflowError } = await supabase
+      .from('intent_workflows')
+      .select('id, state')
+      .eq('id', workflowId)
+      .eq('organization_id', organizationId)
+      .single() as { data: { id: string; state: WorkflowState } | null; error: any }
     
-    if (!currentState) {
+    if (workflowError || !workflow) {
       return NextResponse.json(
         { error: 'Workflow not found' },
         { status: 404 }
       )
     }
 
-    // STATE ENGINE ENFORCEMENT: Allow from COMPETITOR_PENDING or COMPETITOR_FAILED (retry)
-    if (
-      currentState !== WorkflowState.COMPETITOR_PENDING &&
-      currentState !== WorkflowState.COMPETITOR_FAILED
-    ) {
-      const errorMessage = currentState === WorkflowState.COMPETITOR_COMPLETED
+    // UNIFIED ENGINE: Must be in step_2_competitors to proceed
+    if (workflow.state !== WorkflowState.step_2_competitors) {
+      const errorMessage = workflow.state === WorkflowState.step_3_seeds
         ? 'Cannot re-run competitor analysis after completion. Please create a new workflow.'
-        : `Workflow must be in COMPETITOR_PENDING or COMPETITOR_FAILED state, currently in ${currentState}`
+        : `Workflow must be in step_2_competitors state, currently in ${workflow.state}`
       
       return NextResponse.json(
         {
           error: 'ILLEGAL_TRANSITION',
           message: errorMessage,
-          current_state: currentState
+          current_state: workflow.state
         },
         { status: 409 }
       )
@@ -136,7 +138,7 @@ export async function POST(
         action: AuditAction.WORKFLOW_COMPETITOR_SEED_KEYWORDS_STARTED,
         details: {
           workflow_id: workflowId,
-          current_state: currentState
+          current_state: workflow.state
         },
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
@@ -196,27 +198,9 @@ export async function POST(
 
     console.log(`[CompetitorAnalyze] Using location ${locationCode} and language ${languageCode} for region "${keywordSettings.target_region}"`)
 
-    // STATE ENGINE: Transition to processing state first
-    // This prevents concurrent processing and ensures clean state machine
-    const processingResult = await transitionWorkflow({
-      workflowId,
-      organizationId,
-      from: currentState, // Use dynamic state (PENDING or FAILED)
-      to: WorkflowState.COMPETITOR_PROCESSING
-    })
-
-    if (!processingResult.success) {
-      // Another request won the race or illegal transition
-      console.log(`[CompetitorAnalyze] Failed to transition to processing: ${processingResult.error}`)
-      return NextResponse.json(
-        { 
-          error: processingResult.error || 'TRANSITION_FAILED',
-          message: 'Failed to start competitor analysis. Workflow may already be processing.',
-          workflow_id: workflowId
-        },
-        { status: 409 } // Conflict - another request won the race
-      )
-    }
+    // UNIFIED ENGINE: No processing state needed
+    // Work happens synchronously, then advance to next step
+    console.log(`[CompetitorAnalyze] Processing competitors for workflow ${workflowId}`)
 
     // Extract seed keywords from competitors using dependency injection
     const extractionRequest: ExtractSeedKeywordsRequest = {
@@ -239,14 +223,7 @@ export async function POST(
     console.log(`[CompetitorAnalyze] Extraction completed: ${result.total_keywords_created} keywords from ${competitors.length} competitors`)
 
     if (result.total_keywords_created === 0) {
-      // Transition to FAILED state (not PENDING) to maintain state machine integrity
-      await transitionWorkflow({
-        workflowId,
-        organizationId,
-        from: WorkflowState.COMPETITOR_PROCESSING,
-        to: WorkflowState.COMPETITOR_FAILED
-      })
-
+      // Stay in step_2_competitors for retry - no FAILED state needed
       return NextResponse.json(
         {
           success: false,
@@ -257,24 +234,23 @@ export async function POST(
       )
     }
 
-    // TRANSITION AFTER SUCCESS: Only transition after side effects complete
-    // This ensures state machine purity - if state says "COMPLETED", work is actually done
-    const completedResult = await transitionWorkflow({
-      workflowId,
-      organizationId,
-      from: WorkflowState.COMPETITOR_PROCESSING,
-      to: WorkflowState.COMPETITOR_COMPLETED
-    })
-    
-    if (!completedResult.success) {
-      // Another request already transitioned this workflow
-      // Keywords were already extracted, return success anyway
-      console.log(`[CompetitorAnalyze] Workflow already completed (concurrent request won race)`)
-      return NextResponse.json({
-        success: true,
-        message: 'Competitor analysis already completed by concurrent request',
-        workflow_id: workflowId
+    // UNIFIED ENGINE: Advance to next step after successful completion
+    try {
+      await advanceWorkflow({
+        workflowId,
+        organizationId,
+        expectedState: WorkflowState.step_2_competitors,
+        nextState: WorkflowState.step_3_seeds
       })
+      
+      console.log(`[CompetitorAnalyze] Successfully advanced to step_3_seeds`)
+    } catch (error) {
+      if (error instanceof WorkflowTransitionError) {
+        // Another request already advanced this workflow
+        console.log(`[CompetitorAnalyze] Workflow already advanced (concurrent request won race)`)
+      } else {
+        throw error
+      }
     }
 
     // Log action completion
@@ -311,30 +287,21 @@ export async function POST(
     // Log error
     console.error(`[CompetitorAnalyze] Error during competitor analysis:`, error)
 
-    // Update workflow with error status if we have the necessary IDs
-    if (workflowId && organizationId) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      try {
-        await transitionWorkflow({
-          workflowId,
-          organizationId,
-          from: WorkflowState.COMPETITOR_PROCESSING,
-          to: WorkflowState.COMPETITOR_FAILED
-        })
-        
-        // Emit terminal failure analytics event (AC 8)
-        emitAnalyticsEvent({
-          event_type: 'workflow_step_failed',
-          organization_id: organizationId,
-          workflow_id: workflowId,
-          step: 'step_2_competitors',
-          total_attempts: 1,
-          final_error_message: errorMessage,
-          timestamp: new Date().toISOString()
-        })
-      } catch (updateError) {
-        console.error('Failed to update workflow error status:', updateError)
-      }
+    // UNIFIED ENGINE: No error state transitions needed
+    // Stay in step_2_competitors for retry capability
+    console.error(`[CompetitorAnalyze] Error during competitor analysis:`, error)
+
+    // Emit failure analytics event for monitoring
+    if (organizationId) {
+      emitAnalyticsEvent({
+        event_type: 'workflow_step_failed',
+        organization_id: organizationId,
+        workflow_id: workflowId,
+        step: 'step_2_competitors',
+        total_attempts: 1,
+        final_error_message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      })
     }
 
     // Return error response
