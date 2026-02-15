@@ -12,6 +12,7 @@ import type {
   IntentWorkflowStatus,
   IntentWorkflow
 } from '@/lib/types/intent-workflow'
+import { WorkflowState } from '@/lib/constants/intent-workflow-steps'
 
 /**
  * Zod schema for intent workflow creation request validation
@@ -235,7 +236,7 @@ export async function POST(request: Request) {
       id: workflow.id,
       name: workflow.name,
       organization_id: workflow.organization_id,
-      status: workflow.state as IntentWorkflowStatus,
+      state: workflow.state as WorkflowState,
       created_at: workflow.created_at
     }
 
