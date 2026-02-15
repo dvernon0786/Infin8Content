@@ -170,23 +170,6 @@ export async function generateICPDocument(
   throw finalError
 }
 
-/**
- * Get current AI cost for a workflow (fallback method)
- */
-async function getWorkflowCurrentCost(workflowId: string): Promise<number> {
-  const supabase = createServiceRoleClient()
-  const { data: existing } = await supabase
-    .from('intent_workflows')
-    .select('workflow_data')
-    .eq('id', workflowId)
-    .single()
-  
-  if (!existing) {
-    return 0
-  }
-  
-  return (existing as any)?.workflow_data?.total_ai_cost ?? 0
-}
 
 /**
  * Atomically check if workflow can accept additional cost (no update)
@@ -498,40 +481,16 @@ export async function storeICPGenerationResult(
 export async function handleICPGenerationFailure(
   workflowId: string,
   organizationId: string,
-  error: Error,
-  retryCount: number = 0,
-  lastErrorMessage: string | null = null
+  error: Error
 ): Promise<void> {
-  const supabase = createServiceRoleClient()
+  console.error(
+    `[ICPGenerator] ICP failure for workflow ${workflowId}:`,
+    error.message
+  )
 
-  // CANONICAL FAILURE STATE: Retryable failure keeps current_step = 1
-  // Failure ≠ terminal. Terminal is only successful completion (current_step = 10).
-  // This allows users to retry the step without workflow regression.
-  const { error: updateError } = await supabase
-    .from('intent_workflows')
-    .update({
-      status: 'failed',
-      current_step: 1,  // Keep at step 1 for retry, not terminal
-      step_1_icp_error_message: error.message,
-      retry_count: retryCount,
-      step_1_icp_last_error_message: lastErrorMessage || error.message,
-      workflow_data: {
-        icp_generation_error: {
-          message: error.message,
-          timestamp: new Date().toISOString(),
-          retryCount,
-          lastErrorMessage
-        }
-      }
-    })
-    .eq('id', workflowId)
-    .eq('organization_id', organizationId)
-
-  if (updateError) {
-    console.error(`Failed to update workflow error status: ${updateError.message}`)
-  }
-
-  console.log(`[ICPGenerator] ICP generation failure recorded for workflow ${workflowId}`)
+  // Zero-legacy FSM: No DB mutation.
+  // User remains in step_1_icp for retry.
+  // State transitions handled only by advanceWorkflow().
 }
 
 /**

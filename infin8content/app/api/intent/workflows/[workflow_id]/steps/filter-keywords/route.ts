@@ -18,6 +18,8 @@ import {
   type FilterResult
 } from '@/lib/services/intent-engine/keyword-filter'
 import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
+import { advanceWorkflow } from '@/lib/services/workflow/advanceWorkflow'
+import { WorkflowState } from '@/types/workflow-state'
 
 export async function POST(
   request: NextRequest,
@@ -51,7 +53,7 @@ export async function POST(
     const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id, current_step')
+      .select('id, state, organization_id')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
       .single()
@@ -63,12 +65,12 @@ export async function POST(
       )
     }
 
-    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 5 when current_step = 5
-    if ((workflow as any).current_step !== 5) {
+    // FSM GUARD: Only allow step 5 when state = step_5_filtering
+    if ((workflow as any).state !== 'step_5_filtering') {
       return NextResponse.json(
         { 
-          error: 'INVALID_STEP_ORDER',
-          message: `Workflow must be at step 5 (keyword filtering), currently at step ${(workflow as any).current_step}`
+          error: 'INVALID_STATE',
+          message: `Workflow must be in step_5_filtering. Current state: ${(workflow as any).state}`
         },
         { status: 400 }
       )
@@ -100,20 +102,25 @@ export async function POST(
     // Race between filtering and timeout
     const filterResult = await Promise.race([filterPromise, timeoutPromise]) as FilterResult
 
-    // Update workflow status to step_5_filtering
+    // Update workflow metadata
     const { error: updateError } = await supabase
       .from('intent_workflows')
       .update({
-        status: 'step_5_filtering',
-        current_step: 6,  // Advance to Step 6
-        step_5_filtering_completed_at: new Date().toISOString(),
         filtered_keywords_count: filterResult.filtered_keywords_count
       })
       .eq('id', workflowId)
 
     if (updateError) {
-      throw new Error(`Failed to update workflow status: ${updateError.message}`)
+      throw new Error(`Failed to update workflow metadata: ${updateError.message}`)
     }
+
+    // Advance workflow state to step_6_clustering
+    await advanceWorkflow({
+      workflowId,
+      organizationId,
+      expectedState: WorkflowState.step_5_filtering,
+      nextState: WorkflowState.step_6_clustering
+    })
 
     // Log completion of keyword filtering
     await logActionAsync({
