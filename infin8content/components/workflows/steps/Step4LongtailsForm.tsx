@@ -23,7 +23,7 @@ export function Step4LongtailsForm({ workflowId }: Step4LongtailsFormProps) {
       })
 
       const res = await fetch(
-        `/api/intent/workflows/${workflowId}/longtail-expand`,
+        `/api/intent/workflows/${workflowId}/steps/longtail-expand`,
         { method: 'POST' }
       )
 
