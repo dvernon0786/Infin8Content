@@ -463,20 +463,15 @@ export async function storeICPGenerationResult(
     throw new Error('Failed to record usage')
   }
 
-  // 2️⃣ Store ICP data in dedicated table (upsert for idempotency)
+  // 2️⃣ Store ICP data directly on workflow (fast + stable)
   const { error: icpError } = await supabase
-    .from('workflow_icp_data')
-    .upsert({
-      workflow_id: workflowId,
-      organization_id: organizationId,
-      industries: icpResult.icp_data.industries,
-      buyer_roles: icpResult.icp_data.buyerRoles,
-      pain_points: icpResult.icp_data.painPoints,
-      value_proposition: icpResult.icp_data.valueProposition,
-      generated_at: icpResult.generatedAt
-    }, {
-      onConflict: 'workflow_id'
+    .from('intent_workflows')
+    .update({
+      icp_data: icpResult.icp_data,
+      step_1_icp_completed_at: new Date().toISOString()
     })
+    .eq('id', workflowId)
+    .eq('organization_id', organizationId)
 
   if (icpError) {
     console.error('Failed to store ICP data:', icpError)
