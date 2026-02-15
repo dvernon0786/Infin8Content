@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import KeywordReviewPage from './KeywordReviewPage'
 
@@ -9,6 +10,7 @@ interface Step3SeedsFormProps {
 }
 
 export function Step3SeedsForm({ workflowId }: Step3SeedsFormProps) {
+  const router = useRouter()
   const [keywords, setKeywords] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -71,7 +73,7 @@ export function Step3SeedsForm({ workflowId }: Step3SeedsFormProps) {
       }
 
       // Redirect to next step or show success
-      window.location.href = `/workflows/${workflowId}?step=4`
+      router.push(`/workflows/${workflowId}/steps/4`)
     } catch (err: any) {
       setError(err.message)
     }
