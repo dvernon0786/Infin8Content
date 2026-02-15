@@ -478,7 +478,7 @@ export async function storeICPGenerationResult(
     throw new Error('Failed to store ICP data')
   }
 
-  // 3️⃣ Advance workflow state (can fail with 409 - that's ok)
+  // 3️⃣ Advance workflow state
   try {
     await advanceWorkflow({
       workflowId,
@@ -488,15 +488,8 @@ export async function storeICPGenerationResult(
     })
   } catch (error: any) {
     if (error instanceof WorkflowTransitionError) {
-      // If workflow already moved forward, this is safe (race condition)
-      if (error.message.includes('not in expected state')) {
-        console.log(
-          `[ICPGenerator] Workflow already advanced (race safe): ${error.message}` 
-        )
-        return
-      }
-
-      // Any other transition error is a real bug - crash loudly
+      // This is a real state error - don't silence it
+      console.error(`[ICPGenerator] Workflow transition failed: ${error.message}`)
       throw error
     }
     throw error

@@ -167,7 +167,7 @@ export async function POST(request: Request) {
       name: name.trim(),
       organization_id: targetOrgId,
       created_by: currentUser.id,
-      status: 'step_0_auth' as IntentWorkflowStatus,
+      state: 'step_1_icp', // Start directly in step_1_icp for clean linear progression
       workflow_data: {}
     }
 
