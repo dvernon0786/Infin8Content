@@ -12,7 +12,7 @@ export interface IntentWorkflow {
   id: string
   organization_id: string
   name: string
-  status: WorkflowState
+  state: WorkflowState
   current_step: number
   created_at: string
   created_by: string
@@ -31,7 +31,7 @@ export interface CreateIntentWorkflowResponse {
   id: string
   name: string
   organization_id: string
-  status: IntentWorkflowStatus
+  state: WorkflowState
   created_at: string
 }
 
