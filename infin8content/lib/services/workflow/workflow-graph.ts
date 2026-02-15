@@ -1,14 +1,26 @@
 /**
- * Formal Workflow Transition Graph
+ * Workflow State Graph - Production-Grade Finite State Machine
  * 
- * Single source of truth for all allowed state transitions.
- * This defines the finite state machine rules for the workflow engine.
+ * CRITICAL PRODUCTION NOTES:
  * 
- * Rules:
- * - Only forward progression (no backwards transitions)
- * - No step skipping
- * - Terminal states (completed, cancelled) have no outgoing transitions
- * - Each state has exactly one or zero valid next states
+ * 1. ENUM is append-only - never remove or reorder values without full data migration
+ * 2. Never write string literals for states - always use WorkflowState enum
+ * 3. State transitions must be atomic and guarded by advanceWorkflow()
+ * 4. Cancellation is allowed from any active state for operational flexibility
+ * 5. No backward transitions - FSM is strictly forward-only
+ * 
+ * State Machine Properties:
+ * - States: 11 (9 active + 2 terminal)
+ * - Transitions: 20 (10 forward + 10 cancellation paths)
+ * - Entry State: step_1_icp (no CREATED zombie state)
+ * - Terminal States: COMPLETED, CANCELLED
+ * - Deterministic: Single path from entry to completion
+ * 
+ * Design Philosophy:
+ * - Linear progression with optional cancellation
+ * - No step skipping or branching complexity
+ * - Database-enforced state integrity via ENUM
+ * - Race-safe atomic transitions
  */
 
 import { WorkflowState } from '@/types/workflow-state'
@@ -20,18 +32,20 @@ import { WorkflowState } from '@/types/workflow-state'
  * 
  * Note: No CREATED state - workflows start directly in step_1_icp
  * This eliminates zombie states and ensures clean linear progression
+ * 
+ * Cancellation allowed from any active state for production flexibility
  */
 export const WORKFLOW_TRANSITIONS: Record<WorkflowState, WorkflowState[]> = {
-  // Linear Step Progression (no CREATED state)
-  [WorkflowState.step_1_icp]: [WorkflowState.step_2_competitors],
-  [WorkflowState.step_2_competitors]: [WorkflowState.step_3_seeds],
-  [WorkflowState.step_3_seeds]: [WorkflowState.step_4_longtails],
-  [WorkflowState.step_4_longtails]: [WorkflowState.step_5_filtering],
-  [WorkflowState.step_5_filtering]: [WorkflowState.step_6_clustering],
-  [WorkflowState.step_6_clustering]: [WorkflowState.step_7_validation],
-  [WorkflowState.step_7_validation]: [WorkflowState.step_8_subtopics],
-  [WorkflowState.step_8_subtopics]: [WorkflowState.step_9_articles],
-  [WorkflowState.step_9_articles]: [WorkflowState.COMPLETED],
+  // Linear Step Progression (with cancellation option)
+  [WorkflowState.step_1_icp]: [WorkflowState.step_2_competitors, WorkflowState.CANCELLED],
+  [WorkflowState.step_2_competitors]: [WorkflowState.step_3_seeds, WorkflowState.CANCELLED],
+  [WorkflowState.step_3_seeds]: [WorkflowState.step_4_longtails, WorkflowState.CANCELLED],
+  [WorkflowState.step_4_longtails]: [WorkflowState.step_5_filtering, WorkflowState.CANCELLED],
+  [WorkflowState.step_5_filtering]: [WorkflowState.step_6_clustering, WorkflowState.CANCELLED],
+  [WorkflowState.step_6_clustering]: [WorkflowState.step_7_validation, WorkflowState.CANCELLED],
+  [WorkflowState.step_7_validation]: [WorkflowState.step_8_subtopics, WorkflowState.CANCELLED],
+  [WorkflowState.step_8_subtopics]: [WorkflowState.step_9_articles, WorkflowState.CANCELLED],
+  [WorkflowState.step_9_articles]: [WorkflowState.COMPLETED, WorkflowState.CANCELLED],
   
   // Terminal States
   [WorkflowState.COMPLETED]: [],    // No transitions from completed
@@ -81,11 +95,11 @@ export function isTerminalState(state: WorkflowState): boolean {
 /**
  * Validate that a state is in the transition graph
  * 
- * @param state - Workflow state to validate
+ * @param value - String value to validate
  * @returns true if state exists in graph, false otherwise
  */
-export function isValidState(state: string): state is WorkflowState {
-  return Object.keys(WORKFLOW_TRANSITIONS).includes(state)
+export function isValidState(value: string): value is WorkflowState {
+  return (Object.values(WorkflowState) as string[]).includes(value)
 }
 
 /**

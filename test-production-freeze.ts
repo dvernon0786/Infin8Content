@@ -28,8 +28,8 @@ async function runProductionFreezeTests() {
     const testAudit = {
       workflow_id: 'test-id',
       organization_id: 'test-org',
-      previous_state: WorkflowState.CREATED,
-      new_state: WorkflowState.ICP_PENDING,
+      previous_state: WorkflowState.step_1_icp,
+      new_state: WorkflowState.step_2_competitors,
       transition_reason: 'test',
       transitioned_at: new Date().toISOString()
     }
@@ -57,8 +57,8 @@ async function runProductionFreezeTests() {
   try {
     const { isLegalTransition } = await import('./infin8content/types/workflow-state')
     
-    const legalTest = isLegalTransition(WorkflowState.CREATED, WorkflowState.ICP_PENDING)
-    const illegalTest = isLegalTransition(WorkflowState.CREATED, WorkflowState.COMPLETED)
+    const legalTest = isLegalTransition(WorkflowState.step_1_icp, WorkflowState.step_2_competitors)
+    const illegalTest = isLegalTransition(WorkflowState.step_1_icp, WorkflowState.COMPLETED)
     
     console.log(`${legalTest ? '✅' : '❌'} Legal transition recognized: ${legalTest}`)
     console.log(`${!illegalTest ? '✅' : '❌'} Illegal transition rejected: ${!illegalTest}`)
