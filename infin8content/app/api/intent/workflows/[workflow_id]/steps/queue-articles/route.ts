@@ -9,6 +9,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { advanceWorkflow, WorkflowTransitionError } from '@/lib/services/workflow/advanceWorkflow'
+import { WorkflowState } from '@/types/workflow-state'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import {
@@ -58,7 +60,7 @@ export async function POST(
       .select('id, state, organization_id')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single()
+      .single() as { data: { id: string; state: WorkflowState; organization_id: string } | null, error: any }
 
     if (workflowError || !workflow) {
       return NextResponse.json(
@@ -67,15 +69,12 @@ export async function POST(
       )
     }
 
-    // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string; current_step: number }
-
-    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 9 when current_step = 9
-    if (typedWorkflow.current_step !== 9) {
+    // FSM GUARD: Only allow article queuing when in step_8_subtopics state
+    if (workflow.state !== WorkflowState.step_8_subtopics) {
       return NextResponse.json(
         {
-          error: 'INVALID_STEP_ORDER',
-          message: `Workflow must be at step 9 (article queuing), currently at step ${typedWorkflow.current_step}`
+          error: 'INVALID_STATE',
+          message: `Workflow must be in step_8_subtopics state. Current state: ${workflow.state}` 
         },
         { status: 400 }
       )
@@ -89,7 +88,7 @@ export async function POST(
         action: AuditAction.WORKFLOW_ARTICLE_QUEUING_STARTED,
         details: {
           workflow_id: workflowId,
-          workflow_status: typedWorkflow.status
+          current_state: workflow.state
         },
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
@@ -108,14 +107,14 @@ export async function POST(
 
     console.log(`[QueueArticles] Completed queuing in ${duration}ms`)
 
-    // QUEUE LAYER: Only responsible for queuing articles at step 9
+    // QUEUE LAYER: Only responsible for queuing articles at step 8
     // Terminal completion is driven by the article generation pipeline, not here
     // Verify articles were successfully queued
     if (queueingResult.articles_created === 0) {
       return NextResponse.json(
         {
           error: 'NO_ARTICLES_QUEUED',
-          message: 'Cannot proceed with step 9 - no articles were queued for generation'
+          message: 'Cannot proceed with step 8 - no articles were queued for generation'
         },
         { status: 400 }
       )
@@ -129,6 +128,25 @@ export async function POST(
         },
         { status: 500 }
       )
+    }
+
+    // Advance workflow state - ONLY mutation point
+    try {
+      await advanceWorkflow({
+        workflowId,
+        organizationId,
+        expectedState: WorkflowState.step_8_subtopics,
+        nextState: WorkflowState.step_9_articles
+      })
+    } catch (error: any) {
+      if (error instanceof WorkflowTransitionError) {
+        console.error(`[QueueArticles] Workflow transition failed: ${error.message}`)
+        return NextResponse.json(
+          { error: 'Workflow transition failed', details: error.message },
+          { status: 409 }
+        )
+      }
+      throw error
     }
 
     // Log completion
@@ -152,18 +170,18 @@ export async function POST(
     }
 
     // Return success response
-    return NextResponse.json(
-      {
-        success: true,
-        workflow_id: workflowId,
-        workflow_status: 'step_9_articles',
-        articles_created: queueingResult.articles_created,
-        articles: queueingResult.articles,
-        errors: queueingResult.errors,
-        duration_ms: duration
-      },
-      { status: 200 }
-    )
+    return NextResponse.json({
+      success: true,
+      workflow_id: workflowId,
+      previous_state: WorkflowState.step_8_subtopics,
+      new_state: WorkflowState.step_9_articles,
+      articles_created: queueingResult.articles_created,
+      articles: queueingResult.articles,
+      errors: queueingResult.errors,
+      duration_ms: duration
+    },
+    { status: 200 }
+  )
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     console.error(`[QueueArticles] Error: ${errorMessage}`)

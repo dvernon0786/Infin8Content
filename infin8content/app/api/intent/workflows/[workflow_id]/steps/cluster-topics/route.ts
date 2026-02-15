@@ -9,6 +9,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { advanceWorkflow, WorkflowTransitionError } from '@/lib/services/workflow/advanceWorkflow'
+import { WorkflowState } from '@/types/workflow-state'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
@@ -47,10 +49,10 @@ export async function POST(
     const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, state, organization_id') // Use unified state instead of legacy status/current_step
+      .select('id, state, organization_id')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single()
+      .single() as { data: { id: string; state: WorkflowState; organization_id: string } | null, error: any }
 
     if (workflowError || !workflow) {
       return NextResponse.json(
@@ -59,15 +61,12 @@ export async function POST(
       )
     }
 
-    // Type guard: ensure workflow is properly typed
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string; current_step: number }
-
-    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 6 when current_step = 6
-    if (typedWorkflow.current_step !== 6) {
+    // FSM GUARD: Only allow topic clustering when in step_6_clustering state
+    if (workflow.state !== WorkflowState.step_6_clustering) {
       return NextResponse.json(
-        { 
-          error: 'INVALID_STEP_ORDER',
-          message: `Workflow must be at step 6 (topic clustering), currently at step ${typedWorkflow.current_step}`
+        {
+          error: 'INVALID_STATE',
+          message: `Workflow must be in step_6_clustering state. Current state: ${workflow.state}` 
         },
         { status: 400 }
       )
@@ -80,7 +79,7 @@ export async function POST(
       action: AuditAction.WORKFLOW_TOPIC_CLUSTERING_STARTED,
       details: {
         workflow_id: workflowId,
-        current_status: typedWorkflow.status
+        current_state: workflow.state
       },
       ipAddress: extractIpAddress(request.headers),
       userAgent: extractUserAgent(request.headers),
@@ -150,29 +149,23 @@ export async function POST(
       )
     }
 
-    // Update workflow status to step_6_clustering
-    const { error: updateError } = await supabase
-      .from('intent_workflows')
-      .update({
-        status: 'step_6_clustering',
-        current_step: 7,  // Advance to Step 7
-        step_6_clustering_completed_at: new Date().toISOString(),
-        cluster_count: clusterResult.cluster_count,
-        keywords_clustered: clusterResult.keywords_clustered
+    // Advance workflow state - ONLY mutation point
+    try {
+      await advanceWorkflow({
+        workflowId,
+        organizationId,
+        expectedState: WorkflowState.step_6_clustering,
+        nextState: WorkflowState.step_7_validation
       })
-      .eq('id', workflowId)
-      .eq('organization_id', organizationId)  // CRITICAL: Add tenant isolation
-
-    if (updateError) {
-      console.error('Failed to update workflow status:', updateError)
-      return NextResponse.json(
-        {
-          error: 'Failed to update workflow status',
-          message: 'Clustering completed but workflow state could not be updated.',
-          code: 'WORKFLOW_UPDATE_FAILED'
-        },
-        { status: 500 }
-      )
+    } catch (error: any) {
+      if (error instanceof WorkflowTransitionError) {
+        console.error(`[ClusterTopics] Workflow transition failed: ${error.message}`)
+        return NextResponse.json(
+          { error: 'Workflow transition failed', details: error.message },
+          { status: 409 }
+        )
+      }
+      throw error
     }
 
     // Log completion audit action
@@ -192,8 +185,10 @@ export async function POST(
 
     // Return success response
     return NextResponse.json({
+      success: true,
       workflow_id: workflowId,
-      status: 'step_6_clustering',
+      previous_state: WorkflowState.step_6_clustering,
+      new_state: WorkflowState.step_7_validation,
       cluster_count: clusterResult.cluster_count,
       keywords_clustered: clusterResult.keywords_clustered,
       avg_cluster_size: clusterResult.avg_cluster_size,

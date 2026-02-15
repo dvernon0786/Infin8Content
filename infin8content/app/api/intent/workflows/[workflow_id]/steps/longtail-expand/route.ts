@@ -9,8 +9,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { advanceWorkflow, WorkflowTransitionError } from '@/lib/services/workflow/advanceWorkflow'
+import { WorkflowState } from '@/types/workflow-state'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
-import { logIntentActionAsync } from '@/lib/services/intent-engine/intent-audit-logger'
 import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import {
@@ -57,10 +58,10 @@ export async function POST(
     const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, state, organization_id') // Use unified state instead of legacy status/current_step
+      .select('id, state, organization_id')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single()
+      .single() as { data: { id: string; state: WorkflowState; organization_id: string } | null, error: any }
 
     if (workflowError || !workflow) {
       return NextResponse.json(
@@ -69,15 +70,12 @@ export async function POST(
       )
     }
 
-    // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string; current_step: number }
-
-    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 4 when current_step = 4
-    if (typedWorkflow.current_step !== 4) {
+    // FSM GUARD: Only allow longtail expansion when in step_4_longtails state
+    if (workflow.state !== WorkflowState.step_4_longtails) {
       return NextResponse.json(
         {
-          error: 'INVALID_STEP_ORDER',
-          message: `Workflow must be at step 4 (longtail expansion), currently at step ${typedWorkflow.current_step}`
+          error: 'INVALID_STATE',
+          message: `Workflow must be in step_4_longtails state. Current state: ${workflow.state}` 
         },
         { status: 400 }
       )
@@ -91,7 +89,7 @@ export async function POST(
         action: AuditAction.WORKFLOW_LONGTAIL_KEYWORDS_STARTED,
         details: {
           workflow_id: workflowId,
-          workflow_status: typedWorkflow.status
+          current_state: workflow.state
         },
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
@@ -116,6 +114,25 @@ export async function POST(
       // Don't fail the request, but log the warning
     }
 
+    // Advance workflow state - ONLY mutation point
+    try {
+      await advanceWorkflow({
+        workflowId,
+        organizationId,
+        expectedState: WorkflowState.step_4_longtails,
+        nextState: WorkflowState.step_5_filtering
+      })
+    } catch (error: any) {
+      if (error instanceof WorkflowTransitionError) {
+        console.error(`[LongtailExpand] Workflow transition failed: ${error.message}`)
+        return NextResponse.json(
+          { error: 'Workflow transition failed', details: error.message },
+          { status: 409 }
+        )
+      }
+      throw error
+    }
+
     // Log completion
     try {
       await logActionAsync({
@@ -136,29 +153,6 @@ export async function POST(
       // Continue anyway - logging is non-blocking
     }
 
-    // Log Intent audit trail entry (Story 37.4)
-    try {
-      logIntentActionAsync({
-        organizationId,
-        workflowId,
-        entityType: 'workflow',
-        entityId: workflowId,
-        actorId: userId,
-        action: AuditAction.WORKFLOW_STEP_COMPLETED,
-        details: {
-          step: 'step_4_longtails',
-          seeds_processed: expansionResult.seeds_processed,
-          longtails_created: expansionResult.total_longtails_created,
-          duration_ms: duration,
-        },
-        ipAddress: extractIpAddress(request.headers),
-        userAgent: extractUserAgent(request.headers),
-      })
-    } catch (intentLogError) {
-      console.error('Failed to log intent audit entry:', intentLogError)
-      // Continue anyway - logging is non-blocking
-    }
-
     // Emit analytics event
     emitAnalyticsEvent({
       event_type: 'longtail_expansion_completed',
@@ -174,10 +168,12 @@ export async function POST(
     // Return success response
     return NextResponse.json({
       success: true,
+      workflow_id: workflowId,
+      previous_state: WorkflowState.step_4_longtails,
+      new_state: WorkflowState.step_5_filtering,
       data: {
         seeds_processed: expansionResult.seeds_processed,
-        longtails_created: expansionResult.total_longtails_created,
-        step_4_longtails_completed_at: expansionResult.step_4_longtails_completed_at
+        longtails_created: expansionResult.total_longtails_created
       }
     })
 

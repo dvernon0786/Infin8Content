@@ -9,6 +9,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { advanceWorkflow, WorkflowTransitionError } from '@/lib/services/workflow/advanceWorkflow'
+import { WorkflowState } from '@/types/workflow-state'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import { ClusterValidator } from '@/lib/services/intent-engine/cluster-validator'
@@ -55,10 +57,10 @@ export async function POST(
     const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, state, organization_id') // Use unified state instead of legacy status/current_step
+      .select('id, state, organization_id')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single()
+      .single() as { data: { id: string; state: WorkflowState; organization_id: string } | null, error: any }
 
     if (workflowError || !workflow) {
       return NextResponse.json(
@@ -67,15 +69,12 @@ export async function POST(
       )
     }
 
-    // Type guard: ensure workflow is properly typed
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string; current_step: number }
-
-    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 7 when current_step = 7
-    if (typedWorkflow.current_step !== 7) {
+    // FSM GUARD: Only allow cluster validation when in step_7_validation state
+    if (workflow.state !== WorkflowState.step_7_validation) {
       return NextResponse.json(
-        { 
-          error: 'INVALID_STEP_ORDER',
-          message: `Workflow must be at step 7 (cluster validation), currently at step ${typedWorkflow.current_step}`
+        {
+          error: 'INVALID_STATE',
+          message: `Workflow must be in step_7_validation state. Current state: ${workflow.state}` 
         },
         { status: 400 }
       )
@@ -88,7 +87,7 @@ export async function POST(
       action: AuditAction.WORKFLOW_CLUSTER_VALIDATION_STARTED,
       details: {
         workflow_id: workflowId,
-        current_status: typedWorkflow.status
+        current_state: workflow.state
       },
       ipAddress: extractIpAddress(request.headers),
       userAgent: extractUserAgent(request.headers),
@@ -168,21 +167,23 @@ export async function POST(
       }
     }
 
-    // Update workflow status to step_7_validation
-    const { error: updateError } = await supabase
-      .from('intent_workflows')
-      .update({
-        status: 'step_7_validation',
-        current_step: 8,  // Advance to Step 8
-        step_7_validation_completed_at: new Date().toISOString(),
-        valid_cluster_count: validationSummary.valid_clusters,
-        invalid_cluster_count: validationSummary.invalid_clusters
+    // Advance workflow state - ONLY mutation point
+    try {
+      await advanceWorkflow({
+        workflowId,
+        organizationId,
+        expectedState: WorkflowState.step_7_validation,
+        nextState: WorkflowState.step_8_subtopics
       })
-      .eq('id', workflowId)
-
-    if (updateError) {
-      console.error('Failed to update workflow status:', updateError)
-      // Don't fail the request, but log the error
+    } catch (error: any) {
+      if (error instanceof WorkflowTransitionError) {
+        console.error(`[ValidateClusters] Workflow transition failed: ${error.message}`)
+        return NextResponse.json(
+          { error: 'Workflow transition failed', details: error.message },
+          { status: 409 }
+        )
+      }
+      throw error
     }
 
     // Log completion audit action
@@ -202,8 +203,10 @@ export async function POST(
 
     // Return success response
     return NextResponse.json({
+      success: true,
       workflow_id: workflowId,
-      status: 'step_7_validation',
+      previous_state: WorkflowState.step_7_validation,
+      new_state: WorkflowState.step_8_subtopics,
       total_clusters: validationSummary.total_clusters,
       valid_clusters: validationSummary.valid_clusters,
       invalid_clusters: validationSummary.invalid_clusters,
@@ -226,17 +229,6 @@ export async function POST(
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
       })
-    }
-
-    // Update workflow with error state
-    if (workflowId) {
-      const supabase = createServiceRoleClient()
-      await supabase
-        .from('intent_workflows')
-        .update({
-          step_7_validation_error_message: error instanceof Error ? error.message : 'Unknown error'
-        })
-        .eq('id', workflowId)
     }
 
     // Return appropriate error response

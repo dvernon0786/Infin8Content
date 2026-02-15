@@ -9,6 +9,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { advanceWorkflow, WorkflowTransitionError } from '@/lib/services/workflow/advanceWorkflow'
+import { WorkflowState } from '@/types/workflow-state'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
@@ -51,10 +53,10 @@ export async function POST(
     const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, state, organization_id') // Use unified state instead of legacy status/current_step
+      .select('id, state, organization_id')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single()
+      .single() as { data: { id: string; state: WorkflowState; organization_id: string } | null, error: any }
 
     if (workflowError || !workflow) {
       return NextResponse.json(
@@ -63,12 +65,12 @@ export async function POST(
       )
     }
 
-    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 5 when current_step = 5
-    if ((workflow as any).current_step !== 5) {
+    // FSM GUARD: Only allow keyword filtering when in step_5_filtering state
+    if (workflow.state !== WorkflowState.step_5_filtering) {
       return NextResponse.json(
-        { 
-          error: 'INVALID_STEP_ORDER',
-          message: `Workflow must be at step 5 (keyword filtering), currently at step ${(workflow as any).current_step}`
+        {
+          error: 'INVALID_STATE',
+          message: `Workflow must be in step_5_filtering state. Current state: ${workflow.state}` 
         },
         { status: 400 }
       )
@@ -100,19 +102,23 @@ export async function POST(
     // Race between filtering and timeout
     const filterResult = await Promise.race([filterPromise, timeoutPromise]) as FilterResult
 
-    // Update workflow status to step_5_filtering
-    const { error: updateError } = await supabase
-      .from('intent_workflows')
-      .update({
-        status: 'step_5_filtering',
-        current_step: 6,  // Advance to Step 6
-        step_5_filtering_completed_at: new Date().toISOString(),
-        filtered_keywords_count: filterResult.filtered_keywords_count
+    // Advance workflow state - ONLY mutation point
+    try {
+      await advanceWorkflow({
+        workflowId,
+        organizationId,
+        expectedState: WorkflowState.step_5_filtering,
+        nextState: WorkflowState.step_6_clustering
       })
-      .eq('id', workflowId)
-
-    if (updateError) {
-      throw new Error(`Failed to update workflow status: ${updateError.message}`)
+    } catch (error: any) {
+      if (error instanceof WorkflowTransitionError) {
+        console.error(`[FilterKeywords] Workflow transition failed: ${error.message}`)
+        return NextResponse.json(
+          { error: 'Workflow transition failed', details: error.message },
+          { status: 409 }
+        )
+      }
+      throw error
     }
 
     // Log completion of keyword filtering
@@ -142,9 +148,10 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
+      workflow_id: workflowId,
+      previous_state: WorkflowState.step_5_filtering,
+      new_state: WorkflowState.step_6_clustering,
       data: {
-        workflow_id: workflowId,
-        status: 'step_5_filtering',
         filter_result: filterResult
       }
     })

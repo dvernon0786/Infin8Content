@@ -9,6 +9,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { advanceWorkflow, WorkflowTransitionError } from '@/lib/services/workflow/advanceWorkflow'
+import { WorkflowState } from '@/types/workflow-state'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import {
@@ -52,10 +54,10 @@ export async function POST(
     const supabase = await createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, state, organization_id') // Use unified state instead of legacy status
+      .select('id, state, organization_id')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single()
+      .single() as { data: { id: string; state: WorkflowState; organization_id: string } | null, error: any }
 
     if (workflowError || !workflow) {
       return NextResponse.json(
@@ -64,15 +66,12 @@ export async function POST(
       )
     }
 
-    // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string }
-
-    // Check if workflow is in correct state for article linking
-    if (typedWorkflow.status !== 'step_9_articles') {
+    // FSM GUARD: Only allow article linking when in step_9_articles state
+    if (workflow.state !== WorkflowState.step_9_articles) {
       return NextResponse.json(
         {
-          error: 'Invalid workflow state',
-          message: `Workflow must be in step_9_articles state, currently in ${typedWorkflow.status}`
+          error: 'INVALID_STATE',
+          message: `Workflow must be in step_9_articles state. Current state: ${workflow.state}` 
         },
         { status: 400 }
       )
@@ -86,7 +85,7 @@ export async function POST(
         action: AuditAction.WORKFLOW_ARTICLES_LINKING_STARTED,
         details: {
           workflow_id: workflowId,
-          workflow_status: typedWorkflow.status
+          current_state: workflow.state
         },
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
@@ -104,6 +103,25 @@ export async function POST(
     const duration = Date.now() - startTime
 
     console.log(`[LinkArticles] Completed linking in ${duration}ms`)
+
+    // Advance workflow state - ONLY mutation point
+    try {
+      await advanceWorkflow({
+        workflowId,
+        organizationId,
+        expectedState: WorkflowState.step_9_articles,
+        nextState: WorkflowState.COMPLETED
+      })
+    } catch (error: any) {
+      if (error instanceof WorkflowTransitionError) {
+        console.error(`[LinkArticles] Workflow transition failed: ${error.message}`)
+        return NextResponse.json(
+          { error: 'Workflow transition failed', details: error.message },
+          { status: 409 }
+        )
+      }
+      throw error
+    }
 
     // Log completion
     try {
@@ -130,6 +148,9 @@ export async function POST(
     // Return success response
     return NextResponse.json({
       success: true,
+      workflow_id: workflowId,
+      previous_state: WorkflowState.step_9_articles,
+      new_state: WorkflowState.COMPLETED,
       data: linkingResult
     })
 
