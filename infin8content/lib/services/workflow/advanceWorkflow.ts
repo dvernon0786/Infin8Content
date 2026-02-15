@@ -11,7 +11,12 @@
  */
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
-import { WorkflowState, isLegalTransition } from '@/types/workflow-state'
+import { WorkflowState } from '@/types/workflow-state'
+import { 
+  WORKFLOW_TRANSITIONS, 
+  isLegalTransition as isGraphLegalTransition,
+  isTerminalState 
+} from '@/lib/services/workflow/workflow-graph'
 
 interface AdvanceWorkflowParams {
   workflowId: string
@@ -39,10 +44,20 @@ export async function advanceWorkflow({
   nextState
 }: AdvanceWorkflowParams): Promise<void> {
 
-  // 1️⃣ Enforce legal transition
-  if (!isLegalTransition(expectedState, nextState)) {
+  // 1️⃣ Enforce legal transition using formal graph
+  if (!isGraphLegalTransition(expectedState, nextState)) {
     throw new WorkflowTransitionError(
-      `Illegal transition attempted: ${expectedState} → ${nextState}`,
+      `Illegal transition attempted: ${expectedState} → ${nextState}. Allowed transitions from ${expectedState}: [${WORKFLOW_TRANSITIONS[expectedState]?.join(', ') || 'none'}]`,
+      expectedState,
+      undefined,
+      nextState
+    )
+  }
+
+  // 2️⃣ Prevent transitions from terminal states
+  if (isTerminalState(expectedState)) {
+    throw new WorkflowTransitionError(
+      `Cannot transition from terminal state: ${expectedState}`,
       expectedState,
       undefined,
       nextState
