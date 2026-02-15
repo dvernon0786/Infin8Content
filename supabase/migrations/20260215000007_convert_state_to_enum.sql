@@ -1,11 +1,35 @@
--- Safe workflow state column conversion to ENUM type
--- This migration handles existing data safely and provides rollback capability
+-- Clean ENUM conversion - Step by step approach
+-- This handles the type conversion properly without casting issues
 
--- Step 1: Create backup of existing states (for safety)
+-- Step 1: Create backup of existing states
 CREATE TABLE IF NOT EXISTS intent_workflows_state_backup AS 
-SELECT id, state FROM intent_workflows;
+SELECT id, state::text as original_state FROM intent_workflows;
 
--- Step 2: Update any invalid states to valid ones (data cleanup)
+-- Step 2: Verify ENUM type exists
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'workflow_state_enum') THEN
+    RAISE EXCEPTION 'workflow_state_enum type does not exist. Run the ENUM creation migration first.';
+  END IF;
+END $$;
+
+-- Step 3: Check current column type
+DO $$
+DECLARE
+  current_type TEXT;
+BEGIN
+  SELECT data_type INTO current_type
+  FROM information_schema.columns 
+  WHERE table_name = 'intent_workflows' AND column_name = 'state';
+  
+  RAISE NOTICE 'Current state column type: %', current_type;
+  
+  IF current_type != 'text' THEN
+    RAISE EXCEPTION 'State column is not TEXT type. Current type: %', current_type;
+  END IF;
+END $$;
+
+-- Step 4: Clean up any invalid data first
 UPDATE intent_workflows 
 SET state = 'CREATED' 
 WHERE state NOT IN (
@@ -15,38 +39,42 @@ WHERE state NOT IN (
   'step_7_validation', 'step_8_subtopics', 'step_9_articles'
 );
 
--- Step 3: Drop the default value to avoid casting issues
+-- Step 5: Drop default value
 ALTER TABLE intent_workflows ALTER COLUMN state DROP DEFAULT;
 
--- Step 4: Convert the existing text column to ENUM type
--- The USING clause safely casts existing text values to the new ENUM
+-- Step 6: Convert to ENUM using explicit cast
 ALTER TABLE intent_workflows
   ALTER COLUMN state TYPE workflow_state_enum
-  USING state::workflow_state_enum;
+  USING state::text::workflow_state_enum;
 
--- Step 5: Add a default value using the ENUM type
+-- Step 7: Set new default
 ALTER TABLE intent_workflows ALTER COLUMN state SET DEFAULT 'step_1_icp';
 
--- Step 6: Add check constraint to ensure state is always valid
+-- Step 8: Add constraint
 ALTER TABLE intent_workflows
-  ADD CONSTRAINT valid_workflow_state 
+  ADD CONSTRAINT IF NOT EXISTS valid_workflow_state 
   CHECK (state IS NOT NULL);
 
--- Step 7: Add comment for documentation
-COMMENT ON COLUMN intent_workflows.state IS 'Unified workflow state using strict ENUM type - single source of truth';
-
--- Step 8: Verify the conversion worked correctly
+-- Step 9: Verify conversion
 DO $$
 DECLARE
-  invalid_count INTEGER;
+  enum_count INTEGER;
+  text_count INTEGER;
 BEGIN
-  SELECT COUNT(*) INTO invalid_count
-  FROM intent_workflows 
-  WHERE state IS NULL;
+  -- Count total workflows
+  SELECT COUNT(*) INTO text_count
+  FROM intent_workflows;
   
-  IF invalid_count > 0 THEN
-    RAISE EXCEPTION 'Found % workflows with NULL state after conversion', invalid_count;
+  -- Count workflows with valid ENUM states
+  SELECT COUNT(*) INTO enum_count
+  FROM intent_workflows 
+  WHERE state IS NOT NULL;
+  
+  RAISE NOTICE 'Conversion verification: % total workflows, % with valid ENUM states', text_count, enum_count;
+  
+  IF enum_count != text_count THEN
+    RAISE EXCEPTION 'Conversion failed: % workflows have NULL states', text_count - enum_count;
   END IF;
   
-  RAISE NOTICE 'Successfully converted workflow state column to ENUM type';
+  RAISE NOTICE 'ENUM conversion completed successfully';
 END $$;
