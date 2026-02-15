@@ -37,7 +37,7 @@ export class WorkflowGateValidator {
       // Query workflow status
       let query = supabase
         .from('intent_workflows')
-        .select('id, status, organization_id')
+        .select('id, state, organization_id')
         .eq('id', workflowId)
       
       // Add organization isolation if provided

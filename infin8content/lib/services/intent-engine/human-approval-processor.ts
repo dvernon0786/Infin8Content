@@ -379,7 +379,7 @@ export async function isHumanApprovalRequired(workflowId: string): Promise<boole
 
   const workflowResult = await supabase
     .from('intent_workflows')
-    .select('status')
+    .select('state')
     .eq('id', workflowId)
     .single()
 
@@ -388,10 +388,10 @@ export async function isHumanApprovalRequired(workflowId: string): Promise<boole
   }
 
   const workflow = workflowResult.data as unknown as {
-    status: string
+    state: string
   }
 
-  return workflow.status === 'step_8_subtopics'
+  return workflow.state === 'step_8_subtopics'
 }
 
 /**
