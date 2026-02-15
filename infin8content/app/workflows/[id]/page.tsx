@@ -9,9 +9,12 @@ export default async function WorkflowRedirect({ params, searchParams }: PagePro
   const { id } = await params
   const { step } = await searchParams
   
-  // Default to step 1 if no step provided
-  const targetStep = step ?? '1'
+  // Parse and validate step - only allow 1-9
+  const parsedStep = parseInt(step ?? '1', 10)
+  const safeStep = Number.isNaN(parsedStep) || parsedStep < 1 || parsedStep > 9
+    ? 1
+    : parsedStep
   
   // Redirect to canonical folder-based routing
-  redirect(`/workflows/${id}/steps/${targetStep}`)
+  redirect(`/workflows/${id}/steps/${safeStep}`)
 }
