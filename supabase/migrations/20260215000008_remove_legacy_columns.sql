@@ -3,23 +3,55 @@
 -- This migration removes all legacy workflow columns after unified state implementation
 -- The codebase has been fully updated to use only the unified state column
 
--- Step 1: Verify no data will be lost
+-- Step 1: Verify no data will be lost (check only existing columns)
 DO $$
 DECLARE
   legacy_count INTEGER;
+  has_status BOOLEAN;
+  has_current_step BOOLEAN;
+  has_workflow_data BOOLEAN;
+  has_retry_count BOOLEAN;
 BEGIN
-  -- Check if any workflows still use legacy columns
-  SELECT COUNT(*) INTO legacy_count
-  FROM intent_workflows 
-  WHERE status IS NOT NULL 
-     OR current_step IS NOT NULL 
-     OR workflow_data IS NOT NULL
-     OR retry_count IS NOT NULL;
+  -- Check which legacy columns actually exist
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'intent_workflows' AND column_name = 'status'
+  ) INTO has_status;
   
-  IF legacy_count > 0 THEN
-    RAISE NOTICE 'Found % workflows with legacy column data - data will be lost', legacy_count;
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'intent_workflows' AND column_name = 'current_step'
+  ) INTO has_current_step;
+  
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'intent_workflows' AND column_name = 'workflow_data'
+  ) INTO has_workflow_data;
+  
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'intent_workflows' AND column_name = 'retry_count'
+  ) INTO has_retry_count;
+  
+  -- Build dynamic query to check existing legacy columns
+  IF has_status OR has_current_step OR has_workflow_data OR has_retry_count THEN
+    EXECUTE format('
+      SELECT COUNT(*) INTO legacy_count
+      FROM intent_workflows 
+      WHERE %s OR %s OR %s OR %s',
+      CASE WHEN has_status THEN 'status IS NOT NULL' ELSE 'FALSE' END,
+      CASE WHEN has_current_step THEN 'current_step IS NOT NULL' ELSE 'FALSE' END,
+      CASE WHEN has_workflow_data THEN 'workflow_data IS NOT NULL' ELSE 'FALSE' END,
+      CASE WHEN has_retry_count THEN 'retry_count IS NOT NULL' ELSE 'FALSE' END
+    );
+    
+    IF legacy_count > 0 THEN
+      RAISE NOTICE 'Found % workflows with legacy column data - data will be lost', legacy_count;
+    ELSE
+      RAISE NOTICE 'No legacy column data found - safe to proceed';
+    END IF;
   ELSE
-    RAISE NOTICE 'No legacy column data found - safe to proceed';
+    RAISE NOTICE 'No legacy columns found - schema already clean';
   END IF;
 END $$;
 
