@@ -12,9 +12,8 @@ export interface GateResult {
 
 export interface WorkflowData {
   id: string
-  status: string
+  state: string
   organization_id: string
-  step_1_icp_completed_at: string | null
 }
 
 export class ICPGateValidator {
@@ -26,40 +25,14 @@ export class ICPGateValidator {
   async validateICPCompletion(workflowId: string): Promise<GateResult> {
     try {
       const supabase = createServiceRoleClient()
-      
-      // Query workflow status and ICP completion
+
       const { data: workflow, error } = await supabase
         .from('intent_workflows')
-        .select('id, status, organization_id, step_1_icp_completed_at')
+        .select('id, state, organization_id')
         .eq('id', workflowId)
         .single() as { data: WorkflowData | null, error: any }
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return {
-            allowed: false,
-            icpStatus: 'not_found',
-            workflowStatus: 'not_found',
-            error: 'Workflow not found',
-            errorResponse: {
-              error: 'Workflow not found',
-              workflowId,
-              requiredAction: 'Provide valid workflow ID'
-            }
-          }
-        }
-        
-        // Database errors - fail open for availability
-        console.error('Database error in ICP gate validation:', error)
-        return {
-          allowed: true,
-          icpStatus: 'error',
-          workflowStatus: 'error',
-          error: 'Database error - failing open for availability'
-        }
-      }
-
-      if (!workflow) {
+      if (error || !workflow) {
         return {
           allowed: false,
           icpStatus: 'not_found',
@@ -73,53 +46,36 @@ export class ICPGateValidator {
         }
       }
 
-      // Check if ICP is complete (status must be step_1_icp or later)
-      const icpCompleteStatuses = [
-        'step_1_icp',
-        'step_2_icp_complete',
-        'step_3_competitors',
-        'step_4_longtails',
-        'step_5_filtering',
-        'step_6_clustering',
-        'step_7_validation',
-        'step_8_subtopics',
-        'step_9_articles'
-      ]
-
-      const isICPComplete = icpCompleteStatuses.includes(workflow.status)
-
-      if (!isICPComplete) {
+      // FSM rule: ICP complete if state is NOT step_1_icp
+      if (workflow.state === 'step_1_icp') {
         return {
           allowed: false,
-          icpStatus: workflow.status,
-          workflowStatus: workflow.status,
-          error: `ICP completion required before ${workflow.status}`,
+          icpStatus: 'not_completed',
+          workflowStatus: workflow.state,
+          error: 'ICP must be completed before proceeding',
           errorResponse: {
-            error: `ICP completion required before ${workflow.status}`,
-            workflowStatus: workflow.status,
-            icpStatus: workflow.status,
-            requiredAction: 'Complete ICP generation (step 1) before proceeding',
-            currentStep: workflow.status,
+            error: 'ICP must be completed before proceeding',
+            workflowStatus: workflow.state,
+            requiredAction: 'Complete ICP generation first',
+            currentStep: 'icp-generate',
             blockedAt: new Date().toISOString()
           }
         }
       }
 
-      // ICP is complete - allow access
       return {
         allowed: true,
-        icpStatus: workflow.status,
-        workflowStatus: workflow.status
+        icpStatus: 'completed',
+        workflowStatus: workflow.state
       }
 
     } catch (error) {
-      console.error('Unexpected error in ICP gate validation:', error)
-      // Fail open for availability
+      console.error('ICP gate unexpected error:', error)
+
       return {
         allowed: true,
         icpStatus: 'error',
-        workflowStatus: 'error',
-        error: 'Unexpected error - failing open for availability'
+        workflowStatus: 'error'
       }
     }
   }
