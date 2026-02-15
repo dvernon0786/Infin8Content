@@ -32,13 +32,13 @@ export interface HumanApprovalRequest {
 export interface HumanApprovalResponse {
   success: boolean
   approval_id: string
-  workflow_status: string
+  workflow_state: WorkflowState
   message: string
 }
 
 export interface WorkflowSummary {
   workflow_id: string
-  status: string
+  state: WorkflowState
   organization_id: string
   created_at: string
   updated_at: string
@@ -116,18 +116,18 @@ export async function processHumanApproval(
 
   const workflow = workflowResult.data as unknown as {
     id: string
-    status: string
+    state: WorkflowState
     organization_id: string
     created_at: string
     updated_at: string
     icp_document: any
     competitor_analysis: any
-    current_step: number
+    state: WorkflowState
   }
 
   // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 8 when current_step = 8
-  if (workflow.current_step !== 8) {
-    throw new Error(`Workflow must be at step 8 (human approval), currently at step ${workflow.current_step}`)
+  if (workflow.state !== 'step_8_subtopics') {
+    throw new Error(`Workflow must be at step 8 (human approval), currently at state ${workflow.state}`)
   }
 
   // Validate user belongs to the same organization as the workflow
@@ -184,7 +184,7 @@ export async function processHumanApproval(
   // CANONICAL TRANSITION: Update current_step based on decision
   if (decision === 'approved') {
     // Approved: Advance to Step 9 (Article Generation)
-    updateData.current_step = 9
+    updateData.state = 'step_9_articles'
   } else if (decision === 'rejected' && reset_to_step) {
     // 
     // 🔁 REGRESSION EXCEPTION: Human approval can reset workflow
@@ -196,7 +196,7 @@ export async function processHumanApproval(
     // 
     // All other steps 1-7,9: No regression allowed
     //
-    updateData.current_step = reset_to_step
+    updateData.state = reset_to_state
   }
   
   const finalUpdateResult = await supabase
@@ -277,7 +277,7 @@ export async function getWorkflowSummary(workflowId: string): Promise<WorkflowSu
 
   const workflow = workflowResult.data as unknown as {
     id: string
-    status: string
+    state: WorkflowState
     organization_id: string
     created_at: string
     updated_at: string
