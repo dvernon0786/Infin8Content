@@ -50,10 +50,23 @@ ALTER TABLE intent_workflows
 -- Step 7: Set new default
 ALTER TABLE intent_workflows ALTER COLUMN state SET DEFAULT 'step_1_icp';
 
--- Step 8: Add constraint
-ALTER TABLE intent_workflows
-  ADD CONSTRAINT IF NOT EXISTS valid_workflow_state 
-  CHECK (state IS NOT NULL);
+-- Step 8: Add constraint (compatible with all PostgreSQL versions)
+DO $$
+BEGIN
+  -- Check if constraint already exists
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints 
+    WHERE table_name = 'intent_workflows' 
+    AND constraint_name = 'valid_workflow_state'
+  ) THEN
+    ALTER TABLE intent_workflows
+      ADD CONSTRAINT valid_workflow_state 
+      CHECK (state IS NOT NULL);
+    RAISE NOTICE 'Added valid_workflow_state constraint';
+  ELSE
+    RAISE NOTICE 'valid_workflow_state constraint already exists';
+  END IF;
+END $$;
 
 -- Step 9: Verify conversion
 DO $$
