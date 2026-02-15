@@ -7,12 +7,11 @@
  */
 
 export enum WorkflowState {
-  // Global States
-  CREATED = 'CREATED',
+  // Terminal States
   CANCELLED = 'CANCELLED',
   COMPLETED = 'COMPLETED',
 
-  // Step 1 - ICP Generation
+  // Step 1 - ICP Generation (Entry Point)
   step_1_icp = 'step_1_icp',
 
   // Step 2 - Competitor Analysis
@@ -45,10 +44,10 @@ export enum WorkflowState {
  * 
  * Simple linear progression with retry capability
  * No processing states - only step advancement
+ * No CREATED state - workflows start directly in step_1_icp
  */
 export const legalTransitions: Record<WorkflowState, WorkflowState[]> = {
-  // Global Transitions
-  [WorkflowState.CREATED]: [WorkflowState.step_1_icp],
+  // Terminal States
   [WorkflowState.CANCELLED]: [], // Terminal state
   [WorkflowState.COMPLETED]: [], // Terminal state
 

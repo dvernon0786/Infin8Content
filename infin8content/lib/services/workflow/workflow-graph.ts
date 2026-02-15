@@ -17,14 +17,12 @@ import { WorkflowState } from '@/types/workflow-state'
  * Formal transition graph defining all legal state transitions
  * Key: Current state
  * Value: Array of allowed next states
+ * 
+ * Note: No CREATED state - workflows start directly in step_1_icp
+ * This eliminates zombie states and ensures clean linear progression
  */
 export const WORKFLOW_TRANSITIONS: Record<WorkflowState, WorkflowState[]> = {
-  // Global States
-  [WorkflowState.CREATED]: [WorkflowState.step_1_icp],
-  [WorkflowState.CANCELLED]: [], // Terminal state
-  [WorkflowState.COMPLETED]: [], // Terminal state
-  
-  // Linear Step Progression
+  // Linear Step Progression (no CREATED state)
   [WorkflowState.step_1_icp]: [WorkflowState.step_2_competitors],
   [WorkflowState.step_2_competitors]: [WorkflowState.step_3_seeds],
   [WorkflowState.step_3_seeds]: [WorkflowState.step_4_longtails],
@@ -33,7 +31,11 @@ export const WORKFLOW_TRANSITIONS: Record<WorkflowState, WorkflowState[]> = {
   [WorkflowState.step_6_clustering]: [WorkflowState.step_7_validation],
   [WorkflowState.step_7_validation]: [WorkflowState.step_8_subtopics],
   [WorkflowState.step_8_subtopics]: [WorkflowState.step_9_articles],
-  [WorkflowState.step_9_articles]: [WorkflowState.COMPLETED]
+  [WorkflowState.step_9_articles]: [WorkflowState.COMPLETED],
+  
+  // Terminal States
+  [WorkflowState.COMPLETED]: [],    // No transitions from completed
+  [WorkflowState.CANCELLED]: []     // No transitions from cancelled
 }
 
 /**
