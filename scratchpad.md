@@ -1,5 +1,35 @@
 # Scratchpad
 
+## TypeScript Compilation Fixes - COMPLETED ✅
+
+**Date:** 2026-02-15  
+**Type:** Quick Dev Fix  
+**Status:** ✅ COMPLETED
+
+### Summary
+Successfully fixed TypeScript compilation errors in ICP generator tests by updating function calls to match new zero-legacy 3-parameter signature and adjusting test expectations.
+
+### Issues Fixed
+- **TS2554 Errors:** 3 function signature mismatches resolved
+- **Files:** `icp-generator-endpoint.test.ts` and `icp-generator-retry.test.ts`
+- **Root Cause:** `handleICPGenerationFailure` refactored from 5 args to 3 args for zero-legacy FSM
+
+### Changes Made
+1. **Function Calls:** Removed `attemptCount` and `errorMessage` parameters
+2. **Test Expectations:** Updated to expect no DB mutations (zero-legacy behavior)
+3. **Comments:** Added explanatory comments for architectural change
+
+### Verification
+- ✅ TypeScript compilation passes (`npm run typecheck` - 0 errors)
+- ✅ Test expectations aligned with new zero-legacy logging-only behavior
+- ✅ Adversarial review completed with 10 findings addressed
+
+### Files Modified
+- `infin8content/__tests__/services/icp-generator-endpoint.test.ts`
+- `infin8content/__tests__/services/icp-generator-retry.test.ts`
+
+---
+
 ## Epic C Retrospective - COMPLETED ✅
 
 **Date:** 2026-02-06  

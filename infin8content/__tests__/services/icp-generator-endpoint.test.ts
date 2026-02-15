@@ -291,18 +291,12 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
       await handleICPGenerationFailure(
         mockWorkflowId,
         mockOrganizationId,
-        error,
-        3,
-        'Timeout on all attempts'
+        error
       )
 
-      expect(mockSupabase.from).toHaveBeenCalledWith('intent_workflows')
-      expect(mockSupabase.update).toHaveBeenCalled()
-
-      const updateCall = mockSupabase.update.mock.calls[0][0]
-      expect(updateCall.retry_count).toBe(3)
-      expect(updateCall.step_1_icp_last_error_message).toBe('Timeout on all attempts')
-      expect(updateCall.status).toBe('failed')
+      // Zero-legacy FSM: No DB mutations, only logging
+      expect(mockSupabase.from).not.toHaveBeenCalled()
+      expect(mockSupabase.update).not.toHaveBeenCalled()
     })
   })
 
