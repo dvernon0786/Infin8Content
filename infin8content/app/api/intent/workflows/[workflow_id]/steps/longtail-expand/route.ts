@@ -60,7 +60,7 @@ export async function POST(
       .select('id, state, organization_id')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single()
+      .single() as { data: { id: string; state: string; organization_id: string } | null; error: any }
 
     if (workflowError || !workflow) {
       console.log("WORKFLOW SELECT ERROR:", workflowError)
@@ -174,8 +174,7 @@ export async function POST(
       success: true,
       data: {
         seeds_processed: expansionResult.seeds_processed,
-        longtails_created: expansionResult.total_longtails_created,
-        step_4_longtails_completed_at: expansionResult.step_4_longtails_completed_at
+        longtails_created: expansionResult.total_longtails_created
       }
     })
 
