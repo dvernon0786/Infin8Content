@@ -48,11 +48,11 @@ export function WorkflowDetailModal({
   if (!workflow) return null
 
   // Check if workflow can be cancelled (not already terminal)
-  const canCancel = workflow.status !== 'completed' && workflow.status !== 'failed'
+  const canCancel = workflow.state !== 'completed' && workflow.state !== 'failed'
   
   // Detect the active step for execution
   const activeStep = WORKFLOW_STEP_CONFIG.find(
-    (s) => s.step === workflow.status
+    (s) => s.step === workflow.state
   )
 
   const handleCancelWorkflow = async () => {
@@ -87,7 +87,7 @@ export function WorkflowDetailModal({
       order: index,
     }))
 
-  const currentStepOrder = steps.find(s => s.key === workflow.status)?.order ?? -1
+  const currentStepOrder = steps.find(s => s.key === workflow.state)?.order ?? -1
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -188,7 +188,7 @@ export function WorkflowDetailModal({
                     Status
                   </p>
                   <p className="text-sm font-medium mt-1">
-                    {WORKFLOW_STEP_DESCRIPTIONS[workflow.status as WorkflowState] || 'Unknown'}
+                    {WORKFLOW_STEP_DESCRIPTIONS[workflow.state as WorkflowState] || 'Unknown'}
                   </p>
                 </div>
                 <div>
@@ -227,7 +227,7 @@ export function WorkflowDetailModal({
                   )}
 
                   {/* ICP Input Form - only for step_0_auth */}
-                  {workflow.status === 'step_0_auth' ? (
+                  {workflow.state === 'step_0_auth' ? (
                     <div className="space-y-4 sm:space-y-6">
                       <div className="space-y-4 sm:space-y-6">
                         <div className="space-y-2">
