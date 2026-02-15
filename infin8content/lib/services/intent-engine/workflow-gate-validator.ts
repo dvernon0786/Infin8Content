@@ -32,7 +32,7 @@ export class WorkflowGateValidator {
     try {
       const supabase = createServiceRoleClient()
       
-      // Query workflow status
+      // Query workflow state
       let query = supabase
         .from('intent_workflows')
         .select('id, state, organization_id')
@@ -63,10 +63,7 @@ export class WorkflowGateValidator {
         }
         
         // Database errors - fail open for availability
-        // TRADE-OFF: Prioritizes system availability over strict gate enforcement
-        // If database is temporarily unavailable, allows access to prevent cascading failures
-        // Audit logging will capture the error state for investigation
-        console.error('Database error in longtail gate validation:', workflowError)
+        console.error('Database error in workflow gate validation:', workflowError)
         return {
           allowed: true,
           longtailStatus: 'error',
@@ -91,57 +88,36 @@ export class WorkflowGateValidator {
         }
       }
 
-      // Use canonical step ordering
+      // FSM validation: longtails and clustering must be complete before subtopics
+      const validStates = ['step_6_clustering', 'step_7_validation', 'step_8_subtopics', 'step_9_articles', 'completed']
       
-      // Handle terminal states - they are beyond all execution steps
-
-      // Check if workflow has completed both longtails and clustering
-      const longtailsComplete = effectiveIndex >= longtailIndex
-      const clusteringComplete = effectiveIndex >= clusteringIndex
-
-      // If workflow is before step_8_subtopics, check prerequisites
-        // Workflow hasn't reached subtopic step yet
-        const missingPrerequisites = []
-
-        if (!longtailsComplete) {
-          missingPrerequisites.push('longtail expansion (step 4)')
-        }
-
-        if (!clusteringComplete) {
-          missingPrerequisites.push('topic clustering (step 6)')
-        }
-
-        if (missingPrerequisites.length > 0) {
-          return {
-            allowed: false,
-            longtailStatus: longtailsComplete ? 'complete' : 'not_complete',
-            clusteringStatus: clusteringComplete ? 'complete' : 'not_complete',
+      if (!validStates.includes(workflow.state)) {
+        return {
+          allowed: false,
+          longtailStatus: 'incomplete',
+          clusteringStatus: 'incomplete',
+          workflowStatus: workflow.state,
+          error: 'Longtail expansion and clustering must be complete before subtopic generation',
+          errorResponse: {
+            error: 'Prerequisites not met',
             workflowStatus: workflow.state,
-            error: `Longtail expansion and clustering required before subtopics. Missing: ${missingPrerequisites.join(', ')}`,
-            errorResponse: {
-              error: 'Longtail expansion and clustering required before subtopics',
-              workflowStatus: workflow.state,
-              longtailStatus: longtailsComplete ? 'complete' : 'not_complete',
-              clusteringStatus: clusteringComplete ? 'complete' : 'not_complete',
-              missingPrerequisites,
-              requiredAction: 'Complete longtail expansion (step 4) and topic clustering (step 6) before subtopic generation',
-              currentStep: 'subtopic-generation',
-              blockedAt: new Date().toISOString()
-            }
+            requiredAction: 'Complete longtail expansion and clustering first',
+            currentStep: 'subtopic-generation',
+            blockedAt: new Date().toISOString()
           }
         }
       }
 
-      // Prerequisites are met - allow access
+      // All checks passed - allow access
       return {
         allowed: true,
-        longtailStatus: longtailsComplete ? 'complete' : 'not_complete',
-        clusteringStatus: clusteringComplete ? 'complete' : 'not_complete',
+        longtailStatus: 'complete',
+        clusteringStatus: 'complete',
         workflowStatus: workflow.state
       }
 
     } catch (error) {
-      console.error('Unexpected error in longtail gate validation:', error)
+      console.error('Unexpected error in workflow gate validation:', error)
       // Fail open for availability
       return {
         allowed: true,
@@ -178,23 +154,13 @@ export class WorkflowGateValidator {
         return
       }
 
-      // Determine action based on result
-      let action: string
-      if (result.longtailStatus === 'error' || result.clusteringStatus === 'error') {
-        action = 'workflow.gate.longtails_error'
-      } else if (result.allowed) {
-        action = 'workflow.gate.longtails_allowed'
-      } else {
-        action = 'workflow.gate.longtails_blocked'
-      }
-
       await logIntentAction({
         organizationId: workflow.organization_id,
         workflowId,
         entityType: 'workflow',
         entityId: workflowId,
         actorId: '00000000-0000-0000-0000-000000000000', // System actor UUID
-        action,
+        action: result.allowed ? 'workflow.gate.longtails_allowed' : 'workflow.gate.longtails_blocked',
         details: {
           attempted_step: stepName,
           longtail_status: result.longtailStatus,
@@ -203,8 +169,8 @@ export class WorkflowGateValidator {
           enforcement_action: result.allowed ? 'allowed' : 'blocked',
           error_message: result.error
         },
-        ipAddress: null,
-        userAgent: null
+        ipAddress: null, // Will be populated by middleware
+        userAgent: null // Will be populated by middleware
       })
 
     } catch (error) {

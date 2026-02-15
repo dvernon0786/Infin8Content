@@ -176,7 +176,7 @@ export async function processHumanApproval(
 
   // Update workflow to final status
   const updateData: any = { 
-    state: finalState,
+    state: finalStatus,
     updated_at: new Date().toISOString()
   }
   
@@ -238,7 +238,7 @@ export async function processHumanApproval(
   return {
     success: true,
     approval_id: approval.id,
-    workflow_state: finalState,
+    workflow_state: finalStatus,
     message,
   }
 }
