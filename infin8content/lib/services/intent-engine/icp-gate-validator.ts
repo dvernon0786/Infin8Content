@@ -48,13 +48,19 @@ export class ICPGateValidator {
           }
         }
         
-        // Database errors - fail open for availability
+        // Database errors - fail closed for FSM safety
         console.error('Database error in ICP gate validation:', error)
         return {
-          allowed: true,
+          allowed: false,
           icpStatus: 'error',
           workflowStatus: 'error',
-          error: 'Database error - failing open for availability'
+          error: 'Database error - gate enforcement failed closed for safety',
+          errorResponse: {
+            error: 'Database error - gate enforcement failed',
+            workflowId,
+            requiredAction: 'Retry request or contact support',
+            technicalDetails: 'Database connectivity issue preventing gate validation'
+          }
         }
       }
 
@@ -113,12 +119,17 @@ export class ICPGateValidator {
 
     } catch (error) {
       console.error('Unexpected error in ICP gate validation:', error)
-      // Fail open for availability
+      // Fail closed for FSM safety
       return {
-        allowed: true,
+        allowed: false,
         icpStatus: 'error',
         workflowStatus: 'error',
-        error: 'Unexpected error - failing open for availability'
+        error: 'Unexpected error - gate enforcement failed closed for safety',
+        errorResponse: {
+          error: 'Gate enforcement failed',
+          requiredAction: 'Retry request or contact support',
+          technicalDetails: 'Unexpected error preventing gate validation'
+        }
       }
     }
   }
