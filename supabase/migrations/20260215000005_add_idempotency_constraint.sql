@@ -1,8 +1,9 @@
--- Add Unique Constraint for True Idempotency
+-- Add Unique Constraint for True Idempotency (Production-Safe)
 -- Prevents duplicate usage records from race conditions
+-- Uses CONCURRENTLY to avoid table locks in production
 -- Date: February 15, 2026
 
--- Add unique constraint on idempotency_key
-ALTER TABLE ai_usage_ledger
-ADD CONSTRAINT ai_usage_ledger_idempotency_unique
-UNIQUE (idempotency_key);
+-- Create unique index concurrently to avoid table locks
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS 
+ai_usage_ledger_idempotency_unique
+ON ai_usage_ledger (idempotency_key);
