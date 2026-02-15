@@ -52,7 +52,7 @@ export async function POST(
     const supabase = await createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id')
+      .select('id, state, organization_id')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
       .single()

@@ -1,7 +1,5 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
-import { WORKFLOW_STEP_ORDER } from '@/lib/constants/intent-workflow-steps'
-import { normalizeWorkflowStatus } from '@/lib/utils/normalize-workflow-status'
 import { AuditAction } from '@/types/audit'
 
 export interface GateResult {
@@ -14,7 +12,7 @@ export interface GateResult {
 
 export interface WorkflowData {
   id: string
-  status: string
+  state: string
   organization_id: string
 }
 
@@ -32,40 +30,14 @@ export class SubtopicApprovalGateValidator {
   async validateSubtopicApproval(workflowId: string): Promise<GateResult> {
     try {
       const supabase = createServiceRoleClient()
-      
-      // Query workflow status
-      const { data: workflow, error: workflowError } = await supabase
+
+      const { data: workflow, error } = await supabase
         .from('intent_workflows')
-        .select('id, status, organization_id')
+        .select('id, state, organization_id')
         .eq('id', workflowId)
         .single() as { data: WorkflowData | null, error: any }
 
-      if (workflowError) {
-        if (workflowError.code === 'PGRST116') {
-          return {
-            allowed: false,
-            subtopicApprovalStatus: 'not_found',
-            workflowStatus: 'not_found',
-            error: 'Workflow not found',
-            errorResponse: {
-              error: 'Workflow not found',
-              workflowId,
-              requiredAction: 'Provide valid workflow ID'
-            }
-          }
-        }
-        
-        // Database errors - fail open for availability
-        console.error('Database error in subtopic approval gate validation:', workflowError)
-        return {
-          allowed: true,
-          subtopicApprovalStatus: 'error',
-          workflowStatus: 'error',
-          error: 'Database error - failing open for availability'
-        }
-      }
-
-      if (!workflow) {
+      if (error || !workflow) {
         return {
           allowed: false,
           subtopicApprovalStatus: 'not_found',
@@ -79,117 +51,79 @@ export class SubtopicApprovalGateValidator {
         }
       }
 
-      // Workflow must be at step_8_subtopics to require subtopic approval
-      if (workflow.status !== 'step_8_subtopics') {
-        // If workflow is beyond step_8_subtopics, allow (already approved)
-        // If workflow is before step_8_subtopics, block (subtopics not ready yet)
-        const normalizedStatus = normalizeWorkflowStatus(workflow.status)
-        
-        // Handle terminal states - they are beyond all execution steps
-        const currentIndex = WORKFLOW_STEP_ORDER.indexOf(normalizedStatus as any)
-        const approvalIndex = WORKFLOW_STEP_ORDER.indexOf('step_8_subtopics')
-        const effectiveIndex = currentIndex === -1 ? WORKFLOW_STEP_ORDER.length : currentIndex
-        
-        if (effectiveIndex < approvalIndex) {
-          // Workflow hasn't reached subtopic approval step yet
+      // FSM rule: subtopic approval only relevant at step_7_validation
+      if (workflow.state !== 'step_7_validation') {
+
+        // If workflow already progressed beyond validation,
+        // approval already happened → allow
+        if (
+          workflow.state === 'step_8_subtopics' ||
+          workflow.state === 'step_9_articles' ||
+          workflow.state === 'completed' ||
+          workflow.state === 'failed'
+        ) {
           return {
-            allowed: false,
-            subtopicApprovalStatus: 'not_ready',
-            workflowStatus: workflow.status,
-            error: 'Subtopics not yet generated for approval',
-            errorResponse: {
-              error: 'Subtopics not yet generated for approval',
-              workflowStatus: workflow.status,
-              subtopicApprovalStatus: 'not_ready',
-              requiredAction: 'Complete subtopic generation (step 8) before approval',
-              currentStep: 'article-generation',
-              blockedAt: new Date().toISOString()
-            }
+            allowed: true,
+            subtopicApprovalStatus: 'already_completed',
+            workflowStatus: workflow.state
           }
         }
-        
-        // Workflow is beyond step_8_subtopics, so approval already happened
+
+        // Otherwise block - not ready for subtopic approval yet
         return {
-          allowed: true,
-          subtopicApprovalStatus: 'not_required',
-          workflowStatus: workflow.status,
-          error: 'Subtopic approval gate not required at this step'
+          allowed: false,
+          subtopicApprovalStatus: 'invalid_state',
+          workflowStatus: workflow.state,
+          error: 'Subtopic approval required before article generation',
+          errorResponse: {
+            error: 'Subtopic approval required before article generation',
+            workflowStatus: workflow.state,
+            requiredAction: 'Complete topic clustering first',
+            currentStep: 'subtopic-approval',
+            blockedAt: new Date().toISOString()
+          }
         }
       }
 
-      // Check if any subtopics have been approved
-      const { data: approvals, error: approvalsError } = await supabase
+      // We are at step_7_validation
+      // Check subtopic approval record
+      const { data: approval } = await supabase
         .from('intent_approvals')
-        .select('decision, approved_items')
+        .select('decision')
         .eq('workflow_id', workflowId)
         .eq('approval_type', 'subtopics')
-        .in('decision', ['approved', 'rejected'])
-        .order('created_at', { ascending: false })
-        .limit(1) as { data: ApprovalData[] | null, error: any }
+        .eq('decision', 'approved')
+        .single()
 
-      if (approvalsError) {
-        // Database errors - fail open for availability
-        console.error('Database error checking subtopic approval:', approvalsError)
-        return {
-          allowed: true,
-          subtopicApprovalStatus: 'error',
-          workflowStatus: workflow.status,
-          error: 'Database error - failing open for availability'
-        }
-      }
-
-      if (!approvals || approvals.length === 0) {
+      if (!approval) {
         return {
           allowed: false,
           subtopicApprovalStatus: 'not_approved',
-          workflowStatus: workflow.status,
+          workflowStatus: workflow.state,
           error: 'Subtopics must be approved before article generation',
           errorResponse: {
             error: 'Subtopics must be approved before article generation',
-            workflowStatus: workflow.status,
-            subtopicApprovalStatus: 'not_approved',
-            requiredAction: 'Approve subtopics via keyword approval endpoints',
-            currentStep: 'article-generation',
+            workflowStatus: workflow.state,
+            requiredAction: 'Approve subtopics first',
+            currentStep: 'subtopic-approval',
             blockedAt: new Date().toISOString()
           }
         }
       }
 
-      const latestApproval = approvals[0]
-
-      // Check if subtopics were rejected
-      if (latestApproval.decision === 'rejected') {
-        return {
-          allowed: false,
-          subtopicApprovalStatus: 'rejected',
-          workflowStatus: workflow.status,
-          error: 'Subtopics rejected - revision required',
-          errorResponse: {
-            error: 'Subtopics rejected - revision required',
-            workflowStatus: workflow.status,
-            subtopicApprovalStatus: 'rejected',
-            requiredAction: 'Regenerate or revise subtopics before article generation',
-            currentStep: 'article-generation',
-            blockedAt: new Date().toISOString()
-          }
-        }
-      }
-
-      // Subtopic approval is confirmed - allow access
       return {
         allowed: true,
         subtopicApprovalStatus: 'approved',
-        workflowStatus: workflow.status
+        workflowStatus: workflow.state
       }
 
     } catch (error) {
-      console.error('Unexpected error in subtopic approval gate validation:', error)
-      // Fail open for availability
+      console.error('Subtopic gate unexpected error:', error)
+
       return {
         allowed: true,
         subtopicApprovalStatus: 'error',
-        workflowStatus: 'error',
-        error: 'Unexpected error - failing open for availability'
+        workflowStatus: 'error'
       }
     }
   }
