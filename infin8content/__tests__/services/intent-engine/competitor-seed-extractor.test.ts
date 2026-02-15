@@ -671,8 +671,7 @@ describe('Competitor Seed Extractor Service', () => {
 //     await updateWorkflowStatus(mockWorkflowId, mockOrganizationId, 'step_2_competitors')
 //
 //     const updateCall = mockSupabase.from().update.mock.calls[0][0]
-//     expect(updateCall.status).toBe('step_2_competitors')
-//     expect(updateCall.step_2_competitor_completed_at).toBeDefined()
+//     expect(updateCall.state).toBe('step_3_seeds')
 //   })
 //
 //   it('should update workflow status to failed with error message', async () => {

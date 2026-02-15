@@ -467,8 +467,7 @@
     const { error: icpError } = await supabase
       .from('intent_workflows')
       .update({
-        icp_data: icpResult.icp_data,
-        step_1_icp_completed_at: new Date().toISOString()
+        icp_data: icpResult.icp_data
       })
       .eq('id', workflowId)
       .eq('organization_id', organizationId)

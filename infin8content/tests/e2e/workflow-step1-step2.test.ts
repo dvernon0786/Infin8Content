@@ -172,9 +172,7 @@ describe('E2E: Step 1 → Step 2 Deterministic Execution', () => {
 
     const workflow = await getWorkflow(workflowId)
 
-    expect(workflow.workflow.current_step).toBe(3)
-    expect(workflow.workflow.status).toBe('step_2_competitors')
-    expect(workflow.workflow.step_2_competitor_completed_at).toBeTruthy()
+    expect(workflow.workflow.state).toBe('step_3_seeds')
   })
 
   it('Step 2 cannot execute twice (immutability enforced)', async () => {

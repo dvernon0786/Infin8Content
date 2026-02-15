@@ -12,9 +12,8 @@ export interface GateResult {
 
 export interface WorkflowData {
   id: string
-  status: string
+  state: string
   organization_id: string
-  step_1_icp_completed_at: string | null
 }
 
 export class ICPGateValidator {
@@ -27,10 +26,10 @@ export class ICPGateValidator {
     try {
       const supabase = createServiceRoleClient()
       
-      // Query workflow status and ICP completion
+      // Query workflow state
       const { data: workflow, error } = await supabase
         .from('intent_workflows')
-        .select('id, status, organization_id, step_1_icp_completed_at')
+        .select('id, state, organization_id')
         .eq('id', workflowId)
         .single() as { data: WorkflowData | null, error: any }
 
@@ -73,33 +72,33 @@ export class ICPGateValidator {
         }
       }
 
-      // Check if ICP is complete (status must be step_1_icp or later)
-      const icpCompleteStatuses = [
-        'step_1_icp',
-        'step_2_icp_complete',
-        'step_3_competitors',
+      // Check if ICP is complete (state must be step_2_competitors or later)
+      const icpCompleteStates = [
+        'step_2_competitors',
+        'step_3_seeds',
         'step_4_longtails',
         'step_5_filtering',
         'step_6_clustering',
         'step_7_validation',
         'step_8_subtopics',
-        'step_9_articles'
+        'step_9_articles',
+        'COMPLETED'
       ]
 
-      const isICPComplete = icpCompleteStatuses.includes(workflow.status)
+      const isICPComplete = icpCompleteStates.includes(workflow.state)
 
       if (!isICPComplete) {
         return {
           allowed: false,
-          icpStatus: workflow.status,
-          workflowStatus: workflow.status,
-          error: `ICP completion required before ${workflow.status}`,
+          icpStatus: workflow.state,
+          workflowStatus: workflow.state,
+          error: `ICP completion required before ${workflow.state}`,
           errorResponse: {
-            error: `ICP completion required before ${workflow.status}`,
-            workflowStatus: workflow.status,
-            icpStatus: workflow.status,
+            error: `ICP completion required before ${workflow.state}`,
+            workflowStatus: workflow.state,
+            icpStatus: workflow.state,
             requiredAction: 'Complete ICP generation (step 1) before proceeding',
-            currentStep: workflow.status,
+            currentStep: workflow.state,
             blockedAt: new Date().toISOString()
           }
         }
@@ -108,8 +107,8 @@ export class ICPGateValidator {
       // ICP is complete - allow access
       return {
         allowed: true,
-        icpStatus: workflow.status,
-        workflowStatus: workflow.status
+        icpStatus: workflow.state,
+        workflowStatus: workflow.state
       }
 
     } catch (error) {

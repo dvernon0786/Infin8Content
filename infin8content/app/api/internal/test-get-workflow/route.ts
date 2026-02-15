@@ -23,29 +23,23 @@ export async function GET(request: NextRequest) {
 
     const supabase = createServiceRoleClient()
 
-    // Get workflow with all step data
+    // Get workflow with clean state
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
       .select(`
         id,
         name,
         organization_id,
-        status,
-        current_step,
+        state,
         created_at,
         updated_at,
-        step_0_initial_at,
-        step_1_icp_completed_at,
-        step_1_icp_error_message,
-        step_2_competitor_completed_at,
-        step_2_competitor_error_message,
-        step_3_seeds_completed_at,
-        step_4_clustering_ready_at,
-        step_5_filtering_completed_at,
-        step_6_clustering_completed_at,
-        step_7_validation_completed_at,
-        step_8_linking_completed_at,
-        step_9_queuing_completed_at
+        created_by,
+        cancelled_at,
+        cancelled_by,
+        icp_data,
+        article_link_count,
+        article_linking_started_at,
+        article_linking_completed_at
       `)
       .eq('id', workflowId)
       .single()
