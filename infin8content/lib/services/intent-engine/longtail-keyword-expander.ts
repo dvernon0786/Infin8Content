@@ -61,7 +61,6 @@ export interface LongtailExpansionResult {
 export interface ExpansionSummary {
   seeds_processed: number
   total_longtails_created: number
-  step_4_longtails_completed_at: string
   results: LongtailExpansionResult[]
 }
 
