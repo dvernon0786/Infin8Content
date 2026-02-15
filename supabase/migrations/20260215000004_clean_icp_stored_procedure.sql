@@ -18,23 +18,9 @@ CREATE OR REPLACE FUNCTION record_usage_increment_and_complete_step(
 RETURNS void
 LANGUAGE plpgsql
 AS $$
-DECLARE
-  v_exists BOOLEAN;
 BEGIN
 
-  -- Check idempotency - prevent duplicate usage records
-  SELECT EXISTS(
-    SELECT 1 
-    FROM ai_usage_ledger 
-    WHERE idempotency_key = p_idempotency_key
-  )
-  INTO v_exists;
-
-  IF v_exists THEN
-    RETURN; -- Already recorded, exit early
-  END IF;
-
-  -- Insert usage record only - no workflow mutations
+  -- Insert usage record only - database-level idempotency
   INSERT INTO ai_usage_ledger (
     id,
     workflow_id,
@@ -56,7 +42,8 @@ BEGIN
     p_cost,
     p_idempotency_key,
     NOW()
-  );
+  )
+  ON CONFLICT (idempotency_key) DO NOTHING;
 
 END;
 $$;
