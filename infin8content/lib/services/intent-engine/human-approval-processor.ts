@@ -122,7 +122,6 @@ export async function processHumanApproval(
     updated_at: string
     icp_document: any
     competitor_analysis: any
-    state: WorkflowState
   }
 
   // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 8 when current_step = 8
@@ -177,7 +176,7 @@ export async function processHumanApproval(
 
   // Update workflow to final status
   const updateData: any = { 
-    status: finalStatus,
+    state: finalState,
     updated_at: new Date().toISOString()
   }
   
@@ -196,7 +195,7 @@ export async function processHumanApproval(
     // 
     // All other steps 1-7,9: No regression allowed
     //
-    updateData.state = reset_to_state
+    updateData.state = CANONICAL_RESET_MAP[String(reset_to_step)] as WorkflowState
   }
   
   const finalUpdateResult = await supabase
@@ -239,7 +238,7 @@ export async function processHumanApproval(
   return {
     success: true,
     approval_id: approval.id,
-    workflow_status: finalStatus,
+    workflow_state: finalState,
     message,
   }
 }
@@ -349,7 +348,7 @@ export async function getWorkflowSummary(workflowId: string): Promise<WorkflowSu
 
   return {
     workflow_id: workflowId,
-    status: workflow.status,
+    state: workflow.state,
     organization_id: workflow.organization_id,
     created_at: workflow.created_at,
     updated_at: workflow.updated_at,
