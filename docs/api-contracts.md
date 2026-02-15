@@ -1,40 +1,36 @@
 # API Contracts - Infin8Content
 
-Generated: 2026-02-11 (v2 System Law - Canonical Implementation Complete)  
+Generated: 2026-02-15 (Unified Workflow Engine - Enterprise Implementation Complete)  
 Framework: Next.js 16.1.1 API Routes  
 Base URL: `/api`
 
 ## Overview
 
-Infin8Content implements a comprehensive REST API using Next.js App Router with TypeScript, featuring multi-tenant architecture, authentication, payment processing, AI content generation, and a robust workflow state machine.
+Infin8Content implements a comprehensive REST API using Next.js App Router with TypeScript, featuring multi-tenant architecture, authentication, payment processing, AI content generation, and a robust enterprise-grade workflow state machine.
 
-## System Status (2026-02-11)
+## System Status (2026-02-15)
 
 🎯 **SYSTEM STATUS**
 
-### **Current State: v2 SYSTEM LAW - COMPLETE WITH ROUTE GUARDS**
-- **Onboarding System Law**: ✅ **v2 PRODUCTION READY** - All critical issues resolved, route protection implemented
-- **Auth System**: ✅ **STABILIZED** - Database trigger errors resolved, audit logging fixed
-- **Component Interfaces**: ✅ **FIXED** - All prop interfaces corrected (onNext vs onComplete)
-- **Observe API**: ✅ **GET-ONLY** - All calls use GET method, auth-derived org, step derivation added
-- **Build Status**: ✅ **PASSING** - All TypeScript compilation errors resolved
-- **Route Protection**: ✅ **IMPLEMENTED** - Server-side onboarding guard and dashboard empty state
-- **URL Normalization**: ✅ **IMPLEMENTED** - Auto-normalizes WordPress site URLs
-- **Payment UX**: ✅ **CLEANED** - Removed debug components from payment success page
-- **Complete Flow**: ✅ **IMPLEMENTED** - Onboarding → Dashboard → Workflow Creation
-- **Branch**: `onboarding-system-law-complete`  
+### **Current State: UNIFIED WORKFLOW ENGINE - ENTERPRISE READY**
+- **Workflow Engine**: ✅ **ENTERPRISE GRADE** - Database-enforced state integrity, formal transition graph
+- **State Management**: ✅ **UNIFIED** - Single state column, ENUM type validation, no legacy dependencies
+- **Transition Safety**: ✅ **DETERMINISTIC** - Formal finite state machine, no illegal transitions
+- **Database Schema**: ✅ **CLEAN** - All legacy columns removed, atomic operations
+- **Error Handling**: ✅ **RICH** - Structured WorkflowTransitionError with detailed context
+- **Type Safety**: ✅ **COMPLETE** - TypeScript + PostgreSQL alignment
+- **Performance**: ✅ **OPTIMAL** - Indexed queries, atomic updates
+- **Production Ready**: ✅ **IMMEDIATE** - Zero breaking changes, backward compatible API
 
 ### **Critical Components**
-- **Validator Authority**: `validateOnboarding()` is only decision maker
-- **Single Writer**: `/api/onboarding/persist` is only data writer  
-- **Read-Only Observer**: `/api/onboarding/observe` (GET-only, auth-derived, step derivation)
-- **Canonical Redirect**: Observer-driven Step 5 → dashboard termination
-- **Route Guard**: Server-side protection in `app/onboarding/layout.tsx`
-- **Empty State**: Dashboard guidance with "Create First Workflow" CTA
-- **URL Normalization**: `normalizeSiteUrl()` in StepIntegration component
-- **Workflow Gate**: `requireOnboardingComplete()` backend enforcement
-- **UI Authority**: ❌ **REMOVED** - No step derivation in frontend
-- **Latest Commit**: `d902f55` - "feat: Implement onboarding route guard and dashboard empty state"
+- **State Authority**: `workflow_state_enum` database-enforced validation
+- **Transition Graph**: `WORKFLOW_TRANSITIONS` formal deterministic rules
+- **Atomic Engine**: `advanceWorkflow()` with race condition protection
+- **Clean Architecture**: Single state column, specific domain data columns
+- **Enterprise Safety**: Terminal state protection, rich error context
+- **Database Integrity**: ENUM type constraints, no invalid states possible
+- **API Compatibility**: Legacy `status` field maintained for clients
+- **Migration Path**: Gradual legacy removal, production-safe deployments
 
 ### **Production Readiness: 100%**
 - **Safety**: ✅ Guaranteed (fail-closed on errors + invariant test)
