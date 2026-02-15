@@ -178,7 +178,7 @@ export async function POST(request: Request) {
         id,
         name,
         organization_id,
-        status,
+        state,
         created_at,
         updated_at
       `)
@@ -192,7 +192,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const workflow = workflowData as unknown as CreateIntentWorkflowResponse & { updated_at: string }
+    const workflow = workflowData as any // Cast to access state property as unknown as CreateIntentWorkflowResponse & { updated_at: string }
 
     // Log the workflow creation action
     try {
@@ -203,7 +203,7 @@ export async function POST(request: Request) {
         details: {
           workflow_id: workflow.id,
           workflow_name: workflow.name,
-          workflow_status: workflow.status
+          workflow_status: workflow.state // Migrate to unified state
         },
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
@@ -224,7 +224,7 @@ export async function POST(request: Request) {
         action: AuditAction.WORKFLOW_CREATED,
         details: {
           workflow_name: workflow.name,
-          workflow_status: workflow.status,
+          workflow_status: workflow.state, // Migrate to unified state
         },
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
@@ -239,7 +239,7 @@ export async function POST(request: Request) {
       id: workflow.id,
       name: workflow.name,
       organization_id: workflow.organization_id,
-      status: workflow.status,
+      status: workflow.state, // Migrate from legacy status to unified state
       created_at: workflow.created_at
     }
 
@@ -295,7 +295,7 @@ export async function GET(request: Request) {
       .select(`
         id,
         name,
-        status,
+        state,
         created_at,
         updated_at,
         created_by (id, email)

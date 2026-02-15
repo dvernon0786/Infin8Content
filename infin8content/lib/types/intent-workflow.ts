@@ -12,8 +12,8 @@ export interface IntentWorkflow {
   id: string
   organization_id: string
   name: string
-  status: WorkflowState
-  current_step: number
+  state: WorkflowState // Unified state column (replaces legacy status)
+  current_step: number // Legacy column (deprecated)
   created_at: string
   created_by: string
   updated_at: string
@@ -31,7 +31,7 @@ export interface CreateIntentWorkflowResponse {
   id: string
   name: string
   organization_id: string
-  status: IntentWorkflowStatus
+  status: WorkflowState // Keep status for API compatibility (maps to state)
   created_at: string
 }
 

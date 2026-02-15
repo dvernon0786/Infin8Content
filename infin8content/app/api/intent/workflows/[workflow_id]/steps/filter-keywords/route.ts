@@ -51,7 +51,7 @@ export async function POST(
     const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id, current_step')
+      .select('id, state, organization_id') // Use unified state instead of legacy status/current_step
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
       .single()

@@ -48,7 +48,7 @@ export async function POST(
     // Verify workflow exists and belongs to user's organization
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id, name')
+      .select('id, state, organization_id, name') // Use unified state instead of legacy status
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
       .single()
