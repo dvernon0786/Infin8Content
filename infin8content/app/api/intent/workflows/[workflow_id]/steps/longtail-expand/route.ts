@@ -201,26 +201,6 @@ export async function POST(
       } catch (logError) {
         console.error('Failed to log workflow error:', logError)
       }
-
-      // Log Intent audit trail entry (Story 37.4)
-      try {
-        logIntentActionAsync({
-          organizationId,
-          workflowId,
-          entityType: 'workflow',
-          entityId: workflowId,
-          actorId: userId,
-          action: AuditAction.WORKFLOW_STEP_FAILED,
-          details: {
-            step: 'step_4_longtails',
-            error: error instanceof Error ? error.message : 'Unknown error',
-          },
-          ipAddress: extractIpAddress(request.headers),
-          userAgent: extractUserAgent(request.headers),
-        })
-      } catch (intentLogError) {
-        console.error('Failed to log intent audit entry:', intentLogError)
-      }
     }
 
     // Check if it's a validation error vs system error
