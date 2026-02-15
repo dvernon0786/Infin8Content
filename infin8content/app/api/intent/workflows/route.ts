@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
-import { logIntentActionAsync } from '@/lib/services/intent-engine/intent-audit-logger'
 import { AuditAction } from '@/types/audit'
 import { isFeatureFlagEnabled } from '@/lib/utils/feature-flags'
 import { FEATURE_FLAG_KEYS } from '@/lib/types/feature-flag'
@@ -167,8 +166,7 @@ export async function POST(request: Request) {
       name: name.trim(),
       organization_id: targetOrgId,
       created_by: currentUser.id,
-      status: 'step_0_auth' as IntentWorkflowStatus,
-      workflow_data: {}
+      state: 'step_1_icp'
     }
 
     const { data: workflowData, error: insertError } = await supabase
@@ -178,7 +176,7 @@ export async function POST(request: Request) {
         id,
         name,
         organization_id,
-        status,
+        state,
         created_at,
         updated_at
       `)
@@ -192,7 +190,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const workflow = workflowData as unknown as CreateIntentWorkflowResponse & { updated_at: string }
+    const workflow = workflowData as unknown as CreateIntentWorkflowResponse & { updated_at: string; state: string }
 
     // Log the workflow creation action
     try {
@@ -203,7 +201,7 @@ export async function POST(request: Request) {
         details: {
           workflow_id: workflow.id,
           workflow_name: workflow.name,
-          workflow_status: workflow.status
+          workflow_state: workflow.state
         },
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
@@ -215,16 +213,14 @@ export async function POST(request: Request) {
 
     // Log the Intent audit trail entry (Story 37.4)
     try {
-      logIntentActionAsync({
-        organizationId: targetOrgId,
-        workflowId: workflow.id,
-        entityType: 'workflow',
-        entityId: workflow.id,
-        actorId: currentUser.id,
+      await logActionAsync({
+        orgId: targetOrgId,
+        userId: currentUser.id,
         action: AuditAction.WORKFLOW_CREATED,
         details: {
+          workflow_id: workflow.id,
           workflow_name: workflow.name,
-          workflow_status: workflow.status,
+          workflow_state: workflow.state,
         },
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
@@ -239,7 +235,7 @@ export async function POST(request: Request) {
       id: workflow.id,
       name: workflow.name,
       organization_id: workflow.organization_id,
-      status: workflow.status,
+      status: workflow.state as IntentWorkflowStatus,
       created_at: workflow.created_at
     }
 
@@ -295,7 +291,7 @@ export async function GET(request: Request) {
       .select(`
         id,
         name,
-        status,
+        state,
         created_at,
         updated_at,
         created_by (id, email)

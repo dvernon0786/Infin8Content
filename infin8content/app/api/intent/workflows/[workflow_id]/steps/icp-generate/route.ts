@@ -19,6 +19,8 @@ import {
   handleICPGenerationFailure,
   type ICPGenerationRequest
 } from '@/lib/services/intent-engine/icp-generator'
+import { advanceWorkflow } from '@/lib/services/workflow/advanceWorkflow'
+import { WorkflowState } from '@/types/workflow-state'
 
 // Rate limit configuration for ICP generation
 const RATE_LIMIT_CONFIG: RateLimitConfig = {
@@ -97,7 +99,7 @@ export async function POST(
     const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id, current_step')
+      .select('id, state, organization_id')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
       .single()
@@ -109,15 +111,12 @@ export async function POST(
       )
     }
 
-    // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string; current_step: number }
-
-    // CANONICAL GUARD: Only allow step 1 when current_step = 1
-    if (typedWorkflow.current_step !== 1) {
+    // FSM GUARD: Only allow step 1 when state = step_1_icp
+    if ((workflow as any).state !== 'step_1_icp') {
       return NextResponse.json(
         {
-          error: 'INVALID_STEP_ORDER',
-          message: `Workflow must be at step 1 (ICP generation), currently at step ${typedWorkflow.current_step}`
+          error: 'INVALID_STATE',
+          message: `Workflow must be in step_1_icp. Current state: ${(workflow as any).state}` 
         },
         { status: 400 }
       )
@@ -126,7 +125,7 @@ export async function POST(
     // Check for idempotency - if ICP already generated, return existing result
     const { data: existingWorkflow, error: fetchError } = await supabase
       .from('intent_workflows')
-      .select('icp_data, step_1_icp_completed_at')
+      .select('icp_data, updated_at')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
       .single()
@@ -140,7 +139,7 @@ export async function POST(
         icp_data: (existingWorkflow as any).icp_data,
         cached: true,
         metadata: {
-          generated_at: (existingWorkflow as any).step_1_icp_completed_at
+          generated_at: (existingWorkflow as any).updated_at
         }
       })
     }
@@ -153,6 +152,14 @@ export async function POST(
 
     // Store result in workflow with retry metadata (consolidated in single update)
     await storeICPGenerationResult(workflowId, organizationId, icpResult, idempotencyKey)
+
+    // Advance workflow state to step_2_competitors
+    await advanceWorkflow({
+      workflowId,
+      organizationId,
+      expectedState: WorkflowState.step_1_icp,
+      nextState: WorkflowState.step_2_competitors
+    })
 
     // Emit analytics event for workflow step completion
     try {

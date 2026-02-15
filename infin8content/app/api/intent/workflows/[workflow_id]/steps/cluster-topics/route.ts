@@ -14,6 +14,8 @@ import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import { KeywordClusterer } from '@/lib/services/intent-engine/keyword-clusterer'
 import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
+import { advanceWorkflow } from '@/lib/services/workflow/advanceWorkflow'
+import { WorkflowState } from '@/types/workflow-state'
 
 export async function POST(
   request: NextRequest,
@@ -47,7 +49,7 @@ export async function POST(
     const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id, current_step')
+      .select('id, state, organization_id')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
       .single()
@@ -60,14 +62,14 @@ export async function POST(
     }
 
     // Type guard: ensure workflow is properly typed
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string; current_step: number }
+    const typedWorkflow = workflow as unknown as { id: string; state: string; organization_id: string }
 
-    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 6 when current_step = 6
-    if (typedWorkflow.current_step !== 6) {
+    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 6 when state = step_6_clustering
+    if (typedWorkflow.state !== 'step_6_clustering') {
       return NextResponse.json(
         { 
           error: 'INVALID_STEP_ORDER',
-          message: `Workflow must be at step 6 (topic clustering), currently at step ${typedWorkflow.current_step}`
+          message: `Workflow must be at step 6 (topic clustering), currently at ${typedWorkflow.state}`
         },
         { status: 400 }
       )
@@ -80,7 +82,7 @@ export async function POST(
       action: AuditAction.WORKFLOW_TOPIC_CLUSTERING_STARTED,
       details: {
         workflow_id: workflowId,
-        current_status: typedWorkflow.status
+        current_state: typedWorkflow.state
       },
       ipAddress: extractIpAddress(request.headers),
       userAgent: extractUserAgent(request.headers),
@@ -150,13 +152,10 @@ export async function POST(
       )
     }
 
-    // Update workflow status to step_6_clustering
+    // Update workflow metadata
     const { error: updateError } = await supabase
       .from('intent_workflows')
       .update({
-        status: 'step_6_clustering',
-        current_step: 7,  // Advance to Step 7
-        step_6_clustering_completed_at: new Date().toISOString(),
         cluster_count: clusterResult.cluster_count,
         keywords_clustered: clusterResult.keywords_clustered
       })
@@ -164,16 +163,24 @@ export async function POST(
       .eq('organization_id', organizationId)  // CRITICAL: Add tenant isolation
 
     if (updateError) {
-      console.error('Failed to update workflow status:', updateError)
+      console.error('Failed to update workflow metadata:', updateError)
       return NextResponse.json(
         {
-          error: 'Failed to update workflow status',
-          message: 'Clustering completed but workflow state could not be updated.',
+          error: 'Failed to update workflow metadata',
+          message: 'Clustering completed but workflow metadata could not be updated.',
           code: 'WORKFLOW_UPDATE_FAILED'
         },
         { status: 500 }
       )
     }
+
+    // Advance workflow state to step_7_validation
+    await advanceWorkflow({
+      workflowId,
+      organizationId,
+      expectedState: WorkflowState.step_6_clustering,
+      nextState: WorkflowState.step_7_validation
+    })
 
     // Log completion audit action
     await logActionAsync({
@@ -224,7 +231,7 @@ export async function POST(
       await supabase
         .from('intent_workflows')
         .update({
-          step_6_clustering_error_message: error instanceof Error ? error.message : 'Unknown error'
+          // Note: Error handling removed - step_6_clustering_error_message column no longer exists
         })
         .eq('id', workflowId)
         .eq('organization_id', organizationId)  // CRITICAL: Add tenant isolation to error path

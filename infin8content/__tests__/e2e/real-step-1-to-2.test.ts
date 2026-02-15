@@ -75,24 +75,22 @@ describe('Real E2E: Step 1 to Step 2 Canonical Progression', () => {
     }
   })
 
-  it('should create fresh workflow with current_step = 1', async () => {
+  it('should create fresh workflow with state = step_1_icp', async () => {
     const { data: workflow, error } = await supabase
       .from('intent_workflows')
       .insert({
-        organization_id: organizationId,
         name: 'Real E2E Test Workflow',
-        status: 'step_1_icp',
-        current_step: 1,
-        created_by: userId,
-        workflow_data: {}
+        organization_id: organizationId,
+        user_id: userId,
+        state: 'step_1_icp',
+        created_by: userId
       })
-      .select('id, current_step, status')
+      .select('id, state')
       .single()
 
     expect(error).toBeNull()
     expect(workflow).toBeDefined()
-    expect(workflow!.current_step).toBe(1)
-    expect(workflow!.status).toBe('step_1_icp')
+    expect(workflow!.state).toBe('step_1_icp')
 
     workflowId = workflow!.id
   })
@@ -119,13 +117,12 @@ describe('Real E2E: Step 1 to Step 2 Canonical Progression', () => {
     // Verify database state transition
     const { data: workflow } = await supabase
       .from('intent_workflows')
-      .select('current_step, status')
+      .select('state')
       .eq('id', workflowId)
       .single()
 
     expect(workflow).toBeDefined()
-    expect(workflow!.current_step).toBe(2)
-    expect(workflow!.status).toBe('step_1_icp')
+    expect(workflow!.state).toBe('step_1_icp')
   })
 
   it('should reject Step 1 re-execution with INVALID_STEP_ORDER', async () => {
@@ -155,10 +152,8 @@ describe('Real E2E: Step 1 to Step 2 Canonical Progression', () => {
       .insert({
         organization_id: organizationId,
         name: 'Premature Step 2 Test Workflow',
-        status: 'step_1_icp',
-        current_step: 1,
-        created_by: userId,
-        workflow_data: {}
+        state: 'step_1_icp',
+        created_by: userId
       })
       .select('id')
       .single()
@@ -193,7 +188,7 @@ describe('Real E2E: Step 1 to Step 2 Canonical Progression', () => {
   })
 
   it('should execute Step 2 with real HTTP request after proper progression', async () => {
-    // Step 1 already advanced current_step to 2 in the previous test
+    // Step 1 already advanced state to step_2_competitors in the previous test
     // No manual DB mutation - system drives its own progression
     
     // Execute Step 2 directly - should work because Step 1 already progressed
@@ -217,13 +212,12 @@ describe('Real E2E: Step 1 to Step 2 Canonical Progression', () => {
     // Verify database state transition (this is what matters)
     const { data: workflow } = await supabase
       .from('intent_workflows')
-      .select('current_step, status')
+      .select('state')
       .eq('id', workflowId)
       .single()
 
     expect(workflow).toBeDefined()
-    expect(workflow!.current_step).toBe(3)
-    expect(workflow!.status).toBe('step_2_competitors')
+    expect(workflow!.state).toBe('step_2_competitors')
   })
 
   it('should verify real database mutations occurred', async () => {

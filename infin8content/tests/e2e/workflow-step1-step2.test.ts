@@ -66,9 +66,7 @@ describe('E2E: Step 1 → Step 2 Deterministic Execution', () => {
 
     const workflow = await getWorkflow(workflowId)
 
-    expect(workflow.workflow.current_step).toBe(2)
-    expect(workflow.workflow.status).toBe('step_1_icp')
-    expect(workflow.workflow.step_1_icp_completed_at).toBeTruthy()
+    expect(workflow.workflow.state).toBe('step_2_competitors')
   })
 
   it('Step 1 cannot execute again (guard enforced)', async () => {
@@ -94,7 +92,7 @@ describe('E2E: Step 1 → Step 2 Deterministic Execution', () => {
     expect(body.error).toBe('INVALID_STEP_ORDER')
 
     const workflow = await getWorkflow(workflowId)
-    expect(workflow.workflow.current_step).toBe(2) // unchanged
+    expect(workflow.workflow.state).toBe('step_2_competitors') // unchanged
   })
 
   it('Step 2 cannot execute before Step 1 (fresh workflow case)', async () => {
@@ -172,9 +170,7 @@ describe('E2E: Step 1 → Step 2 Deterministic Execution', () => {
 
     const workflow = await getWorkflow(workflowId)
 
-    expect(workflow.workflow.current_step).toBe(3)
-    expect(workflow.workflow.status).toBe('step_2_competitors')
-    expect(workflow.workflow.step_2_competitor_completed_at).toBeTruthy()
+    expect(workflow.workflow.state).toBe('step_3_seeds')
   })
 
   it('Step 2 cannot execute twice (immutability enforced)', async () => {
@@ -205,7 +201,7 @@ describe('E2E: Step 1 → Step 2 Deterministic Execution', () => {
     expect(body.error).toBe('STEP_ALREADY_COMPLETED')
 
     const workflow = await getWorkflow(workflowId)
-    expect(workflow.workflow.current_step).toBe(3) // unchanged
+    expect(workflow.workflow.state).toBe('step_3_seeds') // unchanged
   })
 
   it('Step 2 is atomic under concurrency', async () => {
@@ -328,7 +324,7 @@ describe('E2E: Step 1 → Step 2 Deterministic Execution', () => {
       // Verify final state - exactly 2 keywords (from the successful request)
       const finalWorkflow = await getWorkflow(freshWorkflowId)
       expect(finalWorkflow.keywords.count).toBe(2) // Not 6 (3 requests × 2 keywords)
-      expect(finalWorkflow.workflow.current_step).toBe(3) // Advanced to step 3
+      expect(finalWorkflow.workflow.state).toBe('step_3_seeds') // Advanced to step 3
 
       console.log(`[Concurrency Test] Results: ${successes.length} success, ${conflicts.length} conflicts, ${finalWorkflow.keywords.count} keywords`)
 
