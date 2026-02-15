@@ -1,7 +1,5 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
-import { WORKFLOW_STEP_ORDER } from '@/lib/constants/intent-workflow-steps'
-import { normalizeWorkflowStatus } from '@/lib/utils/normalize-workflow-status'
 
 export interface GateResult {
   allowed: boolean
@@ -14,7 +12,7 @@ export interface GateResult {
 
 export interface WorkflowData {
   id: string
-  status: string
+  state: string
   organization_id: string
 }
 
@@ -94,20 +92,14 @@ export class WorkflowGateValidator {
       }
 
       // Use canonical step ordering
-      const normalizedStatus = normalizeWorkflowStatus(workflow.status)
       
       // Handle terminal states - they are beyond all execution steps
-      const currentIndex = WORKFLOW_STEP_ORDER.indexOf(normalizedStatus as any)
-      const longtailIndex = WORKFLOW_STEP_ORDER.indexOf('step_4_longtails')
-      const clusteringIndex = WORKFLOW_STEP_ORDER.indexOf('step_6_clustering')
-      const effectiveIndex = currentIndex === -1 ? WORKFLOW_STEP_ORDER.length : currentIndex
 
       // Check if workflow has completed both longtails and clustering
       const longtailsComplete = effectiveIndex >= longtailIndex
       const clusteringComplete = effectiveIndex >= clusteringIndex
 
       // If workflow is before step_8_subtopics, check prerequisites
-      if (effectiveIndex < WORKFLOW_STEP_ORDER.indexOf('step_8_subtopics')) {
         // Workflow hasn't reached subtopic step yet
         const missingPrerequisites = []
 
@@ -124,11 +116,11 @@ export class WorkflowGateValidator {
             allowed: false,
             longtailStatus: longtailsComplete ? 'complete' : 'not_complete',
             clusteringStatus: clusteringComplete ? 'complete' : 'not_complete',
-            workflowStatus: workflow.status,
+            workflowStatus: workflow.state,
             error: `Longtail expansion and clustering required before subtopics. Missing: ${missingPrerequisites.join(', ')}`,
             errorResponse: {
               error: 'Longtail expansion and clustering required before subtopics',
-              workflowStatus: workflow.status,
+              workflowStatus: workflow.state,
               longtailStatus: longtailsComplete ? 'complete' : 'not_complete',
               clusteringStatus: clusteringComplete ? 'complete' : 'not_complete',
               missingPrerequisites,
@@ -145,7 +137,7 @@ export class WorkflowGateValidator {
         allowed: true,
         longtailStatus: longtailsComplete ? 'complete' : 'not_complete',
         clusteringStatus: clusteringComplete ? 'complete' : 'not_complete',
-        workflowStatus: workflow.status
+        workflowStatus: workflow.state
       }
 
     } catch (error) {
