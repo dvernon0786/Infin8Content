@@ -78,7 +78,7 @@ export async function POST(
     // 🔒 ENFORCE COMPETITOR GATE - Check if competitors exist
     const { count: competitorCount } = await supabase
       .from('organization_competitors')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
       .eq('organization_id', organizationId)
       .eq('is_active', true)
 
