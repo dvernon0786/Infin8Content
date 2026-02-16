@@ -110,35 +110,35 @@ export async function POST(
       )
     }
 
-    // Preliminary check - the real guard is in the FSM transition itself
-    if (workflow.state !== 'step_1_icp') {
-      return NextResponse.json(
-        {
-          error: 'INVALID_STATE',
-          message: `Workflow must be in step_1_icp. Current state: ${workflow.state}` 
-        },
-        { status: 400 }
-      )
-    }
+    // 3-state idempotency logic
+    const currentState = workflow.state
 
-    // Check for idempotency - if ICP already generated, return existing result
-    const { data: existingWorkflow, error: fetchError } = await supabase
-      .from('intent_workflows')
-      .select('icp_data, updated_at, state')
-      .eq('id', workflowId)
-      .single() as { data: { icp_data: any; updated_at: string; state: string } | null; error: any }
+    // CASE 1 — Already completed (idempotent)
+    if (currentState === 'step_2_competitors') {
+      const { data: existing } = await supabase
+        .from('intent_workflows')
+        .select('icp_data, updated_at')
+        .eq('id', workflowId)
+        .single() as { data: { icp_data: any; updated_at: string } | null; error: any }
 
-    if (existingWorkflow && existingWorkflow.icp_data) {
       return NextResponse.json({
         success: true,
         workflow_id: workflowId,
-        workflow_state: existingWorkflow.state,
-        icp_data: existingWorkflow.icp_data,
+        workflow_state: currentState,
+        icp_data: existing?.icp_data,
         cached: true,
         metadata: {
-          generated_at: existingWorkflow.updated_at
+          generated_at: existing?.updated_at
         }
       })
+    }
+
+    // CASE 2 — Wrong state
+    if (currentState !== 'step_1_icp') {
+      return NextResponse.json({
+        error: 'INVALID_STATE',
+        message: `Cannot generate ICP from state: ${currentState}` 
+      }, { status: 409 })
     }
 
     // Generate UUID idempotency key at request boundary
@@ -148,10 +148,17 @@ export async function POST(
     const icpResult = await generateICPDocument(mappedRequest, organizationId, 300000, undefined, workflowId, idempotencyKey)
 
     // Store result in workflow with retry metadata (consolidated in single update)
+    // This function also handles the FSM transition internally
     await storeICPGenerationResult(workflowId, organizationId, icpResult, idempotencyKey)
 
-    // FSM TRANSITION: Advance to step_2_competitors
-    const nextState = await WorkflowFSM.transition(workflowId, 'ICP_COMPLETED', { userId: currentUser.id })
+    // Get the new state after storage (should be step_2_competitors)
+    const { data: updatedWorkflow } = await supabase
+      .from('intent_workflows')
+      .select('state')
+      .eq('id', workflowId)
+      .single() as { data: { state: string } | null; error: any }
+
+    const nextState = updatedWorkflow?.state || currentState
 
     // Emit analytics event for workflow step completion
     try {
