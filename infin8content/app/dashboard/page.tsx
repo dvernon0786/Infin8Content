@@ -1,16 +1,22 @@
 import { createServiceRoleClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/supabase/get-current-user"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { WorkflowDashboard } from "@/components/dashboard/workflow-dashboard/WorkflowDashboard"
 
 export default async function DashboardPage() {
   const user = await getCurrentUser()
+
+  if (!user || !user.org_id) {
+    redirect('/login')
+  }
+
   const supabase = createServiceRoleClient()
 
   const { data: workflows } = await supabase
     .from("intent_workflows")
     .select("id")
-    .eq("organization_id", user!.org_id)
+    .eq("organization_id", user.org_id)
 
   if (!workflows || workflows.length === 0) {
     return (
