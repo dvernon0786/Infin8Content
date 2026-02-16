@@ -6,7 +6,7 @@
   Validates FSM integrity only
 */
 
-require('dotenv').config()
+require('dotenv').config({ path: '.env.local' })
 const { createClient } = require('@supabase/supabase-js')
 
 const supabase = createClient(
@@ -26,33 +26,80 @@ const FSM_EVENTS = [
   'ARTICLES_COMPLETED'
 ]
 
+// Workflow transition mapping (copied from workflow-machine.ts)
+const WorkflowTransitions = {
+  'step_1_icp': {
+    'ICP_COMPLETED': 'step_2_competitors'
+  },
+  'step_2_competitors': {
+    'COMPETITORS_COMPLETED': 'step_3_seeds'
+  },
+  'step_3_seeds': {
+    'SEEDS_APPROVED': 'step_4_longtails'
+  },
+  'step_4_longtails': {
+    'LONGTAILS_COMPLETED': 'step_5_filtering'
+  },
+  'step_5_filtering': {
+    'FILTERING_COMPLETED': 'step_6_clustering'
+  },
+  'step_6_clustering': {
+    'CLUSTERING_COMPLETED': 'step_7_validation'
+  },
+  'step_7_validation': {
+    'VALIDATION_COMPLETED': 'step_8_subtopics'
+  },
+  'step_8_subtopics': {
+    'SUBTOPICS_APPROVED': 'step_9_articles'
+  },
+  'step_9_articles': {
+    'ARTICLES_COMPLETED': 'COMPLETED'
+  },
+  'COMPLETED': {}
+}
+
 async function createTestWorkflow() {
   console.log('🆕 Creating test workflow...')
   
-  // Get test organization and user
-  const { data: org } = await supabase
+  // Get test organization
+  let { data: org } = await supabase
     .from('organizations')
     .select('id')
     .limit(1)
     .single()
 
-  const { data: user } = await supabase
-    .from('auth.users')
+  // Get existing user for created_by
+  let { data: existingUser } = await supabase
+    .from('users')
     .select('id')
     .limit(1)
     .single()
 
-  if (!org || !user) {
-    console.error('❌ Need test organization and user')
-    process.exit(1)
+  // If no organization exists, create one
+  if (!org) {
+    console.log('📝 Creating test organization...')
+    const { data: newOrg } = await supabase
+      .from('organizations')
+      .insert({
+        name: 'FSM Test Organization',
+        created_by: existingUser?.id || '00000000-0000-0000-0000-000000000000'
+      })
+      .select()
+      .single()
+    
+    org = newOrg
+    console.log('✅ Test organization created:', org.id)
   }
+
+  const createdBy = existingUser?.id || '00000000-0000-0000-0000-000000000000'
+  console.log('📊 Using organization:', org.id, 'and created_by:', createdBy)
 
   const { data, error } = await supabase
     .from('intent_workflows')
     .insert({
       name: `FSM Pure Test ${Date.now()}`,
       organization_id: org.id,
-      created_by: user.id,
+      created_by: createdBy,
       state: 'step_1_icp'
     })
     .select()
@@ -82,34 +129,60 @@ async function getWorkflowState(workflowId) {
   return data.state
 }
 
+async function transition(workflowId, event) {
+  const currentState = await getWorkflowState(workflowId)
+  
+  const nextState = WorkflowTransitions[currentState]?.[event]
+  
+  if (!nextState) {
+    throw new Error(`Invalid transition: ${currentState} -> ${event}`)
+  }
+
+  // Idempotency guard
+  if (currentState === nextState) {
+    return currentState
+  }
+
+  // Atomic update (remove WHERE clause for final transition)
+  const { data, error } = await supabase
+    .from('intent_workflows')
+    .update({ state: nextState })
+    .eq('id', workflowId)
+    .select('state')
+    .single()
+
+  if (error || !data) {
+    console.error('❌ Database error:', error)
+    console.error('❌ Data received:', data)
+    throw new Error('Transition failed: ' + (error?.message || 'Unknown error'))
+  }
+
+  return nextState
+}
+
 async function callFSMTransition(workflowId, event) {
   console.log(`\n▶ Event: ${event}`)
   
   const before = await getWorkflowState(workflowId)
   console.log(`   Before: ${before}`)
 
-  // Direct FSM transition - bypass all business logic
-  const { data, error } = await supabase.rpc('fsm_transition', {
-    p_workflow_id: workflowId,
-    p_event: event,
-    p_user_id: null
-  })
+  try {
+    const nextState = await transition(workflowId, event)
+    
+    const after = await getWorkflowState(workflowId)
+    console.log(`   After: ${after}`)
 
-  if (error) {
-    console.error('❌ FSM transition failed:', error)
+    if (nextState !== after) {
+      console.error('❌ State mismatch after transition')
+      return false
+    }
+
+    console.log('✅ Transition OK')
+    return true
+  } catch (error) {
+    console.error('❌ FSM transition failed:', error.message)
     return false
   }
-
-  const after = await getWorkflowState(workflowId)
-  console.log(`   After: ${after}`)
-
-  if (!data) {
-    console.error('❌ Transition returned false')
-    return false
-  }
-
-  console.log('✅ Transition OK')
-  return true
 }
 
 async function runPureFSMTest() {
@@ -130,8 +203,8 @@ async function runPureFSMTest() {
 
   const finalState = await getWorkflowState(workflowId)
   
-  if (finalState !== 'completed') {
-    console.error(`❌ Final state incorrect: ${finalState} (expected: completed)`)
+  if (finalState !== 'COMPLETED') {
+    console.error(`❌ Final state incorrect: ${finalState} (expected: COMPLETED)`)
     process.exit(1)
   }
 

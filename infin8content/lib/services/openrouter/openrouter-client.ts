@@ -55,11 +55,11 @@ export interface OpenRouterGenerationResult {
  * Note: Models may become unavailable - fallback logic handles this automatically
  */
 export const FREE_MODELS = [
-  'google/gemini-2.5-flash', // Primary choice - Google's state-of-the-art workhorse model with advanced reasoning
-  'meta-llama/llama-3.3-70b-instruct:free', // Fallback - 70B multilingual, 128K context, excellent instruction following
-  'meta-llama/llama-3bmo-v1-turbo', // Fast backup
-  // Removed: 'nvidia/nemotron-3-demo-70b' - no longer valid model ID
-  // Removed: 'tns-standard/tns-standard-8-7.5-chimera' - replaced with better model
+  'perplexity/sonar', // Primary choice - Perplexity's fast, efficient model
+  'openai/gpt-4o-mini', // Fallback - OpenAI's cost-effective model
+  // Removed: 'meta-llama/llama-3bmo-v1-turbo' - no longer valid model ID
+  // Removed: 'meta-llama/llama-3.3-70b-instruct:free' - no longer available
+  // Removed: 'google/gemini-2.5-flash' - using Perplexity instead
 ] as const
 
 export const MODEL_PRICING: Record<string, {
