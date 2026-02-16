@@ -21,11 +21,7 @@ import {
 } from '@/lib/services/intent-engine/competitor-seed-extractor'
 import type { SeedExtractor } from '@/lib/services/intent-engine/seed-extractor.interface'
 import { DeterministicFakeExtractor } from '@/lib/services/intent-engine/deterministic-fake-extractor'
-import { 
-  advanceWorkflow,
-  WorkflowTransitionError
-} from '@/lib/services/workflow/advanceWorkflow'
-import { WorkflowState } from '@/types/workflow-state'
+import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
 import { resolveLocationCode, resolveLanguageCode } from '@/lib/config/dataforseo-geo'
 
@@ -105,7 +101,7 @@ export async function POST(
       .select('id, state')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single() as { data: { id: string; state: WorkflowState } | null; error: any }
+      .single() as { data: { id: string; state: string } | null; error: any }
     
     if (workflowError || !workflow) {
       return NextResponse.json(
@@ -115,8 +111,8 @@ export async function POST(
     }
 
     // UNIFIED ENGINE: Must be in step_2_competitors to proceed
-    if (workflow.state !== WorkflowState.step_2_competitors) {
-      const errorMessage = workflow.state === WorkflowState.step_3_seeds
+    if (workflow.state !== 'step_2_competitors') {
+      const errorMessage = workflow.state === 'step_3_seeds'
         ? 'Cannot re-run competitor analysis after completion. Please create a new workflow.'
         : `Workflow must be in step_2_competitors state, currently in ${workflow.state}`
       
@@ -234,23 +230,19 @@ export async function POST(
       )
     }
 
-    // UNIFIED ENGINE: Advance to next step after successful completion
+    // FSM TRANSITION: Advance to next step after successful completion
     try {
-      await advanceWorkflow({
-        workflowId,
-        organizationId,
-        expectedState: WorkflowState.step_2_competitors,
-        nextState: WorkflowState.step_3_seeds
-      })
+      await WorkflowFSM.transition(workflowId, 'COMPETITORS_COMPLETED', { userId: currentUser.id })
       
       console.log(`[CompetitorAnalyze] Successfully advanced to step_3_seeds`)
     } catch (error) {
-      if (error instanceof WorkflowTransitionError) {
-        // Another request already advanced this workflow
-        console.log(`[CompetitorAnalyze] Workflow already advanced (concurrent request won race)`)
-      } else {
-        throw error
-      }
+      return NextResponse.json(
+        { 
+          error: 'Failed to advance workflow',
+          message: error instanceof Error ? error.message : 'Unknown error'
+        },
+        { status: 500 }
+      )
     }
 
     // Log action completion
