@@ -198,7 +198,6 @@ story_location: "{project-root}/_bmad-output/implementation-artifacts"
 # Files Added/Modified:
 # - lib/constants/intent-workflow-steps.ts (NEW: Single source of truth)
 # - lib/utils/normalize-workflow-status.ts (NEW: Backward compatibility)
-# - lib/inngest/workflow-transition-guard.ts (NEW: Inngest guards)
 # - __tests__/workflow-canonical-states.test.ts (NEW: Regression tests)
 # - Multiple service files updated to use canonical definitions
 

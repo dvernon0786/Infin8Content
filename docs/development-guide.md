@@ -163,9 +163,11 @@ lib/constants/intent-workflow-steps.ts          # SINGLE SOURCE OF TRUTH
 lib/utils/normalize-workflow-status.ts          # BACKWARD COMPATIBILITY
 └─ normalizeWorkflowStatus() (legacy → canonical)
 
-lib/inngest/workflow-transition-guard.ts          # INNGEST GUARDS
-├─ assertValidWorkflowTransition() (linear progression)
-└─ handleWorkflowFailure() (explicit errors)
+# Architecture Note
+# workflow-transition-guard.ts was removed to eliminate duplicate state machine logic.
+# All transition authority now lives exclusively in WorkflowFSM.transition().
+# This ensures single source of truth for workflow state transitions.
+
 ```
 
 #### Usage Examples
