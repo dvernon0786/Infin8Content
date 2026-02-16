@@ -2,54 +2,39 @@
  * Canonical Intent Engine Workflow Steps
  *
  * ⚠️ SINGLE SOURCE OF TRUTH
- * All workflow step names, ordering, progress, and helpers
- * MUST be defined here and imported everywhere else.
+ * FSM is the canonical authority for WorkflowState
+ * All other definitions re-export from FSM
  */
 
-export const INTENT_WORKFLOW_STEPS = {
-  AUTH: 'step_0_auth',
-  ICP: 'step_1_icp',
-  COMPETITORS: 'step_2_competitors',
-  KEYWORDS: 'step_3_keywords',
-  LONGTAILS: 'step_4_longtails',
-  FILTERING: 'step_5_filtering',
-  CLUSTERING: 'step_6_clustering',
-  VALIDATION: 'step_7_validation',
-  SUBTOPICS: 'step_8_subtopics',
-  ARTICLES: 'step_9_articles',
-  COMPLETED: 'completed',
-  FAILED: 'failed',
-} as const
+import { WorkflowState } from '@/lib/fsm/workflow-events'
 
-/** Ordered execution steps (non-terminal) */
-export const WORKFLOW_STEP_ORDER = [
-  INTENT_WORKFLOW_STEPS.AUTH,
-  INTENT_WORKFLOW_STEPS.ICP,
-  INTENT_WORKFLOW_STEPS.COMPETITORS,
-  INTENT_WORKFLOW_STEPS.KEYWORDS,
-  INTENT_WORKFLOW_STEPS.LONGTAILS,
-  INTENT_WORKFLOW_STEPS.FILTERING,
-  INTENT_WORKFLOW_STEPS.CLUSTERING,
-  INTENT_WORKFLOW_STEPS.VALIDATION,
-  INTENT_WORKFLOW_STEPS.SUBTOPICS,
-  INTENT_WORKFLOW_STEPS.ARTICLES,
-] as const
+/** Re-export FSM WorkflowState as canonical type */
+export type { WorkflowState } from '@/lib/fsm/workflow-events'
 
-/** All valid workflow states (including terminal states) */
-export const ALL_WORKFLOW_STATES = [
+/** Ordered execution steps (non-terminal) - aligned with FSM */
+export const WORKFLOW_STEP_ORDER: WorkflowState[] = [
+  'step_1_icp',
+  'step_2_competitors',
+  'step_3_seeds',
+  'step_4_longtails',
+  'step_5_filtering',
+  'step_6_clustering',
+  'step_7_validation',
+  'step_8_subtopics',
+  'step_9_articles',
+]
+
+/** All valid workflow states (including terminal state) - aligned with FSM */
+export const ALL_WORKFLOW_STATES: WorkflowState[] = [
   ...WORKFLOW_STEP_ORDER,
-  INTENT_WORKFLOW_STEPS.COMPLETED,
-  INTENT_WORKFLOW_STEPS.FAILED,
-] as const
+  'completed',
+]
 
-export type WorkflowState = typeof ALL_WORKFLOW_STATES[number]
-
-/** Progress mapping for dashboard */
+/** Progress mapping for dashboard - FSM-aligned */
 export const WORKFLOW_PROGRESS_MAP: Record<WorkflowState, number> = {
-  step_0_auth: 5,
   step_1_icp: 15,
   step_2_competitors: 25,
-  step_3_keywords: 35,
+  step_3_seeds: 35,
   step_4_longtails: 45,
   step_5_filtering: 55,
   step_6_clustering: 65,
@@ -57,15 +42,13 @@ export const WORKFLOW_PROGRESS_MAP: Record<WorkflowState, number> = {
   step_8_subtopics: 85,
   step_9_articles: 95,
   completed: 100,
-  failed: 0,
 }
 
-/** Human-readable labels */
+/** Human-readable labels - FSM-aligned */
 export const WORKFLOW_STEP_DESCRIPTIONS: Record<WorkflowState, string> = {
-  step_0_auth: 'Authentication',
   step_1_icp: 'ICP Generation',
   step_2_competitors: 'Competitor Analysis',
-  step_3_keywords: 'Seed Keyword Extraction',
+  step_3_seeds: 'Seed Keyword Extraction',
   step_4_longtails: 'Long-tail Expansion',
   step_5_filtering: 'Keyword Filtering',
   step_6_clustering: 'Topic Clustering',
@@ -73,10 +56,9 @@ export const WORKFLOW_STEP_DESCRIPTIONS: Record<WorkflowState, string> = {
   step_8_subtopics: 'Subtopic Generation',
   step_9_articles: 'Article Generation',
   completed: 'Completed',
-  failed: 'Failed',
 }
 
-/** Helper guards */
+/** Helper guards - FSM-aligned */
 export function getStepIndex(step: WorkflowState): number {
   return ALL_WORKFLOW_STATES.indexOf(step)
 }
@@ -93,7 +75,7 @@ export function isValidWorkflowState(value: string): value is WorkflowState {
   return ALL_WORKFLOW_STATES.includes(value as WorkflowState)
 }
 
-/** Dashboard helpers */
+/** Dashboard helpers - FSM-aligned */
 export function calculateProgress(status: string): number {
   return WORKFLOW_PROGRESS_MAP[status as WorkflowState] || 0
 }
@@ -102,7 +84,7 @@ export function getStepDescription(status: string): string {
   return WORKFLOW_STEP_DESCRIPTIONS[status as WorkflowState] || 'Unknown'
 }
 
-/** Runtime assertion to prevent invalid states */
+/** Runtime assertion to prevent invalid states - FSM-aligned */
 export function assertValidWorkflowState(
   status: string
 ): asserts status is WorkflowState {

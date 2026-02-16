@@ -3,9 +3,9 @@ import type { WorkflowState } from '@/lib/constants/intent-workflow-steps'
 export function normalizeWorkflowStatus(
   status: string
 ): WorkflowState {
+  // Since FSM is the single source of truth, only handle valid FSM states
+  // This function can be used for backward compatibility if needed
   switch (status) {
-    case 'step_3_seeds':
-      return 'step_3_keywords'
     case 'step_4_topics':
       return 'step_4_longtails'
     case 'step_5_generation':

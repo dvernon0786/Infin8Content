@@ -17,8 +17,8 @@ export function assertValidWorkflowTransition(
   assertValidWorkflowState(currentStatus)
   assertValidWorkflowState(nextStatus)
 
-  // Allow terminal states (completed/failed) from any step
-  if (nextStatus === 'completed' || nextStatus === 'failed') {
+  // Allow terminal state (completed) from any step
+  if (nextStatus === 'completed') {
     return
   }
 

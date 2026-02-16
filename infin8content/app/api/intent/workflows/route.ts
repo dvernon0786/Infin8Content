@@ -9,7 +9,6 @@ import { NextResponse } from 'next/server'
 import type { 
   CreateIntentWorkflowRequest, 
   CreateIntentWorkflowResponse,
-  IntentWorkflowStatus,
   IntentWorkflow
 } from '@/lib/types/intent-workflow'
 import { WorkflowState } from '@/lib/constants/intent-workflow-steps'
@@ -42,7 +41,7 @@ const createWorkflowSchema = z.object({
  * - id: string (UUID)
  * - name: string
  * - organization_id: string (UUID)
- * - status: string (IntentWorkflowStatus)
+ * - state: string (WorkflowState)
  * - created_at: string (ISO timestamp)
  * 
  * Response (Error):
@@ -191,7 +190,14 @@ export async function POST(request: Request) {
       )
     }
 
-    const workflow = workflowData as unknown as CreateIntentWorkflowResponse & { updated_at: string; state: string }
+    const workflow = workflowData as unknown as {
+      id: string
+      name: string
+      organization_id: string
+      state: WorkflowState
+      created_at: string
+      updated_at: string
+    }
 
     // Log the workflow creation action
     try {
