@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { ChevronRight, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 import type { WorkflowDashboardItem } from '@/lib/services/intent-engine/workflow-dashboard-service'
-import { WORKFLOW_STEP_DESCRIPTIONS, WORKFLOW_PROGRESS_MAP, type WorkflowState } from '@/lib/constants/intent-workflow-steps'
+import { WORKFLOW_STEP_DESCRIPTIONS, WORKFLOW_PROGRESS_MAP } from '@/lib/constants/intent-workflow-steps'
+import type { WorkflowState } from '@/lib/fsm/workflow-events'
 
 interface WorkflowCardProps {
   workflow: WorkflowDashboardItem

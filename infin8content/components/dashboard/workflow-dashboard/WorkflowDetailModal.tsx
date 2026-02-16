@@ -15,7 +15,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AlertTriangle, X } from 'lucide-react'
 import type { WorkflowDashboardItem } from '@/lib/services/intent-engine/workflow-dashboard-service'
-import { WORKFLOW_STEP_DESCRIPTIONS, type WorkflowState } from '@/lib/constants/intent-workflow-steps'
+import { WORKFLOW_STEP_DESCRIPTIONS } from '@/lib/constants/intent-workflow-steps'
+import type { WorkflowState } from '@/lib/fsm/workflow-events'
 import { WORKFLOW_STEP_CONFIG } from '@/lib/intent-workflow/step-config'
 
 interface WorkflowDetailModalProps {

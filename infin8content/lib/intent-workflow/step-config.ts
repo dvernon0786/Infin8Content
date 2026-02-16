@@ -1,4 +1,4 @@
-import type { WorkflowState } from '@/lib/constants/intent-workflow-steps'
+import type { WorkflowState } from '@/lib/fsm/workflow-events'
 
 export interface WorkflowStepConfig {
   step: WorkflowState
