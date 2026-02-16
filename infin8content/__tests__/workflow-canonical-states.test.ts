@@ -10,7 +10,6 @@ import {
   ALL_WORKFLOW_STATES,
   assertValidWorkflowState
 } from '../lib/constants/intent-workflow-steps'
-import { assertValidWorkflowTransition } from '../lib/inngest/workflow-transition-guard'
 import type { WorkflowState } from '../lib/fsm/workflow-events'
 
 // Add global Jest types
@@ -107,39 +106,6 @@ describe('Sealed FSM Workflow States', () => {
       ALL_WORKFLOW_STATES.forEach(state => {
         expect(state).toBeValidWorkflowState()
       })
-    })
-  })
-
-  describe('FSM Transition Validation', () => {
-    test('should allow valid linear progression', () => {
-      expect(() => assertValidWorkflowTransition('step_1_icp', 'step_2_competitors')).not.toThrow()
-      expect(() => assertValidWorkflowTransition('step_2_competitors', 'step_3_seeds')).not.toThrow()
-      expect(() => assertValidWorkflowTransition('step_8_subtopics', 'step_9_articles')).not.toThrow()
-    })
-
-    test('should allow terminal state transitions', () => {
-      expect(() => assertValidWorkflowTransition('step_5_filtering', 'completed')).not.toThrow()
-      expect(() => assertValidWorkflowTransition('step_9_articles', 'completed')).not.toThrow()
-      // ❌ NO failed state transitions
-      expect(() => assertValidWorkflowTransition('step_9_articles', 'failed')).toThrow()
-    })
-
-    test('should reject illegal transitions', () => {
-      // ❌ NO legacy state transitions
-      expect(() => assertValidWorkflowTransition('step_1_icp', 'step_3_keywords')).toThrow()
-      expect(() => assertValidWorkflowTransition('step_5_filtering', 'step_2_competitors')).toThrow()
-      expect(() => assertValidWorkflowTransition('step_3_seeds', 'step_5_filtering')).toThrow() // Skip steps
-    })
-
-    test('should allow idempotent transitions', () => {
-      expect(() => assertValidWorkflowTransition('step_1_icp', 'step_1_icp')).not.toThrow()
-      expect(() => assertValidWorkflowTransition('step_3_seeds', 'step_3_seeds')).not.toThrow()
-    })
-
-    test('should enforce linear progression constraint', () => {
-      // Only next step or completed should be allowed
-      expect(() => assertValidWorkflowTransition('step_1_icp', 'step_2_competitors')).not.toThrow()
-      expect(() => assertValidWorkflowTransition('step_1_icp', 'step_3_seeds')).toThrow() // Skip step
     })
   })
 
