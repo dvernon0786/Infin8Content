@@ -190,7 +190,14 @@ export async function POST(request: Request) {
       )
     }
 
-    const workflow = workflowData as unknown as CreateIntentWorkflowResponse & { updated_at: string; state: string }
+    const workflow = workflowData as unknown as {
+      id: string
+      name: string
+      organization_id: string
+      state: WorkflowState
+      created_at: string
+      updated_at: string
+    }
 
     // Log the workflow creation action
     try {
