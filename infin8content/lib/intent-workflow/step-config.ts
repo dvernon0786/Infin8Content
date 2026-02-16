@@ -10,13 +10,6 @@ export interface WorkflowStepConfig {
 
 export const WORKFLOW_STEP_CONFIG: WorkflowStepConfig[] = [
   {
-    step: 'step_0_auth',
-    label: 'Generate ICP',
-    endpoint: 'steps/icp-generate',
-    autoAdvance: false,
-    hidden: true, // Hide from UI progress - execution-only step
-  },
-  {
     step: 'step_1_icp',
     label: 'Generate ICP',
     endpoint: 'steps/icp-generate',
@@ -29,7 +22,7 @@ export const WORKFLOW_STEP_CONFIG: WorkflowStepConfig[] = [
     autoAdvance: false, // verify later
   },
   {
-    step: 'step_3_keywords',
+    step: 'step_3_seeds',
     label: 'Extract Seed Keywords',
     endpoint: 'steps/seed-extract',
     autoAdvance: false,
