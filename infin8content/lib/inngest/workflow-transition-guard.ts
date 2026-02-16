@@ -5,9 +5,9 @@
 
 import {
   WORKFLOW_STEP_ORDER,
-  assertValidWorkflowState,
-  type WorkflowState
+  assertValidWorkflowState
 } from '@/lib/constants/intent-workflow-steps'
+import type { WorkflowState } from '@/lib/fsm/workflow-events'
 
 export function assertValidWorkflowTransition(
   currentStatus: string,

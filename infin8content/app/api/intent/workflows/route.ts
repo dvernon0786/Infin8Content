@@ -11,7 +11,7 @@ import type {
   CreateIntentWorkflowResponse,
   IntentWorkflow
 } from '@/lib/types/intent-workflow'
-import { WorkflowState } from '@/lib/constants/intent-workflow-steps'
+import type { WorkflowState } from '@/lib/fsm/workflow-events'
 
 /**
  * Zod schema for intent workflow creation request validation
