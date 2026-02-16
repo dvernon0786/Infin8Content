@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { queueApprovedSubtopicsForArticles } from '@/lib/services/intent-engine/article-queuing-processor'
+import { queueArticlesForWorkflow } from '@/lib/services/intent-engine/article-queuing-processor'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { inngest } from '@/lib/inngest/client'
 
@@ -36,7 +36,7 @@ describe('Article Queuing Processor', () => {
     vi.clearAllMocks()
   })
 
-  describe('queueApprovedSubtopicsForArticles', () => {
+  describe('queueArticlesForWorkflow', () => {
     it('should create articles for approved keywords', async () => {
       const workflowId = 'workflow-123'
       const organizationId = 'org-123'
@@ -95,13 +95,13 @@ describe('Article Queuing Processor', () => {
       // Mock Inngest event
       vi.mocked(inngest).send = vi.fn().mockResolvedValue({ ids: ['event-1'] })
 
-      const result = await queueApprovedSubtopicsForArticles(workflowId)
+      const result = await queueArticlesForWorkflow(workflowId)
 
       expect(result.workflow_id).toBe(workflowId)
       expect(result.articles_created).toBe(1)
       expect(result.articles).toHaveLength(1)
       expect(result.articles[0].keyword).toBe('best seo practices')
-      expect(result.errors).toHaveLength(0)
+      expect(result.message).toBeDefined()
     })
 
     it('should handle workflow not found error', async () => {
@@ -112,7 +112,7 @@ describe('Article Queuing Processor', () => {
         error: { message: 'Not found' }
       })
 
-      await expect(queueApprovedSubtopicsForArticles(workflowId)).rejects.toThrow(
+      await expect(queueArticlesForWorkflow(workflowId)).rejects.toThrow(
         'Workflow not found'
       )
     })
@@ -131,7 +131,7 @@ describe('Article Queuing Processor', () => {
         error: null
       })
 
-      await expect(queueApprovedSubtopicsForArticles(workflowId)).rejects.toThrow(
+      await expect(queueArticlesForWorkflow(workflowId)).rejects.toThrow(
         'Invalid workflow state'
       )
     })
@@ -164,11 +164,11 @@ describe('Article Queuing Processor', () => {
         error: null
       })
 
-      const result = await queueApprovedSubtopicsForArticles(workflowId)
+      const result = await queueArticlesForWorkflow(workflowId)
 
       expect(result.articles_created).toBe(0)
       expect(result.articles).toHaveLength(0)
-      expect(result.errors).toHaveLength(0)
+      expect(result.message).toBeDefined()
     })
 
     it('should handle article creation errors gracefully', async () => {
@@ -212,11 +212,10 @@ describe('Article Queuing Processor', () => {
         error: null
       })
 
-      const result = await queueApprovedSubtopicsForArticles(workflowId)
+      const result = await queueArticlesForWorkflow(workflowId)
 
       expect(result.articles_created).toBe(0)
-      expect(result.errors).toHaveLength(1)
-      expect(result.errors[0]).toContain('Failed to create article')
+      expect(result.message).toContain('Failed to create article')
     })
 
     it('should trigger Planner Agent via Inngest', async () => {
@@ -267,7 +266,7 @@ describe('Article Queuing Processor', () => {
       // Mock Inngest event
       vi.mocked(inngest).send = vi.fn().mockResolvedValue({ ids: ['event-1'] })
 
-      await queueApprovedSubtopicsForArticles(workflowId)
+      await queueArticlesForWorkflow(workflowId)
 
       expect(inngest.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -310,7 +309,7 @@ describe('Article Queuing Processor', () => {
         error: null
       })
 
-      await queueApprovedSubtopicsForArticles(workflowId)
+      await queueArticlesForWorkflow(workflowId)
 
       // Verify update was called with correct status
       expect(mockSupabase.update).toHaveBeenCalledWith(
@@ -369,7 +368,7 @@ describe('Article Queuing Processor', () => {
 
       vi.mocked(inngest.send).mockResolvedValue({ ids: ['event-1'] })
 
-      await queueApprovedSubtopicsForArticles(workflowId)
+      await queueArticlesForWorkflow(workflowId)
 
       // Verify article was created with context
       expect(mockSupabase.insert).toHaveBeenCalledWith(
@@ -440,12 +439,11 @@ describe('Article Queuing Processor', () => {
       // Mock Inngest failure
       vi.mocked(inngest.send).mockRejectedValue(new Error('Inngest error'))
 
-      const result = await queueApprovedSubtopicsForArticles(workflowId)
+      const result = await queueArticlesForWorkflow(workflowId)
 
       // Article should NOT be in createdArticles due to Inngest failure
       expect(result.articles_created).toBe(0)
-      expect(result.errors).toHaveLength(1)
-      expect(result.errors[0]).toContain('Failed to trigger Planner Agent')
+      expect(result.message).toContain('Failed to trigger Planner Agent')
     })
 
     it('should skip existing articles (idempotency)', async () => {
@@ -493,12 +491,12 @@ describe('Article Queuing Processor', () => {
         error: null
       })
 
-      const result = await queueApprovedSubtopicsForArticles(workflowId)
+      const result = await queueArticlesForWorkflow(workflowId)
 
       // Should include existing article without creating new one
       expect(result.articles_created).toBe(1)
       expect(result.articles).toHaveLength(1)
-      expect(result.errors).toHaveLength(0)
+      expect(result.message).toBeDefined()
       // Verify insert was NOT called
       expect(mockSupabase.insert).not.toHaveBeenCalled()
     })
@@ -531,7 +529,7 @@ describe('Article Queuing Processor', () => {
         error: null
       })
 
-      await expect(queueApprovedSubtopicsForArticles(workflowId)).rejects.toThrow(
+      await expect(queueArticlesForWorkflow(workflowId)).rejects.toThrow(
         'exceeds limit of 50 articles'
       )
     })

@@ -10,6 +10,7 @@
  */
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 import { 
   RetryPolicy, 
   isRetryableError, 
@@ -478,7 +479,7 @@ async function checkSeedApproval(workflowId: string): Promise<void> {
 /**
  * Main function to expand seed keywords into long-tail keywords
  */
-export async function expandSeedKeywordsToLongtails(workflowId: string): Promise<ExpansionSummary> {
+export async function expandSeedKeywordsToLongtails(workflowId: string, userId: string): Promise<ExpansionSummary> {
   const supabase = createServiceRoleClient()
   
   console.log(`[LongtailExpander] Starting long-tail expansion for workflow ${workflowId}`)
@@ -568,16 +569,8 @@ export async function expandSeedKeywordsToLongtails(workflowId: string): Promise
     }
   }
   
-  // Update workflow state to next step
-  const { error } = await supabase
-    .from('intent_workflows')
-    .update({ state: 'step_5_filtering' })
-    .eq('id', workflowId)
-    .eq('organization_id', organizationId)
-  
-  if (error) {
-    throw new Error(`Failed to update workflow state: ${error.message}`)
-  }
+  // Update workflow state using FSM transition ONLY
+  await WorkflowFSM.transition(workflowId, 'LONGTAILS_COMPLETED', { userId })
   
   console.log(`[LongtailExpander] Completed expansion. Created ${totalLongtailsCreated} long-tails from ${seedKeywords.length} seeds`)
   
@@ -588,29 +581,3 @@ export async function expandSeedKeywordsToLongtails(workflowId: string): Promise
   }
 }
 
-/**
- * Update workflow status
- */
-async function updateWorkflowStatus(
-  workflowId: string,
-  organizationId: string,
-  status: string,
-  metadata?: Record<string, any>
-): Promise<void> {
-  const supabase = createServiceRoleClient()
-  
-  const updateData: any = { status }
-  if (metadata) {
-    Object.assign(updateData, metadata)
-  }
-  
-  const { error } = await supabase
-    .from('intent_workflows')
-    .update(updateData)
-    .eq('id', workflowId)
-    .eq('organization_id', organizationId)
-  
-  if (error) {
-    throw new Error(`Failed to update workflow status: ${error.message}`)
-  }
-}

@@ -398,7 +398,7 @@ describe('Long-Tail Keyword Expander', () => {
 
       const { expandSeedKeywordsToLongtails } = await import('@/lib/services/intent-engine/longtail-keyword-expander')
 
-      await expect(expandSeedKeywordsToLongtails('test-workflow-id'))
+      await expect(expandSeedKeywordsToLongtails('test-workflow-id', 'user-123'))
         .rejects.toThrow('Seed keywords must be approved before long-tail expansion')
       
       // Verify approval lookup was attempted
@@ -455,7 +455,7 @@ describe('Long-Tail Keyword Expander', () => {
 
       const { expandSeedKeywordsToLongtails } = await import('@/lib/services/intent-engine/longtail-keyword-expander')
 
-      await expect(expandSeedKeywordsToLongtails('test-workflow-id'))
+      await expect(expandSeedKeywordsToLongtails('test-workflow-id', 'user-123'))
         .rejects.toThrow('Seed keywords must be approved before long-tail expansion')
       
       // Verify approval lookup was attempted
@@ -550,7 +550,7 @@ describe('Long-Tail Keyword Expander', () => {
 
       // Should fail with "no seeds" error, not "approval required" error
       // This proves the guard passed and execution proceeded
-      await expect(expandSeedKeywordsToLongtails('test-workflow-id'))
+      await expect(expandSeedKeywordsToLongtails('test-workflow-id', 'user-123'))
         .rejects.toThrow('No seed keywords found for long-tail expansion')
       
       // Verify all lookups were attempted in order

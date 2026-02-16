@@ -12,7 +12,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import {
-  queueApprovedSubtopicsForArticles,
+  queueArticlesForWorkflow,
   type ArticleQueueingResult
 } from '@/lib/services/intent-engine/article-queuing-processor'
 import { enforceICPGate, enforceSubtopicApprovalGate } from '@/lib/middleware/intent-engine-gate'
@@ -67,15 +67,14 @@ export async function POST(
       )
     }
 
-    // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string; current_step: number }
-
-    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 9 when current_step = 9
-    if (typedWorkflow.current_step !== 9) {
+    // FSM GUARD: Only allow step_9_articles for article queuing
+    const typedWorkflow = workflow as unknown as { id: string; state: string; organization_id: string }
+    
+    if (typedWorkflow.state !== 'step_9_articles') {
       return NextResponse.json(
         {
-          error: 'INVALID_STEP_ORDER',
-          message: `Workflow must be at step 9 (article queuing), currently at step ${typedWorkflow.current_step}`
+          error: 'INVALID_STATE',
+          message: `Workflow must be at step_9_articles. Current state: ${typedWorkflow.state}`
         },
         { status: 400 }
       )
@@ -89,7 +88,7 @@ export async function POST(
         action: AuditAction.WORKFLOW_ARTICLE_QUEUING_STARTED,
         details: {
           workflow_id: workflowId,
-          workflow_status: typedWorkflow.status
+          workflow_state: typedWorkflow.state
         },
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
@@ -103,7 +102,7 @@ export async function POST(
 
     // Execute article queuing
     const startTime = Date.now()
-    const queueingResult = await queueApprovedSubtopicsForArticles(workflowId)
+    const queueingResult = await queueArticlesForWorkflow(workflowId)
     const duration = Date.now() - startTime
 
     console.log(`[QueueArticles] Completed queuing in ${duration}ms`)
@@ -121,11 +120,12 @@ export async function POST(
       )
     }
 
-    if (queueingResult.errors.length > 0 && queueingResult.articles_created === 0) {
+    // Check if queuing failed completely
+    if (queueingResult.articles_created === 0) {
       return NextResponse.json(
         {
           error: 'QUEUING_FAILED',
-          message: 'All article queuing attempts failed - workflow cannot proceed'
+          message: queueingResult.message || 'All article queuing attempts failed - workflow cannot proceed'
         },
         { status: 500 }
       )
@@ -140,7 +140,8 @@ export async function POST(
         details: {
           workflow_id: workflowId,
           articles_created: queueingResult.articles_created,
-          errors_count: queueingResult.errors.length,
+          workflow_state: queueingResult.workflow_state,
+          message: queueingResult.message,
           duration_ms: duration
         },
         ipAddress: extractIpAddress(request.headers),
@@ -156,10 +157,10 @@ export async function POST(
       {
         success: true,
         workflow_id: workflowId,
-        workflow_status: 'step_9_articles',
+        workflow_state: queueingResult.workflow_state,
         articles_created: queueingResult.articles_created,
         articles: queueingResult.articles,
-        errors: queueingResult.errors,
+        message: queueingResult.message,
         duration_ms: duration
       },
       { status: 200 }

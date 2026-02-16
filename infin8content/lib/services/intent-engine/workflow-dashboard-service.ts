@@ -8,35 +8,26 @@
 
 import { SupabaseClient } from '@supabase/supabase-js'
 import type { IntentWorkflow } from '@/lib/types/intent-workflow'
-import { 
-  WORKFLOW_PROGRESS_MAP, 
-  WORKFLOW_STEP_DESCRIPTIONS,
-  ALL_WORKFLOW_STATES,
-  calculateProgress,
-  getStepDescription,
-  assertValidWorkflowState,
-  type WorkflowState 
-} from '@/lib/constants/intent-workflow-steps'
-import { normalizeWorkflowStatus } from '@/lib/utils/normalize-workflow-status'
 
-const STEP_TO_INDEX: Record<string, number> = {
-  step_1_icp: 1,
-  step_2_competitors: 2,
-  step_3_keywords: 3,
-  step_4_longtails: 4,
-  step_5_filtering: 5,
-  step_6_clustering: 6,
-  step_7_validation: 7,
-  step_8_subtopics: 8,
-  step_9_articles: 9,
-}
+// Pure FSM state order for progress calculation
+const STATE_ORDER: string[] = [
+  'step_1_icp',
+  'step_2_competitors', 
+  'step_3_seeds',
+  'step_4_longtails',
+  'step_5_filtering',
+  'step_6_clustering',
+  'step_7_validation',
+  'step_8_subtopics',
+  'step_9_articles',
+  'completed'
+]
 
 export interface WorkflowDashboardItem {
   id: string
   name: string
   state: string
   progress_percentage: number
-  current_step: number
   created_at: string
   updated_at: string
   created_by: string
@@ -115,20 +106,19 @@ export function calculateEstimatedCompletion(
 
 /**
  * Format workflows for dashboard display
+ * Uses pure FSM state for progress calculation
  */
 export function formatWorkflows(workflows: IntentWorkflow[]): WorkflowDashboardItem[] {
   return workflows.map(workflow => {
-    // CANONICAL: Derive progress from state, not current_step
-    const stepOrder = ['step_0_auth', 'step_1_icp', 'step_2_competitors', 'step_3_keywords', 'step_4_longtails', 'step_5_filtering', 'step_6_clustering', 'step_7_validation', 'step_8_subtopics', 'step_9_articles']
-    const currentStepIndex = stepOrder.indexOf(workflow.state) + 1
-    const progress = currentStepIndex >= 10 ? 100 : ((currentStepIndex - 1) / 9) * 100
+    // Pure FSM: Derive progress from state order only
+    const stateIndex = STATE_ORDER.indexOf(workflow.state)
+    const progress = stateIndex >= 0 ? (stateIndex / (STATE_ORDER.length - 1)) * 100 : 0
     
     return {
       id: workflow.id,
       name: workflow.name,
       state: workflow.state,
       progress_percentage: progress,
-      current_step: currentStepIndex,
       created_at: workflow.created_at,
       updated_at: workflow.updated_at,
       created_by: workflow.created_by,
@@ -136,7 +126,7 @@ export function formatWorkflows(workflows: IntentWorkflow[]): WorkflowDashboardI
         workflow.created_at,
         workflow.updated_at,
         progress
-      ),
+      )
     }
   })
 }
@@ -144,9 +134,6 @@ export function formatWorkflows(workflows: IntentWorkflow[]): WorkflowDashboardI
 /**
  * Fetch all workflows for an organization
  */
-// Export the helper functions for use in tests
-export { calculateProgress, getStepDescription }
-
 export async function getWorkflowDashboard(
   supabase: SupabaseClient,
   organizationId: string
@@ -161,17 +148,13 @@ export async function getWorkflowDashboard(
     throw new Error(`Failed to fetch workflows: ${error.message}`)
   }
 
-  const normalizedWorkflows = (workflows || []).map(w => ({
-    ...w,
-    status: normalizeWorkflowStatus(w.status),
-  }))
-  const formattedWorkflows = formatWorkflows(normalizedWorkflows)
-  const summary = calculateSummary(normalizedWorkflows)
+  const formattedWorkflows = formatWorkflows(workflows || [])
+  const summary = calculateSummary(workflows || [])
 
   return {
     workflows: formattedWorkflows,
     filters: {
-      statuses: [...ALL_WORKFLOW_STATES],
+      statuses: [...STATE_ORDER],
       date_ranges: ['today', 'this_week', 'this_month', 'all_time'],
     },
     summary,

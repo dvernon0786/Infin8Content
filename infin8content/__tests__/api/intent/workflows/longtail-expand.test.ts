@@ -47,8 +47,7 @@ vi.mocked(mockEmitAnalyticsEvent).mockResolvedValue(undefined)
 
 vi.mocked(mockExpandSeedKeywordsToLongtails).mockResolvedValue({
   seeds_processed: 1,
-  total_longtails_created: 12,
-  step_4_longtails_completed_at: new Date().toISOString()
+  total_longtails_created: 12
 })
 
 // Import after mocking
@@ -76,8 +75,7 @@ describe('/api/intent/workflows/[workflow_id]/steps/longtail-expand', () => {
     mockEmitAnalyticsEvent.mockResolvedValue(undefined)
     mockExpandSeedKeywordsToLongtails.mockResolvedValue({
       seeds_processed: 1,
-      total_longtails_created: 12,
-      step_4_longtails_completed_at: new Date().toISOString()
+      total_longtails_created: 12
     })
   })
 
@@ -157,7 +155,7 @@ describe('/api/intent/workflows/[workflow_id]/steps/longtail-expand', () => {
             eq: vi.fn(() => ({
               eq: vi.fn(() => ({
                 single: vi.fn(() => ({ 
-                  data: { organization_id: 'org-123', status: 'step_1_icp' }, 
+                  data: { organization_id: 'org-123', state: 'step_1_icp' }, 
                   error: null 
                 }))
               }))
@@ -195,7 +193,7 @@ describe('/api/intent/workflows/[workflow_id]/steps/longtail-expand', () => {
             eq: vi.fn(() => ({
               eq: vi.fn(() => ({
                 single: vi.fn(() => ({ 
-                  data: { organization_id: 'org-123', status: 'step_3_seeds' }, 
+                  data: { organization_id: 'org-123', state: 'step_3_seeds' }, 
                   error: null 
                 }))
               }))
@@ -231,7 +229,7 @@ describe('/api/intent/workflows/[workflow_id]/steps/longtail-expand', () => {
             eq: vi.fn(() => ({
               eq: vi.fn(() => ({
                 single: vi.fn(() => ({ 
-                  data: { organization_id: 'org-123', status: 'step_3_seeds' }, 
+                  data: { organization_id: 'org-123', state: 'step_3_seeds' }, 
                   error: null 
                 }))
               }))
@@ -266,7 +264,7 @@ describe('/api/intent/workflows/[workflow_id]/steps/longtail-expand', () => {
             eq: vi.fn(() => ({
               eq: vi.fn(() => ({
                 single: vi.fn(() => ({ 
-                  data: { organization_id: 'org-123', status: 'step_3_seeds' }, 
+                  data: { organization_id: 'org-123', state: 'step_3_seeds' }, 
                   error: null 
                 }))
               }))
@@ -301,7 +299,7 @@ describe('/api/intent/workflows/[workflow_id]/steps/longtail-expand', () => {
             eq: vi.fn(() => ({
               eq: vi.fn(() => ({
                 single: vi.fn(() => ({ 
-                  data: { organization_id: 'org-123', status: 'step_3_seeds' }, 
+                  data: { organization_id: 'org-123', state: 'step_3_seeds' }, 
                   error: null 
                 }))
               }))
