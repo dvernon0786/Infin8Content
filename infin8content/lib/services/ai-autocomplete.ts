@@ -176,7 +176,7 @@ async function generateAISuggestions(
     ], {
       maxTokens: 500,
       temperature: 0.7,
-      model: 'google/gemini-2.5-flash'
+      model: 'perplexity/sonar'
     })
 
     // Parse AI response with safe parsing to handle markdown code blocks

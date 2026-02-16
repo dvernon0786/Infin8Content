@@ -80,7 +80,7 @@ export async function runContentWritingAgent(
           generateContent(messages, {
             maxTokens: 2000,
             temperature: 0.7,
-            model: 'google/gemini-2.5-flash-exp'
+            model: 'perplexity/sonar'
           }),
           timeoutPromise
         ]);
