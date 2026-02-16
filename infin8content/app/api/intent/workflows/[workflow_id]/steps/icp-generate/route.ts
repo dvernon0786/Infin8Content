@@ -13,14 +13,13 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { checkRateLimit, type RateLimitConfig } from '@/lib/services/rate-limiting/persistent-rate-limiter'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
-import {
+import { 
   generateICPDocument,
   storeICPGenerationResult,
   handleICPGenerationFailure,
   type ICPGenerationRequest
 } from '@/lib/services/intent-engine/icp-generator'
-import { advanceWorkflow } from '@/lib/services/workflow/advanceWorkflow'
-import { WorkflowState } from '@/types/workflow-state'
+import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 
 // Rate limit configuration for ICP generation
 const RATE_LIMIT_CONFIG: RateLimitConfig = {
@@ -153,13 +152,8 @@ export async function POST(
     // Store result in workflow with retry metadata (consolidated in single update)
     await storeICPGenerationResult(workflowId, organizationId, icpResult, idempotencyKey)
 
-    // Advance workflow state to step_2_competitors
-    await advanceWorkflow({
-      workflowId,
-      organizationId,
-      expectedState: WorkflowState.step_1_icp,
-      nextState: WorkflowState.step_2_competitors
-    })
+    // FSM TRANSITION: Advance to step_2_competitors
+    await WorkflowFSM.transition(workflowId, 'ICP_COMPLETED', { userId: currentUser.id })
 
     // Emit analytics event for workflow step completion
     try {
