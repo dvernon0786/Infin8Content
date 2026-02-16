@@ -58,7 +58,7 @@ describe('CompetitorGateValidator', () => {
       // Assert
       expect(result.allowed).toBe(true)
       expect(result.competitorStatus).toBe('step_3_competitors')
-      expect(result.workflowStatus).toBe('step_3_competitors')
+      expect(result.workflowState).toBe('step_3_competitors')
       expect(result.error).toBeUndefined()
     })
 
@@ -83,7 +83,7 @@ describe('CompetitorGateValidator', () => {
       // Assert
       expect(result.allowed).toBe(true)
       expect(result.competitorStatus).toBe('step_4_longtails')
-      expect(result.workflowStatus).toBe('step_4_longtails')
+      expect(result.workflowState).toBe('step_4_longtails')
     })
 
     it('should block access when workflow status is step_2_icp_complete', async () => {
@@ -107,11 +107,11 @@ describe('CompetitorGateValidator', () => {
       // Assert
       expect(result.allowed).toBe(false)
       expect(result.competitorStatus).toBe('step_2_icp_complete')
-      expect(result.workflowStatus).toBe('step_2_icp_complete')
+      expect(result.workflowState).toBe('step_2_icp_complete')
       expect(result.error).toBe('Competitor analysis required before seed keywords')
       expect(result.errorResponse).toEqual({
         error: 'Competitor analysis required before seed keywords',
-        workflowStatus: 'step_2_icp_complete',
+        workflowState: 'step_2_icp_complete',
         competitorStatus: 'not_complete',
         requiredAction: 'Complete competitor analysis (step 2) before proceeding',
         currentStep: 'step_2_icp_complete',
@@ -140,7 +140,7 @@ describe('CompetitorGateValidator', () => {
       // Assert
       expect(result.allowed).toBe(false)
       expect(result.competitorStatus).toBe('step_1_icp')
-      expect(result.workflowStatus).toBe('step_1_icp')
+      expect(result.workflowState).toBe('step_1_icp')
       expect(result.error).toBe('Competitor analysis required before seed keywords')
     })
 
@@ -159,7 +159,7 @@ describe('CompetitorGateValidator', () => {
       // Assert
       expect(result.allowed).toBe(true)
       expect(result.competitorStatus).toBe('error')
-      expect(result.workflowStatus).toBe('error')
+      expect(result.workflowState).toBe('error')
       expect(result.error).toBe('Database error - failing open for availability')
     })
 
@@ -178,7 +178,7 @@ describe('CompetitorGateValidator', () => {
       // Assert
       expect(result.allowed).toBe(false)
       expect(result.competitorStatus).toBe('not_found')
-      expect(result.workflowStatus).toBe('not_found')
+      expect(result.workflowState).toBe('not_found')
       expect(result.error).toBe('Workflow not found')
       expect(result.errorResponse).toEqual({
         error: 'Workflow not found',
@@ -201,7 +201,7 @@ describe('CompetitorGateValidator', () => {
       // Assert
       expect(result.allowed).toBe(true)
       expect(result.competitorStatus).toBe('error')
-      expect(result.workflowStatus).toBe('error')
+      expect(result.workflowState).toBe('error')
       expect(result.error).toBe('Unexpected error - failing open for availability')
     })
 
@@ -246,7 +246,7 @@ describe('CompetitorGateValidator', () => {
 
         // Assert
         expect(result.allowed).toBe(true)
-        expect(result.workflowStatus).toBe(status)
+        expect(result.workflowState).toBe(status)
       }
     })
 
@@ -290,7 +290,7 @@ describe('CompetitorGateValidator', () => {
 
         // Assert
         expect(result.allowed).toBe(false)
-        expect(result.workflowStatus).toBe(status)
+        expect(result.workflowState).toBe(status)
         expect(result.error).toBe('Competitor analysis required before seed keywords')
       }
     })
@@ -325,7 +325,7 @@ describe('CompetitorGateValidator', () => {
       const gateResult = {
         allowed: true,
         competitorStatus: 'step_3_competitors',
-        workflowStatus: 'step_3_competitors'
+        workflowState: 'step_3_competitors'
       }
       
       const mockWorkflow = {
@@ -368,7 +368,7 @@ describe('CompetitorGateValidator', () => {
       const gateResult = {
         allowed: false,
         competitorStatus: 'step_2_icp_complete',
-        workflowStatus: 'step_2_icp_complete',
+        workflowState: 'step_2_icp_complete',
         error: 'Competitor analysis required before seed keywords'
       }
       
@@ -411,7 +411,7 @@ describe('CompetitorGateValidator', () => {
       const gateResult = {
         allowed: true,
         competitorStatus: 'step_3_competitors',
-        workflowStatus: 'step_3_competitors'
+        workflowState: 'step_3_competitors'
       }
       
       mockLogSingle.mockResolvedValue({

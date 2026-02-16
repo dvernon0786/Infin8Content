@@ -61,7 +61,7 @@ describe('ICPGateValidator', () => {
       // Assert
       expect(result.allowed).toBe(true)
       expect(result.icpStatus).toBe('step_2_icp_complete')
-      expect(result.workflowStatus).toBe('step_2_icp_complete')
+      expect(result.workflowState).toBe('step_2_icp_complete')
       expect(result.error).toBeUndefined()
     })
 
@@ -92,7 +92,7 @@ describe('ICPGateValidator', () => {
       // Assert
       expect(result.allowed).toBe(false)
       expect(result.icpStatus).toBe('step_1_icp')
-      expect(result.workflowStatus).toBe('step_1_icp')
+      expect(result.workflowState).toBe('step_1_icp')
       expect(result.error).toContain('ICP completion required')
     })
 

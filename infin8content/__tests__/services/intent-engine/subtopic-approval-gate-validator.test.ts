@@ -66,7 +66,7 @@ describe('SubtopicApprovalGateValidator', () => {
 
       expect(result.allowed).toBe(true)
       expect(result.subtopicApprovalStatus).toBe('approved')
-      expect(result.workflowStatus).toBe('step_8_approval')
+      expect(result.workflowState).toBe('step_8_approval')
     })
 
     it('should block access when subtopics are rejected', async () => {
@@ -98,7 +98,7 @@ describe('SubtopicApprovalGateValidator', () => {
       expect(result.error).toBe('Subtopics rejected - revision required')
       expect(result.errorResponse).toMatchObject({
         error: 'Subtopics rejected - revision required',
-        workflowStatus: 'step_8_approval',
+        workflowState: 'step_8_approval',
         subtopicApprovalStatus: 'rejected',
         requiredAction: 'Regenerate or revise subtopics before article generation',
         currentStep: 'article-generation'
@@ -129,7 +129,7 @@ describe('SubtopicApprovalGateValidator', () => {
       expect(result.error).toBe('Subtopics must be approved before article generation')
       expect(result.errorResponse).toMatchObject({
         error: 'Subtopics must be approved before article generation',
-        workflowStatus: 'step_8_approval',
+        workflowState: 'step_8_approval',
         subtopicApprovalStatus: 'not_approved',
         requiredAction: 'Approve subtopics via keyword approval endpoints'
       })
@@ -153,7 +153,7 @@ describe('SubtopicApprovalGateValidator', () => {
       expect(result.error).toBe('Subtopics not yet generated for approval')
       expect(result.errorResponse).toMatchObject({
         error: 'Subtopics not yet generated for approval',
-        workflowStatus: 'step_7_validation',
+        workflowState: 'step_7_validation',
         subtopicApprovalStatus: 'not_ready',
         requiredAction: 'Complete subtopic generation (step 8) before approval'
       })
@@ -174,7 +174,7 @@ describe('SubtopicApprovalGateValidator', () => {
 
       expect(result.allowed).toBe(true)
       expect(result.subtopicApprovalStatus).toBe('not_required')
-      expect(result.workflowStatus).toBe('step_9_articles')
+      expect(result.workflowState).toBe('step_9_articles')
     })
 
     it('should return error when workflow not found', async () => {
@@ -188,7 +188,7 @@ describe('SubtopicApprovalGateValidator', () => {
 
       expect(result.allowed).toBe(false)
       expect(result.subtopicApprovalStatus).toBe('not_found')
-      expect(result.workflowStatus).toBe('not_found')
+      expect(result.workflowState).toBe('not_found')
       expect(result.error).toBe('Workflow not found')
       expect(result.errorResponse).toMatchObject({
         error: 'Workflow not found',
@@ -208,7 +208,7 @@ describe('SubtopicApprovalGateValidator', () => {
 
       expect(result.allowed).toBe(true)
       expect(result.subtopicApprovalStatus).toBe('error')
-      expect(result.workflowStatus).toBe('error')
+      expect(result.workflowState).toBe('error')
       expect(result.error).toBe('Database error - failing open for availability')
     })
 
@@ -220,7 +220,7 @@ describe('SubtopicApprovalGateValidator', () => {
 
       expect(result.allowed).toBe(true)
       expect(result.subtopicApprovalStatus).toBe('error')
-      expect(result.workflowStatus).toBe('error')
+      expect(result.workflowState).toBe('error')
       expect(result.error).toBe('Unexpected error - failing open for availability')
     })
 
@@ -274,7 +274,7 @@ describe('SubtopicApprovalGateValidator', () => {
       const mockResult = {
         allowed: false,
         subtopicApprovalStatus: 'not_approved',
-        workflowStatus: 'step_8_approval',
+        workflowState: 'step_8_approval',
         error: 'Subtopics must be approved'
       }
 
@@ -311,7 +311,7 @@ describe('SubtopicApprovalGateValidator', () => {
       const mockResult = {
         allowed: true,
         subtopicApprovalStatus: 'approved',
-        workflowStatus: 'step_8_approval'
+        workflowState: 'step_8_approval'
       }
 
       await validator.logGateEnforcement('workflow-123', 'article-generation', mockResult)
@@ -347,7 +347,7 @@ describe('SubtopicApprovalGateValidator', () => {
       const mockResult = {
         allowed: true,
         subtopicApprovalStatus: 'error',
-        workflowStatus: 'error',
+        workflowState: 'error',
         error: 'Database error - failing open for availability'
       }
 
@@ -387,7 +387,7 @@ describe('SubtopicApprovalGateValidator', () => {
       const mockResult = {
         allowed: false,
         subtopicApprovalStatus: 'not_approved',
-        workflowStatus: 'step_8_approval'
+        workflowState: 'step_8_approval'
       }
 
       // Should not throw error
@@ -409,7 +409,7 @@ describe('SubtopicApprovalGateValidator', () => {
       const mockResult = {
         allowed: false,
         subtopicApprovalStatus: 'not_approved',
-        workflowStatus: 'step_8_approval'
+        workflowState: 'step_8_approval'
       }
 
       // Should not throw error

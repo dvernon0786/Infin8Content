@@ -55,7 +55,7 @@ describe('SeedApprovalGateValidator', () => {
 
       expect(result.allowed).toBe(true)
       expect(result.seedApprovalStatus).toBe('approved')
-      expect(result.workflowStatus).toBe('step_3_seeds')
+      expect(result.workflowState).toBe('step_3_seeds')
     })
 
     it('should block access when seed approval is not approved', async () => {
@@ -134,7 +134,7 @@ describe('SeedApprovalGateValidator', () => {
 
       expect(result.allowed).toBe(false)
       expect(result.seedApprovalStatus).toBe('not_found')
-      expect(result.workflowStatus).toBe('not_found')
+      expect(result.workflowState).toBe('not_found')
     })
 
     it('should fail open on workflow database error', async () => {
@@ -302,7 +302,7 @@ describe('SeedApprovalGateValidator', () => {
       const result = {
         allowed: true,
         seedApprovalStatus: 'approved',
-        workflowStatus: 'step_3_seeds'
+        workflowState: 'step_3_seeds'
       }
 
       const mockWorkflowQuery = {
@@ -338,7 +338,7 @@ describe('SeedApprovalGateValidator', () => {
       const result = {
         allowed: false,
         seedApprovalStatus: 'not_approved',
-        workflowStatus: 'step_3_seeds',
+        workflowState: 'step_3_seeds',
         error: 'Seed keywords must be approved'
       }
 
@@ -375,7 +375,7 @@ describe('SeedApprovalGateValidator', () => {
       const result = {
         allowed: false,
         seedApprovalStatus: 'not_approved',
-        workflowStatus: 'step_3_seeds'
+        workflowState: 'step_3_seeds'
       }
 
       const mockWorkflowQuery = {
@@ -404,7 +404,7 @@ describe('SeedApprovalGateValidator', () => {
       const result = {
         allowed: false,
         seedApprovalStatus: 'not_approved',
-        workflowStatus: 'step_3_seeds'
+        workflowState: 'step_3_seeds'
       }
 
       const mockWorkflowQuery = {
