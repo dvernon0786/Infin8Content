@@ -27,15 +27,13 @@ export function WorkflowCard({ workflow, onNavigate }: WorkflowCardProps) {
     router.push(`/workflows/${workflow.id}/steps/1`)
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: WorkflowState) => {
     if (status === 'completed') return 'bg-green-100 text-green-800'
-    if (status === 'failed') return 'bg-red-100 text-red-800'
     return 'bg-blue-100 text-blue-800'
   }
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: WorkflowState) => {
     if (status === 'completed') return <CheckCircle className="w-4 h-4" />
-    if (status === 'failed') return <AlertCircle className="w-4 h-4" />
     return <Clock className="w-4 h-4" />
   }
 
@@ -57,9 +55,9 @@ export function WorkflowCard({ workflow, onNavigate }: WorkflowCardProps) {
               {WORKFLOW_STEP_DESCRIPTIONS[workflow.state as WorkflowState] || 'Unknown'}
             </p>
           </div>
-          <Badge className={getStatusColor(workflow.state)}>
+          <Badge className={getStatusColor(workflow.state as WorkflowState)}>
             <span className="flex items-center gap-1">
-              {getStatusIcon(workflow.state)}
+              {getStatusIcon(workflow.state as WorkflowState)}
               {WORKFLOW_STEP_DESCRIPTIONS[workflow.state as WorkflowState] || 'Unknown'}
             </span>
           </Badge>
