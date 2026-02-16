@@ -11,6 +11,26 @@ import type {
   WorkflowDashboardItem,
 } from '@/lib/services/intent-engine/workflow-dashboard-service'
 
+// Pure FSM state order for step calculation
+const STATE_ORDER: string[] = [
+  'step_1_icp',
+  'step_2_competitors', 
+  'step_3_seeds',
+  'step_4_longtails',
+  'step_5_filtering',
+  'step_6_clustering',
+  'step_7_validation',
+  'step_8_subtopics',
+  'step_9_articles',
+  'completed'
+]
+
+// Helper function to get step number from state
+function getStateStepNumber(state: string): number {
+  const index = STATE_ORDER.indexOf(state)
+  return index >= 0 ? index + 1 : 1
+}
+
 const STEP_NARRATIVE = [
   'Authentication',
   'ICP',
@@ -156,7 +176,7 @@ export function WorkflowDashboard() {
               onFocus={() => setFocusedIndex(i)}
               onContinue={() =>
                 router.push(
-                  `/workflows/${workflow.id}/steps/${workflow.current_step}`
+                  `/workflows/${workflow.id}/steps/${getStateStepNumber(workflow.state)}`
                 )
               }
             />
@@ -179,7 +199,7 @@ function WorkflowRow({
   onFocus: () => void
 }) {
   const [hovered, setHovered] = useState(false)
-  const stepNumber = workflow.current_step
+  const stepNumber = getStateStepNumber(workflow.state)
   const narrative = getNarrative(stepNumber)
   const progress = Math.round((stepNumber / 9) * 100)
   const showExpanded = hovered || isFocused

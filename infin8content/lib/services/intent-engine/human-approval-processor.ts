@@ -1,27 +1,18 @@
 /**
- * Human Approval Processor Service
+ * Human Approval Processor Service - FSM Hardened Version
  * Story 37.3: Implement Human Approval Gate (Workflow-Level)
  * 
  * This service handles the final human approval logic for workflows
- * before they are eligible for article generation.
+ * using ONLY FSM transitions - no direct database mutations.
  */
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
+import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
+import { WorkflowState } from '@/lib/fsm/workflow-events'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
-import { type WorkflowState, assertValidWorkflowState } from '@/lib/constants/intent-workflow-steps'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
-import { AuditAction, AuditActionType } from '@/types/audit'
-
-const CANONICAL_RESET_MAP: Record<string, WorkflowState> = {
-  1: 'step_1_icp',
-  2: 'step_2_competitors',
-  3: 'step_3_keywords',
-  4: 'step_4_longtails',
-  5: 'step_5_filtering',
-  6: 'step_6_clustering',
-  7: 'step_7_validation',
-};
+import { AuditAction } from '@/types/audit'
 
 export interface HumanApprovalRequest {
   decision: 'approved' | 'rejected'
@@ -58,13 +49,21 @@ export interface WorkflowSummary {
   }
 }
 
+const RESET_STEP_MAP: Record<number, WorkflowState> = {
+  1: 'step_1_icp',
+  2: 'step_2_competitors',
+  3: 'step_3_seeds',
+  4: 'step_4_longtails',
+  5: 'step_5_filtering',
+  6: 'step_6_clustering',
+  7: 'step_7_validation',
+}
+
 /**
- * Process human approval for a workflow
+ * Process human approval for a workflow using ONLY FSM transitions
  * 
- * @param workflowId - The workflow ID to approve
- * @param approvalRequest - The approval decision and metadata
- * @param headers - Request headers for audit logging (optional)
- * @returns Approval response with status
+ * This function NEVER directly mutates intent_workflows table.
+ * All state changes go through WorkflowFSM.transition().
  */
 export async function processHumanApproval(
   workflowId: string,
@@ -103,10 +102,10 @@ export async function processHumanApproval(
   // Create Supabase client
   const supabase = await createServiceRoleClient()
 
-  // Validate workflow exists and is at correct step
+  // Validate workflow exists and is at correct step - READ ONLY
   const workflowResult = await supabase
     .from('intent_workflows')
-    .select('*')
+    .select('id, state, organization_id, created_at, updated_at, icp_document, competitor_analysis')
     .eq('id', workflowId)
     .single()
 
@@ -116,17 +115,17 @@ export async function processHumanApproval(
 
   const workflow = workflowResult.data as unknown as {
     id: string
-    state: WorkflowState
     organization_id: string
     created_at: string
     updated_at: string
     icp_document: any
     competitor_analysis: any
+    state: string
   }
 
-  // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 8 when current_step = 8
+  // ENFORCE STRICT LINEAR PROGRESSION: Only allow step_8_subtopics for human approval
   if (workflow.state !== 'step_8_subtopics') {
-    throw new Error(`Workflow must be at step 8 (human approval), currently at state ${workflow.state}`)
+    throw new Error(`Workflow must be at step_8_subtopics for human approval, current state: ${workflow.state}`)
   }
 
   // Validate user belongs to the same organization as the workflow
@@ -162,64 +161,42 @@ export async function processHumanApproval(
     id: string
   }
 
-  // Update workflow status based on decision
-  let finalStatus: WorkflowState
-  if (decision === 'approved') {
-    finalStatus = 'step_9_articles'
-  } else {
-    if (!reset_to_step || !CANONICAL_RESET_MAP[reset_to_step.toString()]) {
-      throw new Error('Invalid reset_to_step: must be 1-7')
-    }
-    finalStatus = CANONICAL_RESET_MAP[reset_to_step.toString()]
-    assertValidWorkflowState(finalStatus)
-  }
+  let finalState: WorkflowState
 
-  // Update workflow to final status
-  const updateData: any = { 
-    state: finalStatus,
-    updated_at: new Date().toISOString()
-  }
-  
-  // CANONICAL TRANSITION: Update current_step based on decision
+  // FSM TRANSITION: Handle decision through state machine ONLY
   if (decision === 'approved') {
-    // Approved: Advance to Step 9 (Article Generation)
-    updateData.state = 'step_9_articles'
+    // Approved: Advance to Step 9 (Article Generation) via FSM
+    finalState = await WorkflowFSM.transition(workflowId, 'SUBTOPICS_APPROVED', { 
+      userId: currentUser.id 
+    })
   } else if (decision === 'rejected' && reset_to_step) {
-    // 
+    // Rejected: Reset to specified step via FSM
     // 🔁 REGRESSION EXCEPTION: Human approval can reset workflow
-    // 
     // This is the ONLY place where regression is allowed:
     // - Only admins can trigger via rejection
     // - Only steps 1-7 allowed as reset targets
-    // - Must update both current_step and status consistently
-    // 
-    // All other steps 1-7,9: No regression allowed
-    //
-    updateData.state = CANONICAL_RESET_MAP[String(reset_to_step)] as WorkflowState
-  }
-  
-  const finalUpdateResult = await supabase
-    .from('intent_workflows')
-    .update(updateData)
-    .eq('id', workflowId)
-
-  if (finalUpdateResult.error) {
-    console.error('Failed to update workflow to final status:', finalUpdateResult.error)
-    throw new Error('Failed to update workflow to final status')
+    // - FSM validates reset targets
+    const resetState = RESET_STEP_MAP[reset_to_step]
+    finalState = await WorkflowFSM.transition(workflowId, 'HUMAN_RESET', { 
+      userId: currentUser.id,
+      resetTo: resetState
+    })
+  } else {
+    throw new Error('Invalid approval decision')
   }
 
   // Log audit action
-  let auditAction: AuditActionType
+  let auditAction: string
   if (decision === 'approved') {
-    auditAction = AuditAction.WORKFLOW_HUMAN_APPROVAL_APPROVED
+    auditAction = 'WORKFLOW_HUMAN_APPROVAL_APPROVED'
   } else {
-    auditAction = AuditAction.WORKFLOW_HUMAN_APPROVAL_REJECTED
+    auditAction = 'WORKFLOW_HUMAN_APPROVAL_REJECTED'
   }
 
   logActionAsync({
     orgId: currentUser.org_id,
     userId: currentUser.id,
-    action: auditAction,
+    action: auditAction as any,
     details: {
       workflow_id: workflowId,
       decision,
@@ -238,16 +215,15 @@ export async function processHumanApproval(
   return {
     success: true,
     approval_id: approval.id,
-    workflow_state: finalStatus,
+    workflow_state: finalState,
     message,
   }
 }
 
 /**
- * Get workflow summary for human review
+ * Get workflow summary for human review - READ ONLY
  * 
- * @param workflowId - The workflow ID to summarize
- * @returns Complete workflow summary
+ * This function NEVER mutates workflow state.
  */
 export async function getWorkflowSummary(workflowId: string): Promise<WorkflowSummary> {
   if (!workflowId) {
@@ -263,10 +239,10 @@ export async function getWorkflowSummary(workflowId: string): Promise<WorkflowSu
   // Create Supabase client
   const supabase = await createServiceRoleClient()
 
-  // Get workflow details
+  // Get workflow details - READ ONLY
   const workflowResult = await supabase
     .from('intent_workflows')
-    .select('*')
+    .select('id, state, organization_id, created_at, updated_at, icp_document, competitor_analysis')
     .eq('id', workflowId)
     .single()
 
@@ -276,7 +252,7 @@ export async function getWorkflowSummary(workflowId: string): Promise<WorkflowSu
 
   const workflow = workflowResult.data as unknown as {
     id: string
-    state: WorkflowState
+    state: string
     organization_id: string
     created_at: string
     updated_at: string
@@ -348,7 +324,7 @@ export async function getWorkflowSummary(workflowId: string): Promise<WorkflowSu
 
   return {
     workflow_id: workflowId,
-    state: workflow.state,
+    state: workflow.state as WorkflowState,
     organization_id: workflow.organization_id,
     created_at: workflow.created_at,
     updated_at: workflow.updated_at,
@@ -360,74 +336,5 @@ export async function getWorkflowSummary(workflowId: string): Promise<WorkflowSu
     validation_results: validationResults,
     approved_keywords: approvedKeywords,
     summary_statistics: summaryStatistics,
-  }
-}
-
-/**
- * Check if human approval is required for a workflow
- * 
- * @param workflowId - The workflow ID to check
- * @returns True if human approval is required, false otherwise
- */
-export async function isHumanApprovalRequired(workflowId: string): Promise<boolean> {
-  if (!workflowId) {
-    return false
-  }
-
-  const supabase = await createServiceRoleClient()
-
-  const workflowResult = await supabase
-    .from('intent_workflows')
-    .select('state')
-    .eq('id', workflowId)
-    .single()
-
-  if (workflowResult.error || !workflowResult.data) {
-    return false
-  }
-
-  const workflow = workflowResult.data as unknown as {
-    state: string
-  }
-
-  return workflow.state === 'step_8_subtopics'
-}
-
-/**
- * Get human approval status for a workflow
- * 
- * @param workflowId - The workflow ID to check
- * @returns Approval status or null if not found
- */
-export async function getHumanApprovalStatus(workflowId: string): Promise<{
-  decision: string
-  approver_id: string
-  feedback: string | null
-  reset_to_step: number | null
-  created_at: string
-} | null> {
-  if (!workflowId) {
-    return null
-  }
-
-  const supabase = await createServiceRoleClient()
-
-  const approvalResult = await supabase
-    .from('intent_approvals')
-    .select('decision, approver_id, feedback, reset_to_step, created_at')
-    .eq('workflow_id', workflowId)
-    .eq('approval_type', 'human_approval')
-    .single()
-
-  if (approvalResult.error || !approvalResult.data) {
-    return null
-  }
-
-  return approvalResult.data as unknown as {
-    decision: string
-    approver_id: string
-    feedback: string | null
-    reset_to_step: number | null
-    created_at: string
   }
 }

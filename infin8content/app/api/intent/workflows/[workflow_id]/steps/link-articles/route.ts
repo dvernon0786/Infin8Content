@@ -13,7 +13,6 @@ import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/servic
 import { AuditAction } from '@/types/audit'
 import {
   linkArticlesToWorkflow,
-  validateWorkflowAccess,
   type LinkingResult
 } from '@/lib/services/intent-engine/article-workflow-linker'
 
@@ -39,17 +38,8 @@ export async function POST(
     organizationId = currentUser.org_id
     userId = currentUser.id
 
-    // Verify user has access to workflow
-    const hasAccess = await validateWorkflowAccess(userId, workflowId)
-    if (!hasAccess) {
-      return NextResponse.json(
-        { error: 'Access denied' },
-        { status: 403 }
-      )
-    }
-
     // Verify workflow exists and belongs to user's organization
-    const supabase = await createServiceRoleClient()
+    const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
       .select('id, state, organization_id')
@@ -64,41 +54,26 @@ export async function POST(
       )
     }
 
-    // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string }
+    // FSM GUARD: Pure state validation
+    const typedWorkflow = workflow as unknown as {
+      id: string
+      state: string
+      organization_id: string
+    }
 
-    // Check if workflow is in correct state for article linking
-    if (typedWorkflow.status !== 'step_9_articles') {
+    if (typedWorkflow.state !== 'step_9_articles') {
       return NextResponse.json(
         {
           error: 'Invalid workflow state',
-          message: `Workflow must be in step_9_articles state, currently in ${typedWorkflow.status}`
+          message: `Workflow must be in step_9_articles state, currently in ${typedWorkflow.state}`
         },
         { status: 400 }
       )
     }
 
-    // Log action start
-    try {
-      await logActionAsync({
-        orgId: organizationId,
-        userId: userId,
-        action: AuditAction.WORKFLOW_ARTICLES_LINKING_STARTED,
-        details: {
-          workflow_id: workflowId,
-          workflow_status: typedWorkflow.status
-        },
-        ipAddress: extractIpAddress(request.headers),
-        userAgent: extractUserAgent(request.headers),
-      })
-    } catch (logError) {
-      console.error('Failed to log workflow start:', logError)
-      // Continue anyway - logging is non-blocking
-    }
-
     console.log(`[LinkArticles] Starting article linking for workflow ${workflowId}`)
 
-    // Execute article linking
+    // Execute linking
     const startTime = Date.now()
     const linkingResult = await linkArticlesToWorkflow(workflowId, userId)
     const duration = Date.now() - startTime
@@ -113,7 +88,7 @@ export async function POST(
         action: AuditAction.WORKFLOW_ARTICLES_LINKING_COMPLETED,
         details: {
           workflow_id: workflowId,
-          workflow_status: linkingResult.workflow_status,
+          workflow_state: linkingResult.workflow_state,
           total_articles: linkingResult.total_articles,
           linked_articles: linkingResult.linked_articles,
           failed_articles: linkingResult.failed_articles,
