@@ -227,125 +227,19 @@ export function WorkflowDetailModal({
                     </div>
                   )}
 
-                  {/* ICP Input Form - only for step_0_auth */}
-                  {workflow.state === 'step_0_auth' ? (
-                    <div className="space-y-4 sm:space-y-6">
-                      <div className="space-y-4 sm:space-y-6">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Organization Name *
-                          </label>
-                          <Input
-                            placeholder="Enter organization name"
-                            value={icpFormData.organizationName}
-                            onChange={(e) => setIcpFormData(prev => ({
-                              ...prev,
-                              organizationName: e.target.value
-                            }))}
-                            disabled={isRunningStep}
-                            className="w-full"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Organization Website *
-                          </label>
-                          <Input
-                            type="url"
-                            placeholder="https://example.com"
-                            value={icpFormData.organizationUrl}
-                            onChange={(e) => setIcpFormData(prev => ({
-                              ...prev,
-                              organizationUrl: e.target.value
-                            }))}
-                            disabled={isRunningStep}
-                            className="w-full"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Organization LinkedIn *
-                          </label>
-                          <Input
-                            type="url"
-                            placeholder="https://linkedin.com/company/example"
-                            value={icpFormData.organizationLinkedInUrl}
-                            onChange={(e) => setIcpFormData(prev => ({
-                              ...prev,
-                              organizationLinkedInUrl: e.target.value
-                            }))}
-                            disabled={isRunningStep}
-                            className="w-full"
-                          />
-                        </div>
-                      </div>
+                  {/* Regular action button for all steps */}
+                  <Button
+                    className="w-full min-h-[44px] text-base sm:min-h-[40px] sm:text-sm"
+                    disabled={isRunningStep}
+                    onClick={async () => {
+                      try {
+                        setIsRunningStep(true)
+                        setStepError(null)
 
-                      <Button
-                        className="w-full min-h-[44px] text-base sm:min-h-[40px] sm:text-sm"
-                        disabled={isRunningStep}
-                        onClick={async () => {
-                          try {
-                            setIsRunningStep(true)
-                            setStepError(null)
-
-                            // Validate form inputs
-                            if (!icpFormData.organizationName || !icpFormData.organizationUrl || !icpFormData.organizationLinkedInUrl) {
-                              setStepError('All fields are required to generate ICP')
-                              return
-                            }
-
-                            // Validate URL format
-                            try {
-                              new URL(icpFormData.organizationUrl)
-                              new URL(icpFormData.organizationLinkedInUrl)
-                            } catch {
-                              setStepError('Please enter valid URLs')
-                              return
-                            }
-
-                            const res = await fetch(
-                              `/api/intent/workflows/${workflow.id}/${activeStep.endpoint}`,
-                              {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  organization_name: icpFormData.organizationName,
-                                  organization_url: icpFormData.organizationUrl,
-                                  organization_linkedin_url: icpFormData.organizationLinkedInUrl,
-                                }),
-                              }
-                            )
-
-                            if (!res.ok) {
-                              const body = await res.json()
-                              throw new Error(body.error || 'Step failed')
-                            }
-
-                            // realtime subscription will refresh workflow
-                          } catch (err: any) {
-                            setStepError(err.message || 'Something went wrong')
-                          } finally {
-                            setIsRunningStep(false)
-                          }
-                        }}
-                      >
-                        {isRunningStep ? 'Generating ICP…' : activeStep.label}
-                      </Button>
-                    </div>
-                  ) : (
-                    /* Regular action button for other steps */
-                    <Button
-                      className="w-full min-h-[44px] text-base sm:min-h-[40px] sm:text-sm"
-                      disabled={isRunningStep}
-                      onClick={async () => {
-                        try {
-                          setIsRunningStep(true)
-                          setStepError(null)
-
-                          const res = await fetch(
-                            `/api/intent/workflows/${workflow.id}/${activeStep.endpoint}`,
-                            { method: 'POST' }
-                          )
+                        const res = await fetch(
+                          `/api/intent/workflows/${workflow.id}/${activeStep.endpoint}`,
+                          { method: 'POST' }
+                        )
 
                           if (!res.ok) {
                             const body = await res.json()
@@ -362,7 +256,6 @@ export function WorkflowDetailModal({
                     >
                       {isRunningStep ? 'Running…' : activeStep.label}
                     </Button>
-                  )}
                 </div>
               )}
 
