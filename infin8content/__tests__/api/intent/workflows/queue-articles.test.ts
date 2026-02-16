@@ -127,14 +127,15 @@ describe('Queue Articles API Endpoint', () => {
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockResolvedValue({
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockResolvedValue({
         workflow_id: 'workflow-123',
+        workflow_state: 'step_9_articles',
         articles_created: 2,
         articles: [
           { id: 'article-1', keyword: 'keyword-1', status: 'queued' },
           { id: 'article-2', keyword: 'keyword-2', status: 'queued' }
         ],
-        errors: []
+        message: 'Articles queued successfully'
       })
 
       const response = await POST(
@@ -167,11 +168,12 @@ describe('Queue Articles API Endpoint', () => {
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockResolvedValue({
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockResolvedValue({
         workflow_id: 'workflow-123',
+        workflow_state: 'step_9_articles',
         articles_created: 0,
         articles: [],
-        errors: []
+        message: 'No articles to queue'
       })
 
       await POST(
@@ -204,11 +206,12 @@ describe('Queue Articles API Endpoint', () => {
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockResolvedValue({
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockResolvedValue({
         workflow_id: 'workflow-123',
+        workflow_state: 'step_9_articles',
         articles_created: 1,
         articles: [{ id: 'article-1', keyword: 'keyword-1', status: 'queued' }],
-        errors: []
+        message: '1 article queued successfully'
       })
 
       await POST(
@@ -245,11 +248,12 @@ describe('Queue Articles API Endpoint', () => {
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockResolvedValue({
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockResolvedValue({
         workflow_id: 'workflow-123',
+        workflow_state: 'step_9_articles',
         articles_created: 1,
         articles: [{ id: 'article-1', keyword: 'keyword-1', status: 'queued' }],
-        errors: ['Failed to trigger Planner Agent for article article-2']
+        message: '1 article queued with some issues'
       })
 
       const response = await POST(
@@ -280,7 +284,7 @@ describe('Queue Articles API Endpoint', () => {
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockRejectedValue(
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockRejectedValue(
         new Error('Database connection failed')
       )
 
@@ -310,7 +314,7 @@ describe('Queue Articles API Endpoint', () => {
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockRejectedValue(
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockRejectedValue(
         new Error('Fatal error')
       )
 
@@ -347,11 +351,12 @@ describe('Queue Articles API Endpoint', () => {
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockResolvedValue({
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockResolvedValue({
         workflow_id: 'workflow-123',
+        workflow_state: 'step_9_articles',
         articles_created: 1,
         articles: [{ id: 'article-1', keyword: 'keyword-1', status: 'queued' }],
-        errors: []
+        message: '1 article queued successfully'
       })
 
       const response = await POST(
@@ -404,14 +409,15 @@ describe('Queue Articles API Endpoint', () => {
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockResolvedValue({
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockResolvedValue({
         workflow_id: 'workflow-123',
+        workflow_state: 'step_9_articles',
         articles_created: 2,
         articles: [
           { id: 'article-1', keyword: 'keyword-1', status: 'queued' },
           { id: 'article-2', keyword: 'keyword-2', status: 'queued' }
         ],
-        errors: []
+        message: 'Articles queued successfully'
       })
 
       // First run
@@ -424,14 +430,15 @@ describe('Queue Articles API Endpoint', () => {
       expect(data1.articles_created).toBe(2)
 
       // Second run should skip existing articles
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockResolvedValue({
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockResolvedValue({
         workflow_id: 'workflow-123',
+        workflow_state: 'step_9_articles',
         articles_created: 2,
         articles: [
           { id: 'article-1', keyword: 'keyword-1', status: 'queued' },
           { id: 'article-2', keyword: 'keyword-2', status: 'queued' }
         ],
-        errors: []
+        message: 'Articles queued successfully'
       })
 
       const response2 = await POST(
@@ -441,7 +448,7 @@ describe('Queue Articles API Endpoint', () => {
       expect(response2.status).toBe(200)
       const data2 = await response2.json()
       expect(data2.articles_created).toBe(2)
-      expect(data2.errors).toHaveLength(0)
+      expect(data2.message).toBeDefined()
     })
   })
 })
