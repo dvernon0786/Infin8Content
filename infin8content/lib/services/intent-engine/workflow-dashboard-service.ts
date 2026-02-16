@@ -17,7 +17,6 @@ import {
   assertValidWorkflowState,
   type WorkflowState 
 } from '@/lib/constants/intent-workflow-steps'
-import { normalizeWorkflowStatus } from '@/lib/utils/normalize-workflow-status'
 
 const STEP_TO_INDEX: Record<string, number> = {
   step_1_icp: 1,
@@ -31,12 +30,19 @@ const STEP_TO_INDEX: Record<string, number> = {
   step_9_articles: 9,
 }
 
+/**
+ * Maps workflow state to step number for UI navigation
+ */
+export function getStateStepNumber(state: string): number {
+  const stepOrder = ['step_0_auth', 'step_1_icp', 'step_2_competitors', 'step_3_keywords', 'step_4_longtails', 'step_5_filtering', 'step_6_clustering', 'step_7_validation', 'step_8_subtopics', 'step_9_articles']
+  return stepOrder.indexOf(state) + 1
+}
+
 export interface WorkflowDashboardItem {
   id: string
   name: string
   state: string
   progress_percentage: number
-  current_step: number
   created_at: string
   updated_at: string
   created_by: string
@@ -128,7 +134,6 @@ export function formatWorkflows(workflows: IntentWorkflow[]): WorkflowDashboardI
       name: workflow.name,
       state: workflow.state,
       progress_percentage: progress,
-      current_step: currentStepIndex,
       created_at: workflow.created_at,
       updated_at: workflow.updated_at,
       created_by: workflow.created_by,
@@ -161,12 +166,8 @@ export async function getWorkflowDashboard(
     throw new Error(`Failed to fetch workflows: ${error.message}`)
   }
 
-  const normalizedWorkflows = (workflows || []).map(w => ({
-    ...w,
-    status: normalizeWorkflowStatus(w.status),
-  }))
-  const formattedWorkflows = formatWorkflows(normalizedWorkflows)
-  const summary = calculateSummary(normalizedWorkflows)
+  const formattedWorkflows = formatWorkflows(workflows || [])
+  const summary = calculateSummary(workflows || [])
 
   return {
     workflows: formattedWorkflows,

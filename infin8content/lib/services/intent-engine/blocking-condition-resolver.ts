@@ -22,7 +22,7 @@ export interface BlockingCondition {
 
 export interface WorkflowData {
   id: string
-  status: string
+  state: string
   organization_id: string
   seed_keywords_approved?: boolean
   subtopics_approved?: boolean
@@ -49,10 +49,10 @@ export class BlockingConditionResolver {
     try {
       const supabase = createServiceRoleClient()
 
-      // Query workflow status
+      // Query workflow state
       const { data: workflow, error: workflowError } = await supabase
         .from('intent_workflows')
-        .select('id, status, organization_id, seed_keywords_approved, subtopics_approved')
+        .select('id, state, organization_id, seed_keywords_approved, subtopics_approved')
         .eq('id', workflowId)
         .eq('organization_id', organizationId)
         .single() as { data: WorkflowData | null; error: any }
@@ -82,7 +82,7 @@ export class BlockingConditionResolver {
    */
   private checkBlockingCondition(workflow: WorkflowData): BlockingCondition | null {
     const map = this.getBlockingConditionMap()
-    const currentStep = workflow.status
+    const currentStep = workflow.state
 
     // Check if current step has a blocking condition
     if (map[currentStep]) {

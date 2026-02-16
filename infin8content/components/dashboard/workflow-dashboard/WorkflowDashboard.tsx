@@ -10,6 +10,7 @@ import type {
   DashboardResponse,
   WorkflowDashboardItem,
 } from '@/lib/services/intent-engine/workflow-dashboard-service'
+import { getStateStepNumber } from '@/lib/services/intent-engine/workflow-dashboard-service'
 
 const STEP_NARRATIVE = [
   'Authentication',
@@ -156,7 +157,7 @@ export function WorkflowDashboard() {
               onFocus={() => setFocusedIndex(i)}
               onContinue={() =>
                 router.push(
-                  `/workflows/${workflow.id}/steps/${workflow.current_step}`
+                  `/workflows/${workflow.id}/steps/${getStateStepNumber(workflow.state)}`
                 )
               }
             />
@@ -179,7 +180,7 @@ function WorkflowRow({
   onFocus: () => void
 }) {
   const [hovered, setHovered] = useState(false)
-  const stepNumber = workflow.current_step
+  const stepNumber = getStateStepNumber(workflow.state)
   const narrative = getNarrative(stepNumber)
   const progress = Math.round((stepNumber / 9) * 100)
   const showExpanded = hovered || isFocused

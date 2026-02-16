@@ -20,7 +20,7 @@ export interface SeedApprovalRequest {
 export interface SeedApprovalResponse {
   success: boolean
   approval_id: string
-  workflow_status: 'step_3_keywords'
+  workflow_state: 'step_3_keywords',
   message: string
 }
 
@@ -80,7 +80,7 @@ export async function processSeedApproval(
   }
 
   // Validate workflow is at step_3_keywords
-  if (workflow.status !== 'step_3_keywords') {
+  if (workflow.state !== 'step_3_keywords') {
     throw new Error('Workflow must be at step_3_keywords for seed approval')
   }
 
@@ -156,7 +156,7 @@ export async function processSeedApproval(
   return {
     success: true,
     approval_id: approval.id,
-    workflow_status: 'step_3_keywords', // Status unchanged - this is a governance gate
+    workflow_state: 'step_3_keywords', // Status unchanged - this is a governance gate
     message,
   }
 }

@@ -13,7 +13,6 @@ export interface IntentWorkflow {
   organization_id: string
   name: string
   state: WorkflowState
-  current_step: number
   created_at: string
   created_by: string
   updated_at: string

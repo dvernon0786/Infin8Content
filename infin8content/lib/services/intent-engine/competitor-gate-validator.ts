@@ -5,7 +5,7 @@ import { WorkflowState } from '@/types/workflow-state'
 export interface GateResult {
   allowed: boolean
   competitorStatus: string
-  workflowStatus: string
+  workflowState: string
   error?: string
   errorResponse?: object
 }
@@ -38,7 +38,7 @@ export class CompetitorGateValidator {
           return {
             allowed: false,
             competitorStatus: 'not_found',
-            workflowStatus: 'not_found',
+            workflowState: 'not_found',
             error: 'Workflow not found',
             errorResponse: {
               error: 'Workflow not found',
@@ -53,7 +53,7 @@ export class CompetitorGateValidator {
         return {
           allowed: true,
           competitorStatus: 'error',
-          workflowStatus: 'error',
+          workflowState: 'error',
           error: 'Database error - failing open for availability'
         }
       }
@@ -62,7 +62,7 @@ export class CompetitorGateValidator {
         return {
           allowed: false,
           competitorStatus: 'not_found',
-          workflowStatus: 'not_found',
+          workflowState: 'not_found',
           error: 'Workflow not found',
           errorResponse: {
             error: 'Workflow not found',
@@ -91,11 +91,11 @@ export class CompetitorGateValidator {
         return {
           allowed: false,
           competitorStatus: workflow.state,
-          workflowStatus: workflow.state,
+          workflowState: workflow.state,
           error: 'Competitor analysis required before seed keywords',
           errorResponse: {
             error: 'Competitor analysis required before seed keywords',
-            workflowStatus: workflow.state,
+            workflowState: workflow.state,
             competitorStatus: 'not_complete',
             requiredAction: 'Complete competitor analysis (step 2) before proceeding',
             currentStep: workflow.state,
@@ -108,7 +108,7 @@ export class CompetitorGateValidator {
       return {
         allowed: true,
         competitorStatus: workflow.state,
-        workflowStatus: workflow.state
+        workflowState: workflow.state
       }
 
     } catch (error) {
@@ -117,7 +117,7 @@ export class CompetitorGateValidator {
       return {
         allowed: true,
         competitorStatus: 'error',
-        workflowStatus: 'error',
+        workflowState: 'error',
         error: 'Unexpected error - failing open for availability'
       }
     }
@@ -158,7 +158,7 @@ export class CompetitorGateValidator {
         details: {
           attempted_step: stepName,
           competitor_status: result.competitorStatus,
-          workflow_status: result.workflowStatus,
+          workflow_state: result.workflowStatus,
           enforcement_action: result.allowed ? 'allowed' : 'blocked',
           error_message: result.error
         },

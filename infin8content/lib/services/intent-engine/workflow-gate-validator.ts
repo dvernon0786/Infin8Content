@@ -1,20 +1,18 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
-import { WORKFLOW_STEP_ORDER } from '@/lib/constants/intent-workflow-steps'
-import { normalizeWorkflowStatus } from '@/lib/utils/normalize-workflow-status'
 
 export interface GateResult {
   allowed: boolean
   longtailStatus: string
   clusteringStatus: string
-  workflowStatus: string
+  workflowState: string
   error?: string
   errorResponse?: object
 }
 
 export interface WorkflowData {
   id: string
-  status: string
+  state: string
   organization_id: string
 }
 
@@ -26,146 +24,77 @@ export interface WorkflowValidationParams {
 export class WorkflowGateValidator {
   /**
    * Validates that longtails and clustering are complete before subtopic generation
-   * @param workflowId - The workflow ID to validate
-   * @param organizationId - The organization ID for isolation validation
-   * @returns GateResult indicating if access is allowed
+   * Uses FSM state instead of legacy step ordering
    */
-  async validateLongtailsRequiredForSubtopics(workflowId: string, organizationId?: string): Promise<GateResult> {
+  async validateGate(
+    workflowId: string,
+    organizationId: string
+  ): Promise<GateResult> {
     try {
       const supabase = createServiceRoleClient()
-      
-      // Query workflow status
-      let query = supabase
+
+      // Query workflow state
+      const { data: workflow, error: workflowError } = await supabase
         .from('intent_workflows')
-        .select('id, status, organization_id')
+        .select('id, state, organization_id')
         .eq('id', workflowId)
-      
-      // Add organization isolation if provided
-      if (organizationId) {
-        query = query.eq('organization_id', organizationId)
-      }
-      
-      const { data: workflow, error: workflowError } = await query
-        .single() as { data: WorkflowData | null, error: any }
+        .eq('organization_id', organizationId)
+        .single() as { data: WorkflowData | null; error: any }
 
-      if (workflowError) {
-        if (workflowError.code === 'PGRST116') {
-          return {
-            allowed: false,
-            longtailStatus: 'not_found',
-            clusteringStatus: 'not_found',
-            workflowStatus: 'not_found',
-            error: 'Workflow not found',
-            errorResponse: {
-              error: 'Workflow not found',
-              workflowId,
-              requiredAction: 'Provide valid workflow ID'
-            }
-          }
-        }
-        
-        // Database errors - fail open for availability
-        // TRADE-OFF: Prioritizes system availability over strict gate enforcement
-        // If database is temporarily unavailable, allows access to prevent cascading failures
-        // Audit logging will capture the error state for investigation
-        console.error('Database error in longtail gate validation:', workflowError)
-        return {
-          allowed: true,
-          longtailStatus: 'error',
-          clusteringStatus: 'error',
-          workflowStatus: 'error',
-          error: 'Database error - failing open for availability'
-        }
-      }
-
-      if (!workflow) {
+      if (workflowError || !workflow) {
         return {
           allowed: false,
           longtailStatus: 'not_found',
           clusteringStatus: 'not_found',
-          workflowStatus: 'not_found',
+          workflowState: 'unknown',
           error: 'Workflow not found',
           errorResponse: {
             error: 'Workflow not found',
-            workflowId,
             requiredAction: 'Provide valid workflow ID'
           }
         }
       }
 
-      // Use canonical step ordering
-      const normalizedStatus = normalizeWorkflowStatus(workflow.status)
+      // FSM validation: Only allow steps 6+ (clustering onwards)
+      const stepOrder = ['step_1_icp', 'step_2_competitors', 'step_3_seeds', 'step_4_longtails', 'step_5_filtering', 'step_6_clustering', 'step_7_validation', 'step_8_subtopics', 'step_9_articles']
+      const currentIndex = stepOrder.indexOf(workflow.state)
+      const minimumIndex = stepOrder.indexOf('step_6_clustering')
       
-      // Handle terminal states - they are beyond all execution steps
-      const currentIndex = WORKFLOW_STEP_ORDER.indexOf(normalizedStatus as any)
-      const longtailIndex = WORKFLOW_STEP_ORDER.indexOf('step_4_longtails')
-      const clusteringIndex = WORKFLOW_STEP_ORDER.indexOf('step_6_clustering')
-      const effectiveIndex = currentIndex === -1 ? WORKFLOW_STEP_ORDER.length : currentIndex
-
-      // Check if workflow has completed both longtails and clustering
-      const longtailsComplete = effectiveIndex >= longtailIndex
-      const clusteringComplete = effectiveIndex >= clusteringIndex
-
-      // If workflow is before step_8_subtopics, check prerequisites
-      if (effectiveIndex < WORKFLOW_STEP_ORDER.indexOf('step_8_subtopics')) {
-        // Workflow hasn't reached subtopic step yet
-        const missingPrerequisites = []
-
-        if (!longtailsComplete) {
-          missingPrerequisites.push('longtail expansion (step 4)')
-        }
-
-        if (!clusteringComplete) {
-          missingPrerequisites.push('topic clustering (step 6)')
-        }
-
-        if (missingPrerequisites.length > 0) {
-          return {
-            allowed: false,
-            longtailStatus: longtailsComplete ? 'complete' : 'not_complete',
-            clusteringStatus: clusteringComplete ? 'complete' : 'not_complete',
-            workflowStatus: workflow.status,
-            error: `Longtail expansion and clustering required before subtopics. Missing: ${missingPrerequisites.join(', ')}`,
-            errorResponse: {
-              error: 'Longtail expansion and clustering required before subtopics',
-              workflowStatus: workflow.status,
-              longtailStatus: longtailsComplete ? 'complete' : 'not_complete',
-              clusteringStatus: clusteringComplete ? 'complete' : 'not_complete',
-              missingPrerequisites,
-              requiredAction: 'Complete longtail expansion (step 4) and topic clustering (step 6) before subtopic generation',
-              currentStep: 'subtopic-generation',
-              blockedAt: new Date().toISOString()
-            }
+      if (currentIndex < minimumIndex) {
+        return {
+          allowed: false,
+          longtailStatus: 'incomplete',
+          clusteringStatus: 'incomplete',
+          workflowState: workflow.state,
+          error: 'Workflow has not completed prerequisite steps',
+          errorResponse: {
+            error: 'Prerequisites not met',
+            currentState: workflow.state,
+            requiredState: 'step_6_clustering or later'
           }
         }
       }
 
-      // Prerequisites are met - allow access
       return {
         allowed: true,
-        longtailStatus: longtailsComplete ? 'complete' : 'not_complete',
-        clusteringStatus: clusteringComplete ? 'complete' : 'not_complete',
-        workflowStatus: workflow.status
+        longtailStatus: 'complete',
+        clusteringStatus: 'complete',
+        workflowState: workflow.state
       }
-
     } catch (error) {
-      console.error('Unexpected error in longtail gate validation:', error)
-      // Fail open for availability
+      console.error('Error validating workflow gate:', error)
       return {
-        allowed: true,
+        allowed: false,
         longtailStatus: 'error',
         clusteringStatus: 'error',
-        workflowStatus: 'error',
-        error: 'Unexpected error - failing open for availability'
+        workflowState: 'unknown',
+        error: 'Internal server error'
       }
     }
   }
 
   /**
    * Logs gate enforcement attempts for audit trail
-   * @param workflowId - The workflow ID
-   * @param stepName - The step being attempted
-   * @param result - The gate validation result
    */
   async logGateEnforcement(
     workflowId: string,
@@ -173,48 +102,38 @@ export class WorkflowGateValidator {
     result: GateResult
   ): Promise<void> {
     try {
-      // Extract organization from workflow for audit logging
       const supabase = createServiceRoleClient()
-      const { data: workflow } = await supabase
+      
+      // Get workflow for logging
+      const workflowResult = await supabase
         .from('intent_workflows')
         .select('organization_id')
         .eq('id', workflowId)
-        .single() as { data: Pick<WorkflowData, 'organization_id'> | null }
+        .single()
 
-      if (!workflow) {
-        console.warn('Cannot log gate enforcement - workflow not found:', workflowId)
+      if (workflowResult.error || !workflowResult.data) {
+        console.error('Failed to retrieve workflow for gate logging')
         return
       }
 
-      // Determine action based on result
-      let action: string
-      if (result.longtailStatus === 'error' || result.clusteringStatus === 'error') {
-        action = 'workflow.gate.longtails_error'
-      } else if (result.allowed) {
-        action = 'workflow.gate.longtails_allowed'
-      } else {
-        action = 'workflow.gate.longtails_blocked'
-      }
-
       await logIntentAction({
-        organizationId: workflow.organization_id,
+        organizationId: workflowResult.data.organization_id,
         workflowId,
         entityType: 'workflow',
         entityId: workflowId,
         actorId: '00000000-0000-0000-0000-000000000000', // System actor UUID
-        action,
+        action: `WORKFLOW_GATE_${result.allowed ? 'PASSED' : 'BLOCKED'}`,
         details: {
           attempted_step: stepName,
           longtail_status: result.longtailStatus,
           clustering_status: result.clusteringStatus,
-          workflow_status: result.workflowStatus,
+          workflow_state: result.workflowState,
           enforcement_action: result.allowed ? 'allowed' : 'blocked',
           error_message: result.error
         },
         ipAddress: null,
         userAgent: null
       })
-
     } catch (error) {
       console.error('Failed to log gate enforcement:', error)
       // Non-blocking - don't let logging failures affect gate operation

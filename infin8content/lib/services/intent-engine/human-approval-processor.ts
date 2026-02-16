@@ -9,14 +9,15 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
-import { type WorkflowState, assertValidWorkflowState } from '@/lib/constants/intent-workflow-steps'
+import { WorkflowState } from '@/lib/fsm/workflow-events'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction, AuditActionType } from '@/types/audit'
+import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 
 const CANONICAL_RESET_MAP: Record<string, WorkflowState> = {
   1: 'step_1_icp',
   2: 'step_2_competitors',
-  3: 'step_3_keywords',
+  3: 'step_3_seeds',
   4: 'step_4_longtails',
   5: 'step_5_filtering',
   6: 'step_6_clustering',
@@ -32,13 +33,13 @@ export interface HumanApprovalRequest {
 export interface HumanApprovalResponse {
   success: boolean
   approval_id: string
-  workflow_status: string
+  workflow_state: string
   message: string
 }
 
 export interface WorkflowSummary {
   workflow_id: string
-  status: string
+  state: string
   organization_id: string
   created_at: string
   updated_at: string
@@ -106,7 +107,7 @@ export async function processHumanApproval(
   // Validate workflow exists and is at correct step
   const workflowResult = await supabase
     .from('intent_workflows')
-    .select('*')
+    .select('id, state, organization_id, created_at, updated_at, icp_document, competitor_analysis')
     .eq('id', workflowId)
     .single()
 
@@ -116,18 +117,17 @@ export async function processHumanApproval(
 
   const workflow = workflowResult.data as unknown as {
     id: string
-    status: string
     organization_id: string
     created_at: string
     updated_at: string
     icp_document: any
     competitor_analysis: any
-    current_step: number
+    state: string
   }
 
-  // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 8 when current_step = 8
-  if (workflow.current_step !== 8) {
-    throw new Error(`Workflow must be at step 8 (human approval), currently at step ${workflow.current_step}`)
+  // ENFORCE STRICT LINEAR PROGRESSION: Only allow step_8_subtopics for human approval
+  if (workflow.state !== 'step_8_subtopics') {
+    throw new Error(`Workflow must be at step_8_subtopics for human approval, current state: ${workflow.state}`)
   }
 
   // Validate user belongs to the same organization as the workflow
@@ -172,19 +172,14 @@ export async function processHumanApproval(
       throw new Error('Invalid reset_to_step: must be 1-7')
     }
     finalStatus = CANONICAL_RESET_MAP[reset_to_step.toString()]
-    assertValidWorkflowState(finalStatus)
   }
 
-  // Update workflow to final status
-  const updateData: any = { 
-    status: finalStatus,
-    updated_at: new Date().toISOString()
-  }
-  
-  // CANONICAL TRANSITION: Update current_step based on decision
+  // FSM TRANSITION: Handle decision through state machine
   if (decision === 'approved') {
     // Approved: Advance to Step 9 (Article Generation)
-    updateData.current_step = 9
+    await WorkflowFSM.transition(workflowId, 'SUBTOPICS_APPROVED', { 
+      userId: currentUser.id 
+    })
   } else if (decision === 'rejected' && reset_to_step) {
     // 
     // 🔁 REGRESSION EXCEPTION: Human approval can reset workflow
@@ -192,21 +187,15 @@ export async function processHumanApproval(
     // This is the ONLY place where regression is allowed:
     // - Only admins can trigger via rejection
     // - Only steps 1-7 allowed as reset targets
-    // - Must update both current_step and status consistently
+    // - FSM validates reset targets
     // 
     // All other steps 1-7,9: No regression allowed
     //
-    updateData.current_step = reset_to_step
-  }
-  
-  const finalUpdateResult = await supabase
-    .from('intent_workflows')
-    .update(updateData)
-    .eq('id', workflowId)
-
-  if (finalUpdateResult.error) {
-    console.error('Failed to update workflow to final status:', finalUpdateResult.error)
-    throw new Error('Failed to update workflow to final status')
+    const resetState = CANONICAL_RESET_MAP[reset_to_step.toString()]
+    await WorkflowFSM.transition(workflowId, 'HUMAN_RESET', { 
+      userId: currentUser.id,
+      resetTo: resetState
+    })
   }
 
   // Log audit action
@@ -239,7 +228,7 @@ export async function processHumanApproval(
   return {
     success: true,
     approval_id: approval.id,
-    workflow_status: finalStatus,
+    workflow_state: finalStatus,
     message,
   }
 }
@@ -267,7 +256,7 @@ export async function getWorkflowSummary(workflowId: string): Promise<WorkflowSu
   // Get workflow details
   const workflowResult = await supabase
     .from('intent_workflows')
-    .select('*')
+    .select('id, state, organization_id, created_at, updated_at, icp_document, competitor_analysis')
     .eq('id', workflowId)
     .single()
 
@@ -277,7 +266,7 @@ export async function getWorkflowSummary(workflowId: string): Promise<WorkflowSu
 
   const workflow = workflowResult.data as unknown as {
     id: string
-    status: string
+    state: string
     organization_id: string
     created_at: string
     updated_at: string
@@ -349,7 +338,7 @@ export async function getWorkflowSummary(workflowId: string): Promise<WorkflowSu
 
   return {
     workflow_id: workflowId,
-    status: workflow.status,
+    state: workflow.state,
     organization_id: workflow.organization_id,
     created_at: workflow.created_at,
     updated_at: workflow.updated_at,
@@ -379,7 +368,7 @@ export async function isHumanApprovalRequired(workflowId: string): Promise<boole
 
   const workflowResult = await supabase
     .from('intent_workflows')
-    .select('status')
+    .select('state')
     .eq('id', workflowId)
     .single()
 
@@ -388,10 +377,10 @@ export async function isHumanApprovalRequired(workflowId: string): Promise<boole
   }
 
   const workflow = workflowResult.data as unknown as {
-    status: string
+    state: string
   }
 
-  return workflow.status === 'step_8_subtopics'
+  return workflow.state === 'step_8_subtopics'
 }
 
 /**

@@ -19,6 +19,7 @@ import {
   retryWithPolicy 
 } from './retry-utils'
 import { emitAnalyticsEvent } from '../analytics/event-emitter'
+import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 import { resolveLocationCode, resolveLanguageCode } from '@/lib/config/dataforseo-geo'
 
 export const LONGTAIL_RETRY_POLICY: RetryPolicy = {
@@ -61,7 +62,6 @@ export interface LongtailExpansionResult {
 export interface ExpansionSummary {
   seeds_processed: number
   total_longtails_created: number
-  step_4_longtails_completed_at: string
   results: LongtailExpansionResult[]
 }
 
@@ -497,7 +497,7 @@ export async function expandSeedKeywordsToLongtails(workflowId: string): Promise
   // Get workflow details
   const { data: workflow, error: workflowError } = await supabase
     .from('intent_workflows')
-    .select('organization_id, status')
+    .select('organization_id, state')
     .eq('id', workflowId)
     .single()
   
@@ -569,46 +569,16 @@ export async function expandSeedKeywordsToLongtails(workflowId: string): Promise
     }
   }
   
-  // Update workflow status
+  // Update workflow state using FSM
   const completionTime = new Date().toISOString()
-  await updateWorkflowStatus(workflowId, organizationId, 'step_4_longtails', {
-    step_4_longtails_completed_at: completionTime,
-    current_step: 5  // Advance to Step 5
-  })
+  await WorkflowFSM.transition(workflowId, 'LONGTAILS_COMPLETED')
   
   console.log(`[LongtailExpander] Completed expansion. Created ${totalLongtailsCreated} long-tails from ${seedKeywords.length} seeds`)
   
   return {
     seeds_processed: seedKeywords.length,
     total_longtails_created: totalLongtailsCreated,
-    step_4_longtails_completed_at: completionTime,
     results
   }
 }
 
-/**
- * Update workflow status
- */
-async function updateWorkflowStatus(
-  workflowId: string,
-  organizationId: string,
-  status: string,
-  metadata?: Record<string, any>
-): Promise<void> {
-  const supabase = createServiceRoleClient()
-  
-  const updateData: any = { status }
-  if (metadata) {
-    Object.assign(updateData, metadata)
-  }
-  
-  const { error } = await supabase
-    .from('intent_workflows')
-    .update(updateData)
-    .eq('id', workflowId)
-    .eq('organization_id', organizationId)
-  
-  if (error) {
-    throw new Error(`Failed to update workflow status: ${error.message}`)
-  }
-}

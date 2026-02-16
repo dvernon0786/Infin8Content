@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ICPGateValidator, type GateResult } from '@/lib/services/intent-engine/icp-gate-validator'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 import { CompetitorGateValidator } from '@/lib/services/intent-engine/competitor-gate-validator'
 import { SeedApprovalGateValidator } from '@/lib/services/intent-engine/seed-approval-gate-validator'
 import { SubtopicApprovalGateValidator } from '@/lib/services/intent-engine/subtopic-approval-gate-validator'
@@ -194,7 +195,11 @@ export async function enforceSeedApprovalGate(
 ): Promise<NextResponse | null> {
   try {
     // Validate seed approval
-    const result = await seedApprovalGateValidator.validateSeedApproval(workflowId)
+    const supabase = createServiceRoleClient()
+    const { data: workflow } = await supabase.from('intent_workflows').select('organization_id').eq('id', workflowId).single() as { data: { organization_id: string } | null }
+    const organizationId = workflow?.organization_id || ''
+    const userId = '00000000-0000-0000-0000-000000000000' // System user
+    const result = await seedApprovalGateValidator.validateGate(workflowId, organizationId, userId)
     
     // If access is allowed, continue to next handler
     if (result.allowed) {
@@ -209,7 +214,7 @@ export async function enforceSeedApprovalGate(
     // Return 423 Blocked response with actionable error details
     return NextResponse.json(result.errorResponse || {
       error: result.error || `Seed approval required before ${stepName}`,
-      workflowStatus: result.workflowStatus,
+      workflowState: result.workflowState,
       seedApprovalStatus: result.seedApprovalStatus,
       requiredAction: 'Approve seed keywords via POST /api/intent/workflows/{workflow_id}/steps/approve-seeds',
       currentStep: stepName,
@@ -225,7 +230,7 @@ export async function enforceSeedApprovalGate(
       await seedApprovalGateValidator.logGateEnforcement(workflowId, stepName, {
         allowed: true,
         seedApprovalStatus: 'error',
-        workflowStatus: 'error',
+        workflowState: 'error',
         error: 'Gate enforcement failed - failing open for availability'
       })
     } catch (logError) {

@@ -113,7 +113,7 @@ export async function POST(
         action: AuditAction.WORKFLOW_ARTICLES_LINKING_COMPLETED,
         details: {
           workflow_id: workflowId,
-          workflow_status: linkingResult.workflow_status,
+          workflow_state: linkingResult.workflow_state,
           total_articles: linkingResult.total_articles,
           linked_articles: linkingResult.linked_articles,
           failed_articles: linkingResult.failed_articles,

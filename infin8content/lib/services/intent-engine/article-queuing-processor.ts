@@ -16,6 +16,7 @@ import {
   retryWithPolicy,
   classifyErrorType
 } from './retry-utils'
+import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 
 export const ARTICLE_QUEUING_RETRY_POLICY: RetryPolicy = {
   maxAttempts: 3,
@@ -43,8 +44,7 @@ export interface WorkflowContext {
   organization_id: string
   icp_document?: string
   competitor_urls?: string[]
-  status: string
-  current_step: number
+  state: string
 }
 
 export interface ArticleQueueingResult {
@@ -88,7 +88,7 @@ async function queueApprovedSubtopicsForArticlesImpl(
     // Fetch workflow context
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, organization_id, icp_document, competitor_urls, status, current_step')
+      .select('id, organization_id, icp_document, competitor_urls, state')
       .eq('id', workflowId)
       .single()
 
@@ -98,18 +98,9 @@ async function queueApprovedSubtopicsForArticlesImpl(
 
     const typedWorkflow = workflow as unknown as WorkflowContext
 
-    // CANONICAL GUARD: Only allow step 9 when current_step = 9
-    // No defaults, no fallbacks - throw immediately if undefined
-    if (typedWorkflow.current_step === undefined || typedWorkflow.current_step === null) {
-      throw new Error(
-        `Workflow state corrupted: current_step is undefined for workflow ${workflowId}`
-      )
-    }
-
-    if (typedWorkflow.current_step !== 9) {
-      throw new Error(
-        `Invalid step order: workflow must be at step 9 (article queuing), currently at step ${typedWorkflow.current_step}`
-      )
+    // CANONICAL GUARD: Only allow step_9_articles for article queuing
+    if (typedWorkflow.state !== 'step_9_articles') {
+      throw new Error(`Invalid workflow state: article queuing requires step_9_articles, current state: ${typedWorkflow.state}`)
     }
 
     // Fetch approved keywords (article_status = 'ready')
@@ -126,8 +117,8 @@ async function queueApprovedSubtopicsForArticlesImpl(
 
     if (!approvedKeywords || approvedKeywords.length === 0) {
       console.warn(`[ArticleQueuing] No approved keywords found for workflow ${workflowId}`)
-      // Update workflow status even if no articles
-      await updateWorkflowStatus(supabase, workflowId, 'step_9_articles')
+      // Update workflow state even if no articles
+      await updateWorkflowState(workflowId)
       return {
         workflow_id: workflowId,
         articles_created: 0,
@@ -243,8 +234,8 @@ async function queueApprovedSubtopicsForArticlesImpl(
       }
     }
 
-    // Update workflow status to step_9_articles
-    await updateWorkflowStatus(supabase, workflowId, 'step_9_articles')
+    // Update workflow state to completed
+    await updateWorkflowState(workflowId)
 
     console.log(
       `[ArticleQueuing] Completed: ${createdArticles.length} articles created, ${errors.length} errors`
@@ -264,25 +255,10 @@ async function queueApprovedSubtopicsForArticlesImpl(
 }
 
 /**
- * Update workflow status to step 9 (articles queued)
+ * Updates workflow state using FSM transition
  */
-async function updateWorkflowStatus(
-  supabase: ReturnType<typeof createServiceRoleClient>,
-  workflowId: string,
-  status: string
+async function updateWorkflowState(
+  workflowId: string
 ): Promise<void> {
-  const { error } = await supabase
-    .from('intent_workflows')
-    .update({
-      status: 'step_9_articles',  // Reflect step just completed
-      current_step: 9,           // Step 9 active
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', workflowId)
-
-  if (error) {
-    throw new Error(`Failed to update workflow status: ${error.message}`)
-  }
-
-  console.log(`[ArticleQueuing] Updated workflow ${workflowId} status to step_9_articles, current_step set to 9`)
+  await WorkflowFSM.transition(workflowId, 'ARTICLES_COMPLETED')
 }

@@ -11,6 +11,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { logIntentAction } from './intent-audit-logger'
 import { AuditAction } from '@/types/audit'
+import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 
 export interface LinkingResult {
   workflow_id: string
@@ -19,7 +20,7 @@ export interface LinkingResult {
   linked_articles: number
   already_linked: number
   failed_articles: number
-  workflow_status: string
+  workflow_state: string
   processing_time_seconds: number
   details: {
     linked_article_ids: string[]
@@ -37,12 +38,6 @@ export interface ArticleLinkingData {
   linked_at?: string | null
 }
 
-export interface WorkflowLinkingCounts {
-  total: number
-  linked: number
-  already_linked: number
-  failed: number
-}
 
 /**
  * Validates that the user has access to the specified workflow
@@ -95,19 +90,19 @@ export async function validateWorkflowForLinking(workflowId: string): Promise<{
   try {
     const { data: workflow, error } = await supabase
       .from('intent_workflows')
-      .select('*')
+      .select('id, state, organization_id')
       .eq('id', workflowId)
-      .single() as any
+      .single() as { data: { id: string; state: string; organization_id: string } | null; error: any }
 
     if (error || !workflow) {
       return { valid: false, error: 'Workflow not found' }
     }
 
     // Workflow must be at step_9_articles (articles generation phase)
-    if (workflow.status !== 'step_9_articles') {
+    if (workflow.state !== 'step_9_articles') {
       return { 
         valid: false, 
-        error: `Workflow must be at step_9_articles state, current state: ${workflow.status}` 
+        error: `Workflow must be at step_9_articles state, current state: ${workflow.state}` 
       }
     }
 
@@ -235,41 +230,6 @@ export async function linkSingleArticle(
   }
 }
 
-/**
- * Updates workflow link counts and status
- */
-export async function updateWorkflowLinkCounts(
-  workflowId: string, 
-  counts: WorkflowLinkingCounts,
-  userId: string
-): Promise<void> {
-  const supabase = createServiceRoleClient()
-  
-  try {
-    const updateData: any = {
-      article_link_count: counts.linked,
-      updated_at: new Date().toISOString()
-    }
-
-    // If linking is complete, update status and completion timestamp
-    if (counts.linked > 0 && counts.failed === 0 && counts.already_linked === 0) {
-      updateData.status = 'step_10_completed'
-      updateData.article_linking_completed_at = new Date().toISOString()
-    }
-
-    const { error } = await supabase
-      .from('intent_workflows')
-      .update(updateData)
-      .eq('id', workflowId) as any
-
-    if (error) {
-      throw error
-    }
-  } catch (error) {
-    console.error('Error updating workflow link counts:', error)
-    throw error
-  }
-}
 
 /**
  * Main function to link articles to workflow
@@ -287,16 +247,6 @@ export async function linkArticlesToWorkflow(
       throw new Error(error || 'Workflow validation failed')
     }
 
-    // Mark linking as started
-    const supabase = createServiceRoleClient()
-    await supabase
-      .from('intent_workflows')
-      .update({ 
-        article_linking_started_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', workflowId) as any
-
     // Log linking start
     await logIntentAction({
       organizationId: workflow.organization_id,
@@ -312,6 +262,7 @@ export async function linkArticlesToWorkflow(
     const articles = await getCompletedArticlesForWorkflow(workflowId)
     
     // Get already linked articles count
+    const supabase = createServiceRoleClient()
     const { data: alreadyLinkedData } = await supabase
       .from('articles')
       .select('id')
@@ -327,7 +278,7 @@ export async function linkArticlesToWorkflow(
       linked_articles: 0,
       already_linked: alreadyLinkedCount,
       failed_articles: 0,
-      workflow_status: workflow.status,
+      workflow_state: workflow.state,
       processing_time_seconds: 0,
       details: {
         linked_article_ids: [],
@@ -359,24 +310,16 @@ export async function linkArticlesToWorkflow(
       await Promise.all(batchPromises)
     }
 
-    // Update workflow counts
-    const counts: WorkflowLinkingCounts = {
-      total: result.total_articles,
-      linked: result.linked_articles,
-      already_linked: result.already_linked,
-      failed: result.failed_articles
+    // Trigger FSM transition if linking completed successfully
+    if (result.failed_articles === 0) {
+      await WorkflowFSM.transition(workflowId, 'ARTICLES_COMPLETED', { 
+        userId: userId
+      })
     }
-    
-    await updateWorkflowLinkCounts(workflowId, counts, userId)
 
-    // Get final workflow status
-    const { data: finalWorkflow } = await supabase
-      .from('intent_workflows')
-      .select('status')
-      .eq('id', workflowId)
-      .single() as any
-
-    result.workflow_status = finalWorkflow?.status || workflow.status
+    // Re-read current state from FSM after potential transition
+    const currentState = await WorkflowFSM.getCurrentState(workflowId)
+    result.workflow_state = currentState
     result.linking_status = result.failed_articles > 0 ? 'completed_with_failures' : 'completed'
     result.processing_time_seconds = (Date.now() - startTime) / 1000
 
