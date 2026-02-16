@@ -18,8 +18,7 @@ import {
   type FilterResult
 } from '@/lib/services/intent-engine/keyword-filter'
 import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
-import { advanceWorkflow } from '@/lib/services/workflow/advanceWorkflow'
-import { WorkflowState } from '@/types/workflow-state'
+import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 
 export async function POST(
   request: NextRequest,
@@ -114,13 +113,8 @@ export async function POST(
       throw new Error(`Failed to update workflow metadata: ${updateError.message}`)
     }
 
-    // Advance workflow state to step_6_clustering
-    await advanceWorkflow({
-      workflowId,
-      organizationId,
-      expectedState: WorkflowState.step_5_filtering,
-      nextState: WorkflowState.step_6_clustering
-    })
+    // FSM TRANSITION: Advance workflow state to step_6_clustering
+    await WorkflowFSM.transition(workflowId, 'FILTERING_COMPLETED', { userId: currentUser.id })
 
     // Log completion of keyword filtering
     await logActionAsync({

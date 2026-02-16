@@ -14,8 +14,7 @@ import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import { KeywordClusterer } from '@/lib/services/intent-engine/keyword-clusterer'
 import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
-import { advanceWorkflow } from '@/lib/services/workflow/advanceWorkflow'
-import { WorkflowState } from '@/types/workflow-state'
+import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 
 export async function POST(
   request: NextRequest,
@@ -174,13 +173,8 @@ export async function POST(
       )
     }
 
-    // Advance workflow state to step_7_validation
-    await advanceWorkflow({
-      workflowId,
-      organizationId,
-      expectedState: WorkflowState.step_6_clustering,
-      nextState: WorkflowState.step_7_validation
-    })
+    // FSM TRANSITION: Advance workflow state to step_7_validation
+    await WorkflowFSM.transition(workflowId, 'CLUSTERING_COMPLETED', { userId: currentUser.id })
 
     // Log completion audit action
     await logActionAsync({
