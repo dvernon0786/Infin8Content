@@ -3,7 +3,6 @@
 
 import { SupabaseClient } from '@supabase/supabase-js'
 import { 
-  INTENT_WORKFLOW_STEPS, 
   ALL_WORKFLOW_STATES,
   type WorkflowState 
 } from '@/lib/constants/intent-workflow-steps'

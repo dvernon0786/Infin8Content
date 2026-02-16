@@ -8,7 +8,7 @@
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
-import { INTENT_WORKFLOW_STEPS } from '@/lib/constants/intent-workflow-steps'
+import { WORKFLOW_STEP_ORDER } from '@/lib/constants/intent-workflow-steps'
 
 export interface BlockingCondition {
   blocked_at_step: string
@@ -115,49 +115,49 @@ export class BlockingConditionResolver {
    */
   getBlockingConditionMap(): BlockingConditionMap {
     return {
-      [INTENT_WORKFLOW_STEPS.AUTH]: {
-        gate_id: 'gate_icp_required',
-        blocking_reason: 'ICP generation required before competitor analysis',
-        required_action: 'Generate ICP document',
-        action_link_template: '/workflows/{workflow_id}/steps/generate-icp',
-      },
-      [INTENT_WORKFLOW_STEPS.ICP]: {
+      'step_1_icp': {
         gate_id: 'gate_competitors_required',
         blocking_reason: 'Competitor analysis required before seed keywords',
         required_action: 'Analyze competitors',
         action_link_template: '/workflows/{workflow_id}/steps/analyze-competitors',
       },
-      [INTENT_WORKFLOW_STEPS.KEYWORDS]: {
+      'step_2_competitors': {
         gate_id: 'gate_seeds_approval_required',
         blocking_reason: 'Seed keywords must be approved before longtail expansion',
         required_action: 'Review and approve seeds',
         action_link_template: '/workflows/{workflow_id}/approvals/seeds',
       },
-      [INTENT_WORKFLOW_STEPS.LONGTAILS]: {
+      'step_3_seeds': {
+        gate_id: 'gate_longtails_required',
+        blocking_reason: 'Longtail keyword expansion required before filtering',
+        required_action: 'Expand longtail keywords',
+        action_link_template: '/workflows/{workflow_id}/steps/expand-longtails',
+      },
+      'step_4_longtails': {
         gate_id: 'gate_filtering_required',
         blocking_reason: 'Keyword filtering required before clustering',
         required_action: 'Filter keywords',
         action_link_template: '/workflows/{workflow_id}/steps/filter-keywords',
       },
-      [INTENT_WORKFLOW_STEPS.FILTERING]: {
+      'step_5_filtering': {
         gate_id: 'gate_clustering_required',
         blocking_reason: 'Clustering required before subtopic generation',
         required_action: 'Cluster keywords',
         action_link_template: '/workflows/{workflow_id}/steps/cluster-keywords',
       },
-      [INTENT_WORKFLOW_STEPS.CLUSTERING]: {
+      'step_6_clustering': {
         gate_id: 'gate_validation_required',
         blocking_reason: 'Cluster validation required before subtopics',
         required_action: 'Validate clusters',
         action_link_template: '/workflows/{workflow_id}/steps/validate-clusters',
       },
-      [INTENT_WORKFLOW_STEPS.VALIDATION]: {
+      'step_7_validation': {
         gate_id: 'gate_subtopic_generation_required',
         blocking_reason: 'Subtopic generation required before approval',
         required_action: 'Generate subtopics',
         action_link_template: '/workflows/{workflow_id}/steps/generate-subtopics',
       },
-      [INTENT_WORKFLOW_STEPS.SUBTOPICS]: {
+      'step_8_subtopics': {
         gate_id: 'gate_subtopic_approval_required',
         blocking_reason: 'Subtopics must be approved before article generation',
         required_action: 'Review and approve subtopics',
