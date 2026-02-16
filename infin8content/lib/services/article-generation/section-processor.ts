@@ -2010,7 +2010,7 @@ Generate content that ranks well, engages readers deeply, and establishes topica
     maxTokens: maxResponseTokens,
     temperature: 0.7,
     maxRetries: 3,
-    model: 'google/gemini-2.5-flash' // Explicitly use Gemini 2.5 Flash for better quality
+    model: 'perplexity/sonar' // Using Perplexity for consistency with other services
   })
 
   // Track API cost (free models = $0.00)
