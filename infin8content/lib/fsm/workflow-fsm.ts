@@ -46,6 +46,11 @@ export class WorkflowFSM {
 
     const currentState = await this.getCurrentState(workflowId)
 
+    // 🔒 PRODUCTION HARDENING: Cannot reset completed workflows
+    if (currentState === 'completed' && event === 'HUMAN_RESET') {
+      throw new Error('Cannot reset completed workflow')
+    }
+
     let nextState: WorkflowState | undefined
 
     // 🔁 HUMAN RESET

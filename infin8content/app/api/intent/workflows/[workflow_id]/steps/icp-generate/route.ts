@@ -101,7 +101,7 @@ export async function POST(
       .select('id, state, organization_id')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single()
+      .single() as { data: { id: string; state: string; organization_id: string } | null; error: any }
 
     if (workflowError || !workflow) {
       return NextResponse.json(
@@ -110,12 +110,12 @@ export async function POST(
       )
     }
 
-    // FSM GUARD: Only allow step 1 when state = step_1_icp
-    if ((workflow as any).state !== 'step_1_icp') {
+    // Preliminary check - the real guard is in the FSM transition itself
+    if (workflow.state !== 'step_1_icp') {
       return NextResponse.json(
         {
           error: 'INVALID_STATE',
-          message: `Workflow must be in step_1_icp. Current state: ${(workflow as any).state}` 
+          message: `Workflow must be in step_1_icp. Current state: ${workflow.state}` 
         },
         { status: 400 }
       )
@@ -124,21 +124,19 @@ export async function POST(
     // Check for idempotency - if ICP already generated, return existing result
     const { data: existingWorkflow, error: fetchError } = await supabase
       .from('intent_workflows')
-      .select('icp_data, updated_at')
+      .select('icp_data, updated_at, state')
       .eq('id', workflowId)
-      .eq('organization_id', organizationId)
-      .single()
+      .single() as { data: { icp_data: any; updated_at: string; state: string } | null; error: any }
 
-    if (!fetchError && existingWorkflow && (existingWorkflow as any).icp_data) {
-      console.log(`[ICP-Generate] ICP already exists for workflow ${workflowId}, returning cached result`)
+    if (existingWorkflow && existingWorkflow.icp_data) {
       return NextResponse.json({
         success: true,
         workflow_id: workflowId,
-        status: 'step_1_icp',
-        icp_data: (existingWorkflow as any).icp_data,
+        workflow_state: existingWorkflow.state,
+        icp_data: existingWorkflow.icp_data,
         cached: true,
         metadata: {
-          generated_at: (existingWorkflow as any).updated_at
+          generated_at: existingWorkflow.updated_at
         }
       })
     }
@@ -153,7 +151,7 @@ export async function POST(
     await storeICPGenerationResult(workflowId, organizationId, icpResult, idempotencyKey)
 
     // FSM TRANSITION: Advance to step_2_competitors
-    await WorkflowFSM.transition(workflowId, 'ICP_COMPLETED', { userId: currentUser.id })
+    const nextState = await WorkflowFSM.transition(workflowId, 'ICP_COMPLETED', { userId: currentUser.id })
 
     // Emit analytics event for workflow step completion
     try {
@@ -188,7 +186,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       workflow_id: workflowId,
-      status: 'step_1_icp',
+      workflow_state: nextState,
       icp_data: icpResult.icp_data,
       metadata: {
         tokens_used: icpResult.tokensUsed,
@@ -200,6 +198,19 @@ export async function POST(
   } catch (error) {
     // Log error
     console.error(`[ICP-Generate] Error generating ICP:`, error)
+
+    // Handle FSM transition errors (race conditions)
+    if (error instanceof Error && error.message.includes('Invalid transition:')) {
+      return NextResponse.json(
+        {
+          error: 'RACE_CONDITION',
+          message: 'Workflow state changed during ICP generation. The workflow may have already advanced.',
+          workflow_id: workflowId,
+          details: error.message
+        },
+        { status: 409 } // Conflict - appropriate for race conditions
+      )
+    }
 
     // Update workflow with error status if we have the necessary IDs
     if (workflowId && organizationId) {

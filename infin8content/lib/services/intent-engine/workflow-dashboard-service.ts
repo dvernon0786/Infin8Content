@@ -38,7 +38,6 @@ export interface DashboardSummary {
   total_workflows: number
   completed_workflows: number
   in_progress_workflows: number
-  failed_workflows: number
 }
 
 export interface DashboardResponse {
@@ -63,14 +62,11 @@ export function calculateSummary(workflows: IntentWorkflow[]): DashboardSummary 
     total_workflows: workflows.length,
     completed_workflows: 0,
     in_progress_workflows: 0,
-    failed_workflows: 0,
   }
 
   workflows.forEach(workflow => {
     if (workflow.state === 'completed') {
       summary.completed_workflows++
-    } else if (workflow.state === 'failed') {
-      summary.failed_workflows++
     } else {
       summary.in_progress_workflows++
     }
@@ -140,7 +136,15 @@ export async function getWorkflowDashboard(
 ): Promise<DashboardResponse> {
   const { data: workflows, error } = await supabase
     .from('intent_workflows')
-    .select('*')
+    .select(`
+      id,
+      name,
+      state,
+      organization_id,
+      created_at,
+      updated_at,
+      created_by
+    `)
     .eq('organization_id', organizationId)
     .order('updated_at', { ascending: false })
 
