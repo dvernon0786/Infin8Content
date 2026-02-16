@@ -14,8 +14,7 @@ import { AuditAction } from '@/types/audit'
 import { ClusterValidator } from '@/lib/services/intent-engine/cluster-validator'
 import { retryWithPolicy } from '@/lib/services/intent-engine/retry-utils'
 import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
-import { advanceWorkflow } from '@/lib/services/workflow/advanceWorkflow'
-import { WorkflowState } from '@/types/workflow-state'
+import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 
 // Custom retry policy for cluster validation (2s → 4s → 8s as per story requirements)
 const CLUSTER_VALIDATION_RETRY_POLICY = {
@@ -181,13 +180,8 @@ export async function POST(
       // Don't fail the request, but log the error
     }
 
-    // Advance workflow state to step_8_subtopics
-    await advanceWorkflow({
-      workflowId,
-      organizationId,
-      expectedState: WorkflowState.step_7_validation,
-      nextState: WorkflowState.step_8_subtopics
-    })
+    // FSM TRANSITION: Advance workflow state to step_8_subtopics
+    await WorkflowFSM.transition(workflowId, 'VALIDATION_COMPLETED', { userId: currentUser.id })
 
     // Log completion audit action
     await logActionAsync({

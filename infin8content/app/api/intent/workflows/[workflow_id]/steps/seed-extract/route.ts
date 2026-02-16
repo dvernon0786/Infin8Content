@@ -11,8 +11,7 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
-import { advanceWorkflow, WorkflowTransitionError } from '@/lib/services/workflow/advanceWorkflow'
-import { WorkflowState } from '@/types/workflow-state'
+import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
 
@@ -241,7 +240,7 @@ export async function POST(
       .select('id, state')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single() as { data: { id: string; state: WorkflowState } | null; error: any }
+      .single() as { data: { id: string; state: string } | null; error: any }
 
     if (workflowFetchError || !workflow) {
       return NextResponse.json(
@@ -250,12 +249,12 @@ export async function POST(
       )
     }
 
-    if (workflow.state !== WorkflowState.step_3_seeds) {
+    if (workflow.state !== 'step_3_seeds') {
       return NextResponse.json(
         {
           error: 'Illegal workflow transition',
           currentState: workflow.state,
-          expectedState: WorkflowState.step_3_seeds
+          expectedState: 'step_3_seeds'
         },
         { status: 409 }
       )
@@ -300,30 +299,18 @@ export async function POST(
     }
 
     // --------------------------------------------------
-    // 6. ATOMIC STATE TRANSITION (UNIFIED WORKFLOW ENGINE)
+    // 6. FSM STATE TRANSITION (DETERMINISTIC ENGINE)
     // --------------------------------------------------
     try {
-      await advanceWorkflow({
-        workflowId,
-        organizationId,
-        expectedState: WorkflowState.step_3_seeds,
-        nextState: WorkflowState.step_4_longtails
-      })
+      await WorkflowFSM.transition(workflowId, 'SEEDS_APPROVED', { userId: currentUser.id })
     } catch (error) {
-      if (error instanceof WorkflowTransitionError) {
-        return NextResponse.json(
-          { 
-            error: error.message,
-            currentState: error.currentState,
-            expectedState: error.expectedState,
-            attemptedState: error.attemptedState
-          },
-          { status: 409 }
-        )
-      }
-      
-      console.error('Workflow transition failed:', error)
-      throw error
+      return NextResponse.json(
+        { 
+          error: 'Failed to advance workflow',
+          message: error instanceof Error ? error.message : 'Unknown error'
+        },
+        { status: 500 }
+      )
     }
 
     // --------------------------------------------------
@@ -337,7 +324,7 @@ export async function POST(
         workflow_id: workflowId,
         step: 3,
         selected_count: selectedKeywordIds.length,
-        new_state: WorkflowState.step_4_longtails
+        new_state: 'step_4_longtails'
       },
       ipAddress: extractIpAddress(request.headers),
       userAgent: extractUserAgent(request.headers),
@@ -351,7 +338,7 @@ export async function POST(
       data: {
         keywordsSelected: selectedKeywordIds.length,
         message: 'Step 3 completed successfully',
-        nextState: WorkflowState.step_4_longtails
+        nextState: 'step_4_longtails'
       }
     })
 

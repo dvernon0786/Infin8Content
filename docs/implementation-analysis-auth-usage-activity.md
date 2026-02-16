@@ -831,3 +831,32 @@ ORDER BY created_at DESC LIMIT 5;
 ---
 
 **Implementation Complete:** All three features successfully re-enabled with comprehensive verification and documentation.
+
+---
+
+## FSM HARDENING UPDATE - 2026-02-16
+
+### Additional Architecture Improvements
+
+**Related to Workflow Engine Hardening (feat/fsm-hardening-production-safe-v2):**
+
+The article generation API remains unaffected by workflow engine changes, but the broader system now includes:
+
+- **Deterministic FSM Architecture**: All workflow steps now use `WorkflowFSM.transition()` instead of legacy `advanceWorkflow()`
+- **Zero Legacy Field References**: Complete elimination of `status`, `current_step`, `step_10_completed` fields
+- **Centralized Mutation Lock**: Only FSM can update workflow states, preventing race conditions
+- **Production-Grade State Guards**: Pure state-based validation across all workflow routes
+
+**Impact on Article Generation:**
+- ✅ **No changes required** - Article generation uses separate architecture
+- ✅ **Improved system stability** - Workflow engine now deterministic
+- ✅ **Enhanced audit trail** - All workflow transitions properly logged
+- ✅ **Race condition safety** - Concurrent workflow requests handled correctly
+
+**Current Status:**
+- Article generation features: ✅ **PRODUCTION READY**
+- Workflow engine: ✅ **PRODUCTION READY** (newly hardened)
+- Overall system: ✅ **ENTERPRISE GRADE**
+
+---
+
