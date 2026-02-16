@@ -9,7 +9,6 @@ export type WorkflowState =
   | 'step_8_subtopics'
   | 'step_9_articles'
   | 'completed'
-  | 'failed'
 
 export type WorkflowEvent =
   | 'ICP_COMPLETED'

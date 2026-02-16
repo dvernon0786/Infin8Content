@@ -13,6 +13,5 @@ export const WorkflowTransitions: Record<
   step_7_validation: { VALIDATION_COMPLETED: 'step_8_subtopics' },
   step_8_subtopics: { SUBTOPICS_APPROVED: 'step_9_articles' },
   step_9_articles: { ARTICLES_COMPLETED: 'completed' },
-  completed: {},
-  failed: {}
+  completed: {}
 }
