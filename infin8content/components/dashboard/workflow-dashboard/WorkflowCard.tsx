@@ -52,13 +52,13 @@ export function WorkflowCard({ workflow, onNavigate }: WorkflowCardProps) {
           <div className="flex-1">
             <CardTitle className="text-lg">{workflow.name}</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              {WORKFLOW_STEP_DESCRIPTIONS[workflow.state as WorkflowState] || 'Unknown'}
+              {WORKFLOW_STEP_DESCRIPTIONS[workflow.state] || 'Unknown'}
             </p>
           </div>
-          <Badge className={getStatusColor(workflow.state as WorkflowState)}>
+          <Badge className={getStatusColor(workflow.state)}>
             <span className="flex items-center gap-1">
-              {getStatusIcon(workflow.state as WorkflowState)}
-              {WORKFLOW_STEP_DESCRIPTIONS[workflow.state as WorkflowState] || 'Unknown'}
+              {getStatusIcon(workflow.state)}
+              {WORKFLOW_STEP_DESCRIPTIONS[workflow.state] || 'Unknown'}
             </span>
           </Badge>
         </div>
@@ -69,9 +69,9 @@ export function WorkflowCard({ workflow, onNavigate }: WorkflowCardProps) {
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Progress</span>
-            <span className="font-semibold">{WORKFLOW_PROGRESS_MAP[workflow.state as WorkflowState]}%</span>
+            <span className="font-semibold">{WORKFLOW_PROGRESS_MAP[workflow.state]}%</span>
           </div>
-          <Progress value={WORKFLOW_PROGRESS_MAP[workflow.state as WorkflowState]} className="h-2" />
+          <Progress value={WORKFLOW_PROGRESS_MAP[workflow.state]} className="h-2" />
         </div>
 
         {/* Metadata */}

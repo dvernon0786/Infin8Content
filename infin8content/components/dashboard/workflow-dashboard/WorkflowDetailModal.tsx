@@ -49,7 +49,7 @@ export function WorkflowDetailModal({
   if (!workflow) return null
 
   // Check if workflow can be cancelled (not already terminal)
-  const canCancel = workflow.state !== 'completed' && workflow.state !== 'failed'
+  const canCancel = workflow.state !== 'completed'
   
   // Detect the active step for execution
   const activeStep = WORKFLOW_STEP_CONFIG.find(

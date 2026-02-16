@@ -1,11 +1,11 @@
 /**
  * Inngest Workflow Transition Guard
- * Enforces FSM-based transitions - single source of truth
+ * Delegates to FSM - single source of truth
  */
 
 import { assertValidWorkflowState } from '@/lib/constants/intent-workflow-steps'
 import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
-import type { WorkflowState, WorkflowEvent } from '@/lib/fsm/workflow-events'
+import type { WorkflowState } from '@/lib/fsm/workflow-events'
 
 export function assertValidWorkflowTransition(
   currentStatus: string,
@@ -25,32 +25,33 @@ export function assertValidWorkflowTransition(
     return
   }
 
-  // For all other transitions, check if FSM allows this progression
-  // Since we don't have the event here, we use linear progression check
-  // This is a simplified validation - full validation happens in FSM.transition
+  // For all other transitions, FSM is the only authority
+  // Since we don't have the event here, we use basic linear validation
+  // Full validation happens in WorkflowFSM.transition() with proper events
   const currentState = currentStatus as WorkflowState
   const nextState = nextStatus as WorkflowState
   
-  // Get valid next states from FSM linear order
-  const validProgressions: Record<WorkflowState, WorkflowState[]> = {
-    'step_1_icp': ['step_2_competitors'],
-    'step_2_competitors': ['step_3_seeds'],
-    'step_3_seeds': ['step_4_longtails'],
-    'step_4_longtails': ['step_5_filtering'],
-    'step_5_filtering': ['step_6_clustering'],
-    'step_6_clustering': ['step_7_validation'],
-    'step_7_validation': ['step_8_subtopics'],
-    'step_8_subtopics': ['step_9_articles'],
-    'step_9_articles': ['completed'],
-    'completed': [] // Terminal state
-  }
-
-  const allowedNextStates = validProgressions[currentState]
+  // Simple linear progression check - FSM handles full validation
+  const stepOrder: WorkflowState[] = [
+    'step_1_icp',
+    'step_2_competitors',
+    'step_3_seeds',
+    'step_4_longtails',
+    'step_5_filtering',
+    'step_6_clustering',
+    'step_7_validation',
+    'step_8_subtopics',
+    'step_9_articles'
+  ]
   
-  if (!allowedNextStates.includes(nextState)) {
+  const currentIndex = stepOrder.indexOf(currentState)
+  const nextIndex = stepOrder.indexOf(nextState)
+  
+  // Only allow next step in sequence
+  if (nextIndex !== currentIndex + 1) {
     throw new Error(
       `🚨 Illegal workflow transition: ${currentStatus} → ${nextStatus}. ` +
-      `FSM does not allow this progression.`
+      `FSM enforces linear progression only.`
     )
   }
 }

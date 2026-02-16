@@ -8,6 +8,7 @@
 
 import { SupabaseClient } from '@supabase/supabase-js'
 import type { IntentWorkflow } from '@/lib/types/intent-workflow'
+import type { WorkflowState } from '@/lib/fsm/workflow-events'
 
 // Pure FSM state order for progress calculation
 const STATE_ORDER: string[] = [
@@ -26,7 +27,7 @@ const STATE_ORDER: string[] = [
 export interface WorkflowDashboardItem {
   id: string
   name: string
-  state: string
+  state: WorkflowState
   progress_percentage: number
   created_at: string
   updated_at: string
