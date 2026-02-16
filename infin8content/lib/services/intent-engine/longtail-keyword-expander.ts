@@ -61,7 +61,6 @@ export interface LongtailExpansionResult {
 export interface ExpansionSummary {
   seeds_processed: number
   total_longtails_created: number
-  step_4_longtails_completed_at: string
   results: LongtailExpansionResult[]
 }
 
@@ -497,7 +496,7 @@ export async function expandSeedKeywordsToLongtails(workflowId: string): Promise
   // Get workflow details
   const { data: workflow, error: workflowError } = await supabase
     .from('intent_workflows')
-    .select('organization_id, status')
+    .select('organization_id, state')
     .eq('id', workflowId)
     .single()
   
@@ -569,19 +568,22 @@ export async function expandSeedKeywordsToLongtails(workflowId: string): Promise
     }
   }
   
-  // Update workflow status
-  const completionTime = new Date().toISOString()
-  await updateWorkflowStatus(workflowId, organizationId, 'step_4_longtails', {
-    step_4_longtails_completed_at: completionTime,
-    current_step: 5  // Advance to Step 5
-  })
+  // Update workflow state to next step
+  const { error } = await supabase
+    .from('intent_workflows')
+    .update({ state: 'step_5_filtering' })
+    .eq('id', workflowId)
+    .eq('organization_id', organizationId)
+  
+  if (error) {
+    throw new Error(`Failed to update workflow state: ${error.message}`)
+  }
   
   console.log(`[LongtailExpander] Completed expansion. Created ${totalLongtailsCreated} long-tails from ${seedKeywords.length} seeds`)
   
   return {
     seeds_processed: seedKeywords.length,
     total_longtails_created: totalLongtailsCreated,
-    step_4_longtails_completed_at: completionTime,
     results
   }
 }

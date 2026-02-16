@@ -57,27 +57,25 @@ export async function POST(
     const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id, current_step')
+      .select('id, state, organization_id')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single()
+      .single() as { data: { id: string; state: string; organization_id: string } | null; error: any }
 
     if (workflowError || !workflow) {
+      console.log("WORKFLOW SELECT ERROR:", workflowError)
       return NextResponse.json(
         { error: 'Workflow not found' },
         { status: 404 }
       )
     }
 
-    // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string; current_step: number }
-
-    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 4 when current_step = 4
-    if (typedWorkflow.current_step !== 4) {
+    // FSM progression check: Only allow from step_3_seeds state
+    if (workflow.state !== 'step_3_seeds') {
       return NextResponse.json(
         {
-          error: 'INVALID_STEP_ORDER',
-          message: `Workflow must be at step 4 (longtail expansion), currently at step ${typedWorkflow.current_step}`
+          error: 'INVALID_STATE',
+          message: `Workflow must be in state step_3_seeds before longtail expansion. Current state: ${workflow.state}`
         },
         { status: 400 }
       )
@@ -91,7 +89,7 @@ export async function POST(
         action: AuditAction.WORKFLOW_LONGTAIL_KEYWORDS_STARTED,
         details: {
           workflow_id: workflowId,
-          workflow_status: typedWorkflow.status
+          workflow_status: workflow.state
         },
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
@@ -176,8 +174,7 @@ export async function POST(
       success: true,
       data: {
         seeds_processed: expansionResult.seeds_processed,
-        longtails_created: expansionResult.total_longtails_created,
-        step_4_longtails_completed_at: expansionResult.step_4_longtails_completed_at
+        longtails_created: expansionResult.total_longtails_created
       }
     })
 

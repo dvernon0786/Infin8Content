@@ -65,7 +65,7 @@ export async function processSeedApproval(
   // Validate workflow exists and is at correct step
   const workflowResult = await supabase
     .from('intent_workflows')
-    .select('id, status, organization_id')
+    .select('id, state, organization_id')
     .eq('id', workflowId)
     .single()
 
@@ -75,13 +75,13 @@ export async function processSeedApproval(
 
   const workflow = workflowResult.data as unknown as {
     id: string
-    status: string
+    state: string
     organization_id: string
   }
 
   // Validate workflow is at step_3_keywords
-  if (workflow.status !== 'step_3_keywords') {
-    throw new Error('Workflow must be at step_3_keywords for seed approval')
+  if (workflow.state !== 'step_3_seeds') {
+    throw new Error('Workflow must be at step_3_seeds for seed approval')
   }
 
   // Validate user belongs to the same organization as the workflow
