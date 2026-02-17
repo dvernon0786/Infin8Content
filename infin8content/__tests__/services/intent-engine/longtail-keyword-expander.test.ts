@@ -57,40 +57,60 @@ vi.mock('@/lib/services/intent-engine/retry-utils', async () => {
   }
 })
 
-// Mock DataForSEO API responses
+// Mock DataForSEO API responses (with correct structure)
 const mockRelatedKeywordsResponse = {
   version: '0.1.20230228',
-  status_code: 200,
+  status_code: 20000,  // CORRECT: DataForSEO success code
   status_message: 'Ok.',
   result_count: 3,
+  tasks_error: 0,  // ADD: tasks_error field
   tasks: [{
     id: '12345',
-    status_code: 200,
+    status_code: 20000,  // CORRECT: Task success code
     status_message: 'Ok.',
     result: [
       {
-        keyword: 'best seo tools 2024',
-        search_volume: 1200,
-        competition: 0.5,
-        competition_index: 50,
-        keyword_difficulty: 45,
-        cpc: 2.50
-      },
-      {
-        keyword: 'seo analysis software',
-        search_volume: 800,
-        competition: 0.3,
-        competition_index: 30,
-        keyword_difficulty: 35,
-        cpc: 1.80
-      },
-      {
-        keyword: 'keyword research tools',
-        search_volume: 2500,
-        competition: 0.7,
-        competition_index: 70,
-        keyword_difficulty: 60,
-        cpc: 3.20
+        items: [  // CORRECT: Nested items structure
+          {
+            keyword_data: {
+              keyword: 'best seo tools 2024',
+              keyword_info: {
+                search_volume: 1200,
+                competition: 50,
+                cpc: 2.50
+              },
+              keyword_properties: {
+                keyword_difficulty: 45
+              }
+            }
+          },
+          {
+            keyword_data: {
+              keyword: 'seo analysis software',
+              keyword_info: {
+                search_volume: 800,
+                competition: 30,
+                cpc: 1.80
+              },
+              keyword_properties: {
+                keyword_difficulty: 35
+              }
+            }
+          },
+          {
+            keyword_data: {
+              keyword: 'keyword research tools',
+              keyword_info: {
+                search_volume: 2500,
+                competition: 70,
+                cpc: 3.20
+              },
+              keyword_properties: {
+                keyword_difficulty: 60
+              }
+            }
+          }
+        ]
       }
     ]
   }]
@@ -98,37 +118,57 @@ const mockRelatedKeywordsResponse = {
 
 const mockSuggestionsResponse = {
   version: '0.1.20230228',
-  status_code: 200,
+  status_code: 20000,  // CORRECT
   status_message: 'Ok.',
   result_count: 3,
+  tasks_error: 0,  // ADD
   tasks: [{
     id: '12346',
-    status_code: 200,
+    status_code: 20000,  // CORRECT
     status_message: 'Ok.',
     result: [
       {
-        keyword: 'seo optimization tips',
-        search_volume: 1800,
-        competition: 0.4,
-        competition_index: 40,
-        keyword_difficulty: 40,
-        cpc: 2.10
-      },
-      {
-        keyword: 'search engine optimization',
-        search_volume: 5000,
-        competition: 0.8,
-        competition_index: 80,
-        keyword_difficulty: 70,
-        cpc: 4.50
-      },
-      {
-        keyword: 'seo marketing strategy',
-        search_volume: 950,
-        competition: 0.6,
-        competition_index: 60,
-        keyword_difficulty: 55,
-        cpc: 2.80
+        items: [  // CORRECT: Nested structure
+          {
+            keyword_data: {
+              keyword: 'seo optimization tips',
+              keyword_info: {
+                search_volume: 1800,
+                competition: 40,
+                cpc: 2.10
+              },
+              keyword_properties: {
+                keyword_difficulty: 40
+              }
+            }
+          },
+          {
+            keyword_data: {
+              keyword: 'search engine optimization',
+              keyword_info: {
+                search_volume: 5000,
+                competition: 80,
+                cpc: 4.50
+              },
+              keyword_properties: {
+                keyword_difficulty: 70
+              }
+            }
+          },
+          {
+            keyword_data: {
+              keyword: 'seo marketing strategy',
+              keyword_info: {
+                search_volume: 950,
+                competition: 60,
+                cpc: 2.80
+              },
+              keyword_properties: {
+                keyword_difficulty: 55
+              }
+            }
+          }
+        ]
       }
     ]
   }]
@@ -136,37 +176,57 @@ const mockSuggestionsResponse = {
 
 const mockIdeasResponse = {
   version: '0.1.20230228',
-  status_code: 200,
+  status_code: 20000,  // CORRECT
   status_message: 'Ok.',
   result_count: 3,
+  tasks_error: 0,  // ADD
   tasks: [{
     id: '12347',
-    status_code: 200,
+    status_code: 20000,  // CORRECT
     status_message: 'Ok.',
     result: [
       {
-        keyword: 'local seo services',
-        search_volume: 1600,
-        competition: 0.5,
-        competition_index: 50,
-        keyword_difficulty: 45,
-        cpc: 2.60
-      },
-      {
-        keyword: 'technical seo audit',
-        search_volume: 720,
-        competition: 0.4,
-        competition_index: 40,
-        keyword_difficulty: 38,
-        cpc: 1.90
-      },
-      {
-        keyword: 'content seo strategy',
-        search_volume: 1100,
-        competition: 0.6,
-        competition_index: 60,
-        keyword_difficulty: 52,
-        cpc: 2.30
+        items: [  // CORRECT: Nested structure
+          {
+            keyword_data: {
+              keyword: 'local seo services',
+              keyword_info: {
+                search_volume: 1600,
+                competition: 50,
+                cpc: 2.60
+              },
+              keyword_properties: {
+                keyword_difficulty: 45
+              }
+            }
+          },
+          {
+            keyword_data: {
+              keyword: 'technical seo audit',
+              keyword_info: {
+                search_volume: 720,
+                competition: 40,
+                cpc: 1.90
+              },
+              keyword_properties: {
+                keyword_difficulty: 38
+              }
+            }
+          },
+          {
+            keyword_data: {
+              keyword: 'content seo strategy',
+              keyword_info: {
+                search_volume: 1100,
+                competition: 60,
+                cpc: 2.30
+              },
+              keyword_properties: {
+                keyword_difficulty: 52
+              }
+            }
+          }
+        ]
       }
     ]
   }]
@@ -174,17 +234,22 @@ const mockIdeasResponse = {
 
 const mockAutocompleteResponse = {
   version: '0.1.20230228',
-  status_code: 200,
+  status_code: 20000,  // CORRECT
   status_message: 'Ok.',
   result_count: 3,
+  tasks_error: 0,  // ADD
   tasks: [{
     id: '12348',
-    status_code: 200,
+    status_code: 20000,  // CORRECT
     status_message: 'Ok.',
     result: [
-      { keyword: 'seo tools for beginners' },
-      { keyword: 'seo tools free' },
-      { keyword: 'seo tools comparison' }
+      {
+        items: [  // CORRECT: Nested structure (autocomplete is different)
+          { keyword: 'seo tools for beginners' },
+          { keyword: 'seo tools free' },
+          { keyword: 'seo tools comparison' }
+        ]
+      }
     ]
   }]
 }
