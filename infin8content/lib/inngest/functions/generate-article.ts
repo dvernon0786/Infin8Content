@@ -303,9 +303,13 @@ async function checkAndCompleteWorkflow(
       return
     }
 
-    // FSM GUARD: Only proceed if workflow is at step_9_articles
-    if (workflow.state !== 'step_9_articles') {
-      console.log(`[WorkflowCompletion] Workflow ${workflowId} not at step_9_articles (current: ${workflow.state}), skipping completion check`)
+    // FSM GUARD: Only proceed if workflow is in Step 9 phase (any terminal state)
+    if (
+      workflow.state !== 'step_9_articles' &&
+      workflow.state !== 'step_9_articles_running' &&
+      workflow.state !== 'step_9_articles_queued'
+    ) {
+      console.log(`[WorkflowCompletion] Workflow ${workflowId} not in Step 9 phase (current: ${workflow.state}), skipping completion check`)
       return
     }
 
@@ -313,7 +317,7 @@ async function checkAndCompleteWorkflow(
     const { data: incompleteArticles } = await supabase
       .from('articles')
       .select('id')
-      .eq('intent_workflow_id', workflowId)
+      .eq('workflow_id', workflowId)  // Fixed: use workflow_id not intent_workflow_id
       .neq('status', 'completed')
 
     // If no incomplete articles, complete workflow via FSM transition
