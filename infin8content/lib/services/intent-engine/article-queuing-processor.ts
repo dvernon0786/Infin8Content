@@ -181,17 +181,9 @@ export async function queueArticlesForWorkflow(
   let finalState: WorkflowState = workflow.state as WorkflowState
   let message: string
 
-  // FSM TRANSITION: Advance to completed state only if all keywords were queued successfully
-  if (queuedCount === keywords.length) {
-    // All keywords queued successfully - advance workflow via FSM
-    finalState = await WorkflowFSM.transition(workflowId, 'ARTICLES_COMPLETED', {
-      userId: currentUser.id
-    })
-    message = `Successfully queued ${queuedCount} articles and completed workflow`
-  } else {
-    // Some failures - don't advance workflow
-    message = `Queued ${queuedCount} of ${keywords.length} articles (${keywords.length - queuedCount} failed)`
-  }
+  // QUEUE LAYER: Only responsible for queuing articles, NOT completing workflow
+  // Terminal completion is driven by the article generation pipeline via ProgressService
+  message = `Queued ${queuedCount} of ${keywords.length} articles (${keywords.length - queuedCount} failed)`
 
   // Log audit action
   await logIntentAction({

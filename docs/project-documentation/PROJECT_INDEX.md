@@ -1,7 +1,10 @@
 # Infin8Content Project Documentation Index
 
 **Generated:** 2026-02-13  
-**Version:** v2.2 - AI Copilot Architecture Complete  
+**Version:** v2.1.0 (Zero-Legacy FSM)  
+**Last Updated:** 2026-02-17  
+**Architecture:** Deterministic Finite State Machine  
+**Status:** Production Ready  
 **Status:** Enterprise-Grade AI-Assisted Decision Platform
 
 ## Overview
@@ -23,12 +26,15 @@ The platform has evolved from an AI automation pipeline to an **AI-assisted deci
 - ✅ **Enterprise Safety:** Multi-workflow isolation, compute bounds (2-100 keywords)
 - ✅ **Audit Trail:** Complete decision history with UPSERT persistence
 
-## Documentation Structure
+## 📚 Documentation Structure
 
-### 🏗️ Architecture Documentation
-- **[Architecture Overview](architecture/ARCHITECTURE_OVERVIEW.md)** - Complete system architecture, technology stack, and design patterns
-- **[Database Schema](database/DATABASE_SCHEMA.md)** - Database design, relationships, and migration patterns
-- **[Workflow Guide](workflows/WORKFLOW_GUIDE.md)** - Intent Engine workflow system and orchestration patterns
+### Core Documentation (Updated v2.1.0)
+- **[Architecture Overview](./ARCHITECTURE_OVERVIEW.md)** - Zero-Legacy FSM system architecture
+- **[FSM Workflow Guide](./FSM_WORKFLOW_GUIDE.md)** - Complete 9-step deterministic workflow
+- **[API Reference](./API_REFERENCE.md)** - 91 endpoints across 13 categories
+- **[Database Schema](./DATABASE_SCHEMA.md)** - Multi-tenant schema with RLS
+- **[Development Guide](./DEVELOPMENT_GUIDE.md)** - Zero-legacy development patterns
+- **[Deployment Guide](./DEPLOYMENT_GUIDE.md)** - Production deployment & monitoring
 
 ### 🔌 API Documentation  
 - **[API Reference](api/API_REFERENCE.md)** - Complete API endpoint documentation with authentication and usage patterns
