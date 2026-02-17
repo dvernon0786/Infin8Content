@@ -71,13 +71,13 @@ describe('Inngest + FSM Integration', () => {
       const sendSpy = vi.spyOn(inngest, 'send').mockResolvedValue({ ids: ['test-event-id'] })
       
       // Simulate the route logic (simplified test)
-      await WorkflowFSM.transition(workflowId, 'LONGTAILS_COMPLETED')
+      await WorkflowFSM.transition(workflowId, 'LONGTAIL_START')
       await inngest.send({
         name: 'intent.step4.longtails',
         data: { workflowId }
       })
       
-      expect(WorkflowFSM.transition).toHaveBeenCalledWith(workflowId, 'LONGTAILS_COMPLETED')
+      expect(WorkflowFSM.transition).toHaveBeenCalledWith(workflowId, 'LONGTAIL_START')
       expect(sendSpy).toHaveBeenCalledWith({
         name: 'intent.step4.longtails',
         data: { workflowId }
@@ -136,7 +136,7 @@ describe('Inngest + FSM Integration', () => {
       expect(workers.step4Longtails).toBeDefined()
       
       // Simulate the route trigger
-      await WorkflowFSM.transition(workflowId, 'LONGTAILS_COMPLETED')
+      await WorkflowFSM.transition(workflowId, 'LONGTAIL_START')
       await inngest.send({
         name: 'intent.step4.longtails',
         data: { workflowId }
@@ -145,7 +145,7 @@ describe('Inngest + FSM Integration', () => {
       // Verify the expected sequence:
       // 1. FSM transition to running
       // 2. Inngest event sent
-      expect(transitionSpy).toHaveBeenCalledWith(workflowId, 'LONGTAILS_COMPLETED')
+      expect(transitionSpy).toHaveBeenCalledWith(workflowId, 'LONGTAIL_START')
       expect(sendSpy).toHaveBeenCalledWith({
         name: 'intent.step4.longtails',
         data: { workflowId }

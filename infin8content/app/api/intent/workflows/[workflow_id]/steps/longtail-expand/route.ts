@@ -74,7 +74,7 @@ export async function POST(
     }
 
     // 4️⃣ STRICT FSM GUARD
-    if (!WorkflowFSM.canTransition(currentState as any, 'LONGTAILS_COMPLETED')) {
+    if (!WorkflowFSM.canTransition(currentState as any, 'LONGTAIL_START')) {
       return NextResponse.json(
         {
           error: 'INVALID_STATE',
@@ -131,7 +131,7 @@ export async function POST(
     // Transition to running state FIRST
     await WorkflowFSM.transition(
       workflowId,
-      'LONGTAILS_COMPLETED',
+      'LONGTAIL_START',
       { userId: currentUser.id }
     )
 

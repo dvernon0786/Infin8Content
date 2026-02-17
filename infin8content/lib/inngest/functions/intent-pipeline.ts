@@ -6,6 +6,7 @@
 
 import { inngest } from '@/lib/inngest/client'
 import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
+import { WorkflowEvent } from '@/lib/fsm/workflow-events'
 import { 
   expandSeedKeywordsToLongtails
 } from '@/lib/services/intent-engine/longtail-keyword-expander'
@@ -43,6 +44,25 @@ async function getOrganizationId(workflowId: string): Promise<string> {
   return data.organization_id
 }
 
+/* ================================================================
+   SHARED HELPER
+================================================================ */
+
+async function guardAndStart(
+  workflowId: string,
+  expectedIdleState: string,
+  startEvent: WorkflowEvent
+) {
+  const currentState = await WorkflowFSM.getCurrentState(workflowId)
+
+  if (currentState !== expectedIdleState) {
+    return { skipped: true, currentState }
+  }
+
+  await WorkflowFSM.transition(workflowId, startEvent)
+  return { skipped: false }
+}
+
 // Step 4: Long-tail Keyword Expansion
 export const step4Longtails = inngest.createFunction(
   {
@@ -51,39 +71,30 @@ export const step4Longtails = inngest.createFunction(
     retries: 2
   },
   { event: 'intent.step4.longtails' },
-  async ({ event, step }) => {
+  async ({ event }) => {
     const workflowId = event.data.workflowId
-    
-    console.log(`[Step4] Starting long-tail expansion for workflow ${workflowId}`)
-    
-    // FSM Guard - ensure we're in running state
-    const currentState = await WorkflowFSM.getCurrentState(workflowId)
-    if (currentState !== 'step_4_longtails_running') {
-      console.log(`[Step4] Skipping - invalid state: ${currentState}`)
-      return { skipped: true, currentState }
-    }
-    
+
+    const guard = await guardAndStart(
+      workflowId,
+      'step_4_longtails',
+      'LONGTAIL_START'
+    )
+    if (guard.skipped) return guard
+
     try {
-      // Run existing service (no changes to service logic)
       await expandSeedKeywordsToLongtails(workflowId)
-      
-      // Transition to completed
-      await WorkflowFSM.transition(workflowId, 'LONGTAILS_COMPLETED')
-      console.log(`[Step4] Completed successfully for workflow ${workflowId}`)
-      
-      // Trigger next step
+
+      await WorkflowFSM.transition(workflowId, 'LONGTAIL_SUCCESS')
+
       await inngest.send({
         name: 'intent.step5.filtering',
         data: { workflowId }
       })
-      
-      return { success: true, workflowId }
-      
+
+      return { success: true }
+
     } catch (error) {
-      console.error(`[Step4] Failed for workflow ${workflowId}:`, error)
-      
-      // Transition to failed state
-      await WorkflowFSM.transition(workflowId, 'LONGTAILS_COMPLETED')
+      await WorkflowFSM.transition(workflowId, 'LONGTAIL_FAILED')
       throw error
     }
   }
@@ -97,41 +108,43 @@ export const step5Filtering = inngest.createFunction(
     retries: 2
   },
   { event: 'intent.step5.filtering' },
-  async ({ event, step }) => {
+  async ({ event }) => {
     const workflowId = event.data.workflowId
-    
-    console.log(`[Step5] Starting filtering for workflow ${workflowId}`)
-    
-    // FSM Guard
-    const currentState = await WorkflowFSM.getCurrentState(workflowId)
-    if (currentState !== 'step_5_filtering_running') {
-      console.log(`[Step5] Skipping - invalid state: ${currentState}`)
-      return { skipped: true, currentState }
-    }
-    
+
+    const guard = await guardAndStart(
+      workflowId,
+      'step_5_filtering',
+      'FILTERING_START'
+    )
+    if (guard.skipped) return guard
+
     try {
-      // Run filtering service
-      const orgId = await getOrganizationId(workflowId)
+      const { createServiceRoleClient } = require('@/lib/supabase/server')
+      const supabase = createServiceRoleClient()
+
+      const { data: workflow } = await supabase
+        .from('intent_workflows')
+        .select('organization_id')
+        .eq('id', workflowId)
+        .single()
+
+      const orgId = workflow?.organization_id
+      if (!orgId) throw new Error('Organization not found')
+
       const filterOptions = await getOrganizationFilterSettings(orgId)
       await filterKeywords(workflowId, orgId, filterOptions)
-      
-      // Transition to completed
-      await WorkflowFSM.transition(workflowId, 'FILTERING_COMPLETED')
-      console.log(`[Step5] Completed successfully for workflow ${workflowId}`)
-      
-      // Trigger next step
+
+      await WorkflowFSM.transition(workflowId, 'FILTERING_SUCCESS')
+
       await inngest.send({
         name: 'intent.step6.clustering',
         data: { workflowId }
       })
-      
-      return { success: true, workflowId }
-      
+
+      return { success: true }
+
     } catch (error) {
-      console.error(`[Step5] Failed for workflow ${workflowId}:`, error)
-      
-      // Transition to failed state
-      await WorkflowFSM.transition(workflowId, 'FILTERING_COMPLETED')
+      await WorkflowFSM.transition(workflowId, 'FILTERING_FAILED')
       throw error
     }
   }
@@ -145,40 +158,31 @@ export const step6Clustering = inngest.createFunction(
     retries: 2
   },
   { event: 'intent.step6.clustering' },
-  async ({ event, step }) => {
+  async ({ event }) => {
     const workflowId = event.data.workflowId
-    
-    console.log(`[Step6] Starting clustering for workflow ${workflowId}`)
-    
-    // FSM Guard
-    const currentState = await WorkflowFSM.getCurrentState(workflowId)
-    if (currentState !== 'step_6_clustering_running') {
-      console.log(`[Step6] Skipping - invalid state: ${currentState}`)
-      return { skipped: true, currentState }
-    }
-    
+
+    const guard = await guardAndStart(
+      workflowId,
+      'step_6_clustering',
+      'CLUSTERING_START'
+    )
+    if (guard.skipped) return guard
+
     try {
-      // Run clustering service
       const clusterer = new KeywordClusterer()
       await clusterer.clusterKeywords(workflowId)
-      
-      // Transition to completed
-      await WorkflowFSM.transition(workflowId, 'CLUSTERING_COMPLETED')
-      console.log(`[Step6] Completed successfully for workflow ${workflowId}`)
-      
-      // Trigger next step
+
+      await WorkflowFSM.transition(workflowId, 'CLUSTERING_SUCCESS')
+
       await inngest.send({
         name: 'intent.step7.validation',
         data: { workflowId }
       })
-      
-      return { success: true, workflowId }
-      
+
+      return { success: true }
+
     } catch (error) {
-      console.error(`[Step6] Failed for workflow ${workflowId}:`, error)
-      
-      // Transition to failed state
-      await WorkflowFSM.transition(workflowId, 'CLUSTERING_COMPLETED')
+      await WorkflowFSM.transition(workflowId, 'CLUSTERING_FAILED')
       throw error
     }
   }
@@ -192,40 +196,31 @@ export const step7Validation = inngest.createFunction(
     retries: 2
   },
   { event: 'intent.step7.validation' },
-  async ({ event, step }) => {
+  async ({ event }) => {
     const workflowId = event.data.workflowId
-    
-    console.log(`[Step7] Starting validation for workflow ${workflowId}`)
-    
-    // FSM Guard
-    const currentState = await WorkflowFSM.getCurrentState(workflowId)
-    if (currentState !== 'step_7_validation_running') {
-      console.log(`[Step7] Skipping - invalid state: ${currentState}`)
-      return { skipped: true, currentState }
-    }
-    
+
+    const guard = await guardAndStart(
+      workflowId,
+      'step_7_validation',
+      'VALIDATION_START'
+    )
+    if (guard.skipped) return guard
+
     try {
-      // Run validation service
       const validator = new ClusterValidator()
       await validator.validateWorkflowClusters(workflowId, [], [])
-      
-      // Transition to completed
-      await WorkflowFSM.transition(workflowId, 'VALIDATION_COMPLETED')
-      console.log(`[Step7] Completed successfully for workflow ${workflowId}`)
-      
-      // Trigger next step
+
+      await WorkflowFSM.transition(workflowId, 'VALIDATION_SUCCESS')
+
       await inngest.send({
         name: 'intent.step8.subtopics',
         data: { workflowId }
       })
-      
-      return { success: true, workflowId }
-      
+
+      return { success: true }
+
     } catch (error) {
-      console.error(`[Step7] Failed for workflow ${workflowId}:`, error)
-      
-      // Transition to failed state
-      await WorkflowFSM.transition(workflowId, 'VALIDATION_COMPLETED')
+      await WorkflowFSM.transition(workflowId, 'VALIDATION_FAILED')
       throw error
     }
   }
@@ -239,60 +234,46 @@ export const step8Subtopics = inngest.createFunction(
     retries: 2
   },
   { event: 'intent.step8.subtopics' },
-  async ({ event, step }) => {
+  async ({ event }) => {
     const workflowId = event.data.workflowId
-    
-    console.log(`[Step8] Starting subtopics for workflow ${workflowId}`)
-    
-    // FSM Guard
-    const currentState = await WorkflowFSM.getCurrentState(workflowId)
-    if (currentState !== 'step_8_subtopics_running') {
-      console.log(`[Step8] Skipping - invalid state: ${currentState}`)
-      return { skipped: true, currentState }
-    }
-    
+
+    const guard = await guardAndStart(
+      workflowId,
+      'step_8_subtopics',
+      'SUBTOPICS_START'
+    )
+    if (guard.skipped) return guard
+
     try {
-      // Run subtopic service
-      const generator = new KeywordSubtopicGenerator()
-      
-      // Get all keywords ready for subtopic generation
       const { createServiceRoleClient } = require('@/lib/supabase/server')
       const supabase = createServiceRoleClient()
-      
+
       const { data: keywords } = await supabase
         .from('keywords')
         .select('id')
         .eq('workflow_id', workflowId)
-        .eq('subtopics_status', 'not_started')
         .eq('longtail_status', 'completed')
-      
-      if (!keywords || keywords.length === 0) {
-        console.log(`[Step8] No keywords ready for subtopics in workflow ${workflowId}`)
-      } else {
-        // Generate subtopics for each keyword
+        .eq('subtopics_status', 'not_started')
+
+      const generator = new KeywordSubtopicGenerator()
+
+      if (keywords?.length) {
         for (const keyword of keywords) {
           await generator.generate(keyword.id)
-          console.log(`[Step8] Generated subtopics for keyword ${keyword.id}`)
         }
       }
-      
-      // Transition to completed
-      await WorkflowFSM.transition(workflowId, 'SUBTOPICS_APPROVED')
-      console.log(`[Step8] Completed successfully for workflow ${workflowId}`)
-      
-      // Trigger next step
+
+      await WorkflowFSM.transition(workflowId, 'SUBTOPICS_SUCCESS')
+
       await inngest.send({
         name: 'intent.step9.articles',
         data: { workflowId }
       })
-      
-      return { success: true, workflowId }
-      
+
+      return { success: true }
+
     } catch (error) {
-      console.error(`[Step8] Failed for workflow ${workflowId}:`, error)
-      
-      // Transition to failed state
-      await WorkflowFSM.transition(workflowId, 'SUBTOPICS_APPROVED')
+      await WorkflowFSM.transition(workflowId, 'SUBTOPICS_FAILED')
       throw error
     }
   }
@@ -306,35 +287,26 @@ export const step9Articles = inngest.createFunction(
     retries: 2
   },
   { event: 'intent.step9.articles' },
-  async ({ event, step }) => {
+  async ({ event }) => {
     const workflowId = event.data.workflowId
-    
-    console.log(`[Step9] Starting articles for workflow ${workflowId}`)
-    
-    // FSM Guard
-    const currentState = await WorkflowFSM.getCurrentState(workflowId)
-    if (currentState !== 'step_9_articles_running') {
-      console.log(`[Step9] Skipping - invalid state: ${currentState}`)
-      return { skipped: true, currentState }
-    }
-    
+
+    const guard = await guardAndStart(
+      workflowId,
+      'step_9_articles',
+      'ARTICLES_START'
+    )
+    if (guard.skipped) return guard
+
     try {
-      // Run article service
       await queueArticlesForWorkflow(workflowId)
-      
-      // Transition to completed - final step!
-      await WorkflowFSM.transition(workflowId, 'ARTICLES_COMPLETED')
-      console.log(`[Step9] Completed successfully for workflow ${workflowId} - WORKFLOW COMPLETE`)
-      
-      // No next step trigger - workflow is complete
-      
-      return { success: true, workflowId, completed: true }
-      
+
+      await WorkflowFSM.transition(workflowId, 'ARTICLES_SUCCESS')
+      await WorkflowFSM.transition(workflowId, 'WORKFLOW_COMPLETED')
+
+      return { success: true, completed: true }
+
     } catch (error) {
-      console.error(`[Step9] Failed for workflow ${workflowId}:`, error)
-      
-      // Transition to failed state
-      await WorkflowFSM.transition(workflowId, 'ARTICLES_COMPLETED')
+      await WorkflowFSM.transition(workflowId, 'ARTICLES_FAILED')
       throw error
     }
   }

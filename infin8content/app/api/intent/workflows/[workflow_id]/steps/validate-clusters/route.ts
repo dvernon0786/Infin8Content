@@ -78,7 +78,7 @@ export async function POST(
     }
 
     // 4️⃣ STRICT FSM GUARD
-    if (!WorkflowFSM.canTransition(currentState as any, 'VALIDATION_COMPLETED')) {
+    if (!WorkflowFSM.canTransition(currentState as any, 'VALIDATION_START')) {
       return NextResponse.json(
         {
           error: 'INVALID_STATE',
@@ -193,7 +193,7 @@ export async function POST(
     // 6️⃣ FSM TRANSITION (ONLY STATE CHANGE POINT)
     const nextState = await WorkflowFSM.transition(
       workflowId,
-      'VALIDATION_COMPLETED',
+      'VALIDATION_START',
       { userId: currentUser.id }
     )
 
