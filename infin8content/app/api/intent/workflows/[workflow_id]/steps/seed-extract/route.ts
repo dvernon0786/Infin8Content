@@ -86,7 +86,7 @@ export async function GET(
         user_selected,
         decision_confidence,
         selection_source,
-        selection_timestamp
+        selection_updated_at
       `, { count: 'exact' })
       .eq('organization_id', organizationId)
       .eq('workflow_id', workflowId)
