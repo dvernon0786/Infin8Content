@@ -337,10 +337,12 @@ async function persistLongtails(
       article_status: 'not_started'
     }))
 
-    const { error } = await supabase.from('keywords').insert(rows)
+    const { error } = await supabase.from('keywords').upsert(rows, {
+      onConflict: 'workflow_id,keyword'
+    })
 
     if (error && error.code !== '23505') {
-      throw new Error(`Bulk insert failed: ${error.message}`)
+      throw new Error(`Bulk upsert failed: ${error.message}`)
     }
   }
 

@@ -3,6 +3,14 @@ import { generateArticle } from '@/lib/inngest/functions/generate-article'
 import { cleanupStuckArticles } from '@/lib/inngest/functions/cleanup-stuck-articles'
 import { uxMetricsRollup } from '@/lib/inngest/functions/ux-metrics-rollup'
 import { inngest } from '@/lib/inngest/client'
+import { 
+  step4Longtails,
+  step5Filtering,
+  step6Clustering,
+  step7Validation,
+  step8Subtopics,
+  step9Articles
+} from '@/lib/inngest/functions/intent-pipeline'
 import { NextRequest, NextResponse } from 'next/server'
 
 // Validate environment variables at runtime (not build time)
@@ -29,7 +37,17 @@ console.log('[Inngest API] Registering functions:', {
   isDevelopment,
   hasEventKey: !!eventKey,
   hasSigningKey: !!signingKey,
-  functionIds: ['article/generate', 'articles/cleanup-stuck', 'ux-metrics/weekly-rollup'],
+  functionIds: [
+    'article/generate', 
+    'articles/cleanup-stuck', 
+    'ux-metrics/weekly-rollup',
+    'intent-step4-longtails',
+    'intent-step5-filtering',
+    'intent-step6-clustering',
+    'intent-step7-validation',
+    'intent-step8-subtopics',
+    'intent-step9-articles'
+  ],
 })
 
 // Create handlers - allow local dev without env vars
@@ -37,7 +55,17 @@ const handlers = useInngestServe
   ? serve({
       client: inngest,
       signingKey: signingKey || undefined, // Optional for local dev
-      functions: [generateArticle, cleanupStuckArticles, uxMetricsRollup],
+      functions: [
+        generateArticle, 
+        cleanupStuckArticles, 
+        uxMetricsRollup,
+        step4Longtails,
+        step5Filtering,
+        step6Clustering,
+        step7Validation,
+        step8Subtopics,
+        step9Articles
+      ],
       // Disable signature validation temporarily for debugging
       // TODO: Remove this in production
       ...(isDevelopment && {
