@@ -60,6 +60,7 @@ export interface LongtailExpansionResult {
 }
 
 export interface ExpansionSummary {
+  workflow_id: string
   seeds_processed: number
   total_longtails_created: number
   results: LongtailExpansionResult[]
@@ -453,28 +454,6 @@ async function getOrganizationSettings(organizationId: string): Promise<{ locati
   }
 }
 
-/**
- * Check if seed keywords are approved for a workflow
- */
-async function checkSeedApproval(workflowId: string): Promise<void> {
-  const supabase = createServiceRoleClient()
-  
-  const { data: approval, error } = await supabase
-    .from('intent_approvals')
-    .select('decision')
-    .eq('workflow_id', workflowId)
-    .eq('approval_type', 'seed_keywords')
-    .single()
-  
-  if (error || !approval) {
-    throw new Error('seed_approval_required')
-  }
-  
-  const typedApproval = approval as unknown as { decision: string }
-  if (typedApproval.decision !== 'approved') {
-    throw new Error('seed_approval_required')
-  }
-}
 
 /**
  * Main function to expand seed keywords into long-tail keywords
@@ -484,15 +463,8 @@ export async function expandSeedKeywordsToLongtails(workflowId: string, userId: 
   
   console.log(`[LongtailExpander] Starting long-tail expansion for workflow ${workflowId}`)
   
-  // APPROVAL GUARD: Check seed keyword approval before any external API calls
-  try {
-    await checkSeedApproval(workflowId)
-  } catch (error) {
-    if (error instanceof Error && error.message === 'seed_approval_required') {
-      throw new Error('Seed keywords must be approved before long-tail expansion')
-    }
-    throw error
-  }
+  // NOTE: Approval validation is now handled at route layer
+  // Service assumes validation has passed and executes business logic only
   
   // Get workflow details
   const { data: workflow, error: workflowError } = await supabase
@@ -575,9 +547,9 @@ export async function expandSeedKeywordsToLongtails(workflowId: string, userId: 
   console.log(`[LongtailExpander] Completed expansion. Created ${totalLongtailsCreated} long-tails from ${seedKeywords.length} seeds`)
   
   return {
-    seeds_processed: seedKeywords.length,
+    workflow_id: workflowId,
     total_longtails_created: totalLongtailsCreated,
+    seeds_processed: seedKeywords.length,
     results
   }
 }
-
