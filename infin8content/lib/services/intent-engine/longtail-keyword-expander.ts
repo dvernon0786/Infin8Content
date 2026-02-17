@@ -297,39 +297,42 @@ async function persistLongtails(
   seed: SeedKeyword,
   longtails: LongtailKeywordData[]
 ) {
-
-  if (!longtails.length) return
-
   const supabase = createServiceRoleClient()
 
-  const rows = longtails.map(lt => ({
-    workflow_id: workflowId,
-    organization_id: seed.organization_id,
-    competitor_url_id: seed.competitor_url_id,
-    seed_keyword: seed.keyword,
-    keyword: lt.keyword,
-    search_volume: lt.search_volume,
-    competition_level: lt.competition_level,
-    competition_index: lt.competition_index,
-    keyword_difficulty: lt.keyword_difficulty,
-    cpc: lt.cpc,
-    parent_seed_keyword_id: seed.id,
-    longtail_status: 'not_started',
-    subtopics_status: 'not_started',
-    article_status: 'not_started'
-  }))
+  if (longtails.length) {
+    const rows = longtails.map(lt => ({
+      workflow_id: workflowId,
+      organization_id: seed.organization_id,
+      competitor_url_id: seed.competitor_url_id,
+      seed_keyword: seed.keyword,
+      keyword: lt.keyword,
+      search_volume: lt.search_volume,
+      competition_level: lt.competition_level,
+      competition_index: lt.competition_index,
+      keyword_difficulty: lt.keyword_difficulty,
+      cpc: lt.cpc,
+      parent_seed_keyword_id: seed.id,
+      longtail_status: 'not_started',
+      subtopics_status: 'not_started',
+      article_status: 'not_started'
+    }))
 
-  const { error } = await supabase.from('keywords').insert(rows)
+    const { error } = await supabase.from('keywords').insert(rows)
 
-  if (error && error.code !== '23505') {
-    throw new Error(`Bulk insert failed: ${error.message}`)
+    if (error && error.code !== '23505') {
+      throw new Error(`Bulk insert failed: ${error.message}`)
+    }
   }
 
-  // ✅ IMPORTANT — use 'completed', not 'complete'
-  await supabase
+  // ALWAYS mark seed completed - ensures deterministic workflow integrity
+  const { error: updateError } = await supabase
     .from('keywords')
     .update({ longtail_status: 'completed' })
     .eq('id', seed.id)
+
+  if (updateError) {
+    throw new Error(`Seed status update failed: ${updateError.message}`)
+  }
 }
 
 /* -------------------------------------------------------------------------- */
