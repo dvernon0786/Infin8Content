@@ -128,7 +128,7 @@ export async function POST(
 
     // 6️⃣ EXECUTE BUSINESS LOGIC (only after approval validation passes)
     const startTime = Date.now()
-    const expansionResult = await expandSeedKeywordsToLongtails(workflowId, userId)
+    const expansionResult = await expandSeedKeywordsToLongtails(workflowId)
     const duration = Date.now() - startTime
 
     console.log(`[LongtailExpand] Completed expansion in ${duration}ms`)
