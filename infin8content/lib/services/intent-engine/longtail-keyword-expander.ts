@@ -477,18 +477,19 @@ export async function expandSeedKeywordsToLongtails(workflowId: string, userId: 
   }
   
   const organizationId = (workflow as any).organization_id
-  
+
   // Get organization settings
   const { locationCode, languageCode } = await getOrganizationSettings(organizationId)
-  
-  // Get seed keywords that need long-tail expansion
+
+  // Get seed keywords for this workflow only
   const { data: seedKeywords, error: seedsError } = await supabase
     .from('keywords')
     .select('*')
+    .eq('workflow_id', workflowId)
     .eq('organization_id', organizationId)
     .is('parent_seed_keyword_id', null) // Only seed keywords
     .eq('longtail_status', 'not_started')
-  
+
   if (seedsError) {
     throw new Error(`Failed to fetch seed keywords: ${seedsError.message}`)
   }
