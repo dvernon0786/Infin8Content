@@ -656,6 +656,14 @@ Expands seed keywords into long-tail keywords using four DataForSEO endpoints (S
 }
 ```
 
+**DataForSEO Integration:**
+- **Endpoints Used**: Related Keywords, Keyword Suggestions, Keyword Ideas, Google Autocomplete
+- **Response Validation**: Strict DataForSEO v3 status code validation (20000)
+- **Extraction**: Correct nested response parsing (`tasks[0].result[0].items`)
+- **Field Mapping**: Proper `keyword_data.keyword_info.search_volume` mapping
+- **Retry Policy**: Exponential backoff (2s, 4s, 8s) with 3 attempts
+- **Performance**: ~4-6 seconds execution time
+
 **Workflow State Requirements:**
 - Workflow must be in `step_3_seeds` status
 - Seed keywords must exist with `longtail_status = 'not_started'`

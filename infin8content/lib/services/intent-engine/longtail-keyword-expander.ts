@@ -12,10 +12,6 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { 
   RetryPolicy, 
-  isRetryableError, 
-  calculateBackoffDelay, 
-  sleep, 
-  classifyErrorType,
   retryWithPolicy 
 } from './retry-utils'
 import { emitAnalyticsEvent } from '../analytics/event-emitter'
@@ -77,6 +73,7 @@ interface DataForSEOResponse {
   time?: string
   cost?: number
   result_count?: number
+  tasks_error?: number
   tasks?: Array<{
     id?: string
     status_code: number
@@ -118,7 +115,39 @@ export async function makeDataForSEORequest(
     throw new Error(`DataForSEO API error: HTTP ${response.status} ${response.statusText}`)
   }
 
-  return await response.json()
+  const jsonResponse = await response.json()
+  console.log('[DataForSEO DEBUG] HTTP Response:', {
+    url,
+    status: response.status,
+    statusText: response.statusText,
+    response: jsonResponse
+  })
+
+  return jsonResponse
+}
+
+/**
+ * Extract items from DataForSEO response with strict validation
+ * Centralized to prevent duplication across 4 endpoints
+ */
+function extractTaskItems(response: DataForSEOResponse, endpointName: string): any[] {
+  // Validate response structure and status codes
+  if (response.status_code !== 20000 || response.tasks_error !== 0) {
+    throw new Error(`${endpointName} API failed: ${response.status_message} (status_code: ${response.status_code}, tasks_error: ${response.tasks_error})`)
+  }
+
+  const task = response.tasks?.[0]
+  if (!task || task.status_code !== 20000) {
+    throw new Error(`${endpointName} task failed: ${task?.status_message || 'No task data'} (task_status_code: ${task?.status_code})`)
+  }
+
+  const block = task.result?.[0]
+  if (!block?.items) {
+    console.log(`[DataForSEO DEBUG] No items found in ${endpointName.toLowerCase()} response`)
+    return []
+  }
+
+  return block.items
 }
 
 /**
@@ -144,21 +173,26 @@ export async function fetchRelatedKeywords(
     `fetchRelatedKeywords(${seedKeyword})`
   )
   
-  if (response.status_code !== 200 || !response.tasks?.[0]?.result) {
-    throw new Error(`Related keywords API failed: ${response.status_message}`)
-  }
-
-  const results = response.tasks[0].result.slice(0, 3)
+  // Debug: Log raw response
+  console.log('[DataForSEO DEBUG] Raw related response:', JSON.stringify(response, null, 2))
   
-  return results.map((item: any) => ({
-    keyword: item.keyword,
-    search_volume: item.search_volume || 0,
-    competition_level: mapCompetitionLevel(item.competition),
-    competition_index: item.competition_index || 0,
-    keyword_difficulty: item.keyword_difficulty || 0,
-    cpc: item.cpc,
-    source: 'related' as const
-  }))
+  // Extract items using centralized validation
+  const results = extractTaskItems(response, 'Related Keywords').slice(0, 3)
+  
+  return results.map((item: any) => {
+    const data = item.keyword_data
+    const info = data?.keyword_info ?? {}
+
+    return {
+      keyword: data?.keyword,
+      search_volume: info.search_volume ?? 0,
+      competition_level: mapCompetitionLevel(info.competition ?? 0),
+      competition_index: info.competition ?? 0,
+      keyword_difficulty: data?.keyword_properties?.keyword_difficulty ?? 0,
+      cpc: info.cpc,
+      source: 'related' as const
+    }
+  })
 }
 
 /**
@@ -178,23 +212,29 @@ export async function fetchKeywordSuggestions(
     limit: 3
   }]
 
-  const response = await makeDataForSEORequest(endpoint, data)
+  const response = await retryWithPolicy(
+    () => makeDataForSEORequest(endpoint, data),
+    LONGTAIL_RETRY_POLICY,
+    `fetchKeywordSuggestions(${seedKeyword})`
+  )
   
-  if (response.status_code !== 200 || !response.tasks?.[0]?.result) {
-    throw new Error(`Keyword suggestions API failed: ${response.status_message}`)
-  }
+  // Extract items using centralized validation
+  const results = extractTaskItems(response, 'Keyword Suggestions').slice(0, 3)
+  
+  return results.map((item: any) => {
+    const data = item.keyword_data
+    const info = data?.keyword_info ?? {}
 
-  const results = response.tasks[0].result.slice(0, 3)
-  
-  return results.map((item: any) => ({
-    keyword: item.keyword,
-    search_volume: item.search_volume || 0,
-    competition_level: mapCompetitionLevel(item.competition),
-    competition_index: item.competition_index || 0,
-    keyword_difficulty: item.keyword_difficulty || 0,
-    cpc: item.cpc,
-    source: 'suggestions' as const
-  }))
+    return {
+      keyword: data?.keyword,
+      search_volume: info.search_volume ?? 0,
+      competition_level: mapCompetitionLevel(info.competition ?? 0),
+      competition_index: info.competition ?? 0,
+      keyword_difficulty: data?.keyword_properties?.keyword_difficulty ?? 0,
+      cpc: info.cpc,
+      source: 'suggestions' as const
+    }
+  })
 }
 
 /**
@@ -214,23 +254,29 @@ export async function fetchKeywordIdeas(
     limit: 3
   }]
 
-  const response = await makeDataForSEORequest(endpoint, data)
+  const response = await retryWithPolicy(
+    () => makeDataForSEORequest(endpoint, data),
+    LONGTAIL_RETRY_POLICY,
+    `fetchKeywordIdeas(${seedKeyword})`
+  )
   
-  if (response.status_code !== 200 || !response.tasks?.[0]?.result) {
-    throw new Error(`Keyword ideas API failed: ${response.status_message}`)
-  }
+  // Extract items using centralized validation
+  const results = extractTaskItems(response, 'Keyword Ideas').slice(0, 3)
+  
+  return results.map((item: any) => {
+    const data = item.keyword_data
+    const info = data?.keyword_info ?? {}
 
-  const results = response.tasks[0].result.slice(0, 3)
-  
-  return results.map((item: any) => ({
-    keyword: item.keyword,
-    search_volume: item.search_volume || 0,
-    competition_level: mapCompetitionLevel(item.competition),
-    competition_index: item.competition_index || 0,
-    keyword_difficulty: item.keyword_difficulty || 0,
-    cpc: item.cpc,
-    source: 'ideas' as const
-  }))
+    return {
+      keyword: data?.keyword,
+      search_volume: info.search_volume ?? 0,
+      competition_level: mapCompetitionLevel(info.competition ?? 0),
+      competition_index: info.competition ?? 0,
+      keyword_difficulty: data?.keyword_properties?.keyword_difficulty ?? 0,
+      cpc: info.cpc,
+      source: 'ideas' as const
+    }
+  })
 }
 
 /**
@@ -250,23 +296,36 @@ export async function fetchGoogleAutocomplete(
     limit: 3
   }]
 
-  const response = await makeDataForSEORequest(endpoint, data)
+  const response = await retryWithPolicy(
+    () => makeDataForSEORequest(endpoint, data),
+    LONGTAIL_RETRY_POLICY,
+    `fetchGoogleAutocomplete(${seedKeyword})`
+  )
   
-  if (response.status_code !== 200 || !response.tasks?.[0]?.result) {
-    throw new Error(`Google autocomplete API failed: ${response.status_message}`)
-  }
-
-  const results = response.tasks[0].result.slice(0, 3)
+  // Extract items using centralized validation
+  const results = extractTaskItems(response, 'Google Autocomplete').slice(0, 3)
   
-  return results.map((item: any) => ({
-    keyword: item.keyword,
-    search_volume: 0, // Autocomplete doesn't provide search volume
-    competition_level: 'low' as const, // Default to low
-    competition_index: 0,
-    keyword_difficulty: 0,
-    cpc: undefined,
-    source: 'autocomplete' as const
-  }))
+  return results
+    .map((item: any): LongtailKeywordData | null => {
+      // Autocomplete response structure is different - no keyword_data nesting
+      const keyword = item.keyword || item.q || ''
+      
+      // Defensive: Filter out empty/undefined keywords
+      if (!keyword.trim()) {
+        return null
+      }
+      
+      return {
+        keyword: keyword.trim(),
+        search_volume: 0, // Autocomplete doesn't provide search volume
+        competition_level: 'low' as const, // Default to low
+        competition_index: 0,
+        keyword_difficulty: 0,
+        cpc: undefined,
+        source: 'autocomplete' as const
+      }
+    })
+    .filter((item): item is LongtailKeywordData => item !== null)
 }
 
 /**
@@ -323,7 +382,7 @@ async function expandSeedKeyword(
 
   console.log(`[LongtailExpander] Expanding seed keyword: "${seedKeyword.keyword}"`)
 
-  // Fetch from all four sources with retry logic
+  // Fetch from all four sources - each function handles its own retry logic
   const sources = [
     { name: 'related', fetcher: fetchRelatedKeywords },
     { name: 'suggestions', fetcher: fetchKeywordSuggestions },
@@ -332,26 +391,14 @@ async function expandSeedKeyword(
   ]
 
   for (const source of sources) {
-    for (let attempt = 0; attempt < LONGTAIL_RETRY_POLICY.maxAttempts; attempt++) {
-      try {
-        console.log(`[LongtailExpander] Fetching ${source.name} keywords (attempt ${attempt + 1})`)
-        const keywords = await source.fetcher(seedKeyword.keyword, locationCode, languageCode)
-        allLongtails.push(...keywords)
-        console.log(`[LongtailExpander] Got ${keywords.length} ${source.name} keywords`)
-        break
-      } catch (error) {
-        const errorType = classifyErrorType(error)
-        console.error(`[LongtailExpander] ${source.name} error (attempt ${attempt + 1}):`, error)
-        
-        if (!isRetryableError(error) || attempt === LONGTAIL_RETRY_POLICY.maxAttempts - 1) {
-          errors.push(`${source.name}: ${error instanceof Error ? error.message : 'Unknown error'}`)
-          break
-        }
-        
-        const delay = calculateBackoffDelay(attempt, LONGTAIL_RETRY_POLICY)
-        console.log(`[LongtailExpander] Retrying ${source.name} after ${delay}ms`)
-        await sleep(delay)
-      }
+    try {
+      console.log(`[LongtailExpander] Fetching ${source.name} keywords`)
+      const keywords = await source.fetcher(seedKeyword.keyword, locationCode, languageCode)
+      allLongtails.push(...keywords)
+      console.log(`[LongtailExpander] Got ${keywords.length} ${source.name} keywords`)
+    } catch (error) {
+      console.error(`[LongtailExpander] ${source.name} failed:`, error)
+      errors.push(`${source.name}: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
