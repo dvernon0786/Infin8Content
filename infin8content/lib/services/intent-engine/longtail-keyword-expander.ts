@@ -541,9 +541,6 @@ export async function expandSeedKeywordsToLongtails(workflowId: string, userId: 
     }
   }
   
-  // Update workflow state using FSM transition ONLY
-  await WorkflowFSM.transition(workflowId, 'LONGTAILS_COMPLETED', { userId })
-  
   console.log(`[LongtailExpander] Completed expansion. Created ${totalLongtailsCreated} long-tails from ${seedKeywords.length} seeds`)
   
   return {
