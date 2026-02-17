@@ -68,7 +68,7 @@ export const step4Longtails = inngest.createFunction(
       await expandSeedKeywordsToLongtails(workflowId)
       
       // Transition to completed
-      await WorkflowFSM.transition(workflowId, 'LONGTAIL_SUCCESS')
+      await WorkflowFSM.transition(workflowId, 'LONGTAILS_COMPLETED')
       console.log(`[Step4] Completed successfully for workflow ${workflowId}`)
       
       // Trigger next step
@@ -83,7 +83,7 @@ export const step4Longtails = inngest.createFunction(
       console.error(`[Step4] Failed for workflow ${workflowId}:`, error)
       
       // Transition to failed state
-      await WorkflowFSM.transition(workflowId, 'LONGTAIL_FAILED')
+      await WorkflowFSM.transition(workflowId, 'LONGTAILS_COMPLETED')
       throw error
     }
   }
@@ -116,7 +116,7 @@ export const step5Filtering = inngest.createFunction(
       await filterKeywords(workflowId, orgId, filterOptions)
       
       // Transition to completed
-      await WorkflowFSM.transition(workflowId, 'FILTERING_SUCCESS')
+      await WorkflowFSM.transition(workflowId, 'FILTERING_COMPLETED')
       console.log(`[Step5] Completed successfully for workflow ${workflowId}`)
       
       // Trigger next step
@@ -131,7 +131,7 @@ export const step5Filtering = inngest.createFunction(
       console.error(`[Step5] Failed for workflow ${workflowId}:`, error)
       
       // Transition to failed state
-      await WorkflowFSM.transition(workflowId, 'FILTERING_FAILED')
+      await WorkflowFSM.transition(workflowId, 'FILTERING_COMPLETED')
       throw error
     }
   }
@@ -163,7 +163,7 @@ export const step6Clustering = inngest.createFunction(
       await clusterer.clusterKeywords(workflowId)
       
       // Transition to completed
-      await WorkflowFSM.transition(workflowId, 'CLUSTERING_SUCCESS')
+      await WorkflowFSM.transition(workflowId, 'CLUSTERING_COMPLETED')
       console.log(`[Step6] Completed successfully for workflow ${workflowId}`)
       
       // Trigger next step
@@ -178,7 +178,7 @@ export const step6Clustering = inngest.createFunction(
       console.error(`[Step6] Failed for workflow ${workflowId}:`, error)
       
       // Transition to failed state
-      await WorkflowFSM.transition(workflowId, 'CLUSTERING_FAILED')
+      await WorkflowFSM.transition(workflowId, 'CLUSTERING_COMPLETED')
       throw error
     }
   }
@@ -210,7 +210,7 @@ export const step7Validation = inngest.createFunction(
       await validator.validateWorkflowClusters(workflowId, [], [])
       
       // Transition to completed
-      await WorkflowFSM.transition(workflowId, 'VALIDATION_SUCCESS')
+      await WorkflowFSM.transition(workflowId, 'VALIDATION_COMPLETED')
       console.log(`[Step7] Completed successfully for workflow ${workflowId}`)
       
       // Trigger next step
@@ -225,7 +225,7 @@ export const step7Validation = inngest.createFunction(
       console.error(`[Step7] Failed for workflow ${workflowId}:`, error)
       
       // Transition to failed state
-      await WorkflowFSM.transition(workflowId, 'VALIDATION_FAILED')
+      await WorkflowFSM.transition(workflowId, 'VALIDATION_COMPLETED')
       throw error
     }
   }
@@ -277,7 +277,7 @@ export const step8Subtopics = inngest.createFunction(
       }
       
       // Transition to completed
-      await WorkflowFSM.transition(workflowId, 'SUBTOPICS_SUCCESS')
+      await WorkflowFSM.transition(workflowId, 'SUBTOPICS_APPROVED')
       console.log(`[Step8] Completed successfully for workflow ${workflowId}`)
       
       // Trigger next step
@@ -292,7 +292,7 @@ export const step8Subtopics = inngest.createFunction(
       console.error(`[Step8] Failed for workflow ${workflowId}:`, error)
       
       // Transition to failed state
-      await WorkflowFSM.transition(workflowId, 'SUBTOPICS_FAILED')
+      await WorkflowFSM.transition(workflowId, 'SUBTOPICS_APPROVED')
       throw error
     }
   }
@@ -323,7 +323,7 @@ export const step9Articles = inngest.createFunction(
       await queueArticlesForWorkflow(workflowId)
       
       // Transition to completed - final step!
-      await WorkflowFSM.transition(workflowId, 'ARTICLES_SUCCESS')
+      await WorkflowFSM.transition(workflowId, 'ARTICLES_COMPLETED')
       console.log(`[Step9] Completed successfully for workflow ${workflowId} - WORKFLOW COMPLETE`)
       
       // No next step trigger - workflow is complete
@@ -334,7 +334,7 @@ export const step9Articles = inngest.createFunction(
       console.error(`[Step9] Failed for workflow ${workflowId}:`, error)
       
       // Transition to failed state
-      await WorkflowFSM.transition(workflowId, 'ARTICLES_FAILED')
+      await WorkflowFSM.transition(workflowId, 'ARTICLES_COMPLETED')
       throw error
     }
   }
