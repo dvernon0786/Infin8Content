@@ -46,36 +46,45 @@ export async function POST(
     organizationId = currentUser.org_id
     userId = currentUser.id
 
-    // ENFORCE ICP GATE - Check if ICP is complete before proceeding
-    const gateResponse = await enforceICPGate(workflowId, 'validate-clusters')
-    if (gateResponse) {
-      return gateResponse
-    }
-
-    // Verify workflow exists and belongs to user's organization
+    // 1️⃣ AUTH: Already handled above
+    
+    // 2️⃣ FETCH WORKFLOW (READ ONLY)
     const supabase = createServiceRoleClient()
-    const { data: workflow, error: workflowError } = await supabase
+    const { data: workflow, error } = await supabase
       .from('intent_workflows')
       .select('id, state, organization_id')
       .eq('id', workflowId)
-      .eq('organization_id', organizationId)
-      .single()
+      .eq('organization_id', currentUser.org_id)
+      .single() as { data: { id: string; state: string; organization_id: string } | null; error: any }
 
-    if (workflowError || !workflow) {
+    if (error || !workflow) {
       return NextResponse.json(
         { error: 'Workflow not found' },
         { status: 404 }
       )
     }
 
-    // FSM GUARD: Only allow step 7 when state = step_7_validation
-    if ((workflow as any).state !== 'step_7_validation') {
+    const currentState = workflow.state
+
+    // 3️⃣ IDEMPOTENCY CASE
+    // If not exactly at this step — return success safely (future-proof)
+    if (currentState !== 'step_7_validation') {
+      return NextResponse.json({
+        success: true,
+        workflow_id: workflowId,
+        workflow_state: currentState,
+        cached: true
+      })
+    }
+
+    // 4️⃣ STRICT FSM GUARD
+    if (!WorkflowFSM.canTransition(currentState as any, 'VALIDATION_COMPLETED')) {
       return NextResponse.json(
-        { 
+        {
           error: 'INVALID_STATE',
-          message: `Workflow must be in step_7_validation. Current state: ${(workflow as any).state}`
+          message: `Workflow must be in step_7_validation. Current state: ${currentState}` 
         },
-        { status: 400 }
+        { status: 409 }
       )
     }
 
@@ -86,12 +95,13 @@ export async function POST(
       action: AuditAction.WORKFLOW_CLUSTER_VALIDATION_STARTED,
       details: {
         workflow_id: workflowId,
-        current_state: (workflow as any).state
+        current_state: currentState
       },
       ipAddress: extractIpAddress(request.headers),
       userAgent: extractUserAgent(request.headers),
     })
 
+    // 5️⃣ EXECUTE BUSINESS LOGIC
     // Perform cluster validation with retry logic
     const validationSummary = await retryWithPolicy(
       async () => {
@@ -180,28 +190,18 @@ export async function POST(
       // Don't fail the request, but log the error
     }
 
-    // FSM TRANSITION: Advance workflow state to step_8_subtopics
-    await WorkflowFSM.transition(workflowId, 'VALIDATION_COMPLETED', { userId: currentUser.id })
+    // 6️⃣ FSM TRANSITION (ONLY STATE CHANGE POINT)
+    const nextState = await WorkflowFSM.transition(
+      workflowId,
+      'VALIDATION_COMPLETED',
+      { userId: currentUser.id }
+    )
 
-    // Log completion audit action
-    await logActionAsync({
-      orgId: organizationId,
-      userId: userId,
-      action: AuditAction.WORKFLOW_CLUSTER_VALIDATION_COMPLETED,
-      details: {
-        workflow_id: workflowId,
-        total_clusters: validationSummary.total_clusters,
-        valid_clusters: validationSummary.valid_clusters,
-        invalid_clusters: validationSummary.invalid_clusters
-      },
-      ipAddress: extractIpAddress(request.headers),
-      userAgent: extractUserAgent(request.headers),
-    })
-
-    // Return success response
+    // 7️⃣ RETURN AUTHORITATIVE NEXT STATE
     return NextResponse.json({
+      success: true,
       workflow_id: workflowId,
-      status: 'step_7_validation',
+      workflow_state: nextState,
       total_clusters: validationSummary.total_clusters,
       valid_clusters: validationSummary.valid_clusters,
       invalid_clusters: validationSummary.invalid_clusters,

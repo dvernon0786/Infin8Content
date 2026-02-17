@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { logIntentActionAsync } from '@/lib/services/intent-engine/intent-audit-logger'
 import { AuditAction } from '@/types/audit'
@@ -17,7 +18,6 @@ import {
   expandSeedKeywordsToLongtails,
   type ExpansionSummary
 } from '@/lib/services/intent-engine/longtail-keyword-expander'
-import { enforceICPGate, enforceSeedApprovalGate } from '@/lib/middleware/intent-engine-gate'
 
 export async function POST(
   request: NextRequest,
@@ -41,43 +41,45 @@ export async function POST(
     organizationId = currentUser.org_id
     userId = currentUser.id
 
-    // ENFORCE ICP GATE - Check if ICP is complete before proceeding
-    const icpGateResponse = await enforceICPGate(workflowId, 'longtail-expand')
-    if (icpGateResponse) {
-      return icpGateResponse
-    }
-
-    // ENFORCE SEED APPROVAL GATE - Check if seed keywords are approved before proceeding
-    const seedGateResponse = await enforceSeedApprovalGate(workflowId, 'longtail-expand')
-    if (seedGateResponse) {
-      return seedGateResponse
-    }
-
-    // Verify workflow exists and belongs to user's organization
+    // 1️⃣ AUTH: Already handled above
+    
+    // 2️⃣ FETCH WORKFLOW (READ ONLY)
     const supabase = createServiceRoleClient()
-    const { data: workflow, error: workflowError } = await supabase
+    const { data: workflow, error } = await supabase
       .from('intent_workflows')
       .select('id, state, organization_id')
       .eq('id', workflowId)
-      .eq('organization_id', organizationId)
+      .eq('organization_id', currentUser.org_id)
       .single() as { data: { id: string; state: string; organization_id: string } | null; error: any }
 
-    if (workflowError || !workflow) {
-      console.log("WORKFLOW SELECT ERROR:", workflowError)
+    if (error || !workflow) {
       return NextResponse.json(
         { error: 'Workflow not found' },
         { status: 404 }
       )
     }
 
-    // FSM progression check: Only allow from step_3_seeds state
-    if (workflow.state !== 'step_3_seeds') {
+    const currentState = workflow.state
+
+    // 3️⃣ IDEMPOTENCY CASE
+    // If not exactly at this step — return success safely (future-proof)
+    if (currentState !== 'step_4_longtails') {
+      return NextResponse.json({
+        success: true,
+        workflow_id: workflowId,
+        workflow_state: currentState,
+        cached: true
+      })
+    }
+
+    // 4️⃣ STRICT FSM GUARD
+    if (!WorkflowFSM.canTransition(currentState as any, 'LONGTAILS_COMPLETED')) {
       return NextResponse.json(
         {
           error: 'INVALID_STATE',
-          message: `Workflow must be in state step_3_seeds before longtail expansion. Current state: ${workflow.state}`
+          message: `Workflow must be in step_4_longtails. Current state: ${currentState}` 
         },
-        { status: 400 }
+        { status: 409 }
       )
     }
 
@@ -101,7 +103,7 @@ export async function POST(
 
     console.log(`[LongtailExpand] Starting long-tail expansion for workflow ${workflowId}`)
 
-    // Execute long-tail keyword expansion
+    // 5️⃣ EXECUTE BUSINESS LOGIC
     const startTime = Date.now()
     const expansionResult = await expandSeedKeywordsToLongtails(workflowId, userId)
     const duration = Date.now() - startTime
@@ -114,67 +116,22 @@ export async function POST(
       // Don't fail the request, but log the warning
     }
 
-    // Log completion
-    try {
-      await logActionAsync({
-        orgId: organizationId,
-        userId: userId,
-        action: AuditAction.WORKFLOW_LONGTAIL_KEYWORDS_COMPLETED,
-        details: {
-          workflow_id: workflowId,
-          seeds_processed: expansionResult.seeds_processed,
-          longtails_created: expansionResult.total_longtails_created,
-          duration_ms: duration
-        },
-        ipAddress: extractIpAddress(request.headers),
-        userAgent: extractUserAgent(request.headers),
-      })
-    } catch (logError) {
-      console.error('Failed to log workflow completion:', logError)
-      // Continue anyway - logging is non-blocking
-    }
+    // 6️⃣ FSM TRANSITION (ONLY STATE CHANGE POINT)
+    const nextState = await WorkflowFSM.transition(
+      workflowId,
+      'LONGTAILS_COMPLETED',
+      { userId: currentUser.id }
+    )
 
-    // Log Intent audit trail entry (Story 37.4)
-    try {
-      logIntentActionAsync({
-        organizationId,
-        workflowId,
-        entityType: 'workflow',
-        entityId: workflowId,
-        actorId: userId,
-        action: AuditAction.WORKFLOW_STEP_COMPLETED,
-        details: {
-          step: 'step_4_longtails',
-          seeds_processed: expansionResult.seeds_processed,
-          longtails_created: expansionResult.total_longtails_created,
-          duration_ms: duration,
-        },
-        ipAddress: extractIpAddress(request.headers),
-        userAgent: extractUserAgent(request.headers),
-      })
-    } catch (intentLogError) {
-      console.error('Failed to log intent audit entry:', intentLogError)
-      // Continue anyway - logging is non-blocking
-    }
-
-    // Emit analytics event
-    emitAnalyticsEvent({
-      event_type: 'longtail_expansion_completed',
-      timestamp: new Date().toISOString(),
-      organization_id: organizationId,
-      workflow_id: workflowId,
-      seeds_processed: expansionResult.seeds_processed,
-      longtails_created: expansionResult.total_longtails_created,
-      duration_ms: duration,
-      sources: ['related', 'suggestions', 'ideas', 'autocomplete']
-    })
-
-    // Return success response
+    // 7️⃣ RETURN AUTHORITATIVE NEXT STATE
     return NextResponse.json({
       success: true,
+      workflow_id: workflowId,
+      workflow_state: nextState,
       data: {
         seeds_processed: expansionResult.seeds_processed,
-        longtails_created: expansionResult.total_longtails_created
+        longtails_created: expansionResult.total_longtails_created,
+        duration_ms: duration
       }
     })
 

@@ -63,15 +63,27 @@ export async function POST(
       )
     }
 
-    // FSM GUARD: Only allow subtopic generation after clustering is complete
+    // FSM GUARD: Only allow subtopic generation in step_8_subtopics with terminal idempotency
     const typedWorkflow = workflow as unknown as { id: string; state: string; organization_id: string }
-    if (typedWorkflow.state !== 'step_6_clustering' && typedWorkflow.state !== 'step_7_validation' && typedWorkflow.state !== 'step_8_subtopics' && typedWorkflow.state !== 'step_9_articles' && typedWorkflow.state !== 'completed') {
+    const currentState = typedWorkflow.state
+    
+    // IDEMPOTENCY: Already beyond Step 8
+    if (currentState === 'step_9_articles' || currentState === 'completed') {
+      return NextResponse.json({
+        success: true,
+        workflow_state: currentState,
+        cached: true
+      })
+    }
+    
+    // STRICT GUARD: Only allow execution in Step 8
+    if (currentState !== 'step_8_subtopics') {
       return NextResponse.json(
         { 
-          error: 'Invalid workflow state for subtopic generation',
-          message: `Workflow must be at step_6_clustering or later, currently in ${typedWorkflow.state}`
+          error: 'INVALID_STATE',
+          message: `Subtopic generation requires step_8_subtopics. Current state: ${currentState}`
         },
-        { status: 423 }
+        { status: 409 }
       )
     }
 

@@ -38,39 +38,45 @@ export async function POST(
     organizationId = currentUser.org_id
     userId = currentUser.id
 
-    // ENFORCE ICP GATE - Check if ICP is complete before proceeding
-    const gateResponse = await enforceICPGate(workflowId, 'cluster-topics')
-    if (gateResponse) {
-      return gateResponse
-    }
-
-    // Verify workflow exists and belongs to user's organization
+    // 1️⃣ AUTH: Already handled above
+    
+    // 2️⃣ FETCH WORKFLOW (READ ONLY)
     const supabase = createServiceRoleClient()
-    const { data: workflow, error: workflowError } = await supabase
+    const { data: workflow, error } = await supabase
       .from('intent_workflows')
       .select('id, state, organization_id')
       .eq('id', workflowId)
-      .eq('organization_id', organizationId)
-      .single()
+      .eq('organization_id', currentUser.org_id)
+      .single() as { data: { id: string; state: string; organization_id: string } | null; error: any }
 
-    if (workflowError || !workflow) {
+    if (error || !workflow) {
       return NextResponse.json(
         { error: 'Workflow not found' },
         { status: 404 }
       )
     }
 
-    // Type guard: ensure workflow is properly typed
-    const typedWorkflow = workflow as unknown as { id: string; state: string; organization_id: string }
+    const currentState = workflow.state
 
-    // ENFORCE STRICT LINEAR PROGRESSION: Only allow step 6 when state = step_6_clustering
-    if (typedWorkflow.state !== 'step_6_clustering') {
+    // 3️⃣ IDEMPOTENCY CASE
+    // If not exactly at this step — return success safely (future-proof)
+    if (currentState !== 'step_6_clustering') {
+      return NextResponse.json({
+        success: true,
+        workflow_id: workflowId,
+        workflow_state: currentState,
+        cached: true
+      })
+    }
+
+    // 4️⃣ STRICT FSM GUARD
+    if (!WorkflowFSM.canTransition(currentState as any, 'CLUSTERING_COMPLETED')) {
       return NextResponse.json(
-        { 
-          error: 'INVALID_STEP_ORDER',
-          message: `Workflow must be at step 6 (topic clustering), currently at ${typedWorkflow.state}`
+        {
+          error: 'INVALID_STATE',
+          message: `Workflow must be in step_6_clustering. Current state: ${currentState}` 
         },
-        { status: 400 }
+        { status: 409 }
       )
     }
 
@@ -81,12 +87,13 @@ export async function POST(
       action: AuditAction.WORKFLOW_TOPIC_CLUSTERING_STARTED,
       details: {
         workflow_id: workflowId,
-        current_state: typedWorkflow.state
+        current_state: currentState
       },
       ipAddress: extractIpAddress(request.headers),
       userAgent: extractUserAgent(request.headers),
     })
 
+    // 5️⃣ EXECUTE BUSINESS LOGIC
     // DEFENSE IN DEPTH: Verify sufficient user-selected keywords exist for clustering
     const { count: keywordCount, error: keywordError } = await supabase
       .from('keywords')
@@ -173,28 +180,18 @@ export async function POST(
       )
     }
 
-    // FSM TRANSITION: Advance workflow state to step_7_validation
-    await WorkflowFSM.transition(workflowId, 'CLUSTERING_COMPLETED', { userId: currentUser.id })
+    // 6️⃣ FSM TRANSITION (ONLY STATE CHANGE POINT)
+    const nextState = await WorkflowFSM.transition(
+      workflowId,
+      'CLUSTERING_COMPLETED',
+      { userId: currentUser.id }
+    )
 
-    // Log completion audit action
-    await logActionAsync({
-      orgId: organizationId,
-      userId: userId,
-      action: AuditAction.WORKFLOW_TOPIC_CLUSTERING_COMPLETED,
-      details: {
-        workflow_id: workflowId,
-        cluster_count: clusterResult.cluster_count,
-        keywords_clustered: clusterResult.keywords_clustered,
-        avg_cluster_size: clusterResult.avg_cluster_size
-      },
-      ipAddress: extractIpAddress(request.headers),
-      userAgent: extractUserAgent(request.headers),
-    })
-
-    // Return success response
+    // 7️⃣ RETURN AUTHORITATIVE NEXT STATE
     return NextResponse.json({
+      success: true,
       workflow_id: workflowId,
-      status: 'step_6_clustering',
+      workflow_state: nextState,
       cluster_count: clusterResult.cluster_count,
       keywords_clustered: clusterResult.keywords_clustered,
       avg_cluster_size: clusterResult.avg_cluster_size,

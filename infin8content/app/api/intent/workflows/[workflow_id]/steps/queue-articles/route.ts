@@ -70,13 +70,24 @@ export async function POST(
     // FSM GUARD: Only allow step_9_articles for article queuing
     const typedWorkflow = workflow as unknown as { id: string; state: string; organization_id: string }
     
+    // IDEMPOTENCY CASE: Already completed
+    if (typedWorkflow.state === 'completed') {
+      return NextResponse.json({
+        success: true,
+        workflow_id: workflowId,
+        workflow_state: typedWorkflow.state,
+        cached: true,
+        message: 'Workflow already completed'
+      })
+    }
+    
     if (typedWorkflow.state !== 'step_9_articles') {
       return NextResponse.json(
         {
           error: 'INVALID_STATE',
           message: `Workflow must be at step_9_articles. Current state: ${typedWorkflow.state}`
         },
-        { status: 400 }
+        { status: 409 }
       )
     }
 
@@ -117,17 +128,6 @@ export async function POST(
           message: 'Cannot proceed with step 9 - no articles were queued for generation'
         },
         { status: 400 }
-      )
-    }
-
-    // Check if queuing failed completely
-    if (queueingResult.articles_created === 0) {
-      return NextResponse.json(
-        {
-          error: 'QUEUING_FAILED',
-          message: queueingResult.message || 'All article queuing attempts failed - workflow cannot proceed'
-        },
-        { status: 500 }
       )
     }
 

@@ -278,20 +278,23 @@ export const generateArticle = inngest.createFunction(
  * 
  * This function is called immediately after an article is marked completed.
  * It checks if all articles in the workflow have status = 'completed'.
- * If so, it atomically updates the workflow to terminal state (current_step: 10, status: 'completed').
+ * If so, it transitions the workflow via FSM to completed state.
  * 
  * This is the canonical completion trigger for the workflow state machine.
- * Completion is only driven by the article generation pipeline, not by the queuing layer.
+ * Completion is only driven by the article generation pipeline via FSM transition.
  */
 async function checkAndCompleteWorkflow(
   supabase: any,
   workflowId: string
 ): Promise<void> {
   try {
-    // Guard: Only complete if workflow is in Step 9 execution phase
+    // Import FSM for terminal authority
+    const { WorkflowFSM } = await import('@/lib/fsm/workflow-fsm')
+    
+    // Fetch current workflow state (FSM state only)
     const { data: workflow } = await supabase
       .from('intent_workflows')
-      .select('current_step')
+      .select('state')
       .eq('id', workflowId)
       .single()
 
@@ -300,9 +303,9 @@ async function checkAndCompleteWorkflow(
       return
     }
 
-    // CANONICAL GUARD: Only proceed if workflow is at step 9
-    if (workflow.current_step !== 9) {
-      console.log(`[WorkflowCompletion] Workflow ${workflowId} not at step 9 (current: ${workflow.current_step}), skipping completion check`)
+    // FSM GUARD: Only proceed if workflow is at step_9_articles
+    if (workflow.state !== 'step_9_articles') {
+      console.log(`[WorkflowCompletion] Workflow ${workflowId} not at step_9_articles (current: ${workflow.state}), skipping completion check`)
       return
     }
 
@@ -313,24 +316,16 @@ async function checkAndCompleteWorkflow(
       .eq('intent_workflow_id', workflowId)
       .neq('status', 'completed')
 
-    // If no incomplete articles, mark workflow as completed (terminal state)
+    // If no incomplete articles, complete workflow via FSM transition
     if (!incompleteArticles || incompleteArticles.length === 0) {
-      console.log(`[WorkflowCompletion] All articles completed for workflow ${workflowId}, marking workflow as completed`)
+      console.log(`[WorkflowCompletion] All articles completed for workflow ${workflowId}, completing via FSM`)
 
-      const { error: updateError } = await supabase
-        .from('intent_workflows')
-        .update({
-          current_step: 10,
-          status: 'completed',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', workflowId)
-
-      if (updateError) {
-        console.error(`[WorkflowCompletion] Failed to mark workflow as completed: ${updateError.message}`)
-      } else {
-        console.log(`[WorkflowCompletion] Workflow ${workflowId} successfully marked as completed (terminal state)`)
-      }
+      // SINGLE TERMINAL AUTHORITY: FSM transition only
+      await WorkflowFSM.transition(workflowId, 'ARTICLES_COMPLETED', {
+        userId: 'system'
+      })
+      
+      console.log(`[WorkflowCompletion] Workflow ${workflowId} completed via FSM`)
     } else {
       console.log(`[WorkflowCompletion] Workflow ${workflowId} has ${incompleteArticles.length} incomplete articles, not completing yet`)
     }

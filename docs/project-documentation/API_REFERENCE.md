@@ -610,7 +610,13 @@ When reporting API issues, include:
 
 ---
 
-**This API reference is continuously updated. Check the documentation portal for the latest changes and additions.**
+**API Reference - Infin8Content**
+
+**Version:** v2.1.0 (Zero-Legacy FSM)  
+**Last Updated:** 2026-02-17  
+**Framework:** Next.js 16.1.1 API Routes  
+**Base URL:** `/api`  
+**Architecture:** Deterministic Finite State Machine
 
 #### POST /api/auth/signup
 Register new user account.

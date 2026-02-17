@@ -99,12 +99,8 @@ export async function linkArticlesToWorkflow(
     }
   }
 
-  // 3️⃣ Deterministic FSM transition (ONLY if no failures)
-  if (failed === 0) {
-    await WorkflowFSM.transition(workflowId, 'ARTICLES_COMPLETED', {
-      userId,
-    })
-  }
+  // 3️⃣ LINKER LAYER: Only responsible for linking articles, NOT completing workflow
+  // Terminal completion is driven by the article generation pipeline via ProgressService
 
   const currentState = await WorkflowFSM.getCurrentState(workflowId)
 

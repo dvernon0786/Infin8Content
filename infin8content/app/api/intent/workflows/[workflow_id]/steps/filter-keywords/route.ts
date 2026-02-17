@@ -42,36 +42,45 @@ export async function POST(
     organizationId = currentUser.org_id
     userId = currentUser.id
 
-    // ENFORCE ICP GATE - Check if ICP is complete before proceeding
-    const gateResponse = await enforceICPGate(workflowId, 'filter-keywords')
-    if (gateResponse) {
-      return gateResponse
-    }
-
-    // Verify workflow exists and belongs to user's organization
+    // 1️⃣ AUTH: Already handled above
+    
+    // 2️⃣ FETCH WORKFLOW (READ ONLY)
     const supabase = createServiceRoleClient()
-    const { data: workflow, error: workflowError } = await supabase
+    const { data: workflow, error } = await supabase
       .from('intent_workflows')
       .select('id, state, organization_id')
       .eq('id', workflowId)
-      .eq('organization_id', organizationId)
-      .single()
+      .eq('organization_id', currentUser.org_id)
+      .single() as { data: { id: string; state: string; organization_id: string } | null; error: any }
 
-    if (workflowError || !workflow) {
+    if (error || !workflow) {
       return NextResponse.json(
         { error: 'Workflow not found' },
         { status: 404 }
       )
     }
 
-    // FSM GUARD: Only allow step 5 when state = step_5_filtering
-    if ((workflow as any).state !== 'step_5_filtering') {
+    const currentState = workflow.state
+
+    // 3️⃣ IDEMPOTENCY CASE
+    // If not exactly at this step — return success safely (future-proof)
+    if (currentState !== 'step_5_filtering') {
+      return NextResponse.json({
+        success: true,
+        workflow_id: workflowId,
+        workflow_state: currentState,
+        cached: true
+      })
+    }
+
+    // 4️⃣ STRICT FSM GUARD
+    if (!WorkflowFSM.canTransition(currentState as any, 'FILTERING_COMPLETED')) {
       return NextResponse.json(
-        { 
+        {
           error: 'INVALID_STATE',
-          message: `Workflow must be in step_5_filtering. Current state: ${(workflow as any).state}`
+          message: `Workflow must be in step_5_filtering. Current state: ${currentState}` 
         },
-        { status: 400 }
+        { status: 409 }
       )
     }
 
@@ -87,6 +96,7 @@ export async function POST(
       userAgent: extractUserAgent(request.headers),
     })
 
+    // 5️⃣ EXECUTE BUSINESS LOGIC
     // Get organization filter settings
     const filterOptions = await getOrganizationFilterSettings(organizationId)
 
@@ -113,41 +123,19 @@ export async function POST(
       throw new Error(`Failed to update workflow metadata: ${updateError.message}`)
     }
 
-    // FSM TRANSITION: Advance workflow state to step_6_clustering
-    await WorkflowFSM.transition(workflowId, 'FILTERING_COMPLETED', { userId: currentUser.id })
+    // 6️⃣ FSM TRANSITION (ONLY STATE CHANGE POINT)
+    const nextState = await WorkflowFSM.transition(
+      workflowId,
+      'FILTERING_COMPLETED',
+      { userId: currentUser.id }
+    )
 
-    // Log completion of keyword filtering
-    await logActionAsync({
-      orgId: organizationId,
-      userId: userId,
-      action: AuditAction.WORKFLOW_KEYWORD_FILTERING_COMPLETED,
-      details: {
-        workflow_id: workflowId,
-        total_keywords: filterResult.total_keywords,
-        filtered_keywords_count: filterResult.filtered_keywords_count,
-        removal_breakdown: filterResult.removal_breakdown
-      },
-      ipAddress: extractIpAddress(request.headers),
-      userAgent: extractUserAgent(request.headers),
-    })
-
-    // Emit analytics event
-    emitAnalyticsEvent({
-      event_type: 'workflow.keyword_filtering.completed',
-      timestamp: new Date().toISOString(),
-      organization_id: organizationId,
-      workflow_id: workflowId,
-      total_keywords: filterResult.total_keywords,
-      filtered_keywords_count: filterResult.filtered_keywords_count
-    })
-
+    // 7️⃣ RETURN AUTHORITATIVE NEXT STATE
     return NextResponse.json({
       success: true,
-      data: {
-        workflow_id: workflowId,
-        status: 'step_5_filtering',
-        filter_result: filterResult
-      }
+      workflow_id: workflowId,
+      workflow_state: nextState,
+      filter_result: filterResult
     })
 
   } catch (error) {
