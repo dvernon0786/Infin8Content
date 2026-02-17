@@ -12,6 +12,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
+import { inngest } from '@/lib/inngest/client'
 import {
   filterKeywords,
   getOrganizationFilterSettings,
@@ -123,20 +124,21 @@ export async function POST(
       throw new Error(`Failed to update workflow metadata: ${updateError.message}`)
     }
 
-    // 6️⃣ FSM TRANSITION (ONLY STATE CHANGE POINT)
-    const nextState = await WorkflowFSM.transition(
-      workflowId,
-      'FILTERING_START',
-      { userId: currentUser.id }
-    )
+    // 6️⃣ INNGEST EVENT DISPATCH (async trigger)
+    // Worker will handle FSM transition via guardAndStart()
+    await inngest.send({
+      name: 'intent.step5.filtering',
+      data: { workflowId }
+    })
 
-    // 7️⃣ RETURN AUTHORITATIVE NEXT STATE
+    // 7️⃣ RETURN IMMEDIATE 202 ACCEPTED
     return NextResponse.json({
       success: true,
       workflow_id: workflowId,
-      workflow_state: nextState,
-      filter_result: filterResult
-    })
+      workflow_state: 'step_5_filtering', // Still in idle until worker processes
+      status: 'triggered',
+      message: 'Keyword filtering triggered. Check workflow state for progress.'
+    }, { status: 202 })
 
   } catch (error) {
     console.error('Keyword filtering failed:', error)
