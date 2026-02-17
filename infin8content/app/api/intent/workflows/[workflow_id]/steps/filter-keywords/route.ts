@@ -11,14 +11,7 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
-import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import { inngest } from '@/lib/inngest/client'
-import {
-  filterKeywords,
-  getOrganizationFilterSettings,
-  type FilterResult
-} from '@/lib/services/intent-engine/keyword-filter'
-import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
 import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 
 export async function POST(
@@ -97,41 +90,14 @@ export async function POST(
       userAgent: extractUserAgent(request.headers),
     })
 
-    // 5️⃣ EXECUTE BUSINESS LOGIC
-    // Get organization filter settings
-    const filterOptions = await getOrganizationFilterSettings(organizationId)
-
-    // Set timeout for 1 minute as per requirements
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Keyword filtering timeout')), 60000)
-    })
-
-    // Perform keyword filtering
-    const filterPromise = filterKeywords(workflowId, organizationId, filterOptions)
-
-    // Race between filtering and timeout
-    const filterResult = await Promise.race([filterPromise, timeoutPromise]) as FilterResult
-
-    // Update workflow metadata
-    const { error: updateError } = await supabase
-      .from('intent_workflows')
-      .update({
-        filtered_keywords_count: filterResult.filtered_keywords_count
-      })
-      .eq('id', workflowId)
-
-    if (updateError) {
-      throw new Error(`Failed to update workflow metadata: ${updateError.message}`)
-    }
-
-    // 6️⃣ INNGEST EVENT DISPATCH (async trigger)
+    // 5️⃣ INNGEST EVENT DISPATCH (async trigger)
     // Worker will handle FSM transition via guardAndStart()
     await inngest.send({
       name: 'intent.step5.filtering',
       data: { workflowId }
     })
 
-    // 7️⃣ RETURN IMMEDIATE 202 ACCEPTED
+    // 6️⃣ RETURN IMMEDIATE 202 ACCEPTED
     return NextResponse.json({
       success: true,
       workflow_id: workflowId,
@@ -160,13 +126,6 @@ export async function POST(
 
     // Return appropriate error response
     if (error instanceof Error) {
-      if (error.message === 'Keyword filtering timeout') {
-        return NextResponse.json(
-          { error: 'Keyword filtering timeout - operation took longer than 1 minute' },
-          { status: 408 }
-        )
-      }
-      
       if (error.message.includes('Invalid workflow state')) {
         return NextResponse.json(
           { error: error.message },

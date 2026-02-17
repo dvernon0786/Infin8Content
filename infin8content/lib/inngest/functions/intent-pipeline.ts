@@ -7,6 +7,7 @@
 import { inngest } from '@/lib/inngest/client'
 import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 import { WorkflowEvent } from '@/lib/fsm/workflow-events'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 import { 
   expandSeedKeywordsToLongtails
 } from '@/lib/services/intent-engine/longtail-keyword-expander'
@@ -29,7 +30,6 @@ import {
 
 // Helper function to get organization ID
 async function getOrganizationId(workflowId: string): Promise<string> {
-  const { createServiceRoleClient } = require('@/lib/supabase/server')
   const supabase = createServiceRoleClient()
   const { data, error } = await supabase
     .from('intent_workflows')
@@ -41,7 +41,7 @@ async function getOrganizationId(workflowId: string): Promise<string> {
     throw new Error(`Failed to get organization ID for workflow ${workflowId}`)
   }
   
-  return data.organization_id
+  return (data as any).organization_id
 }
 
 /* ================================================================
@@ -196,7 +196,6 @@ export const step7Validation = inngest.createFunction(
     if (guard.skipped) return guard
 
     try {
-      const { createServiceRoleClient } = require('@/lib/supabase/server')
       const supabase = createServiceRoleClient()
 
       // Fetch clusters and keywords for validation
@@ -215,7 +214,7 @@ export const step7Validation = inngest.createFunction(
       }
 
       const validator = new ClusterValidator()
-      await validator.validateWorkflowClusters(workflowId, clusters, keywords)
+      await validator.validateWorkflowClusters(workflowId, clusters as any, keywords as any)
 
       await WorkflowFSM.transition(workflowId, 'VALIDATION_SUCCESS')
 
@@ -252,7 +251,6 @@ export const step8Subtopics = inngest.createFunction(
     if (guard.skipped) return guard
 
     try {
-      const { createServiceRoleClient } = require('@/lib/supabase/server')
       const supabase = createServiceRoleClient()
 
       const { data: keywords } = await supabase
@@ -266,7 +264,7 @@ export const step8Subtopics = inngest.createFunction(
 
       if (keywords?.length) {
         for (const keyword of keywords) {
-          await generator.generate(keyword.id)
+          await generator.generate((keyword as any).id)
         }
       }
 
