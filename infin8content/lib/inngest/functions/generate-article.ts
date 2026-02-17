@@ -320,6 +320,18 @@ async function checkAndCompleteWorkflow(
       .eq('workflow_id', workflowId)  // Fixed: use workflow_id not intent_workflow_id
       .neq('status', 'completed')
 
+    // PRODUCTION HARDENING: Verify at least one article exists before completing
+    const { data: allArticles } = await supabase
+      .from('articles')
+      .select('id')
+      .eq('workflow_id', workflowId)
+      .limit(1)
+
+    if (!allArticles || allArticles.length === 0) {
+      console.log(`[WorkflowCompletion] No articles found for workflow ${workflowId}, not completing`)
+      return
+    }
+
     // If no incomplete articles, complete workflow via FSM transition
     if (!incompleteArticles || incompleteArticles.length === 0) {
       console.log(`[WorkflowCompletion] All articles completed for workflow ${workflowId}, completing via FSM`)
