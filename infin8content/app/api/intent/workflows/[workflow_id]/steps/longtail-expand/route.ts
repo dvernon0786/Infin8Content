@@ -83,6 +83,29 @@ export async function POST(
       )
     }
 
+    // 5️⃣ APPROVAL VALIDATION (FIRST - before any service logic)
+    const { ApprovalGateValidator } = await import('@/lib/workflow/approval/approval-gate-validator')
+    const { APPROVAL_THRESHOLDS } = await import('@/lib/constants/approval-thresholds')
+    
+    const approvalResult = await ApprovalGateValidator.countApproved(
+      workflowId,
+      'seeds',
+      organizationId
+    )
+    
+    const requiredMinimum = APPROVAL_THRESHOLDS['seeds']
+    
+    if (approvalResult.approvedCount < requiredMinimum) {
+      return NextResponse.json({
+        error: 'APPROVAL_REQUIRED',
+        entity_type: 'seeds',
+        required_minimum: requiredMinimum,
+        approved_count: approvalResult.approvedCount,
+        remaining_needed: requiredMinimum - approvalResult.approvedCount,
+        message: `Approve at least ${requiredMinimum} seed keyword(s) before proceeding.`
+      }, { status: 409 })
+    }
+
     // Log action start
     try {
       await logActionAsync({
@@ -103,7 +126,7 @@ export async function POST(
 
     console.log(`[LongtailExpand] Starting long-tail expansion for workflow ${workflowId}`)
 
-    // 5️⃣ EXECUTE BUSINESS LOGIC
+    // 6️⃣ EXECUTE BUSINESS LOGIC (only after approval validation passes)
     const startTime = Date.now()
     const expansionResult = await expandSeedKeywordsToLongtails(workflowId, userId)
     const duration = Date.now() - startTime
@@ -116,14 +139,14 @@ export async function POST(
       // Don't fail the request, but log the warning
     }
 
-    // 6️⃣ FSM TRANSITION (ONLY STATE CHANGE POINT)
+    // 7️⃣ FSM TRANSITION (ONLY STATE CHANGE POINT)
     const nextState = await WorkflowFSM.transition(
       workflowId,
       'LONGTAILS_COMPLETED',
       { userId: currentUser.id }
     )
 
-    // 7️⃣ RETURN AUTHORITATIVE NEXT STATE
+    // 8️⃣ RETURN AUTHORITATIVE NEXT STATE
     return NextResponse.json({
       success: true,
       workflow_id: workflowId,
@@ -157,36 +180,37 @@ export async function POST(
       }
     }
 
-    // Check if it's a validation error vs system error
+    // Return structured error responses
     if (error instanceof Error) {
       if (error.message.includes('No seed keywords found')) {
         return NextResponse.json(
           { 
             success: false,
-            error: 'No seed keywords found for expansion',
-            message: 'Please ensure seed keywords have been extracted before expanding to long-tails'
+            error: 'NO_SEED_KEYWORDS',
+            message: 'No seed keywords found for expansion'
           },
           { status: 400 }
         )
       }
-
-      if (error.message.includes('Workflow not found') || error.message.includes('Invalid workflow state')) {
+      
+      if (error.message.includes('Workflow not found')) {
         return NextResponse.json(
           { 
             success: false,
-            error: error.message
+            error: 'WORKFLOW_NOT_FOUND',
+            message: 'Workflow not found'
           },
-          { status: 400 }
+          { status: 404 }
         )
       }
     }
 
-    // Generic server error
+    // Generic system error
     return NextResponse.json(
       { 
         success: false,
-        error: 'Internal server error',
-        message: 'Long-tail keyword expansion failed. Please try again.'
+        error: 'SYSTEM_ERROR',
+        message: 'Long-tail keyword expansion failed due to a system error'
       },
       { status: 500 }
     )

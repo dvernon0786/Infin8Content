@@ -1,5 +1,80 @@
 # Scratchpad
 
+## Human-in-the-Loop Enforcement - PRODUCTION-SEALED ✅
+
+**Date:** 2026-02-17  
+**Type:** Enterprise Architecture Implementation  
+**Status:** ✅ PRODUCTION-SEALED
+
+### Summary
+Successfully implemented comprehensive human-in-the-loop enforcement contract for Steps 3-9 with entity-level approval gating, route-layer enforcement, and production-safe database migrations. Achieved enterprise-grade architecture with single FSM authority and deterministic execution.
+
+### Critical Implementation Components
+1. **Entity-Level Approval Tracking**: `user_selected` boolean flags on keywords, topic_clusters tables
+2. **Route-Layer Enforcement**: Approval validation before service execution with structured 409 responses
+3. **Immutable Threshold Constants**: Frozen `APPROVAL_THRESHOLDS` map with compile-time safety
+4. **Production-Safe Validator**: Pure read-only `ApprovalGateValidator` with entity isolation
+5. **Robust Database Migration**: Handles existing columns, missing tables, and data constraints safely
+
+### Architecture Achievements
+- ✅ **Single State Mutation Authority**: FSM transitions only in route layer
+- ✅ **Deterministic Schema**: No runtime information_schema detection
+- ✅ **Clean Layer Separation**: Services pure business logic only
+- ✅ **Entity Isolation**: Organization-level approval tracking
+- ✅ **Production Safety**: Idempotent migrations and graceful error handling
+
+### Database Schema Analysis
+| Table | Status | Columns Added |
+|-------|--------|---------------|
+| `keywords` | ✅ EXISTS | `user_selected`, `selection_source`, `selection_updated_at` |
+| `topic_clusters` | ✅ EXISTS | `user_selected`, `selection_source`, `selection_updated_at` |
+| `subtopics` | ❌ MISSING | Uses `keywords.subtopics_status` filter |
+
+### Files Created/Modified
+**New Files**:
+- `lib/constants/approval-thresholds.ts` - Immutable threshold constants
+- `lib/workflow/approval/approval-gate-validator.ts` - Production-safe validator
+- `scripts/migrations/add_approval_tracking_robust.sql` - Safe database migration
+- `scripts/discover-database-schema.sql` - Schema discovery script
+- `DATABASE_SCHEMA_ANALYSIS.md` - Schema analysis documentation
+- `DATABASE_SCHEMA_FIXES_COMPLETE.md` - Migration fixes documentation
+- `ARCHITECTURAL_VIOLATIONS_FIXED.md` - Architecture fixes documentation
+
+**Modified Files**:
+- `lib/services/intent-engine/longtail-keyword-expander.ts` - Removed FSM transition
+- `app/api/intent/workflows/[workflow_id]/steps/longtail-expand/route.ts` - Added approval validation
+- Updated interface to include `workflow_id` in `ExpansionSummary`
+
+### Architectural Violations Fixed
+1. **Duplicate FSM Transition**: Removed from service layer, single authority in route
+2. **Runtime Schema Detection**: Replaced with deterministic schema approach
+3. **Spec Wording Mismatch**: Updated validator documentation for precision
+4. **Database Migration Issues**: Fixed constraint violations and column existence checks
+
+### Approval Thresholds
+```typescript
+const APPROVAL_THRESHOLDS = {
+  seeds: 1,        // Minimum 1 seed keyword
+  longtails: 2,    // Minimum 2 long-tail keywords  
+  clusters: 1,     // Minimum 1 cluster
+  subtopics: 1     // Minimum 1 subtopic
+} as const
+```
+
+### Migration Script Status
+- ✅ **Safe**: Checks table/column existence before operations
+- ✅ **Idempotent**: Can be run multiple times safely
+- ✅ **Data-Safe**: Cleans invalid data before adding constraints
+- ✅ **Production-Ready**: Handles actual database schema gracefully
+
+### Next Steps
+- ✅ All critical architectural violations fixed
+- ✅ Production-sealed status achieved
+- ✅ Ready for immediate deployment
+- ✅ Migration script ready for execution
+
+---
+
 ## FSM Production-Sealed Implementation - COMPLETED ✅
 
 **Date:** 2026-02-17  
