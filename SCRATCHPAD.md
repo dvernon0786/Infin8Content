@@ -1,59 +1,61 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-02-18 00:51 UTC+11  
-**Current Focus:** INNGEST + FSM INTEGRATION - 100% COMPLETE 🎉
+**Last Updated:** 2026-02-18 09:20 UTC+11  
+**Current Focus:** MODEL A ARCHITECTURAL COMPLIANCE - COMPLETE 
 
-## 🎯 **INNGEST + FSM INTEGRATION - COMPLETE**
+## **MODEL A ARCHITECTURE FIX - COMPLETE**
 
-### **📅 Completion Date: February 18, 2026**
+### **Completion Date: February 18, 2026**
 
-### **🔥 Major Achievement: Complete Enterprise-Grade Workflow Automation**
+### **Major Achievement: Surgical Model A Compliance Fix**
 
-We have successfully implemented **100% complete Inngest + FSM integration** for Steps 4-9 with enterprise-grade safety guards, real service integration, and comprehensive testing.
+Successfully eliminated all Model A violations in workflow steps 5-7, enforced event-only route pattern, and fixed completion authority issues.
 
 ---
 
-## **🚨 ISSUE RESOLVED: WORKFLOW AUTOMATION COMPLETE**
+## **ISSUE RESOLVED: MODEL A VIOLATIONS FIXED**
 
 ### **Root Cause Identified**
-- **Problem**: Manual step-by-step execution with 2.7 minute blocking operations
-- **Symptom**: No automated pipeline for Steps 4-9
-- **Impact**: Poor user experience, no real-time progress tracking
+- **Problem**: Steps 5-7 routes executing business logic (violating Model A)
+- **Symptom**: Duplicate execution (route + worker), heavy compute in HTTP
+- **Impact**: Non-idempotent, race conditions, architectural inconsistency
 
-### **✅ Complete Resolution Applied**
+### **Complete Resolution Applied**
 
-#### **1. All 6 Inngest Workers Implemented**
+#### **1. Routes 5-7 Converted to Event-Only**
 ```typescript
-// ✅ COMPLETE: lib/inngest/functions/intent-pipeline.ts
-export const step4Longtails = inngest.createFunction(...)
+// BEFORE: Business logic in routes
+const filterResult = await filterKeywords(workflowId, orgId, options)
+const clusterResult = await clusterer.clusterKeywords(workflowId, config)
+const validationSummary = await retryWithPolicy(validationFn, policy)
+
+// AFTER: Event dispatch only
+await inngest.send({ name: 'intent.step5.filtering', data: { workflowId } })
+return NextResponse.json({ success: true }, { status: 202 })
+```
+
+#### **2. Business Logic Moved to Workers Only**
+```typescript
+// Workers now own all compute
 export const step5Filtering = inngest.createFunction(...)
 export const step6Clustering = inngest.createFunction(...)
 export const step7Validation = inngest.createFunction(...)
-export const step8Subtopics = inngest.createFunction(...)
-export const step9Articles = inngest.createFunction(...)
 ```
 
-#### **2. FSM Extensions Complete**
+#### **3. Step 9 Completion Authority Fixed**
 ```typescript
-// ✅ COMPLETE: 12 new states, 24 events
-step_X_running + step_X_failed for steps 4-9
-*_START/SUCCESS/FAILED/RETRY events for each step
+// BEFORE: Premature completion
+await WorkflowFSM.transition(workflowId, 'WORKFLOW_COMPLETED')
+
+// AFTER: Correct async model
+await WorkflowFSM.transition(workflowId, 'ARTICLES_SUCCESS')
+// Article generation workers will trigger WORKFLOW_COMPLETED
 ```
 
-#### **3. Non-Blocking Step 4 Route**
+#### **4. Import Cleanup & Type Safety**
 ```typescript
-// ✅ BEFORE: 2.7 minute blocking
-await expandSeedKeywordsToLongtails(workflowId)
-
-// ✅ AFTER: 200ms response
-await WorkflowFSM.transition(workflowId, 'LONGTAIL_START')
-await inngest.send({ name: 'intent.step4.longtails', data: { workflowId } })
-return NextResponse.json({ status: 'started' }, { status: 202 })
-```
-
-#### **4. Database Safety Guards Applied**
-```sql
--- ✅ COMPLETE: Unique constraints for idempotency
+// Fixed require() → static imports
+import { createServiceRoleClient } from '@/lib/supabase/server'
 CREATE UNIQUE INDEX keywords_workflow_keyword_unique 
 ON keywords (workflow_id, keyword);
 

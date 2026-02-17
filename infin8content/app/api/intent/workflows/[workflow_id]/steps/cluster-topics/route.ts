@@ -11,10 +11,7 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
-import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import { inngest } from '@/lib/inngest/client'
-import { KeywordClusterer } from '@/lib/services/intent-engine/keyword-clusterer'
-import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
 import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 
 export async function POST(
@@ -94,101 +91,14 @@ export async function POST(
       userAgent: extractUserAgent(request.headers),
     })
 
-    // 5️⃣ EXECUTE BUSINESS LOGIC
-    // DEFENSE IN DEPTH: Verify sufficient user-selected keywords exist for clustering
-    const { count: keywordCount, error: keywordError } = await supabase
-      .from('keywords')
-      .select('id', { count: 'exact', head: true })
-      .eq('organization_id', organizationId)
-      .eq('workflow_id', workflowId)
-      .eq('user_selected', true) // CRITICAL: Only cluster user-selected keywords
-      .is('parent_seed_keyword_id', null)  // Match Step 3 filter - only seed keywords
-
-    if (keywordError) {
-      return NextResponse.json(
-        { error: 'Failed to verify keyword count for clustering' },
-        { status: 500 }
-      )
-    }
-
-    // ENTERPRISE GUARD: Cap clustering input to prevent compute explosion
-    if (!keywordCount || keywordCount < 2) {
-      return NextResponse.json(
-        {
-          error: 'Insufficient keywords for clustering',
-          message: 'At least 2 selected keywords are required for clustering. Please select more keywords in Step 3.',
-          code: 'INSUFFICIENT_KEYWORDS_FOR_CLUSTERING'
-        },
-        { status: 400 }
-      )
-    }
-
-    if (keywordCount > 100) {
-      return NextResponse.json(
-        {
-          error: 'Too many keywords selected for clustering',
-          message: 'Maximum 100 keywords can be selected for clustering. Please deselect some keywords or use bulk actions to select top keywords by volume.',
-          code: 'TOO_MANY_KEYWORDS_SELECTED',
-          maxAllowed: 100,
-          currentSelected: keywordCount
-        },
-        { status: 400 }
-      )
-    }
-
-    console.log(`[ClusterTopics] Found ${keywordCount} seed keywords available for clustering`)
-
-    // Initialize clusterer and perform clustering on user-selected keywords only
-    const clusterer = new KeywordClusterer()
-    const clusterResult = await clusterer.clusterKeywords(workflowId, {
-      similarityThreshold: 0.6,
-      maxSpokesPerHub: 8,
-      minClusterSize: 3,
-      userSelectedOnly: true // CRITICAL: Only cluster user-selected keywords
-    })
-
-    // BLOCK advancement if no clusters created
-    if (clusterResult.cluster_count === 0) {
-      return NextResponse.json(
-        {
-          error: 'No clusters created',
-          message: 'Clustering produced no valid clusters. Try adjusting clustering parameters or adding more diverse keywords.',
-          code: 'NO_CLUSTERS_CREATED'
-        },
-        { status: 400 }
-      )
-    }
-
-    // Update workflow metadata
-    const { error: updateError } = await supabase
-      .from('intent_workflows')
-      .update({
-        cluster_count: clusterResult.cluster_count,
-        keywords_clustered: clusterResult.keywords_clustered
-      })
-      .eq('id', workflowId)
-      .eq('organization_id', organizationId)  // CRITICAL: Add tenant isolation
-
-    if (updateError) {
-      console.error('Failed to update workflow metadata:', updateError)
-      return NextResponse.json(
-        {
-          error: 'Failed to update workflow metadata',
-          message: 'Clustering completed but workflow metadata could not be updated.',
-          code: 'WORKFLOW_UPDATE_FAILED'
-        },
-        { status: 500 }
-      )
-    }
-
-    // 6️⃣ INNGEST EVENT DISPATCH (async trigger)
+    // 5️⃣ INNGEST EVENT DISPATCH (async trigger)
     // Worker will handle FSM transition via guardAndStart()
     await inngest.send({
       name: 'intent.step6.clustering',
       data: { workflowId }
     })
 
-    // 7️⃣ RETURN IMMEDIATE 202 ACCEPTED
+    // 6️⃣ RETURN IMMEDIATE 202 ACCEPTED
     return NextResponse.json({
       success: true,
       workflow_id: workflowId,
@@ -215,27 +125,8 @@ export async function POST(
       })
     }
 
-    // Update workflow with error state
-    if (workflowId && organizationId) {
-      const supabase = createServiceRoleClient()
-      await supabase
-        .from('intent_workflows')
-        .update({
-          // Note: Error handling removed - step_6_clustering_error_message column no longer exists
-        })
-        .eq('id', workflowId)
-        .eq('organization_id', organizationId)  // CRITICAL: Add tenant isolation to error path
-    }
-
     // Return appropriate error response
     if (error instanceof Error) {
-      if (error.message.includes('Insufficient keywords')) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 400 }
-        )
-      }
-      
       if (error.message.includes('Workflow not found')) {
         return NextResponse.json(
           { error: error.message },
