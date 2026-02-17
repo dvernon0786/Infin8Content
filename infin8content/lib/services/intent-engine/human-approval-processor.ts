@@ -123,9 +123,10 @@ export async function processHumanApproval(
     state: string
   }
 
-  // ENFORCE STRICT LINEAR PROGRESSION: Only allow step_8_subtopics for human approval
-  if (workflow.state !== 'step_8_subtopics') {
-    throw new Error(`Workflow must be at step_8_subtopics for human approval, current state: ${workflow.state}`)
+  // ENFORCE STRICT LINEAR PROGRESSION: Allow human approval at step_8_subtopics or step_8_subtopics_running
+  // This handles both manual triggering and cases where automation hasn't started yet
+  if (workflow.state !== 'step_8_subtopics' && workflow.state !== 'step_8_subtopics_running') {
+    throw new Error(`Workflow must be at step_8_subtopics or step_8_subtopics_running for human approval, current state: ${workflow.state}`)
   }
 
   // Validate user belongs to the same organization as the workflow

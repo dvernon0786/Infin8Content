@@ -119,18 +119,7 @@ export const step5Filtering = inngest.createFunction(
     if (guard.skipped) return guard
 
     try {
-      const { createServiceRoleClient } = require('@/lib/supabase/server')
-      const supabase = createServiceRoleClient()
-
-      const { data: workflow } = await supabase
-        .from('intent_workflows')
-        .select('organization_id')
-        .eq('id', workflowId)
-        .single()
-
-      const orgId = workflow?.organization_id
-      if (!orgId) throw new Error('Organization not found')
-
+      const orgId = await getOrganizationId(workflowId)
       const filterOptions = await getOrganizationFilterSettings(orgId)
       await filterKeywords(workflowId, orgId, filterOptions)
 
@@ -207,8 +196,26 @@ export const step7Validation = inngest.createFunction(
     if (guard.skipped) return guard
 
     try {
+      const { createServiceRoleClient } = require('@/lib/supabase/server')
+      const supabase = createServiceRoleClient()
+
+      // Fetch clusters and keywords for validation
+      const { data: clusters } = await supabase
+        .from('topic_clusters')
+        .select('*')
+        .eq('workflow_id', workflowId)
+
+      const { data: keywords } = await supabase
+        .from('keywords')
+        .select('*')
+        .eq('workflow_id', workflowId)
+
+      if (!clusters?.length || !keywords?.length) {
+        throw new Error('No clusters or keywords found for validation')
+      }
+
       const validator = new ClusterValidator()
-      await validator.validateWorkflowClusters(workflowId, [], [])
+      await validator.validateWorkflowClusters(workflowId, clusters, keywords)
 
       await WorkflowFSM.transition(workflowId, 'VALIDATION_SUCCESS')
 
