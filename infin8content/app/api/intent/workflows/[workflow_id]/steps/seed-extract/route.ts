@@ -286,8 +286,8 @@ export async function POST(
       .from('keywords')
       .update({
         user_selected: true,
-        selection_source: 'user',
-        selection_timestamp: new Date().toISOString()
+        selection_source: 'human',
+        selection_updated_at: new Date().toISOString()
       })
       .eq('organization_id', organizationId)
       .eq('workflow_id', workflowId)
