@@ -373,6 +373,7 @@ async function expandSeedKeyword(
  * Persist long-tail keywords to database
  */
 async function persistLongtailKeywords(
+  workflowId: string,
   seedKeyword: SeedKeyword,
   longtails: LongtailKeywordData[]
 ): Promise<void> {
@@ -382,6 +383,7 @@ async function persistLongtailKeywords(
     const { error } = await supabase
       .from('keywords')
       .insert({
+        workflow_id: workflowId,
         organization_id: seedKeyword.organization_id,
         competitor_url_id: seedKeyword.competitor_url_id,
         seed_keyword: seedKeyword.keyword, // Keep original seed for reference
@@ -510,7 +512,7 @@ export async function expandSeedKeywordsToLongtails(workflowId: string, userId: 
       
       // Persist long-tail keywords
       if (result.longtails.length > 0) {
-        await persistLongtailKeywords(seedKeyword as SeedKeyword, result.longtails)
+        await persistLongtailKeywords(workflowId, seedKeyword as SeedKeyword, result.longtails)
         await updateSeedKeywordStatus(seedKeyword.id)
       }
       
