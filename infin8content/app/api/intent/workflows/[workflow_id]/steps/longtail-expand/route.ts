@@ -14,6 +14,7 @@ import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/servic
 import { logIntentActionAsync } from '@/lib/services/intent-engine/intent-audit-logger'
 import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
+import { inngest } from '@/lib/inngest/client'
 import {
   expandSeedKeywordsToLongtails,
   type ExpansionSummary
@@ -73,7 +74,7 @@ export async function POST(
     }
 
     // 4️⃣ STRICT FSM GUARD
-    if (!WorkflowFSM.canTransition(currentState as any, 'LONGTAILS_COMPLETED')) {
+    if (!WorkflowFSM.canTransition(currentState as any, 'LONGTAIL_START')) {
       return NextResponse.json(
         {
           error: 'INVALID_STATE',
@@ -126,37 +127,30 @@ export async function POST(
 
     console.log(`[LongtailExpand] Starting long-tail expansion for workflow ${workflowId}`)
 
-    // 6️⃣ EXECUTE BUSINESS LOGIC (only after approval validation passes)
-    const startTime = Date.now()
-    const expansionResult = await expandSeedKeywordsToLongtails(workflowId)
-    const duration = Date.now() - startTime
-
-    console.log(`[LongtailExpand] Completed expansion in ${duration}ms`)
-
-    // Validate completion within 5 minutes (300,000ms)
-    if (duration > 300000) {
-      console.warn(`[LongtailExpand] Expansion exceeded 5-minute timeout: ${duration}ms`)
-      // Don't fail the request, but log the warning
-    }
-
-    // 7️⃣ FSM TRANSITION (ONLY STATE CHANGE POINT)
-    const nextState = await WorkflowFSM.transition(
+    // 6️⃣ NON-BLOCKING TRIGGER (replace blocking business logic)
+    // Transition to running state FIRST
+    await WorkflowFSM.transition(
       workflowId,
-      'LONGTAILS_COMPLETED',
+      'LONGTAIL_START',
       { userId: currentUser.id }
     )
 
-    // 8️⃣ RETURN AUTHORITATIVE NEXT STATE
+    // Send Inngest event for async processing
+    await inngest.send({
+      name: 'intent.step4.longtails',
+      data: { workflowId }
+    })
+
+    console.log(`[LongtailExpand] Triggered async processing for workflow ${workflowId}`)
+
+    // 7️⃣ RETURN IMMEDIATE 202 ACCEPTED
     return NextResponse.json({
       success: true,
       workflow_id: workflowId,
-      workflow_state: nextState,
-      data: {
-        seeds_processed: expansionResult.seeds_processed,
-        longtails_created: expansionResult.total_longtails_created,
-        duration_ms: duration
-      }
-    })
+      workflow_state: 'step_4_longtails_running',
+      status: 'started',
+      message: 'Long-tail expansion started. Check workflow state for progress.'
+    }, { status: 202 })
 
   } catch (error) {
     console.error('[LongtailExpand] Expansion failed:', error)
