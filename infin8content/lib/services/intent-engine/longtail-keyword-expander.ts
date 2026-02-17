@@ -127,6 +127,30 @@ export async function makeDataForSEORequest(
 }
 
 /**
+ * Extract items from DataForSEO response with strict validation
+ * Centralized to prevent duplication across 4 endpoints
+ */
+function extractTaskItems(response: DataForSEOResponse, endpointName: string): any[] {
+  // Validate response structure and status codes
+  if (response.status_code !== 20000 || response.tasks_error !== 0) {
+    throw new Error(`${endpointName} API failed: ${response.status_message} (status_code: ${response.status_code}, tasks_error: ${response.tasks_error})`)
+  }
+
+  const task = response.tasks?.[0]
+  if (!task || task.status_code !== 20000) {
+    throw new Error(`${endpointName} task failed: ${task?.status_message || 'No task data'} (task_status_code: ${task?.status_code})`)
+  }
+
+  const block = task.result?.[0]
+  if (!block?.items) {
+    console.log(`[DataForSEO DEBUG] No items found in ${endpointName.toLowerCase()} response`)
+    return []
+  }
+
+  return block.items
+}
+
+/**
  * Fetch related keywords for a seed keyword
  */
 export async function fetchRelatedKeywords(
@@ -152,23 +176,8 @@ export async function fetchRelatedKeywords(
   // Debug: Log raw response
   console.log('[DataForSEO DEBUG] Raw related response:', JSON.stringify(response, null, 2))
   
-  // Validate response structure and status codes
-  if (response.status_code !== 20000 || response.tasks_error !== 0) {
-    throw new Error(`Related keywords API failed: ${response.status_message} (status_code: ${response.status_code}, tasks_error: ${response.tasks_error})`)
-  }
-
-  const task = response.tasks?.[0]
-  if (!task || task.status_code !== 20000) {
-    throw new Error(`Related keywords task failed: ${task?.status_message || 'No task data'} (task_status_code: ${task?.status_code})`)
-  }
-
-  const block = task.result?.[0]
-  if (!block?.items) {
-    console.log('[DataForSEO DEBUG] No items found in related keywords response')
-    return []
-  }
-
-  const results = block.items.slice(0, 3)
+  // Extract items using centralized validation
+  const results = extractTaskItems(response, 'Related Keywords').slice(0, 3)
   
   return results.map((item: any) => {
     const data = item.keyword_data
@@ -209,23 +218,8 @@ export async function fetchKeywordSuggestions(
     `fetchKeywordSuggestions(${seedKeyword})`
   )
   
-  // Validate response structure and status codes
-  if (response.status_code !== 20000 || response.tasks_error !== 0) {
-    throw new Error(`Keyword suggestions API failed: ${response.status_message} (status_code: ${response.status_code}, tasks_error: ${response.tasks_error})`)
-  }
-
-  const task = response.tasks?.[0]
-  if (!task || task.status_code !== 20000) {
-    throw new Error(`Keyword suggestions task failed: ${task?.status_message || 'No task data'} (task_status_code: ${task?.status_code})`)
-  }
-
-  const block = task.result?.[0]
-  if (!block?.items) {
-    console.log('[DataForSEO DEBUG] No items found in keyword suggestions response')
-    return []
-  }
-
-  const results = block.items.slice(0, 3)
+  // Extract items using centralized validation
+  const results = extractTaskItems(response, 'Keyword Suggestions').slice(0, 3)
   
   return results.map((item: any) => {
     const data = item.keyword_data
@@ -266,23 +260,8 @@ export async function fetchKeywordIdeas(
     `fetchKeywordIdeas(${seedKeyword})`
   )
   
-  // Validate response structure and status codes
-  if (response.status_code !== 20000 || response.tasks_error !== 0) {
-    throw new Error(`Keyword ideas API failed: ${response.status_message} (status_code: ${response.status_code}, tasks_error: ${response.tasks_error})`)
-  }
-
-  const task = response.tasks?.[0]
-  if (!task || task.status_code !== 20000) {
-    throw new Error(`Keyword ideas task failed: ${task?.status_message || 'No task data'} (task_status_code: ${task?.status_code})`)
-  }
-
-  const block = task.result?.[0]
-  if (!block?.items) {
-    console.log('[DataForSEO DEBUG] No items found in keyword ideas response')
-    return []
-  }
-
-  const results = block.items.slice(0, 3)
+  // Extract items using centralized validation
+  const results = extractTaskItems(response, 'Keyword Ideas').slice(0, 3)
   
   return results.map((item: any) => {
     const data = item.keyword_data
@@ -323,26 +302,11 @@ export async function fetchGoogleAutocomplete(
     `fetchGoogleAutocomplete(${seedKeyword})`
   )
   
-  // Validate response structure and status codes
-  if (response.status_code !== 20000 || response.tasks_error !== 0) {
-    throw new Error(`Google autocomplete API failed: ${response.status_message} (status_code: ${response.status_code}, tasks_error: ${response.tasks_error})`)
-  }
-
-  const task = response.tasks?.[0]
-  if (!task || task.status_code !== 20000) {
-    throw new Error(`Google autocomplete task failed: ${task?.status_message || 'No task data'} (task_status_code: ${task?.status_code})`)
-  }
-
-  const block = task.result?.[0]
-  if (!block?.items) {
-    console.log('[DataForSEO DEBUG] No items found in google autocomplete response')
-    return []
-  }
-
-  const results = block.items.slice(0, 3)
+  // Extract items using centralized validation
+  const results = extractTaskItems(response, 'Google Autocomplete').slice(0, 3)
   
   return results
-    .map((item: any) => {
+    .map((item: any): LongtailKeywordData | null => {
       // Autocomplete response structure is different - no keyword_data nesting
       const keyword = item.keyword || item.q || ''
       
@@ -361,7 +325,7 @@ export async function fetchGoogleAutocomplete(
         source: 'autocomplete' as const
       }
     })
-    .filter((item: any): item is LongtailKeywordData => item !== null)
+    .filter((item): item is LongtailKeywordData => item !== null)
 }
 
 /**
