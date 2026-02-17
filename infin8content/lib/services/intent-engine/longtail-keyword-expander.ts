@@ -169,6 +169,24 @@ function mapCompetitionLevel(value: unknown): 'low' | 'medium' | 'high' {
   return 'high'
 }
 
+function normalizeCompetitionIndex(value: unknown): number {
+  const num = Number(value ?? 0)
+  if (isNaN(num)) return 0
+
+  // 0–1 scale → convert to 0–100
+  if (num <= 1) {
+    return Math.round(num * 100)
+  }
+
+  return Math.round(num)
+}
+
+function normalizeInteger(value: unknown): number {
+  const num = Number(value ?? 0)
+  if (isNaN(num)) return 0
+  return Math.round(num)
+}
+
 function normalizeKeyword(keyword: string): string {
   return keyword.trim().toLowerCase()
 }
@@ -235,8 +253,10 @@ async function fetchSource(
       keyword: data.keyword,
       search_volume: info.search_volume ?? 0,
       competition_level: mapCompetitionLevel(info.competition),
-      competition_index: Number(info.competition ?? 0),
-      keyword_difficulty: data?.keyword_properties?.keyword_difficulty ?? 0,
+      competition_index: normalizeCompetitionIndex(info.competition),
+      keyword_difficulty: normalizeInteger(
+        data?.keyword_properties?.keyword_difficulty
+      ),
       cpc: info.cpc,
       source
     }
@@ -297,32 +317,41 @@ async function persistLongtails(
   seed: SeedKeyword,
   longtails: LongtailKeywordData[]
 ) {
-
-  if (!longtails.length) return
-
   const supabase = createServiceRoleClient()
 
-  const rows = longtails.map(lt => ({
-    workflow_id: workflowId,
-    organization_id: seed.organization_id,
-    competitor_url_id: seed.competitor_url_id,
-    seed_keyword: seed.keyword,
-    keyword: lt.keyword,
-    search_volume: lt.search_volume,
-    competition_level: lt.competition_level,
-    competition_index: lt.competition_index,
-    keyword_difficulty: lt.keyword_difficulty,
-    cpc: lt.cpc,
-    parent_seed_keyword_id: seed.id,
-    longtail_status: 'complete',
-    subtopics_status: 'not_started',
-    article_status: 'not_started'
-  }))
+  if (longtails.length) {
+    const rows = longtails.map(lt => ({
+      workflow_id: workflowId,
+      organization_id: seed.organization_id,
+      competitor_url_id: seed.competitor_url_id,
+      seed_keyword: seed.keyword,
+      keyword: lt.keyword,
+      search_volume: lt.search_volume,
+      competition_level: lt.competition_level,
+      competition_index: lt.competition_index,
+      keyword_difficulty: lt.keyword_difficulty,
+      cpc: lt.cpc,
+      parent_seed_keyword_id: seed.id,
+      longtail_status: 'not_started',
+      subtopics_status: 'not_started',
+      article_status: 'not_started'
+    }))
 
-  const { error } = await supabase.from('keywords').insert(rows)
+    const { error } = await supabase.from('keywords').insert(rows)
 
-  if (error && error.code !== '23505') {
-    throw new Error(`Bulk insert failed: ${error.message}`)
+    if (error && error.code !== '23505') {
+      throw new Error(`Bulk insert failed: ${error.message}`)
+    }
+  }
+
+  // ALWAYS mark seed completed - ensures deterministic workflow integrity
+  const { error: updateError } = await supabase
+    .from('keywords')
+    .update({ longtail_status: 'completed' })
+    .eq('id', seed.id)
+
+  if (updateError) {
+    throw new Error(`Seed status update failed: ${updateError.message}`)
   }
 }
 
