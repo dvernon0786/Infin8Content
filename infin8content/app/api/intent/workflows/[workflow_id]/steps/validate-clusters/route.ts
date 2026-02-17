@@ -11,6 +11,7 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
+import { inngest } from '@/lib/inngest/client'
 import { ClusterValidator } from '@/lib/services/intent-engine/cluster-validator'
 import { retryWithPolicy } from '@/lib/services/intent-engine/retry-utils'
 import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
@@ -190,23 +191,21 @@ export async function POST(
       // Don't fail the request, but log the error
     }
 
-    // 6️⃣ FSM TRANSITION (ONLY STATE CHANGE POINT)
-    const nextState = await WorkflowFSM.transition(
-      workflowId,
-      'VALIDATION_START',
-      { userId: currentUser.id }
-    )
+    // 6️⃣ INNGEST EVENT DISPATCH (async trigger)
+    // Worker will handle FSM transition via guardAndStart()
+    await inngest.send({
+      name: 'intent.step7.validation',
+      data: { workflowId }
+    })
 
-    // 7️⃣ RETURN AUTHORITATIVE NEXT STATE
+    // 7️⃣ RETURN IMMEDIATE 202 ACCEPTED
     return NextResponse.json({
       success: true,
       workflow_id: workflowId,
-      workflow_state: nextState,
-      total_clusters: validationSummary.total_clusters,
-      valid_clusters: validationSummary.valid_clusters,
-      invalid_clusters: validationSummary.invalid_clusters,
-      completed_at: new Date().toISOString()
-    })
+      workflow_state: 'step_7_validation', // Still in idle until worker processes
+      status: 'triggered',
+      message: 'Cluster validation triggered. Check workflow state for progress.'
+    }, { status: 202 })
 
   } catch (error) {
     console.error('Cluster validation failed:', error)

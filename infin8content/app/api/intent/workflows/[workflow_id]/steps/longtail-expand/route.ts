@@ -127,15 +127,9 @@ export async function POST(
 
     console.log(`[LongtailExpand] Starting long-tail expansion for workflow ${workflowId}`)
 
-    // 6️⃣ NON-BLOCKING TRIGGER (replace blocking business logic)
-    // Transition to running state FIRST
-    await WorkflowFSM.transition(
-      workflowId,
-      'LONGTAIL_START',
-      { userId: currentUser.id }
-    )
-
+    // 6️⃣ NON-BLOCKING TRIGGER (async only)
     // Send Inngest event for async processing
+    // Worker will handle FSM transition via guardAndStart()
     await inngest.send({
       name: 'intent.step4.longtails',
       data: { workflowId }
@@ -147,9 +141,9 @@ export async function POST(
     return NextResponse.json({
       success: true,
       workflow_id: workflowId,
-      workflow_state: 'step_4_longtails_running',
-      status: 'started',
-      message: 'Long-tail expansion started. Check workflow state for progress.'
+      workflow_state: 'step_4_longtails', // Still in idle until worker processes
+      status: 'triggered',
+      message: 'Long-tail expansion triggered. Check workflow state for progress.'
     }, { status: 202 })
 
   } catch (error) {

@@ -12,6 +12,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
+import { inngest } from '@/lib/inngest/client'
 import { KeywordClusterer } from '@/lib/services/intent-engine/keyword-clusterer'
 import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
 import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
@@ -180,23 +181,21 @@ export async function POST(
       )
     }
 
-    // 6️⃣ FSM TRANSITION (ONLY STATE CHANGE POINT)
-    const nextState = await WorkflowFSM.transition(
-      workflowId,
-      'CLUSTERING_START',
-      { userId: currentUser.id }
-    )
+    // 6️⃣ INNGEST EVENT DISPATCH (async trigger)
+    // Worker will handle FSM transition via guardAndStart()
+    await inngest.send({
+      name: 'intent.step6.clustering',
+      data: { workflowId }
+    })
 
-    // 7️⃣ RETURN AUTHORITATIVE NEXT STATE
+    // 7️⃣ RETURN IMMEDIATE 202 ACCEPTED
     return NextResponse.json({
       success: true,
       workflow_id: workflowId,
-      workflow_state: nextState,
-      cluster_count: clusterResult.cluster_count,
-      keywords_clustered: clusterResult.keywords_clustered,
-      avg_cluster_size: clusterResult.avg_cluster_size,
-      completed_at: clusterResult.completed_at
-    })
+      workflow_state: 'step_6_clustering', // Still in idle until worker processes
+      status: 'triggered',
+      message: 'Topic clustering triggered. Check workflow state for progress.'
+    }, { status: 202 })
 
   } catch (error) {
     console.error('Topic clustering failed:', error)
