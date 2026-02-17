@@ -12,6 +12,13 @@ const AllowedResetStates: WorkflowState[] = [
   'step_7_validation'
 ]
 
+export interface TransitionResult {
+  ok: boolean
+  previousState: WorkflowState
+  nextState: WorkflowState
+  applied: boolean
+}
+
 export class WorkflowFSM {
   static async getCurrentState(workflowId: string): Promise<WorkflowState> {
     const supabase = createServiceRoleClient()
@@ -41,12 +48,13 @@ export class WorkflowFSM {
     workflowId: string,
     event: WorkflowEvent,
     options?: { resetTo?: WorkflowState; userId?: string }
-  ): Promise<WorkflowState> {
+  ): Promise<TransitionResult> {
+
     const supabase = createServiceRoleClient()
 
     const currentState = await this.getCurrentState(workflowId)
 
-    // 🔒 PRODUCTION HARDENING: Cannot reset completed workflows
+    // 🔒 Prevent resetting completed workflows
     if (currentState === 'completed' && event === 'HUMAN_RESET') {
       throw new Error('Cannot reset completed workflow')
     }
@@ -69,14 +77,23 @@ export class WorkflowFSM {
     }
 
     if (!nextState) {
-      throw new Error(
-        `Invalid transition: ${currentState} -> ${event}` 
-      )
+      // No valid transition - return deterministic result, never throw
+      return {
+        ok: false,
+        previousState: currentState,
+        nextState: currentState,
+        applied: false
+      }
     }
 
-    // 🟢 Idempotency guard
+    // 🟢 Idempotency shortcut
     if (currentState === nextState) {
-      return currentState
+      return {
+        ok: true,
+        previousState: currentState,
+        nextState: currentState,
+        applied: false // No change needed
+      }
     }
 
     // 🔒 Atomic update
@@ -86,22 +103,60 @@ export class WorkflowFSM {
       .eq('id', workflowId)
       .eq('state', currentState)
       .select('state')
-      .single() as { data: { state: string } | null; error: any }
+      .single()
 
     if (error || !data) {
-      throw new Error('Transition failed due to concurrent modification')
+
+      // ⚠️ Possible concurrent modification — re-check state
+      const { data: latest } = await supabase
+        .from('intent_workflows')
+        .select('state')
+        .eq('id', workflowId)
+        .single() as { data: { state: string } | null; error: any }
+
+      if (!latest) {
+        throw new Error('Workflow missing during transition reconciliation')
+      }
+
+      // If state changed, another worker transitioned it.
+      if (latest.state !== currentState) {
+        return {
+          ok: false,
+          previousState: currentState,
+          nextState: latest.state as WorkflowState,
+          applied: false
+        }
+      }
+
+      // If still same state, transition was not valid - return deterministic result
+      return {
+        ok: false,
+        previousState: currentState,
+        nextState: currentState,
+        applied: false
+      }
     }
 
-    // 📜 Audit log
-    await supabase.from('workflow_state_transitions').insert({
-      workflow_id: workflowId,
-      previous_state: currentState,
-      event,
-      next_state: nextState,
-      triggered_by: options?.userId ?? null,
-      created_at: new Date().toISOString()
-    })
+    // 📜 Audit log (non-blocking safe)
+    try {
+      await supabase.from('workflow_state_transitions').insert({
+        workflow_id: workflowId,
+        previous_state: currentState,
+        event,
+        next_state: nextState,
+        triggered_by: options?.userId ?? null,
+        created_at: new Date().toISOString()
+      })
+    } catch (auditError) {
+      // Never fail transition due to audit log
+      console.warn('[FSM] Audit log failed:', auditError)
+    }
 
-    return nextState
+    return {
+      ok: true,
+      previousState: currentState,
+      nextState: nextState,
+      applied: true
+    }
   }
 }

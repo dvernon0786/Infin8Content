@@ -65,7 +65,12 @@ describe('Inngest + FSM Integration', () => {
   describe('Step 4 Route Integration', () => {
     it('should transition to running state and send Inngest event', async () => {
       // Mock the FSM transition
-      vi.spyOn(WorkflowFSM, 'transition').mockResolvedValue('step_4_longtails_running')
+      vi.spyOn(WorkflowFSM, 'transition').mockResolvedValue({
+        ok: true,
+        previousState: 'step_4_longtails',
+        nextState: 'step_4_longtails_running',
+        applied: true
+      })
       
       // Mock Inngest send
       const sendSpy = vi.spyOn(inngest, 'send').mockResolvedValue({ ids: ['test-event-id'] })
@@ -123,8 +128,18 @@ describe('Inngest + FSM Integration', () => {
     it('should simulate complete Step 4 execution', async () => {
       // Mock FSM state transitions
       const transitionSpy = vi.spyOn(WorkflowFSM, 'transition')
-        .mockResolvedValueOnce('step_4_longtails_running')
-        .mockResolvedValueOnce('step_5_filtering')
+        .mockResolvedValueOnce({
+          ok: true,
+          previousState: 'step_4_longtails',
+          nextState: 'step_4_longtails_running',
+          applied: true
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          previousState: 'step_4_longtails_running',
+          nextState: 'step_5_filtering',
+          applied: true
+        })
       
       // Mock Inngest event sending
       const sendSpy = vi.spyOn(inngest, 'send').mockResolvedValue({ ids: ['test-event-id'] })
@@ -161,7 +176,12 @@ describe('Inngest + FSM Integration', () => {
       
       // Mock FSM transition to failed
       const transitionSpy = vi.spyOn(WorkflowFSM, 'transition')
-        .mockResolvedValue('step_4_longtails_failed')
+        .mockResolvedValue({
+          ok: true,
+          previousState: 'step_4_longtails_running',
+          nextState: 'step_4_longtails_failed',
+          applied: true
+        })
       
       // This would test the worker's error handling
       // The worker should:
