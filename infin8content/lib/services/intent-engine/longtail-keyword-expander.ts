@@ -10,7 +10,6 @@
  */
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
-import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 import { 
   RetryPolicy, 
   isRetryableError, 
