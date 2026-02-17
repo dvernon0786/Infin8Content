@@ -48,16 +48,16 @@ describe('Inngest + FSM Integration', () => {
     
     it('should have all required transition events', () => {
       const expectedEvents = [
-        'LONGTAIL_START', 'LONGTAIL_SUCCESS', 'LONGTAIL_FAILED', 'LONGTAIL_RETRY',
-        'FILTERING_START', 'FILTERING_SUCCESS', 'FILTERING_FAILED', 'FILTERING_RETRY',
-        'CLUSTERING_START', 'CLUSTERING_SUCCESS', 'CLUSTERING_FAILED', 'CLUSTERING_RETRY',
-        'VALIDATION_START', 'VALIDATION_SUCCESS', 'VALIDATION_FAILED', 'VALIDATION_RETRY',
-        'SUBTOPICS_START', 'SUBTOPICS_SUCCESS', 'SUBTOPICS_FAILED', 'SUBTOPICS_RETRY',
-        'ARTICLES_START', 'ARTICLES_SUCCESS', 'ARTICLES_FAILED', 'ARTICLES_RETRY'
+        'LONGTAILS_COMPLETED',
+        'FILTERING_COMPLETED',
+        'CLUSTERING_COMPLETED',
+        'VALIDATION_COMPLETED',
+        'SUBTOPICS_APPROVED',
+        'ARTICLES_COMPLETED'
       ]
       
       expectedEvents.forEach(event => {
-        expect(event).toMatch(/^[A-Z_]+_(START|SUCCESS|FAILED|RETRY)$/)
+        expect(event).toMatch(/^[A-Z_]+_(COMPLETED|APPROVED)$/)
       })
     })
   })
@@ -71,13 +71,13 @@ describe('Inngest + FSM Integration', () => {
       const sendSpy = vi.spyOn(inngest, 'send').mockResolvedValue({ ids: ['test-event-id'] })
       
       // Simulate the route logic (simplified test)
-      await WorkflowFSM.transition(workflowId, 'LONGTAIL_START')
+      await WorkflowFSM.transition(workflowId, 'LONGTAILS_COMPLETED')
       await inngest.send({
         name: 'intent.step4.longtails',
         data: { workflowId }
       })
       
-      expect(WorkflowFSM.transition).toHaveBeenCalledWith(workflowId, 'LONGTAIL_START')
+      expect(WorkflowFSM.transition).toHaveBeenCalledWith(workflowId, 'LONGTAILS_COMPLETED')
       expect(sendSpy).toHaveBeenCalledWith({
         name: 'intent.step4.longtails',
         data: { workflowId }
@@ -136,7 +136,7 @@ describe('Inngest + FSM Integration', () => {
       expect(workers.step4Longtails).toBeDefined()
       
       // Simulate the route trigger
-      await WorkflowFSM.transition(workflowId, 'LONGTAIL_START')
+      await WorkflowFSM.transition(workflowId, 'LONGTAILS_COMPLETED')
       await inngest.send({
         name: 'intent.step4.longtails',
         data: { workflowId }
@@ -145,7 +145,7 @@ describe('Inngest + FSM Integration', () => {
       // Verify the expected sequence:
       // 1. FSM transition to running
       // 2. Inngest event sent
-      expect(transitionSpy).toHaveBeenCalledWith(workflowId, 'LONGTAIL_START')
+      expect(transitionSpy).toHaveBeenCalledWith(workflowId, 'LONGTAILS_COMPLETED')
       expect(sendSpy).toHaveBeenCalledWith({
         name: 'intent.step4.longtails',
         data: { workflowId }
