@@ -48,19 +48,63 @@ async function getOrganizationId(workflowId: string): Promise<string> {
    SHARED HELPER
 ================================================================ */
 
+interface GuardResult {
+  skipped: boolean
+  reason?: string
+  currentState?: string
+}
+
 async function guardAndStart(
   workflowId: string,
   expectedIdleState: string,
-  startEvent: WorkflowEvent
-) {
+  startEvent: string
+): Promise<GuardResult> {
+  // 1️⃣ Read current state
   const currentState = await WorkflowFSM.getCurrentState(workflowId)
 
+  // 2️⃣ If not idle → skip safely
   if (currentState !== expectedIdleState) {
-    return { skipped: true, currentState }
+    return {
+      skipped: true,
+      reason: 'not-in-idle-state',
+      currentState,
+    }
   }
 
-  await WorkflowFSM.transition(workflowId, startEvent)
-  return { skipped: false }
+  // 3️⃣ Try atomic transition
+  try {
+    await WorkflowFSM.transition(workflowId, startEvent as any, {
+      userId: 'system',
+    })
+
+    return { skipped: false }
+
+  } catch (err: any) {
+    // 4️⃣ Handle expected concurrency conflict
+    if (
+      typeof err?.message === 'string' &&
+      err.message.includes('concurrent modification')
+    ) {
+      // Another worker beat us to it.
+      // Re-check state to confirm.
+
+      const latestState = await WorkflowFSM.getCurrentState(workflowId)
+
+      // If already transitioned to running → safe skip
+      if (latestState !== expectedIdleState) {
+        return {
+          skipped: true,
+          reason: 'already-started-by-other-worker',
+          currentState: latestState,
+        }
+      }
+
+      // If still idle, this is unexpected → bubble error
+    }
+
+    // Real error
+    throw err
+  }
 }
 
 // Step 4: Long-tail Keyword Expansion
