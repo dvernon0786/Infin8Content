@@ -45,48 +45,9 @@ async function getOrganizationId(workflowId: string): Promise<string> {
 }
 
 /* ================================================================
-   SHARED HELPER
+   PURE MINIMAL WORKERS
+   No guardAndStart - transition-driven only
 ================================================================ */
-
-interface GuardResult {
-  skipped: boolean
-  reason?: string
-  currentState?: string
-}
-
-async function guardAndStart(
-  workflowId: string,
-  expectedIdleState: string,
-  startEvent: string
-): Promise<GuardResult> {
-  // 1️⃣ Read current state
-  const currentState = await WorkflowFSM.getCurrentState(workflowId)
-
-  // 2️⃣ If not idle → skip safely
-  if (currentState !== expectedIdleState) {
-    return {
-      skipped: true,
-      reason: 'not-in-idle-state',
-      currentState,
-    }
-  }
-
-  // 3️⃣ Try atomic transition
-  const result = await WorkflowFSM.transition(workflowId, startEvent as any, {
-    userId: 'system',
-  })
-
-  // 4️⃣ Handle deterministic result
-  if (!result.applied) {
-    return {
-      skipped: true,
-      reason: 'transition-not-applied',
-      currentState: result.nextState,
-    }
-  }
-
-  return { skipped: false }
-}
 
 // Step 4: Long-tail Keyword Expansion
 export const step4Longtails = inngest.createFunction(
@@ -99,17 +60,18 @@ export const step4Longtails = inngest.createFunction(
   async ({ event }) => {
     const workflowId = event.data.workflowId
 
-    const guard = await guardAndStart(
-      workflowId,
-      'step_4_longtails',
-      'LONGTAIL_START'
-    )
-    if (guard.skipped) return guard
+    // Pure minimal: transition-driven only (no race window)
+    const start = await WorkflowFSM.transition(workflowId, 'LONGTAIL_START', {
+      userId: 'system'
+    })
+    if (!start.applied) return { skipped: true }
 
     try {
       await expandSeedKeywordsToLongtails(workflowId)
 
-      await WorkflowFSM.transition(workflowId, 'LONGTAIL_SUCCESS')
+      await WorkflowFSM.transition(workflowId, 'LONGTAIL_SUCCESS', {
+        userId: 'system'
+      })
 
       await inngest.send({
         name: 'intent.step5.filtering',
@@ -119,7 +81,9 @@ export const step4Longtails = inngest.createFunction(
       return { success: true }
 
     } catch (error) {
-      await WorkflowFSM.transition(workflowId, 'LONGTAIL_FAILED')
+      await WorkflowFSM.transition(workflowId, 'LONGTAIL_FAILED', {
+        userId: 'system'
+      })
       throw error
     }
   }
@@ -136,19 +100,20 @@ export const step5Filtering = inngest.createFunction(
   async ({ event }) => {
     const workflowId = event.data.workflowId
 
-    const guard = await guardAndStart(
-      workflowId,
-      'step_5_filtering',
-      'FILTERING_START'
-    )
-    if (guard.skipped) return guard
+    // Pure minimal: transition-driven only (no race window)
+    const start = await WorkflowFSM.transition(workflowId, 'FILTERING_START', {
+      userId: 'system'
+    })
+    if (!start.applied) return { skipped: true }
 
     try {
       const orgId = await getOrganizationId(workflowId)
       const filterOptions = await getOrganizationFilterSettings(orgId)
       await filterKeywords(workflowId, orgId, filterOptions)
 
-      await WorkflowFSM.transition(workflowId, 'FILTERING_SUCCESS')
+      await WorkflowFSM.transition(workflowId, 'FILTERING_SUCCESS', {
+        userId: 'system'
+      })
 
       await inngest.send({
         name: 'intent.step6.clustering',
@@ -158,7 +123,9 @@ export const step5Filtering = inngest.createFunction(
       return { success: true }
 
     } catch (error) {
-      await WorkflowFSM.transition(workflowId, 'FILTERING_FAILED')
+      await WorkflowFSM.transition(workflowId, 'FILTERING_FAILED', {
+        userId: 'system'
+      })
       throw error
     }
   }
@@ -175,18 +142,19 @@ export const step6Clustering = inngest.createFunction(
   async ({ event }) => {
     const workflowId = event.data.workflowId
 
-    const guard = await guardAndStart(
-      workflowId,
-      'step_6_clustering',
-      'CLUSTERING_START'
-    )
-    if (guard.skipped) return guard
+    // Pure minimal: transition-driven only (no race window)
+    const start = await WorkflowFSM.transition(workflowId, 'CLUSTERING_START', {
+      userId: 'system'
+    })
+    if (!start.applied) return { skipped: true }
 
     try {
       const clusterer = new KeywordClusterer()
       await clusterer.clusterKeywords(workflowId)
 
-      await WorkflowFSM.transition(workflowId, 'CLUSTERING_SUCCESS')
+      await WorkflowFSM.transition(workflowId, 'CLUSTERING_SUCCESS', {
+        userId: 'system'
+      })
 
       await inngest.send({
         name: 'intent.step7.validation',
@@ -196,7 +164,9 @@ export const step6Clustering = inngest.createFunction(
       return { success: true }
 
     } catch (error) {
-      await WorkflowFSM.transition(workflowId, 'CLUSTERING_FAILED')
+      await WorkflowFSM.transition(workflowId, 'CLUSTERING_FAILED', {
+        userId: 'system'
+      })
       throw error
     }
   }
@@ -213,12 +183,11 @@ export const step7Validation = inngest.createFunction(
   async ({ event }) => {
     const workflowId = event.data.workflowId
 
-    const guard = await guardAndStart(
-      workflowId,
-      'step_7_validation',
-      'VALIDATION_START'
-    )
-    if (guard.skipped) return guard
+    // Pure minimal: transition-driven only (no race window)
+    const start = await WorkflowFSM.transition(workflowId, 'VALIDATION_START', {
+      userId: 'system'
+    })
+    if (!start.applied) return { skipped: true }
 
     try {
       const supabase = createServiceRoleClient()
@@ -251,7 +220,9 @@ export const step7Validation = inngest.createFunction(
       return { success: true }
 
     } catch (error) {
-      await WorkflowFSM.transition(workflowId, 'VALIDATION_FAILED')
+      await WorkflowFSM.transition(workflowId, 'VALIDATION_FAILED', {
+        userId: 'system'
+      })
       throw error
     }
   }
@@ -268,12 +239,11 @@ export const step8Subtopics = inngest.createFunction(
   async ({ event }) => {
     const workflowId = event.data.workflowId
 
-    const guard = await guardAndStart(
-      workflowId,
-      'step_8_subtopics',
-      'SUBTOPICS_START'
-    )
-    if (guard.skipped) return guard
+    // Pure minimal: transition-driven only (no race window)
+    const start = await WorkflowFSM.transition(workflowId, 'SUBTOPICS_START', {
+      userId: 'system'
+    })
+    if (!start.applied) return { skipped: true }
 
     try {
       const supabase = createServiceRoleClient()
@@ -303,7 +273,9 @@ export const step8Subtopics = inngest.createFunction(
       return { success: true }
 
     } catch (error) {
-      await WorkflowFSM.transition(workflowId, 'SUBTOPICS_FAILED')
+      await WorkflowFSM.transition(workflowId, 'SUBTOPICS_FAILED', {
+        userId: 'system'
+      })
       throw error
     }
   }
@@ -320,22 +292,25 @@ export const step9Articles = inngest.createFunction(
   async ({ event }) => {
     const workflowId = event.data.workflowId
 
-    const guard = await guardAndStart(
-      workflowId,
-      'step_9_articles',
-      'ARTICLES_START'
-    )
-    if (guard.skipped) return guard
+    // Pure minimal: transition-driven only (no race window)
+    const start = await WorkflowFSM.transition(workflowId, 'ARTICLES_START', {
+      userId: 'system'
+    })
+    if (!start.applied) return { skipped: true }
 
     try {
       await queueArticlesForWorkflow(workflowId)
 
-      await WorkflowFSM.transition(workflowId, 'ARTICLES_SUCCESS')
+      await WorkflowFSM.transition(workflowId, 'ARTICLES_SUCCESS', {
+        userId: 'system'
+      })
 
       return { success: true, articlesQueued: true }
 
     } catch (error) {
-      await WorkflowFSM.transition(workflowId, 'ARTICLES_FAILED')
+      await WorkflowFSM.transition(workflowId, 'ARTICLES_FAILED', {
+        userId: 'system'
+      })
       throw error
     }
   }
