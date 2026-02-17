@@ -344,7 +344,7 @@ export async function expandSeedKeywordsToLongtails(
 
   if (workflowError || !workflow) throw new Error('Workflow not found')
 
-  const orgId = workflow.organization_id
+  const orgId = (workflow as unknown as { organization_id: string }).organization_id
 
   const { data: seeds, error: seedsError } = await supabase
     .from('keywords')
@@ -373,13 +373,14 @@ export async function expandSeedKeywordsToLongtails(
     throw new Error('Organization not found')
   }
 
-  const locationCode = resolveLocationCode(org.keyword_settings?.target_region)
-  const languageCode = resolveLanguageCode(org.keyword_settings?.language_code)
+  const orgData = org as { keyword_settings?: { target_region?: string; language_code?: string } }
+  const locationCode = resolveLocationCode(orgData.keyword_settings?.target_region)
+  const languageCode = resolveLanguageCode(orgData.keyword_settings?.language_code)
 
   const results = []
   let total = 0
 
-  for (const seed of seeds as SeedKeyword[]) {
+  for (const seed of seeds as unknown as SeedKeyword[]) {
     const expansion = await expandSingleSeed(seed, locationCode, languageCode)
 
     await persistLongtails(workflowId, seed, expansion.longtails)
