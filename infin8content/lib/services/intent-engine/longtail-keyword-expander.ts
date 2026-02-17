@@ -314,7 +314,7 @@ async function persistLongtails(
     keyword_difficulty: lt.keyword_difficulty,
     cpc: lt.cpc,
     parent_seed_keyword_id: seed.id,
-    longtail_status: 'complete',
+    longtail_status: 'not_started',
     subtopics_status: 'not_started',
     article_status: 'not_started'
   }))
@@ -324,6 +324,12 @@ async function persistLongtails(
   if (error && error.code !== '23505') {
     throw new Error(`Bulk insert failed: ${error.message}`)
   }
+
+  // ✅ IMPORTANT — use 'completed', not 'complete'
+  await supabase
+    .from('keywords')
+    .update({ longtail_status: 'completed' })
+    .eq('id', seed.id)
 }
 
 /* -------------------------------------------------------------------------- */
