@@ -41,11 +41,13 @@ const mockRetryWithPolicy = vi.mocked(retryWithPolicy)
 const mockEmitAnalyticsEvent = vi.mocked(emitAnalyticsEvent)
 
 describe('expandSeedKeywordsToLongtails', () => {
+  let mockSupabase: any
+
   beforeEach(() => {
     vi.clearAllMocks()
     
     // Default Supabase mock setup
-    const mockSupabase = {
+    mockSupabase = {
       from: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -54,7 +56,7 @@ describe('expandSeedKeywordsToLongtails', () => {
       insert: vi.fn()
     }
     
-    mockCreateServiceRoleClient.mockReturnValue(mockSupabase as any)
+    mockCreateServiceRoleClient.mockReturnValue(mockSupabase)
     
     // Default retry policy success
     mockRetryWithPolicy.mockImplementation(async (fn) => await fn())
@@ -62,7 +64,6 @@ describe('expandSeedKeywordsToLongtails', () => {
 
   it('expands seeds successfully with all sources', async () => {
     // Mock workflow query
-    const mockSupabase = mockCreateServiceRoleClient() as any
     mockSupabase.single.mockResolvedValueOnce({ organization_id: 'org-123' })
     
     // Mock seeds query
@@ -225,7 +226,6 @@ describe('expandSeedKeywordsToLongtails', () => {
 
   it('handles no seeds found gracefully', async () => {
     // Mock workflow query
-    const mockSupabase = mockCreateServiceRoleClient()
     mockSupabase.single.mockResolvedValueOnce({ organization_id: 'org-123' })
     
     // Mock empty seeds query
@@ -243,7 +243,6 @@ describe('expandSeedKeywordsToLongtails', () => {
 
   it('handles partial source failures gracefully', async () => {
     // Mock workflow query
-    const mockSupabase = mockCreateServiceRoleClient()
     mockSupabase.single.mockResolvedValueOnce({ organization_id: 'org-123' })
     
     // Mock seeds query
@@ -316,7 +315,6 @@ describe('expandSeedKeywordsToLongtails', () => {
 
   it('handles workflow not found error', async () => {
     // Mock workflow query failure
-    const mockSupabase = mockCreateServiceRoleClient()
     mockSupabase.single.mockResolvedValueOnce(null)
 
     await expect(expandSeedKeywordsToLongtails('invalid-workflow')).rejects.toThrow('Workflow not found')
@@ -324,7 +322,6 @@ describe('expandSeedKeywordsToLongtails', () => {
 
   it('handles duplicate key errors in bulk insert', async () => {
     // Mock workflow query
-    const mockSupabase = mockCreateServiceRoleClient()
     mockSupabase.single.mockResolvedValueOnce({ organization_id: 'org-123' })
     
     // Mock seeds query
@@ -389,7 +386,6 @@ describe('expandSeedKeywordsToLongtails', () => {
 
   it('uses correct geo settings from organization', async () => {
     // Mock workflow query
-    const mockSupabase = mockCreateServiceRoleClient()
     mockSupabase.single.mockResolvedValueOnce({ organization_id: 'org-123' })
     
     // Mock seeds query
