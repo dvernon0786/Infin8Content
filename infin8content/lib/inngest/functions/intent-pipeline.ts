@@ -301,9 +301,8 @@ export const step9Articles = inngest.createFunction(
       await queueArticlesForWorkflow(workflowId)
 
       await WorkflowFSM.transition(workflowId, 'ARTICLES_SUCCESS')
-      await WorkflowFSM.transition(workflowId, 'WORKFLOW_COMPLETED')
 
-      return { success: true, completed: true }
+      return { success: true, articlesQueued: true }
 
     } catch (error) {
       await WorkflowFSM.transition(workflowId, 'ARTICLES_FAILED')
