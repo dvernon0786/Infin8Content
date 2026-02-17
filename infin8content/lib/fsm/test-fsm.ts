@@ -8,11 +8,11 @@ async function testFSM() {
     console.log('Testing FSM methods...')
     
     // Test canTransition
-    const canTransition = WorkflowFSM.canTransition('step_4_longtails', 'LONGTAILS_COMPLETED')
-    console.log('Can transition step_4_longtails -> LONGTAILS_COMPLETED:', canTransition)
+    const canTransition = WorkflowFSM.canTransition('step_4_longtails', 'LONGTAIL_SUCCESS')
+    console.log('Can transition step_4_longtails -> LONGTAIL_SUCCESS:', canTransition)
     
-    const invalidTransition = WorkflowFSM.canTransition('step_2_competitors', 'LONGTAILS_COMPLETED')
-    console.log('Can transition step_2_competitors -> LONGTAILS_COMPLETED (should be false):', invalidTransition)
+    const invalidTransition = WorkflowFSM.canTransition('step_2_competitors', 'LONGTAIL_SUCCESS')
+    console.log('Can transition step_2_competitors -> LONGTAIL_SUCCESS (should be false):', invalidTransition)
     
     // Test getAllowedEvents
     const allowedEvents = WorkflowFSM.getAllowedEvents('step_4_longtails')

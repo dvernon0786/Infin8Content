@@ -74,7 +74,7 @@ export async function POST(
     }
 
     // 4️⃣ STRICT FSM GUARD
-    if (!WorkflowFSM.canTransition(currentState as any, 'FILTERING_COMPLETED')) {
+    if (!WorkflowFSM.canTransition(currentState as any, 'FILTERING_SUCCESS')) {
       return NextResponse.json(
         {
           error: 'INVALID_STATE',
@@ -126,7 +126,7 @@ export async function POST(
     // 6️⃣ FSM TRANSITION (ONLY STATE CHANGE POINT)
     const nextState = await WorkflowFSM.transition(
       workflowId,
-      'FILTERING_COMPLETED',
+      'FILTERING_SUCCESS',
       { userId: currentUser.id }
     )
 
