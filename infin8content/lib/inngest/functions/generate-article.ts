@@ -321,7 +321,7 @@ async function checkAndCompleteWorkflow(
       console.log(`[WorkflowCompletion] All articles completed for workflow ${workflowId}, completing via FSM`)
 
       // SINGLE TERMINAL AUTHORITY: FSM transition only
-      await WorkflowFSM.transition(workflowId, 'ARTICLES_SUCCESS', {
+      await WorkflowFSM.transition(workflowId, 'ARTICLES_COMPLETED', {
         userId: 'system'
       })
       
