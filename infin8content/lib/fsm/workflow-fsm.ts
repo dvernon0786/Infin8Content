@@ -12,6 +12,13 @@ const AllowedResetStates: WorkflowState[] = [
   'step_7_validation'
 ]
 
+export interface TransitionResult {
+  ok: boolean
+  previousState: WorkflowState
+  nextState: WorkflowState
+  applied: boolean
+}
+
 export class WorkflowFSM {
   static async getCurrentState(workflowId: string): Promise<WorkflowState> {
     const supabase = createServiceRoleClient()
@@ -41,7 +48,7 @@ export class WorkflowFSM {
     workflowId: string,
     event: WorkflowEvent,
     options?: { resetTo?: WorkflowState; userId?: string }
-  ): Promise<WorkflowState> {
+  ): Promise<TransitionResult> {
 
     const supabase = createServiceRoleClient()
 
@@ -70,12 +77,23 @@ export class WorkflowFSM {
     }
 
     if (!nextState) {
-      throw new Error(`Invalid transition: ${currentState} -> ${event}`)
+      // No valid transition - return deterministic result, never throw
+      return {
+        ok: false,
+        previousState: currentState,
+        nextState: currentState,
+        applied: false
+      }
     }
 
     // 🟢 Idempotency shortcut
     if (currentState === nextState) {
-      return currentState
+      return {
+        ok: true,
+        previousState: currentState,
+        nextState: currentState,
+        applied: false // No change needed
+      }
     }
 
     // 🔒 Atomic update
@@ -102,11 +120,21 @@ export class WorkflowFSM {
 
       // If state changed, another worker transitioned it.
       if (latest.state !== currentState) {
-        return latest.state as WorkflowState
+        return {
+          ok: false,
+          previousState: currentState,
+          nextState: latest.state as WorkflowState,
+          applied: false
+        }
       }
 
-      // If still same state, something is genuinely wrong
-      throw new Error('FSM transition failed unexpectedly')
+      // If still same state, transition was not valid - return deterministic result
+      return {
+        ok: false,
+        previousState: currentState,
+        nextState: currentState,
+        applied: false
+      }
     }
 
     // 📜 Audit log (non-blocking safe)
@@ -124,6 +152,11 @@ export class WorkflowFSM {
       console.warn('[FSM] Audit log failed:', auditError)
     }
 
-    return nextState
+    return {
+      ok: true,
+      previousState: currentState,
+      nextState: nextState,
+      applied: true
+    }
   }
 }

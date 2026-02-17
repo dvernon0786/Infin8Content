@@ -167,9 +167,10 @@ export async function processHumanApproval(
   // FSM TRANSITION: Handle decision through state machine ONLY
   if (decision === 'approved') {
     // Approved: Advance to Step 9 (Article Generation) via FSM
-    finalState = await WorkflowFSM.transition(workflowId, 'HUMAN_SUBTOPICS_APPROVED', { 
+    const result = await WorkflowFSM.transition(workflowId, 'HUMAN_SUBTOPICS_APPROVED', { 
       userId: currentUser.id 
     })
+    finalState = result.nextState
   } else if (decision === 'rejected' && reset_to_step) {
     // Rejected: Reset to specified step via FSM
     // 🔁 REGRESSION EXCEPTION: Human approval can reset workflow
@@ -178,10 +179,11 @@ export async function processHumanApproval(
     // - Only steps 1-7 allowed as reset targets
     // - FSM validates reset targets
     const resetState = RESET_STEP_MAP[reset_to_step]
-    finalState = await WorkflowFSM.transition(workflowId, 'HUMAN_RESET', { 
+    const resetResult = await WorkflowFSM.transition(workflowId, 'HUMAN_RESET', { 
       userId: currentUser.id,
       resetTo: resetState
     })
+    finalState = resetResult.nextState
   } else {
     throw new Error('Invalid approval decision')
   }

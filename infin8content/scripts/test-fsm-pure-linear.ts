@@ -83,12 +83,12 @@ async function callFSMTransition(workflowId: string, event: string): Promise<boo
 
   try {
     // Direct FSM transition - bypass all business logic
-    const nextState = await WorkflowFSM.transition(workflowId, event as any)
+    const result = await WorkflowFSM.transition(workflowId, event as any)
     
     const after = await WorkflowFSM.getCurrentState(workflowId)
     console.log(`   After: ${after}`)
 
-    if (nextState !== after) {
+    if (result.nextState !== after) {
       console.error('❌ State mismatch after transition')
       return false
     }
