@@ -1,6 +1,6 @@
 /**
- * Unit Tests for Long-Tail Keyword Expander Service
- * Story 35.1: Expand Seed Keywords into Long-Tail Keywords (4-Source Model)
+ * Unit Tests for Long-Tail Keyword Expander Service (Production-Grade)
+ * Tests the public API contract: expandSeedKeywordsToLongtails(workflowId)
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
@@ -10,617 +10,445 @@ vi.mock('@/lib/supabase/server', () => ({
   createServiceRoleClient: vi.fn()
 }))
 
-// Mock the longtail-keyword-expander service
-const mockFetchRelatedKeywords = vi.fn()
-const mockExpandSeedKeywordsToLongtails = vi.fn()
-
-vi.mock('@/lib/services/intent-engine/longtail-keyword-expander', () => ({
-  LONGTAIL_RETRY_POLICY: {
-    maxAttempts: 3,
-    initialDelayMs: 2000,
-    backoffMultiplier: 2,
-    maxDelayMs: 8000
-  },
-  fetchRelatedKeywords: mockFetchRelatedKeywords,
-  expandSeedKeywordsToLongtails: mockExpandSeedKeywordsToLongtails
+// Mock retry utils
+vi.mock('@/lib/services/intent-engine/retry-utils', () => ({
+  retryWithPolicy: vi.fn()
 }))
 
-// Set default implementations
-mockFetchRelatedKeywords.mockImplementation(async (keyword: string, locationId: number, language: string) => {
-  throw new Error('Default mock implementation - should be overridden in tests')
-})
+// Mock analytics
+vi.mock('@/lib/services/analytics/event-emitter', () => ({
+  emitAnalyticsEvent: vi.fn()
+}))
 
-mockExpandSeedKeywordsToLongtails.mockImplementation(async (workflowId: string) => {
-  throw new Error('Default mock implementation - should be overridden in tests')
-})
+// Mock geo config
+vi.mock('@/lib/config/dataforseo-geo', () => ({
+  resolveLocationCode: vi.fn((region?: string) => region === 'Germany' ? 2276 : 2840),
+  resolveLanguageCode: vi.fn((lang?: string) => lang || 'en')
+}))
 
 // Mock fetch for DataForSEO API calls
 const mockFetch = vi.fn()
 ;(global as any).fetch = mockFetch
 
-// Mock sleep function to prevent actual delays in tests
-vi.mock('@/lib/services/intent-engine/retry-utils', async () => {
-  const actual = await vi.importActual('@/lib/services/intent-engine/retry-utils') as any
-  return {
-    ...actual,
-    sleep: vi.fn(() => Promise.resolve()),
-    retryWithPolicy: vi.fn(async (fn, policy, context) => {
-      // Use faster retry policy for tests
-      const testPolicy = {
-        maxAttempts: 2, // Fewer attempts for faster tests
-        initialDelayMs: 10, // Much shorter delay
-        backoffMultiplier: 2,
-        maxDelayMs: 20
-      }
-      return actual.retryWithPolicy(fn, testPolicy, context)
-    })
-  }
-})
+// Import after mocking
+import { expandSeedKeywordsToLongtails } from '@/lib/services/intent-engine/longtail-keyword-expander'
+import { createServiceRoleClient } from '@/lib/supabase/server'
+import { retryWithPolicy } from '@/lib/services/intent-engine/retry-utils'
+import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 
-// Mock DataForSEO API responses (with correct structure)
-const mockRelatedKeywordsResponse = {
-  version: '0.1.20230228',
-  status_code: 20000,  // CORRECT: DataForSEO success code
-  status_message: 'Ok.',
-  result_count: 3,
-  tasks_error: 0,  // ADD: tasks_error field
-  tasks: [{
-    id: '12345',
-    status_code: 20000,  // CORRECT: Task success code
-    status_message: 'Ok.',
-    result: [
-      {
-        items: [  // CORRECT: Nested items structure
-          {
-            keyword_data: {
-              keyword: 'best seo tools 2024',
-              keyword_info: {
-                search_volume: 1200,
-                competition: 50,
-                cpc: 2.50
-              },
-              keyword_properties: {
-                keyword_difficulty: 45
-              }
-            }
-          },
-          {
-            keyword_data: {
-              keyword: 'seo analysis software',
-              keyword_info: {
-                search_volume: 800,
-                competition: 30,
-                cpc: 1.80
-              },
-              keyword_properties: {
-                keyword_difficulty: 35
-              }
-            }
-          },
-          {
-            keyword_data: {
-              keyword: 'keyword research tools',
-              keyword_info: {
-                search_volume: 2500,
-                competition: 70,
-                cpc: 3.20
-              },
-              keyword_properties: {
-                keyword_difficulty: 60
-              }
-            }
-          }
-        ]
-      }
-    ]
-  }]
-}
+const mockCreateServiceRoleClient = vi.mocked(createServiceRoleClient)
+const mockRetryWithPolicy = vi.mocked(retryWithPolicy)
+const mockEmitAnalyticsEvent = vi.mocked(emitAnalyticsEvent)
 
-const mockSuggestionsResponse = {
-  version: '0.1.20230228',
-  status_code: 20000,  // CORRECT
-  status_message: 'Ok.',
-  result_count: 3,
-  tasks_error: 0,  // ADD
-  tasks: [{
-    id: '12346',
-    status_code: 20000,  // CORRECT
-    status_message: 'Ok.',
-    result: [
-      {
-        items: [  // CORRECT: Nested structure
-          {
-            keyword_data: {
-              keyword: 'seo optimization tips',
-              keyword_info: {
-                search_volume: 1800,
-                competition: 40,
-                cpc: 2.10
-              },
-              keyword_properties: {
-                keyword_difficulty: 40
-              }
-            }
-          },
-          {
-            keyword_data: {
-              keyword: 'search engine optimization',
-              keyword_info: {
-                search_volume: 5000,
-                competition: 80,
-                cpc: 4.50
-              },
-              keyword_properties: {
-                keyword_difficulty: 70
-              }
-            }
-          },
-          {
-            keyword_data: {
-              keyword: 'seo marketing strategy',
-              keyword_info: {
-                search_volume: 950,
-                competition: 60,
-                cpc: 2.80
-              },
-              keyword_properties: {
-                keyword_difficulty: 55
-              }
-            }
-          }
-        ]
-      }
-    ]
-  }]
-}
-
-const mockIdeasResponse = {
-  version: '0.1.20230228',
-  status_code: 20000,  // CORRECT
-  status_message: 'Ok.',
-  result_count: 3,
-  tasks_error: 0,  // ADD
-  tasks: [{
-    id: '12347',
-    status_code: 20000,  // CORRECT
-    status_message: 'Ok.',
-    result: [
-      {
-        items: [  // CORRECT: Nested structure
-          {
-            keyword_data: {
-              keyword: 'local seo services',
-              keyword_info: {
-                search_volume: 1600,
-                competition: 50,
-                cpc: 2.60
-              },
-              keyword_properties: {
-                keyword_difficulty: 45
-              }
-            }
-          },
-          {
-            keyword_data: {
-              keyword: 'technical seo audit',
-              keyword_info: {
-                search_volume: 720,
-                competition: 40,
-                cpc: 1.90
-              },
-              keyword_properties: {
-                keyword_difficulty: 38
-              }
-            }
-          },
-          {
-            keyword_data: {
-              keyword: 'content seo strategy',
-              keyword_info: {
-                search_volume: 1100,
-                competition: 60,
-                cpc: 2.30
-              },
-              keyword_properties: {
-                keyword_difficulty: 52
-              }
-            }
-          }
-        ]
-      }
-    ]
-  }]
-}
-
-const mockAutocompleteResponse = {
-  version: '0.1.20230228',
-  status_code: 20000,  // CORRECT
-  status_message: 'Ok.',
-  result_count: 3,
-  tasks_error: 0,  // ADD
-  tasks: [{
-    id: '12348',
-    status_code: 20000,  // CORRECT
-    status_message: 'Ok.',
-    result: [
-      {
-        items: [  // CORRECT: Nested structure (autocomplete is different)
-          { keyword: 'seo tools for beginners' },
-          { keyword: 'seo tools free' },
-          { keyword: 'seo tools comparison' }
-        ]
-      }
-    ]
-  }]
-}
-
-describe('Long-Tail Keyword Expander', () => {
+describe('expandSeedKeywordsToLongtails', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
-    // Set up environment variables
-    vi.stubEnv('DATAFORSEO_LOGIN', 'test-login')
-    vi.stubEnv('DATAFORSEO_PASSWORD', 'test-password')
+    // Default Supabase mock setup
+    const mockSupabase = {
+      from: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      single: vi.fn(),
+      insert: vi.fn()
+    }
+    
+    mockCreateServiceRoleClient.mockReturnValue(mockSupabase as any)
+    
+    // Default retry policy success
+    mockRetryWithPolicy.mockImplementation(async (fn) => await fn())
   })
 
-  describe('Retry Policy Configuration', () => {
-    it('should have correct retry policy configuration', async () => {
-      const { LONGTAIL_RETRY_POLICY } = await import('@/lib/services/intent-engine/longtail-keyword-expander')
+  it('expands seeds successfully with all sources', async () => {
+    // Mock workflow query
+    const mockSupabase = mockCreateServiceRoleClient() as any
+    mockSupabase.single.mockResolvedValueOnce({ organization_id: 'org-123' })
+    
+    // Mock seeds query
+    mockSupabase.single.mockResolvedValueOnce([
+      {
+        id: 'seed-1',
+        keyword: 'seo tools',
+        organization_id: 'org-123',
+        competitor_url_id: 'comp-1'
+      }
+    ])
+    
+    // Mock organization query
+    mockSupabase.single.mockResolvedValueOnce({
+      keyword_settings: {
+        target_region: 'United States',
+        language_code: 'en'
+      }
+    })
+    
+    // Mock bulk insert
+    mockSupabase.insert.mockResolvedValueOnce({ error: null })
+    
+    // Mock DataForSEO API responses
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('related_keywords')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            status_code: 20000,
+            status_message: 'OK',
+            tasks: [{
+              status_code: 20000,
+              status_message: 'OK',
+              result: [{
+                items: [
+                  {
+                    keyword_data: {
+                      keyword: 'best seo tools',
+                      keyword_info: {
+                        search_volume: 1200,
+                        competition: 45,
+                        cpc: 2.50
+                      },
+                      keyword_properties: {
+                        keyword_difficulty: 50
+                      }
+                    }
+                  }
+                ]
+              }]
+            }]
+          })
+        })
+      }
+      if (url.includes('keyword_suggestions')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            status_code: 20000,
+            status_message: 'OK',
+            tasks: [{
+              status_code: 20000,
+              status_message: 'OK',
+              result: [{
+                items: [
+                  {
+                    keyword_data: {
+                      keyword: 'seo software',
+                      keyword_info: {
+                        search_volume: 800,
+                        competition: 30,
+                        cpc: 1.80
+                      },
+                      keyword_properties: {
+                        keyword_difficulty: 40
+                      }
+                    }
+                  }
+                ]
+              }]
+            }]
+          })
+        })
+      }
+      if (url.includes('keyword_ideas')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            status_code: 20000,
+            status_message: 'OK',
+            tasks: [{
+              status_code: 20000,
+              status_message: 'OK',
+              result: [{
+                items: [
+                  {
+                    keyword_data: {
+                      keyword: 'free seo tools',
+                      keyword_info: {
+                        search_volume: 1500,
+                        competition: 60,
+                        cpc: 2.20
+                      },
+                      keyword_properties: {
+                        keyword_difficulty: 55
+                      }
+                    }
+                  }
+                ]
+              }]
+            }]
+          })
+        })
+      }
+      if (url.includes('autocomplete')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            status_code: 20000,
+            status_message: 'OK',
+            tasks: [{
+              status_code: 20000,
+              status_message: 'OK',
+              result: [{
+                items: [
+                  { keyword: 'seo tools free' },
+                  { keyword: 'seo tools list' },
+                  { keyword: 'top seo tools' }
+                ]
+              }]
+            }]
+          })
+        })
+      }
       
-      expect(LONGTAIL_RETRY_POLICY.maxAttempts).toBe(3)
-      expect(LONGTAIL_RETRY_POLICY.initialDelayMs).toBe(2000)
-      expect(LONGTAIL_RETRY_POLICY.backoffMultiplier).toBe(2)
-      expect(LONGTAIL_RETRY_POLICY.maxDelayMs).toBe(8000)
-      
-      // Verify exponential sequence: 2s, 4s, 8s
-      const delay1 = LONGTAIL_RETRY_POLICY.initialDelayMs
-      const delay2 = delay1 * LONGTAIL_RETRY_POLICY.backoffMultiplier
-      const delay3 = Math.min(delay2 * LONGTAIL_RETRY_POLICY.backoffMultiplier, LONGTAIL_RETRY_POLICY.maxDelayMs)
-      
-      expect(delay1).toBe(2000)
-      expect(delay2).toBe(4000)
-      expect(delay3).toBe(8000)
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ status_code: 20000, status_message: 'OK', tasks: [] })
+      })
+    })
+
+    const result = await expandSeedKeywordsToLongtails('workflow-123')
+
+    expect(result.seeds_processed).toBe(1)
+    expect(result.total_longtails_created).toBeGreaterThan(0)
+    expect(result.results).toHaveLength(1)
+    expect(result.workflow_id).toBe('workflow-123')
+    
+    // Verify analytics event was emitted
+    expect(mockEmitAnalyticsEvent).toHaveBeenCalledWith({
+      event_type: 'longtail_keywords_expanded',
+      timestamp: expect.any(String),
+      organization_id: 'org-123',
+      workflow_id: 'workflow-123',
+      seed_keyword: 'seo tools',
+      longtails_created: expect.any(Number)
     })
   })
 
-  describe('DataForSEO API Integration', () => {
-    it('should fetch related keywords successfully', async () => {
-      mockFetchRelatedKeywords.mockResolvedValueOnce([
-        {
-          keyword: 'best seo tools 2024',
-          search_volume: 1200,
-          competition_level: 'low',
-          competition_index: 50,
-          keyword_difficulty: 45,
-          cpc: 2.50,
-          source: 'related'
-        },
-        {
-          keyword: 'seo tools for beginners',
-          search_volume: 800,
-          competition_level: 'low',
-          competition_index: 40,
-          keyword_difficulty: 35,
-          cpc: 1.80,
-          source: 'related'
-        },
-        {
-          keyword: 'free seo tools',
-          search_volume: 1500,
-          competition_level: 'medium',
-          competition_index: 60,
-          keyword_difficulty: 50,
-          cpc: 2.20,
-          source: 'related'
-        }
-      ])
+  it('handles no seeds found gracefully', async () => {
+    // Mock workflow query
+    const mockSupabase = mockCreateServiceRoleClient()
+    mockSupabase.single.mockResolvedValueOnce({ organization_id: 'org-123' })
+    
+    // Mock empty seeds query
+    mockSupabase.single.mockResolvedValueOnce([])
 
-      const { fetchRelatedKeywords } = await import('@/lib/services/intent-engine/longtail-keyword-expander')
-      const result = await fetchRelatedKeywords('seo tools', 2840, 'en')
+    const result = await expandSeedKeywordsToLongtails('workflow-123')
 
-      expect(result).toHaveLength(3)
-      expect(result[0]).toEqual({
-        keyword: 'best seo tools 2024',
-        search_volume: 1200,
-        competition_level: 'low',
-        competition_index: 50,
-        keyword_difficulty: 45,
-        cpc: 2.50,
-        source: 'related'
-      })
-
-      expect(mockFetchRelatedKeywords).toHaveBeenCalledWith('seo tools', 2840, 'en')
-    })
-
-    it('should handle API errors gracefully', async () => {
-      mockFetchRelatedKeywords.mockRejectedValueOnce(new Error('API Error'))
-
-      const { fetchRelatedKeywords } = await import('@/lib/services/intent-engine/longtail-keyword-expander')
-
-      try {
-        await fetchRelatedKeywords('seo tools', 2840, 'en')
-        expect(true).toBe(false) // Should not reach here
-      } catch (error) {
-        expect(error).toBeDefined()
-      }
-    })
-
-    it('should retry on retryable errors', async () => {
-      // First call fails with rate limit, second succeeds
-      mockFetchRelatedKeywords
-        .mockRejectedValueOnce(new Error('Rate limit exceeded'))
-        .mockResolvedValueOnce([
-          {
-            keyword: 'best seo tools 2024',
-            search_volume: 1200,
-            competition_level: 'low',
-            competition_index: 50,
-            keyword_difficulty: 45,
-            cpc: 2.50,
-            source: 'related'
-          }
-        ])
-
-      const { fetchRelatedKeywords } = await import('@/lib/services/intent-engine/longtail-keyword-expander')
-      
-      // The mock will throw on first call, so we expect it to fail
-      // In a real scenario, the retry logic would handle this, but since we're mocking
-      // the service function directly, we can't test the retry behavior
-      await expect(fetchRelatedKeywords('seo tools', 2840, 'en'))
-        .rejects.toThrow('Rate limit exceeded')
-      
-      // Verify the mock was called
-      expect(mockFetchRelatedKeywords).toHaveBeenCalledTimes(1)
-    })
-
-    it('should not retry on non-retryable errors', async () => {
-      mockFetchRelatedKeywords.mockRejectedValueOnce(new Error('Unauthorized'))
-
-      const { fetchRelatedKeywords } = await import('@/lib/services/intent-engine/longtail-keyword-expander')
-
-      try {
-        await fetchRelatedKeywords('seo tools', 2840, 'en')
-        expect(true).toBe(false) // Should not reach here
-      } catch (error) {
-        expect(error).toBeDefined()
-      }
-    })
+    expect(result.seeds_processed).toBe(0)
+    expect(result.total_longtails_created).toBe(0)
+    expect(result.results).toHaveLength(0)
+    
+    // Should not call analytics for no seeds
+    expect(mockEmitAnalyticsEvent).not.toHaveBeenCalled()
   })
 
-  describe('Error Handling', () => {
-    it('should handle DataForSEO credential errors', async () => {
-      vi.stubEnv('DATAFORSEO_LOGIN', '')
-      vi.stubEnv('DATAFORSEO_PASSWORD', '')
-
-      // Override the mock to throw the expected error
-      mockFetchRelatedKeywords.mockImplementation(async () => {
-        throw new Error('DataForSEO credentials not configured')
+  it('handles partial source failures gracefully', async () => {
+    // Mock workflow query
+    const mockSupabase = mockCreateServiceRoleClient()
+    mockSupabase.single.mockResolvedValueOnce({ organization_id: 'org-123' })
+    
+    // Mock seeds query
+    mockSupabase.single.mockResolvedValueOnce([
+      {
+        id: 'seed-1',
+        keyword: 'seo tools',
+        organization_id: 'org-123',
+        competitor_url_id: 'comp-1'
+      }
+    ])
+    
+    // Mock organization query
+    mockSupabase.single.mockResolvedValueOnce({
+      keyword_settings: {
+        target_region: 'United States',
+        language_code: 'en'
+      }
+    })
+    
+    // Mock bulk insert
+    mockSupabase.insert.mockResolvedValueOnce({ error: null })
+    
+    // Mock DataForSEO with some failures
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('related_keywords')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            status_code: 20000,
+            status_message: 'OK',
+            tasks: [{
+              status_code: 20000,
+              status_message: 'OK',
+              result: [{
+                items: [
+                  {
+                    keyword_data: {
+                      keyword: 'best seo tools',
+                      keyword_info: {
+                        search_volume: 1200,
+                        competition: 45,
+                        cpc: 2.50
+                      },
+                      keyword_properties: {
+                        keyword_difficulty: 50
+                      }
+                    }
+                  }
+                ]
+              }]
+            }]
+          })
+        })
+      }
+      // Other sources fail
+      return Promise.resolve({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error'
       })
-
-      const { fetchRelatedKeywords } = await import('@/lib/services/intent-engine/longtail-keyword-expander')
-
-      await expect(fetchRelatedKeywords('seo tools', 2840, 'en'))
-        .rejects.toThrow('Unauthorized')
     })
 
-    it('should handle malformed API responses', async () => {
-      // Override the mock to throw the expected error
-      mockFetchRelatedKeywords.mockImplementation(async () => {
-        throw new Error('Related keywords API failed')
-      })
+    const result = await expandSeedKeywordsToLongtails('workflow-123')
 
-      const { fetchRelatedKeywords } = await import('@/lib/services/intent-engine/longtail-keyword-expander')
-
-      await expect(fetchRelatedKeywords('seo tools', 2840, 'en'))
-        .rejects.toThrow('Related keywords API failed')
-    })
+    expect(result.seeds_processed).toBe(1)
+    expect(result.total_longtails_created).toBe(1) // Only from related keywords
+    expect(result.results[0].errors).toHaveLength(3) // 3 failed sources
   })
 
-  describe('Seed Approval Guard (Story 35.2a)', () => {
-    it('should fail when no approval exists', async () => {
-      const { createServiceRoleClient } = await import('@/lib/supabase/server')
-      
-      // Reset the mock to clear any previous calls
-      mockExpandSeedKeywordsToLongtails.mockClear()
-      
-      // Mock approval lookup to return no data
-      const mockApprovalChain = {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: null,
-                error: new Error('No rows found')
-              })
-            })
-          })
-        })
+  it('handles workflow not found error', async () => {
+    // Mock workflow query failure
+    const mockSupabase = mockCreateServiceRoleClient()
+    mockSupabase.single.mockResolvedValueOnce(null)
+
+    await expect(expandSeedKeywordsToLongtails('invalid-workflow')).rejects.toThrow('Workflow not found')
+  })
+
+  it('handles duplicate key errors in bulk insert', async () => {
+    // Mock workflow query
+    const mockSupabase = mockCreateServiceRoleClient()
+    mockSupabase.single.mockResolvedValueOnce({ organization_id: 'org-123' })
+    
+    // Mock seeds query
+    mockSupabase.single.mockResolvedValueOnce([
+      {
+        id: 'seed-1',
+        keyword: 'seo tools',
+        organization_id: 'org-123',
+        competitor_url_id: 'comp-1'
       }
-      
-      const mockSupabase = {
-        from: vi.fn((table: string) => {
-          if (table === 'intent_approvals') {
-            return mockApprovalChain
-          }
-          // Should never reach other tables if approval fails
-          throw new Error(`Unexpected table access: ${table}`)
-        })
+    ])
+    
+    // Mock organization query
+    mockSupabase.single.mockResolvedValueOnce({
+      keyword_settings: {
+        target_region: 'United States',
+        language_code: 'en'
       }
-      
-      vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
-
-      // Override the mock to simulate the database lookup logic
-      mockExpandSeedKeywordsToLongtails.mockImplementation(async (workflowId: string) => {
-        // Simulate the approval lookup
-        const approvalResult = await mockSupabase.from('intent_approvals')?.select()?.eq()?.eq()?.single()
-        
-        if (!approvalResult?.data) {
-          throw new Error('Seed keywords must be approved before long-tail expansion')
-        }
-        
-        return { success: true }
-      })
-
-      const { expandSeedKeywordsToLongtails } = await import('@/lib/services/intent-engine/longtail-keyword-expander')
-
-      await expect(expandSeedKeywordsToLongtails('test-workflow-id', 'user-123'))
-        .rejects.toThrow('Seed keywords must be approved before long-tail expansion')
-      
-      // Verify approval lookup was attempted
-      expect(mockSupabase.from).toHaveBeenCalledWith('intent_approvals')
+    })
+    
+    // Mock bulk insert with duplicate error
+    mockSupabase.insert.mockResolvedValueOnce({ 
+      error: { code: '23505', message: 'duplicate key' }
     })
 
-    it('should fail when approval decision is rejected', async () => {
-      const { createServiceRoleClient } = await import('@/lib/supabase/server')
-      
-      // Reset the mock to clear any previous calls
-      mockExpandSeedKeywordsToLongtails.mockClear()
-      
-      // Mock approval lookup to return rejected decision
-      const mockApprovalChain = {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: { decision: 'rejected' },
-                error: null
-              })
-            })
-          })
-        })
-      }
-      
-      const mockSupabase = {
-        from: vi.fn((table: string) => {
-          if (table === 'intent_approvals') {
-            return mockApprovalChain
-          }
-          // Should never reach other tables if approval is rejected
-          throw new Error(`Unexpected table access: ${table}`)
-        })
-      }
-      
-      vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
-
-      // Override the mock to simulate the database lookup logic
-      mockExpandSeedKeywordsToLongtails.mockImplementation(async (workflowId: string) => {
-        // Simulate the approval lookup
-        const approvalResult = await mockSupabase.from('intent_approvals')?.select()?.eq()?.eq()?.single()
-        
-        if (!approvalResult?.data) {
-          throw new Error('Seed keywords must be approved before long-tail expansion')
-        }
-        
-        if (approvalResult.data.decision === 'rejected') {
-          throw new Error('Seed keywords must be approved before long-tail expansion')
-        }
-        
-        return { success: true }
+    // Mock successful DataForSEO response
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        status_code: 20000,
+        status_message: 'OK',
+        tasks: [{
+          status_code: 20000,
+          status_message: 'OK',
+          result: [{
+            items: [
+              {
+                keyword_data: {
+                  keyword: 'best seo tools',
+                  keyword_info: {
+                    search_volume: 1200,
+                    competition: 45,
+                    cpc: 2.50
+                  },
+                  keyword_properties: {
+                    keyword_difficulty: 50
+                  }
+                }
+              }
+            ]
+          }]
+        }]
       })
-
-      const { expandSeedKeywordsToLongtails } = await import('@/lib/services/intent-engine/longtail-keyword-expander')
-
-      await expect(expandSeedKeywordsToLongtails('test-workflow-id', 'user-123'))
-        .rejects.toThrow('Seed keywords must be approved before long-tail expansion')
-      
-      // Verify approval lookup was attempted
-      expect(mockSupabase.from).toHaveBeenCalledWith('intent_approvals')
     })
 
-    it('should proceed to expansion when approval decision is approved', async () => {
-      const { createServiceRoleClient } = await import('@/lib/supabase/server')
-      
-      // Mock approval lookup to return approved decision
-      const mockApprovalChain = {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: { decision: 'approved' },
-                error: null
-              })
-            })
-          })
-        })
-      }
-      
-      // Mock workflow lookup
-      const mockWorkflowChain = {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: { organization_id: 'org-123', status: 'step_3_seeds' },
-              error: null
-            })
-          })
-        })
-      }
-      
-      // Mock keywords lookup (empty - no seeds to expand)
-      const mockKeywordsChain = {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            is: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({
-                data: [],
-                error: null
-              })
-            })
-          })
-        })
-      }
-      
-      const mockSupabase = {
-        from: vi.fn((table: string) => {
-          if (table === 'intent_approvals') {
-            return mockApprovalChain
-          }
-          if (table === 'intent_workflows') {
-            return mockWorkflowChain
-          }
-          if (table === 'keywords') {
-            return mockKeywordsChain
-          }
-          throw new Error(`Unexpected table access: ${table}`)
-        })
-      }
-      
-      vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
+    // Should not throw on duplicate key errors
+    const result = await expandSeedKeywordsToLongtails('workflow-123')
 
-      // Override the mock to simulate the database lookup logic
-      mockExpandSeedKeywordsToLongtails.mockImplementation(async (workflowId: string) => {
-        // Simulate the approval lookup
-        const approvalResult = await mockSupabase.from('intent_approvals')?.select()?.eq()?.eq()?.single()
-        
-        if (!approvalResult?.data) {
-          throw new Error('Seed keywords must be approved before long-tail expansion')
-        }
-        
-        if (approvalResult.data.decision === 'rejected') {
-          throw new Error('Seed keywords must be approved before long-tail expansion')
-        }
-        
-        // Check for seed keywords
-        const workflowResult = await mockSupabase.from('intent_workflows')?.select()?.eq()?.single()
-        const keywordsResult = await mockSupabase.from('keywords')?.select()?.eq()?.is()?.eq()
-        
-        if (!keywordsResult?.data || keywordsResult.data.length === 0) {
-          throw new Error('No seed keywords found for long-tail expansion')
-        }
-        
-        return { success: true }
-      })
+    expect(result.seeds_processed).toBe(1)
+    expect(result.total_longtails_created).toBe(1)
+  })
 
-      const { expandSeedKeywordsToLongtails } = await import('@/lib/services/intent-engine/longtail-keyword-expander')
-
-      // Should fail with "no seeds" error, not "approval required" error
-      // This proves the guard passed and execution proceeded
-      await expect(expandSeedKeywordsToLongtails('test-workflow-id', 'user-123'))
-        .rejects.toThrow('No seed keywords found for long-tail expansion')
-      
-      // Verify all lookups were attempted in order
-      expect(mockSupabase.from).toHaveBeenCalledWith('intent_approvals')
-      expect(mockSupabase.from).toHaveBeenCalledWith('intent_workflows')
+  it('uses correct geo settings from organization', async () => {
+    // Mock workflow query
+    const mockSupabase = mockCreateServiceRoleClient()
+    mockSupabase.single.mockResolvedValueOnce({ organization_id: 'org-123' })
+    
+    // Mock seeds query
+    mockSupabase.single.mockResolvedValueOnce([
+      {
+        id: 'seed-1',
+        keyword: 'seo tools',
+        organization_id: 'org-123',
+        competitor_url_id: 'comp-1'
+      }
+    ])
+    
+    // Mock organization query with German settings
+    mockSupabase.single.mockResolvedValueOnce({
+      keyword_settings: {
+        target_region: 'Germany',
+        language_code: 'de'
+      }
     })
+    
+    // Mock bulk insert
+    mockSupabase.insert.mockResolvedValueOnce({ error: null })
+    
+    // Mock DataForSEO response
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        status_code: 20000,
+        status_message: 'OK',
+        tasks: [{
+          status_code: 20000,
+          status_message: 'OK',
+          result: [{
+            items: [
+              {
+                keyword_data: {
+                  keyword: 'seo tools deutsch',
+                  keyword_info: {
+                    search_volume: 800,
+                    competition: 40,
+                    cpc: 1.50
+                  },
+                  keyword_properties: {
+                    keyword_difficulty: 45
+                  }
+                }
+              }
+            ]
+          }]
+        }]
+      })
+    })
+
+    await expandSeedKeywordsToLongtails('workflow-123')
+
+    // Verify DataForSEO was called with German location code (2276)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('location_code=2276'),
+      expect.any(Object)
+    )
   })
 })
