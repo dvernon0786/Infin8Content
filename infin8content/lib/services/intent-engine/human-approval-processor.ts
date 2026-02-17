@@ -166,7 +166,7 @@ export async function processHumanApproval(
   // FSM TRANSITION: Handle decision through state machine ONLY
   if (decision === 'approved') {
     // Approved: Advance to Step 9 (Article Generation) via FSM
-    finalState = await WorkflowFSM.transition(workflowId, 'SUBTOPICS_APPROVED', { 
+    finalState = await WorkflowFSM.transition(workflowId, 'SUBTOPICS_SUCCESS', { 
       userId: currentUser.id 
     })
   } else if (decision === 'rejected' && reset_to_step) {
