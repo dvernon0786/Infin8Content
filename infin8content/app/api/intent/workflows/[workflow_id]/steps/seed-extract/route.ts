@@ -86,7 +86,7 @@ export async function GET(
         user_selected,
         decision_confidence,
         selection_source,
-        selection_timestamp
+        selection_updated_at
       `, { count: 'exact' })
       .eq('organization_id', organizationId)
       .eq('workflow_id', workflowId)
@@ -267,8 +267,8 @@ export async function POST(
       .from('keywords')
       .update({
         user_selected: false,
-        selection_source: 'bulk_deselect',
-        selection_timestamp: new Date().toISOString()
+        selection_source: null,
+        selection_updated_at: new Date().toISOString()
       })
       .eq('organization_id', organizationId)
       .eq('workflow_id', workflowId)
@@ -286,8 +286,8 @@ export async function POST(
       .from('keywords')
       .update({
         user_selected: true,
-        selection_source: 'user',
-        selection_timestamp: new Date().toISOString()
+        selection_source: 'human',
+        selection_updated_at: new Date().toISOString()
       })
       .eq('organization_id', organizationId)
       .eq('workflow_id', workflowId)
