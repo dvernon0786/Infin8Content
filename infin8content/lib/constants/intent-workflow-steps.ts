@@ -42,6 +42,7 @@ export const WORKFLOW_PROGRESS_MAP: Record<WorkflowState, number> = {
   step_7_validation: 75,
   step_8_subtopics: 85,
   step_9_articles: 95,
+  step_9_articles_queued: 98,
   completed: 100,
   
   // Running states (same progress as base)
@@ -73,6 +74,7 @@ export const WORKFLOW_STEP_DESCRIPTIONS: Record<WorkflowState, string> = {
   step_7_validation: 'Cluster Validation',
   step_8_subtopics: 'Subtopic Generation',
   step_9_articles: 'Article Generation',
+  step_9_articles_queued: 'Articles Queued',
   completed: 'Completed',
   
   // Running states

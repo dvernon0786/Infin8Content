@@ -19,6 +19,7 @@ export type WorkflowState =
   | 'step_8_subtopics_failed'
   | 'step_9_articles'
   | 'step_9_articles_running'
+  | 'step_9_articles_queued'
   | 'step_9_articles_failed'
   | 'completed'
 
@@ -64,6 +65,10 @@ export type WorkflowEvent =
   | 'ARTICLES_SUCCESS'
   | 'ARTICLES_FAILED'
   | 'ARTICLES_RETRY'
+
+  // Human Approval Events (separate from automated pipeline)
+  | 'HUMAN_SUBTOPICS_APPROVED'
+  | 'HUMAN_SUBTOPICS_REJECTED'
 
   // Final
   | 'WORKFLOW_COMPLETED'

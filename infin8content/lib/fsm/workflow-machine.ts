@@ -59,7 +59,8 @@ export const WorkflowTransitions: Record<
 
   /* ===================== STEP 8 ===================== */
   step_8_subtopics: {
-    SUBTOPICS_START: 'step_8_subtopics_running'
+    SUBTOPICS_START: 'step_8_subtopics_running',
+    HUMAN_SUBTOPICS_APPROVED: 'step_9_articles'
   },
   step_8_subtopics_running: {
     SUBTOPICS_SUCCESS: 'step_9_articles',
@@ -74,8 +75,11 @@ export const WorkflowTransitions: Record<
     ARTICLES_START: 'step_9_articles_running'
   },
   step_9_articles_running: {
-    ARTICLES_SUCCESS: 'completed',
+    ARTICLES_SUCCESS: 'step_9_articles_queued',
     ARTICLES_FAILED: 'step_9_articles_failed'
+  },
+  step_9_articles_queued: {
+    WORKFLOW_COMPLETED: 'completed'
   },
   step_9_articles_failed: {
     ARTICLES_RETRY: 'step_9_articles_running'
