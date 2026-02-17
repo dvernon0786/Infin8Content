@@ -169,6 +169,24 @@ function mapCompetitionLevel(value: unknown): 'low' | 'medium' | 'high' {
   return 'high'
 }
 
+function normalizeCompetitionIndex(value: unknown): number {
+  const num = Number(value ?? 0)
+  if (isNaN(num)) return 0
+
+  // 0–1 scale → convert to 0–100
+  if (num <= 1) {
+    return Math.round(num * 100)
+  }
+
+  return Math.round(num)
+}
+
+function normalizeInteger(value: unknown): number {
+  const num = Number(value ?? 0)
+  if (isNaN(num)) return 0
+  return Math.round(num)
+}
+
 function normalizeKeyword(keyword: string): string {
   return keyword.trim().toLowerCase()
 }
@@ -235,8 +253,10 @@ async function fetchSource(
       keyword: data.keyword,
       search_volume: info.search_volume ?? 0,
       competition_level: mapCompetitionLevel(info.competition),
-      competition_index: Number(info.competition ?? 0),
-      keyword_difficulty: data?.keyword_properties?.keyword_difficulty ?? 0,
+      competition_index: normalizeCompetitionIndex(info.competition),
+      keyword_difficulty: normalizeInteger(
+        data?.keyword_properties?.keyword_difficulty
+      ),
       cpc: info.cpc,
       source
     }
