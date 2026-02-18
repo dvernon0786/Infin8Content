@@ -11,8 +11,7 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
-import { inngest } from '@/lib/inngest/client'
-import { transitionAndTrigger } from '@/lib/fsm/boundary-transition-wrapper'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 
 export interface SubtopicApprovalRequest {
   decision: 'approved' | 'rejected'
@@ -314,18 +313,17 @@ async function checkAndTriggerWorkflowCompletion(
 
   console.log(`🔥🔥🔥 [SubtopicApproval] ALL KEYWORDS APPROVED - Triggering Step 9 for workflow ${workflowId}`)
 
-  // Bulletproof boundary transition - emission guaranteed
-  const result = await transitionAndTrigger(
+  // Unified transition - automatic event emission guaranteed
+  const result = await transitionWithAutomation(
     workflowId,
-    'step_8_subtopics',
     'HUMAN_SUBTOPICS_APPROVED',
     userId
   )
 
   if (!result.success) {
-    console.log(`⚠️⚠️⚠️ [SubtopicApproval] Boundary transition failed for ${workflowId}: ${result.error}`)
+    console.log(`⚠️⚠️⚠️ [SubtopicApproval] Unified transition failed for ${workflowId}: ${result.error}`)
     return
   }
 
-  console.log(`✅✅✅ [SubtopicApproval] Boundary transition completed for workflow ${workflowId}`)
+  console.log(`✅✅✅ [SubtopicApproval] Unified transition completed for workflow ${workflowId}`)
 }

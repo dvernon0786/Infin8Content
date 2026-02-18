@@ -12,7 +12,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
-import { transitionAndTrigger } from '@/lib/fsm/boundary-transition-wrapper'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
 import { inngest } from '@/lib/inngest/client'
@@ -304,10 +304,9 @@ export async function POST(
     // 6. FSM STATE TRANSITION (DETERMINISTIC ENGINE)
     // --------------------------------------------------
     try {
-      // Bulletproof boundary transition - emission guaranteed
-      const result = await transitionAndTrigger(
+      // Unified transition - automatic event emission guaranteed
+      const result = await transitionWithAutomation(
         workflowId, 
-        'step_3_seeds', 
         'SEEDS_APPROVED', 
         currentUser.id
       )
@@ -322,7 +321,7 @@ export async function POST(
         )
       }
 
-      console.log(`✅✅✅ [SeedExtract] Boundary transition completed for workflow ${workflowId}`)
+      console.log(`✅✅✅ [SeedExtract] Unified transition completed for workflow ${workflowId}`)
     } catch (error) {
       return NextResponse.json(
         { 
