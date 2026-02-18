@@ -14,6 +14,7 @@ import { AuditAction } from '@/types/audit'
 import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
+import { inngest } from '@/lib/inngest/client'
 
 export async function GET(
   request: NextRequest,
@@ -303,6 +304,14 @@ export async function POST(
     // --------------------------------------------------
     try {
       await WorkflowFSM.transition(workflowId, 'SEEDS_APPROVED', { userId: currentUser.id })
+      
+      // Trigger Step 4 automation
+      console.log(`🔥🔥🔥 [SeedExtract] SENDING INNGEST EVENT: intent.step4.longtails for workflow ${workflowId}`)
+      await inngest.send({
+        name: 'intent.step4.longtails',
+        data: { workflowId }
+      })
+      console.log(`✅✅✅ [SeedExtract] INNGEST EVENT SENT SUCCESSFULLY for workflow ${workflowId}`)
     } catch (error) {
       return NextResponse.json(
         { 
