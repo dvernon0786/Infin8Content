@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,7 +10,7 @@ import { requireWorkflowStepAccess } from '@/lib/guards/workflow-step-gate'
 import { getStepFromState } from '@/lib/services/workflow-engine/workflow-progression'
 
 interface WorkflowProgressPageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 const PIPELINE_STAGES = [
@@ -26,7 +26,7 @@ export default function WorkflowProgressPage({ params }: WorkflowProgressPagePro
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const workflowId = params.id
+  const workflowId = use(params).id
 
   // Poll workflow state every 2 seconds
   useEffect(() => {
