@@ -10,7 +10,7 @@ import { requireWorkflowStepAccess } from '@/lib/guards/workflow-step-gate'
 import { getStepFromState } from '@/lib/services/workflow-engine/workflow-progression'
 
 interface WorkflowProgressPageProps {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 const PIPELINE_STAGES = [
@@ -26,49 +26,65 @@ export default function WorkflowProgressPage({ params }: WorkflowProgressPagePro
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const workflowId = params.then(p => p.id)
+  const workflowId = params.id
 
   // Poll workflow state every 2 seconds
   useEffect(() => {
     let interval: NodeJS.Timeout
+    let isMounted = true
 
     const pollWorkflow = async () => {
       try {
-        const id = await workflowId
-        const response = await fetch(`/api/intent/workflows/${id}`)
+        const response = await fetch(`/api/intent/workflows/${workflowId}`)
         
         if (!response.ok) {
           throw new Error('Failed to fetch workflow status')
         }
 
         const data = await response.json()
+        if (!isMounted) return
+        
         setWorkflow(data.workflow)
 
-        const currentStep = getStepFromState(data.workflow.state)
+        const state = data.workflow?.state
+        if (!state) return
+
+        // Stop polling on failure states
+        if (state.includes('_FAILED')) {
+          clearInterval(interval)
+          return
+        }
+
+        const currentStep = getStepFromState(state)
 
         // Redirect to Step 8 when pipeline is complete
         if (currentStep === 8) {
-          router.replace(`/workflows/${id}/steps/8`)
+          clearInterval(interval)
+          router.replace(`/workflows/${workflowId}/steps/8`)
           return
         }
 
         // Redirect to completion when everything is done
-        if (data.workflow.state === 'completed') {
-          router.replace(`/workflows/${id}/completed`)
+        if (state === 'completed') {
+          clearInterval(interval)
+          router.replace(`/workflows/${workflowId}/completed`)
           return
         }
 
       } catch (err: any) {
-        setError(err.message)
+        if (isMounted) setError(err.message)
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
 
     pollWorkflow()
     interval = setInterval(pollWorkflow, 2000)
 
-    return () => clearInterval(interval)
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
   }, [router, workflowId])
 
   if (loading) {
@@ -100,7 +116,10 @@ export default function WorkflowProgressPage({ params }: WorkflowProgressPagePro
     )
   }
 
-  const currentStep = getStepFromState(workflow.state)
+  const state = workflow?.state
+  if (!state) return null
+  
+  const currentStep = getStepFromState(state)
   const currentStage = PIPELINE_STAGES.find(s => s.step === currentStep)
   const failedStage = PIPELINE_STAGES.find(s => workflow.state.includes(`${s.state}_failed`))
 
@@ -183,9 +202,9 @@ export default function WorkflowProgressPage({ params }: WorkflowProgressPagePro
               <div>
                 <div className="flex justify-between text-sm text-muted-foreground mb-2">
                   <span>Progress</span>
-                  <span>{Math.round(((currentStep - 4) / 4) * 100)}%</span>
+                  <span>{Math.round(Math.min(((currentStep - 3) / 4) * 100, 100))}%</span>
                 </div>
-                <Progress value={((currentStep - 4) / 4) * 100} className="w-full" />
+                <Progress value={Math.min(((currentStep - 3) / 4) * 100, 100)} className="w-full" />
               </div>
 
               {/* Stage List */}
