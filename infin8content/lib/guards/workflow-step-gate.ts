@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getStepFromState, canAccessStep as canAccessWorkflowStep, getNextStep, getPreviousStep } from '@/lib/services/workflow-engine/workflow-progression'
-import { WorkflowState as StateMachineState } from '@/types/workflow-state'
+import { WorkflowState as StateMachineState } from '@/lib/fsm/workflow-events'
 
 export interface WorkflowState {
   id: string
@@ -49,12 +49,12 @@ export async function requireWorkflowStepAccess(workflowId: string, targetStep: 
   }
 
   // If workflow is completed, redirect to dashboard
-  if (workflowState.state === StateMachineState.COMPLETED) {
+  if (workflowState.state === 'completed') {
     redirect('/dashboard')
   }
 
   // If workflow is cancelled, redirect to dashboard
-  if (workflowState.state === StateMachineState.CANCELLED) {
+  if (workflowState.state === 'cancelled') {
     redirect('/dashboard')
   }
 

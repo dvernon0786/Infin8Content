@@ -105,18 +105,7 @@ export class WorkflowFSM {
       }
     }
 
-    // 🔍 DEBUG: Verify service role authentication
-    console.log('SERVICE ROLE KEY STARTS WITH:', process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(0, 10))
-    console.log('SUPABASE URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-    
-    const testUpdate = await supabase
-      .from('intent_workflows')
-      .update({ state: 'step_4_longtails_running' })
-      .eq('id', workflowId)
-
-    console.log('Manual update test:', testUpdate)
-
-    // 🔒 Atomic compare-and-swap - REQUIRED for safety
+    //  Atomic compare-and-swap - REQUIRED for safety
     const { data: updated } = await supabase
       .from('intent_workflows')
       .update({ state: nextState })
@@ -136,26 +125,12 @@ export class WorkflowFSM {
       }
     }
 
-    const { data: latest, error: latestError } = await supabase
-      .from('intent_workflows')
-      .select('state')
-      .eq('id', workflowId)
-      .single()
-
-    if (latestError || !latest) {
-      return {
-        ok: false,
-        applied: false,
-        previousState: currentState,
-        nextState: currentState
-      }
-    }
-
+    // Transition successful - return result without redundant read
     return {
       ok: true,
       applied: true,
       previousState: currentState,
-      nextState: (latest as any).state as WorkflowState
+      nextState
     }
   }
 }

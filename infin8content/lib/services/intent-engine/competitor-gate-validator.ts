@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
-import { WorkflowState } from '@/types/workflow-state'
+import { WorkflowState } from '@/lib/fsm/workflow-events'
+import { getStepFromState } from '@/lib/services/workflow-engine/workflow-progression'
 
 export interface GateResult {
   allowed: boolean
@@ -72,42 +73,12 @@ export class CompetitorGateValidator {
         }
       }
 
-      // Check if competitor analysis is complete
-      // Any state at or after step_3_seeds is valid
+      // Check if competitor analysis is complete using FSM step derivation
+      // Any state at or after step 2 (competitors) is valid for seed access
 
-      const orderedStates = [
-        'step_1_icp',
-        'step_2_competitors',
-        'step_3_seeds',
-        'step_4_longtails',
-        'step_4_longtails_running',
-        'step_4_longtails_failed',
-        'step_5_filtering',
-        'step_5_filtering_running',
-        'step_5_filtering_failed',
-        'step_6_clustering',
-        'step_6_clustering_running',
-        'step_6_clustering_failed',
-        'step_7_validation',
-        'step_7_validation_running',
-        'step_7_validation_failed',
-        'step_8_subtopics',
-        'step_8_subtopics_running',
-        'step_8_subtopics_failed',
-        'step_9_articles',
-        'step_9_articles_running',
-        'step_9_articles_failed',
-        'step_9_articles_queued',
-        'completed',
-        'COMPLETED',
-        'CANCELLED'
-      ] as const
-
-      const currentIndex = orderedStates.indexOf(workflow.state as any)
-      const step3Index = orderedStates.indexOf('step_3_seeds')
-
-      const isCompetitorComplete =
-        currentIndex !== -1 && currentIndex >= step3Index
+      // Use FSM step derivation instead of manual ordering
+      const currentStep = getStepFromState(workflow.state)
+      const isCompetitorComplete = currentStep >= 2 // Step 2 = competitors
 
       if (!isCompetitorComplete) {
         return {

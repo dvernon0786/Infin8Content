@@ -4,6 +4,9 @@ export const WorkflowTransitions: Record<
   WorkflowState,
   Partial<Record<WorkflowEvent, WorkflowState>>
 > = {
+  // Initial state
+  CREATED: {},
+
   // Step 1-3 (existing)
   step_1_icp: { ICP_COMPLETED: 'step_2_competitors' },
   step_2_competitors: { COMPETITORS_COMPLETED: 'step_3_seeds' },
@@ -87,6 +90,7 @@ export const WorkflowTransitions: Record<
 
   /* ===================== FINAL ===================== */
   completed: {},
+  cancelled: {},
 
   /* ===================== RESET ===================== */
   // HUMAN_RESET handled in WorkflowFSM.transition() with options
