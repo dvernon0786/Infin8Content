@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,7 +8,7 @@ import { CheckCircle, ArrowLeft, Download, Eye } from 'lucide-react'
 import { requireWorkflowStepAccess } from '@/lib/guards/workflow-step-gate'
 
 interface WorkflowCompletedPageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default function WorkflowCompletedPage({ params }: WorkflowCompletedPageProps) {
@@ -19,7 +19,7 @@ export default function WorkflowCompletedPage({ params }: WorkflowCompletedPageP
   useEffect(() => {
     const loadWorkflow = async () => {
       try {
-        const id = params.id
+        const id = use(params).id
         const response = await fetch(`/api/intent/workflows/${id}`)
         
         if (!response.ok) {
