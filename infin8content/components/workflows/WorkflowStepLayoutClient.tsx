@@ -157,11 +157,13 @@ export function WorkflowStepLayoutClient({
           </span>
 
           <Button
-            onClick={() =>
-              router.push(
-                `/workflows/${workflow.id}/steps/${currentStep}` 
-              )
-            }
+            onClick={() => {
+              if (currentStep >= 4 && currentStep <= 7) {
+                router.push(`/workflows/${workflow.id}/progress`)
+              } else {
+                router.push(`/workflows/${workflow.id}/steps/${currentStep}`)
+              }
+            }}
             disabled={currentStep >= 9}
           >
             Continue

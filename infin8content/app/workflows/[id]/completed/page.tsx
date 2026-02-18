@@ -8,7 +8,7 @@ import { CheckCircle, ArrowLeft, Download, Eye } from 'lucide-react'
 import { requireWorkflowStepAccess } from '@/lib/guards/workflow-step-gate'
 
 interface WorkflowCompletedPageProps {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 export default function WorkflowCompletedPage({ params }: WorkflowCompletedPageProps) {
@@ -19,7 +19,7 @@ export default function WorkflowCompletedPage({ params }: WorkflowCompletedPageP
   useEffect(() => {
     const loadWorkflow = async () => {
       try {
-        const id = await params
+        const id = params.id
         const response = await fetch(`/api/intent/workflows/${id}`)
         
         if (!response.ok) {
