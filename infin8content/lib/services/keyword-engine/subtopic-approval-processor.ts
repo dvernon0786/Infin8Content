@@ -10,6 +10,8 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
+import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
+import { inngest } from '@/lib/inngest/client'
 
 export interface SubtopicApprovalRequest {
   decision: 'approved' | 'rejected'
@@ -162,6 +164,12 @@ export async function processSubtopicApproval(
     userAgent: headers ? extractUserAgent(headers) : null,
   })
 
+  // 🔥 WORKFLOW-LEVEL APPROVAL CHECK
+  // Check if this was the final keyword approval needed to trigger Step 9
+  if (decision === 'approved') {
+    await checkAndTriggerWorkflowCompletion(keywordId, currentUser.org_id, currentUser.id)
+  }
+
   // Return success response
   const message = decision === 'approved' 
     ? 'Subtopics approved successfully'
@@ -238,4 +246,87 @@ export async function getApprovedKeywordIds(keywordIds: string[]): Promise<strin
   }>
 
   return approvals.map(approval => approval.entity_id)
+}
+
+/**
+ * Check if all keywords in the workflow have approved subtopics and trigger Step 9 if ready
+ * 
+ * @param keywordId - The keyword ID that was just approved
+ * @param organizationId - The organization ID for validation
+ * @param userId - The user ID for audit logging
+ */
+async function checkAndTriggerWorkflowCompletion(
+  keywordId: string,
+  organizationId: string,
+  userId: string
+): Promise<void> {
+  const supabase = createServiceRoleClient()
+
+  // Get the workflow ID from the keyword
+  const { data: keyword } = await supabase
+    .from('keywords')
+    .select('workflow_id')
+    .eq('id', keywordId)
+    .single()
+
+  if (!keyword) {
+    console.error(`[SubtopicApproval] Cannot find workflow for keyword ${keywordId}`)
+    return
+  }
+
+  const workflowId = (keyword as any).workflow_id
+
+  // Get current workflow state
+  const currentState = await WorkflowFSM.getCurrentState(workflowId)
+  
+  // Only proceed if workflow is in step_8_subtopics state
+  if (currentState !== 'step_8_subtopics') {
+    console.log(`[SubtopicApproval] Workflow ${workflowId} not in step_8_subtopics, current: ${currentState}`)
+    return
+  }
+
+  // Check if ALL keywords in this workflow have approved subtopics
+  const { data: allKeywords } = await supabase
+    .from('keywords')
+    .select('id, subtopics_status')
+    .eq('workflow_id', workflowId)
+
+  if (!allKeywords || allKeywords.length === 0) {
+    console.log(`[SubtopicApproval] No keywords found for workflow ${workflowId}`)
+    return
+  }
+
+  // Get all keyword IDs for this workflow
+  const workflowKeywordIds = allKeywords.map(k => (k as any).id)
+
+  // Get approved keyword IDs
+  const approvedKeywordIds = await getApprovedKeywordIds(workflowKeywordIds)
+
+  // Check if all keywords have approved subtopics
+  const allApproved = workflowKeywordIds.length === approvedKeywordIds.length
+
+  if (!allApproved) {
+    console.log(`[SubtopicApproval] Not all keywords approved yet: ${approvedKeywordIds.length}/${workflowKeywordIds.length}`)
+    return
+  }
+
+  console.log(`🔥🔥🔥 [SubtopicApproval] ALL KEYWORDS APPROVED - Triggering Step 9 for workflow ${workflowId}`)
+
+  // Trigger FSM transition
+  const transitionResult = await WorkflowFSM.transition(workflowId, 'HUMAN_SUBTOPICS_APPROVED', {
+    userId
+  })
+
+  if (!transitionResult.applied) {
+    console.log(`⚠️⚠️⚠️ [SubtopicApproval] Workflow transition not applied for ${workflowId}`)
+    return
+  }
+
+  // Trigger Step 9 automation
+  console.log(`🔥🔥🔥 [SubtopicApproval] SENDING INNGEST EVENT: intent.step9.articles for workflow ${workflowId}`)
+  await inngest.send({
+    name: 'intent.step9.articles',
+    data: { workflowId }
+  })
+  console.log(`✅✅✅ [SubtopicApproval] INNGEST EVENT SENT SUCCESSFULLY for workflow ${workflowId}`)
 }
