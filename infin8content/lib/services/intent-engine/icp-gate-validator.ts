@@ -14,13 +14,12 @@ export interface WorkflowData {
   id: string
   state: string
   organization_id: string
+  icp_data: any | null
 }
 
 export class ICPGateValidator {
   /**
    * Validates ICP completion for a given workflow
-   * @param workflowId - The workflow ID to validate
-   * @returns GateResult indicating if access is allowed
    */
   async validateICPCompletion(workflowId: string): Promise<GateResult> {
     try {
@@ -28,9 +27,9 @@ export class ICPGateValidator {
 
       const { data: workflow, error } = await supabase
         .from('intent_workflows')
-        .select('id, state, organization_id')
+        .select('id, state, organization_id, icp_data')
         .eq('id', workflowId)
-        .single() as { data: WorkflowData | null, error: any }
+        .single() as { data: WorkflowData | null; error: any }
 
       if (error || !workflow) {
         return {
@@ -46,7 +45,7 @@ export class ICPGateValidator {
         }
       }
 
-      // FSM rule: ICP complete if state is NOT step_1_icp
+      // Block if still on Step 1
       if (workflow.state === 'step_1_icp') {
         return {
           allowed: false,
@@ -63,6 +62,23 @@ export class ICPGateValidator {
         }
       }
 
+      // 🔥 Correct validation: check icp_data column directly
+      if (!workflow.icp_data) {
+        return {
+          allowed: false,
+          icpStatus: 'missing_data',
+          workflowStatus: workflow.state,
+          error: 'ICP data missing',
+          errorResponse: {
+            error: 'ICP data missing - please regenerate ICP',
+            workflowStatus: workflow.state,
+            requiredAction: 'Regenerate ICP data',
+            currentStep: 'icp-generate',
+            blockedAt: new Date().toISOString()
+          }
+        }
+      }
+
       return {
         allowed: true,
         icpStatus: 'completed',
@@ -72,19 +88,23 @@ export class ICPGateValidator {
     } catch (error) {
       console.error('ICP gate unexpected error:', error)
 
+      // 🔒 Fail closed
       return {
-        allowed: true,
+        allowed: false,
         icpStatus: 'error',
-        workflowStatus: 'error'
+        workflowStatus: 'error',
+        error: 'ICP validation failed unexpectedly',
+        errorResponse: {
+          error: 'ICP validation failed unexpectedly',
+          requiredAction: 'Retry operation or contact support',
+          blockedAt: new Date().toISOString()
+        }
       }
     }
   }
 
   /**
-   * Logs gate enforcement attempts for audit trail
-   * @param workflowId - The workflow ID
-   * @param stepName - The step being attempted
-   * @param result - The gate validation result
+   * Logs gate enforcement attempts (non-blocking)
    */
   async logGateEnforcement(
     workflowId: string,
@@ -92,40 +112,35 @@ export class ICPGateValidator {
     result: GateResult
   ): Promise<void> {
     try {
-      // Extract organization from workflow for audit logging
       const supabase = createServiceRoleClient()
+
       const { data: workflow } = await supabase
         .from('intent_workflows')
         .select('organization_id')
         .eq('id', workflowId)
-        .single() as { data: Pick<WorkflowData, 'organization_id'> | null }
-
-      if (!workflow) {
-        console.warn('Cannot log gate enforcement - workflow not found:', workflowId)
-        return
-      }
+        .single() as { data: { organization_id: string } | null }
 
       await logIntentAction({
-        organizationId: workflow.organization_id,
+        organizationId: workflow?.organization_id || '',
         workflowId,
         entityType: 'workflow',
         entityId: workflowId,
-        actorId: '00000000-0000-0000-0000-000000000000', // System actor UUID
-        action: result.allowed ? AuditAction.WORKFLOW_GATE_ICP_ALLOWED : AuditAction.WORKFLOW_GATE_ICP_BLOCKED,
+        actorId: 'system', // no FK violation
+        action: result.allowed
+          ? AuditAction.WORKFLOW_GATE_ICP_ALLOWED
+          : AuditAction.WORKFLOW_GATE_ICP_BLOCKED,
         details: {
           attempted_step: stepName,
           icp_status: result.icpStatus,
           workflow_status: result.workflowStatus,
           enforcement_action: result.allowed ? 'allowed' : 'blocked',
-          error_message: result.error
-        },
-        ipAddress: null, // Will be populated by middleware
-        userAgent: null // Will be populated by middleware
+          error_message: result.error,
+          timestamp: new Date().toISOString()
+        }
       })
-
-    } catch (error) {
-      console.error('Failed to log gate enforcement:', error)
-      // Non-blocking - don't let logging failures affect gate operation
+    } catch (auditError) {
+      console.error('Failed to log gate enforcement:', auditError)
+      // Non-blocking
     }
   }
 }

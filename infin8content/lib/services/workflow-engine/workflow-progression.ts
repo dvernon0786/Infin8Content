@@ -35,64 +35,64 @@ export const WORKFLOW_STEPS = [
     step: WorkflowStep.ICP,
     label: 'step_1_icp',
     states: [
-      WorkflowState.CREATED,
-      WorkflowState.step_1_icp
+      'CREATED',
+      'step_1_icp'
     ]
   },
   {
     step: WorkflowStep.COMPETITORS,
     label: 'step_2_competitors',
     states: [
-      WorkflowState.step_2_competitors
+      'step_2_competitors'
     ]
   },
   {
     step: WorkflowStep.KEYWORDS,
     label: 'step_3_seeds',
     states: [
-      WorkflowState.step_3_seeds
+      'step_3_seeds'
     ]
   },
   {
     step: WorkflowStep.TOPICS,
     label: 'step_4_longtails',
     states: [
-      WorkflowState.step_4_longtails
+      'step_4_longtails'
     ]
   },
   {
     step: WorkflowStep.VALIDATION,
     label: 'step_5_filtering',
     states: [
-      WorkflowState.step_5_filtering
+      'step_5_filtering'
     ]
   },
   {
     step: WorkflowStep.ARTICLE,
     label: 'step_6_clustering',
     states: [
-      WorkflowState.step_6_clustering
+      'step_6_clustering'
     ]
   },
   {
     step: WorkflowStep.PUBLISH,
     label: 'step_7_validation',
     states: [
-      WorkflowState.step_7_validation
+      'step_7_validation'
     ]
   },
   {
     step: WorkflowStep.SUBTOPICS,
     label: 'step_8_subtopics',
     states: [
-      WorkflowState.step_8_subtopics
+      'step_8_subtopics'
     ]
   },
   {
     step: WorkflowStep.ARTICLES,
     label: 'step_9_articles',
     states: [
-      WorkflowState.step_9_articles
+      'step_9_articles'
     ]
   }
 ]
@@ -120,8 +120,9 @@ export function getStepKey(stepNumber: number): WorkflowStep {
  * Defines how terminal states map to steps for navigation purposes
  */
 const TERMINAL_STATE_MAPPING: Record<string, number> = {
-  [WorkflowState.CANCELLED]: 1, // Maps to first step for navigation reset
-  [WorkflowState.COMPLETED]: 9  // Maps to final step
+  'CANCELLED': 1, // Maps to first step for navigation reset
+  'completed': 9, // Maps to final step
+  'COMPLETED': 9  // Maps to final step (handle both variants)
 }
 
 /**
@@ -149,17 +150,17 @@ export function getStepFromState(state: WorkflowState): number {
  */
 export function getStatusFromState(state: WorkflowState): string {
   // Handle terminal states specially
-  if (state === WorkflowState.CANCELLED) {
+  if ((state as any) === 'CANCELLED') {
     return 'cancelled'
   }
   
-  if (state === WorkflowState.COMPLETED) {
+  if ((state as any) === 'completed' || (state as any) === 'COMPLETED') {
     return 'completed'
   }
 
   // Find step definition that contains this state
   const stepDefinition = WORKFLOW_STEPS.find(step =>
-    step.states.includes(state)
+    step.states.includes(state as any)
   )
   
   return stepDefinition?.label ?? 'step_1_icp'
@@ -173,7 +174,7 @@ export function canAccessStep(currentState: WorkflowState, targetStep: number): 
   const currentStep = getStepFromState(currentState)
   
   // Cannot access if workflow is cancelled
-  if (currentState === WorkflowState.CANCELLED) {
+  if (currentState === 'CANCELLED') {
     return false
   }
   
@@ -189,7 +190,7 @@ export function getNextStep(currentState: WorkflowState): number | null {
   const currentStep = getStepFromState(currentState)
   
   // Terminal states have no next step
-  if (currentState === WorkflowState.COMPLETED || currentState === WorkflowState.CANCELLED) {
+  if ((currentState as any) === 'completed' || (currentState as any) === 'COMPLETED' || (currentState as any) === 'CANCELLED') {
     return null
   }
   
@@ -227,7 +228,7 @@ export function isFailedState(currentState: WorkflowState): boolean {
  * Used for UI progression and analytics
  */
 export function isCompletedState(currentState: WorkflowState): boolean {
-  return currentState.includes('_COMPLETED') || currentState === WorkflowState.COMPLETED
+  return currentState.includes('_COMPLETED') || (currentState as any) === 'completed' || (currentState as any) === 'COMPLETED'
 }
 
 /**
@@ -253,16 +254,16 @@ export function getStepLabel(step: number): string {
  */
 export function getStatesForStep(stepNumber: number): WorkflowState[] {
   const stepDefinition = WORKFLOW_STEPS.find(step => getStepNumber(step.step) === stepNumber)
-  return stepDefinition ? [...stepDefinition.states] : []
+  return stepDefinition ? [...stepDefinition.states] as WorkflowState[] : []
 }
 
 /**
  * Validates that all workflow states are covered in the configuration
  * Used for development-time validation
  */
-export function validateStateCoverage(): { valid: boolean; uncoveredStates: WorkflowState[] } {
-  const allStates = Object.values(WorkflowState)
-  const coveredStates = new Set<WorkflowState>()
+export function validateStateCoverage(): { valid: boolean; uncoveredStates: string[] } {
+  const allStates = ['step_1_icp', 'step_2_competitors', 'step_3_seeds', 'step_4_longtails', 'step_5_filtering', 'step_6_clustering', 'step_7_validation', 'step_8_subtopics', 'step_9_articles', 'completed', 'COMPLETED', 'CANCELLED']
+  const coveredStates = new Set<string>()
   
   // Add all states from step definitions
   WORKFLOW_STEPS.forEach(step => {
@@ -271,7 +272,7 @@ export function validateStateCoverage(): { valid: boolean; uncoveredStates: Work
   
   // Add terminal state mappings
   Object.keys(TERMINAL_STATE_MAPPING).forEach(state => {
-    coveredStates.add(state as WorkflowState)
+    coveredStates.add(state)
   })
   
   const uncoveredStates = allStates.filter(state => !coveredStates.has(state))
@@ -286,9 +287,9 @@ export function validateStateCoverage(): { valid: boolean; uncoveredStates: Work
  * Validates that each state appears exactly once across all steps
  * Critical for enterprise engines to prevent nondeterministic routing
  */
-export function validateUniqueStateAssignment(): { valid: boolean; duplicateStates: WorkflowState[] } {
+export function validateUniqueStateAssignment(): { valid: boolean; duplicateStates: string[] } {
   const allAssignedStates = WORKFLOW_STEPS.flatMap(step => step.states)
-  const stateCounts = new Map<WorkflowState, number>()
+  const stateCounts = new Map<string, number>()
   
   // Count occurrences of each state
   allAssignedStates.forEach(state => {
