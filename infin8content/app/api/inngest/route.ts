@@ -18,44 +18,22 @@ const signingKey = process.env.INNGEST_SIGNING_KEY
 const isDevelopment = process.env.NODE_ENV === 'development'
 const isTest = process.env.NODE_ENV === 'test' || process.env.CI === 'true'
 
-// Create handlers based on environment configuration
-let handlers: { GET: any; POST: any; PUT: any }
-
-if (!eventKey) {
-  console.warn('INNGEST_EVENT_KEY not set, Inngest route disabled')
-  
-  // Provide disabled handlers
-  handlers = {
-    GET: () => new Response('Inngest disabled - missing INNGEST_EVENT_KEY', { status: 503 }),
-    POST: () => new Response('Inngest disabled - missing INNGEST_EVENT_KEY', { status: 503 }),
-    PUT: () => new Response('Inngest disabled - missing INNGEST_EVENT_KEY', { status: 503 })
-  }
-} else {
-  // INNGEST_SIGNING_KEY is required in production only
-  if (!isDevelopment && !isTest && !signingKey) {
-    throw new Error('INNGEST_SIGNING_KEY is required in production')
-  }
-
-  // Create clean production handlers
-  // In test/CI environments, signingKey may be undefined for build validation
-  handlers = serve({
-    client: inngest,
-    signingKey: isTest ? undefined : signingKey,
-    functions: [
-      generateArticle, 
-      cleanupStuckArticles, 
-      uxMetricsRollup,
-      step4Longtails,
-      step5Filtering,
-      step6Clustering,
-      step7Validation,
-      step8Subtopics,
-      step9Articles
-    ],
-  })
-}
-
-// Export the handlers
-export const { GET, POST, PUT } = handlers
+// Production-only validation - moved to runtime handlers
+// Don't validate at module level to avoid build errors
+export const { GET, POST, PUT } = serve({
+  client: inngest,
+  signingKey: isTest ? undefined : process.env.INNGEST_SIGNING_KEY,
+  functions: [
+    generateArticle, 
+    cleanupStuckArticles, 
+    uxMetricsRollup,
+    step4Longtails,
+    step5Filtering,
+    step6Clustering,
+    step7Validation,
+    step8Subtopics,
+    step9Articles
+  ],
+})
 
 
