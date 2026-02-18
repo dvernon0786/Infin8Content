@@ -12,6 +12,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
 import { inngest } from '@/lib/inngest/client'
@@ -303,15 +304,24 @@ export async function POST(
     // 6. FSM STATE TRANSITION (DETERMINISTIC ENGINE)
     // --------------------------------------------------
     try {
-      await WorkflowFSM.transition(workflowId, 'SEEDS_APPROVED', { userId: currentUser.id })
-      
-      // Trigger Step 4 automation
-      console.log(`🔥🔥🔥 [SeedExtract] SENDING INNGEST EVENT: intent.step4.longtails for workflow ${workflowId}`)
-      await inngest.send({
-        name: 'intent.step4.longtails',
-        data: { workflowId }
-      })
-      console.log(`✅✅✅ [SeedExtract] INNGEST EVENT SENT SUCCESSFULLY for workflow ${workflowId}`)
+      // Unified transition - automatic event emission guaranteed
+      const result = await transitionWithAutomation(
+        workflowId, 
+        'SEEDS_APPROVED', 
+        currentUser.id
+      )
+
+      if (!result.success) {
+        return NextResponse.json(
+          { 
+            error: 'Failed to advance workflow',
+            message: result.error
+          },
+          { status: 500 }
+        )
+      }
+
+      console.log(`✅✅✅ [SeedExtract] Unified transition completed for workflow ${workflowId}`)
     } catch (error) {
       return NextResponse.json(
         { 

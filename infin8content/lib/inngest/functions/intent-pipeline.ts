@@ -6,6 +6,7 @@
 
 import { inngest } from '@/lib/inngest/client'
 import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 import { WorkflowEvent } from '@/lib/fsm/workflow-events'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { 
@@ -73,14 +74,12 @@ export const step4Longtails = inngest.createFunction(
     try {
       await expandSeedKeywordsToLongtails(workflowId)
 
-      await WorkflowFSM.transition(workflowId, 'LONGTAIL_SUCCESS', {
-        userId: 'system'
-      })
-
-      await inngest.send({
-        name: 'intent.step5.filtering',
-        data: { workflowId }
-      })
+      // Unified transition - automatic event emission guaranteed
+      const result = await transitionWithAutomation(workflowId, 'LONGTAIL_SUCCESS', 'system')
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to transition LONGTAIL_SUCCESS')
+      }
 
       return { success: true }
 
@@ -115,14 +114,12 @@ export const step5Filtering = inngest.createFunction(
       const filterOptions = await getOrganizationFilterSettings()
       await filterKeywords(workflowId, orgId, filterOptions)
 
-      await WorkflowFSM.transition(workflowId, 'FILTERING_SUCCESS', {
-        userId: 'system'
-      })
-
-      await inngest.send({
-        name: 'intent.step6.clustering',
-        data: { workflowId }
-      })
+      // Unified transition - automatic event emission guaranteed
+      const result = await transitionWithAutomation(workflowId, 'FILTERING_SUCCESS', 'system')
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to transition FILTERING_SUCCESS')
+      }
 
       return { success: true }
 
@@ -156,14 +153,12 @@ export const step6Clustering = inngest.createFunction(
       const clusterer = new KeywordClusterer()
       await clusterer.clusterKeywords(workflowId)
 
-      await WorkflowFSM.transition(workflowId, 'CLUSTERING_SUCCESS', {
-        userId: 'system'
-      })
-
-      await inngest.send({
-        name: 'intent.step7.validation',
-        data: { workflowId }
-      })
+      // Unified transition - automatic event emission guaranteed
+      const result = await transitionWithAutomation(workflowId, 'CLUSTERING_SUCCESS', 'system')
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to transition CLUSTERING_SUCCESS')
+      }
 
       return { success: true }
 
@@ -228,12 +223,12 @@ export const step7Validation = inngest.createFunction(
       const validator = new ClusterValidator()
       await validator.validateWorkflowClusters(workflowId, clusters as any, keywords as any)
 
-      await WorkflowFSM.transition(workflowId, 'VALIDATION_SUCCESS')
-
-      await inngest.send({
-        name: 'intent.step8.subtopics',
-        data: { workflowId }
-      })
+      // Unified transition - automatic event emission guaranteed
+      const result = await transitionWithAutomation(workflowId, 'VALIDATION_SUCCESS', 'system')
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to transition VALIDATION_SUCCESS')
+      }
 
       return { success: true }
 
@@ -281,12 +276,12 @@ export const step8Subtopics = inngest.createFunction(
         }
       }
 
-      await WorkflowFSM.transition(workflowId, 'SUBTOPICS_SUCCESS')
-
-      await inngest.send({
-        name: 'intent.step9.articles',
-        data: { workflowId }
-      })
+      // Unified transition - automatic event emission guaranteed
+      const result = await transitionWithAutomation(workflowId, 'SUBTOPICS_SUCCESS', 'system')
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to transition SUBTOPICS_SUCCESS')
+      }
 
       return { success: true }
 

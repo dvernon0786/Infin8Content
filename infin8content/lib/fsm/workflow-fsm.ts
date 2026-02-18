@@ -50,6 +50,26 @@ export class WorkflowFSM {
     event: WorkflowEvent,
     options?: { resetTo?: WorkflowState; userId?: string }
   ): Promise<TransitionResult> {
+    // 🚨 DEPRECATION WARNING - Use unified engine instead
+    const stack = new Error().stack
+    const caller = stack?.split('\n')[2]?.trim()
+    
+    if (!caller?.includes('unified-workflow-engine')) {
+      console.warn(`
+🚨🚨🚨 DEPRECATED: Direct WorkflowFSM.transition() usage detected!
+
+   Caller: ${caller}
+
+   This usage is NOT RECOMMENDED because it bypasses automatic
+   event emission guarantees.
+
+   Replace with:
+   ✅ import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
+   ✅ await transitionWithAutomation(workflowId, '${event}', userId)
+
+   This prevents the original bug class of missing event emissions.
+      `)
+    }
 
     const supabase = createServiceRoleClient()
 

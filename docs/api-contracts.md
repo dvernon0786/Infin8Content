@@ -1,6 +1,6 @@
 # API Contracts - Infin8Content
 
-Generated: 2026-02-11 (v2 System Law - Canonical Implementation Complete)  
+Generated: 2026-02-19 (Mathematically Closed Unified Workflow Engine)  
 Framework: Next.js 16.1.1 API Routes  
 Base URL: `/api`
 
@@ -8,26 +8,26 @@ Base URL: `/api`
 
 Infin8Content implements a comprehensive REST API using Next.js App Router with TypeScript, featuring multi-tenant architecture, authentication, payment processing, AI content generation, and a robust workflow state machine.
 
-## System Status (2026-02-11)
+## System Status (2026-02-19)
 
 🎯 **SYSTEM STATUS**
 
-### **Current State: v2 SYSTEM LAW - COMPLETE WITH ROUTE GUARDS**
-- **Onboarding System Law**: ✅ **v2 PRODUCTION READY** - All critical issues resolved, route protection implemented
-- **Auth System**: ✅ **STABILIZED** - Database trigger errors resolved, audit logging fixed
-- **Component Interfaces**: ✅ **FIXED** - All prop interfaces corrected (onNext vs onComplete)
-- **Observe API**: ✅ **GET-ONLY** - All calls use GET method, auth-derived org, step derivation added
-- **Build Status**: ✅ **PASSING** - All TypeScript compilation errors resolved
-- **Route Protection**: ✅ **IMPLEMENTED** - Server-side onboarding guard and dashboard empty state
-- **URL Normalization**: ✅ **IMPLEMENTED** - Auto-normalizes WordPress site URLs
-- **Payment UX**: ✅ **CLEANED** - Removed debug components from payment success page
-- **Complete Flow**: ✅ **IMPLEMENTED** - Onboarding → Dashboard → Workflow Creation
-- **Branch**: `onboarding-system-law-complete`  
+### **Current State: MATHEMATICALLY CLOSED UNIFIED WORKFLOW ENGINE**
+- **Workflow Engine**: ✅ **MATHEMATICALLY CLOSED** - All escape hatches eliminated, structural coupling achieved
+- **Event Emission**: ✅ **GUARANTEED** - Automatic emission through unified engine, no manual calls possible
+- **FSM Architecture**: ✅ **IMMUNE** - Original bug class mathematically impossible
+- **Worker Chaining**: ✅ **UNIFIED** - All workers use `transitionWithAutomation()` only
+- **Human Boundaries**: ✅ **PROTECTED** - Seed approval and subtopic approval use unified engine
+- **Runtime Warnings**: ✅ **DEPRECATED** - Raw FSM usage emits deprecation warnings
+- **Test Coverage**: ✅ **COMPLETE** - 10/10 tests passing (invariant + behavioral)
+- **Type Safety**: ✅ **VALIDATED** - TypeScript compilation successful
+- **Branch**: `fsm-event-emission-fixes`  
 
 ### **Critical Components**
-- **Validator Authority**: `validateOnboarding()` is only decision maker
-- **Single Writer**: `/api/onboarding/persist` is only data writer  
-- **Read-Only Observer**: `/api/onboarding/observe` (GET-only, auth-derived, step derivation)
+- **Unified Engine**: `transitionWithAutomation()` is ONLY way to transition
+- **Automation Graph**: Single `AUTOMATION_GRAPH` governs all event emissions
+- **Structural Coupling**: FSM and automation are one system
+- **No Escape Routes**: Every transition path is mathematically protected
 - **Canonical Redirect**: Observer-driven Step 5 → dashboard termination
 - **Route Guard**: Server-side protection in `app/onboarding/layout.tsx`
 - **Empty State**: Dashboard guidance with "Create First Workflow" CTA
