@@ -59,12 +59,16 @@ export const step4Longtails = inngest.createFunction(
   { event: 'intent.step4.longtails' },
   async ({ event }) => {
     const workflowId = event.data.workflowId
+    console.log(`🚨🚨🚨 [Inngest step4Longtails] WORKER TRIGGERED for workflow ${workflowId} 🚨🚨🚨`)
 
     // Pure minimal: transition-driven only (no race window)
     const start = await WorkflowFSM.transition(workflowId, 'LONGTAIL_START', {
       userId: 'system'
     })
-    if (!start.applied) return { skipped: true }
+    if (!start.applied) {
+      console.log(`⚠️⚠️⚠️ [Inngest step4Longtails] SKIPPED workflow ${workflowId} - transition not applied`)
+      return { skipped: true }
+    }
 
     try {
       await expandSeedKeywordsToLongtails(workflowId)

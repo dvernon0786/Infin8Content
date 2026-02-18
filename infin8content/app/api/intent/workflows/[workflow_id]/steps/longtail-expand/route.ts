@@ -130,10 +130,12 @@ export async function POST(
     // 6️⃣ NON-BLOCKING TRIGGER (async only)
     // Send Inngest event for async processing
     // Worker will handle FSM transition via guardAndStart()
+    console.log(`🔥🔥🔥 [LongtailExpand] SENDING INNGEST EVENT: intent.step4.longtails for workflow ${workflowId}`)
     await inngest.send({
       name: 'intent.step4.longtails',
       data: { workflowId }
     })
+    console.log(`✅✅✅ [LongtailExpand] INNGEST EVENT SENT SUCCESSFULLY for workflow ${workflowId}`)
 
     console.log(`[LongtailExpand] Triggered async processing for workflow ${workflowId}`)
 

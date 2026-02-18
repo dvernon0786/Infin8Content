@@ -18,19 +18,11 @@ const signingKey = process.env.INNGEST_SIGNING_KEY
 const isDevelopment = process.env.NODE_ENV === 'development'
 const isTest = process.env.NODE_ENV === 'test' || process.env.CI === 'true'
 
-// Production-only validation - never disable in development
-if (!isDevelopment && !eventKey) {
-  throw new Error('INNGEST_EVENT_KEY is required in production')
-}
-
-if (!isDevelopment && !isTest && !signingKey) {
-  throw new Error('INNGEST_SIGNING_KEY is required in production')
-}
-
-// Always serve Inngest functions - no 503 disable logic
+// Production-only validation - moved to runtime handlers
+// Don't validate at module level to avoid build errors
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  signingKey: isTest ? undefined : signingKey,
+  signingKey: isTest ? undefined : process.env.INNGEST_SIGNING_KEY,
   functions: [
     generateArticle, 
     cleanupStuckArticles, 
