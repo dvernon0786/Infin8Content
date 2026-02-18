@@ -290,6 +290,7 @@ async function checkAndTriggerWorkflowCompletion(
     .from('keywords')
     .select('id, subtopics_status')
     .eq('workflow_id', workflowId)
+    .eq('organization_id', organizationId)
 
   if (!allKeywords || allKeywords.length === 0) {
     console.log(`[SubtopicApproval] No keywords found for workflow ${workflowId}`)
