@@ -55,12 +55,18 @@ export function WorkflowStepLayoutClient({
     })
   }, [workflow.id, currentStep])
 
-  // Auto-advance if backend progressed beyond current step
+  // Redirect pipeline steps to progress page
   useEffect(() => {
-    if (currentStep > step) {
+    if (step >= 4 && step <= 7) {
+      router.replace(`/workflows/${workflow.id}/progress`)
+      return
+    }
+
+    // Auto-advance if backend progressed beyond current interactive step
+    if (currentStep > step && step <= 3) {
       router.replace(`/workflows/${workflow.id}/steps/${currentStep}`)
     }
-  }, [currentStep, step, router])
+  }, [currentStep, step, router, workflow.id])
 
   return (
     <div className="min-h-screen bg-background">

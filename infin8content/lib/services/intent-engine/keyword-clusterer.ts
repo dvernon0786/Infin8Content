@@ -92,6 +92,7 @@ export class KeywordClusterer {
       const keywords = await this.loadFilteredKeywords(workflowId, options.userSelectedOnly)
       
       // Enterprise compute guards
+      // WARNING: Clustering is O(n²). Do not increase 100 keyword limit without redesigning algorithm.
       if (keywords.length < 2) {
         throw new Error(`Insufficient keywords for clustering: ${keywords.length} < 2`)
       }
@@ -185,7 +186,7 @@ export class KeywordClusterer {
         // Then get keywords for that organization and workflow
         let query = this.supabase
           .from('keywords')
-          .select('*')
+          .select('id, keyword, search_volume, organization_id, workflow_id, user_selected, selection_source')
           .eq('organization_id', typedWorkflow.organization_id)
           .eq('workflow_id', workflowId) // CRITICAL: Add workflow isolation
           .eq('is_filtered_out', false)
@@ -376,7 +377,9 @@ export class KeywordClusterer {
           workflow_id: workflowId,
           hub_keyword_id: cluster.hub_keyword_id,
           spoke_keyword_id: cluster.spoke_keyword_id,
-          similarity_score: cluster.similarity_score
+          similarity_score: cluster.similarity_score,
+          user_selected: false,
+          selection_source: 'ai'   // Explicit AI-generated clusters
         }))
 
         const { error } = await this.supabase

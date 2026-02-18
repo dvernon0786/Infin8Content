@@ -196,15 +196,29 @@ export const step7Validation = inngest.createFunction(
     try {
       const supabase = createServiceRoleClient()
 
+      // First get organization_id from workflow for enterprise isolation
+      const { data: workflow, error: workflowError } = await supabase
+        .from('intent_workflows')
+        .select('organization_id')
+        .eq('id', workflowId)
+        .single()
+        
+      if (workflowError || !workflow) {
+        throw new Error(`Workflow not found: ${workflowId}`)
+      }
+
+      // Type guard for organization_id
+      const typedWorkflow = workflow as unknown as { organization_id: string }
+
       // Fetch clusters and keywords for validation
       const { data: clusters } = await supabase
         .from('topic_clusters')
-        .select('*')
+        .select('hub_keyword_id, spoke_keyword_id, similarity_score')
         .eq('workflow_id', workflowId)
 
       const { data: keywords } = await supabase
         .from('keywords')
-        .select('*')
+        .select('id, keyword')
         .eq('workflow_id', workflowId)
 
       if (!clusters?.length || !keywords?.length) {
@@ -319,3 +333,4 @@ export const step9Articles = inngest.createFunction(
     }
   }
 )
+
