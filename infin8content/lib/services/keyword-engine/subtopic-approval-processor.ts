@@ -12,6 +12,7 @@ import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/servic
 import { AuditAction } from '@/types/audit'
 import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 import { inngest } from '@/lib/inngest/client'
+import { transitionAndTrigger } from '@/lib/fsm/boundary-transition-wrapper'
 
 export interface SubtopicApprovalRequest {
   decision: 'approved' | 'rejected'
@@ -313,21 +314,18 @@ async function checkAndTriggerWorkflowCompletion(
 
   console.log(`🔥🔥🔥 [SubtopicApproval] ALL KEYWORDS APPROVED - Triggering Step 9 for workflow ${workflowId}`)
 
-  // Trigger FSM transition
-  const transitionResult = await WorkflowFSM.transition(workflowId, 'HUMAN_SUBTOPICS_APPROVED', {
+  // Bulletproof boundary transition - emission guaranteed
+  const result = await transitionAndTrigger(
+    workflowId,
+    'step_8_subtopics',
+    'HUMAN_SUBTOPICS_APPROVED',
     userId
-  })
+  )
 
-  if (!transitionResult.applied) {
-    console.log(`⚠️⚠️⚠️ [SubtopicApproval] Workflow transition not applied for ${workflowId}`)
+  if (!result.success) {
+    console.log(`⚠️⚠️⚠️ [SubtopicApproval] Boundary transition failed for ${workflowId}: ${result.error}`)
     return
   }
 
-  // Trigger Step 9 automation
-  console.log(`🔥🔥🔥 [SubtopicApproval] SENDING INNGEST EVENT: intent.step9.articles for workflow ${workflowId}`)
-  await inngest.send({
-    name: 'intent.step9.articles',
-    data: { workflowId }
-  })
-  console.log(`✅✅✅ [SubtopicApproval] INNGEST EVENT SENT SUCCESSFULLY for workflow ${workflowId}`)
+  console.log(`✅✅✅ [SubtopicApproval] Boundary transition completed for workflow ${workflowId}`)
 }
