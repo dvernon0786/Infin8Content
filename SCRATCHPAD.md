@@ -1,9 +1,138 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-02-18 09:20 UTC+11  
-**Current Focus:** MODEL A ARCHITECTURAL COMPLIANCE - COMPLETE 
+**Last Updated:** 2026-02-18 13:19 UTC+11  
+**Current Focus:** WORKFLOWSTATE ENUM BUG - STEP 3 REDIRECT FIX
 
-## **MODEL A ARCHITECTURE FIX - COMPLETE**
+## **WORKFLOWSTATE ENUM BUG - COMPLETE RESOLUTION**
+
+### **Completion Date: February 18, 2026**
+
+### **Major Achievement: Fixed Step 3 Redirect to Step 1**
+
+Successfully identified and resolved the root cause of Step 3 redirecting to Step 1 - TypeScript union types being used as runtime enums throughout the codebase.
+
+---
+
+## **ISSUE RESOLVED: STEP 3 REDIRECT FIXED**
+
+### **Root Cause Identified**
+- **Problem**: `WorkflowState.step_3_seeds` returns `undefined` at runtime (union type, not enum)
+- **Symptom**: Competitor gate always blocked → Step 3 redirected to Step 1
+- **Impact**: Workflow progression stuck at Step 2
+
+### **Complete Resolution Applied**
+
+#### **1. Competitor Gate Fixed**
+```typescript
+// BEFORE: Undefined runtime values
+const competitorCompleteStates = [
+  WorkflowState.step_3_seeds, // undefined
+  WorkflowState.step_4_longtails, // undefined
+  ...
+]
+competitorCompleteStates.includes(workflow.state) // always false
+
+// AFTER: String literals with index comparison
+const orderedStates = ['step_1_icp', 'step_2_competitors', 'step_3_seeds', ...] as const
+const currentIndex = orderedStates.indexOf(workflow.state as any)
+const step3Index = orderedStates.indexOf('step_3_seeds')
+const isCompetitorComplete = currentIndex !== -1 && currentIndex >= step3Index
+```
+
+#### **2. Workflow Progression Fixed**
+```typescript
+// BEFORE: Enum properties don't exist
+const TERMINAL_STATE_MAPPING: Record<string, number> = {
+  [WorkflowState.COMPLETED]: 9, // undefined
+  [WorkflowState.CANCELLED]: 1  // undefined
+}
+
+// AFTER: String literals
+const TERMINAL_STATE_MAPPING: Record<string, number> = {
+  'completed': 9,
+  'COMPLETED': 9,
+  'CANCELLED': 1
+}
+```
+
+#### **3. Foreign Key Violations Fixed**
+```typescript
+// BEFORE: Fake UUID violates FK constraint
+actorId: '00000000-0000-0000-0000-000000000000'
+
+// AFTER: System actor string
+actorId: 'system'
+```
+
+#### **4. Type Safety Added**
+```typescript
+// Added proper casting for union type comparisons
+if ((state as any) === 'completed' || (state as any) === 'COMPLETED') {
+  return 'completed'
+}
+```
+
+---
+
+## **PREVIOUS ISSUE: RLS SERVICE ROLE UPDATE FIX - COMPLETE**
+
+### **Completion Date: February 18, 2026**
+
+### **Major Achievement: Resolved Silent RLS Update Blocking**
+
+Successfully identified and fixed the root cause of FSM transition failures - RLS policy was blocking service role UPDATE operations, causing `{ skipped: true }` behavior.
+
+---
+
+## **ISSUE RESOLVED: RLS UPDATE BLOCKING FIXED**
+
+### **Root Cause Identified**
+- **Problem**: RLS policy `roles = {public}` blocked service role UPDATE operations
+- **Symptom**: FSM transitions returned `applied: false` → worker skipped
+- **Impact**: Workflow state never progressed beyond `step_4_longtails`
+
+### **Complete Resolution Applied**
+
+#### **1. RLS Policy Fixed**
+```sql
+-- BEFORE: Wrong role targeting
+CREATE POLICY "Service role full access"
+FOR ALL
+USING (auth.role() = 'service_role')  -- Checks JWT, not Postgres role
+
+-- AFTER: Correct PostgREST role targeting  
+CREATE POLICY "Service role full access"
+FOR ALL
+TO service_role  -- Targets actual PostgREST executor role
+USING (true)
+WITH CHECK (true);
+```
+
+#### **2. FSM Atomic Safety Restored**
+```typescript
+// Restored critical atomic compare-and-swap
+.update({ state: nextState })
+.eq('id', workflowId)
+.eq('state', currentState)  // 🔒 REQUIRED for safety
+```
+
+#### **3. Debug Infrastructure Added**
+```typescript
+// Comprehensive transition debugging
+console.log('[FSM TRANSITION DEBUG]', {
+  workflowId, currentState, event, allowedEvents
+})
+
+// Service role authentication test
+const testUpdate = await supabase
+  .from('intent_workflows')
+  .update({ updated_at: new Date().toISOString() })
+  .eq('id', workflowId)
+```
+
+---
+
+## **PREVIOUS MODEL A ARCHITECTURE FIX - COMPLETE**
 
 ### **Completion Date: February 18, 2026**
 

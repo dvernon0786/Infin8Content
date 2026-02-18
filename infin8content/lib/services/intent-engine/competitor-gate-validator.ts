@@ -73,19 +73,41 @@ export class CompetitorGateValidator {
       }
 
       // Check if competitor analysis is complete
-      // Allowed states: step_3_seeds or any state after it (unified workflow)
-      const competitorCompleteStates = [
-        WorkflowState.step_3_seeds,
-        WorkflowState.step_4_longtails,
-        WorkflowState.step_5_filtering,
-        WorkflowState.step_6_clustering,
-        WorkflowState.step_7_validation,
-        WorkflowState.step_8_subtopics,
-        WorkflowState.step_9_articles,
-        WorkflowState.COMPLETED
-      ]
+      // Any state at or after step_3_seeds is valid
 
-      const isCompetitorComplete = competitorCompleteStates.includes(workflow.state)
+      const orderedStates = [
+        'step_1_icp',
+        'step_2_competitors',
+        'step_3_seeds',
+        'step_4_longtails',
+        'step_4_longtails_running',
+        'step_4_longtails_failed',
+        'step_5_filtering',
+        'step_5_filtering_running',
+        'step_5_filtering_failed',
+        'step_6_clustering',
+        'step_6_clustering_running',
+        'step_6_clustering_failed',
+        'step_7_validation',
+        'step_7_validation_running',
+        'step_7_validation_failed',
+        'step_8_subtopics',
+        'step_8_subtopics_running',
+        'step_8_subtopics_failed',
+        'step_9_articles',
+        'step_9_articles_running',
+        'step_9_articles_failed',
+        'step_9_articles_queued',
+        'completed',
+        'COMPLETED',
+        'CANCELLED'
+      ] as const
+
+      const currentIndex = orderedStates.indexOf(workflow.state as any)
+      const step3Index = orderedStates.indexOf('step_3_seeds')
+
+      const isCompetitorComplete =
+        currentIndex !== -1 && currentIndex >= step3Index
 
       if (!isCompetitorComplete) {
         return {
@@ -153,7 +175,7 @@ export class CompetitorGateValidator {
         workflowId,
         entityType: 'workflow',
         entityId: workflowId,
-        actorId: '00000000-0000-0000-0000-000000000000', // System actor UUID
+        actorId: 'system', // System action - no FK violation
         action: result.allowed ? 'workflow.gate.competitors_allowed' : 'workflow.gate.competitors_blocked',
         details: {
           attempted_step: stepName,
