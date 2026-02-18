@@ -6,7 +6,7 @@
  * No stored fields needed - everything is derived mathematically from the state machine.
  */
 
-import { WorkflowState } from '@/types/workflow-state'
+import { WorkflowState } from '@/lib/fsm/workflow-events'
 
 /**
  * Symbolic workflow step enumeration
@@ -57,42 +57,55 @@ export const WORKFLOW_STEPS = [
     step: WorkflowStep.TOPICS,
     label: 'step_4_longtails',
     states: [
-      'step_4_longtails'
+      'step_4_longtails',
+      'step_4_longtails_running',
+      'step_4_longtails_failed'
     ]
   },
   {
     step: WorkflowStep.VALIDATION,
     label: 'step_5_filtering',
     states: [
-      'step_5_filtering'
+      'step_5_filtering',
+      'step_5_filtering_running',
+      'step_5_filtering_failed'
     ]
   },
   {
     step: WorkflowStep.ARTICLE,
     label: 'step_6_clustering',
     states: [
-      'step_6_clustering'
+      'step_6_clustering',
+      'step_6_clustering_running',
+      'step_6_clustering_failed'
     ]
   },
   {
     step: WorkflowStep.PUBLISH,
     label: 'step_7_validation',
     states: [
-      'step_7_validation'
+      'step_7_validation',
+      'step_7_validation_running',
+      'step_7_validation_failed'
     ]
   },
   {
     step: WorkflowStep.SUBTOPICS,
     label: 'step_8_subtopics',
     states: [
-      'step_8_subtopics'
+      'step_8_subtopics',
+      'step_8_subtopics_running',
+      'step_8_subtopics_failed'
     ]
   },
   {
     step: WorkflowStep.ARTICLES,
     label: 'step_9_articles',
     states: [
-      'step_9_articles'
+      'step_9_articles',
+      'step_9_articles_running',
+      'step_9_articles_failed',
+      'step_9_articles_queued'
     ]
   }
 ]
@@ -120,9 +133,8 @@ export function getStepKey(stepNumber: number): WorkflowStep {
  * Defines how terminal states map to steps for navigation purposes
  */
 const TERMINAL_STATE_MAPPING: Record<string, number> = {
-  'CANCELLED': 1, // Maps to first step for navigation reset
-  'completed': 9, // Maps to final step
-  'COMPLETED': 9  // Maps to final step (handle both variants)
+  'cancelled': 1, // Maps to first step for navigation reset (canonical lowercase)
+  'completed': 9, // Maps to final step (canonical lowercase)
 }
 
 /**
@@ -140,8 +152,13 @@ export function getStepFromState(state: WorkflowState): number {
     step.states.includes(state)
   )
   
+  // Fail fast - no silent fallback to step 1
+  if (!stepDefinition) {
+    throw new Error(`Unmapped workflow state: ${state}`)
+  }
+  
   // Return step number derived from configuration index
-  return stepDefinition ? getStepNumber(stepDefinition.step) : 1
+  return getStepNumber(stepDefinition.step)
 }
 
 /**
@@ -150,11 +167,11 @@ export function getStepFromState(state: WorkflowState): number {
  */
 export function getStatusFromState(state: WorkflowState): string {
   // Handle terminal states specially
-  if ((state as any) === 'CANCELLED') {
+  if ((state as any) === 'cancelled') {
     return 'cancelled'
   }
   
-  if ((state as any) === 'completed' || (state as any) === 'COMPLETED') {
+  if ((state as any) === 'completed') {
     return 'completed'
   }
 
@@ -171,14 +188,12 @@ export function getStatusFromState(state: WorkflowState): string {
  * Replaces the old current_step-based access control
  */
 export function canAccessStep(currentState: WorkflowState, targetStep: number): boolean {
-  const currentStep = getStepFromState(currentState)
-  
-  // Cannot access if workflow is cancelled
-  if (currentState === 'CANCELLED') {
+  // Cancelled workflows cannot access any steps
+  if (currentState === 'cancelled') {
     return false
   }
-  
-  // Can only access current step or previous steps
+
+  const currentStep = getStepFromState(currentState)
   return targetStep <= currentStep
 }
 
@@ -190,12 +205,12 @@ export function getNextStep(currentState: WorkflowState): number | null {
   const currentStep = getStepFromState(currentState)
   
   // Terminal states have no next step
-  if ((currentState as any) === 'completed' || (currentState as any) === 'COMPLETED' || (currentState as any) === 'CANCELLED') {
+  if ((currentState as any) === 'completed' || (currentState as any) === 'cancelled') {
     return null
   }
   
   const nextStep = currentStep + 1
-  return nextStep <= 7 ? nextStep : null
+  return nextStep <= 9 ? nextStep : null
 }
 
 /**
@@ -212,7 +227,7 @@ export function getPreviousStep(currentState: WorkflowState): number | null {
  * Used for UI loading indicators and preventing concurrent actions
  */
 export function isProcessingState(currentState: WorkflowState): boolean {
-  return currentState.includes('_PROCESSING')
+  return currentState.endsWith('_running')
 }
 
 /**
@@ -220,7 +235,7 @@ export function isProcessingState(currentState: WorkflowState): boolean {
  * Used for UI error display and retry logic
  */
 export function isFailedState(currentState: WorkflowState): boolean {
-  return currentState.includes('_FAILED')
+  return currentState.endsWith('_failed')
 }
 
 /**
@@ -228,7 +243,7 @@ export function isFailedState(currentState: WorkflowState): boolean {
  * Used for UI progression and analytics
  */
 export function isCompletedState(currentState: WorkflowState): boolean {
-  return currentState.includes('_COMPLETED') || (currentState as any) === 'completed' || (currentState as any) === 'COMPLETED'
+  return currentState === 'completed'
 }
 
 /**
@@ -236,16 +251,19 @@ export function isCompletedState(currentState: WorkflowState): boolean {
  * Provides human-readable step names
  */
 export function getStepLabel(step: number): string {
-  switch (step) {
-    case 1: return 'ICP Generation'
-    case 2: return 'Competitor Analysis'
-    case 3: return 'Keyword Processing'
-    case 4: return 'Topic Clustering'
-    case 5: return 'Content Validation'
-    case 6: return 'Article Generation'
-    case 7: return 'Publishing'
-    default: return 'Unknown Step'
-  }
+  const labels = [
+    'ICP Generation',
+    'Competitor Analysis', 
+    'Seed Keywords',
+    'Longtail Expansion',
+    'Filtering',
+    'Clustering',
+    'Validation',
+    'Subtopics',
+    'Articles'
+  ]
+
+  return labels[step - 1] ?? 'Unknown Step'
 }
 
 /**
@@ -262,7 +280,33 @@ export function getStatesForStep(stepNumber: number): WorkflowState[] {
  * Used for development-time validation
  */
 export function validateStateCoverage(): { valid: boolean; uncoveredStates: string[] } {
-  const allStates = ['step_1_icp', 'step_2_competitors', 'step_3_seeds', 'step_4_longtails', 'step_5_filtering', 'step_6_clustering', 'step_7_validation', 'step_8_subtopics', 'step_9_articles', 'completed', 'COMPLETED', 'CANCELLED']
+  const allStates: WorkflowState[] = [
+    'CREATED',
+    'step_1_icp',
+    'step_2_competitors',
+    'step_3_seeds',
+    'step_4_longtails',
+    'step_4_longtails_running',
+    'step_4_longtails_failed',
+    'step_5_filtering',
+    'step_5_filtering_running',
+    'step_5_filtering_failed',
+    'step_6_clustering',
+    'step_6_clustering_running',
+    'step_6_clustering_failed',
+    'step_7_validation',
+    'step_7_validation_running',
+    'step_7_validation_failed',
+    'step_8_subtopics',
+    'step_8_subtopics_running',
+    'step_8_subtopics_failed',
+    'step_9_articles',
+    'step_9_articles_running',
+    'step_9_articles_failed',
+    'step_9_articles_queued',
+    'completed',
+    'cancelled'
+  ]
   const coveredStates = new Set<string>()
   
   // Add all states from step definitions

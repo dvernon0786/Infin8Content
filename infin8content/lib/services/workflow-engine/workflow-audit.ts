@@ -3,7 +3,7 @@
  * Enterprise-grade audit trail for all workflow state transitions
  */
 
-import { WorkflowState } from '@/types/workflow-state'
+import { WorkflowState } from '@/lib/fsm/workflow-events'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 
 export interface WorkflowTransitionAudit {

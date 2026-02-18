@@ -1,4 +1,5 @@
 export type WorkflowState =
+  | 'CREATED'
   | 'step_1_icp'
   | 'step_2_competitors'
   | 'step_3_seeds'
@@ -22,6 +23,7 @@ export type WorkflowState =
   | 'step_9_articles_queued'
   | 'step_9_articles_failed'
   | 'completed'
+  | 'cancelled'
 
 export type WorkflowEvent =
   // Step 1-3 (existing)

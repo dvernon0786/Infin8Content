@@ -26,12 +26,18 @@ export const WORKFLOW_STEP_ORDER: WorkflowState[] = [
 
 /** All valid workflow states (including terminal state) - aligned with FSM */
 export const ALL_WORKFLOW_STATES: WorkflowState[] = [
+  'CREATED',
   ...WORKFLOW_STEP_ORDER,
   'completed',
+  'cancelled',
 ]
 
 /** Progress mapping for dashboard - FSM-aligned */
 export const WORKFLOW_PROGRESS_MAP: Record<WorkflowState, number> = {
+  // Initial state
+  CREATED: 0,
+  cancelled: 0,
+  
   // Base states
   step_1_icp: 15,
   step_2_competitors: 25,
@@ -64,6 +70,10 @@ export const WORKFLOW_PROGRESS_MAP: Record<WorkflowState, number> = {
 
 /** Human-readable labels - FSM-aligned */
 export const WORKFLOW_STEP_DESCRIPTIONS: Record<WorkflowState, string> = {
+  // Initial state
+  CREATED: 'Created',
+  cancelled: 'Cancelled',
+  
   // Base states
   step_1_icp: 'ICP Generation',
   step_2_competitors: 'Competitor Analysis',
