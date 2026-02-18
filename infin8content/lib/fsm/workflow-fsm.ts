@@ -54,7 +54,15 @@ export class WorkflowFSM {
 
     const currentState = await this.getCurrentState(workflowId)
 
-    // 🔒 Prevent resetting completed workflows
+    // � DEBUG: Log transition details
+    console.log('[FSM TRANSITION DEBUG]', {
+      workflowId,
+      currentState,
+      event,
+      allowedEvents: Object.keys(WorkflowTransitions[currentState] || {})
+    })
+
+    // �🔒 Prevent resetting completed workflows
     if (currentState === 'completed' && event === 'HUMAN_RESET') {
       throw new Error('Cannot reset completed workflow')
     }
@@ -96,44 +104,46 @@ export class WorkflowFSM {
       }
     }
 
-    // 🔒 Atomic update
-    const { data, error } = await supabase
+    // 🔍 DEBUG: Test service role authentication
+    const testUpdate = await supabase
+      .from('intent_workflows')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', workflowId)
+      .select()
+      .single()
+
+    console.log("TEST UPDATE RESULT:", testUpdate)
+
+    // 🔒 Atomic compare-and-swap - REQUIRED for safety
+    const { data: updated } = await supabase
       .from('intent_workflows')
       .update({ state: nextState })
       .eq('id', workflowId)
-      .eq('state', currentState)
+      .eq('state', currentState) // 🔒 CRITICAL - restore atomic safety
       .select('state')
       .single()
 
-    if (error || !data) {
-
-      // ⚠️ Possible concurrent modification — re-check state
-      const { data: latest } = await supabase
+    if (!updated) {
+      const { data: latest, error: latestError } = await supabase
         .from('intent_workflows')
         .select('state')
         .eq('id', workflowId)
-        .single() as { data: { state: string } | null; error: any }
+        .single()
 
-      if (!latest) {
-        throw new Error('Workflow missing during transition reconciliation')
-      }
-
-      // If state changed, another worker transitioned it.
-      if (latest.state !== currentState) {
+      if (latestError || !latest) {
         return {
           ok: false,
+          applied: false,
           previousState: currentState,
-          nextState: latest.state as WorkflowState,
-          applied: false
+          nextState: currentState
         }
       }
 
-      // If still same state, transition was not valid - return deterministic result
       return {
         ok: false,
+        applied: false,
         previousState: currentState,
-        nextState: currentState,
-        applied: false
+        nextState: (latest as any).state as WorkflowState
       }
     }
 
@@ -149,14 +159,13 @@ export class WorkflowFSM {
       })
     } catch (auditError) {
       // Never fail transition due to audit log
-      console.warn('[FSM] Audit log failed:', auditError)
     }
 
     return {
       ok: true,
+      applied: true,
       previousState: currentState,
-      nextState: nextState,
-      applied: true
+      nextState
     }
   }
 }
