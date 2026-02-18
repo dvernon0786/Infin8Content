@@ -119,23 +119,27 @@ export async function filterKeywords(
   const supabase = createServiceRoleClient()
   
   try {
-    // Get all long-tail keywords for the workflow
-    const keywords = await retryWithPolicy(
-      async () => {
-        const { data, error } = await supabase
-          .from('keywords')
-          .select('*')
-          .eq('organization_id', organizationId)
-          .is('parent_seed_keyword_id', 'not null') // Only long-tail keywords
-          .is('is_filtered_out', false) // Only active keywords
-          .order('search_volume', { ascending: false })
-        
-        if (error) throw new Error(`Failed to fetch keywords: ${error.message}`)
-        return data as unknown as Keyword[]
-      },
-      FILTER_RETRY_POLICY,
-      'fetch keywords for filtering'
-    )
+  // ✅ FIX #1 + #2 — Correct NOT NULL syntax + Proper workflow scoping
+  const keywords = await retryWithPolicy(
+    async () => {
+      const { data, error } = await supabase
+        .from('keywords')
+        .select('*')
+        .eq('workflow_id', workflowId)                 // CRITICAL: scope to workflow
+        .eq('organization_id', organizationId)
+        .not('parent_seed_keyword_id', 'is', null)    // CORRECT PostgREST NOT NULL
+        .eq('is_filtered_out', false)
+        .order('search_volume', { ascending: false })
+
+      if (error) {
+        throw new Error(`Failed to fetch keywords: ${error.message}`)
+      }
+
+      return data as unknown as Keyword[] || []
+    },
+    FILTER_RETRY_POLICY,
+    'fetch keywords for filtering'
+  )
     
     if (!keywords || keywords.length === 0) {
       return {
@@ -159,7 +163,12 @@ export async function filterKeywords(
     )
     
     // Step 3: Update filtered keywords in database
-    await updateFilteredKeywords(keywords, volumeFilteredKeywords, supabase)
+    await updateFilteredKeywords(
+      keywords, 
+      volumeFilteredKeywords, 
+      options.min_search_volume, 
+      supabase
+    )
     
     const totalFiltered = duplicateCount + lowVolumeCount
     
@@ -256,83 +265,39 @@ function filterBySearchVolume(
 async function updateFilteredKeywords(
   allKeywords: Keyword[],
   remainingKeywords: Keyword[],
+  minSearchVolume: number,
   supabase: any
 ): Promise<void> {
   const remainingIds = new Set(remainingKeywords.map(k => k.id))
-  const keywordsToUpdate = allKeywords.filter(k => !remainingIds.has(k.id))
-  
-  if (keywordsToUpdate.length === 0) return
-  
-  const now = new Date().toISOString()
-  
-  // Batch update filtered keywords
-  await retryWithPolicy(
-    async () => {
-      const updates = keywordsToUpdate.map(keyword => {
-        const normalized = normalizeKeyword(keyword.keyword)
-        const isLowVolume = keyword.search_volume < 100 // Default threshold
-        const filteredReason = isLowVolume ? 'low_volume' : 'duplicate'
-        
-        return {
-          id: keyword.id,
-          is_filtered_out: true,
-          filtered_reason: filteredReason,
-          filtered_at: now
-        }
-      })
-      
-      // Update in batches to avoid request size limits
-      const batchSize = 100
-      for (let i = 0; i < updates.length; i += batchSize) {
-        const batch = updates.slice(i, i + batchSize)
-        const { error } = await supabase
-          .from('keywords')
-          .upsert(batch, { onConflict: 'id' })
-        
-        if (error) throw new Error(`Failed to update batch: ${error.message}`)
-      }
-      
-      return true
-    },
-    FILTER_RETRY_POLICY,
-    'update filtered keywords'
-  )
+
+  const updates = allKeywords.map(keyword => {
+    const isRemaining = remainingIds.has(keyword.id)
+    const isLowVolume = keyword.search_volume < minSearchVolume
+
+    return {
+      id: keyword.id,
+      is_filtered_out: !isRemaining,
+      filtered_reason: !isRemaining
+        ? (isLowVolume ? 'low_volume' : 'duplicate')
+        : null
+    }
+  })
+
+  // Batch update to avoid N+1 queries
+  await supabase
+    .from('keywords')
+    .upsert(updates, { onConflict: 'id' })
 }
 
 /**
- * Get organization's minimum search volume setting
+ * PRODUCTION SAFE:
+ * Removed broken organization_settings table dependency.
+ * Returns default filter config.
  */
-export async function getOrganizationFilterSettings(
-  organizationId: string
-): Promise<FilterOptions> {
-  const supabase = createServiceRoleClient()
-  
-  try {
-    const settings = await retryWithPolicy(
-      async () => {
-        const { data, error } = await supabase
-          .from('organization_settings')
-          .select('min_search_volume')
-          .eq('organization_id', organizationId)
-          .single()
-        
-        if (error && error.code !== 'PGRST116') throw new Error(`Failed to fetch settings: ${error.message}`) // PGRST116 = no rows
-        return data
-      },
-      FILTER_RETRY_POLICY,
-      'fetch organization filter settings'
-    )
-    
-    return {
-      min_search_volume: (settings as any)?.min_search_volume || 100,
-      similarity_threshold: 0.85
-    }
-  } catch (error) {
-    console.warn('Failed to fetch organization settings, using defaults:', error)
-    return {
-      min_search_volume: 100,
-      similarity_threshold: 0.85
-    }
+export async function getOrganizationFilterSettings(): Promise<FilterOptions> {
+  return {
+    min_search_volume: 100,
+    similarity_threshold: 0.85
   }
 }
 

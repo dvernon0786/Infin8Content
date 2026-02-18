@@ -112,7 +112,7 @@ export const step5Filtering = inngest.createFunction(
 
     try {
       const orgId = await getOrganizationId(workflowId)
-      const filterOptions = await getOrganizationFilterSettings(orgId)
+      const filterOptions = await getOrganizationFilterSettings()
       await filterKeywords(workflowId, orgId, filterOptions)
 
       await WorkflowFSM.transition(workflowId, 'FILTERING_SUCCESS', {
