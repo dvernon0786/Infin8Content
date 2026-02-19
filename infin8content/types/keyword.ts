@@ -9,6 +9,7 @@ export interface KeywordSubtopic {
 export interface KeywordRecord {
   id: string
   keyword: string
+  seed_keyword: string
   longtail_keyword?: string
   organization_id: string
   competitor_url_id?: string
