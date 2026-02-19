@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { WorkflowEvent } from '@/lib/fsm/workflow-events'
 
 describe('🚀 FULL WORKFLOW SIMULATION', () => {
   const projectRoot = process.cwd()
@@ -18,8 +19,7 @@ describe('🚀 FULL WORKFLOW SIMULATION', () => {
       transitionWithAutomation: vi.fn().mockImplementation(async (workflowId, event, userId) => {
         console.log(`[Mock] transitionWithAutomation called: ${workflowId}, ${event}, ${userId}`)
         
-        // Simulate the automation graph behavior
-        const automationGraph = {
+        const automationGraph: Record<string, string> = {
           'SEEDS_APPROVED': 'intent.step4.longtails',
           'HUMAN_SUBTOPICS_APPROVED': 'intent.step9.articles',
           'LONGTAIL_SUCCESS': 'intent.step5.filtering',
@@ -29,7 +29,7 @@ describe('🚀 FULL WORKFLOW SIMULATION', () => {
           'ARTICLES_SUCCESS': 'WORKFLOW_COMPLETED'
         }
         
-        const emittedEvent = automationGraph[event]
+        const emittedEvent = automationGraph[event as string]
         
         if (emittedEvent) {
           console.log(`[Mock] Would emit Inngest event: ${emittedEvent}`)
@@ -121,7 +121,7 @@ describe('🚀 FULL WORKFLOW SIMULATION', () => {
     ]
     
     for (const { event, expected } of workerEvents) {
-      const result = await transitionWithAutomation(workflowId, event, 'system')
+      const result = await transitionWithAutomation(workflowId, event as WorkflowEvent, 'system')
       expect(result.success).toBe(true)
       expect(result.emittedEvent).toBe(expected)
       console.log(`✅ ${event} completed, emitted: ${result.emittedEvent}`)
@@ -164,7 +164,7 @@ describe('🚀 FULL WORKFLOW SIMULATION', () => {
     const startEvents = ['LONGTAIL_START', 'FILTERING_START', 'CLUSTERING_START']
     
     for (const event of startEvents) {
-      const result = await transitionWithAutomation(workflowId, event, 'test-user')
+      const result = await transitionWithAutomation(workflowId, event as WorkflowEvent, 'test-user')
       expect(result.success).toBe(true)
       expect(result.emittedEvent).toBeUndefined()
       console.log(`✅ ${event} completed, no emission (correct)`)
