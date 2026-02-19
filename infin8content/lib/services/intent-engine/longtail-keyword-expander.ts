@@ -291,13 +291,19 @@ async function expandSingleSeed(
 
   for (const result of results) {
     if (result.status === 'fulfilled') {
+      console.log(`[LongtailExpander] Seed "${seed.keyword}" - ${result.value.length} keywords from ${result.status}`)
       collected.push(...result.value)
     } else {
+      console.error(`[LongtailExpander] Seed "${seed.keyword}" - API Error: ${result.reason?.message ?? 'Unknown error'}`)
       errors.push(result.reason?.message ?? 'Unknown error')
     }
   }
 
+  console.log(`[LongtailExpander] Seed "${seed.keyword}" - Total collected: ${collected.length}, Errors: ${errors.length}`)
+
   const unique = deduplicate(collected).slice(0, 12)
+
+  console.log(`[LongtailExpander] Seed "${seed.keyword}" - After deduplication: ${unique.length} unique longtails`)
 
   return {
     seed_keyword_id: seed.id,
@@ -320,6 +326,8 @@ async function persistLongtails(
   const supabase = createServiceRoleClient()
 
   if (longtails.length) {
+    console.log(`[LongtailExpander] Persisting ${longtails.length} longtails for seed "${seed.keyword}"`)
+    
     const rows = longtails.map(lt => ({
       workflow_id: workflowId,
       organization_id: seed.organization_id,
@@ -338,22 +346,33 @@ async function persistLongtails(
     }))
 
     const { error } = await supabase.from('keywords').upsert(rows, {
-      onConflict: 'workflow_id,keyword'
+      onConflict: 'workflow_id,keyword,parent_seed_keyword_id'
     })
 
     if (error && error.code !== '23505') {
+      console.error(`[LongtailExpander] Bulk upsert failed for seed "${seed.keyword}": ${error.message}`)
       throw new Error(`Bulk upsert failed: ${error.message}`)
+    } else if (error && error.code === '23505') {
+      console.log(`[LongtailExpander] Duplicate longtails detected for seed "${seed.keyword}" - skipping duplicates`)
+    } else {
+      console.log(`[LongtailExpander] Successfully persisted ${longtails.length} longtails for seed "${seed.keyword}"`)
     }
+  } else {
+    console.warn(`[LongtailExpander] No longtails to persist for seed "${seed.keyword}"`)
   }
 
   // ALWAYS mark seed completed - ensures deterministic workflow integrity
+  console.log(`[LongtailExpander] Marking seed "${seed.keyword}" as completed`)
   const { error: updateError } = await supabase
     .from('keywords')
     .update({ longtail_status: 'completed' })
     .eq('id', seed.id)
 
   if (updateError) {
+    console.error(`[LongtailExpander] Seed status update failed for "${seed.keyword}": ${updateError.message}`)
     throw new Error(`Seed status update failed: ${updateError.message}`)
+  } else {
+    console.log(`[LongtailExpander] Successfully marked seed "${seed.keyword}" as completed`)
   }
 }
 
@@ -366,6 +385,8 @@ export async function expandSeedKeywordsToLongtails(
 ) {
 
   const supabase = createServiceRoleClient()
+  
+  console.log(`[LongtailExpander] Starting longtail expansion for workflow: ${workflowId}`)
 
   const { data: workflow, error: workflowError } = await supabase
     .from('intent_workflows')
@@ -386,6 +407,7 @@ export async function expandSeedKeywordsToLongtails(
     .eq('longtail_status', 'not_started')
 
   if (seedsError || !seeds?.length) {
+    console.log(`[LongtailExpander] No seeds found for expansion in workflow: ${workflowId}`)
     return {
       workflow_id: workflowId,
       seeds_processed: 0,
@@ -393,6 +415,8 @@ export async function expandSeedKeywordsToLongtails(
       results: []
     }
   }
+
+  console.log(`[LongtailExpander] Found ${seeds.length} seeds to process for workflow: ${workflowId}`)
 
   const { data: org, error: orgError } = await supabase
     .from('organizations')
@@ -408,26 +432,24 @@ export async function expandSeedKeywordsToLongtails(
   const locationCode = resolveLocationCode(orgData.keyword_settings?.target_region)
   const languageCode = resolveLanguageCode(orgData.keyword_settings?.language_code)
 
+  console.log(`[LongtailExpander] Using geo settings: location=${locationCode}, language=${languageCode}`)
+
   const results = []
   let total = 0
 
   for (const seed of seeds as unknown as SeedKeyword[]) {
+    console.log(`[LongtailExpander] Processing seed: "${seed.keyword}"`)
     const expansion = await expandSingleSeed(seed, locationCode, languageCode)
 
     await persistLongtails(workflowId, seed, expansion.longtails)
 
     results.push(expansion)
     total += expansion.longtails_created
-
-    emitAnalyticsEvent({
-      event_type: 'longtail_keywords_expanded',
-      timestamp: new Date().toISOString(),
-      organization_id: orgId,
-      workflow_id: workflowId,
-      seed_keyword: seed.keyword,
-      longtails_created: expansion.longtails_created
-    })
+    
+    console.log(`[LongtailExpander] Seed "${seed.keyword}" completed: ${expansion.longtails_created} longtails, ${expansion.errors.length} errors`)
   }
+
+  console.log(`[LongtailExpander] Workflow ${workflowId} expansion completed: ${total} total longtails created from ${seeds.length} seeds`)
 
   return {
     workflow_id: workflowId,
