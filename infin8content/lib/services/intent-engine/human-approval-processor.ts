@@ -8,7 +8,7 @@
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
-import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 import { WorkflowState } from '@/lib/fsm/workflow-events'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
@@ -167,10 +167,11 @@ export async function processHumanApproval(
   // FSM TRANSITION: Handle decision through state machine ONLY
   if (decision === 'approved') {
     // Approved: Advance to Step 9 (Article Generation) via FSM
-    const result = await WorkflowFSM.transition(workflowId, 'HUMAN_SUBTOPICS_APPROVED', { 
-      userId: currentUser.id 
-    })
-    finalState = result.nextState
+    const result = await transitionWithAutomation(workflowId, 'HUMAN_SUBTOPICS_APPROVED', currentUser.id)
+    if (!result.success) {
+      throw new Error(`Failed to transition approved workflow: ${result.error}`)
+    }
+    finalState = 'step_9_articles' // Known next state for human approval
   } else if (decision === 'rejected' && reset_to_step) {
     // Rejected: Reset to specified step via FSM
     // 🔁 REGRESSION EXCEPTION: Human approval can reset workflow
@@ -179,11 +180,16 @@ export async function processHumanApproval(
     // - Only steps 1-7 allowed as reset targets
     // - FSM validates reset targets
     const resetState = RESET_STEP_MAP[reset_to_step]
-    const resetResult = await WorkflowFSM.transition(workflowId, 'HUMAN_RESET', { 
-      userId: currentUser.id,
-      resetTo: resetState
+    // Use unified engine for reset as well
+    const resetResult = await transitionWithAutomation(workflowId, 'HUMAN_RESET', currentUser.id, { 
+      resetTo: resetState 
     })
-    finalState = resetResult.nextState
+    if (!resetResult.success) {
+      throw new Error('Failed to reset rejected workflow')
+    }
+    // For reset, we need to get the new state from the FSM
+    const { InternalWorkflowFSM } = await import('@/lib/fsm/fsm.internal')
+    finalState = await InternalWorkflowFSM.getCurrentState(workflowId)
   } else {
     throw new Error('Invalid approval decision')
   }

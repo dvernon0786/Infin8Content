@@ -10,7 +10,6 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
-import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 
 export interface SubtopicApprovalRequest {
@@ -277,7 +276,9 @@ async function checkAndTriggerWorkflowCompletion(
   const workflowId = (keyword as any).workflow_id
 
   // Get current workflow state
-  const currentState = await WorkflowFSM.getCurrentState(workflowId)
+  // For state query, we need to use internal FSM since unified engine doesn't export getCurrentState
+  const { InternalWorkflowFSM } = await import('@/lib/fsm/fsm.internal')
+  const currentState = await InternalWorkflowFSM.getCurrentState(workflowId)
   
   // Only proceed if workflow is in step_8_subtopics state
   if (currentState !== 'step_8_subtopics') {

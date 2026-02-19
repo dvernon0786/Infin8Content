@@ -1,9 +1,11 @@
 # Database Schema Documentation - Infin8Content
 
+**Generated:** February 19, 2026  
 **Version:** v2.1.0 (Zero-Legacy FSM)  
-**Last Updated:** 2026-02-17  
+**Last Updated:** 2026-02-19  
 **Database:** Supabase (PostgreSQL 15)  
-**Architecture:** Multi-tenant with Row Level Security
+**Architecture:** Multi-tenant with Row Level Security  
+**Total Tables:** 13 core tables with zero-legacy schema
 
 ---
 

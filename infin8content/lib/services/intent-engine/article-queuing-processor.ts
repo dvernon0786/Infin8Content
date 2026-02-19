@@ -7,7 +7,7 @@
  */
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
-import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 import { WorkflowState } from '@/lib/fsm/workflow-events'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
 import { AuditAction } from '@/types/audit'
@@ -47,10 +47,10 @@ export interface ArticleQueueingResult {
 }
 
 /**
- * Queue approved keywords for article generation using ONLY FSM transitions
+ * Queue approved keywords for article generation using ONLY unified engine.
  * 
  * This function NEVER directly mutates intent_workflows table.
- * All state changes go through WorkflowFSM.transition().
+ * All state changes go through transitionWithAutomation().
  */
 export async function queueArticlesForWorkflow(
   workflowId: string

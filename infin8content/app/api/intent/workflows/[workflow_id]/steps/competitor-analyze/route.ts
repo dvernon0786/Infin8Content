@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
@@ -21,7 +22,6 @@ import {
 } from '@/lib/services/intent-engine/competitor-seed-extractor'
 import type { SeedExtractor } from '@/lib/services/intent-engine/seed-extractor.interface'
 import { DeterministicFakeExtractor } from '@/lib/services/intent-engine/deterministic-fake-extractor'
-import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
 import { resolveLocationCode, resolveLanguageCode } from '@/lib/config/dataforseo-geo'
 
@@ -232,7 +232,10 @@ export async function POST(
 
     // FSM TRANSITION: Advance to next step after successful completion
     try {
-      await WorkflowFSM.transition(workflowId, 'COMPETITORS_COMPLETED', { userId: currentUser.id })
+      const result = await transitionWithAutomation(workflowId, 'COMPETITORS_COMPLETED', currentUser.id)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to transition workflow')
+      }
       
       console.log(`[CompetitorAnalyze] Successfully advanced to step_3_seeds`)
     } catch (error) {

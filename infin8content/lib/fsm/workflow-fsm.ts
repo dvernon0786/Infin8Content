@@ -1,156 +1,63 @@
-import { createServiceRoleClient } from '@/lib/supabase/server'
-import { WorkflowState, WorkflowEvent } from './workflow-events'
-import { WorkflowTransitions } from './workflow-machine'
+/**
+ * DEPRECATED: This file is kept for backward compatibility only.
+ * 
+ * The actual FSM implementation has moved to fsm.internal.ts and is NOT exported.
+ * All transitions MUST go through unified-workflow-engine.ts
+ * 
+ * This file now throws errors to prevent direct usage.
+ */
 
-const AllowedResetStates: WorkflowState[] = [
-  'step_1_icp',
-  'step_2_competitors',
-  'step_3_seeds',
-  'step_4_longtails',
-  'step_5_filtering',
-  'step_6_clustering',
-  'step_7_validation'
-]
+import { WorkflowEvent } from './workflow-events'
 
 export interface TransitionResult {
   ok: boolean
-  previousState: WorkflowState
-  nextState: WorkflowState
+  previousState: string
+  nextState: string
   applied: boolean
   skipped?: boolean
 }
 
+/**
+ * FORBIDDEN: This class throws errors to prevent usage.
+ * Use transitionWithAutomation() from unified-workflow-engine.ts instead.
+ */
 export class WorkflowFSM {
-  static async getCurrentState(workflowId: string): Promise<WorkflowState> {
-    const supabase = createServiceRoleClient()
+  static async getCurrentState(): Promise<never> {
+    throw new Error(`
+🚨 FORBIDDEN: Direct WorkflowFSM usage detected.
 
-    const { data, error } = await supabase
-      .from('intent_workflows')
-      .select('state')
-      .eq('id', workflowId)
-      .single() as { data: { state: string } | null; error: any }
+All state queries MUST go through unified engine:
+✅ import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 
-    if (error || !data) {
-      throw new Error('Workflow not found')
-    }
-
-    return data.state as WorkflowState
+This prevents bypassing automation guarantees.
+    `)
   }
 
-  static getAllowedEvents(state: WorkflowState): WorkflowEvent[] {
-    return Object.keys(WorkflowTransitions[state] || {}) as WorkflowEvent[]
+  static async transition(): Promise<never> {
+    throw new Error(`
+🚨 FORBIDDEN: Direct WorkflowFSM.transition() detected.
+
+All transitions MUST use unified engine:
+✅ import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
+✅ await transitionWithAutomation(workflowId, 'EVENT', userId)
+
+This prevents missing event emissions and silent stalls.
+    `)
   }
 
-  static canTransition(state: WorkflowState, event: WorkflowEvent): boolean {
-    return !!WorkflowTransitions[state]?.[event]
+  static getAllowedEvents(): Promise<never> {
+    throw new Error(`
+🚨 FORBIDDEN: Direct WorkflowFSM usage detected.
+
+Use unified engine for all workflow operations.
+    `)
   }
 
-  static async transition(
-    workflowId: string,
-    event: WorkflowEvent,
-    options?: { resetTo?: WorkflowState; userId?: string }
-  ): Promise<TransitionResult> {
-    // 🚨 DEPRECATION WARNING - Use unified engine instead
-    const stack = new Error().stack
-    const caller = stack?.split('\n')[2]?.trim()
-    
-    if (!caller?.includes('unified-workflow-engine')) {
-      console.warn(`
-🚨🚨🚨 DEPRECATED: Direct WorkflowFSM.transition() usage detected!
+  static canTransition(): Promise<never> {
+    throw new Error(`
+🚨 FORBIDDEN: Direct WorkflowFSM usage detected.
 
-   Caller: ${caller}
-
-   This usage is NOT RECOMMENDED because it bypasses automatic
-   event emission guarantees.
-
-   Replace with:
-   ✅ import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
-   ✅ await transitionWithAutomation(workflowId, '${event}', userId)
-
-   This prevents the original bug class of missing event emissions.
-      `)
-    }
-
-    const supabase = createServiceRoleClient()
-
-    const currentState = await this.getCurrentState(workflowId)
-
-    // � DEBUG: Log transition details
-    console.log('[FSM TRANSITION DEBUG]', {
-      workflowId,
-      currentState,
-      event,
-      allowedEvents: Object.keys(WorkflowTransitions[currentState] || {})
-    })
-
-    // �🔒 Prevent resetting completed workflows
-    if (currentState === 'completed' && event === 'HUMAN_RESET') {
-      throw new Error('Cannot reset completed workflow')
-    }
-
-    let nextState: WorkflowState | undefined
-
-    // 🔁 HUMAN RESET
-    if (event === 'HUMAN_RESET') {
-      if (!options?.resetTo) {
-        throw new Error('HUMAN_RESET requires resetTo')
-      }
-
-      if (!AllowedResetStates.includes(options.resetTo)) {
-        throw new Error('Invalid reset target')
-      }
-
-      nextState = options.resetTo
-    } else {
-      nextState = WorkflowTransitions[currentState]?.[event]
-    }
-
-    if (!nextState) {
-      // No valid transition - return deterministic result, never throw
-      return {
-        ok: false,
-        previousState: currentState,
-        nextState: currentState,
-        applied: false
-      }
-    }
-
-    // 🟢 Idempotency shortcut
-    if (currentState === nextState) {
-      return {
-        ok: true,
-        previousState: currentState,
-        nextState: currentState,
-        applied: false // No change needed
-      }
-    }
-
-    //  Atomic compare-and-swap - REQUIRED for safety
-    const { data: updated } = await supabase
-      .from('intent_workflows')
-      .update({ state: nextState })
-      .eq('id', workflowId)
-      .eq('state', currentState) // 🔒 CRITICAL - restore atomic safety
-      .select('state')
-      .single()
-
-    if (!updated) {
-      // Another worker already acquired the transition - this is expected behavior
-      return {
-        ok: true,
-        applied: false,
-        skipped: true,
-        previousState: currentState,
-        nextState: currentState
-      }
-    }
-
-    // Transition successful - return result without redundant read
-    return {
-      ok: true,
-      applied: true,
-      previousState: currentState,
-      nextState
-    }
+Use unified engine for all workflow operations.
+    `)
   }
 }
