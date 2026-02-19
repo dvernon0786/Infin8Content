@@ -1,13 +1,36 @@
 # Steps 4-9 Implementation Status - COMPLETE
 
-**Date:** 2026-02-17  
-**Status:** ✅ **FULLY IMPLEMENTED - PRODUCTION READY**
+**Date:** 2026-02-19  
+**Status:** ✅ **FULLY IMPLEMENTED - PRODUCTION READY - CRITICAL BUGS FIXED**
 
 ---
 
 ## 🎯 Summary
 
-Successfully implemented complete Inngest + FSM integration for Steps 4-9 with all critical guards, real service integration, and comprehensive testing.
+Successfully implemented complete Inngest + FSM integration for Steps 4-9 with all critical guards, real service integration, comprehensive testing, and **CRITICAL WORKFLOW COMPLETION BUG FIXED**.
+
+---
+
+## 🚨 CRITICAL PRODUCTION BUG FIXED - WORKFLOW COMPLETION
+
+### Issue Resolved: WORKFLOW_COMPLETED Handler Missing
+- **Problem:** Workflows stalled at `step_9_articles_queued`, never reached `completed`
+- **Impact:** Dashboard never showed "completed" status
+- **Solution:** Implemented `workflowCompleted` handler with two-step transition
+- **Result:** Terminal state now reached reliably, dashboard shows completion
+
+### Technical Fix Applied
+```typescript
+// NEW: workflowCompleted handler
+export const workflowCompleted = inngest.createFunction(
+  { id: 'intent-workflow-completed' },
+  { event: 'WORKFLOW_COMPLETED' },
+  async ({ event }) => {
+    // Complete two-step transition: step_9_articles_queued → completed
+    await transitionWithAutomation(workflowId, 'WORKFLOW_COMPLETED', 'system')
+  }
+)
+```
 
 ---
 
