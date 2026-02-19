@@ -266,7 +266,7 @@ export const step8Subtopics = inngest.createFunction(
         .from('keywords')
         .select('id')
         .eq('workflow_id', workflowId)
-        .eq('longtail_status', 'complete')
+        .eq('longtail_status', 'completed')
         .eq('subtopics_status', 'not_started')
 
       const generator = new KeywordSubtopicGenerator()
