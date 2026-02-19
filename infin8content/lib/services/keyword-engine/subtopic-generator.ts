@@ -107,12 +107,12 @@ export class KeywordSubtopicGenerator {
    * Validate that keyword is ready for subtopic generation
    */
   private validateKeywordForGeneration(keyword: KeywordRecord): void {
-    if (keyword.subtopics_status === 'complete') {
+    if (keyword.subtopics_status === 'completed') {
       throw new Error('Subtopics already generated')
     }
 
-    if (keyword.longtail_status !== 'complete') {
-      throw new Error('Keyword must have longtail_status = complete')
+    if (keyword.longtail_status !== 'completed') {
+      throw new Error('Keyword must have longtail_status = completed')
     }
   }
 
