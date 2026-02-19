@@ -89,7 +89,7 @@ export async function processSubtopicApproval(
   }
 
   // Validate subtopics are complete before approval
-  if (keyword.subtopics_status !== 'complete') {
+  if (keyword.subtopics_status !== 'completed') {
     throw new Error('Subtopics must be complete before approval')
   }
 
@@ -276,9 +276,9 @@ async function checkAndTriggerWorkflowCompletion(
   const workflowId = (keyword as any).workflow_id
 
   // Get current workflow state
-  // For state query, we need to use internal FSM since unified engine doesn't export getCurrentState
-  const { InternalWorkflowFSM } = await import('@/lib/fsm/fsm.internal')
-  const currentState = await InternalWorkflowFSM.getCurrentState(workflowId)
+  // Use unified engine to maintain architectural closure
+  const { getWorkflowState } = await import('@/lib/fsm/unified-workflow-engine')
+  const currentState = await getWorkflowState(workflowId)
   
   // Only proceed if workflow is in step_8_subtopics state
   if (currentState !== 'step_8_subtopics') {
@@ -286,12 +286,14 @@ async function checkAndTriggerWorkflowCompletion(
     return
   }
 
-  // Check if ALL keywords in this workflow have approved subtopics
+  // Check if ALL longtail keywords in this workflow have approved subtopics
+  // IMPORTANT: Only longtail keywords (parent_seed_keyword_id IS NOT NULL) get subtopics
   const { data: allKeywords } = await supabase
     .from('keywords')
     .select('id, subtopics_status')
     .eq('workflow_id', workflowId)
     .eq('organization_id', organizationId)
+    .is('parent_seed_keyword_id', 'not null') // Only longtail keywords
 
   if (!allKeywords || allKeywords.length === 0) {
     console.log(`[SubtopicApproval] No keywords found for workflow ${workflowId}`)

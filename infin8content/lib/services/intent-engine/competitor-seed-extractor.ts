@@ -431,6 +431,7 @@ export async function persistSeedKeywords(
       organization_id: organizationId,
       workflow_id: workflowId, // Critical for workflow isolation
       competitor_url_id: null, // ALWAYS NULL for stateless Step 2
+      parent_seed_keyword_id: null, // 🔥 REQUIRED: Explicit NULL for partial index matching
       seed_keyword: keyword.seed_keyword.trim(),
       keyword: keyword.seed_keyword.trim(), // Same as seed_keyword at this stage
       search_volume: keyword.search_volume,
@@ -467,7 +468,7 @@ export async function persistSeedKeywords(
   const { error: upsertError, data } = await supabase
     .from('keywords')
     .upsert(keywordRecords, {
-      onConflict: 'organization_id,workflow_id,seed_keyword'
+      onConflict: 'organization_id,workflow_id,seed_keyword,parent_seed_keyword_id'
     })
     .select('id')
 

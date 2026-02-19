@@ -35,6 +35,15 @@ export type AutomationEvent = keyof typeof AUTOMATION_GRAPH
 export type EmittedEvent = typeof AUTOMATION_GRAPH[AutomationEvent]
 
 /**
+ * Get current workflow state (read-only)
+ * This is the only way to query workflow state - maintains architectural closure
+ */
+export async function getWorkflowState(workflowId: string): Promise<WorkflowState> {
+  const { InternalWorkflowFSM } = await import('./fsm.internal')
+  return await InternalWorkflowFSM.getCurrentState(workflowId)
+}
+
+/**
  * Check if an event requires automation
  */
 export function requiresAutomation(event: string): event is AutomationEvent {
