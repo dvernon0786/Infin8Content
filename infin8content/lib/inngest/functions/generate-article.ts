@@ -1,5 +1,6 @@
 import { inngest } from '@/lib/inngest/client'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 import { runResearchAgent } from '@/lib/services/article-generation/research-agent'
 import { runContentWritingAgent } from '@/lib/services/article-generation/content-writing-agent'
 import type { ArticleSection, ResearchPayload, ContentDefaults } from '@/types/article'
@@ -288,8 +289,8 @@ async function checkAndCompleteWorkflow(
   workflowId: string
 ): Promise<void> {
   try {
-    // Import FSM for terminal authority
-    const { WorkflowFSM } = await import('@/lib/fsm/workflow-fsm')
+    // Import unified engine for terminal authority
+    const { transitionWithAutomation } = await import('@/lib/fsm/unified-workflow-engine')
     
     // Fetch current workflow state (FSM state only)
     const { data: workflow } = await supabase
@@ -336,10 +337,8 @@ async function checkAndCompleteWorkflow(
     if (!incompleteArticles || incompleteArticles.length === 0) {
       console.log(`[WorkflowCompletion] All articles completed for workflow ${workflowId}, completing via FSM`)
 
-      // SINGLE TERMINAL AUTHORITY: FSM transition only
-      await WorkflowFSM.transition(workflowId, 'WORKFLOW_COMPLETED', {
-        userId: 'system'
-      })
+      // SINGLE TERMINAL AUTHORITY: Unified transition only
+      await transitionWithAutomation(workflowId, 'WORKFLOW_COMPLETED', 'system')
       
       console.log(`[WorkflowCompletion] Workflow ${workflowId} completed via FSM`)
     } else {

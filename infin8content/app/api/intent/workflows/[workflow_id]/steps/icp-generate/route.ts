@@ -19,7 +19,6 @@ import {
   handleICPGenerationFailure,
   type ICPGenerationRequest
 } from '@/lib/services/intent-engine/icp-generator'
-import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 
 // Rate limit configuration for ICP generation
 const RATE_LIMIT_CONFIG: RateLimitConfig = {

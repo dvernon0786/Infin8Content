@@ -9,7 +9,8 @@ import {
   step6Clustering,
   step7Validation,
   step8Subtopics,
-  step9Articles
+  step9Articles,
+  workflowCompleted
 } from '@/lib/inngest/functions/intent-pipeline'
 
 // Validate environment variables at runtime
@@ -32,7 +33,8 @@ export const { GET, POST, PUT } = serve({
     step6Clustering,
     step7Validation,
     step8Subtopics,
-    step9Articles
+    step9Articles,
+    workflowCompleted
   ],
 })
 

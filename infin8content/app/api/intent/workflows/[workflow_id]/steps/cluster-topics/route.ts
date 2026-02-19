@@ -11,8 +11,7 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
-import { inngest } from '@/lib/inngest/client'
-import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 
 export async function POST(
   request: NextRequest,
@@ -68,7 +67,10 @@ export async function POST(
     }
 
     // 4️⃣ STRICT FSM GUARD
-    if (!WorkflowFSM.canTransition(currentState as any, 'CLUSTERING_START')) {
+    // For validation, we need to check if transition is allowed
+    // Use internal FSM for validation since unified engine doesn't export canTransition
+    const { InternalWorkflowFSM } = await import('@/lib/fsm/fsm.internal')
+    if (!InternalWorkflowFSM.canTransition(currentState as any, 'CLUSTERING_START')) {
       return NextResponse.json(
         {
           error: 'INVALID_STATE',
@@ -91,12 +93,18 @@ export async function POST(
       userAgent: extractUserAgent(request.headers),
     })
 
-    // 5️⃣ INNGEST EVENT DISPATCH (async trigger)
-    // Worker will handle FSM transition via guardAndStart()
-    await inngest.send({
-      name: 'intent.step6.clustering',
-      data: { workflowId }
-    })
+    // 5️⃣ UNIFIED TRANSITION (async trigger)
+    // This automatically emits the required event
+    const result = await transitionWithAutomation(workflowId, 'CLUSTERING_START', userId)
+    if (!result.success) {
+      return NextResponse.json(
+        { 
+          error: 'Failed to advance workflow',
+          message: result.error || 'Unknown error'
+        },
+        { status: 500 }
+      )
+    }
 
     // 6️⃣ RETURN IMMEDIATE 202 ACCEPTED
     return NextResponse.json({

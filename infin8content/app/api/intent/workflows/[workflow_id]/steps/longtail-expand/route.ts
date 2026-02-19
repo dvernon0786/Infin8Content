@@ -9,10 +9,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
-import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
-import { logIntentActionAsync } from '@/lib/services/intent-engine/intent-audit-logger'
 import { AuditAction } from '@/types/audit'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import { inngest } from '@/lib/inngest/client'
 import {
@@ -74,7 +73,10 @@ export async function POST(
     }
 
     // 4️⃣ STRICT FSM GUARD
-    if (!WorkflowFSM.canTransition(currentState as any, 'LONGTAIL_START')) {
+    // For validation, we need to check if transition is allowed
+    // Use internal FSM for validation since unified engine doesn't export canTransition
+    const { InternalWorkflowFSM } = await import('@/lib/fsm/fsm.internal')
+    if (!InternalWorkflowFSM.canTransition(currentState as any, 'LONGTAIL_START')) {
       return NextResponse.json(
         {
           error: 'INVALID_STATE',
@@ -128,13 +130,13 @@ export async function POST(
     console.log(`[LongtailExpand] Starting long-tail expansion for workflow ${workflowId}`)
 
     // 6️⃣ NON-BLOCKING TRIGGER (async only)
-    // Send Inngest event for async processing
-    // Worker will handle FSM transition via guardAndStart()
-    console.log(`🔥🔥🔥 [LongtailExpand] SENDING INNGEST EVENT: intent.step4.longtails for workflow ${workflowId}`)
-    await inngest.send({
-      name: 'intent.step4.longtails',
-      data: { workflowId }
-    })
+    // UNIFIED TRANSITION (async trigger)
+    // This automatically emits the required event
+    const result = await transitionWithAutomation(workflowId, 'LONGTAIL_START', userId)
+    if (!result.success) {
+      console.error(`[LongtailExpand] Failed to advance workflow:`, result.error)
+      // Still return 202 since processing was triggered
+    }
     console.log(`✅✅✅ [LongtailExpand] INNGEST EVENT SENT SUCCESSFULLY for workflow ${workflowId}`)
 
     console.log(`[LongtailExpand] Triggered async processing for workflow ${workflowId}`)

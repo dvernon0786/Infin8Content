@@ -6,9 +6,9 @@
  * No manual inngest.send allowed.
  */
 
-import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
+import { InternalWorkflowFSM } from './fsm.internal'
 import { inngest } from '@/lib/inngest/client'
-import { WorkflowEvent } from '@/lib/fsm/workflow-events'
+import { WorkflowEvent, WorkflowState } from '@/lib/fsm/workflow-events'
 
 /**
  * SINGLE SOURCE OF TRUTH - Automation Graph
@@ -26,7 +26,8 @@ export const AUTOMATION_GRAPH = {
   'FILTERING_SUCCESS': 'intent.step6.clustering',
   'CLUSTERING_SUCCESS': 'intent.step7.validation',
   'VALIDATION_SUCCESS': 'intent.step8.subtopics',
-  'SUBTOPICS_SUCCESS': 'intent.step9.articles',
+  'ARTICLES_SUCCESS': 'WORKFLOW_COMPLETED',
+  // REMOVED: 'SUBTOPICS_SUCCESS': 'intent.step9.articles' - Step 9 is human gate only
   
 } as const
 
@@ -59,17 +60,19 @@ export function getEmittedEvent(event: AutomationEvent): EmittedEvent {
 export async function transitionWithAutomation(
   workflowId: string,
   event: WorkflowEvent,
-  userId?: string
+  userId?: string,
+  options?: { resetTo?: WorkflowState }
 ): Promise<{ success: boolean; error?: string; emittedEvent?: string }> {
   
-  console.log(`🔥🔥🔥 [UnifiedEngine] Transitioning ${workflowId}: ${event}`)
+  console.log(`[UnifiedEngine] Transitioning ${workflowId}: ${event}`)
   
   try {
-    // 1. Execute FSM transition
-    const transitionResult = await WorkflowFSM.transition(workflowId, event, userId ? { userId } : undefined)
+    // 1. Execute FSM transition with options
+    const fsmOptions = userId ? { userId, ...(options?.resetTo && { resetTo: options.resetTo }) } : options
+    const transitionResult = await InternalWorkflowFSM.transition(workflowId, event, fsmOptions)
     
     if (!transitionResult.applied) {
-      console.log(`⚠️⚠️⚠️ [UnifiedEngine] Transition not applied for ${workflowId}`)
+      console.log(`[UnifiedEngine] Transition not applied for ${workflowId}`)
       return {
         success: false,
         error: 'Transition not applied - likely concurrent execution'
@@ -78,21 +81,21 @@ export async function transitionWithAutomation(
 
     // 2. Check if this event requires automation
     if (!requiresAutomation(event)) {
-      console.log(`✅✅✅ [UnifiedEngine] Transition completed (no automation needed): ${event}`)
+      console.log(`[UnifiedEngine] Transition completed (no automation needed): ${event}`)
       return { success: true }
     }
 
     // 3. AUTOMATIC EMISSION - Guaranteed by structural coupling
     const requiredEvent = getEmittedEvent(event)
     
-    console.log(`🚀🚀🚀 [UnifiedEngine] Auto-emitting ${requiredEvent} for ${workflowId}`)
+    console.log(`[UnifiedEngine] Auto-emitting ${requiredEvent} for ${workflowId}`)
     
     await inngest.send({
       name: requiredEvent,
       data: { workflowId }
     })
 
-    console.log(`✅✅✅ [UnifiedEngine] Unified transition completed: ${event} → ${requiredEvent}`)
+    console.log(`[UnifiedEngine] Unified transition completed: ${event} → ${requiredEvent}`)
     
     return { 
       success: true, 

@@ -5,7 +5,7 @@
  * Impossible to transition without emitting.
  */
 
-import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 import { inngest } from '@/lib/inngest/client'
 
 /**
@@ -32,7 +32,7 @@ export async function transitionAndTrigger(
   state: AutomationBoundaryState,
   event: typeof AUTOMATION_BOUNDARIES[AutomationBoundaryState]['event'],
   userId: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; emittedEvent?: string }> {
   
   // Validate this is a known automation boundary
   const boundary = AUTOMATION_BOUNDARIES[state]
@@ -47,27 +47,21 @@ export async function transitionAndTrigger(
   
   try {
     // 1. Execute FSM transition
-    const transitionResult = await WorkflowFSM.transition(workflowId, event, { userId })
+    const transitionResult = await transitionWithAutomation(workflowId, event, userId)
     
-    if (!transitionResult.applied) {
+    if (!transitionResult.success) {
       console.log(`⚠️⚠️⚠️ [BoundaryGuard] Transition not applied for ${workflowId}`)
       return {
         success: false,
-        error: 'Transition not applied - likely concurrent execution'
+        error: transitionResult.error || 'Transition not applied - likely concurrent execution'
       }
     }
 
-    // 2. EMIT EVENT - GUARANTEED
-    console.log(`🚀🚀🚀 [BoundaryGuard] Emitting ${boundary.requiredEvent} for ${workflowId}`)
-    
-    await inngest.send({
-      name: boundary.requiredEvent,
-      data: { workflowId }
-    })
-
-    console.log(`✅✅✅ [BoundaryGuard] Boundary completed: ${state} -> ${event} -> ${boundary.requiredEvent}`)
-    
-    return { success: true }
+    console.log(`✅✅✅ [BoundaryGuard] Transition successful: ${event}`)
+    return {
+      success: true,
+      emittedEvent: transitionResult.emittedEvent
+    }
 
   } catch (error) {
     console.error(`❌❌❌ [BoundaryGuard] Failed boundary transition:`, error)

@@ -4,8 +4,10 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
 import { inngest } from '@/lib/inngest/client'
+
+// Import internal FSM for testing
+const { InternalWorkflowFSM } = await import('@/lib/fsm/fsm.internal')
 
 // Mock the services that aren't implemented yet
 vi.mock('@/lib/services/intent-engine/longtail-keyword-expander', () => ({
@@ -65,7 +67,7 @@ describe('Inngest + FSM Integration', () => {
   describe('Step 4 Route Integration', () => {
     it('should transition to running state and send Inngest event', async () => {
       // Mock the FSM transition
-      vi.spyOn(WorkflowFSM, 'transition').mockResolvedValue({
+      vi.spyOn(InternalWorkflowFSM, 'transition').mockResolvedValue({
         ok: true,
         previousState: 'step_4_longtails',
         nextState: 'step_4_longtails_running',
@@ -76,13 +78,13 @@ describe('Inngest + FSM Integration', () => {
       const sendSpy = vi.spyOn(inngest, 'send').mockResolvedValue({ ids: ['test-event-id'] })
       
       // Simulate the route logic (simplified test)
-      await WorkflowFSM.transition(workflowId, 'LONGTAIL_START')
+      await InternalWorkflowFSM.transition(workflowId, 'LONGTAIL_START')
       await inngest.send({
         name: 'intent.step4.longtails',
         data: { workflowId }
       })
       
-      expect(WorkflowFSM.transition).toHaveBeenCalledWith(workflowId, 'LONGTAIL_START')
+      expect(InternalWorkflowFSM.transition).toHaveBeenCalledWith(workflowId, 'LONGTAIL_START')
       expect(sendSpy).toHaveBeenCalledWith({
         name: 'intent.step4.longtails',
         data: { workflowId }
@@ -127,7 +129,7 @@ describe('Inngest + FSM Integration', () => {
   describe('End-to-End Flow Simulation', () => {
     it('should simulate complete Step 4 execution', async () => {
       // Mock FSM state transitions
-      const transitionSpy = vi.spyOn(WorkflowFSM, 'transition')
+      const transitionSpy = vi.spyOn(InternalWorkflowFSM, 'transition')
         .mockResolvedValueOnce({
           ok: true,
           previousState: 'step_4_longtails',
@@ -151,7 +153,7 @@ describe('Inngest + FSM Integration', () => {
       expect(workers.step4Longtails).toBeDefined()
       
       // Simulate the route trigger
-      await WorkflowFSM.transition(workflowId, 'LONGTAIL_START')
+      await InternalWorkflowFSM.transition(workflowId, 'LONGTAIL_START')
       await inngest.send({
         name: 'intent.step4.longtails',
         data: { workflowId }
@@ -175,7 +177,7 @@ describe('Inngest + FSM Integration', () => {
       vi.mocked(expandSeedKeywordsToLongtails).mockRejectedValue(new Error('Service failed'))
       
       // Mock FSM transition to failed
-      const transitionSpy = vi.spyOn(WorkflowFSM, 'transition')
+      const transitionSpy = vi.spyOn(InternalWorkflowFSM, 'transition')
         .mockResolvedValue({
           ok: true,
           previousState: 'step_4_longtails_running',

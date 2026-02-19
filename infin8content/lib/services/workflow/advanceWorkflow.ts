@@ -12,7 +12,7 @@
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { WorkflowState } from '@/lib/fsm/workflow-events'
-import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 
 interface AdvanceWorkflowParams {
   workflowId: string
@@ -40,8 +40,9 @@ export async function advanceWorkflow({
   nextState
 }: AdvanceWorkflowParams): Promise<void> {
 
-  // 1️⃣ Enforce legal transition
-  if (!WorkflowFSM.canTransition(expectedState, nextState as any)) {
+  // 1️⃣ Enforce legal transition using internal FSM for guard checking
+  const { InternalWorkflowFSM } = await import('@/lib/fsm/fsm.internal')
+  if (!InternalWorkflowFSM.canTransition(expectedState, nextState as any)) {
     throw new WorkflowTransitionError(
       `Illegal transition attempted: ${expectedState} → ${nextState}`,
       expectedState,

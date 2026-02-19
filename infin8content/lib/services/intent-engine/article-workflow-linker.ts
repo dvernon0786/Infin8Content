@@ -1,7 +1,7 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from './intent-audit-logger'
 import { AuditAction } from '@/types/audit'
-import { WorkflowFSM } from '@/lib/fsm/workflow-fsm'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 
 export interface LinkingResult {
   workflow_id: string
@@ -102,7 +102,9 @@ export async function linkArticlesToWorkflow(
   // 3️⃣ LINKER LAYER: Only responsible for linking articles, NOT completing workflow
   // Terminal completion is driven by the article generation pipeline via ProgressService
 
-  const currentState = await WorkflowFSM.getCurrentState(workflowId)
+  // For state query, we need to use internal FSM since unified engine doesn't export getCurrentState
+  const { InternalWorkflowFSM } = await import('@/lib/fsm/fsm.internal')
+  const currentState = await InternalWorkflowFSM.getCurrentState(workflowId)
 
   return {
     workflow_id: workflowId,

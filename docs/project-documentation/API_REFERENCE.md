@@ -1,19 +1,30 @@
 # API Reference Documentation
 
+**Generated:** February 19, 2026  
+**Version:** v2.1.0 (Zero-Legacy FSM)  
+**Total Endpoints:** 91 across 13 categories  
+**Architecture:** Deterministic FSM-based API
+
 ## 🎯 Overview
 
-Complete API reference for all Infin8Content endpoints including WordPress publishing, article management, and realtime functionality.
+Complete API reference for all Infin8Content endpoints including Intent Engine workflows, article generation, keyword management, and deterministic state transitions.
 
 ---
 
 ## 📚 Table of Contents
 
-1. [WordPress Publishing APIs](#wordpress-publishing-apis)
-2. [Article Management APIs](#article-management-apis)
-3. [Authentication APIs](#authentication-apis)
-4. [Realtime APIs](#realtime-apis)
-5. [Error Codes](#error-codes)
-6. [Rate Limiting](#rate-limiting)
+1. [Intent Workflows API](#intent-workflows-api) - 9-step FSM workflow management
+2. [Keywords API](#keywords-api) - Keyword research and management
+3. [Articles API](#articles-api) - Article generation and publishing
+4. [Authentication API](#authentication-api) - User management and security
+5. [Onboarding API](#onboarding-api) - Organization setup and configuration
+6. [Analytics API](#analytics-api) - Metrics and reporting
+7. [Admin API](#admin-api) - System administration
+8. [Debug API](#debug-api) - Development and debugging tools
+9. [Realtime API](#realtime-api) - Live updates and subscriptions
+10. [Error Codes](#error-codes)
+11. [Rate Limiting](#rate-limiting)
+12. [Authentication Patterns](#authentication-patterns)
 
 ---
 
