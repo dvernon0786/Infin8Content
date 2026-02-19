@@ -23,7 +23,7 @@ export function Step8SubtopicsForm({ workflowId }: Step8SubtopicsFormProps) {
       })
 
       const res = await fetch(
-        `/api/intent/workflows/${workflowId}/human-approval`,
+        `/api/intent/workflows/${workflowId}/steps/human-approval`,
         { method: 'POST' }
       )
 

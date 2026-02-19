@@ -7,7 +7,9 @@ import { resolveLocationCode, resolveLanguageCode } from '@/lib/config/dataforse
 
 export interface KeywordRecord {
   id: string
-  longtail_keyword: string
+  keyword: string
+  seed_keyword: string
+  longtail_keyword?: string | null
   organization_id: string
   longtail_status: string
   subtopics_status: string
@@ -42,8 +44,17 @@ export class KeywordSubtopicGenerator {
     const settings = await this.getOrganizationSettings(keyword.organization_id)
 
     // Generate subtopics using DataForSEO
+    const topic =
+      keyword.longtail_keyword?.trim()
+      || keyword.keyword?.trim()
+      || keyword.seed_keyword?.trim()
+
+    if (!topic) {
+      throw new Error('No valid topic found for subtopic generation')
+    }
+
     const subtopics = await generateSubtopics(
-      keyword.longtail_keyword,
+      topic,
       settings.languageCode,
       settings.locationCode,
       3 // Exactly 3 subtopics per story requirements
