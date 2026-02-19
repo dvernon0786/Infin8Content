@@ -18,9 +18,9 @@ export interface KeywordRecord {
   competition_index?: number
   keyword_difficulty?: number
   cpc?: number
-  longtail_status?: 'not_started' | 'in_progress' | 'complete' | 'failed'
-  subtopics_status?: 'not_started' | 'in_progress' | 'complete' | 'failed'
-  article_status?: 'not_started' | 'in_progress' | 'complete' | 'failed'
+  longtail_status?: 'not_started' | 'in_progress' | 'completed' | 'failed'
+  subtopics_status?: 'not_started' | 'in_progress' | 'completed' | 'failed'
+  article_status?: 'not_started' | 'in_progress' | 'completed' | 'failed'
   subtopics?: KeywordSubtopic[]
   created_at?: string
   updated_at?: string

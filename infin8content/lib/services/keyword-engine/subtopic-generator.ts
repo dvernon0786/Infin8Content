@@ -72,7 +72,7 @@ export class KeywordSubtopicGenerator {
       .from('keywords')
       .update({
         subtopics: subtopics,
-        subtopics_status: 'complete',
+        subtopics_status: 'completed',
         updated_at: new Date().toISOString()
       })
       .eq('id', keywordId)
