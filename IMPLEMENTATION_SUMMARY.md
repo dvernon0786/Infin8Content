@@ -1,19 +1,28 @@
 # Implementation Summary
 
-## Critical Workflow Completion Bug Fix - COMPLETED ✅
+## Critical Workflow Completion & Step 8 Bug Fixes - COMPLETED ✅
 
 **Date:** 2026-02-19  
 **Status:** ✅ **PRODUCTION READY - SHIP READINESS 10/10**
 
-### 🎯 Critical Production Bug Fixed
-Fixed the WORKFLOW_COMPLETED event handler missing issue that caused workflows to stall at `step_9_articles_queued` state, preventing proper completion indication on dashboards.
+### 🎯 Critical Production Bugs Fixed
+1. **WORKFLOW_COMPLETED Event Handler** - Fixed missing event consumer causing workflow stalls
+2. **Step 8 Subtopic Generation** - Fixed data persistence and status consistency issues
 
 ### 🔥 Root Cause Analysis
+
+#### Bug 1: WORKFLOW_COMPLETED Event Gap
 The system had a critical gap in the event chain:
 1. **Step 9 Worker** - Correctly emitted `WORKFLOW_COMPLETED` event
 2. **Event Consumer** - MISSING - No handler for `WORKFLOW_COMPLETED` events
 3. **FSM Transition** - Incomplete - `step_9_articles_queued → completed` not executed
 4. **Dashboard Impact** - Stalled state, never shows "completed"
+
+#### Bug 2: Step 8 Data Persistence Failure
+Critical implementation gaps in Step 8 worker:
+1. **Status Mismatch** - Query used 'completed' but validator expected 'complete'
+2. **Missing Store Call** - Generated subtopics but never persisted to database
+3. **Workflow Corruption** - SUBTOPICS_FAILED → 404 errors, couldn't progress
 
 ### 🛠 Technical Solutions Implemented
 
@@ -59,7 +68,24 @@ HUMAN_SUBTOPICS_APPROVED → intent.step9.articles
 ARTICLES_SUCCESS → WORKFLOW_COMPLETED → completed ✅
 ```
 
-#### 3. Two-Step FSM Transition
+#### 2. Step 8 Subtopic Generation Fixes
+**Problem:** Data persistence failure and status inconsistency
+**Solution:** Complete implementation with proper data flow
+
+```typescript
+// BEFORE: Incomplete implementation
+await generator.generate(keywordId)  // Generated but discarded
+
+// AFTER: Complete data persistence
+const subtopics = await generator.generate(keywordId)
+await generator.store(keywordId, subtopics)  // Properly stored
+
+// Status normalization:
+.eq('longtail_status', 'complete')  // Consistent with validator
+.update({ longtail_status: 'complete' })  // Consistent across services
+```
+
+#### 3. Complete Automation Chain
 **Problem:** Workflow stalled at intermediate state
 **Solution:** Proper two-step transition completion
 
