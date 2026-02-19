@@ -344,28 +344,36 @@ export const workflowCompleted = inngest.createFunction(
     // 2. WORKFLOW_COMPLETED moves state to 'completed'
     
     const supabase = createServiceRoleClient()
-    const { data: workflow } = await supabase
+    const { data: workflow, error } = await supabase
       .from('intent_workflows')
       .select('state')
       .eq('id', workflowId)
       .single()
     
-    if (workflow?.state === 'completed') {
+    if (error) {
+      console.error(`❌ [Inngest workflowCompleted] Error fetching workflow ${workflowId}:`, error)
+      return { success: false, error: error.message }
+    }
+    
+    // Type assertion to handle TypeScript inference issue
+    const workflowState = (workflow as any)?.state
+    
+    if (workflowState === 'completed') {
       console.log(`✅ [Inngest workflowCompleted] Workflow ${workflowId} is already in completed state`)
       return { success: true, alreadyCompleted: true }
     }
     
-    console.log(`📍 [Inngest workflowCompleted] Workflow ${workflowId} current state: ${workflow?.state}`)
+    console.log(`📍 [Inngest workflowCompleted] Workflow ${workflowId} current state: ${workflowState}`)
     
     // Transition to completed state
     const transitionResult = await transitionWithAutomation(workflowId, 'WORKFLOW_COMPLETED', 'system')
     
     if (transitionResult.success) {
       console.log(`🎉 [Inngest workflowCompleted] Workflow ${workflowId} successfully transitioned to completed state`)
-      return { success: true, transitioned: true, fromState: workflow?.state }
+      return { success: true, transitioned: true, fromState: workflowState }
     } else {
       console.log(`⚠️ [Inngest workflowCompleted] Workflow ${workflowId} transition failed:`, transitionResult.error)
-      return { success: false, error: transitionResult.error, fromState: workflow?.state }
+      return { success: false, error: transitionResult.error, fromState: workflowState }
     }
   }
 )
