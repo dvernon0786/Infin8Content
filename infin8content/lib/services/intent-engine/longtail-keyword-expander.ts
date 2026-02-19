@@ -349,7 +349,7 @@ async function persistLongtails(
   // ALWAYS mark seed completed - ensures deterministic workflow integrity
   const { error: updateError } = await supabase
     .from('keywords')
-    .update({ longtail_status: 'completed' })
+    .update({ longtail_status: 'complete' })
     .eq('id', seed.id)
 
   if (updateError) {
