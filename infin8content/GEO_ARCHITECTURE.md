@@ -24,9 +24,10 @@ export const SUPPORTED_LANGUAGE_CODES = new Set([
   // ... 42 more
 ])
 
-// Resolver functions
-export function resolveLocationCode(region?: string): number
-export function resolveLanguageCode(code?: string): string
+// STRICT resolvers (production-safe)
+export function resolveLocationCodeStrict(region?: string): number
+export function resolveLanguageCodeStrict(code?: string): string
+export async function getOrganizationGeoOrThrow(supabase: any, orgId: string): Promise<{locationCode: number, languageCode: string}>
 ```
 
 ### 2. Data Flow Architecture
@@ -36,21 +37,22 @@ User Selection (Onboarding UI)
         ↓
 organizations.keyword_settings
         ↓
-resolveLocationCode() / resolveLanguageCode()
+getOrganizationGeoOrThrow() → resolveLocationCodeStrict() / resolveLanguageCodeStrict()
         ↓
 DataForSEO API (location_code, language_code)
 ```
 
 ## 🔧 Service Integration
 
-### Backend Services (4 Total)
+### Backend Services (5 Total)
 
-| Service | File | Geo Source | Status |
-|---------|------|------------|--------|
-| Competitor-Analyze | `app/api/intent/workflows/[workflow_id]/steps/competitor-analyze/route.ts` | keyword_settings | ✅ |
-| Research Keywords | `app/api/research/keywords/route.ts` | keyword_settings | ✅ |
-| Longtail Expander | `lib/services/intent-engine/longtail-keyword-expander.ts` | keyword_settings | ✅ |
-| Subtopic Generator | `lib/services/keyword-engine/subtopic-generator.ts` | keyword_settings | ✅ |
+| Service | File | Geo Source | Fallback | Status |
+|---------|------|------------|----------|--------|
+| Competitor-Analyze | `app/api/intent/workflows/[workflow_id]/steps/competitor-analyze/route.ts` | getOrganizationGeoOrThrow() | ❌ | ✅ |
+| Research Keywords | `app/api/research/keywords/route.ts` | getOrganizationGeoOrThrow() | ❌ | ✅ |
+| Longtail Expander | `lib/services/intent-engine/longtail-keyword-expander.ts` | getOrganizationGeoOrThrow() | ❌ | ✅ |
+| Subtopic Generator | `lib/services/keyword-engine/subtopic-generator.ts` | getOrganizationGeoOrThrow() | ❌ | ✅ |
+| Research Service | `lib/research/keyword-research.ts` | getOrganizationGeoOrThrow() | ❌ | ✅ |
 
 ### Frontend Components
 
@@ -58,31 +60,41 @@ DataForSEO API (location_code, language_code)
 |----------|------|------------|--------|
 | Onboarding Settings | `components/onboarding/StepKeywordSettings.tsx` | LOCATION_CODE_MAP | ✅ |
 
-## 🛡️ Error Handling & Fallbacks
+## 🛡️ Production-Safe Error Handling
 
-### Resolution Logic
+### STRICT Resolution Logic
 ```typescript
-// Location resolution
-if (!region) return 2840 // US fallback
+// Location resolution (STRICT - NO FALLBACKS)
+if (!region || region.trim().length < 2) {
+  throw new Error('Organization target_region is not configured')
+}
 const normalized = region.trim().toLowerCase()
 const match = Object.entries(LOCATION_CODE_MAP).find(
   ([key]) => key.toLowerCase() === normalized
 )
-return match ? match[1] : 2840 // US fallback
+if (!match) {
+  throw new Error(`Unsupported target_region: "${region}"`)
+}
+return match[1]
 
-// Language resolution  
-if (!code) return 'en' // English fallback
+// Language resolution (STRICT - NO FALLBACKS)
+if (!code || code.trim().length < 2) {
+  throw new Error('Organization language_code is not configured')
+}
 const normalized = code.trim().toLowerCase()
-return SUPPORTED_LANGUAGE_CODES.has(normalized)
-  ? normalized
-  : 'en' // English fallback
+if (!SUPPORTED_LANGUAGE_CODES.has(normalized)) {
+  throw new Error(`Unsupported language_code: "${code}"`)
+}
+return normalized
 ```
 
-### Safety Features
-- Case-insensitive matching
-- Whitespace normalization
-- Safe defaults (US/English)
-- No exceptions thrown
+### Production Safety Features
+- ❌ **No silent fallbacks**
+- ❌ **No hardcoded defaults**
+- ✅ **Immediate error throwing**
+- ✅ **Case-insensitive matching**
+- ✅ **Whitespace normalization**
+- ✅ **Fail-fast enterprise behavior**
 
 ## 📊 Database Schema
 
@@ -106,30 +118,33 @@ keyword_settings JSONB DEFAULT '{}'
 ### Before (Broken)
 - Mixed geo sources
 - Phantom column reads
-- Hardcoded values
+- Hardcoded values (2840, 'en')
+- Silent US fallbacks
 - Geo drift between services
 
-### After (Fixed)
+### After (Production-Safe)
 - Single source of truth
-- Consistent resolution
-- Dynamic UI options
-- No geo drift
+- Strict resolution only
+- No fallback logic
+- Fail-fast errors
+- Full pipeline consistency
 
 ## 🧪 Testing Strategy
 
 ### Unit Tests
-- Resolver function edge cases
+- Strict resolver function edge cases
 - Case-insensitive matching
-- Fallback behavior
+- Error throwing scenarios
 
 ### Integration Tests
 - Service geo resolution
 - UI form submission
-- Backend API calls
+- Backend API calls with strict validation
 
 ### End-to-End Tests
-- Germany test case workflow
-- All 4 workflow steps consistency
+- Germany test case workflow (2276, de)
+- United Kingdom test case (2826, en)
+- All 5 workflow steps consistency
 - Error handling scenarios
 
 ## 📈 Performance Considerations
@@ -159,19 +174,20 @@ keyword_settings JSONB DEFAULT '{}'
 ## 🚀 Deployment Checklist
 
 ### Pre-deployment
-- [ ] Germany test case passes
-- [ ] All services log correct geo settings
-- [ ] No TypeScript errors
-- [ ] Build successful
+- [x] Germany test case passes (2276, de)
+- [x] All services log correct geo settings
+- [x] No TypeScript errors
+- [x] Build successful
+- [x] Fallback logic removed from exports
 
 ### Post-deployment
 - [ ] Monitor logs for geo resolution
-- [ ] Check for any 2840 fallbacks
-- [ ] Verify user adoption of new regions
+- [ ] Verify no silent US fallbacks
+- [ ] Check user adoption of new regions
 - [ ] Performance monitoring
 
 ---
 
-**Architecture Status**: ✅ Production Ready
-**Last Updated**: 2026-02-14
-**Version**: 1.0.0
+**Architecture Status**: ✅ Production Safe & Complete  
+**Last Updated**: 2026-02-20  
+**Version**: 2.0.0 (Production-Safe)

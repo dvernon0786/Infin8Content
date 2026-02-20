@@ -6,7 +6,7 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { RetryPolicy, retryWithPolicy } from './retry-utils'
 import { emitAnalyticsEvent } from '../analytics/event-emitter'
-import { resolveLocationCode, resolveLanguageCode } from '@/lib/config/dataforseo-geo'
+import { getOrganizationGeoOrThrow } from '@/lib/config/dataforseo-geo'
 
 /* -------------------------------------------------------------------------- */
 /*                                   CONFIG                                   */
@@ -428,9 +428,8 @@ export async function expandSeedKeywordsToLongtails(
     throw new Error('Organization not found')
   }
 
-  const orgData = org as { keyword_settings?: { target_region?: string; language_code?: string } }
-  const locationCode = resolveLocationCode(orgData.keyword_settings?.target_region)
-  const languageCode = resolveLanguageCode(orgData.keyword_settings?.language_code)
+  // Use STRICT geo resolution - no fallbacks
+  const { locationCode, languageCode } = await getOrganizationGeoOrThrow(supabase, orgId)
 
   console.log(`[LongtailExpander] Using geo settings: location=${locationCode}, language=${languageCode}`)
 
