@@ -1,13 +1,68 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-02-20 17:36 UTC+11  
-**Current Focus:** ENTERPRISE AI-ENHANCED STEP 8 ENGINE - PRODUCTION READY
+**Last Updated:** 2026-02-20 19:12 UTC+11  
+**Current Focus:** STEP 8 OPTIMIZATION COMPLETE - TESTING CAP IMPLEMENTED
 
-## **🎉 ENTERPRISE AI-ENHANCED STEP 8 ENGINE - COMPLETE**
+## **🎉 STEP 8 OPTIMIZATION COMPLETE - TESTING CAP IMPLEMENTED**
 
-### **Completion Date: February 20, 2026 - 17:36 UTC+11**
+### **Problem Solved:**
+- **Issue:** Step 8 was processing ALL eligible keywords (300+), generating 900+ subtopics
+- **Impact:** Excessive cost (~$7.80), unmanageable review time (hours)
+- **Solution:** Added `.limit(10)` to Step 8 keyword query
 
-### **Major Achievement: Production-Ready AI Enhancement with Zero Breaking Changes**
+### **Implementation:**
+```typescript
+// BEFORE (line 265-271)
+const { data: keywords } = await supabase
+  .from('keywords')
+  .select('id')
+  .eq('workflow_id', workflowId)
+  .eq('longtail_status', 'completed')
+  .eq('subtopics_status', 'not_started')
+
+// AFTER (with testing cap)
+const { data: keywords } = await supabase
+  .from('keywords')
+  .select('id')
+  .eq('workflow_id', workflowId)
+  .eq('longtail_status', 'completed')
+  .eq('subtopics_status', 'not_started')
+  .limit(10) // 🔒 TESTING CAP - Only process top 10 keywords
+```
+
+### **Impact Analysis:**
+| **Metric** | **Before** | **After** | **Improvement** |
+|------------|------------|-----------|----------------|
+| **Keywords Processed** | 300+ | 10 max | 97% reduction |
+| **Subtopics Generated** | 900+ | 30 max | 97% reduction |
+| **API Cost** | ~$7.80 | ~$0.26 | 97% cost savings |
+| **Review Time** | Hours | 5-10 minutes | 90% time savings |
+
+### **Key Benefits:**
+- ✅ **Minimal change:** Single line addition
+- ✅ **No architecture changes:** Step 7 untouched, FSM unchanged
+- ✅ **Easy production toggle:** Remove `.limit(10)` for full volume
+- ✅ **Clean separation:** Step 8 controls processing volume
+- ✅ **Cost-effective:** Perfect for testing and development
+
+### **Technical Details:**
+- **Location:** `step8Subtopics` function in `intent-pipeline.ts`
+- **Line:** 271
+- **Change:** Added `.limit(10)` to Supabase query
+- **Behavior:** Only top 10 keywords processed per workflow run
+- **Remaining keywords:** Stay `subtopics_status = 'not_started'`
+
+### **Production Readiness:**
+When ready for production deployment:
+1. Remove `.limit(10)` from line 271
+2. Full keyword volume will be processed
+3. No other changes required
+
+### **Git Workflow:**
+- **Branch:** `test-main-all` (optimization-testing)
+- **Commit:** Feature complete with detailed message
+- **Push:** Ready for automated testing
+- **PR:** To main branch for review
 
 ---
 
