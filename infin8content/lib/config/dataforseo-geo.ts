@@ -30,9 +30,11 @@ export const SUPPORTED_LANGUAGE_CODES = new Set([
   'sk','sl','sq','sr','sv','th','tl','tr','uk','ur','vi'
 ])
 
-// Standardized geo resolver functions
-export function resolveLocationCode(region?: string): number {
-  if (!region) return 2840
+// LEGACY resolvers - DO NOT EXPORT (fallback logic removed from production)
+function resolveLocationCode(region?: string): number {
+  if (!region || region.trim().length < 2) {
+    return 2840 // United States (default)
+  }
 
   const normalized = region.trim().toLowerCase()
 
@@ -43,12 +45,68 @@ export function resolveLocationCode(region?: string): number {
   return match ? match[1] : 2840
 }
 
-export function resolveLanguageCode(code?: string): string {
-  if (!code) return 'en'
+function resolveLanguageCode(language?: string): string {
+  if (!language || language.trim().length < 2) {
+    return 'en' // English (default)
+  }
 
-  const normalized = code.trim().toLowerCase()
+  const normalized = language.trim().toLowerCase()
 
-  return SUPPORTED_LANGUAGE_CODES.has(normalized)
-    ? normalized
-    : 'en'
+  return SUPPORTED_LANGUAGE_CODES.has(normalized) ? normalized : 'en'
+}
+
+// STRICT geo resolvers - NO FALLBACKS (production-safe)
+export function resolveLocationCodeStrict(region?: string): number {
+  if (!region || region.trim().length < 2) {
+    throw new Error('Organization target_region is not configured')
+  }
+
+  const normalized = region.trim().toLowerCase()
+
+  const match = Object.entries(LOCATION_CODE_MAP).find(
+    ([key]) => key.toLowerCase() === normalized
+  )
+
+  if (!match) {
+    throw new Error(`Unsupported target_region: ${region}`)
+  }
+
+  return match[1]
+}
+
+export function resolveLanguageCodeStrict(language?: string): string {
+  if (!language || language.trim().length < 2) {
+    throw new Error('Organization language_code is not configured')
+  }
+
+  const normalized = language.trim().toLowerCase()
+
+  if (!SUPPORTED_LANGUAGE_CODES.has(normalized)) {
+    throw new Error(`Unsupported language_code: ${language}`)
+  }
+
+  return normalized
+}
+
+// Unified geo loader - ONLY legal way to get organization geo
+export async function getOrganizationGeoOrThrow(
+  supabase: any,
+  organizationId: string
+): Promise<{ locationCode: number; languageCode: string }> {
+  const { data, error } = await supabase
+    .from('organizations')
+    .select('keyword_settings')
+    .eq('id', organizationId)
+    .single()
+
+  if (error || !data?.keyword_settings) {
+    throw new Error('Organization keyword_settings missing')
+  }
+
+  const settings = data.keyword_settings
+
+  const locationCode = resolveLocationCodeStrict(settings.target_region)
+  const languageCode = resolveLanguageCodeStrict(settings.language_code)
+
+  return { locationCode, languageCode }
 }

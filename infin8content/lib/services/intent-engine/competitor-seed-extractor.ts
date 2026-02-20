@@ -68,8 +68,8 @@ export interface ExtractSeedKeywordsRequest {
   organizationId: string
   workflowId?: string  // Optional workflow ID for retry tracking
   maxSeedsPerCompetitor?: number
-  locationCode?: number
-  languageCode?: string
+  locationCode: number
+  languageCode: string
   timeoutMs?: number
 }
 
@@ -95,8 +95,8 @@ export async function extractSeedKeywords(
     organizationId,
     workflowId,
     maxSeedsPerCompetitor = 3,
-    locationCode = 2840,
-    languageCode = 'en',
+    locationCode,
+    languageCode,
     timeoutMs = 600000
   } = request
 

@@ -2,7 +2,7 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { validateSupabaseEnv } from '@/lib/supabase/env'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { searchKeywords } from '@/lib/services/dataforseo'
-import { resolveLocationCode, resolveLanguageCode } from '@/lib/config/dataforseo-geo'
+import { getOrganizationGeoOrThrow } from '@/lib/config/dataforseo-geo'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 
@@ -162,15 +162,17 @@ export async function POST(request: Request) {
       .eq('id', organizationId)
       .single()
 
-    const keywordSettings = (orgData as any)?.keyword_settings || {}
+    if (!orgData) {
+      return NextResponse.json(
+        { error: 'Organization keyword settings not configured' },
+        { status: 400 }
+      )
+    }
 
-    // Map onboarding region to DataForSEO location code, default to US
-    const locationCode = resolveLocationCode(keywordSettings.target_region)
+    // Use STRICT geo resolution - no fallbacks
+    const { locationCode, languageCode } = await getOrganizationGeoOrThrow(supabase, organizationId)
 
-    // Validate language code against supported set, default to English
-    const languageCode = resolveLanguageCode(keywordSettings.language_code)
-
-    console.log(`[ResearchKeywords] Using location ${locationCode} and language ${languageCode} for region "${keywordSettings.target_region}"`)
+    console.log(`[ResearchKeywords] Using location ${locationCode} and language ${languageCode}`)
 
     // Cache miss - call DataForSEO API
     const apiResponse = await searchKeywords({

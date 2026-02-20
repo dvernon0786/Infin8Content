@@ -5,6 +5,8 @@
 import { researchService } from './research-service';
 import { DataForSEOClient } from './dataforseo-client';
 import { TavilyClient } from './tavily-client';
+import { getOrganizationGeoOrThrow } from '@/lib/config/dataforseo-geo';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 export interface KeywordResearchRequest {
   keyword: string;
@@ -60,7 +62,12 @@ export class KeywordResearchService {
     try {
       switch (apiSource) {
         case 'dataforseo':
-          ({ data: researchData, cost } = await this.dataForSEOClient.researchKeyword(keyword));
+          // Get organization geo settings for DataForSEO
+          const supabaseClient = createServiceRoleClient()
+          const geoSettings = await getOrganizationGeoOrThrow(supabaseClient, organizationId)
+          const researchResult = await this.dataForSEOClient.researchKeyword(keyword, geoSettings.locationCode, geoSettings.languageCode)
+          researchData = researchResult.data
+          cost = researchResult.cost
           break;
         case 'tavily':
           ({ data: researchData, cost } = await this.tavilyClient.researchKeyword(keyword));
