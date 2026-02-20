@@ -26,6 +26,10 @@ export class DataForSEOClient {
   }
 
   async researchKeyword(keyword: string, locationCode: number, languageCode: string): Promise<DataForSEOResult> {
+    if (!locationCode || !languageCode) {
+      throw new Error('Geo configuration is required for DataForSEO request')
+    }
+    
     if (!this.apiKey) {
       throw new Error('DataForSEO API key not configured');
     }
@@ -92,6 +96,10 @@ export class DataForSEOClient {
   }
 
   async researchMultipleKeywords(keywords: string[], locationCode: number, languageCode: string): Promise<Record<string, DataForSEOResult>> {
+    if (!locationCode || !languageCode) {
+      throw new Error('Geo configuration is required for DataForSEO request')
+    }
+    
     const results: Record<string, DataForSEOResult> = {};
     
     // Process in batches to respect rate limits
@@ -142,6 +150,10 @@ export class DataForSEOClient {
   }
 
   async getKeywordDifficulty(keyword: string, locationCode: number, languageCode: string): Promise<number> {
+    if (!locationCode || !languageCode) {
+      throw new Error('Geo configuration is required for DataForSEO request')
+    }
+    
     if (!this.apiKey) {
       throw new Error('DataForSEO API key not configured');
     }
@@ -196,6 +208,10 @@ export class DataForSEOClient {
   }
 
   async getSearchVolume(keyword: string, locationCode: number, languageCode: string): Promise<number> {
+    if (!locationCode || !languageCode) {
+      throw new Error('Geo configuration is required for DataForSEO request')
+    }
+    
     if (!this.apiKey) {
       throw new Error('DataForSEO API key not configured');
     }
