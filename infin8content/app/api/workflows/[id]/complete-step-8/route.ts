@@ -31,20 +31,20 @@ export async function POST(
       )
     }
 
-    // 2️⃣ Get approvals
-    const { data: approvals, error: approvalsError } = await supabase
+    // 2️⃣ Check approval status from intent_approvals table (uses approved_items array)
+    const { data: approval, error: approvalError } = await supabase
       .from('intent_approvals')
-      .select('entity_id, decision')
+      .select('approved_items')
       .eq('workflow_id', workflowId)
-      .eq('entity_type', 'keyword')
       .eq('approval_type', 'subtopics')
+      .single()
 
-    if (approvalsError) throw approvalsError
+    if (approvalError && approvalError.code !== 'PGRST116') { // PGRST116 = no rows
+      throw approvalError
+    }
 
-    const approvedIds = new Set(
-      (approvals as unknown as Array<{ entity_id: string; decision: string }> ?? [])
-        .filter(a => a.decision === 'approved')
-        .map(a => a.entity_id)
+    const approvedIds = new Set<string>(
+      (approval as unknown as { approved_items: string[] })?.approved_items ?? []
     )
 
     const allApproved = (keywords as unknown as Array<{ id: string }>).every(k => approvedIds.has(k.id))

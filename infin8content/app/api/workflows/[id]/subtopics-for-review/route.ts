@@ -5,15 +5,10 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 // ✅ ENTERPRISE: Strict DTO typing
 interface ApprovalRow {
   id: string
-  entity_id: string
-  decision: 'approved' | 'rejected'
-  approver_id: string
-  feedback: string | null
+  workflow_id: string
+  approval_type: string
+  approved_items: string[]
   created_at: string
-  approver: {
-    id: string
-    email: string
-  } | null
 }
 
 interface KeywordRow {
@@ -59,48 +54,23 @@ export async function GET(
 
     if (keywordsError) throw keywordsError
 
-    // Fetch approval status with user details
-    const { data: approvals, error: approvalsError } = await supabase
+    // Fetch workflow-level approval record (intent_approvals uses approved_items array)
+    const { data: approval, error: approvalError } = await supabase
       .from('intent_approvals')
-      .select(`
-        id,
-        entity_id,
-        decision,
-        approver_id,
-        feedback,
-        created_at,
-        approver:users (
-          id,
-          email
-        )
-      `)
+      .select('approved_items, created_at')
       .eq('workflow_id', workflowId)
-      .eq('entity_type', 'keyword')
       .eq('approval_type', 'subtopics')
+      .single()
 
-    if (approvalsError) throw approvalsError
-
-    const approvalMap = new Map<string, {
-      decision: 'approved' | 'rejected'
-      approvedBy: string | null
-      approvedAt: string | null
-      feedback: string | null
-    }>()
-
-    if (approvals) {
-      for (const approval of approvals as any[]) {
-        approvalMap.set(approval.entity_id, {
-          decision: approval.decision,
-          approvedBy: approval.approver?.email ?? approval.approver_id,
-          approvedAt: approval.created_at,
-          feedback: approval.feedback,
-        })
-      }
+    if (approvalError && approvalError.code !== 'PGRST116') { // PGRST116 = no rows
+      throw approvalError
     }
 
-    const keywordsWithApprovals = (keywords ?? []).map((keyword: any) => {
-      const approval = approvalMap.get(keyword.id)
+    const approvedIds = new Set<string>(
+      (approval as unknown as ApprovalRow)?.approved_items ?? []
+    )
 
+    const keywordsWithApprovals = (keywords ?? []).map((keyword: any) => {
       return {
         id: keyword.id,
         keyword: keyword.keyword,
@@ -109,10 +79,10 @@ export async function GET(
           : [],
         subtopics_status: keyword.subtopics_status,
         article_status: keyword.article_status,
-        approvalStatus: approval?.decision ?? 'pending',
-        approvedBy: approval?.approvedBy ?? null,
-        approvedAt: approval?.approvedAt ?? null,
-        feedback: approval?.feedback ?? null,
+        approvalStatus: approvedIds.has(keyword.id) ? 'approved' : 'pending',
+        approvedBy: approvedIds.has(keyword.id) ? 'Human' : null,
+        approvedAt: approvedIds.has(keyword.id) ? (approval as unknown as ApprovalRow)?.created_at : null,
+        feedback: null, // No feedback column in current schema
       }
     })
 
