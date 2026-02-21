@@ -15,12 +15,11 @@ export async function POST(
 
     const supabase = createServiceRoleClient()
 
-    // 1️⃣ Get longtail keywords that require approval
+    // 1️⃣ Fetch keywords with completed subtopics (both seeds and longtails)
     const { data: keywords, error: keywordsError } = await supabase
       .from('keywords')
       .select('id')
       .eq('workflow_id', workflowId)
-      .not('parent_seed_keyword_id', 'is', null)
       .eq('subtopics_status', 'completed')
 
     if (keywordsError) throw keywordsError

@@ -94,6 +94,15 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
 
       const { data } = await response.json()
       
+      // ✅ Use live API state, not stale parent prop
+      if (
+        data.workflowState !== 'step_8_subtopics' &&
+        data.workflowState !== 'step_8_subtopics_running'
+      ) {
+        setError('Workflow not in Step 8 state')
+        return
+      }
+      
       setKeywords(data.keywords || [])
 
     } catch (err: any) {
@@ -156,23 +165,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
     }
   }
 
-  // ✅ FSM STATE GUARD: Only allow approval when workflow is ready
-  if (workflowState && workflowState !== 'step_8_subtopics') {
-    return (
-      <div className="text-center py-8">
-        <div className="flex items-center justify-center mb-4">
-          <Lock className="h-6 w-6 text-muted-foreground" />
-        </div>
-        <h3 className="text-lg font-semibold mb-2">Step 8 Not Available</h3>
-        <p className="text-muted-foreground">
-          {workflowState === 'step_8_subtopics_running' 
-            ? 'Subtopics are currently being generated. Please wait for completion.'
-            : 'Please complete previous steps before accessing subtopic approval.'
-          }
-        </p>
-      </div>
-    )
-  }
+  // ✅ REMOVED: Don't gate on stale parent prop - use live API state instead
 
   if (loading) {
     return (
