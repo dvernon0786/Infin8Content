@@ -66,7 +66,7 @@ export const WorkflowTransitions: Record<
     HUMAN_SUBTOPICS_APPROVED: 'step_9_articles'
   },
   step_8_subtopics_running: {
-    SUBTOPICS_SUCCESS: 'step_9_articles',
+    SUBTOPICS_SUCCESS: 'step_8_subtopics',
     SUBTOPICS_FAILED: 'step_8_subtopics_failed'
   },
   step_8_subtopics_failed: {
