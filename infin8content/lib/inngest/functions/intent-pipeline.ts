@@ -268,7 +268,6 @@ export const step8Subtopics = inngest.createFunction(
         .eq('workflow_id', workflowId)
         .eq('longtail_status', 'completed')
         .eq('subtopics_status', 'not_started')
-        .limit(10) // 🔒 TESTING CAP - Only process top 10 keywords
 
       const generator = new KeywordSubtopicGenerator()
 

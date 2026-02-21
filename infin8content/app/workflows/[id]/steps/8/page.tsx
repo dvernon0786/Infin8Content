@@ -12,7 +12,7 @@ export default async function Step8Page({ params }: PageProps) {
 
   return (
     <WorkflowStepLayoutClient workflow={workflow} step={8}>
-      <Step8SubtopicsForm workflowId={workflow.id} />
+      <Step8SubtopicsForm workflowId={workflow.id} workflowState={workflow.state} />
     </WorkflowStepLayoutClient>
   )
 }

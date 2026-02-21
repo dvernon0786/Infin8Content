@@ -265,7 +265,13 @@ Return ONLY this JSON — no markdown fences, no explanation:
       // PATCH 5.1 — Enforce deterministic required types in exact order
       const requiredTypes: SubtopicType[] = ['informational', 'commercial', 'transactional']
       for (let i = 0; i < requiredTypes.length; i++) {
-        if (!subtopics[i] || subtopics[i].type !== requiredTypes[i]) {
+        if (!subtopics[i]) {
+          subtopics[i] = {
+            title: topic,
+            type: requiredTypes[i],
+            keywords: [topic],
+          }
+        } else if (subtopics[i].type !== requiredTypes[i]) {
           subtopics[i] = {
             ...subtopics[i],
             type: requiredTypes[i],
