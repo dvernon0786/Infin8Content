@@ -15,6 +15,7 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { generateContent, type OpenRouterGenerationResult } from '@/lib/services/openrouter/openrouter-client'
 import { getOrganizationGeoOrThrow } from '@/lib/config/dataforseo-geo'
+import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -289,12 +290,8 @@ Return ONLY this JSON — no markdown fences, no explanation:
       }
 
       return subtopics
-    } catch (err) {
-      console.error('[KeywordSubtopicGenerator] AI response parse failed — using fallback', {
-        topic,
-        error: err instanceof Error ? err.message : String(err),
-        rawPreview: raw.slice(0, 200),
-      })
+    } catch (error) {
+      console.warn(`[KeywordSubtopicGenerator] Failed to parse response: ${error}`)
       return this.buildFallbackSubtopics(topic, languageCode)
     }
   }
@@ -424,7 +421,7 @@ Return ONLY this JSON — no markdown fences, no explanation:
   ): Promise<void> {
     const { error } = await this.supabase.from('intent_audit_logs').insert({
       organization_id: organizationId,
-      actor_id: '00000000-0000-0000-0000-000000000000', // System actor UUID
+actor_id: SYSTEM_USER_ID, // System actor UUID
       action: 'subtopics_generated',
       entity_type: 'keyword',
       entity_id: keywordId,
