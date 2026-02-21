@@ -50,9 +50,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
     fetchSubtopicsForReview()
   }, [workflowId])
 
-<<<<<<< Updated upstream
-=======
-  // ✅ Poll when worker is running (use FSM state, not data length)
+// ✅ Poll when worker is running (use FSM state, not data length)
   useEffect(() => {
     if (workflowState !== 'step_8_subtopics_running') return
 
@@ -62,8 +60,6 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
 
     return () => clearInterval(interval)
   }, [workflowState, workflowId])
-
->>>>>>> Stashed changes
   // Helper functions
   function canComplete(): boolean {
     if (keywords.length === 0) return false
@@ -202,8 +198,6 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
   }
 
   if (keywords.length === 0) {
-<<<<<<< Updated upstream
-=======
     if (workflowState === 'step_8_subtopics_running') {
       return (
         <div className="text-center py-8">
@@ -218,7 +212,6 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
       )
     }
     
->>>>>>> Stashed changes
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground">
