@@ -50,6 +50,35 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
     fetchSubtopicsForReview()
   }, [workflowId])
 
+  // Helper functions
+  function canComplete(): boolean {
+    if (keywords.length === 0) return false
+    return keywords.every(k => k.approvalStatus === 'approved')
+  }
+
+  async function completeStep8() {
+    try {
+      setProcessing('complete')
+
+      const res = await fetch(
+        `/api/workflows/${workflowId}/complete-step-8`,
+        { method: 'POST' }
+      )
+
+      const body = await res.json()
+
+      if (!res.ok) throw new Error(body.error)
+
+      // Redirect to Step 9
+      window.location.href = `/workflows/${workflowId}/steps/9` 
+
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setProcessing(null)
+    }
+  }
+
   async function fetchSubtopicsForReview() {
     try {
       setLoading(true)
@@ -319,6 +348,49 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
           )
         })}
       </div>
+
+      {/* Complete Step 8 Button */}
+      {canComplete() && (
+        <div className="pt-6 border-t">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-medium">Ready to Complete Step 8</h3>
+              <p className="text-sm text-muted-foreground">
+                All subtopics have been approved. Click to proceed to Step 9 (Article Generation).
+              </p>
+            </div>
+            <Button
+              onClick={completeStep8}
+              disabled={processing === 'complete'}
+              size="lg"
+            >
+              {processing === 'complete' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Completing…
+                </>
+              ) : (
+                <>
+                  Complete Step 8 →
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Error Display */}
+      {error && (
+        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 text-red-400" />
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <div className="mt-2 text-sm text-red-700">{error}</div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
