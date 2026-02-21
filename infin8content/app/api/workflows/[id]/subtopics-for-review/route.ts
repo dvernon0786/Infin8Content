@@ -38,11 +38,11 @@ interface KeywordWithApproval {
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id: workflowId } = await context.params
-    
+    const { id: workflowId } = params
+
     // Server-side workflow validation
     const workflow = await requireWorkflowStepAccess(workflowId, 8)
     
@@ -80,36 +80,39 @@ export async function GET(
 
     if (approvalsError) throw approvalsError
 
-    // Create approval lookup map with safe typing
-    const approvalMap = new Map()
-    if (Array.isArray(approvals) && approvals.length > 0) {
-      approvals.forEach(approval => {
-        const approvalRecord = approval as unknown as ApprovalRow
-        approvalMap.set(approvalRecord.entity_id, {
-          id: approvalRecord.id,
-          decision: approvalRecord.decision,
-          approvedBy: approvalRecord.approver?.email || approvalRecord.approver_id, // ✅ User-friendly email
-          approvedAt: approvalRecord.created_at,
-          feedback: approvalRecord.feedback
+    const approvalMap = new Map<string, {
+      decision: 'approved' | 'rejected'
+      approvedBy: string | null
+      approvedAt: string | null
+      feedback: string | null
+    }>()
+
+    if (approvals) {
+      for (const approval of approvals as any[]) {
+        approvalMap.set(approval.entity_id, {
+          decision: approval.decision,
+          approvedBy: approval.approver?.email ?? approval.approver_id,
+          approvedAt: approval.created_at,
+          feedback: approval.feedback,
         })
-      })
+      }
     }
 
-    // Compose DTO with joined data and safe typing
-    const keywordsWithApprovals: KeywordWithApproval[] = (Array.isArray(keywords) && keywords.length > 0 ? keywords : []).map(keyword => {
-      const keywordRecord = keyword as unknown as KeywordRow
-      const approval = approvalMap.get(keywordRecord.id)
-      
+    const keywordsWithApprovals = (keywords ?? []).map((keyword: any) => {
+      const approval = approvalMap.get(keyword.id)
+
       return {
-        id: keywordRecord.id,
-        keyword: keywordRecord.keyword,
-        subtopics: keywordRecord.subtopics,
-        subtopics_status: keywordRecord.subtopics_status,
-        article_status: keywordRecord.article_status,
-        approvalStatus: approval?.decision || 'pending',
-        approvedBy: approval?.approvedBy || null,
-        approvedAt: approval?.approvedAt || null,
-        feedback: approval?.feedback || null
+        id: keyword.id,
+        keyword: keyword.keyword,
+        subtopics: Array.isArray(keyword.subtopics)
+          ? keyword.subtopics
+          : [],
+        subtopics_status: keyword.subtopics_status,
+        article_status: keyword.article_status,
+        approvalStatus: approval?.decision ?? 'pending',
+        approvedBy: approval?.approvedBy ?? null,
+        approvedAt: approval?.approvedAt ?? null,
+        feedback: approval?.feedback ?? null,
       }
     })
 
@@ -118,19 +121,19 @@ export async function GET(
       data: {
         workflowId: workflow.id,
         workflowState: workflow.state,
-        keywords: keywordsWithApprovals
-      }
+        keywords: keywordsWithApprovals,
+      },
     })
 
   } catch (error: any) {
     console.error('Failed to fetch subtopics for review:', error)
     
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error.message || 'Failed to fetch subtopics for review' 
+      {
+        success: false,
+        error: error?.message ?? 'Failed to fetch subtopics for review',
       },
-      { status: error.status || 500 }
+      { status: 500 }
     )
   }
 }
