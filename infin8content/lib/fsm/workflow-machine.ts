@@ -95,3 +95,4 @@ export const WorkflowTransitions: Record<
   /* ===================== RESET ===================== */
   // HUMAN_RESET handled in WorkflowFSM.transition() with options
 }
+
