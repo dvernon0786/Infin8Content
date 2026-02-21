@@ -76,9 +76,15 @@ export async function transitionWithAutomation(
   console.log(`[UnifiedEngine] Transitioning ${workflowId}: ${event}`)
   
   try {
+    // 🔍 DEBUG: Get current state before transition
+    const currentState = await getWorkflowState(workflowId)
+    console.log(`[UnifiedEngine] Current state: ${currentState}`)
+    
     // 1. Execute FSM transition with options
     const fsmOptions = userId ? { userId, ...(options?.resetTo && { resetTo: options.resetTo }) } : options
     const transitionResult = await InternalWorkflowFSM.transition(workflowId, event, fsmOptions)
+    
+    console.log(`[UnifiedEngine] FSM Transition Result:`, JSON.stringify(transitionResult, null, 2))
     
     if (!transitionResult.applied) {
       console.log(`[UnifiedEngine] Transition not applied for ${workflowId}`)
