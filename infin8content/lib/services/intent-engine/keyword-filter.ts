@@ -296,7 +296,7 @@ async function updateFilteredKeywords(
  */
 export async function getOrganizationFilterSettings(): Promise<FilterOptions> {
   return {
-    min_search_volume: 100,
+    min_search_volume: 0,  // Include all longtails regardless of search volume
     similarity_threshold: 0.85
   }
 }
