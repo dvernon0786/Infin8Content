@@ -20,19 +20,28 @@ export async function getWorkflowState(workflowId: string): Promise<WorkflowStat
   
   const { data, error } = await supabase
     .from('intent_workflows')
-    .select('*')
+    .select('id, name, state, created_at, updated_at')
     .eq('id', workflowId)
     .eq('organization_id', user.org_id)
-    .single() as { data: any; error: any }
+    .single()
 
   if (error || !data) return null
 
+  // Type guard to ensure data has expected shape
+  const workflowData = data as unknown as {
+    id: string
+    name: string
+    state: StateMachineState
+    created_at: string
+    updated_at: string
+  }
+
   return {
-    id: data.id as string,
-    name: data.name as string,
-    state: data.state as StateMachineState,
-    created_at: data.created_at as string,
-    updated_at: data.updated_at as string,
+    id: workflowData.id,
+    name: workflowData.name,
+    state: workflowData.state,
+    created_at: workflowData.created_at,
+    updated_at: workflowData.updated_at,
   }
 }
 
