@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, CheckCircle, XCircle, AlertCircle, Lock } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 
 interface KeywordSubtopic {
   title: string
@@ -20,6 +19,10 @@ interface KeywordWithSubtopics {
   subtopics: KeywordSubtopic[]
   subtopics_status: string
   article_status: string
+  approvalStatus: 'approved' | 'rejected' | 'pending'
+  approvedBy: string | null
+  approvedAt: string | null
+  feedback: string | null
 }
 
 interface SubtopicApproval {
@@ -37,74 +40,37 @@ interface Step8SubtopicsFormProps {
 
 export function Step8SubtopicsForm({ workflowId, workflowState }: Step8SubtopicsFormProps) {
   const [keywords, setKeywords] = useState<KeywordWithSubtopics[]>([])
-  const [approvals, setApprovals] = useState<Record<string, SubtopicApproval>>({})
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  const supabase = createClient()
-
   useEffect(() => {
-    fetchKeywordsWithSubtopics()
-    fetchApprovalStatus()
+    fetchSubtopicsForReview()
   }, [workflowId])
 
-  async function fetchKeywordsWithSubtopics() {
+  async function fetchSubtopicsForReview() {
     try {
       setLoading(true)
       setError(null)
 
-      // ✅ CORRECTED: Workflow-scoped, longtail-only query
-      const { data, error } = await supabase
-        .from('keywords')
-        .select('id, keyword, subtopics, subtopics_status, article_status')
-        .eq('workflow_id', workflowId) // ✅ Workflow scoping
-        .is('parent_seed_keyword_id', 'not null') // ✅ Longtail keywords only
-        .eq('subtopics_status', 'completed')
-        .order('keyword')
-
-      if (error) throw error
-
-      // Type guard to ensure data is the correct type
-      if (Array.isArray(data) && data.length > 0) {
-        setKeywords(data as unknown as KeywordWithSubtopics[])
-      } else {
-        setKeywords([])
+      // ✅ ENTERPRISE: Server-driven data fetching
+      const response = await fetch(`/api/workflows/${workflowId}/subtopics-for-review`)
+      
+      if (!response.ok) {
+        const body = await response.json()
+        throw new Error(body.error || 'Failed to fetch subtopics')
       }
+
+      const { data } = await response.json()
+      
+      setKeywords(data.keywords || [])
+
     } catch (err: any) {
       setError(err.message)
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function fetchApprovalStatus() {
-    try {
-      const { data, error } = await supabase
-        .from('intent_approvals')
-        .select('id, entity_id, decision, approver_id, feedback, created_at')
-        .eq('workflow_id', workflowId)
-        .eq('entity_type', 'keyword')
-        .eq('approval_type', 'subtopics')
-
-      if (error) throw error
-
-      // Type guard to ensure data is the correct type
-      if (Array.isArray(data)) {
-        // Map approvals by keyword ID for quick lookup
-        const approvalMap: Record<string, SubtopicApproval> = {}
-        data.forEach(approval => {
-          const approvalRecord = approval as any
-          approvalMap[approvalRecord.entity_id] = approvalRecord
-        })
-        setApprovals(approvalMap)
-      } else {
-        setApprovals({})
-      }
-    } catch (err: any) {
-      console.warn('Failed to fetch approval status:', err.message)
     }
   }
 
@@ -133,8 +99,8 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
         throw new Error(body.error || 'Approval failed')
       }
 
-      // Refresh approval status
-      await fetchApprovalStatus()
+      // Refresh data after approval
+      await fetchSubtopicsForReview()
 
       setSuccess(`Subtopics for keyword ${keywords.find(k => k.id === keywordId)?.keyword} ${decision}`)
       
@@ -148,9 +114,8 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
     }
   }
 
-  function getApprovalStatus(keywordId: string): 'approved' | 'rejected' | 'pending' {
-    const approval = approvals[keywordId]
-    return approval ? approval.decision : 'pending'
+  function getApprovalStatus(keyword: any): 'approved' | 'rejected' | 'pending' {
+    return keyword.approvalStatus || 'pending'
   }
 
   function getTypeColor(type: string) {
@@ -236,8 +201,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
 
       <div className="space-y-4">
         {keywords.map((keyword) => {
-          const approvalStatus = getApprovalStatus(keyword.id)
-          const approval = approvals[keyword.id]
+          const approvalStatus = getApprovalStatus(keyword)
           
           return (
             <Card key={keyword.id} className="border-l-4 border-l-blue-500">
@@ -292,8 +256,8 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
                 {approvalStatus !== 'pending' ? (
                   <div className="text-sm text-muted-foreground">
                     {approvalStatus === 'approved' 
-                      ? `Subtopics approved by ${approval?.approver_id} on ${new Date(approval?.created_at || '').toLocaleDateString()}`
-                      : `Subtopics rejected${approval?.feedback ? ` with feedback: "${approval.feedback}"` : ''}`
+                      ? `Subtopics approved by ${keyword.approvedBy} on ${new Date(keyword.approvedAt || '').toLocaleDateString()}`
+                      : `Subtopics rejected${keyword.feedback ? ` with feedback: "${keyword.feedback}"` : ''}`
                     }
                   </div>
                 ) : (
