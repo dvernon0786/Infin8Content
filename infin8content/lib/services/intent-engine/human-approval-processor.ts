@@ -167,10 +167,18 @@ export async function processHumanApproval(
   // FSM TRANSITION: Handle decision through state machine ONLY
   if (decision === 'approved') {
     // Approved: Advance to Step 9 (Article Generation) via FSM
+    console.log('🔍 DEBUG: Starting HUMAN_SUBTOPICS_APPROVED transition for workflow:', workflowId)
+    
     const result = await transitionWithAutomation(workflowId, 'HUMAN_SUBTOPICS_APPROVED', currentUser.id)
+    
+    console.log('🔍 DEBUG: TRANSITION RESULT:', JSON.stringify(result, null, 2))
+    
     if (!result.success) {
+      console.error('🔍 DEBUG: Transition failed:', result.error)
       throw new Error(`Failed to transition approved workflow: ${result.error}`)
     }
+    
+    console.log('🔍 DEBUG: Transition successful, emitted event:', result.emittedEvent)
     finalState = 'step_9_articles' // Known next state for human approval
   } else if (decision === 'rejected' && reset_to_step) {
     // Rejected: Reset to specified step via FSM
