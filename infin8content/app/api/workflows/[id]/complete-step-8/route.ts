@@ -20,7 +20,7 @@ export async function POST(
       .from('keywords')
       .select('id')
       .eq('workflow_id', workflowId)
-      .is('parent_seed_keyword_id', 'not null')
+      .not('parent_seed_keyword_id', 'is', null)
       .eq('subtopics_status', 'completed')
 
     if (keywordsError) throw keywordsError

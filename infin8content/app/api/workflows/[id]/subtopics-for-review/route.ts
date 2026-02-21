@@ -53,7 +53,7 @@ export async function GET(
       .from('keywords')
       .select('id, keyword, subtopics, subtopics_status, article_status')
       .eq('workflow_id', workflowId)
-      .is('parent_seed_keyword_id', 'not null')
+      .not('parent_seed_keyword_id', 'is', null)
       .eq('subtopics_status', 'completed')
       .order('keyword')
 
