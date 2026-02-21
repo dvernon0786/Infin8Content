@@ -43,12 +43,11 @@ export async function GET(
     
     const supabase = createServiceRoleClient()
 
-    // Fetch keywords with completed subtopics
+    // Fetch keywords with completed subtopics (both seeds and longtails)
     const { data: keywords, error: keywordsError } = await supabase
       .from('keywords')
       .select('id, keyword, subtopics, subtopics_status, article_status')
       .eq('workflow_id', workflowId)
-      .not('parent_seed_keyword_id', 'is', null)
       .eq('subtopics_status', 'completed')
       .order('keyword')
 
