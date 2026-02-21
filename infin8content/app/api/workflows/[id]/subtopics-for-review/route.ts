@@ -38,10 +38,10 @@ interface KeywordWithApproval {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: workflowId } = params
+    const { id: workflowId } = await context.params
 
     // Server-side workflow validation
     const workflow = await requireWorkflowStepAccess(workflowId, 8)
