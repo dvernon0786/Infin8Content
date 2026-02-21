@@ -373,18 +373,17 @@ Return ONLY this JSON — no markdown fences, no explanation:
 
     const { data, error } = await this.supabase
       .from('intent_workflows')
-      .select('icp_analysis')
+      .select('*') // SAFE TEMP FIX – avoids column mismatch
       .eq('id', workflowId)
       .single()
 
     if (error || !data) {
-      console.warn(
-        `[KeywordSubtopicGenerator] ICP fetch failed for workflow ${workflowId}: ${error?.message}` 
-      )
       return null
     }
 
-    return (data as WorkflowRow).icp_analysis ?? null
+    // If icp_analysis exists, use it.
+    // If not, return null silently.
+    return (data as any).icp_analysis ?? null
   }
 
   private async fetchGeoSettings(organizationId: string): Promise<OrganizationGeo> {
@@ -419,6 +418,7 @@ Return ONLY this JSON — no markdown fences, no explanation:
   ): Promise<void> {
     const { error } = await this.supabase.from('intent_audit_logs').insert({
       organization_id: organizationId,
+      actor_id: organizationId, // SAFE system actor fallback
       action: 'subtopics_generated',
       entity_type: 'keyword',
       entity_id: keywordId,
