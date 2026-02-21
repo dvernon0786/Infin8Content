@@ -264,7 +264,13 @@ Return ONLY this JSON — no markdown fences, no explanation:
       // PATCH 5.1 — Enforce deterministic required types in exact order
       const requiredTypes: SubtopicType[] = ['informational', 'commercial', 'transactional']
       for (let i = 0; i < requiredTypes.length; i++) {
-        if (!subtopics[i] || subtopics[i].type !== requiredTypes[i]) {
+        if (!subtopics[i]) {
+          subtopics[i] = {
+            title: topic,
+            type: requiredTypes[i],
+            keywords: [topic],
+          }
+        } else if (subtopics[i].type !== requiredTypes[i]) {
           subtopics[i] = {
             ...subtopics[i],
             type: requiredTypes[i],
@@ -418,7 +424,7 @@ Return ONLY this JSON — no markdown fences, no explanation:
   ): Promise<void> {
     const { error } = await this.supabase.from('intent_audit_logs').insert({
       organization_id: organizationId,
-      actor_id: organizationId, // SAFE system actor fallback
+      actor_id: '00000000-0000-0000-0000-000000000000', // System actor UUID
       action: 'subtopics_generated',
       entity_type: 'keyword',
       entity_id: keywordId,
