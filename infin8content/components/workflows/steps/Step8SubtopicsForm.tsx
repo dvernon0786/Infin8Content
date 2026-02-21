@@ -50,6 +50,20 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
     fetchSubtopicsForReview()
   }, [workflowId])
 
+<<<<<<< Updated upstream
+=======
+  // ✅ Poll when worker is running (use FSM state, not data length)
+  useEffect(() => {
+    if (workflowState !== 'step_8_subtopics_running') return
+
+    const interval = setInterval(() => {
+      fetchSubtopicsForReview()
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [workflowState, workflowId])
+
+>>>>>>> Stashed changes
   // Helper functions
   function canComplete(): boolean {
     if (keywords.length === 0) return false
@@ -188,11 +202,27 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
   }
 
   if (keywords.length === 0) {
+<<<<<<< Updated upstream
+=======
+    if (workflowState === 'step_8_subtopics_running') {
+      return (
+        <div className="text-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">
+            Generating subtopics… This may take up to 90 seconds.
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            This page will automatically update when complete.
+          </p>
+        </div>
+      )
+    }
+    
+>>>>>>> Stashed changes
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">No subtopics ready for review yet.</p>
-        <p className="text-sm text-muted-foreground mt-2">
-          Subtopics will appear here once Step 8 generation is complete.
+        <p className="text-muted-foreground">
+          No subtopics were generated.
         </p>
       </div>
     )
