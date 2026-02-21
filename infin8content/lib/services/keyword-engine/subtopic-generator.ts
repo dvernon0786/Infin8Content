@@ -13,7 +13,7 @@
  */
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
-import { generateContent } from '@/lib/services/openrouter/openrouter-client'
+import { generateContent, type OpenRouterGenerationResult } from '@/lib/services/openrouter/openrouter-client'
 import { getOrganizationGeoOrThrow } from '@/lib/config/dataforseo-geo'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -120,17 +120,17 @@ export class KeywordSubtopicGenerator {
         ],
         { maxTokens: 900, temperature: 0.2 }
       ),
-      this.rejectAfter(
+      this.rejectAfter<OpenRouterGenerationResult>(
         AI_TIMEOUT_MS,
         `OpenRouter timed out after ${AI_TIMEOUT_MS}ms for keyword ${keywordId}` 
       ),
     ])
 
-    if (!aiResult || typeof (aiResult as any).content !== 'string') {
+    if (!aiResult || typeof aiResult.content !== 'string') {
       throw new Error(`Invalid OpenRouter response for keyword ${keywordId}`)
     }
 
-    return this.parseResponse((aiResult as any).content, topic, geo.languageCode)
+    return this.parseResponse(aiResult.content, topic, geo.languageCode)
   }
 
   /**
@@ -255,7 +255,7 @@ Return ONLY this JSON — no markdown fences, no explanation:
             .filter((k) => k.length > 0)
 
           return {
-            title: title || `${topic} overview`,
+            title: title || topic,
             type: this.normaliseType(st.type),
             keywords: keywords.length > 0 ? keywords : [topic],
           }
@@ -268,6 +268,17 @@ Return ONLY this JSON — no markdown fences, no explanation:
           subtopics[i].type = FALLBACK_TYPES[i]
         }
         usedTypes.add(subtopics[i].type)
+      }
+
+      // PATCH 5.1 — Enforce deterministic required types in exact order
+      const requiredTypes: SubtopicType[] = ['informational', 'commercial', 'transactional']
+      for (let i = 0; i < requiredTypes.length; i++) {
+        if (!subtopics[i] || subtopics[i].type !== requiredTypes[i]) {
+          subtopics[i] = {
+            ...subtopics[i],
+            type: requiredTypes[i],
+          }
+        }
       }
 
       // PATCH 3 — Language-neutral padding (no English leakage)
