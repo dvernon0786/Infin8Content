@@ -261,15 +261,6 @@ Return ONLY this JSON — no markdown fences, no explanation:
           }
         })
 
-      // PATCH 5 — Enforce unique type distribution even if model ignores instruction
-      const usedTypes = new Set<SubtopicType>()
-      for (let i = 0; i < subtopics.length; i++) {
-        if (usedTypes.has(subtopics[i].type)) {
-          subtopics[i].type = FALLBACK_TYPES[i]
-        }
-        usedTypes.add(subtopics[i].type)
-      }
-
       // PATCH 5.1 — Enforce deterministic required types in exact order
       const requiredTypes: SubtopicType[] = ['informational', 'commercial', 'transactional']
       for (let i = 0; i < requiredTypes.length; i++) {
