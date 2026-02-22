@@ -25,13 +25,25 @@ export async function enforceICPGate(
   stepName: string
 ): Promise<NextResponse | null> {
   try {
+    console.log(`[ICPGate] Checking workflow ${workflowId} for step ${stepName}`)
+    
     // Validate ICP completion
     const result = await icpGateValidator.validateICPCompletion(workflowId)
     
+    console.log(`[ICPGate] Validation result:`, {
+      allowed: result.allowed,
+      error: result.error,
+      icpStatus: result.icpStatus,
+      workflowStatus: result.workflowStatus
+    })
+    
     // If access is allowed, continue to next handler
     if (result.allowed) {
+      console.log(`[ICPGate] ✅ Allowed - workflow ${workflowId} passed ICP gate`)
       return null
     }
+    
+    console.log(`[ICPGate] ❌ Blocked - workflow ${workflowId} failed ICP gate: ${result.error}`)
     
     // Log gate enforcement for audit trail (non-blocking)
     icpGateValidator.logGateEnforcement(workflowId, stepName, result).catch(error => {
