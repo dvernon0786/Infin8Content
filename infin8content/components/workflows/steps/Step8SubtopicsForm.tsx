@@ -45,21 +45,22 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
   const [feedback, setFeedback] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [currentState, setCurrentState] = useState<string | undefined>(workflowState)
 
   useEffect(() => {
     fetchSubtopicsForReview()
   }, [workflowId])
 
-// ✅ Poll when worker is running (use FSM state, not data length)
+// ✅ Poll when worker is running (use live API state, not stale prop)
   useEffect(() => {
-    if (workflowState !== 'step_8_subtopics_running') return
+    if (currentState !== 'step_8_subtopics_running') return
 
     const interval = setInterval(() => {
       fetchSubtopicsForReview()
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [workflowState, workflowId])
+  }, [currentState, workflowId])
   // Helper functions
   function canComplete(): boolean {
     if (keywords.length === 0) return false
@@ -103,6 +104,9 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
       }
 
       const { data } = await response.json()
+      
+      // ✅ Update local state from live API response
+      setCurrentState(data.workflowState)
       
       // ✅ Use live API state, not stale parent prop
       if (
@@ -198,7 +202,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
   }
 
   if (keywords.length === 0) {
-    if (workflowState === 'step_8_subtopics_running') {
+    if (currentState === 'step_8_subtopics_running') {
       return (
         <div className="text-center py-8">
           <Loader2 className="h-6 w-6 animate-spin mx-auto mb-4" />
