@@ -121,8 +121,13 @@ export class ICPGateValidator {
         .eq('id', workflowId)
         .single() as { data: { organization_id: string } | null }
 
+      if (!workflow?.organization_id) {
+        console.warn('[ICPGate] Missing organization_id, skipping audit log')
+        return
+      }
+
       await logIntentAction({
-        organizationId: workflow?.organization_id || '',
+        organizationId: workflow.organization_id,
         workflowId,
         entityType: 'workflow',
         entityId: workflowId,
