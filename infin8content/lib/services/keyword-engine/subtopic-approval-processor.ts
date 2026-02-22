@@ -99,7 +99,9 @@ export async function processSubtopicApproval(
   }
 
   // Update keyword article_status based on decision
-  const newArticleStatus = 'not_started'
+  const newArticleStatus = decision === 'approved'
+    ? 'ready'
+    : 'not_started'
   
   const keywordUpdateResult = await supabase
     .from('keywords')

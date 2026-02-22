@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { processSubtopicApproval, SubtopicApprovalRequest } from '@/lib/services/keyword-engine/subtopic-approval-processor'
 import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 
 export async function POST(
   request: NextRequest,
@@ -24,7 +25,25 @@ export async function POST(
 
     // ENFORCE ICP GATE - Check if ICP is complete before proceeding
     // For keyword-level operations, we need to get the workflow_id from the keyword
-    const gateResponse = await enforceICPGate(keywordId, 'approve-subtopics')
+    const supabase = createServiceRoleClient()
+
+    const { data: keyword } = await supabase
+      .from('keywords')
+      .select('workflow_id')
+      .eq('id', keywordId)
+      .single() as { data: { workflow_id: string } | null }
+
+    if (!keyword?.workflow_id) {
+      return NextResponse.json(
+        { error: 'Workflow not found for keyword' },
+        { status: 404 }
+      )
+    }
+
+    const gateResponse = await enforceICPGate(
+      keyword.workflow_id,
+      'approve-subtopics'
+    )
     if (gateResponse) {
       return gateResponse
     }
