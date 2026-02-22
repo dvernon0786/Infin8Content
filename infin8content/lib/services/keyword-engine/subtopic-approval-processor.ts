@@ -55,8 +55,8 @@ export async function processSubtopicApproval(
     throw new Error('Authentication required')
   }
 
-  // Validate user is organization admin
-  if (currentUser.role !== 'admin') {
+  // Validate user is organization admin or owner
+  if (!['admin', 'owner'].includes(currentUser.role)) {
     throw new Error('Admin access required')
   }
 
@@ -99,7 +99,7 @@ export async function processSubtopicApproval(
   }
 
   // Update keyword article_status based on decision
-  const newArticleStatus = decision === 'approved' ? 'ready' : 'not_started'
+  const newArticleStatus = 'not_started'
   
   const keywordUpdateResult = await supabase
     .from('keywords')
@@ -116,20 +116,54 @@ export async function processSubtopicApproval(
     throw new Error('Failed to update keyword status')
   }
 
+  // Get workflow_id for approval record
+  const { data: workflowRow } = await supabase
+    .from('keywords')
+    .select('workflow_id')
+    .eq('id', keywordId)
+    .single() as { data: { workflow_id: string } | null }
+
+  if (!workflowRow?.workflow_id) {
+    throw new Error('Workflow not found for keyword')
+  }
+
+  // Get existing approval to merge approved_items
+  const { data: existingApproval } = await supabase
+    .from('intent_approvals')
+    .select('approved_items')
+    .eq('workflow_id', workflowRow.workflow_id)
+    .eq('approval_type', 'subtopics')
+    .single() as { data: { approved_items: string[] } | null }
+
+  let approvedItems: string[] = []
+
+  if (existingApproval?.approved_items) {
+    approvedItems = existingApproval.approved_items as string[]
+  }
+
+  // Mutate array properly
+  if (decision === 'approved') {
+    if (!approvedItems.includes(keywordId)) {
+      approvedItems.push(keywordId)
+    }
+  } else {
+    approvedItems = approvedItems.filter(id => id !== keywordId)
+  }
+
   // Create or update approval record (idempotent)
   const approvalData = {
-    entity_id: keywordId,
-    entity_type: 'keyword',
+    workflow_id: workflowRow.workflow_id,
     approval_type: 'subtopics',
-    decision,
+    decision: 'approved', // row represents overall status
     approver_id: currentUser.id,
-    feedback: feedback || null,
+    feedback: null,
+    approved_items: approvedItems,
   }
 
   const approvalResult = await supabase
     .from('intent_approvals')
     .upsert(approvalData, {
-      onConflict: 'entity_id,entity_type,approval_type',
+      onConflict: 'workflow_id,approval_type',
       ignoreDuplicates: false,
     })
     .select('id')
@@ -228,23 +262,17 @@ export async function getApprovedKeywordIds(keywordIds: string[]): Promise<strin
 
   const supabase = await createServiceRoleClient()
 
-  const approvalResult = await supabase
+  const { data } = await supabase
     .from('intent_approvals')
-    .select('entity_id')
-    .in('entity_id', keywordIds)
-    .eq('entity_type', 'keyword')
+    .select('approved_items')
     .eq('approval_type', 'subtopics')
-    .eq('decision', 'approved')
+    .single() as { data: { approved_items: string[] } | null }
 
-  if (approvalResult.error || !approvalResult.data) {
-    return []
-  }
+  if (!data?.approved_items) return []
 
-  const approvals = approvalResult.data as unknown as Array<{
-    entity_id: string
-  }>
+  const approvedItems = data.approved_items as string[]
 
-  return approvals.map(approval => approval.entity_id)
+  return approvedItems.filter(id => keywordIds.includes(id))
 }
 
 /**
