@@ -280,37 +280,50 @@ async function checkAndTriggerWorkflowCompletion(
   const { getWorkflowState } = await import('@/lib/fsm/unified-workflow-engine')
   const currentState = await getWorkflowState(workflowId)
   
+  console.log(`🔍 [SubtopicApproval] Workflow ${workflowId} current state: ${currentState}`)
+  
   // Only proceed if workflow is in step_8_subtopics state
   if (currentState !== 'step_8_subtopics') {
-    console.log(`[SubtopicApproval] Workflow ${workflowId} not in step_8_subtopics, current: ${currentState}`)
+    console.log(`❌ [SubtopicApproval] Workflow ${workflowId} not in step_8_subtopics, current: ${currentState}`)
     return
   }
 
-  // Check if ALL longtail keywords in this workflow have approved subtopics
-  // IMPORTANT: Only longtail keywords (parent_seed_keyword_id IS NOT NULL) get subtopics
-  const { data: allKeywords } = await supabase
+  console.log(`✅ [SubtopicApproval] Workflow ${workflowId} state check passed: step_8_subtopics`)
+
+  // Check if ALL keywords with completed subtopics in this workflow have been approved
+  const { data: allKeywords, error: keywordsError } = await supabase
     .from('keywords')
     .select('id, subtopics_status')
     .eq('workflow_id', workflowId)
     .eq('organization_id', organizationId)
-    .is('parent_seed_keyword_id', 'not null') // Only longtail keywords
+    .eq('subtopics_status', 'completed') // Only keywords with completed subtopics
 
-  if (!allKeywords || allKeywords.length === 0) {
-    console.log(`[SubtopicApproval] No keywords found for workflow ${workflowId}`)
+  if (keywordsError) {
+    console.error(`❌ [SubtopicApproval] Database error fetching keywords: ${keywordsError.message}`)
     return
   }
+
+  if (!allKeywords || allKeywords.length === 0) {
+    console.log(`❌ [SubtopicApproval] No keywords with completed subtopics found for workflow ${workflowId}`)
+    return
+  }
+
+  console.log(`✅ [SubtopicApproval] Found ${allKeywords.length} keywords with completed subtopics`)
 
   // Get all keyword IDs for this workflow
   const workflowKeywordIds = allKeywords.map(k => (k as any).id)
 
   // Get approved keyword IDs
   const approvedKeywordIds = await getApprovedKeywordIds(workflowKeywordIds)
+  
+  console.log(`🔍 [SubtopicApproval] Approval check: ${approvedKeywordIds.length}/${workflowKeywordIds.length} approved`)
 
   // Check if all keywords have approved subtopics
   const allApproved = workflowKeywordIds.length === approvedKeywordIds.length
 
   if (!allApproved) {
-    console.log(`[SubtopicApproval] Not all keywords approved yet: ${approvedKeywordIds.length}/${workflowKeywordIds.length}`)
+    console.log(`❌ [SubtopicApproval] Not all keywords approved yet: ${approvedKeywordIds.length}/${workflowKeywordIds.length}`)
+    console.log(`🔍 [SubtopicApproval] Unapproved keywords: ${workflowKeywordIds.filter(id => !approvedKeywordIds.includes(id))}`)
     return
   }
 
@@ -323,10 +336,14 @@ async function checkAndTriggerWorkflowCompletion(
     userId
   )
 
+  console.log(`🔍 [SubtopicApproval] Transition result:`, result)
+
   if (!result.success) {
-    console.log(`⚠️⚠️⚠️ [SubtopicApproval] Unified transition failed for ${workflowId}: ${result.error}`)
+    console.log(`❌❌❌ [SubtopicApproval] Unified transition failed for ${workflowId}: ${result.error}`)
+    console.log(`🔍 [SubtopicApproval] Transition details:`, JSON.stringify(result, null, 2))
     return
   }
 
   console.log(`✅✅✅ [SubtopicApproval] Unified transition completed for workflow ${workflowId}`)
+  console.log(`🔍 [SubtopicApproval] Transition result details:`, JSON.stringify(result, null, 2))
 }
