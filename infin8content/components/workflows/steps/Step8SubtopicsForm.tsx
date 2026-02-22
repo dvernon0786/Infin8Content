@@ -45,28 +45,21 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
   const [feedback, setFeedback] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [currentState, setCurrentState] = useState<string | undefined>(workflowState)
 
   useEffect(() => {
     fetchSubtopicsForReview()
   }, [workflowId])
 
-  // ✅ Poll when worker is running
   useEffect(() => {
-    let pollInterval: NodeJS.Timeout | null = null
+    if (currentState !== 'step_8_subtopics_running') return
 
-    function pollWorkflowState() {
+    const interval = setInterval(() => {
       fetchSubtopicsForReview()
-    }
+    }, 5000)
 
-    // Start polling if we have no keywords (worker likely running)
-    if (keywords.length === 0 && !loading && !error) {
-      pollInterval = setInterval(pollWorkflowState, 5000) // Poll every 5 seconds
-    }
-
-    return () => {
-      if (pollInterval) clearInterval(pollInterval)
-    }
-  }, [workflowId, keywords.length, loading, error])
+    return () => clearInterval(interval)
+  }, [currentState, workflowId])
 
   // Helper functions
   function canComplete(): boolean {
@@ -111,6 +104,9 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
       }
 
       const { data } = await response.json()
+      
+      // ✅ Update local state from live API response
+      setCurrentState(data.workflowState)
       
       // ✅ Use live API state, not stale parent prop
       if (
@@ -206,10 +202,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
   }
 
   if (keywords.length === 0) {
-    // Check if worker is still running
-    const isRunning = !loading && !error
-    
-    if (isRunning) {
+    if (currentState === 'step_8_subtopics_running') {
       return (
         <div className="text-center py-8">
           <Loader2 className="h-6 w-6 animate-spin mx-auto mb-4" />
@@ -225,9 +218,8 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
     
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">No subtopics ready for review yet.</p>
-        <p className="text-sm text-muted-foreground mt-2">
-          Subtopics will appear here once Step 8 generation is complete.
+        <p className="text-muted-foreground">
+          No subtopics were generated.
         </p>
       </div>
     )

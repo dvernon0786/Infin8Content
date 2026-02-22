@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireWorkflowStepAccess } from '@/lib/guards/workflow-step-gate'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 
+export const dynamic = 'force-dynamic'
+
 // ✅ ENTERPRISE: Strict DTO typing
 interface ApprovalRow {
   id: string
