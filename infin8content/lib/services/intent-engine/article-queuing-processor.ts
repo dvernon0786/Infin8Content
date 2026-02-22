@@ -10,6 +10,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 import { WorkflowState } from '@/lib/fsm/workflow-events'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
+import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 import { AuditAction } from '@/types/audit'
 
 export interface ApprovedKeyword {
@@ -180,7 +181,7 @@ export async function queueArticlesForWorkflow(
     workflowId,
     entityType: 'workflow',
     entityId: workflowId,
-    actorId: 'system', // Worker context - no user session
+    actorId: SYSTEM_USER_ID, // Worker context - system actor
     action: 'WORKFLOW_ARTICLE_QUEUING_COMPLETED' as any,
     details: {
       queued_articles: queuedCount,
