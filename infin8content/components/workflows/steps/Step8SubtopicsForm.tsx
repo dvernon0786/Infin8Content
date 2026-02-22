@@ -51,7 +51,6 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
     fetchSubtopicsForReview()
   }, [workflowId])
 
-// ✅ Poll when worker is running (use live API state, not stale prop)
   useEffect(() => {
     if (currentState !== 'step_8_subtopics_running') return
 
@@ -61,6 +60,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
 
     return () => clearInterval(interval)
   }, [currentState, workflowId])
+
   // Helper functions
   function canComplete(): boolean {
     if (keywords.length === 0) return false
