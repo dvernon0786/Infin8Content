@@ -55,8 +55,8 @@ export async function processSubtopicApproval(
     throw new Error('Authentication required')
   }
 
-  // Validate user is organization admin
-  if (currentUser.role !== 'admin') {
+  // Validate user is organization admin or owner
+  if (currentUser.role !== 'admin' && currentUser.role !== 'owner') {
     throw new Error('Admin access required')
   }
 

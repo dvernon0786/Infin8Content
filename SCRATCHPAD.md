@@ -1,52 +1,57 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-02-22 19:49 UTC+11  
-**Current Focus:** STEP 8 → STEP 9 TRANSITION - FINAL ICP GATE FIX APPLIED
+**Last Updated:** 2026-02-23 01:29 UTC+11  
+**Current Focus:** ROLE GATE FIX - DATABASE CONSTRAINT UPDATE
 
-## **🎯 STEP 8 → STEP 9 TRANSITION - COMPLETE RESOLUTION**
+## **🔥 ROLE GATE FIX - DATABASE CONSTRAINT UPDATE**
 
-### **✅ Achievement: Full Step 8 → Step 9 Pipeline Fixed**
-- **Status:** All blocking issues identified and resolved with minimal fixes
-- **Root Causes:** ActorId UUID violations + empty organizationId fallback + keyword filter bugs + ICP gate wrong ID
-- **Evidence:** Systematic debugging revealed 5 distinct failure points, all now fixed
-- **Fixes Applied:** 3-Rule Actor Policy + organizationId validation + filter correction + comprehensive logging + ICP gate workflowId fix
-- **Result:** Step 8 → Step 9 transition now fully functional and ready for production
-- **Impact:** Complete workflow progression from Step 1 through Step 9 restored
+### **✅ Achievement: Role Gate Fixed + Database Constraint Updated**
+- **Status:** Owner role now allowed in all approval processors + database constraint fixed
+- **Root Cause:** `currentUser.role !== 'admin'` rejected org owners + check constraint missing 'ready' status
+- **Evidence:** Terminal showed constraint violation when trying to set `article_status = 'ready'`
+- **Fixes Applied:** 
+  1. Updated all 3 processors to allow both 'admin' AND 'owner' roles
+  2. Created migration to add 'ready' to article_status check constraint
+- **Result:** Subtopic approvals now work for org owners and database accepts 'ready' status
+- **Impact:** Step 8 → Step 9 transition fully functional for both admin and owner users
 
 ---
 
-## **🔍 COMPLETE ISSUE ANALYSIS & RESOLUTION**
+## **🔍 COMPLETE FIX ANALYSIS**
 
-### **✅ Issue 1: Audit Logging ActorId Violations (RESOLVED)**
-**Problem:** `actorId: 'system'` causing "invalid input syntax for type uuid" error
-**Root Cause:** Background automation using string 'system' instead of valid UUID
-**Fix Applied:** Implemented 3-Rule Actor Policy:
-- Rule 1: User Actions → `currentUser.id`
-- Rule 2: Background Automation → `SYSTEM_USER_ID` (`00000000-0000-0000-0000-000000000000`)
-- Rule 3: Audit Logging → Non-blocking (try-catch)
-**Files Fixed:**
-- `lib/services/intent-engine/icp-gate-validator.ts` - Added SYSTEM_USER_ID import and usage
-- `lib/services/intent-engine/competitor-gate-validator.ts` - Added SYSTEM_USER_ID import and usage
-- `lib/services/intent-engine/article-queuing-processor.ts` - Added SYSTEM_USER_ID import and usage
-**Result:** All audit logs now use valid UUIDs, no more FK violations
-
-### **✅ Issue 2: Empty OrganizationId UUID (RESOLVED)**
-**Problem:** `organizationId: ''` (empty string) causing UUID syntax errors
-**Root Cause:** Fallback `|| ''` in icp-gate-validator.ts creating invalid UUID
-**Fix Applied:** Removed empty string fallback, skip audit if organization_id missing
+### **✅ Issue 1: Role Gate Rejection (RESOLVED)**
+**Problem:** `currentUser.role !== 'admin'` rejected org owners with role = 'owner'
+**Root Cause:** Hardcoded admin-only check in 3 approval processors
+**Fix Applied:** Updated all processors to allow both roles:
 ```typescript
-// BEFORE (caused UUID error)
-organizationId: workflow?.organization_id || ''
-
-// AFTER (skip audit if missing)
-if (!workflow?.organization_id) {
-  console.warn('[ICPGate] Missing organization_id, skipping audit log')
-  return
+// BEFORE (rejected owners)
+if (currentUser.role !== 'admin') {
+  throw new Error('Admin access required')
 }
-await logIntentAction({
-  organizationId: workflow.organization_id,
+
+// AFTER (allows both admin and owner)
+if (currentUser.role !== 'admin' && currentUser.role !== 'owner') {
+  throw new Error('Admin access required')
+}
 ```
-**Result:** No more empty string UUIDs, audit logging handles missing data gracefully
+**Files Fixed:**
+- `lib/services/keyword-engine/subtopic-approval-processor.ts`
+- `lib/services/intent-engine/seed-approval-processor.ts` 
+- `lib/services/intent-engine/human-approval-processor.ts`
+**Result:** Both admin and owner users can now approve subtopics
+
+### **✅ Issue 2: Database Constraint Violation (RESOLVED)**
+**Problem:** `new row for relation "keywords" violates check constraint "keywords_article_status_check"`
+**Root Cause:** Check constraint only allowed ('not_started', 'in_progress', 'completed', 'failed') but code tried to set 'ready'
+**Fix Applied:** Created migration to add 'ready' to check constraint:
+```sql
+-- Migration: 20260223_fix_article_status_ready_constraint.sql
+ALTER TABLE keywords DROP CONSTRAINT IF EXISTS keywords_article_status_check;
+ALTER TABLE keywords 
+ADD CONSTRAINT keywords_article_status_check 
+CHECK (article_status IN ('not_started', 'in_progress', 'completed', 'failed', 'ready'));
+```
+**Result:** Database now accepts 'ready' status for approved subtopics
 
 ### **✅ Issue 3: Keyword Filter Logic Error (RESOLVED)**
 **Problem:** Approval processor filtering for `parent_seed_keyword_id IS NOT NULL` returned 0 rows
