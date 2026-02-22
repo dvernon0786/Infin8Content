@@ -50,6 +50,24 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
     fetchSubtopicsForReview()
   }, [workflowId])
 
+  // ✅ Poll when worker is running
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout | null = null
+
+    function pollWorkflowState() {
+      fetchSubtopicsForReview()
+    }
+
+    // Start polling if we have no keywords (worker likely running)
+    if (keywords.length === 0 && !loading && !error) {
+      pollInterval = setInterval(pollWorkflowState, 5000) // Poll every 5 seconds
+    }
+
+    return () => {
+      if (pollInterval) clearInterval(pollInterval)
+    }
+  }, [workflowId, keywords.length, loading, error])
+
   // Helper functions
   function canComplete(): boolean {
     if (keywords.length === 0) return false
@@ -188,6 +206,23 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
   }
 
   if (keywords.length === 0) {
+    // Check if worker is still running
+    const isRunning = !loading && !error
+    
+    if (isRunning) {
+      return (
+        <div className="text-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">
+            Generating subtopics… This may take up to 90 seconds.
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            This page will automatically update when complete.
+          </p>
+        </div>
+      )
+    }
+    
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground">No subtopics ready for review yet.</p>
