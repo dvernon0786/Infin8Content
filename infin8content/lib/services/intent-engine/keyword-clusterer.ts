@@ -83,7 +83,7 @@ export class KeywordClusterer {
     options: ClusterOptions = {}
   ): Promise<ClusterResult> {
     const startTime = Date.now()
-    const similarityThreshold = options.similarityThreshold ?? 0.4
+    const similarityThreshold = options.similarityThreshold ?? 0.1
     const maxSpokesPerHub = options.maxSpokesPerHub ?? 8
     const minClusterSize = options.minClusterSize ?? 3
 
