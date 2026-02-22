@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
 import { AuditAction } from '@/types/audit'
 
@@ -125,7 +126,7 @@ export class ICPGateValidator {
         workflowId,
         entityType: 'workflow',
         entityId: workflowId,
-        actorId: 'system', // no FK violation
+        actorId: SYSTEM_USER_ID, // System actor UUID
         action: result.allowed
           ? AuditAction.WORKFLOW_GATE_ICP_ALLOWED
           : AuditAction.WORKFLOW_GATE_ICP_BLOCKED,
