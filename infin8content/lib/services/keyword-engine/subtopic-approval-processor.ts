@@ -21,7 +21,7 @@ export interface SubtopicApprovalResponse {
   success: boolean
   decision: 'approved' | 'rejected'
   keyword_id: string
-  article_status: 'ready' | 'not_started'
+  article_status: 'not_started' | 'in_progress' | 'completed' | 'failed'
   message: string
 }
 
