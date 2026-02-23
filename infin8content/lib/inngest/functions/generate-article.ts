@@ -51,6 +51,12 @@ export const generateArticle = inngest.createFunction(
       // Type guard to ensure we have the expected data structure
       const articleData = data as unknown as { id: string; org_id: string; status: string }
 
+      // 🔴 PRODUCTION HARDENING: Idempotency against duplicate events
+      // If the article is already completed, we skip processing successfully.
+      if (articleData.status === 'completed') {
+        return { skipped: true }
+      }
+
       // 🔴 STRUCTURAL CORRECTION: The API now owns the 'queued' -> 'generating' transition.
       // We must assert that the article is already in the 'generating' state.
       if (articleData.status !== 'generating') {
@@ -60,7 +66,7 @@ export const generateArticle = inngest.createFunction(
       return articleData
     })
 
-    // No skipped path needed anymore as we throw on invalid state above
+    if ((article as any).skipped) return { success: true, skipped: true }
 
     /* -------------------------------------------------- */
     /* Load organization context                         */
