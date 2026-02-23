@@ -129,8 +129,8 @@ export function KeywordResearchPageClient() {
                   <span className="text-sm font-medium">Current Usage: </span>
                   <span className="text-sm">{usageInfo.current} / {usageInfo.limit}</span>
                 </div>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   className="font-lato text-neutral-600 hover:text-primary border-neutral-200"
                 >
@@ -151,8 +151,8 @@ export function KeywordResearchPageClient() {
           <CardContent>
             <div className="space-y-4">
               <p className="font-lato text-neutral-600 text-small">{error}</p>
-              <Button 
-                onClick={handleRetry} 
+              <Button
+                onClick={handleRetry}
                 variant="outline"
                 className="font-lato text-neutral-600 hover-text-primary-blue border-neutral-200"
               >
@@ -166,28 +166,6 @@ export function KeywordResearchPageClient() {
       {/* Results Table */}
       <KeywordResultsTable results={results} isLoading={isLoading} />
 
-      {/* Create Article Button - Contextual action from research results */}
-      {results.length > 0 && lastResearchedKeyword && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-lato text-small font-medium text-neutral-900">Ready to create an article?</p>
-                <p className="font-lato text-neutral-600 text-small">
-                  Use "{lastResearchedKeyword}" as your article keyword
-                </p>
-              </div>
-              <Button 
-                onClick={() => router.push(`/dashboard/articles/generate?keyword=${encodeURIComponent(lastResearchedKeyword)}`)}
-                className="gap-2 bg-primary-blue text-white font-lato hover:bg-primary-blue/90"
-              >
-                <Plus className="h-4 w-4" />
-                Create Article
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }

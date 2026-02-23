@@ -26,44 +26,11 @@ export default async function ArticlesPage() {
               Manage and track your article generation progress
             </p>
           </div>
-          {/* Mobile-Optimized Button */}
-          <div className="hidden sm:block">
-            <Link href="/dashboard/articles/generate">
-              <Button
-                className="
-                  bg-primary-blue
-                  text-white
-                  hover:bg-primary-blue/90
-                  font-lato
-                "
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Generate Article
-              </Button>
-            </Link>
-          </div>
-          <div className="sm:hidden">
-            <Link href="/dashboard/articles/generate">
-              <TouchTarget
-                size="large"
-                className="
-                  w-full
-                  bg-primary-blue
-                  text-white
-                  hover:bg-primary-blue/90
-                  font-lato
-                "
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Generate Article
-              </TouchTarget>
-            </Link>
-          </div>
         </div>
 
         {/* Search and Filters - Client Component */}
         <ArticlesClient orgId={currentUser.org_id} />
-        
+
       </div>
     </>
   )

@@ -17,11 +17,15 @@ import { NextResponse } from 'next/server'
  * Validates and sanitizes user input before processing
  */
 const articleGenerationSchema = z.object({
-  keyword: z.string().min(1, 'Keyword must not be empty').max(200, 'Keyword must be less than 200 characters'),
-  targetWordCount: z.number().int().min(500).max(10000),
+  keyword: z.string().max(200, 'Keyword must be less than 200 characters').optional(),
+  articleId: z.string().uuid('Invalid article ID').optional(),
+  targetWordCount: z.number().int().min(500).max(10000).optional().default(1000),
   writingStyle: z.enum(['Professional', 'Conversational', 'Technical', 'Casual', 'Formal']).optional().default('Professional'),
   targetAudience: z.enum(['General', 'B2B', 'B2C', 'Technical', 'Consumer']).optional().default('General'),
   customInstructions: z.string().max(2000, 'Custom instructions must be less than 2000 characters').optional(),
+}).refine(data => data.keyword || data.articleId, {
+  message: "Either keyword or articleId must be provided",
+  path: ["keyword"]
 })
 
 // Plan limits for article generation per month
@@ -31,44 +35,6 @@ const PLAN_LIMITS: Record<string, number | null> = {
   agency: null,   // unlimited
 }
 
-/**
- * POST /api/articles/generate
- * 
- * Creates a new article generation request and queues it via Inngest.
- * 
- * @param request - HTTP request containing article generation parameters
- * @returns JSON response with articleId and status, or error details
- * 
- * Request Body:
- * - keyword: string (required, 1-200 chars) - Target keyword for article
- * - targetWordCount: number (required, 500-10000) - Desired article length
- * - writingStyle: string (optional) - One of: Professional, Conversational, Technical, Casual, Formal
- * - targetAudience: string (optional) - One of: General, B2B, B2C, Technical, Consumer
- * - customInstructions: string (optional, max 2000 chars) - Additional instructions for article generation
- * 
- * Response (Success - 200):
- * - success: boolean
- * - articleId: string (UUID)
- * - status: "queued"
- * - message: string
- * 
- * Response (Error - 400):
- * - error: string - Validation error message
- * 
- * Response (Error - 401):
- * - error: "Authentication required"
- * 
- * Response (Error - 403):
- * - error: string - Usage limit exceeded message
- * - details: { code: "USAGE_LIMIT_EXCEEDED", usageLimitExceeded: true, currentUsage: number, limit: number }
- * 
- * Response (Error - 500):
- * - error: string - Server error message
- * - details?: string - Additional error details
- * 
- * Authentication: Requires authenticated user session
- * Authorization: User must belong to an organization
- */
 /**
  * Execute legacy article generation workflow
  * This is the original article generation logic that remains unchanged
@@ -96,7 +62,7 @@ async function executeLegacyArticleGeneration({
 
   // Check usage limits before creating article record
   const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM format
-  
+
   // Query current usage for this month
   const { data: usageData, error: usageError } = await (supabaseAdmin
     .from('usage_tracking' as any)
@@ -109,7 +75,6 @@ async function executeLegacyArticleGeneration({
   // Handle error: PGRST116 means no row found (first article of month)
   if (usageError && usageError.code !== 'PGRST116') {
     console.error('[Article Generation] Failed to check usage limits:', usageError)
-    // Don't fail request - usage tracking is not critical
   }
 
   const currentUsage = usageData?.usage_count || 0
@@ -131,22 +96,19 @@ async function executeLegacyArticleGeneration({
     )
   }
 
-  // Sanitize custom instructions before storing in database
-  const sanitizedCustomInstructions = parsed.customInstructions 
+  // Sanitize custom instructions
+  const sanitizedCustomInstructions = parsed.customInstructions
     ? sanitizeText(parsed.customInstructions)
     : undefined
 
-  // Create article record in database with status "queued"
-  // Use service role client to bypass RLS for article creation
-  // Type assertion needed until database types are regenerated after migration
-  // TODO: Remove type assertion after running: supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts
+  // Create article record
   const { data: article, error: insertError } = await (supabaseAdmin
     .from('articles' as any)
     .insert({
       org_id: organizationId,
-      created_by: userId || null, // Ensure null if userId is undefined
+      created_by: userId || null,
       keyword: parsed.keyword,
-      title: `Article: ${parsed.keyword}`, // Generate title from keyword
+      title: `Article: ${parsed.keyword}`,
       status: 'queued',
       target_word_count: parsed.targetWordCount,
       writing_style: parsed.writingStyle,
@@ -157,53 +119,29 @@ async function executeLegacyArticleGeneration({
     .single() as unknown as Promise<{ data: { id: string } | null; error: any }>)
 
   if (insertError || !article) {
-    console.error('Failed to create article record:', {
-      insertError: JSON.stringify(insertError, null, 2),
-      article,
-      organizationId,
-      userId,
-      parsed: {
-        keyword: parsed.keyword,
-        targetWordCount: parsed.targetWordCount,
-        writingStyle: parsed.writingStyle,
-        targetAudience: parsed.targetAudience
-      }
-    })
     return NextResponse.json(
       { error: 'Failed to create article record', details: JSON.stringify(insertError, null, 2) },
       { status: 500 }
     )
   }
 
-  // Log audit event for article creation
+  // Log audit events
   logActionAsync({
     orgId: organizationId,
     userId: userId,
     action: 'article.generation.started',
-    details: {
-      articleId: article.id,
-      keyword: parsed.keyword,
-      targetWordCount: parsed.targetWordCount,
-      writingStyle: parsed.writingStyle,
-      targetAudience: parsed.targetAudience,
-    },
+    details: { articleId: article.id, keyword: parsed.keyword },
     ipAddress: extractIpAddress(request.headers),
     userAgent: extractUserAgent(request.headers),
   })
 
-  // Log Intent audit trail entry (Story 37.4)
   logIntentActionAsync({
     organizationId,
     entityType: 'article',
     entityId: article.id,
     actorId: userId,
     action: AuditAction.ARTICLE_QUEUED,
-    details: {
-      keyword: parsed.keyword,
-      targetWordCount: parsed.targetWordCount,
-      writingStyle: parsed.writingStyle,
-      targetAudience: parsed.targetAudience,
-    },
+    details: { keyword: parsed.keyword },
     ipAddress: extractIpAddress(request.headers),
     userAgent: extractUserAgent(request.headers),
   })
@@ -216,65 +154,35 @@ async function executeLegacyArticleGeneration({
     articleId: article.id,
   })
 
-  // Queue article generation via Inngest
-  console.log(`[Article Generation] Sending Inngest event for article ${article.id}`)
-  let inngestEventId: string | null = null
-  
+  // Queue via Inngest
   try {
     const result = await inngest.send({
       name: 'article/generate',
-      data: {
-        articleId: article.id,
-      },
+      data: { articleId: article.id },
     })
-    
-    inngestEventId = result.ids?.[0] || null
-    console.log(`[Article Generation] Inngest event sent successfully. Event ID: ${inngestEventId}`)
+
+    const inngestEventId = result.ids?.[0] || null
+    if (inngestEventId) {
+      await supabaseAdmin
+        .from('articles' as any)
+        .update({ inngest_event_id: inngestEventId })
+        .eq('id', article.id)
+    }
   } catch (inngestError) {
     const errorMsg = inngestError instanceof Error ? inngestError.message : String(inngestError)
-    console.error(`[Article Generation] Failed to send Inngest event for article ${article.id}:`, {
-      error: errorMsg,
-      stack: inngestError instanceof Error ? inngestError.stack : undefined,
-    })
-    
-    // Update article status to failed if Inngest event fails
-    await supabase
+    await supabaseAdmin
       .from('articles' as any)
       .update({
         status: 'failed',
-        error_details: {
-          error_message: `Failed to queue article generation: ${errorMsg}`,
-          failed_at: new Date().toISOString(),
-          inngest_error: true
-        }
+        error_details: { error_message: errorMsg, failed_at: new Date().toISOString() }
       })
       .eq('id', article.id)
-    
-    return NextResponse.json(
-      { 
-        error: 'Failed to queue article generation',
-        details: errorMsg
-      },
-      { status: 500 }
-    )
+
+    return NextResponse.json({ error: 'Failed to queue article generation' }, { status: 500 })
   }
 
-  // Update article with Inngest event ID
-  if (inngestEventId) {
-    const { error: updateError } = await supabase
-      .from('articles' as any)
-      .update({ inngest_event_id: inngestEventId })
-      .eq('id', article.id)
-    
-    if (updateError) {
-      console.error(`[Article Generation] Failed to update article with Inngest event ID:`, updateError)
-      // Don't fail the request - event was sent successfully
-    }
-  }
-
-  // Increment usage tracking atomically (after successful queue)
-  // Type assertion needed until database types are regenerated after migration
-  const { error: usageUpdateError } = await (supabaseAdmin
+  // Increment usage tracking
+  await (supabaseAdmin
     .from('usage_tracking' as any)
     .upsert({
       organization_id: organizationId,
@@ -284,12 +192,7 @@ async function executeLegacyArticleGeneration({
       last_updated: new Date().toISOString(),
     }, {
       onConflict: 'organization_id,metric_type,billing_period',
-    }) as unknown as Promise<{ error: any }>)
-
-  if (usageUpdateError) {
-    console.error('Failed to update usage tracking:', usageUpdateError)
-    // Don't fail the request - usage tracking is not critical for the response
-  }
+    }))
 
   return NextResponse.json({
     success: true,
@@ -301,65 +204,82 @@ async function executeLegacyArticleGeneration({
 
 export async function POST(request: Request) {
   console.log('[Article Generation] API route called')
-  
+
   try {
     validateSupabaseEnv()
-    
+
     const body = await request.json()
-    console.log('[Article Generation] Request body parsed:', { keyword: body.keyword, targetWordCount: body.targetWordCount })
-    
     const parsed = articleGenerationSchema.parse(body)
-    console.log('[Article Generation] Request validated successfully')
 
     // Authenticate user
     const currentUser = await getCurrentUser()
     if (!currentUser || !currentUser.org_id) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
     const organizationId = currentUser.org_id
     const userId = currentUser.id
-    const plan = currentUser.organizations?.plan || 'starter'
+    const supabaseAdmin = createServiceRoleClient()
 
-    // Feature flag routing logic
-    // Check if ENABLE_INTENT_ENGINE flag is enabled for this organization
-    // Default to legacy workflow if flag is disabled or check fails
-    let useIntentEngine = false
-    try {
-      useIntentEngine = await isFeatureFlagEnabled(organizationId, FEATURE_FLAG_KEYS.ENABLE_INTENT_ENGINE)
-      console.log('[Article Generation] Feature flag check result:', { 
-        organizationId, 
-        flagKey: FEATURE_FLAG_KEYS.ENABLE_INTENT_ENGINE, 
-        useIntentEngine 
+    // CASE 1: Triggering an existing article (Manual Trigger from UI)
+    if (parsed.articleId) {
+      console.log(`[Article Generation] Triggering existing article: ${parsed.articleId}`)
+
+      const { data: article, error: fetchError } = await (supabaseAdmin
+        .from('articles' as any)
+        .select('id, status, org_id')
+        .eq('id', parsed.articleId)
+        .eq('org_id', organizationId)
+        .single() as unknown as Promise<{ data: any; error: any }>)
+
+      if (fetchError || !article) {
+        return NextResponse.json({ error: 'Article not found' }, { status: 404 })
+      }
+
+      if (article.status !== 'queued') {
+        return NextResponse.json({ error: `Article is already ${article.status}` }, { status: 400 })
+      }
+
+      // Atomic transition
+      await supabaseAdmin
+        .from('articles' as any)
+        .update({ status: 'generating', updated_at: new Date().toISOString() })
+        .eq('id', article.id)
+
+      // Emit Inngest event
+      await inngest.send({
+        name: 'article/generate',
+        data: { articleId: article.id },
       })
-    } catch (error) {
-      console.error('[Article Generation] Feature flag check failed, defaulting to legacy workflow:', error)
-      useIntentEngine = false
-    }
 
-    // Route to legacy workflow if intent engine is not enabled
-    if (!useIntentEngine) {
-      console.log('[Article Generation] Routing to legacy workflow')
-      // Continue with existing legacy article generation logic
-      return await executeLegacyArticleGeneration({
-        request,
-        parsed,
+      // Audit Log
+      logIntentActionAsync({
         organizationId,
-        userId,
-        plan,
-        currentUser
+        entityType: 'article',
+        entityId: article.id,
+        actorId: userId,
+        action: AuditAction.ARTICLE_GENERATION_STARTED,
+        details: { trigger: 'manual_button' },
+        ipAddress: extractIpAddress(request.headers),
+        userAgent: extractUserAgent(request.headers),
+      })
+
+      return NextResponse.json({
+        success: true,
+        articleId: article.id,
+        status: 'generating',
+        message: 'Generation started'
       })
     }
 
-    console.log('[Article Generation] Routing to intent engine workflow (NOT YET IMPLEMENTED)')
-    // TODO: Implement intent engine workflow routing in future story
-    // Currently falls back to legacy workflow until intent engine is fully implemented
+    // CASE 2: Legacy Keyword Flow (Standard Creation)
+    const plan = currentUser.organizations?.plan || 'starter'
     return await executeLegacyArticleGeneration({
       request,
-      parsed,
+      parsed: {
+        ...parsed,
+        keyword: parsed.keyword!
+      } as any,
       organizationId,
       userId,
       plan,
@@ -367,53 +287,10 @@ export async function POST(request: Request) {
     })
 
   } catch (error: any) {
-    console.error('[Article Generation] Error occurred:', {
-      error: error?.message,
-      stack: error?.stack,
-      name: error?.name,
-      details: error?.details
-    })
-    
     if (error instanceof z.ZodError) {
-      const firstError = error.issues?.[0]
-      return NextResponse.json(
-        { error: firstError?.message || 'Validation error' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: error.issues?.[0]?.message || 'Validation error' }, { status: 400 })
     }
-
-    // Handle JSON parsing errors
-    if (error instanceof SyntaxError && error.message.includes('JSON')) {
-      return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 }
-      )
-    }
-
-    // Handle database connection errors
-    if (error?.code === 'PGRST' || error?.message?.includes('supabase')) {
-      return NextResponse.json(
-        { error: 'Database connection error', details: 'Please try again later' },
-        { status: 503 }
-      )
-    }
-
-    // Handle Inngest errors
-    if (error?.message?.includes('inngest')) {
-      return NextResponse.json(
-        { error: 'Service temporarily unavailable', details: 'Article generation queue is temporarily down' },
-        { status: 503 }
-      )
-    }
-
-    // Generic error
-    return NextResponse.json(
-      { 
-        error: 'Internal server error', 
-        details: process.env.NODE_ENV === 'development' ? error?.message : 'Something went wrong'
-      },
-      { status: 500 }
-    )
+    console.error('[Article Generation] Error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

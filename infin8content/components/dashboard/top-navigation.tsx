@@ -1,7 +1,6 @@
 "use client"
 
-import { LogOut, User, Plus, Bell, Search, MoreHorizontal } from "lucide-react"
-import Link from "next/link"
+import { LogOut, User, Bell, Search, MoreHorizontal } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -33,7 +32,7 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
     const [searchOpen, setSearchOpen] = useState(false)
     const [overflowOpen, setOverflowOpen] = useState(false)
     const { isMobile, isTablet, isDesktop } = useResponsiveNavigation()
-    
+
     const initials = name
         ? name
             .split(" ")
@@ -43,13 +42,11 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
             .slice(0, 2)
         : email.substring(0, 2).toUpperCase()
 
-    // Don't show "Create Article" button on the article generation page itself
-    const showCreateButton = pathname !== "/dashboard/articles/generate"
 
     const handleLogout = async () => {
         try {
             setIsLoggingOut(true)
-            
+
             const response = await fetch('/api/auth/logout', {
                 method: 'POST',
                 headers: {
@@ -143,7 +140,7 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
                     <User className="mr-2 h-4 w-4 text-neutral-600" />
                     <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                     onClick={handleLogout}
                     disabled={isLoggingOut}
                     className="cursor-pointer font-lato text-neutral-600"
@@ -155,35 +152,6 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
         </DropdownMenu>
     )
 
-    // Responsive create button
-    const createButton = showCreateButton && (
-        <Button 
-            variant="ghost"
-            asChild 
-            className={cn(
-                "gap-2 transition-all duration-200 font-lato text-neutral-600 hover:text-[--brand-electric-blue]",
-                isMobile && "h-10 px-3", // Larger on mobile
-                "h-9"
-            )}
-        >
-            <Link href="/dashboard/articles/generate">
-                <Plus className={cn(
-                    isMobile && "h-5 w-5",
-                    "h-4 w-4"
-                )} />
-                <span className={cn(
-                    isMobile && "hidden sm:inline", // Hide text on small mobile
-                    isTablet && "hidden lg:inline", // Hide on tablet
-                    "inline"
-                )}>
-                    Create Article
-                </span>
-                {isMobile && (
-                    <span className="sm:hidden">Create</span>
-                )}
-            </Link>
-        </Button>
-    )
 
     return (
         <header className={cn(
@@ -192,12 +160,12 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
             isMobile ? "h-16 px-3" : "h-16 px-4"
         )}>
             {/* Hamburger menu - only visible on mobile */}
-            <SidebarTrigger 
+            <SidebarTrigger
                 className={cn(
                     "-ml-1",
                     isMobile ? "flex" : "md:hidden"
-                )} 
-                aria-label="Toggle sidebar menu" 
+                )}
+                aria-label="Toggle sidebar menu"
             />
 
 
@@ -223,7 +191,7 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
                         aria-label="View notifications"
                     >
                         <Bell className="h-4 w-4" />
-                        <Badge 
+                        <Badge
                             className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-neutral-200 text-neutral-700"
                         >
                             3
@@ -234,16 +202,14 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
                 {/* Mobile overflow menu */}
                 {isMobile && mobileOverflowMenu}
 
-                {/* Create button */}
-                {createButton}
 
                 {/* User menu - hidden on mobile (moved to overflow) */}
                 {!isMobile && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button 
-                                variant="ghost" 
-                                className="relative rounded-full h-8 w-8" 
+                            <Button
+                                variant="ghost"
+                                className="relative rounded-full h-8 w-8"
                                 suppressHydrationWarning
                             >
                                 <Avatar className="h-8 w-8">
@@ -254,10 +220,10 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
                                 </Avatar>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent 
-                            className="w-56" 
-                            align="end" 
-                            forceMount 
+                        <DropdownMenuContent
+                            className="w-56"
+                            align="end"
+                            forceMount
                             suppressHydrationWarning
                         >
                             <DropdownMenuLabel className="font-normal">
@@ -275,7 +241,7 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
                                 <User className="mr-2 h-4 w-4 text-neutral-600" />
                                 <span>Profile</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                                 onClick={handleLogout}
                                 disabled={isLoggingOut}
                                 className="cursor-pointer font-lato text-neutral-600"
