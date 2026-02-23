@@ -269,10 +269,11 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
                 throw new Error(body.error || 'Bulk approval failed')
               }
 
-              await fetchSubtopicsForReview()
               setSuccess(`Bulk approval successful for ${selectedIds.length} items`)
               setSelectedIds([])
-              setTimeout(() => setSuccess(null), 3000)
+
+              // Frontend routing fix: redirect to Step 9 since the workflow successfully progressed
+              window.location.href = `/workflows/${workflowId}/steps/9`
             } catch (err: any) {
               setError(err.message)
             } finally {
