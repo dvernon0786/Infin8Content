@@ -91,10 +91,10 @@ export async function queueArticlesForWorkflow(
     .from('keywords')
     .select('id, keyword, subtopics, cluster_info')
     .eq('workflow_id', workflowId)
-    .eq('article_status', 'ready')
+    .eq('article_status', 'not_started')
 
   if (keywordsResult.error) {
-    throw new Error('Failed to fetch approved keywords')
+    throw new Error(`Failed to fetch approved keywords: ${keywordsResult.error.message}`)
   }
 
   const keywords = (keywordsResult.data || []) as unknown as Array<{
