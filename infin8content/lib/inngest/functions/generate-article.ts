@@ -56,10 +56,18 @@ export const generateArticle = inngest.createFunction(
         return { skipped: true }
       }
 
-      await supabase
+      const { data: locked, error: lockError } = await supabase
         .from('articles')
         .update({ status: 'generating' })
         .eq('id', articleId)
+        .eq('status', 'queued')
+        .select('id')
+        .single()
+
+      if (!locked || lockError) {
+        console.log(`[B-4] Article ${articleId} is already locked or completed. Skipping duplicate execution.`)
+        return { skipped: true }
+      }
 
       return articleData
     })
