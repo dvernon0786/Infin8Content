@@ -8,6 +8,7 @@ import { ArticleContentViewer } from '@/components/articles/article-content-view
 import { EnhancedArticleContentViewer } from '@/components/articles/enhanced-article-content-viewer'
 import { ArticleStatusMonitor } from '@/components/articles/article-status-monitor'
 import { PublishToWordPressButton } from '@/components/articles/publish-to-wordpress-button'
+import { GenerateArticleButton } from '@/components/articles/generate-article-button'
 import ArticleErrorBoundary from './article-error-boundary'
 import { redirect } from 'next/navigation'
 import { Loader2, ArrowLeft } from 'lucide-react'
@@ -48,52 +49,52 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
   // Additional authorization verification
   if (error || !articleData) {
-    console.warn('Unauthorized article access attempt:', { 
-      articleId: id, 
-      userId: currentUser.id, 
+    console.warn('Unauthorized article access attempt:', {
+      articleId: id,
+      userId: currentUser.id,
       orgId: currentUser.org_id,
       error: error?.message || 'Article not found'
     });
-    
+
     return (
-        <div className="w-full min-h-screen p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-5xl">
-            <Card className="border-destructive">
-              <CardHeader>
-                <CardTitle className="font-poppins text-neutral-900 text-h3-desktop">
-                  Access Denied
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="font-lato text-neutral-600 text-body">
-                  You don't have permission to access this article or it doesn't exist.
+      <div className="w-full min-h-screen p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-5xl">
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="font-poppins text-neutral-900 text-h3-desktop">
+                Access Denied
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="font-lato text-neutral-600 text-body">
+                You don't have permission to access this article or it doesn't exist.
+              </p>
+              {error && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Error: {error.message}
                 </p>
-                {error && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Error: {error.message}
-                  </p>
-                )}
-                <div className="mt-4">
-                  <Link
-                    href="/dashboard/articles"
-                    className="inline-flex items-center gap-2 font-lato text-neutral-600 hover:text-[--color-primary-blue]"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back to Articles
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              )}
+              <div className="mt-4">
+                <Link
+                  href="/dashboard/articles"
+                  className="inline-flex items-center gap-2 font-lato text-neutral-600 hover:text-[--color-primary-blue]"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Articles
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </div>
+      </div>
     )
   }
 
   // Verify org_id matches exactly (additional security layer)
   if (articleData && 'org_id' in articleData && articleData.org_id !== currentUser.org_id) {
-    console.error('Security: Org ID mismatch', { 
-      articleOrg: articleData.org_id, 
-      userOrg: currentUser.org_id 
+    console.error('Security: Org ID mismatch', {
+      articleOrg: articleData.org_id,
+      userOrg: currentUser.org_id
     });
     redirect('/dashboard/articles');
   }
@@ -104,7 +105,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
   // If article is completed, fetch sections in the same query if possible
   let sections: ArticleSection[] | null = null
   let sectionsError: string | null = null
-  
+
   if (article.status === 'completed') {
     try {
       // Optimized: Single query with conditional section loading
@@ -114,7 +115,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
         .eq('id', id)
         .eq('org_id', currentUser.org_id)
         .maybeSingle()
-      
+
       console.log('[ArticleDetailPage] Sections fetch result:', {
         articleId: id,
         hasSections: !!(articleWithSections as any)?.sections,
@@ -128,7 +129,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
       } else if (articleWithSections) {
         const typedData = articleWithSections as unknown as ArticleWithSections
         sections = typedData.sections || null
-        
+
         // If article title is null, generate it from the first section title or keyword
         if (!article.title && sections && sections.length > 0) {
           article.title = sections[0].title || article.keyword || 'Untitled Article'
@@ -164,7 +165,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
       <div className="w-full min-h-screen p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-col gap-6">
-            <Breadcrumb 
+            <Breadcrumb
               items={generateArticleBreadcrumbs(article.title || 'Untitled Article', article.id)}
               className="text-xs sm:text-sm"
             />
@@ -207,10 +208,15 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                   <CardTitle className="font-poppins text-neutral-900 text-h3-desktop">
                     Article status
                   </CardTitle>
-                  <ArticleStatusMonitor 
-                    articleId={article.id} 
-                    initialStatus={article.status}
-                  />
+                  <div className="flex items-center gap-4">
+                    {article.status === 'queued' && (
+                      <GenerateArticleButton articleId={article.id} />
+                    )}
+                    <ArticleStatusMonitor
+                      articleId={article.id}
+                      initialStatus={article.status}
+                    />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -255,66 +261,66 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
             {/* WordPress Publish Button - Only show if enabled and article completed */}
             {canPublish && (
-              <PublishToWordPressButton 
-                articleId={article.id} 
+              <PublishToWordPressButton
+                articleId={article.id}
                 articleStatus={article.status}
               />
             )}
 
             <ArticleErrorBoundary
-            fallback={
-              <Card className="border-destructive">
-                <CardContent className="pt-6">
-                  <div className="text-center py-8">
-                    <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">
-                      Content Loading Error
-                    </h3>
-                    <p className="font-lato text-neutral-600 text-body">
-                      Unable to load article content. Please try refreshing the page.
+              fallback={
+                <Card className="border-destructive">
+                  <CardContent className="pt-6">
+                    <div className="text-center py-8">
+                      <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">
+                        Content Loading Error
+                      </h3>
+                      <p className="font-lato text-neutral-600 text-body">
+                        Unable to load article content. Please try refreshing the page.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              }
+            >
+              {sectionsError && (
+                <Card className="border-destructive">
+                  <CardContent className="pt-6">
+                    <p className="font-lato text-neutral-600 text-body text-center py-4">
+                      Failed to load article content: {sectionsError}
                     </p>
-                  </div>
-                </CardContent>
-              </Card>
-            }
-          >
-                {sectionsError && (
-                  <Card className="border-destructive">
-                    <CardContent className="pt-6">
-                      <p className="font-lato text-neutral-600 text-body text-center py-4">
-                        Failed to load article content: {sectionsError}
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-                
-                {!sectionsError && sections && sections.length > 0 && (
-                  <div className="space-y-4">
-                    <h2 className="font-poppins text-neutral-900 text-h3-desktop">Article content</h2>
-                    <Card>
-                      <CardContent className="p-6">
-                        <EnhancedArticleContentViewer 
-                          sections={sections}
-                          articleId={article.id}
-                          articleTitle={article.title || 'Untitled Article'}
-                          primaryKeyword={article.keyword || ''}
-                          secondaryKeywords={[]}
-                          targetWordCount={article.target_word_count || 300}
-                        />
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
+                  </CardContent>
+                </Card>
+              )}
 
-                {!sectionsError && (!sections || sections.length === 0) && (
+              {!sectionsError && sections && sections.length > 0 && (
+                <div className="space-y-4">
+                  <h2 className="font-poppins text-neutral-900 text-h3-desktop">Article content</h2>
                   <Card>
-                    <CardContent className="pt-6">
-                      <p className="font-lato text-neutral-600 text-body text-center py-8">
-                        Article generation completed, but no content sections were found.
-                      </p>
+                    <CardContent className="p-6">
+                      <EnhancedArticleContentViewer
+                        sections={sections}
+                        articleId={article.id}
+                        articleTitle={article.title || 'Untitled Article'}
+                        primaryKeyword={article.keyword || ''}
+                        secondaryKeywords={[]}
+                        targetWordCount={article.target_word_count || 300}
+                      />
                     </CardContent>
                   </Card>
-                )}
-              </ArticleErrorBoundary>
+                </div>
+              )}
+
+              {!sectionsError && (!sections || sections.length === 0) && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="font-lato text-neutral-600 text-body text-center py-8">
+                      Article generation completed, but no content sections were found.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </ArticleErrorBoundary>
           </div>
         </div>
       </div>

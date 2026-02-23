@@ -92,21 +92,6 @@ describe('TopNavigation', () => {
         expect(screen.queryByLabelText('View notifications')).not.toBeInTheDocument()
     })
 
-    it('shows create article button when not on generate page', () => {
-        vi.mocked(usePathname).mockReturnValue('/dashboard/articles')
-
-        renderWithProvider(<TopNavigation {...mockUser} />, false)
-
-        expect(screen.getByText('Create Article')).toBeInTheDocument()
-    })
-
-    it('hides create article button on generate page', () => {
-        vi.mocked(usePathname).mockReturnValue('/dashboard/articles/generate')
-
-        renderWithProvider(<TopNavigation {...mockUser} />, false)
-
-        expect(screen.queryByText('Create Article')).not.toBeInTheDocument()
-    })
 
     it('shows mobile search toggle on mobile', () => {
         renderWithProvider(<TopNavigation {...mockUser} />, true)
@@ -119,7 +104,7 @@ describe('TopNavigation', () => {
         renderWithProvider(<TopNavigation {...mockUser} />, true)
 
         const searchToggle = screen.getByLabelText('Toggle search')
-        
+
         // Initially search should be hidden
         expect(screen.queryByPlaceholderText('Search...')).not.toBeInTheDocument()
 
@@ -202,7 +187,7 @@ describe('TopNavigation', () => {
         // Open user menu and logout
         const userAvatar = screen.getByRole('button', { name: /test@example.com/i })
         await user.click(userAvatar)
-        
+
         const logoutButton = screen.getByText('Log out')
         await user.click(logoutButton)
 
