@@ -17,7 +17,7 @@ export async function getWorkflowState(workflowId: string): Promise<WorkflowStat
   if (!user?.org_id) return null
 
   const supabase = createServiceRoleClient()
-  
+
   const { data, error } = await supabase
     .from('intent_workflows')
     .select('id, name, state, created_at, updated_at')
@@ -52,13 +52,8 @@ export function canAccessStep(workflowState: WorkflowState, targetStep: number):
 
 export async function requireWorkflowStepAccess(workflowId: string, targetStep: number): Promise<WorkflowState> {
   const workflowState = await getWorkflowState(workflowId)
-  
-  if (!workflowState) {
-    redirect('/dashboard')
-  }
 
-  // If workflow is completed, redirect to dashboard
-  if (workflowState.state === 'completed') {
+  if (!workflowState) {
     redirect('/dashboard')
   }
 
@@ -81,13 +76,13 @@ export function getStepUrl(workflowId: string, step: number): string {
 }
 
 export function getNextStepUrl(workflowState: WorkflowState): string | null {
-    const nextStep = getNextStep(workflowState.state)
-    if (!nextStep) return null
-    return getStepUrl(workflowState.id, nextStep)
-  }
+  const nextStep = getNextStep(workflowState.state)
+  if (!nextStep) return null
+  return getStepUrl(workflowState.id, nextStep)
+}
 
 export function getPreviousStepUrl(workflowState: WorkflowState): string | null {
-    const previousStep = getPreviousStep(workflowState.state)
-    if (!previousStep) return null
-    return getStepUrl(workflowState.id, previousStep)
-  }
+  const previousStep = getPreviousStep(workflowState.state)
+  if (!previousStep) return null
+  return getStepUrl(workflowState.id, previousStep)
+}
