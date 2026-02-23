@@ -91,10 +91,10 @@ export async function queueArticlesForWorkflow(
     .from('keywords')
     .select('id, keyword, subtopics, cluster_info')
     .eq('workflow_id', workflowId)
-    .eq('article_status', 'ready')
+    .eq('article_status', 'not_started')
 
   if (keywordsResult.error) {
-    throw new Error('Failed to fetch approved keywords')
+    throw new Error(`Failed to fetch approved keywords: ${keywordsResult.error.message}`)
   }
 
   const keywords = (keywordsResult.data || []) as unknown as Array<{
@@ -125,7 +125,7 @@ export async function queueArticlesForWorkflow(
           subtopics: keyword.subtopics,
           cluster_info: keyword.cluster_info,
           status: 'queued',
-          created_by: 'system', // Worker context - no user session
+          created_by: SYSTEM_USER_ID, // Worker context - system actor
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -139,15 +139,15 @@ export async function queueArticlesForWorkflow(
 
       if (article) {
         const typedArticle = article as unknown as { id: string; keyword: string; status: string }
-        // Update keyword article_status to 'queued'
+        // Update keyword article_status to 'in_progress'
         const { error: updateError } = await supabase
           .from('keywords')
           .update({
-            article_status: 'queued',
+            article_status: 'in_progress',
             updated_at: new Date().toISOString()
           })
           .eq('id', keyword.id)
-          .eq('article_status', 'ready')
+          .eq('article_status', 'not_started')
 
         if (updateError) {
           console.error(`Failed to update keyword status for "${keyword.keyword}":`, updateError)
