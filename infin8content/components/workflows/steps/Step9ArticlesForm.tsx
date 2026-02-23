@@ -34,16 +34,17 @@ export function Step9ArticlesForm({ workflowId, workflowState }: Step9ArticlesFo
         if (!res.ok) return
 
         const data = await res.json()
+        const currentState = data.workflow?.state
 
         if (
-          data.state === 'completed' ||
-          data.state === 'step_9_articles_queued'
+          currentState === 'completed' ||
+          currentState === 'step_9_articles_queued'
         ) {
           setState('completed')
           clearInterval(interval)
         }
 
-        if (data.state === 'step_9_articles_failed') {
+        if (currentState === 'step_9_articles_failed') {
           setState('error')
           setError('Article queuing failed.')
           clearInterval(interval)
