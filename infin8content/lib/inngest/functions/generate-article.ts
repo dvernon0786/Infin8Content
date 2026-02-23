@@ -3,6 +3,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 import { runResearchAgent } from '@/lib/services/article-generation/research-agent'
 import { runContentWritingAgent } from '@/lib/services/article-generation/content-writing-agent'
+import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 import type { ArticleSection, ResearchPayload, ContentDefaults } from '@/types/article'
 
 // B-4 Required: Retry wrapper with exponential backoff (matches existing retryWithBackoff)
@@ -25,7 +26,7 @@ async function withRetries<T>(
 }
 
 export const generateArticle = inngest.createFunction(
-  { 
+  {
     id: 'article/generate', // PRESERVED: Same function ID as original
     concurrency: { limit: 5 }, // PRESERVED: Same concurrency limits
   },
@@ -92,7 +93,7 @@ export const generateArticle = inngest.createFunction(
         .order('section_order')
 
       if (error || !data) throw new Error('Failed to load sections')
-      
+
       // 🔴 REQUIRED FIX 2: Explicit section ordering assertion
       const sectionsArray = data as unknown as ArticleSection[]
       sectionsArray.sort((a, b) => a.section_order - b.section_order)
@@ -131,7 +132,7 @@ export const generateArticle = inngest.createFunction(
                 .eq('id', section.id)
 
               // 🔴 REQUIRED FIX 3: Research persistence inside retry block
-              const researchResult = await withRetries(async () => 
+              const researchResult = await withRetries(async () =>
                 runResearchAgent({
                   sectionHeader: section.section_header,
                   sectionType: section.section_type,
@@ -291,7 +292,7 @@ async function checkAndCompleteWorkflow(
   try {
     // Import unified engine for terminal authority
     const { transitionWithAutomation } = await import('@/lib/fsm/unified-workflow-engine')
-    
+
     // Fetch current workflow state (FSM state only)
     const { data: workflow } = await supabase
       .from('intent_workflows')
@@ -338,8 +339,8 @@ async function checkAndCompleteWorkflow(
       console.log(`[WorkflowCompletion] All articles completed for workflow ${workflowId}, completing via FSM`)
 
       // SINGLE TERMINAL AUTHORITY: Unified transition only
-      await transitionWithAutomation(workflowId, 'WORKFLOW_COMPLETED', 'system')
-      
+      await transitionWithAutomation(workflowId, 'WORKFLOW_COMPLETED', SYSTEM_USER_ID)
+
       console.log(`[WorkflowCompletion] Workflow ${workflowId} completed via FSM`)
     } else {
       console.log(`[WorkflowCompletion] Workflow ${workflowId} has ${incompleteArticles.length} incomplete articles, not completing yet`)

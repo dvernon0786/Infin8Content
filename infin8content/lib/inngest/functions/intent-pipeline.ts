@@ -5,6 +5,7 @@
  */
 
 import { inngest } from '@/lib/inngest/client'
+import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 import { WorkflowEvent } from '@/lib/fsm/workflow-events'
 import { createServiceRoleClient } from '@/lib/supabase/server'
@@ -62,7 +63,7 @@ export const step4Longtails = inngest.createFunction(
     console.log(`🚨🚨🚨 [Inngest step4Longtails] WORKER TRIGGERED for workflow ${workflowId} 🚨🚨🚨`)
 
     // Pure minimal: transition-driven only (no race window)
-    const start = await transitionWithAutomation(workflowId, 'LONGTAIL_START', 'system')
+    const start = await transitionWithAutomation(workflowId, 'LONGTAIL_START', SYSTEM_USER_ID)
     if (!start.success) {
       console.log(`⚠️⚠️⚠️ [Inngest step4Longtails] SKIPPED workflow ${workflowId} - transition not applied`)
       return { skipped: true }
@@ -72,7 +73,7 @@ export const step4Longtails = inngest.createFunction(
       await expandSeedKeywordsToLongtails(workflowId)
 
       // Unified transition - automatic event emission guaranteed
-      const result = await transitionWithAutomation(workflowId, 'LONGTAIL_SUCCESS', 'system')
+      const result = await transitionWithAutomation(workflowId, 'LONGTAIL_SUCCESS', SYSTEM_USER_ID)
 
       if (!result.success) {
         const isConcurrent = result.error?.includes('concurrent') || result.error?.includes('not applied')
@@ -86,7 +87,7 @@ export const step4Longtails = inngest.createFunction(
       return { success: true }
 
     } catch (error) {
-      await transitionWithAutomation(workflowId, 'LONGTAIL_FAILED', 'system')
+      await transitionWithAutomation(workflowId, 'LONGTAIL_FAILED', SYSTEM_USER_ID)
       throw error
     }
   }
@@ -104,7 +105,7 @@ export const step5Filtering = inngest.createFunction(
     const workflowId = event.data.workflowId
 
     // Pure minimal: transition-driven only (no race window)
-    const start = await transitionWithAutomation(workflowId, 'FILTERING_START', 'system')
+    const start = await transitionWithAutomation(workflowId, 'FILTERING_START', SYSTEM_USER_ID)
     if (!start.success) return { skipped: true }
 
     try {
@@ -113,7 +114,7 @@ export const step5Filtering = inngest.createFunction(
       await filterKeywords(workflowId, orgId, filterOptions)
 
       // Unified transition - automatic event emission guaranteed
-      const result = await transitionWithAutomation(workflowId, 'FILTERING_SUCCESS', 'system')
+      const result = await transitionWithAutomation(workflowId, 'FILTERING_SUCCESS', SYSTEM_USER_ID)
 
       if (!result.success) {
         const isConcurrent = result.error?.includes('concurrent') || result.error?.includes('not applied')
@@ -127,7 +128,7 @@ export const step5Filtering = inngest.createFunction(
       return { success: true }
 
     } catch (error) {
-      await transitionWithAutomation(workflowId, 'FILTERING_FAILED', 'system')
+      await transitionWithAutomation(workflowId, 'FILTERING_FAILED', SYSTEM_USER_ID)
       throw error
     }
   }
@@ -145,7 +146,7 @@ export const step6Clustering = inngest.createFunction(
     const workflowId = event.data.workflowId
 
     // Pure minimal: transition-driven only (no race window)
-    const start = await transitionWithAutomation(workflowId, 'CLUSTERING_START', 'system')
+    const start = await transitionWithAutomation(workflowId, 'CLUSTERING_START', SYSTEM_USER_ID)
     if (!start.success) return { skipped: true }
 
     try {
@@ -153,7 +154,7 @@ export const step6Clustering = inngest.createFunction(
       await clusterer.clusterKeywords(workflowId)
 
       // Unified transition - automatic event emission guaranteed
-      const result = await transitionWithAutomation(workflowId, 'CLUSTERING_SUCCESS', 'system')
+      const result = await transitionWithAutomation(workflowId, 'CLUSTERING_SUCCESS', SYSTEM_USER_ID)
 
       if (!result.success) {
         const isConcurrent = result.error?.includes('concurrent') || result.error?.includes('not applied')
@@ -167,7 +168,7 @@ export const step6Clustering = inngest.createFunction(
       return { success: true }
 
     } catch (error) {
-      await transitionWithAutomation(workflowId, 'CLUSTERING_FAILED', 'system')
+      await transitionWithAutomation(workflowId, 'CLUSTERING_FAILED', SYSTEM_USER_ID)
       throw error
     }
   }
@@ -185,7 +186,7 @@ export const step7Validation = inngest.createFunction(
     const workflowId = event.data.workflowId
 
     // Pure minimal: transition-driven only (no race window)
-    const start = await transitionWithAutomation(workflowId, 'VALIDATION_START', 'system')
+    const start = await transitionWithAutomation(workflowId, 'VALIDATION_START', SYSTEM_USER_ID)
     if (!start.success) return { skipped: true }
 
     try {
@@ -224,7 +225,7 @@ export const step7Validation = inngest.createFunction(
       await validator.validateWorkflowClusters(workflowId, clusters as any, keywords as any)
 
       // Unified transition - automatic event emission guaranteed
-      const result = await transitionWithAutomation(workflowId, 'VALIDATION_SUCCESS', 'system')
+      const result = await transitionWithAutomation(workflowId, 'VALIDATION_SUCCESS', SYSTEM_USER_ID)
 
       if (!result.success) {
         const isConcurrent = result.error?.includes('concurrent') || result.error?.includes('not applied')
@@ -238,7 +239,7 @@ export const step7Validation = inngest.createFunction(
       return { success: true }
 
     } catch (error) {
-      await transitionWithAutomation(workflowId, 'VALIDATION_FAILED', 'system')
+      await transitionWithAutomation(workflowId, 'VALIDATION_FAILED', SYSTEM_USER_ID)
       throw error
     }
   }
@@ -256,7 +257,7 @@ export const step8Subtopics = inngest.createFunction(
     const workflowId = event.data.workflowId
 
     // Pure minimal: transition-driven only (no race window)
-    const start = await transitionWithAutomation(workflowId, 'SUBTOPICS_START', 'system')
+    const start = await transitionWithAutomation(workflowId, 'SUBTOPICS_START', SYSTEM_USER_ID)
     if (!start.success) return { skipped: true }
 
     try {
@@ -279,7 +280,7 @@ export const step8Subtopics = inngest.createFunction(
       }
 
       // Unified transition - automatic event emission guaranteed
-      const result = await transitionWithAutomation(workflowId, 'SUBTOPICS_SUCCESS', 'system')
+      const result = await transitionWithAutomation(workflowId, 'SUBTOPICS_SUCCESS', SYSTEM_USER_ID)
 
       if (!result.success) {
         const isConcurrent = result.error?.includes('concurrent') || result.error?.includes('not applied')
@@ -293,7 +294,7 @@ export const step8Subtopics = inngest.createFunction(
       return { success: true }
 
     } catch (error) {
-      await transitionWithAutomation(workflowId, 'SUBTOPICS_FAILED', 'system')
+      await transitionWithAutomation(workflowId, 'SUBTOPICS_FAILED', SYSTEM_USER_ID)
       throw error
     }
   }
@@ -319,7 +320,7 @@ export const step9Articles = inngest.createFunction(
       : 'ARTICLES_START'
 
     // Pure minimal: transition-driven only (no race window)
-    const start = await transitionWithAutomation(workflowId, startEvent, 'system')
+    const start = await transitionWithAutomation(workflowId, startEvent, SYSTEM_USER_ID)
     if (!start.success) {
       console.log(`[Step9] Skipping due to failed transition: ${start.error}`)
       return { skipped: true }
@@ -328,12 +329,12 @@ export const step9Articles = inngest.createFunction(
     try {
       await queueArticlesForWorkflow(workflowId)
 
-      await transitionWithAutomation(workflowId, 'ARTICLES_SUCCESS', 'system')
+      await transitionWithAutomation(workflowId, 'ARTICLES_SUCCESS', SYSTEM_USER_ID)
 
       return { success: true, articlesQueued: true }
 
     } catch (error) {
-      await transitionWithAutomation(workflowId, 'ARTICLES_FAILED', 'system')
+      await transitionWithAutomation(workflowId, 'ARTICLES_FAILED', SYSTEM_USER_ID)
       throw error
     }
   }
@@ -378,7 +379,7 @@ export const workflowCompleted = inngest.createFunction(
     console.log(`📍 [Inngest workflowCompleted] Workflow ${workflowId} current state: ${workflowState}`)
 
     // Transition to completed state
-    const transitionResult = await transitionWithAutomation(workflowId, 'WORKFLOW_COMPLETED', 'system')
+    const transitionResult = await transitionWithAutomation(workflowId, 'WORKFLOW_COMPLETED', SYSTEM_USER_ID)
 
     if (transitionResult.success) {
       console.log(`🎉 [Inngest workflowCompleted] Workflow ${workflowId} successfully transitioned to completed state`)

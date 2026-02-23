@@ -8,6 +8,7 @@
 
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
+import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 import { WORKFLOW_STEP_ORDER } from '@/lib/constants/intent-workflow-steps'
 
 export interface BlockingCondition {
@@ -211,7 +212,7 @@ export class BlockingConditionResolver {
         workflowId,
         entityType: 'workflow',
         entityId: workflowId,
-        actorId: '00000000-0000-0000-0000-000000000000', // System actor UUID
+        actorId: SYSTEM_USER_ID, // System actor UUID
         action: 'workflow.blocking_condition.queried',
         details: {
           blocked_at_step: condition.blocked_at_step,
