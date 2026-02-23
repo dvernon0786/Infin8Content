@@ -257,6 +257,99 @@ export async function getApprovedKeywordIds(
 }
 
 /**
+ * Deterministically process bulk approval for multiple keywords from Step 8.
+ * Overwrites the approved_items array instead of incremental append to prevent race conditions.
+ *
+ * @param workflowId - The workflow ID
+ * @param approvedKeywordIds - Array of approved keyword IDs
+ * @param headers - Request headers for audit logging
+ */
+export async function processBulkSubtopicApproval(
+  workflowId: string,
+  approvedKeywordIds: string[],
+  headers?: Headers
+) {
+  if (!workflowId) {
+    throw new Error('Workflow ID is required')
+  }
+
+  // Hygienic deduplication of incoming array
+  const uniqueKeywordIds = [...new Set(approvedKeywordIds)]
+
+  const currentUser = await getCurrentUser()
+  if (!currentUser || !currentUser.org_id) {
+    throw new Error('Authentication required')
+  }
+
+  if (!['admin', 'owner'].includes(currentUser.role)) {
+    throw new Error('Admin access required')
+  }
+
+  const supabase = await createServiceRoleClient()
+
+  // Validate keywords belong to the workflow, organization, and are complete
+  if (uniqueKeywordIds.length > 0) {
+    const { data: validKeywords, error: validationError } = await supabase
+      .from('keywords')
+      .select('id')
+      .eq('workflow_id', workflowId)
+      .eq('organization_id', currentUser.org_id)
+      .eq('subtopics_status', 'completed')
+      .in('id', uniqueKeywordIds)
+
+    if (validationError) {
+      console.error('Validation query failed:', validationError)
+      throw new Error(`Failed to validate keywords: ${validationError.message}`)
+    }
+
+    if (!validKeywords || validKeywords.length !== uniqueKeywordIds.length) {
+      throw new Error('One or more keywords are invalid or unauthorized for approval')
+    }
+  }
+
+  // Overwrite approved_items deterministically
+  const { error } = await supabase
+    .from('intent_approvals')
+    .upsert({
+      workflow_id: workflowId,
+      approval_type: 'subtopics',
+      decision: 'approved',
+      approver_id: currentUser.id,
+      approved_items: uniqueKeywordIds,
+      feedback: null
+    }, {
+      onConflict: 'workflow_id,approval_type'
+    })
+
+  if (error) {
+    console.error('Failed to process bulk approval:', error)
+    throw new Error('Failed to process bulk approval')
+  }
+
+  logActionAsync({
+    orgId: currentUser.org_id,
+    userId: currentUser.id,
+    action: AuditAction.KEYWORD_SUBTOPICS_APPROVED,
+    details: {
+      workflow_id: workflowId,
+      count: uniqueKeywordIds.length,
+      decision: 'approved_bulk'
+    },
+    ipAddress: headers ? extractIpAddress(headers) : null,
+    userAgent: headers ? extractUserAgent(headers) : null,
+  })
+
+  // Trigger existing Step 9 logic
+  await checkAndTriggerWorkflowCompletion(
+    workflowId,
+    currentUser.org_id,
+    currentUser.id
+  )
+
+  return { success: true, message: 'Bulk approval submitted' }
+}
+
+/**
  * Check if all keywords in the workflow have approved subtopics and trigger Step 9 if ready.
  * 
  * P5: workflowId passed in directly — already resolved in processSubtopicApproval.
