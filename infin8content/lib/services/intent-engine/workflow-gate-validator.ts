@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
+import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 
 export interface GateResult {
   allowed: boolean
@@ -31,18 +32,18 @@ export class WorkflowGateValidator {
   async validateLongtailsRequiredForSubtopics(workflowId: string, organizationId?: string): Promise<GateResult> {
     try {
       const supabase = createServiceRoleClient()
-      
+
       // Query workflow state
       let query = supabase
         .from('intent_workflows')
         .select('id, state, organization_id')
         .eq('id', workflowId)
-      
+
       // Add organization isolation if provided
       if (organizationId) {
         query = query.eq('organization_id', organizationId)
       }
-      
+
       const { data: workflow, error: workflowError } = await query
         .single() as { data: WorkflowData | null, error: any }
 
@@ -61,7 +62,7 @@ export class WorkflowGateValidator {
             }
           }
         }
-        
+
         // Database errors - fail open for availability
         console.error('Database error in workflow gate validation:', workflowError)
         return {
@@ -90,7 +91,7 @@ export class WorkflowGateValidator {
 
       // FSM validation: longtails and clustering must be complete before subtopics
       const validStates = ['step_6_clustering', 'step_7_validation', 'step_8_subtopics', 'step_9_articles', 'completed']
-      
+
       if (!validStates.includes(workflow.state)) {
         return {
           allowed: false,
@@ -159,7 +160,7 @@ export class WorkflowGateValidator {
         workflowId,
         entityType: 'workflow',
         entityId: workflowId,
-        actorId: '00000000-0000-0000-0000-000000000000', // System actor UUID
+        actorId: SYSTEM_USER_ID, // System actor UUID
         action: result.allowed ? 'workflow.gate.longtails_allowed' : 'workflow.gate.longtails_blocked',
         details: {
           attempted_step: stepName,

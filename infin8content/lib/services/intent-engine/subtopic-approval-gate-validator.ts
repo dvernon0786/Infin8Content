@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
+import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 import { AuditAction } from '@/types/audit'
 
 export interface GateResult {
@@ -168,7 +169,7 @@ export class SubtopicApprovalGateValidator {
         workflowId,
         entityType: 'workflow',
         entityId: workflowId,
-        actorId: '00000000-0000-0000-0000-000000000000', // System actor UUID
+        actorId: SYSTEM_USER_ID, // System actor UUID
         action,
         details: {
           attempted_step: stepName,
