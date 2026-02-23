@@ -114,7 +114,12 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
         data.workflowState !== 'step_8_subtopics' &&
         data.workflowState !== 'step_8_subtopics_running'
       ) {
-        setError('Workflow not in Step 8 state')
+        // If the workflow already moved on, automatically redirect to next step
+        if (['step_9_articles', 'step_9_articles_running', 'step_9_articles_queued', 'completed'].includes(data.workflowState)) {
+          window.location.href = `/workflows/${workflowId}/steps/9`
+          return
+        }
+        setError(`Workflow not in Step 8 state (currently: ${data.workflowState})`)
         return
       }
 
