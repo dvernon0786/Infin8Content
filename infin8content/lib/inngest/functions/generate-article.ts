@@ -41,32 +41,26 @@ export const generateArticle = inngest.createFunction(
 
     const article = await step.run('load-article', async () => {
       const { data, error } = await supabase
-        .from('articles')
-        .select('id, organization_id, status')
+        .from('articles' as any)
+        .select('id, org_id, status')
         .eq('id', articleId)
         .single()
 
       if (error || !data) throw new Error('Article not found')
 
       // Type guard to ensure we have the expected data structure
-      const articleData = data as unknown as { id: string; organization_id: string; status: string }
+      const articleData = data as unknown as { id: string; org_id: string; status: string }
 
-      // 🔴 REQUIRED FIX 1: Prevent double execution
-      if (['completed', 'failed', 'generating'].includes(articleData.status)) {
+      // 🔴 PRODUCTION HARDENING: Idempotency against duplicate events
+      // If the article is already completed, we skip processing successfully.
+      if (articleData.status === 'completed') {
         return { skipped: true }
       }
 
-      const { data: locked, error: lockError } = await supabase
-        .from('articles')
-        .update({ status: 'generating' })
-        .eq('id', articleId)
-        .eq('status', 'queued')
-        .select('id')
-        .single()
-
-      if (!locked || lockError) {
-        console.log(`[B-4] Article ${articleId} is already locked or completed. Skipping duplicate execution.`)
-        return { skipped: true }
+      // 🔴 STRUCTURAL CORRECTION: The API now owns the 'queued' -> 'generating' transition.
+      // We must assert that the article is already in the 'generating' state.
+      if (articleData.status !== 'generating') {
+        throw new Error(`Invalid article state: ${articleData.status}. Expected 'generating'.`)
       }
 
       return articleData
@@ -82,7 +76,7 @@ export const generateArticle = inngest.createFunction(
       const { data, error } = await supabase
         .from('organizations')
         .select('id, name, description, content_defaults')
-        .eq('id', (article as any).organization_id)
+        .eq('id', (article as any).org_id)
         .single()
 
       if (error || !data) throw new Error('Organization not found')
