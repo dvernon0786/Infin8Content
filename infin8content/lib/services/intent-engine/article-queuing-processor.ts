@@ -118,12 +118,12 @@ export async function queueArticlesForWorkflow(
       const { data: article, error: articleError } = await supabase
         .from('articles')
         .insert({
-          keyword_id: keyword.id,
-          workflow_id: workflowId,
-          organization_id: workflow.organization_id,
+          intent_workflow_id: workflowId,
+          org_id: workflow.organization_id,
           keyword: keyword.keyword,
-          subtopics: keyword.subtopics,
+          subtopic_data: keyword.subtopics, // Mapped 'subtopics' to 'subtopic_data'
           cluster_info: keyword.cluster_info,
+          target_word_count: 2000,
           status: 'queued',
           created_by: SYSTEM_USER_ID, // Worker context - system actor
           created_at: new Date().toISOString(),
