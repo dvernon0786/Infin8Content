@@ -12,7 +12,7 @@ export default async function Step9Page({ params }: PageProps) {
 
   return (
     <WorkflowStepLayoutClient workflow={workflow} step={9}>
-      <Step9ArticlesForm workflowId={workflow.id} />
+      <Step9ArticlesForm workflowId={workflow.id} workflowState={workflow.state} />
     </WorkflowStepLayoutClient>
   )
 }

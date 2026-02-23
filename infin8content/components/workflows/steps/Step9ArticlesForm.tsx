@@ -13,46 +13,50 @@ export function Step9ArticlesForm({ workflowId, workflowState }: Step9ArticlesFo
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // If we're already passed step 9, show completed immediately
-    if (workflowState === 'completed' || workflowState === 'step_9_articles_queued') {
+    // If already terminal, stop everything immediately
+    if (
+      workflowState === 'completed' ||
+      workflowState === 'step_9_articles_queued'
+    ) {
       setState('completed')
-    } else if (workflowState === 'step_9_articles_failed') {
+      return
+    }
+
+    if (workflowState === 'step_9_articles_failed') {
       setState('error')
       setError('Article queuing failed.')
-    } else {
-      // Poll workflow state every 3 seconds to get actual completion status from FSM
-      const interval = setInterval(async () => {
-        try {
-          const res = await fetch(`/api/intent/workflows/${workflowId}`)
-          if (res.ok) {
-            try {
-              const text = await res.text()
-              const data = JSON.parse(text)
-              if (data.state === 'completed' || data.state === 'step_9_articles_queued') {
-                setState('completed')
-                clearInterval(interval)
-
-                  ; (window as any)?.analytics?.track('workflow_step_completed', {
-                    workflow_id: workflowId,
-                    step: 9,
-                  })
-              } else if (data.state === 'step_9_articles_failed') {
-                setState('error')
-                setError('Article queuing failed. Please check the logs.')
-                clearInterval(interval)
-              }
-            } catch (parseError) {
-              // Ignore bad JSON payloads to prevent UI crash
-            }
-          }
-        } catch (e) {
-          // Ignore network errors during polling to prevent crashes
-        }
-      }, 3000)
-
-      return () => clearInterval(interval)
+      return
     }
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/intent/workflows/${workflowId}`)
+        if (!res.ok) return
+
+        const data = await res.json()
+        const currentState = data.workflow?.state
+
+        if (
+          currentState === 'completed' ||
+          currentState === 'step_9_articles_queued'
+        ) {
+          setState('completed')
+          clearInterval(interval)
+        }
+
+        if (currentState === 'step_9_articles_failed') {
+          setState('error')
+          setError('Article queuing failed.')
+          clearInterval(interval)
+        }
+      } catch {
+        // ignore
+      }
+    }, 3000)
+
+    return () => clearInterval(interval)
   }, [workflowId, workflowState])
+
 
   return (
     <div className="space-y-6">
