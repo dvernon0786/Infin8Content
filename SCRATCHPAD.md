@@ -1,9 +1,19 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-02-23 12:35 UTC+11  
-**Current Focus:** STEP 9 ARTICLE QUEUING AND GENERATION CONCURRENCY HARDENING
+**Last Updated:** 2026-02-23 16:50 UTC+11  
+**Current Focus:** STEP 9 ARTICLE QUEUING FIX
 
 ## **🔥 STEP 9 ARTICLE QUEUING & GENERATION HARDENING**
+
+### **✅ Achievement: Resolved "cluster_info does not exist" Error**
+- **Status:** Step 9 Article Queuing pipeline schema mismatch fixed.
+- **Root Cause:** The `queueArticlesForWorkflow` service attempted to `SELECT cluster_info` from the `keywords` table. However, `cluster_info` does not exist on the `keywords` table, causing PostgreSQL to throw a fatal error that forced the workflow into `step_9_articles_failed` and an infinite retry loop.
+- **Fixes Applied:** 
+  1. Removed `cluster_info` from the `ApprovedKeyword` interface.
+  2. Surgically removed `cluster_info` from the `keywords` SELECT query in `article-queuing-processor.ts`.
+  3. Removed `cluster_info` from the `articles` insert payload.
+- **Result:** Approved keywords are successfully fetched and articles are queued, allowing the FSM to transition from `step_9_articles` to `step_9_articles_queued`.
+- **Impact:** Step 9 Article Queuing pipeline is fully operational with no database schema crashing.
 
 ### **✅ Achievement: Concurrency Protected + Database Uniqueness Guaranteed + Schema Mismatches Resolved**
 - **Status:** Step 9 Pipeline and Article Workers mathematically concurrency-safe and fully idempotent against duplicate inserts / multiple worker instances.

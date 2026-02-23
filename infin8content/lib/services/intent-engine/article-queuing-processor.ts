@@ -21,10 +21,6 @@ export interface ApprovedKeyword {
     type: string
     keywords: string[]
   }>
-  cluster_info?: {
-    hub_keyword_id?: string
-    similarity_score?: number
-  }
 }
 
 export interface WorkflowContext {
@@ -89,7 +85,7 @@ export async function queueArticlesForWorkflow(
   // Fetch approved keywords ready for article queueing
   const keywordsResult = await supabase
     .from('keywords')
-    .select('id, keyword, subtopics, cluster_info')
+    .select('id, keyword, subtopics')
     .eq('workflow_id', workflowId)
     .eq('article_status', 'not_started')
 
@@ -101,7 +97,6 @@ export async function queueArticlesForWorkflow(
     id: string
     keyword: string
     subtopics: any
-    cluster_info: any
   }>
 
   if (!keywords || keywords.length === 0) {
@@ -122,7 +117,6 @@ export async function queueArticlesForWorkflow(
           org_id: workflow.organization_id,
           keyword: keyword.keyword,
           subtopic_data: keyword.subtopics, // Mapped 'subtopics' to 'subtopic_data'
-          cluster_info: keyword.cluster_info,
           target_word_count: 2000,
           status: 'queued',
           created_by: SYSTEM_USER_ID, // Worker context - system actor
