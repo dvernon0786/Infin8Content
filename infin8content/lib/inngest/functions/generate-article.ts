@@ -3,6 +3,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 import { runResearchAgent } from '@/lib/services/article-generation/research-agent'
 import { runContentWritingAgent } from '@/lib/services/article-generation/content-writing-agent'
+import { ArticleAssembler } from '@/lib/services/article-generation/article-assembler'
 import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 import type { ArticleSection, ResearchPayload, ContentDefaults } from '@/types/article'
 
@@ -52,8 +53,8 @@ export const generateArticle = inngest.createFunction(
       const articleData = data as unknown as { id: string; org_id: string; status: string }
 
       // 🔴 PRODUCTION HARDENING: Idempotency against duplicate events
-      // If the article is already completed, we skip processing successfully.
-      if (articleData.status === 'completed') {
+      // 🚨 AUDIT FIX: Adding 'failed' to terminal states to prevent retry loops
+      if (articleData.status === 'completed' || articleData.status === 'failed') {
         return { skipped: true }
       }
 
@@ -103,14 +104,6 @@ export const generateArticle = inngest.createFunction(
     })
 
     const completedSections: ArticleSection[] = []
-
-    /* -------------------------------------------------- */
-    /* Emit pipeline started event                        */
-    /* -------------------------------------------------- */
-
-    await step.run('emit-pipeline-started', async () => {
-      console.log(`[B-4] Pipeline started for article: ${articleId}`)
-    })
 
     /* -------------------------------------------------- */
     /* Sequential section processing (B-4 CORE)          */
@@ -229,6 +222,20 @@ export const generateArticle = inngest.createFunction(
           throw new Error(`Sequential processing stopped: Section ${section.section_order} failed - ${sectionError instanceof Error ? sectionError.message : String(sectionError)}`)
         }
       }
+
+      /* -------------------------------------------------- */
+      /* Article Assembly (LIFECYCLE HARDENING)            */
+      /* -------------------------------------------------- */
+
+      // 🔴 AUDIT FIX: Assembly MUST run before final completion state
+      await step.run('assemble-article', async () => {
+        const assembler = new ArticleAssembler()
+        await assembler.assemble({
+          articleId,
+          organizationId: (article as any).org_id
+        })
+      })
+
     } catch (pipelineError) {
       // Mark article as failed
       await step.run('mark-article-failed', async () => {
@@ -258,19 +265,10 @@ export const generateArticle = inngest.createFunction(
         .eq('id', articleId)
 
       // CANONICAL COMPLETION: Check if all articles are done and mark workflow terminal
-      // This is the deterministic moment where workflow completion is triggered
       const workflowId = (event.data as any).workflowId
       if (workflowId) {
         await checkAndCompleteWorkflow(supabase, workflowId)
       }
-    })
-
-    /* -------------------------------------------------- */
-    /* Emit pipeline completed event                      */
-    /* -------------------------------------------------- */
-
-    await step.run('emit-pipeline-completed', async () => {
-      console.log(`[B-4] Pipeline completed for article: ${articleId}`)
     })
 
     return { success: true, articleId }
@@ -279,13 +277,6 @@ export const generateArticle = inngest.createFunction(
 
 /**
  * Check if all articles for a workflow are completed and mark workflow as terminal
- * 
- * This function is called immediately after an article is marked completed.
- * It checks if all articles in the workflow have status = 'completed'.
- * If so, it transitions the workflow via FSM to completed state.
- * 
- * This is the canonical completion trigger for the workflow state machine.
- * Completion is only driven by the article generation pipeline via FSM transition.
  */
 async function checkAndCompleteWorkflow(
   supabase: any,
@@ -302,26 +293,20 @@ async function checkAndCompleteWorkflow(
       .eq('id', workflowId)
       .single()
 
-    if (!workflow) {
-      console.warn(`[WorkflowCompletion] Workflow not found: ${workflowId}`)
-      return
-    }
+    if (!workflow) return
 
-    // FSM GUARD: Only proceed if workflow is in Step 9 phase (any terminal state)
+    // FSM GUARD
     if (
       workflow.state !== 'step_9_articles' &&
       workflow.state !== 'step_9_articles_running' &&
       workflow.state !== 'step_9_articles_queued'
-    ) {
-      console.log(`[WorkflowCompletion] Workflow ${workflowId} not in Step 9 phase (current: ${workflow.state}), skipping completion check`)
-      return
-    }
+    ) return
 
     // Check if all articles are completed
     const { data: incompleteArticles } = await supabase
       .from('articles')
       .select('id')
-      .eq('intent_workflow_id', workflowId)  // Fixed column matching schema
+      .eq('intent_workflow_id', workflowId)
       .neq('status', 'completed')
 
     // PRODUCTION HARDENING: Verify at least one article exists before completing
@@ -331,24 +316,13 @@ async function checkAndCompleteWorkflow(
       .eq('intent_workflow_id', workflowId)
       .limit(1)
 
-    if (!allArticles || allArticles.length === 0) {
-      console.log(`[WorkflowCompletion] No articles found for workflow ${workflowId}, not completing`)
-      return
-    }
+    if (!allArticles || allArticles.length === 0) return
 
     // If no incomplete articles, complete workflow via FSM transition
     if (!incompleteArticles || incompleteArticles.length === 0) {
-      console.log(`[WorkflowCompletion] All articles completed for workflow ${workflowId}, completing via FSM`)
-
-      // SINGLE TERMINAL AUTHORITY: Unified transition only
       await transitionWithAutomation(workflowId, 'WORKFLOW_COMPLETED', SYSTEM_USER_ID)
-
-      console.log(`[WorkflowCompletion] Workflow ${workflowId} completed via FSM`)
-    } else {
-      console.log(`[WorkflowCompletion] Workflow ${workflowId} has ${incompleteArticles.length} incomplete articles, not completing yet`)
     }
   } catch (error) {
-    console.error(`[WorkflowCompletion] Error checking workflow completion:`, error)
-    // Non-blocking: completion check failure should not fail the article generation
+    console.error(`[WorkflowCompletion] Error:`, error)
   }
 }
