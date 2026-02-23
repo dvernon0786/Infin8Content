@@ -1,7 +1,18 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-02-23 18:45 UTC+11  
-**Current Focus:** STEP 8 BULK APPROVAL
+**Last Updated:** 2026-02-23 22:35 UTC+11  
+**Current Focus:** DASHBOARD ROUTING FIX
+
+## **🔥 DASHBOARD FSM ROUTING HARDENING**
+
+### **✅ Achievement: Dashboard Routing Fix for Completed Workflows**
+- **Status:** Prevented UI from routing `completed` workflows to non-existent Step 10.
+- **Root Cause Avoided:** The dashboard used `STATE_ORDER.indexOf(state) + 1` to calculate the target UI step. `completed` was at index 9, resulting in `Step 10` (a 404). FSM terminal states are not UI steps.
+- **Fixes Applied:** 
+  1. Replaced `STATE_ORDER` list array with an explicit `STATE_TO_STEP_MAP: Record<string, number>`.
+  2. Mapped the terminal `completed` state back to step `9` (the final UI summary step).
+  3. Added explicit mappings for intermediate queue/running fallback states just in case.
+- **Result:** Clicking "Continue" on a fully finished workflow routes gracefully back to the Step 9 Article view without any 404s.
 
 ## **🔥 STEP 8 UX & RACE SAFETY**
 
