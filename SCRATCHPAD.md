@@ -1,7 +1,19 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-02-23 16:50 UTC+11  
-**Current Focus:** STEP 9 ARTICLE QUEUING FIX
+**Last Updated:** 2026-02-23 18:45 UTC+11  
+**Current Focus:** STEP 8 BULK APPROVAL
+
+## **🔥 STEP 8 UX & RACE SAFETY**
+
+### **✅ Achievement: Step 8 "Select All" & Deterministic Bulk Approval**
+- **Status:** Step 8 bulk approval implemented safely without race conditions.
+- **Root Cause Avoided:** Single-item approval relies on read-modify-write array push, causing lost IDs under concurrent bulk firing.
+- **Fixes Applied:** 
+  1. Created `processBulkSubtopicApproval` to deterministically overwrite the `approved_items` array instead of incremental appends.
+  2. Implemented strict IDOR validation parity in the bulk processor (verifying workflow matching, org matching, and subtopic completion status before upsert).
+  3. Created POST route `/api/workflows/[id]/approve-subtopics-bulk/route.ts`.
+  4. Updated `Step8SubtopicsForm.tsx` with local selection state, a "Select All" button (excluding rejected ones), and an "Approve Selected" submitter.
+- **Result:** Approving all subtopics takes 1 atomic API call, completely eliminates read-modify-write races, and seamlessly triggers Step 9.
 
 ## **🔥 STEP 9 ARTICLE QUEUING & GENERATION HARDENING**
 

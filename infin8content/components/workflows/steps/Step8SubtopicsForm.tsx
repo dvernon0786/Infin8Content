@@ -40,6 +40,7 @@ interface Step8SubtopicsFormProps {
 
 export function Step8SubtopicsForm({ workflowId, workflowState }: Step8SubtopicsFormProps) {
   const [keywords, setKeywords] = useState<KeywordWithSubtopics[]>([])
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<Record<string, string>>({})
@@ -81,7 +82,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
       if (!res.ok) throw new Error(body.error)
 
       // Redirect to Step 9
-      window.location.href = `/workflows/${workflowId}/steps/9` 
+      window.location.href = `/workflows/${workflowId}/steps/9`
 
     } catch (err: any) {
       setError(err.message)
@@ -97,17 +98,17 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
 
       // ✅ ENTERPRISE: Server-driven data fetching
       const response = await fetch(`/api/workflows/${workflowId}/subtopics-for-review`)
-      
+
       if (!response.ok) {
         const body = await response.json()
         throw new Error(body.error || 'Failed to fetch subtopics')
       }
 
       const { data } = await response.json()
-      
+
       // ✅ Update local state from live API response
       setCurrentState(data.workflowState)
-      
+
       // ✅ Use live API state, not stale parent prop
       if (
         data.workflowState !== 'step_8_subtopics' &&
@@ -116,7 +117,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
         setError('Workflow not in Step 8 state')
         return
       }
-      
+
       setKeywords(data.keywords || [])
 
     } catch (err: any) {
@@ -155,7 +156,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
       await fetchSubtopicsForReview()
 
       setSuccess(`Subtopics for keyword ${keywords.find(k => k.id === keywordId)?.keyword} ${decision}`)
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000)
 
@@ -215,7 +216,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
         </div>
       )
     }
-    
+
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground">
@@ -239,6 +240,55 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
         </Badge>
       </div>
 
+      <div className="flex gap-2 border-b pb-4">
+        <Button
+          variant="outline"
+          onClick={() => {
+            const selectable = keywords
+              .filter(k => k.approvalStatus !== 'rejected')
+              .map(k => k.id)
+            setSelectedIds(selectable)
+          }}
+        >
+          Select All
+        </Button>
+        <Button
+          onClick={async () => {
+            if (selectedIds.length === 0) return
+            setProcessing('bulk')
+            try {
+              setError(null)
+              const res = await fetch(`/api/workflows/${workflowId}/approve-subtopics-bulk`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ approvedKeywordIds: selectedIds })
+              })
+
+              if (!res.ok) {
+                const body = await res.json()
+                throw new Error(body.error || 'Bulk approval failed')
+              }
+
+              await fetchSubtopicsForReview()
+              setSuccess(`Bulk approval successful for ${selectedIds.length} items`)
+              setSelectedIds([])
+              setTimeout(() => setSuccess(null), 3000)
+            } catch (err: any) {
+              setError(err.message)
+            } finally {
+              setProcessing(null)
+            }
+          }}
+          disabled={processing === 'bulk' || selectedIds.length === 0}
+        >
+          {processing === 'bulk' ? (
+            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Approving...</>
+          ) : (
+            `Approve Selected (${selectedIds.length})`
+          )}
+        </Button>
+      </div>
+
       {success && (
         <div className="rounded-md border border-green-300/30 bg-green-50 p-3 text-sm">
           <div className="flex items-center">
@@ -251,7 +301,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
       <div className="space-y-4">
         {keywords.map((keyword) => {
           const approvalStatus = getApprovalStatus(keyword)
-          
+
           return (
             <Card key={keyword.id} className="border-l-4 border-l-blue-500">
               <CardHeader className="pb-3">
@@ -290,7 +340,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {subtopic.keywords.map((kw, kwIndex) => (
-                          <span 
+                          <span
                             key={kwIndex}
                             className="inline-block bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded"
                           >
@@ -304,7 +354,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
 
                 {approvalStatus !== 'pending' ? (
                   <div className="text-sm text-muted-foreground">
-                    {approvalStatus === 'approved' 
+                    {approvalStatus === 'approved'
                       ? `Subtopics approved by ${keyword.approvedBy} on ${new Date(keyword.approvedAt || '').toLocaleDateString()}`
                       : `Subtopics rejected${keyword.feedback ? ` with feedback: "${keyword.feedback}"` : ''}`
                     }
@@ -314,15 +364,15 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
                     <Textarea
                       placeholder="Optional feedback for the team..."
                       value={feedback[keyword.id] || ''}
-                      onChange={(e) => 
-                        setFeedback(prev => ({ 
-                          ...prev, 
-                          [keyword.id]: e.target.value 
+                      onChange={(e) =>
+                        setFeedback(prev => ({
+                          ...prev,
+                          [keyword.id]: e.target.value
                         }))
                       }
                       rows={3}
                     />
-                    
+
                     <div className="flex gap-2">
                       <Button
                         onClick={() => handleApproval(keyword.id, 'approved')}
@@ -341,7 +391,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
                           </>
                         )}
                       </Button>
-                      
+
                       <Button
                         variant="outline"
                         onClick={() => handleApproval(keyword.id, 'rejected')}
