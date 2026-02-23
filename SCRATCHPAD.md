@@ -35,6 +35,14 @@
 
 ## **🔥 STEP 9 ARTICLE QUEUING & GENERATION HARDENING**
 
+### **✅ Achievement: Step 9 Immediate Terminal Rendering Optimization**
+- **Status:** Prevented the Step 9 UI from flashing the "Automatically queuing..." spinner when the workflow is already completed.
+- **Root Cause Avoided:** The `Step9ArticlesForm` mounted in an initial `setState('running')` assumption and polled the API to find out it was done, causing an artificial UI lag. The server had this data, but the client didn't.
+- **Fixes Applied:** 
+  1. Updated `app/workflows/[id]/steps/9/page.tsx` to pass the server-rendered `workflow.state` into the component as an initial prop.
+  2. Refactored the `useEffect` inside `Step9ArticlesForm` to instantly check if the initial state is already `completed` or `step_9_articles_queued`. If so, it instantly sets success and entirely skips the polling loop setup.
+- **Result:** After confirming Step 8, when the user arrives at Step 9, if Inngest has already finished queuing (which is extremely fast), the user instantly sees the success view. Zero spinner, zero lag, zero redundant API polling.
+
 ### **✅ Achievement: Step 9 Frontend Automated State Polling (JSON Parse Fix)**
 - **Status:** Step 9 frontend transformed from manual trigger to passive state observer.
 - **Root Cause Avoided:** The legacy manual POST to `/api/intent/workflows/[id]/queue-articles` returned a 404 HTML page (since automated backend handles queuing now), crashing the `res.json()` parser.
