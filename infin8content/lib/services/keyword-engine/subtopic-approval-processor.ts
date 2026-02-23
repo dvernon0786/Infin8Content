@@ -131,18 +131,19 @@ export async function processSubtopicApproval(
   const workflowId = workflowRow.workflow_id
 
   // Get existing approval to merge approved_items
-  const { data: existingApproval } = await supabase
+  const { data, error: existingError } = await supabase
     .from('intent_approvals')
     .select('approved_items')
     .eq('workflow_id', workflowId)
     .eq('approval_type', 'subtopics')
-    .single() as { data: { approved_items: string[] } | null }
+    .maybeSingle()
 
-  let approvedItems: string[] = []
-
-  if (existingApproval?.approved_items) {
-    approvedItems = existingApproval.approved_items as string[]
+  if (existingError) {
+    throw new Error(`Failed to fetch existing approval: ${existingError.message}`)
   }
+
+  const existingApproval = data as { approved_items: string[] } | null
+  let approvedItems: string[] = existingApproval?.approved_items ?? []
 
   // Mutate array properly
   if (decision === 'approved') {
