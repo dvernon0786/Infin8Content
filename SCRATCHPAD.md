@@ -17,6 +17,15 @@
 
 ## **🔥 STEP 9 ARTICLE QUEUING & GENERATION HARDENING**
 
+### **✅ Achievement: Step 9 Frontend Automated State Polling (JSON Parse Fix)**
+- **Status:** Step 9 frontend transformed from manual trigger to passive state observer.
+- **Root Cause Avoided:** The legacy manual POST to `/api/intent/workflows/[id]/queue-articles` returned a 404 HTML page (since automated backend handles queuing now), crashing the `res.json()` parser.
+- **Fixes Applied:** 
+  1. Removed the manual "Queue articles" fetch call completely.
+  2. Implemented passive interval polling on `/api/intent/workflows/[id]` to observe FSM state (`step_9_articles_queued`, `completed`, or `step_9_articles_failed`).
+  3. Hardened the json parser with a strict `try { JSON.parse(await res.text()) } catch {}` block to defend against unexpected 200 OK HTML responses.
+- **Result:** FSM orchestrates the backend event seamlessly, and the frontend accurately reflects the state changes without API route 404s or parsing explosions.
+
 ### **✅ Achievement: Resolved "cluster_info does not exist" Error**
 - **Status:** Step 9 Article Queuing pipeline schema mismatch fixed.
 - **Root Cause:** The `queueArticlesForWorkflow` service attempted to `SELECT cluster_info` from the `keywords` table. However, `cluster_info` does not exist on the `keywords` table, causing PostgreSQL to throw a fatal error that forced the workflow into `step_9_articles_failed` and an infinite retry loop.
