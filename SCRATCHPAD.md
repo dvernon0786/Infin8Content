@@ -14,6 +14,12 @@
   3. Added explicit mappings for intermediate queue/running fallback states just in case.
 - **Result:** Clicking "Continue" on a fully finished workflow routes gracefully back to the Step 9 Article view without any 404s.
 
+### **✅ Achievement: Workflow Gate Redirection Fix for Terminal States**
+- **Status:** Prevented the Step Gate from violently bouncing `completed` workflows back to the dashboard.
+- **Root Cause Avoided:** `requireWorkflowStepAccess` explicitly contained an `if (workflowState.state === 'completed') redirect('/dashboard')` blocker. Since Step 9 is the terminal UI for `completed`, this created an infinite bounce loop.
+- **Fixes Applied:** Removed the block. The gate now correctly allows viewing past steps / terminal states without treating `completed` as a locked execution block.
+- **Result:** The dashboard links to Step 9, Step 9 renders the history/final queue statuses, and the UI loop is broken.
+
 ## **🔥 STEP 8 UX & RACE SAFETY**
 
 ### **✅ Achievement: Step 8 "Select All" & Deterministic Bulk Approval**
