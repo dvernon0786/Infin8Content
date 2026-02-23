@@ -11,24 +11,27 @@ import type {
   WorkflowDashboardItem,
 } from '@/lib/services/intent-engine/workflow-dashboard-service'
 
-// Pure FSM state order for step calculation
-const STATE_ORDER: string[] = [
-  'step_1_icp',
-  'step_2_competitors', 
-  'step_3_seeds',
-  'step_4_longtails',
-  'step_5_filtering',
-  'step_6_clustering',
-  'step_7_validation',
-  'step_8_subtopics',
-  'step_9_articles',
-  'completed'
-]
+// FSM states mapped explicitly to their UI step numbers
+const STATE_TO_STEP_MAP: Record<string, number> = {
+  'step_1_icp': 1,
+  'step_2_competitors': 2,
+  'step_3_seeds': 3,
+  'step_4_longtails': 4,
+  'step_5_filtering': 5,
+  'step_6_clustering': 6,
+  'step_7_validation': 7,
+  'step_8_subtopics': 8,
+  'step_8_subtopics_running': 8,
+  'step_9_articles': 9,
+  'step_9_articles_running': 9,
+  'step_9_articles_queued': 9,
+  'step_9_articles_failed': 9,
+  'completed': 9
+}
 
 // Helper function to get step number from state
 function getStateStepNumber(state: string): number {
-  const index = STATE_ORDER.indexOf(state)
-  return index >= 0 ? index + 1 : 1
+  return STATE_TO_STEP_MAP[state] || 1
 }
 
 const STEP_NARRATIVE = [
@@ -61,8 +64,8 @@ function getNarrative(step: number) {
     label,
     state:
       i + 1 < step ? 'done' :
-      i + 1 === step ? 'current' :
-      'upcoming',
+        i + 1 === step ? 'current' :
+          'upcoming',
   }))
 }
 
@@ -104,7 +107,7 @@ export function WorkflowDashboard() {
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (!data?.workflows.length) return
-      
+
       if (e.key === 'ArrowDown') {
         e.preventDefault()
         setFocusedIndex(i => Math.min(i + 1, data.workflows.length - 1))
