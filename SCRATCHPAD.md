@@ -12,9 +12,9 @@
   1. Created `processBulkSubtopicApproval` to deterministically overwrite the `approved_items` array instead of incremental appends.
   2. Implemented strict IDOR validation parity in the bulk processor (verifying workflow matching, org matching, and subtopic completion status before upsert).
   3. Created POST route `/api/workflows/[id]/approve-subtopics-bulk/route.ts`.
-  4. Updated `Step8SubtopicsForm.tsx` with local selection state, a "Select All" button (excluding rejected ones), and an "Approve Selected" submitter.
+  4. Updated `Step8SubtopicsForm.tsx` with local selection state, an "Approve Selected" submitter, and a "Select All" button using a strict `getApprovalStatus(k) === 'pending'` filter to prevent previously rejected inputs from reverting to selected upon refresh.
   5. Implemented implicit frontend redirect to `/workflows/${workflowId}/steps/9` upon bulk-approve success or an external state transition.
-- **Result:** Approving all subtopics takes 1 atomic API call, completely eliminates read-modify-write races, seamlessly triggers Step 9, and automatically forwards the user's browser.
+- **Result:** Approving all subtopics takes 1 atomic API call, completely eliminates read-modify-write races, effortlessly excludes rejected items, seamlessly triggers Step 9, and automatically forwards the user's browser.
 
 ## **🔥 STEP 9 ARTICLE QUEUING & GENERATION HARDENING**
 

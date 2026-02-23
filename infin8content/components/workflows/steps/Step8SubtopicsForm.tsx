@@ -250,7 +250,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
           variant="outline"
           onClick={() => {
             const selectable = keywords
-              .filter(k => k.approvalStatus !== 'rejected')
+              .filter(k => getApprovalStatus(k) === 'pending')
               .map(k => k.id)
             setSelectedIds(selectable)
           }}
