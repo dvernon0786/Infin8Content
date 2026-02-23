@@ -42,11 +42,11 @@ export async function POST(request: Request) {
     // --------------------------------------------
     // 1️⃣ Fetch Article + Validate Ownership
     // --------------------------------------------
-    const { data: article, error: fetchError } = await supabaseAdmin
-      .from('articles')
+    const { data: article, error: fetchError } = await (supabaseAdmin
+      .from('articles' as any)
       .select('id, status, org_id')
       .eq('id', parsed.articleId)
-      .single()
+      .single() as any)
 
     if (fetchError || !article) {
       return NextResponse.json({ error: 'Article not found' }, { status: 404 })
@@ -68,13 +68,13 @@ export async function POST(request: Request) {
     // --------------------------------------------
     const currentMonth = new Date().toISOString().slice(0, 7)
 
-    const { data: usageData, error: usageError } = await supabaseAdmin
-      .from('usage_tracking')
+    const { data: usageData, error: usageError } = await (supabaseAdmin
+      .from('usage_tracking' as any)
       .select('usage_count')
       .eq('organization_id', organizationId)
       .eq('metric_type', 'article_generation')
       .eq('billing_period', currentMonth)
-      .single()
+      .single() as any)
 
     if (usageError && usageError.code !== 'PGRST116') {
       console.error('[Article Generation] Usage check failed:', usageError)
@@ -98,8 +98,8 @@ export async function POST(request: Request) {
     // --------------------------------------------
     // 3️⃣ Atomic Status Transition (CRITICAL)
     // --------------------------------------------
-    const { data: updatedArticle } = await supabaseAdmin
-      .from('articles')
+    const { data: updatedArticle } = await (supabaseAdmin
+      .from('articles' as any)
       .update({
         status: 'generating',
         updated_at: new Date().toISOString(),
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
       .eq('id', parsed.articleId)
       .eq('status', 'queued') // ensures atomicity
       .select('id')
-      .single()
+      .single() as any)
 
     if (!updatedArticle) {
       return NextResponse.json(
@@ -132,10 +132,10 @@ export async function POST(request: Request) {
       console.error('[Article Generation] Failed to send Inngest event:', inngestError)
 
       // rollback status
-      await supabaseAdmin
-        .from('articles')
+      await (supabaseAdmin
+        .from('articles' as any)
         .update({ status: 'queued' })
-        .eq('id', parsed.articleId)
+        .eq('id', parsed.articleId) as any)
 
       return NextResponse.json(
         { error: 'Failed to queue article generation' },
@@ -145,17 +145,17 @@ export async function POST(request: Request) {
 
     // Store Inngest event ID if available
     if (inngestEventId) {
-      await supabaseAdmin
-        .from('articles')
+      await (supabaseAdmin
+        .from('articles' as any)
         .update({ inngest_event_id: inngestEventId })
-        .eq('id', parsed.articleId)
+        .eq('id', parsed.articleId) as any)
     }
 
     // --------------------------------------------
     // 5️⃣ Increment Usage
     // --------------------------------------------
-    await supabaseAdmin
-      .from('usage_tracking')
+    await (supabaseAdmin
+      .from('usage_tracking' as any)
       .upsert(
         {
           organization_id: organizationId,
@@ -167,7 +167,7 @@ export async function POST(request: Request) {
         {
           onConflict: 'organization_id,metric_type,billing_period',
         }
-      )
+      ) as any)
 
     // --------------------------------------------
     // 6️⃣ Audit Log
