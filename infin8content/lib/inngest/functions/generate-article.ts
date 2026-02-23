@@ -327,14 +327,14 @@ async function checkAndCompleteWorkflow(
     const { data: incompleteArticles } = await supabase
       .from('articles')
       .select('id')
-      .eq('workflow_id', workflowId)  // Fixed: use workflow_id not intent_workflow_id
+      .eq('intent_workflow_id', workflowId)  // Fixed column matching schema
       .neq('status', 'completed')
 
     // PRODUCTION HARDENING: Verify at least one article exists before completing
     const { data: allArticles } = await supabase
       .from('articles')
       .select('id')
-      .eq('workflow_id', workflowId)
+      .eq('intent_workflow_id', workflowId)
       .limit(1)
 
     if (!allArticles || allArticles.length === 0) {
