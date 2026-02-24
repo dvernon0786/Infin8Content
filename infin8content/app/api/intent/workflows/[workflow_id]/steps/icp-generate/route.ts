@@ -11,9 +11,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { AuditAction } from '@/types/audit'
 import { checkRateLimit, type RateLimitConfig } from '@/lib/services/rate-limiting/persistent-rate-limiter'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
-import { 
+import { PLAN_LIMITS } from '@/lib/config/plan-limits'
+import {
   generateICPDocument,
   storeICPGenerationResult,
   handleICPGenerationFailure,
@@ -73,7 +76,7 @@ export async function POST(
     // Parse and validate request body
     const body = await request.json()
     const validationResult = icpGenerationSchema.safeParse(body)
-    
+
     if (!validationResult.success) {
       return NextResponse.json(
         {
@@ -136,12 +139,65 @@ export async function POST(
     if (currentState !== 'step_1_icp') {
       return NextResponse.json({
         error: 'INVALID_STATE',
-        message: `Cannot generate ICP from state: ${currentState}` 
+        message: `Cannot generate ICP from state: ${currentState}`
       }, { status: 409 })
     }
 
     // Generate UUID idempotency key at request boundary
     const idempotencyKey = crypto.randomUUID()
+
+    // 🔒 WORKFLOW CONCURRENCY GUARD
+    const plan = currentUser.organizations?.plan || 'starter'
+    const workflowLimit =
+      PLAN_LIMITS.workflow_active[
+      plan as keyof typeof PLAN_LIMITS.workflow_active
+      ]
+
+    if (workflowLimit !== null) {
+      const { count, error } = await supabase
+        .from('intent_workflows')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', organizationId)
+        .not('state', 'in', '(completed,cancelled)')
+
+      if (error) {
+        console.error('[Workflow Concurrency] Count failed:', error)
+        return NextResponse.json(
+          { error: 'Failed to verify workflow limits' },
+          { status: 500 }
+        )
+      }
+
+      const activeCount = count ?? 0
+
+      if (activeCount >= workflowLimit) {
+        // 📊 QUOTA TELEMETRY
+        await logActionAsync({
+          orgId: organizationId,
+          userId: currentUser.id,
+          action: 'quota.workflow_active.limit_hit' as any,
+          details: {
+            plan,
+            currentActive: activeCount,
+            limit: workflowLimit,
+            metric: 'workflow_active'
+          },
+          ipAddress: extractIpAddress(request.headers),
+          userAgent: extractUserAgent(request.headers),
+        })
+
+        return NextResponse.json(
+          {
+            error: 'Active workflow limit reached for your plan',
+            currentActive: activeCount,
+            limit: workflowLimit,
+            plan: plan,
+            metric: 'workflow_active'
+          },
+          { status: 403 }
+        )
+      }
+    }
 
     // Generate ICP document with automatic retry
     const icpResult = await generateICPDocument(mappedRequest, organizationId, 300000, undefined, workflowId, idempotencyKey)

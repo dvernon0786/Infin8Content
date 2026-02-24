@@ -38,6 +38,13 @@ type IntegrationPayload = {
 function StepIntegration({ className, onNext }: StepIntegrationProps) {
   const { user } = useCurrentUser()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<{
+    message: string;
+    limit?: number;
+    currentValue?: number;
+    plan?: string;
+    metric?: string;
+  } | null>(null)
 
   const [formData, setFormData] = useState<IntegrationPayload>({
     integration: {
@@ -86,14 +93,20 @@ function StepIntegration({ className, onNext }: StepIntegrationProps) {
       })
 
       if (!persistRes.ok) {
-        throw new Error("Failed to persist integration")
+        const data = await persistRes.json().catch(() => null)
+        const error = new Error(data?.error || "Failed to persist integration") as any
+        error.limit = data?.limit
+        error.currentValue = data?.currentValue
+        error.plan = data?.plan
+        error.metric = data?.metric
+        throw error
       }
 
       // 2️⃣ Observe canonical truth
       if (!user?.org_id) {
         throw new Error('User not authenticated or missing organization')
       }
-      
+
       const observeRes = await fetch("/api/onboarding/observe", {
         method: 'GET',
       })
@@ -106,8 +119,15 @@ function StepIntegration({ className, onNext }: StepIntegrationProps) {
 
       // 3️⃣ Bubble up canonical state
       onNext(state)
-    } catch (err) {
+    } catch (err: any) {
       console.error("[StepIntegration] Submission error:", err)
+      setError({
+        message: err.message || "An unexpected error occurred",
+        limit: err.limit,
+        currentValue: err.currentValue,
+        plan: err.plan,
+        metric: err.metric
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -122,6 +142,37 @@ function StepIntegration({ className, onNext }: StepIntegrationProps) {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="p-4 bg-orange-50 border border-orange-200 rounded-md">
+                <div className="flex items-start gap-3">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-orange-900 leading-tight">
+                      {error.metric === 'cms_connection'
+                        ? 'CMS connection limit reached'
+                        : 'Connection failed'}
+                    </p>
+                    <p className="text-sm text-orange-800 leading-normal">
+                      {error.metric === 'cms_connection' && error.limit
+                        ? `Your ${error.plan} plan allows ${error.limit} connected CMS platform(s).`
+                        : error.message}
+                    </p>
+                    {error.metric === 'cms_connection' && (
+                      <div className="pt-2">
+                        <Button
+                          type="button"
+                          variant="primary"
+                          size="sm"
+                          className="text-xs h-8 bg-orange-600 hover:bg-orange-700 text-white"
+                          onClick={() => window.location.href = '/dashboard/settings/billing'}
+                        >
+                          Upgrade plan
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Site URL */}
             <div className="space-y-2">
               <label className="text-sm font-medium">WordPress Site URL</label>

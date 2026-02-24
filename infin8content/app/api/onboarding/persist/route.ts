@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { validateOnboarding } from '@/lib/onboarding/onboarding-validator'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
+import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { PLAN_LIMITS } from '@/lib/config/plan-limits'
 
 const onboardingSchema = z.object({
   website_url: z.string().url().optional(),
@@ -53,7 +55,7 @@ const onboardingSchema = z.object({
  */
 export async function POST(req: Request) {
   console.log('[Persist API] before getCurrentUser')
-  
+
   try {
     const user = await getCurrentUser()
     console.log('[Persist API] getCurrentUser success:', user?.id)
@@ -65,132 +67,177 @@ export async function POST(req: Request) {
     // 1️⃣ Parse and validate full onboarding payload
     const body = onboardingSchema.parse(await req.json())
     console.log('[Persist API] Received payload:', body)
-  
-  const supabase = createServiceRoleClient()
 
-  try {
-    // 2️⃣ Persist data to canonical fields (only update provided fields)
-    const updateData: any = {
-      updated_at: new Date().toISOString()
-    }
-    
-    // Only add fields that are provided
-    if (body.website_url !== undefined) updateData.website_url = body.website_url
-    if (body.business_description !== undefined) updateData.business_description = body.business_description
-    if (body.target_audiences !== undefined) updateData.target_audiences = body.target_audiences
-    if (body.keyword_settings !== undefined) updateData.keyword_settings = body.keyword_settings
-    if (body.content_defaults !== undefined) updateData.content_defaults = body.content_defaults
-    if (body.integration !== undefined) updateData.integration = body.integration
-    
-    console.log('[Persist API] Update data:', updateData)
+    const supabase = createServiceRoleClient()
 
-    console.log('[Persist API] About to update organizations table...')
-    await supabase
-      .from('organizations')
-      .update(updateData)
-      .eq('id', user.org_id)
-    
-    console.log('[Persist API] Organizations table updated successfully')
+    try {
+      // 2️⃣ Persist data to canonical fields (only update provided fields)
+      const updateData: any = {
+        updated_at: new Date().toISOString()
+      }
 
-    // 3️⃣ Replace competitors deterministically (delete then insert)
-    if (body.competitors && body.competitors.length > 0) {
-      // Delete existing competitors first
-      await supabase
-        .from('organization_competitors')
-        .delete()
-        .eq('organization_id', user.org_id)
+      // Only add fields that are provided
+      if (body.website_url !== undefined) updateData.website_url = body.website_url
+      if (body.business_description !== undefined) updateData.business_description = body.business_description
+      if (body.target_audiences !== undefined) updateData.target_audiences = body.target_audiences
+      if (body.keyword_settings !== undefined) updateData.keyword_settings = body.keyword_settings
+      if (body.content_defaults !== undefined) updateData.content_defaults = body.content_defaults
 
-      // Insert new competitors
-      await supabase
-        .from('organization_competitors')
-        .insert(
-          body.competitors.map(c => ({
-            organization_id: user.org_id,
-            name: c.name,
-            url: c.url,
-            domain: new URL(c.url).hostname,
-            description: c.description || null,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            created_by: user.id
-          }))
-        )
-    }
+      if (body.integration !== undefined) {
+        // 🔒 CMS QUOTA CHECK
+        const { data: currentOrg } = await supabase
+          .from('organizations')
+          .select('blog_config, plan')
+          .eq('id', user.org_id)
+          .single() as any
 
-    console.log('[Persist API] About to call validateOnboarding...')
-    // 4️⃣ Validate onboarding truth (DERIVE completion)
-    const validation = await validateOnboarding(user.org_id)
-    console.log('[Persist API] Validation completed:', validation)
+        const existingIntegrations = currentOrg?.blog_config?.integrations || {}
+        const connectedCmsCount = Object.keys(existingIntegrations).length
+        const plan = currentOrg?.plan || 'starter'
+        const cmsLimit = PLAN_LIMITS.cms_connection[plan as keyof typeof PLAN_LIMITS.cms_connection]
 
-    // 5️⃣ Set completion flag ONLY if validation passes (cache the derived truth)
-    const completedAt = new Date().toISOString()
-    if (validation.valid) {
-      await supabase
-        .from('organizations')
-        .update({
-          onboarding_completed: true,
-          onboarding_completed_at: completedAt,
-          onboarding_version: 'v2-authoritative',
-          updated_at: completedAt
-        })
-        .eq('id', user.org_id)
-    } else {
-      // Ensure flag is false if validation fails
+        const isNewIntegration = !existingIntegrations[body.integration.type]
+
+        if (isNewIntegration && cmsLimit !== null && connectedCmsCount >= cmsLimit) {
+          // 📊 QUOTA TELEMETRY
+          await logActionAsync({
+            orgId: user.org_id,
+            userId: user.id,
+            action: 'quota.cms_connection.limit_hit' as any,
+            details: {
+              plan,
+              currentValue: connectedCmsCount,
+              limit: cmsLimit,
+              metric: 'cms_connection'
+            },
+            ipAddress: extractIpAddress(req.headers),
+            userAgent: extractUserAgent(req.headers),
+          })
+
+          return NextResponse.json(
+            {
+              error: "CMS connection limit reached",
+              currentValue: connectedCmsCount,
+              limit: cmsLimit,
+              plan,
+              metric: 'cms_connection'
+            },
+            { status: 403 }
+          )
+        }
+
+        updateData.integration = body.integration
+      }
+
+      console.log('[Persist API] Update data:', updateData)
+
+      console.log('[Persist API] About to update organizations table...')
       await supabase
         .from('organizations')
-        .update({
-          onboarding_completed: false,
-          onboarding_completed_at: null,
-          updated_at: completedAt
-        })
+        .update(updateData)
         .eq('id', user.org_id)
-    }
 
-    // 6️⃣ Auto-enable Intent Engine feature flag if onboarding complete
-    if (validation.valid) {
-      await supabase
-        .from('feature_flags')
-        .upsert(
-          {
-            organization_id: user.org_id,
-            flag_key: 'ENABLE_INTENT_ENGINE',
-            enabled: true,
-          },
-          { onConflict: 'organization_id,flag_key' }
+      console.log('[Persist API] Organizations table updated successfully')
+
+      // 3️⃣ Replace competitors deterministically (delete then insert)
+      if (body.competitors && body.competitors.length > 0) {
+        // Delete existing competitors first
+        await supabase
+          .from('organization_competitors')
+          .delete()
+          .eq('organization_id', user.org_id)
+
+        // Insert new competitors
+        await supabase
+          .from('organization_competitors')
+          .insert(
+            body.competitors.map(c => ({
+              organization_id: user.org_id,
+              name: c.name,
+              url: c.url,
+              domain: new URL(c.url).hostname,
+              description: c.description || null,
+              is_active: true,
+              created_at: new Date().toISOString(),
+              created_by: user.id
+            }))
+          )
+      }
+
+      console.log('[Persist API] About to call validateOnboarding...')
+      // 4️⃣ Validate onboarding truth (DERIVE completion)
+      const validation = await validateOnboarding(user.org_id)
+      console.log('[Persist API] Validation completed:', validation)
+
+      // 5️⃣ Set completion flag ONLY if validation passes (cache the derived truth)
+      const completedAt = new Date().toISOString()
+      if (validation.valid) {
+        await supabase
+          .from('organizations')
+          .update({
+            onboarding_completed: true,
+            onboarding_completed_at: completedAt,
+            onboarding_version: 'v2-authoritative',
+            updated_at: completedAt
+          })
+          .eq('id', user.org_id)
+      } else {
+        // Ensure flag is false if validation fails
+        await supabase
+          .from('organizations')
+          .update({
+            onboarding_completed: false,
+            onboarding_completed_at: null,
+            updated_at: completedAt
+          })
+          .eq('id', user.org_id)
+      }
+
+      // 6️⃣ Auto-enable Intent Engine feature flag if onboarding complete
+      if (validation.valid) {
+        await supabase
+          .from('feature_flags')
+          .upsert(
+            {
+              organization_id: user.org_id,
+              flag_key: 'ENABLE_INTENT_ENGINE',
+              enabled: true,
+            },
+            { onConflict: 'organization_id,flag_key' }
+          )
+      }
+
+      return NextResponse.json({
+        success: true,
+        onboarding_completed: validation.valid,
+        onboarding_completed_at: validation.valid ? completedAt : null,
+        validation: validation
+      })
+
+    } catch (error: any) {
+      console.error('[Onboarding Persist] Error:', error)
+      console.error('[Onboarding Persist] Error stack:', error.stack)
+
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: 'VALIDATION_ERROR', details: error.issues },
+          { status: 400 }
         )
-    }
+      }
 
-    return NextResponse.json({ 
-      success: true,
-      onboarding_completed: validation.valid,
-      onboarding_completed_at: validation.valid ? completedAt : null,
-      validation: validation
-    })
+      // Safely extract error details
+      const errorMessage = error?.message || String(error)
+      const errorStack = error?.stack || ''
 
-  } catch (error: any) {
-    console.error('[Onboarding Persist] Error:', error)
-    console.error('[Onboarding Persist] Error stack:', error.stack)
-    
-    if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'VALIDATION_ERROR', details: error.issues },
-        { status: 400 }
+        { error: 'INTERNAL_ERROR', details: errorMessage, stack: errorStack },
+        { status: 500 }
       )
     }
-
-    // Safely extract error details
-    const errorMessage = error?.message || String(error)
-    const errorStack = error?.stack || ''
-
-    return NextResponse.json(
-      { error: 'INTERNAL_ERROR', details: errorMessage, stack: errorStack },
-      { status: 500 }
-    )
-  }
   } catch (error: any) {
     console.error('[Onboarding Persist] Error:', error)
     console.error('[Onboarding Persist] Error stack:', error.stack)
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'VALIDATION_ERROR', details: error.issues },
