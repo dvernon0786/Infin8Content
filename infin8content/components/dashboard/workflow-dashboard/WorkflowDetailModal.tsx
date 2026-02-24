@@ -37,8 +37,14 @@ export function WorkflowDetailModal({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [isCancelling, setIsCancelling] = useState(false)
   const [isRunningStep, setIsRunningStep] = useState(false)
-  const [stepError, setStepError] = useState<string | null>(null)
-  
+  const [stepError, setStepError] = useState<{
+    message: string;
+    limit?: number;
+    currentActive?: number;
+    plan?: string;
+    metric?: string;
+  } | null>(null)
+
   // ICP form state
   const [icpFormData, setIcpFormData] = useState({
     organizationName: '',
@@ -50,7 +56,7 @@ export function WorkflowDetailModal({
 
   // Check if workflow can be cancelled (not already terminal)
   const canCancel = workflow.state !== 'completed'
-  
+
   // Detect the active step for execution
   const activeStep = WORKFLOW_STEP_CONFIG.find(
     (s) => s.step === workflow.state
@@ -142,13 +148,12 @@ export function WorkflowDetailModal({
                   return (
                     <div key={step.key} className="flex items-center gap-3">
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                          isCompleted
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${isCompleted
                             ? 'bg-green-100 text-green-800'
                             : isCurrent
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-600'
-                        }`}
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}
                       >
                         {index + 1}
                       </div>
@@ -220,10 +225,41 @@ export function WorkflowDetailModal({
               {activeStep && canCancel && (
                 <div className="pt-4 border-t space-y-2">
                   {stepError && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-md sm:p-2">
-                      <p className="text-sm text-red-800 leading-tight">
-                        {stepError}
-                      </p>
+                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-md sm:p-3">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 shrink-0" />
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-orange-900 leading-tight">
+                            {stepError.metric === 'workflow_active'
+                              ? 'Workflow limit reached'
+                              : 'Step failed'}
+                          </p>
+                          <p className="text-sm text-orange-800 leading-normal">
+                            {stepError.metric === 'workflow_active' && stepError.limit
+                              ? `You currently have ${stepError.currentActive} active workflow(s). Your ${stepError.plan} plan allows ${stepError.limit} active workflow(s).`
+                              : stepError.message}
+                          </p>
+                          {stepError.metric === 'workflow_active' && (
+                            <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-xs h-8 border-orange-200 hover:bg-orange-100 text-orange-900"
+                                onClick={() => onOpenChange(false)}
+                              >
+                                Deactivate a workflow
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="text-xs h-8 bg-orange-600 hover:bg-orange-700 text-white"
+                                onClick={() => window.location.href = '/dashboard/settings/billing'}
+                              >
+                                Upgrade plan
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -241,21 +277,32 @@ export function WorkflowDetailModal({
                           { method: 'POST' }
                         )
 
-                          if (!res.ok) {
-                            const body = await res.json()
-                            throw new Error(body.error || 'Step failed')
-                          }
-
-                          // realtime subscription will refresh workflow
-                        } catch (err: any) {
-                          setStepError(err.message || 'Something went wrong')
-                        } finally {
-                          setIsRunningStep(false)
+                        if (!res.ok) {
+                          const body = await res.json()
+                          const error = new Error(body.error || 'Step failed') as any
+                          error.limit = body.limit
+                          error.currentActive = body.currentActive
+                          error.plan = body.plan
+                          error.metric = body.metric
+                          throw error
                         }
-                      }}
-                    >
-                      {isRunningStep ? 'Running…' : activeStep.label}
-                    </Button>
+
+                        // realtime subscription will refresh workflow
+                      } catch (err: any) {
+                        setStepError({
+                          message: err.message || 'Something went wrong',
+                          limit: err.limit,
+                          currentActive: err.currentActive,
+                          plan: err.plan,
+                          metric: err.metric
+                        })
+                      } finally {
+                        setIsRunningStep(false)
+                      }
+                    }}
+                  >
+                    {isRunningStep ? 'Running…' : activeStep.label}
+                  </Button>
                 </div>
               )}
 

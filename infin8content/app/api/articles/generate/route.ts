@@ -3,6 +3,7 @@ import { validateSupabaseEnv } from '@/lib/supabase/env'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { inngest } from '@/lib/inngest/client'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { PLAN_LIMITS } from '@/lib/config/plan-limits'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 
@@ -13,14 +14,6 @@ const articleGenerateSchema = z.object({
   articleId: z.string().uuid('Invalid article ID'),
 })
 
-/**
- * Plan limits for article generation per month
- */
-const PLAN_LIMITS: Record<string, number | null> = {
-  starter: 10,
-  pro: 50,
-  agency: null, // unlimited
-}
 
 export async function POST(request: Request) {
   try {
@@ -81,15 +74,31 @@ export async function POST(request: Request) {
     }
 
     const currentUsage = usageData?.usage_count || 0
-    const limit = PLAN_LIMITS[plan]
+    const limit = PLAN_LIMITS.article_generation[plan as keyof typeof PLAN_LIMITS.article_generation]
 
     if (limit !== null && currentUsage >= limit) {
+      // 📊 QUOTA TELEMETRY
+      await logActionAsync({
+        orgId: organizationId,
+        userId,
+        action: 'quota.article_generation.limit_hit' as any,
+        details: {
+          plan,
+          currentUsage,
+          limit,
+          metric: 'article_generation'
+        },
+        ipAddress: extractIpAddress(request.headers),
+        userAgent: extractUserAgent(request.headers),
+      })
+
       return NextResponse.json(
         {
           error: "You've reached your article limit for this month",
-          usageLimitExceeded: true,
           currentUsage,
           limit,
+          plan,
+          metric: 'article_generation'
         },
         { status: 403 }
       )

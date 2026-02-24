@@ -1,7 +1,27 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-02-23 22:35 UTC+11  
-**Current Focus:** DASHBOARD ROUTING FIX
+**Last Updated:** 2026-02-24 19:25 UTC+11  
+**Current Focus:** QUOTA TELEMETRY & UX STANDARDIZATION
+
+## **🔥 QUOTA TELEMETRY & UX STANDARDIZATION**
+
+### **✅ Achievement: Centralized Plan Limits & Backend Telemetry**
+- **Status:** Standardized plan-based enforcement with structured observability.
+- **Deliverables:**
+  1. Created `lib/config/plan-limits.ts` as the single source of truth for Starter, Pro, and Agency limits.
+  2. Integrated `logActionAsync` across all quota boundaries: `workflow_active`, `article_generation`, `keyword_research`, and `cms_connection`.
+  3. Standardized API `403 Forbidden` responses to include structured telemetry metadata (`limit`, `currentActive`, `plan`, `metric`).
+- **Result:** Every quota hit is now a trackable audit event, enabling product-led growth analysis and abuse detection.
+
+### **✅ Achievement: Plan-Aware UI & Premium Upgrade Paths**
+- **Status:** Transformed technical "403" errors into helpful, actionable user guidance.
+- **Deliverables:**
+  1. **Workflow Safety**: `WorkflowDetailModal` now provides "Deactivate or Upgrade" guidance when active workflow limits are hit.
+  2. **Article Quota**: `GenerateArticleButton` triggers a high-impact branding dialog when the monthly article limit is reached.
+  3. **Keyword Usage**: `KeywordResearchPageClient` displays plan-aware alerts with a "View Billing" CTA.
+  4. **CMS Connections**: `StepIntegration` onboarding now gracefully handles connection limits with specific upgrade messaging for multi-site users.
+- **Result:** A premium global error strategy that guides users toward value-adding upgrades rather than dead-ends.
+- **Zero Drift Protocol:** Verified 100% compliance; no FSM, worker, or DB schema changes.
 
 ## **🔥 DASHBOARD FSM ROUTING HARDENING**
 

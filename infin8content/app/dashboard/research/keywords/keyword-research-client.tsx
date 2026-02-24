@@ -21,6 +21,10 @@ interface KeywordResearchResponse {
     }
   }
   error?: string
+  metric?: string
+  currentUsage?: number
+  limit?: number
+  plan?: string
   details?: {
     code?: string
     usageLimitExceeded?: boolean
@@ -52,19 +56,29 @@ export function KeywordResearchPageClient() {
 
       const data: KeywordResearchResponse = await response.json()
 
-      if (!response.ok || !data.success) {
-        // Handle usage limit exceeded
-        if (data.details?.usageLimitExceeded) {
-          setError(data.error || "You've reached your keyword research limit for this month")
-          setUsageInfo({
-            current: data.details.currentUsage || 0,
-            limit: data.details.limit || null,
-          })
-          setResults([])
-          return
-        }
+      // Handle standardized quota metric
+      if (response.status === 403 && data.metric === 'keyword_research') {
+        setError(data.error || "You've reached your keyword research limit for this month")
+        setUsageInfo({
+          current: data.currentUsage || 0,
+          limit: data.limit || null,
+        })
+        setResults([])
+        return
+      }
 
-        // Handle other errors
+      // Handle legacy usage limit exceeded (for safety)
+      if (data.details?.usageLimitExceeded) {
+        setError(data.error || "You've reached your keyword research limit for this month")
+        setUsageInfo({
+          current: data.details.currentUsage || 0,
+          limit: data.details.limit || null,
+        })
+        setResults([])
+        return
+      }
+
+      if (!response.ok || !data.success) {
         setError(data.error || 'Keyword research failed. Please try again.')
         setResults([])
         return
@@ -87,10 +101,8 @@ export function KeywordResearchPageClient() {
   }
 
   const handleRetry = () => {
-    if (results.length > 0) {
-      // Retry with the last keyword
-      const lastKeyword = results[0].keyword
-      handleResearch(lastKeyword)
+    if (lastResearchedKeyword) {
+      handleResearch(lastResearchedKeyword)
     }
   }
 
@@ -130,9 +142,10 @@ export function KeywordResearchPageClient() {
                   <span className="text-sm">{usageInfo.current} / {usageInfo.limit}</span>
                 </div>
                 <Button
-                  variant="outline"
+                  variant="primary"
                   size="sm"
-                  className="font-lato text-neutral-600 hover:text-primary border-neutral-200"
+                  className="bg-primary-blue hover:bg-primary-blue/90 text-white"
+                  onClick={() => window.location.href = '/dashboard/settings/billing'}
                 >
                   Upgrade Plan
                 </Button>
@@ -154,7 +167,7 @@ export function KeywordResearchPageClient() {
               <Button
                 onClick={handleRetry}
                 variant="outline"
-                className="font-lato text-neutral-600 hover-text-primary-blue border-neutral-200"
+                className="font-lato text-neutral-600 hover:text-primary-blue border-neutral-200"
               >
                 Retry
               </Button>
@@ -169,4 +182,3 @@ export function KeywordResearchPageClient() {
     </div>
   )
 }
-

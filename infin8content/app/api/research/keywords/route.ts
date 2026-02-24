@@ -3,6 +3,8 @@ import { validateSupabaseEnv } from '@/lib/supabase/env'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { searchKeywords } from '@/lib/services/dataforseo'
 import { getOrganizationGeoOrThrow } from '@/lib/config/dataforseo-geo'
+import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { PLAN_LIMITS } from '@/lib/config/plan-limits'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 
@@ -10,26 +12,20 @@ const keywordResearchSchema = z.object({
   keyword: z.string().min(1, 'Keyword must not be empty').max(200, 'Keyword must be less than 200 characters'),
 })
 
-// Plan limits for keyword research per month
-const PLAN_LIMITS: Record<string, number | null> = {
-  starter: 50,
-  pro: 200,
-  agency: null, // unlimited
-}
 
 export async function POST(request: Request) {
   let keyword: string | undefined
-  
+
   try {
     validateSupabaseEnv()
-    
+
     const body = await request.json()
     const parsed = keywordResearchSchema.parse(body)
     keyword = parsed.keyword
 
     // Get current user and organization
     const currentUser = await getCurrentUser()
-    
+
     if (!currentUser || !currentUser.org_id) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -43,13 +39,13 @@ export async function POST(request: Request) {
 
     // Get service role client for admin operations (usage tracking, API costs)
     const supabaseAdmin = createServiceRoleClient()
-    
+
     // Get regular client for RLS-protected operations (cache lookup, insert research)
     const supabase = await createClient()
 
     // Check usage limits before API call
     const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM format
-    
+
     // TODO: Remove type assertion after regenerating types from Supabase Dashboard
     const { data: usageData, error: usageError } = await (supabaseAdmin as any)
       .from('usage_tracking')
@@ -68,19 +64,32 @@ export async function POST(request: Request) {
     }
 
     const currentUsage = usageData?.usage_count || 0
-    const limit = PLAN_LIMITS[plan]
+    const limit = PLAN_LIMITS.keyword_research[plan as keyof typeof PLAN_LIMITS.keyword_research]
 
     // Check if limit exceeded (skip check if unlimited)
     if (limit !== null && currentUsage >= limit) {
+      // 📊 QUOTA TELEMETRY
+      await logActionAsync({
+        orgId: organizationId,
+        userId,
+        action: 'quota.keyword_research.limit_hit' as any,
+        details: {
+          plan,
+          currentUsage,
+          limit,
+          metric: 'keyword_research'
+        },
+        ipAddress: extractIpAddress(request.headers),
+        userAgent: extractUserAgent(request.headers),
+      })
+
       return NextResponse.json(
         {
           error: "You've reached your keyword research limit for this month",
-          details: {
-            code: 'USAGE_LIMIT_EXCEEDED',
-            usageLimitExceeded: true,
-            currentUsage,
-            limit,
-          },
+          currentUsage,
+          limit,
+          plan,
+          metric: 'keyword_research'
         },
         { status: 403 }
       )
@@ -117,18 +126,18 @@ export async function POST(request: Request) {
       // Parse cached results
       const results = cachedResearch.results as any
       const keywordResult = results.tasks?.[0]?.result?.[0]
-      
+
       if (keywordResult) {
         // Map competition level
         const competitionLevel = mapCompetitionLevel(
-          keywordResult.keyword_info?.competition || 
+          keywordResult.keyword_info?.competition ||
           competitionIndexToLevel(keywordResult.competition_index)
         )
 
         // Extract trend data
         const trend = extractTrendData(
-          keywordResult.monthly_searches || 
-          keywordResult.keyword_info?.monthly_searches || 
+          keywordResult.monthly_searches ||
+          keywordResult.keyword_info?.monthly_searches ||
           []
         )
 
@@ -292,14 +301,14 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    
+
     // Log error with context for debugging
     console.error('Keyword research error:', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       keyword: keyword || 'unknown',
     })
-    
+
     return NextResponse.json(
       { error: 'Keyword research failed. Please try again.' },
       { status: 500 }

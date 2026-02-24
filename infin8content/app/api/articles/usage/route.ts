@@ -1,13 +1,8 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
+import { PLAN_LIMITS } from '@/lib/config/plan-limits'
 import { NextResponse } from 'next/server'
 
-// Plan limits for article generation per month
-const PLAN_LIMITS: Record<string, number | null> = {
-  starter: 10,    // 10 articles/month
-  pro: 50,        // 50 articles/month
-  agency: null,   // unlimited
-}
 
 /**
  * GET /api/articles/usage
@@ -35,7 +30,7 @@ const PLAN_LIMITS: Record<string, number | null> = {
 export async function GET() {
   try {
     const currentUser = await getCurrentUser()
-    
+
     if (!currentUser || !currentUser.org_id) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -48,10 +43,10 @@ export async function GET() {
 
     // Get service role client for admin operations (usage tracking)
     const supabaseAdmin = createServiceRoleClient()
-    
+
     // Check usage limits
     const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM format
-    
+
     // Type assertion needed until database types are regenerated after migration
     // TODO: Remove type assertion after running: supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/database.types.ts
     const { data: usageData, error: usageError } = await (supabaseAdmin
@@ -71,7 +66,7 @@ export async function GET() {
     }
 
     const currentUsage = usageData?.usage_count || 0
-    const limit = PLAN_LIMITS[plan]
+    const limit = PLAN_LIMITS.article_generation[plan as keyof typeof PLAN_LIMITS.article_generation]
 
     return NextResponse.json({
       currentUsage,
