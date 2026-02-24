@@ -47,17 +47,6 @@ export function WorkflowDetailModal({
   } | null>(null)
   const router = useRouter()
 
-  // Auto-redirect to articles page when workflow is completed
-  useEffect(() => {
-    if (workflow?.state === 'completed') {
-      console.log('[Workflow UX] Workflow completed. Redirecting to articles page in 1.5s...')
-      const timeout = setTimeout(() => {
-        router.push('/dashboard/articles')
-      }, 1500)
-
-      return () => clearTimeout(timeout)
-    }
-  }, [workflow?.state, router])
 
   // ICP form state
   const [icpFormData, setIcpFormData] = useState({
