@@ -7,6 +7,9 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { RetryPolicy, retryWithPolicy } from './retry-utils'
 import { emitAnalyticsEvent } from '../analytics/event-emitter'
 import { getOrganizationGeoOrThrow } from '@/lib/config/dataforseo-geo'
+import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
+import { logIntentAction } from './intent-audit-logger'
+import { AuditAction } from '@/types/audit'
 
 // 🚨 COMPREHENSIVE ERROR LOGGING
 async function logLongtailError(
@@ -19,25 +22,22 @@ async function logLongtailError(
 ) {
   try {
     const supabase = createServiceRoleClient()
-    
-    // Log to intent_audit_logs
-    await supabase.from('intent_audit_logs').insert({
-      organization_id: organizationId,
-      workflow_id: workflowId,
-      entity_type: 'keyword',
-      entity_id: null,
-      actor_id: '00000000-0000-0000-0000-000000000000',
-      action: 'workflow.longtail_keywords.error',
+
+    // Log to intent_audit_logs using standardized logger
+    await logIntentAction({
+      organizationId: organizationId,
+      workflowId: workflowId,
+      entityType: 'keyword',
+      entityId: workflowId as any, // Using workflow ID as entity for step-level errors
+      actorId: SYSTEM_USER_ID,
+      action: 'workflow.longtail_keywords.error' as any,
       details: {
         seed_keyword: seedKeyword,
         error_type: errorType,
         error_message: errorMessage,
         context: context || {},
         timestamp: new Date().toISOString()
-      },
-      ip_address: null,
-      user_agent: null,
-      created_at: new Date().toISOString()
+      }
     })
 
     // Also emit analytics event
@@ -69,24 +69,22 @@ async function logLongtailSuccess(
 ) {
   try {
     const supabase = createServiceRoleClient()
-    
-    await supabase.from('intent_audit_logs').insert({
-      organization_id: organizationId,
-      workflow_id: workflowId,
-      entity_type: 'keyword',
-      entity_id: null,
-      actor_id: '00000000-0000-0000-0000-000000000000',
-      action: 'workflow.longtail_keywords.seed_completed',
+
+    // Log to intent_audit_logs using standardized logger
+    await logIntentAction({
+      organizationId: organizationId,
+      workflowId: workflowId,
+      entityType: 'keyword',
+      entityId: workflowId as any,
+      actorId: SYSTEM_USER_ID,
+      action: 'workflow.longtail_keywords.seed_completed' as any,
       details: {
         seed_keyword: seedKeyword,
         longtails_created: longtailsCreated,
         longtails_skipped: longtailsSkipped,
         ...details,
         timestamp: new Date().toISOString()
-      },
-      ip_address: null,
-      user_agent: null,
-      created_at: new Date().toISOString()
+      }
     })
 
     console.log(`[LongtailExpander SUCCESS] Workflow: ${workflowId}, Seed: "${seedKeyword}", Created: ${longtailsCreated}, Skipped: ${longtailsSkipped}`)
@@ -203,7 +201,7 @@ function extractTaskItems(
     (typeof response.tasks_error === 'number' && response.tasks_error > 0)
   ) {
     throw new Error(
-      `${endpoint} failed: ${response.status_message} (code=${response.status_code})` 
+      `${endpoint} failed: ${response.status_message} (code=${response.status_code})`
     )
   }
 
@@ -313,7 +311,7 @@ async function fetchSource(
     const response = await retryWithPolicy(
       () => makeDataForSEORequest(endpoint, payload),
       LONGTAIL_RETRY_POLICY,
-      `DataForSEO:${source}` 
+      `DataForSEO:${source}`
     )
 
     const items = extractTaskItems(response, source)
@@ -367,7 +365,7 @@ async function fetchSource(
   } catch (error) {
     // 🚨 COMPREHENSIVE ERROR LOGGING
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    
+
     if (workflowId && organizationId) {
       await logLongtailError(workflowId, organizationId, seed, 'API_CALL_FAILED', errorMessage, {
         source,
@@ -417,7 +415,7 @@ async function expandSingleSeed(
 
   for (const result of results) {
     const source = endpoints[results.indexOf(result)][1]
-    
+
     if (result.status === 'fulfilled') {
       console.log(`[LongtailExpander] Seed "${seed.keyword}" - ${result.value.length} keywords from ${source}`)
       collected.push(...result.value)
@@ -500,7 +498,7 @@ async function persistLongtails(
 
   if (longtails.length) {
     console.log(`[LongtailExpander] Persisting ${longtails.length} longtails for seed "${seed.keyword}"`)
-    
+
     const rows = longtails.map(lt => ({
       workflow_id: workflowId,
       organization_id: seed.organization_id,
@@ -558,7 +556,7 @@ export async function expandSeedKeywordsToLongtails(
 ) {
 
   const supabase = createServiceRoleClient()
-  
+
   console.log(`[LongtailExpander] Starting longtail expansion for workflow: ${workflowId}`)
 
   const { data: workflow, error: workflowError } = await supabase
@@ -630,7 +628,7 @@ export async function expandSeedKeywordsToLongtails(
 
     results.push(expansion)
     total += expansion.longtails_created
-    
+
     console.log(`[LongtailExpander] Seed "${seed.keyword}" completed: ${expansion.longtails_created} longtails, ${expansion.errors.length} errors`)
   }
 

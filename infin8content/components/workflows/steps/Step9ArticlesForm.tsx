@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface Step9ArticlesFormProps {
@@ -12,12 +13,11 @@ export function Step9ArticlesForm({ workflowId, workflowState }: Step9ArticlesFo
   const [state, setState] = useState<'running' | 'completed' | 'error'>('running')
   const [error, setError] = useState<string | null>(null)
 
+  const router = useRouter()
+
   useEffect(() => {
-    // If already terminal, stop everything immediately
-    if (
-      workflowState === 'completed' ||
-      workflowState === 'step_9_articles_queued'
-    ) {
+    // If the server-side state is already terminal, no need to refresh or poll
+    if (workflowState === 'completed' || workflowState === 'step_9_articles_queued') {
       setState('completed')
       return
     }
@@ -36,12 +36,20 @@ export function Step9ArticlesForm({ workflowId, workflowState }: Step9ArticlesFo
         const data = await res.json()
         const currentState = data.workflow?.state
 
-        if (
-          currentState === 'completed' ||
-          currentState === 'step_9_articles_queued'
-        ) {
+        if (currentState === 'completed') {
           setState('completed')
           clearInterval(interval)
+
+          // 🎯 CRITICAL: Trigger server refresh to let the guard handle terminal redirect.
+          // This forces the server component to re-render and hit the guard.
+          setTimeout(() => {
+            router.refresh()
+          }, 500)
+        }
+
+        if (currentState === 'step_9_articles_queued') {
+          setState('completed')
+          // No refresh on queued - wait for 'completed' for deterministic redirect
         }
 
         if (currentState === 'step_9_articles_failed') {
@@ -55,7 +63,7 @@ export function Step9ArticlesForm({ workflowId, workflowState }: Step9ArticlesFo
     }, 3000)
 
     return () => clearInterval(interval)
-  }, [workflowId, workflowState])
+  }, [workflowId, workflowState, router])
 
 
   return (

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { requireWorkflowStepAccess } from '@/lib/guards/workflow-step-gate'
 import { WorkflowStepLayoutClient } from '@/components/workflows/WorkflowStepLayoutClient'
 import { Step9ArticlesForm } from '@/components/workflows/steps/Step9ArticlesForm'
