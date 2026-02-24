@@ -22,6 +22,13 @@
   3. **Standardized Payloads**: All quota blocks now return structured responses with `limit`, `currentActive`/`currentUsage`, `plan`, and `metric`.
 - **Result:** 100% production-safe concurrency enforcement with no impact on FSM or background worker logic.
 
+### **✅ Achievement: Audit RLS Fix & Auto-Redirect UX (Phase 11)**
+- **Status:** Resolved production audit logging errors and enhanced post-completion navigation.
+- **Deliverables:**
+  1. **Audit Security**: Hardened `intent-audit-logger.ts` by using `createServiceRoleClient()` for all intent-engine logs, ensuring durability in headless/serverless contexts.
+  2. **Workflow UX**: Implemented a 1.5s delayed automatic redirect in `WorkflowDetailModal.tsx` to guide users directly to the Articles page upon workflow completion.
+- **Result:** Eliminated "silent" logging failures and unified the transition from intent discovery to article production.
+
 ### **✅ Achievement: Plan-Aware UI & Premium Upgrade Paths**
 - **Status:** Transformed technical "403" errors into helpful, actionable user guidance.
 - **Deliverables:**
