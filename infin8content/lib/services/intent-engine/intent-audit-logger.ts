@@ -7,8 +7,11 @@
  * All audit records are immutable (WORM compliance) and organization-isolated.
  */
 
-import { createClient } from '@/lib/supabase/server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import type { CreateIntentAuditLogParams, IntentAuditLog } from '@/types/audit';
+
+const SYSTEM_ACTOR_ID = '00000000-0000-0000-0000-000000000001';
+const ZERO_UUID = '00000000-0000-0000-0000-000000000000';
 
 /**
  * Log an Intent Engine audit action
@@ -37,20 +40,25 @@ import type { CreateIntentAuditLogParams, IntentAuditLog } from '@/types/audit';
  * ```
  */
 export async function logIntentAction(params: CreateIntentAuditLogParams): Promise<void> {
-    const { 
-        organizationId, 
-        workflowId, 
-        entityType, 
-        entityId, 
-        actorId, 
-        action, 
-        details = {}, 
-        ipAddress, 
-        userAgent 
+    const {
+        organizationId,
+        workflowId,
+        entityType,
+        entityId,
+        actorId,
+        action,
+        details = {},
+        ipAddress,
+        userAgent
     } = params;
 
     try {
-        const supabase = await createClient();
+        const supabase = createServiceRoleClient();
+
+        // Resolve actorId for production-grade audit semantics
+        const resolvedActorId = actorId && actorId !== ZERO_UUID
+            ? actorId
+            : SYSTEM_ACTOR_ID;
 
         const { error } = await supabase
             .from('intent_audit_logs')
@@ -59,7 +67,7 @@ export async function logIntentAction(params: CreateIntentAuditLogParams): Promi
                 workflow_id: workflowId ?? null,
                 entity_type: entityType,
                 entity_id: entityId,
-                actor_id: actorId,
+                actor_id: resolvedActorId,
                 action,
                 details: details as any,
                 ip_address: ipAddress ?? null,
@@ -162,7 +170,7 @@ export async function getIntentAuditLogs(params: {
     } = params;
 
     try {
-        const supabase = await createClient();
+        const supabase = createServiceRoleClient();
 
         let query = supabase
             .from('intent_audit_logs')
@@ -235,7 +243,7 @@ export async function getIntentAuditLogsCount(params: {
     } = params;
 
     try {
-        const supabase = await createClient();
+        const supabase = createServiceRoleClient();
 
         let query = supabase
             .from('intent_audit_logs')
