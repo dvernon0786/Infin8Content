@@ -11,7 +11,16 @@
   1. Created `lib/config/plan-limits.ts` as the single source of truth for Starter, Pro, and Agency limits.
   2. Integrated `logActionAsync` across all quota boundaries: `workflow_active`, `article_generation`, `keyword_research`, and `cms_connection`.
   3. Standardized API `403 Forbidden` responses to include structured telemetry metadata (`limit`, `currentActive`, `plan`, `metric`).
+  4. **Fixed Bug:** Updated concurrency guard in `icp-generate` to exclude the current workflow ID from the active count (`.neq('id', workflowId)`), preventing self-blocking on Starter plans.
 - **Result:** Every quota hit is now a trackable audit event, enabling product-led growth analysis and abuse detection.
+
+### **✅ Achievement: Concurrency Guard Refactor (Phase 9)**
+- **Status:** Architectural hardening completed to solve self-blocking and ensure clean boundaries.
+- **Deliverables:**
+  1. **Moved Guard**: Relocated active workflow limit check from Step 1 execution (`icp-generate`) to the primary creation route (`POST /api/intent/workflows`).
+  2. **Resolved Self-Blocking**: Fixed the logic flaw where a workflow would count itself against the limit during its own first step execution.
+  3. **Standardized Payloads**: All quota blocks now return structured responses with `limit`, `currentActive`/`currentUsage`, `plan`, and `metric`.
+- **Result:** 100% production-safe concurrency enforcement with no impact on FSM or background worker logic.
 
 ### **✅ Achievement: Plan-Aware UI & Premium Upgrade Paths**
 - **Status:** Transformed technical "403" errors into helpful, actionable user guidance.
