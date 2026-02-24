@@ -78,9 +78,17 @@ export const generateArticle = inngest.createFunction(
         .from('organizations')
         .select('id, name, description, content_defaults')
         .eq('id', (article as any).org_id)
-        .single()
+        .maybeSingle()
 
-      if (error || !data) throw new Error('Organization not found')
+      if (error) {
+        console.error('Org query error:', error)
+        throw error
+      }
+
+      if (!data) {
+        throw new Error(`Organization ${(article as any).org_id} not found`)
+      }
+
       return data
     })
 

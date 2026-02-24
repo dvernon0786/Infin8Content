@@ -62,7 +62,8 @@
   1. **Server-Side Guard**: Modified `requireWorkflowStepAccess` in `workflow-step-gate.ts` to enforce a terminal redirect to `/dashboard/articles` when state is `completed`.
   2. **Page Re-render Trigger**: Implemented `router.refresh()` in `Step9ArticlesForm.tsx` (Client component) upon detecting terminal state via polling. This forces the Server Component to re-render and hit the guard.
   3. **Audit Standardization**: Refactored `intent-audit-logger.ts` and `longtail-keyword-expander.ts` to use centralized `SYSTEM_USER_ID` constant, eliminating `actor_id` foreign key violations in background workers.
-  4. **Clean Architecture**: Removed all client-side layout hacks and polling-based redirects, restoring `WorkflowStepLayoutClient.tsx` to a clean UI-only state.
+  4. **Worker Stability**: Hardened `generate-article.ts` by replacing brittle `.single()` calls with `.maybeSingle()` and improved error logging for organization lookups.
+  5. **Clean Architecture**: Removed all client-side layout hacks and polling-based redirects, restoring `WorkflowStepLayoutClient.tsx` to a clean UI-only state.
 - **Result:** 100% deterministic post-completion UX. As soon as the backend completes article queuing, the user is automatically and securely redirected to the dashboard.
 - **Zero Drift Protocol:** Verified; no changes to FSM machine, Inngest events, or DB schema.
 
