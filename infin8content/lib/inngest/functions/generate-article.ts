@@ -91,7 +91,7 @@ export const generateArticle = inngest.createFunction(
 
       const { data, error } = await supabase
         .from('organizations')
-        .select('id, name, description, content_defaults')
+        .select('id, name, content_defaults')
         .eq('id', orgId)
         .limit(1)
 
