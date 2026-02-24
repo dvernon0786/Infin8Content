@@ -49,7 +49,7 @@ export function WorkflowStepLayoutClient({
 
   // Analytics: page viewed
   useEffect(() => {
-    ;(window as any)?.analytics?.track('workflow_step_viewed', {
+    ; (window as any)?.analytics?.track('workflow_step_viewed', {
       workflow_id: workflow.id,
       step: currentStep,
     })
@@ -67,6 +67,12 @@ export function WorkflowStepLayoutClient({
       router.replace(`/workflows/${workflow.id}/steps/${currentStep}`)
     }
   }, [currentStep, step, router, workflow.id])
+
+  useEffect(() => {
+    if (workflow.state === 'completed') {
+      router.replace('/dashboard/articles')
+    }
+  }, [workflow.state, router])
 
   return (
     <div className="min-h-screen bg-background">
