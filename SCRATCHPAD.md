@@ -4150,4 +4150,39 @@ Phase 5: Inngest Sync Resolution (development workflow fixed)
 *State Engine: Normalized Architecture Complete* ✅
 *Inngest Sync: Route Guard Fixed, Development Working* ✅
 
+---
+
+## **🔒 Phase 6: Quota Layer Hardening - February 24, 2026**
+
+### **Objective:**
+Harden the quota enforcement system to ensure deterministic guardrails and strict compliance with the **Zero Drift Protocol**.
+
+### **Key Deliverables:**
+1. **Canonical Quota Function**: Consolidated multiple "ghost" overloads into a single, deterministic database guardrail.
+2. **Centralized Plan Configuration**: Created `lib/config/plan-limits.ts` as the single source of truth for all plan-based tiers.
+3. **Harmonized Limits**: corrected Pro plan Keyword Research limit (500) and implemented CMS connection quotas (Starter: 1, Pro: 3).
+4. **API-Layer Guardrails**: Implemented strict enforcement in Onboarding (CMS) and Keyword Research routes with accessor bug fixes.
+
+### **Technical Implementation:**
+- **Database**: Single `check_organization_monthly_quota` function implemented via migration 20260224__harden_quota_function.sql.
+- **API (Articles)**: Enforced `PLAN_LIMITS.article_generation[plan]` guardrail.
+- **API (Keywords)**: Enforced `PLAN_LIMITS.keyword_research[plan]` guardrail before external API calls.
+- **API (Integrations)**: Enforced CMS connection limit while allowing legitimate credentials updates.
+
+### **Zero Drift Verification:**
+- ✅ No architectural changes to article generation pipeline.
+- ✅ No dual authority introduced (Trigger API remains the sole lifecycle manager).
+- ✅ All overloads removed from Supabase.
+- ✅ Consolidated technical debt in quota layer.
+
+### **Production Status:** ✅ **Hardened & Verified**
+- **Plan Limits**: Centralized and Consistent
+- **Quota Logic**: Deterministic and Non-intrusive
+- **Pipeline Integrity**: 🔒 Preserved
+
+---
+
+*Architecture completed February 24, 2026*
+*Status: Production-Hardened with Centralized Quota Enforcement* ✅
+
 ```
