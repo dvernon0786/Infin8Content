@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Dialog,
   DialogContent,
@@ -44,6 +45,19 @@ export function WorkflowDetailModal({
     plan?: string;
     metric?: string;
   } | null>(null)
+  const router = useRouter()
+
+  // Auto-redirect to articles page when workflow is completed
+  useEffect(() => {
+    if (workflow?.state === 'completed') {
+      console.log('[Workflow UX] Workflow completed. Redirecting to articles page in 1.5s...')
+      const timeout = setTimeout(() => {
+        router.push('/dashboard/articles')
+      }, 1500)
+
+      return () => clearTimeout(timeout)
+    }
+  }, [workflow?.state, router])
 
   // ICP form state
   const [icpFormData, setIcpFormData] = useState({
@@ -149,10 +163,10 @@ export function WorkflowDetailModal({
                     <div key={step.key} className="flex items-center gap-3">
                       <div
                         className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${isCompleted
-                            ? 'bg-green-100 text-green-800'
-                            : isCurrent
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-600'
+                          ? 'bg-green-100 text-green-800'
+                          : isCurrent
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-600'
                           }`}
                       >
                         {index + 1}

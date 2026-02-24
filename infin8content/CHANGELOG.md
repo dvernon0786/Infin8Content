@@ -2,6 +2,14 @@
 
 All notable changes to the Infin8Content platform will be documented in this file.
 
+## [2.1.1] - 2026-02-25
+
+### 🚀 Audit Logging & Workflow UX Improvements
+- **Fixed**: RLS violations in `intent_audit_logs` by switching to `createServiceRoleClient` for Intent Engine background logging.
+- **Standardized**: Headless audit events now correctly bypass RLS while maintaining organization isolation.
+- **Improved**: Added automatic redirect to `/dashboard/articles` with a 1.5s delay when a workflow transitions to the `completed` state.
+- **Enhanced**: User flow from Step 9 (Article Queueing) to Article Generation is now seamless and intentional.
+
 ## [2.1.0] - 2026-02-24
 
 ### 🚀 Quota Telemetry & Concurrency Hardening
