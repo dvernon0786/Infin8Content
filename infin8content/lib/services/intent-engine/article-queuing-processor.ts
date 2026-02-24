@@ -67,13 +67,13 @@ export async function queueArticlesForWorkflow(
     .from('intent_workflows')
     .select('id, state, organization_id')
     .eq('id', workflowId)
-    .single()
+    .limit(1)
 
-  if (workflowResult.error || !workflowResult.data) {
+  if (workflowResult.error || !workflowResult.data || workflowResult.data.length === 0) {
     throw new Error('Workflow not found')
   }
 
-  const workflow = workflowResult.data as unknown as {
+  const workflow = workflowResult.data[0] as unknown as {
     id: string
     state: string
     organization_id: string
@@ -110,7 +110,7 @@ export async function queueArticlesForWorkflow(
   for (const keyword of keywords) {
     try {
       // Create article record
-      const { data: article, error: articleError } = await supabase
+      const articleResult = await supabase
         .from('articles')
         .insert({
           intent_workflow_id: workflowId,
@@ -124,7 +124,10 @@ export async function queueArticlesForWorkflow(
           updated_at: new Date().toISOString()
         })
         .select('id, keyword, status')
-        .single()
+        .limit(1)
+
+      const article = articleResult.data?.[0]
+      const articleError = articleResult.error
 
       if (articleError) {
         console.error(`Failed to create article for keyword "${keyword.keyword}":`, articleError)
@@ -133,6 +136,52 @@ export async function queueArticlesForWorkflow(
 
       if (article) {
         const typedArticle = article as unknown as { id: string; keyword: string; status: string }
+
+        // 🟠 PRODUCTION HARDENING: Create article sections before generation
+        // Each subtopic becomes an article section that the worker can process
+        const subtopicArray = (keyword.subtopics || []) as any[]
+        const VALID_SECTION_TYPES = ['introduction', 'h2', 'h3', 'conclusion', 'faq']
+
+        if (subtopicArray.length > 0) {
+          const sectionRows = subtopicArray.map((subtopic, index) => {
+            const sectionType = VALID_SECTION_TYPES.includes(subtopic.type?.toLowerCase())
+              ? subtopic.type.toLowerCase()
+              : 'h2'
+
+            return {
+              article_id: typedArticle.id,
+              section_order: index + 1,
+              section_header: subtopic.title,
+              section_type: sectionType,
+              status: 'pending',
+              planner_payload: {
+                section_header: subtopic.title,
+                section_type: sectionType,
+                instructions: `Write a high-quality ${sectionType} section about "${subtopic.title}". Include coverage for the following keywords: ${(subtopic.keywords || []).join(', ')}. Maintain a professional tone and ensure technical accuracy.`,
+                context_requirements: subtopic.keywords || [],
+                estimated_words: 500
+              },
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+          })
+
+          const { error: sectionError } = await supabase
+            .from('article_sections')
+            .insert(sectionRows)
+
+          if (sectionError) {
+            console.error(`Failed to create sections for article ${typedArticle.id}:`, sectionError)
+            // Rollback article insertion to prevent ghost articles with no sections
+            await supabase.from('articles').delete().eq('id', typedArticle.id)
+            continue
+          }
+        } else {
+          console.warn(`No subtopics found for keyword "${keyword.keyword}", skipping article creation.`)
+          await supabase.from('articles').delete().eq('id', typedArticle.id)
+          continue
+        }
+
         // Update keyword article_status to 'in_progress'
         const { error: updateError } = await supabase
           .from('keywords')
@@ -145,6 +194,8 @@ export async function queueArticlesForWorkflow(
 
         if (updateError) {
           console.error(`Failed to update keyword status for "${keyword.keyword}":`, updateError)
+          // Cleanup article if status update fails
+          await supabase.from('articles').delete().eq('id', typedArticle.id)
           continue
         }
 
@@ -155,7 +206,6 @@ export async function queueArticlesForWorkflow(
         })
         queuedCount++
       }
-
     } catch (error) {
       console.error(`Error processing keyword "${keyword.keyword}":`, error)
       continue
@@ -210,13 +260,13 @@ export async function getWorkflowContext(workflowId: string): Promise<WorkflowCo
     .from('intent_workflows')
     .select('id, state, organization_id, icp_document, competitor_urls')
     .eq('id', workflowId)
-    .single()
+    .limit(1)
 
-  if (workflowResult.error || !workflowResult.data) {
+  if (workflowResult.error || !workflowResult.data || workflowResult.data.length === 0) {
     throw new Error('Workflow not found')
   }
 
-  const workflow = workflowResult.data as unknown as {
+  const workflow = workflowResult.data[0] as unknown as {
     id: string
     state: string
     organization_id: string
