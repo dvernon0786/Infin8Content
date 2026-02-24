@@ -45,9 +45,16 @@ export const generateArticle = inngest.createFunction(
         .from('articles' as any)
         .select('id, org_id, status')
         .eq('id', articleId)
-        .single()
+        .maybeSingle()
 
-      if (error || !data) throw new Error('Article not found')
+      if (error) {
+        console.error('Article query error:', error)
+        throw error
+      }
+
+      if (!data) {
+        throw new Error(`Article ${articleId} not found`)
+      }
 
       // Type guard to ensure we have the expected data structure
       const articleData = data as unknown as { id: string; org_id: string; status: string }
@@ -295,11 +302,16 @@ async function checkAndCompleteWorkflow(
     const { transitionWithAutomation } = await import('@/lib/fsm/unified-workflow-engine')
 
     // Fetch current workflow state (FSM state only)
-    const { data: workflow } = await supabase
+    const { data: workflow, error } = await supabase
       .from('intent_workflows')
       .select('state')
       .eq('id', workflowId)
-      .single()
+      .maybeSingle()
+
+    if (error) {
+      console.error('Workflow query error:', error)
+      return
+    }
 
     if (!workflow) return
 
