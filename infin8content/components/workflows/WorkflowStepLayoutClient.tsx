@@ -68,11 +68,7 @@ export function WorkflowStepLayoutClient({
     }
   }, [currentStep, step, router, workflow.id])
 
-  useEffect(() => {
-    if (workflow.state === 'completed') {
-      router.replace('/dashboard/articles')
-    }
-  }, [workflow.state, router])
+
 
   return (
     <div className="min-h-screen bg-background">

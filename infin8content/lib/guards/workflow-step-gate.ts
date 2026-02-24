@@ -62,6 +62,11 @@ export async function requireWorkflowStepAccess(workflowId: string, targetStep: 
     redirect('/dashboard')
   }
 
+  // Terminal state handling: Redirect completed workflows to articles dashboard
+  if (workflowState.state === 'completed') {
+    redirect('/dashboard/articles')
+  }
+
   // If trying to access future step, redirect to current step
   if (!canAccessStep(workflowState, targetStep)) {
     const currentStep = getStepFromState(workflowState.state)
