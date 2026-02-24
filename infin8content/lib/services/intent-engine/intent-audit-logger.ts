@@ -10,8 +10,7 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import type { CreateIntentAuditLogParams, IntentAuditLog } from '@/types/audit';
 
-const SYSTEM_ACTOR_ID = '00000000-0000-0000-0000-000000000001';
-const ZERO_UUID = '00000000-0000-0000-0000-000000000000';
+const SYSTEM_ACTOR_ID = '00000000-0000-0000-0000-000000000000';
 
 /**
  * Log an Intent Engine audit action
@@ -56,7 +55,7 @@ export async function logIntentAction(params: CreateIntentAuditLogParams): Promi
         const supabase = createServiceRoleClient();
 
         // Resolve actorId for production-grade audit semantics
-        const resolvedActorId = actorId && actorId !== ZERO_UUID
+        const resolvedActorId = actorId && actorId !== SYSTEM_ACTOR_ID
             ? actorId
             : SYSTEM_ACTOR_ID;
 
