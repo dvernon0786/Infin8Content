@@ -41,23 +41,28 @@ export const generateArticle = inngest.createFunction(
     /* -------------------------------------------------- */
 
     const article = await step.run('load-article', async () => {
+      // 🔍 DIAGNOSTIC: Verify database environment and ID alignment
+      console.log('SUPABASE URL (Worker Context):', process.env.NEXT_PUBLIC_SUPABASE_URL)
+      console.log('Attempting to load article with ID:', articleId)
+
       const { data, error } = await supabase
         .from('articles' as any)
         .select('id, org_id, status')
         .eq('id', articleId)
-        .maybeSingle()
+        .limit(1)
 
       if (error) {
         console.error('Article query error:', error)
         throw error
       }
 
-      if (!data) {
+      const row = data?.[0]
+      if (!row) {
         throw new Error(`Article ${articleId} not found`)
       }
 
       // Type guard to ensure we have the expected data structure
-      const articleData = data as unknown as { id: string; org_id: string; status: string }
+      const articleData = row as unknown as { id: string; org_id: string; status: string }
 
       // 🔴 PRODUCTION HARDENING: Idempotency against duplicate events
       // 🚨 AUDIT FIX: Adding 'failed' to terminal states to prevent retry loops
@@ -81,22 +86,26 @@ export const generateArticle = inngest.createFunction(
     /* -------------------------------------------------- */
 
     const organization = await step.run('load-organization', async () => {
+      const orgId = (article as any).org_id
+      console.log('Org ID being queried (Worker Context):', orgId)
+
       const { data, error } = await supabase
         .from('organizations')
         .select('id, name, description, content_defaults')
-        .eq('id', (article as any).org_id)
-        .maybeSingle()
+        .eq('id', orgId)
+        .limit(1)
 
       if (error) {
         console.error('Org query error:', error)
         throw error
       }
 
-      if (!data) {
-        throw new Error(`Organization ${(article as any).org_id} not found`)
+      const row = data?.[0]
+      if (!row) {
+        throw new Error(`Organization ${orgId} not found`)
       }
 
-      return data
+      return row
     })
 
     /* -------------------------------------------------- */
@@ -302,17 +311,18 @@ async function checkAndCompleteWorkflow(
     const { transitionWithAutomation } = await import('@/lib/fsm/unified-workflow-engine')
 
     // Fetch current workflow state (FSM state only)
-    const { data: workflow, error } = await supabase
+    const { data: workflowData, error } = await supabase
       .from('intent_workflows')
       .select('state')
       .eq('id', workflowId)
-      .maybeSingle()
+      .limit(1)
 
     if (error) {
       console.error('Workflow query error:', error)
       return
     }
 
+    const workflow = workflowData?.[0]
     if (!workflow) return
 
     // FSM GUARD
