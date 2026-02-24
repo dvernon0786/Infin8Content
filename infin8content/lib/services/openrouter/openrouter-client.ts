@@ -127,7 +127,7 @@ export async function generateContent(
   const requestedModel = options.model
 
   // Model selection with fallback chain
-  const modelsToTry = requestedModel 
+  const modelsToTry = requestedModel
     ? [requestedModel, ...FREE_MODELS]
     : [...FREE_MODELS]
 
@@ -163,7 +163,7 @@ export async function generateContent(
           const error = new Error(
             `OpenRouter API error: ${response.status} ${response.statusText} - ${errorMessage}`
           )
-          
+
           // Don't retry on 401 (invalid API key)
           if (response.status === 401) {
             throw error
@@ -171,10 +171,10 @@ export async function generateContent(
 
           // Handle 400 errors - check if it's an invalid model ID (should fallback to next model)
           if (response.status === 400) {
-            const isInvalidModel = errorMessage.includes('is not a valid model ID') || 
-                                   errorMessage.includes('invalid model') ||
-                                   errorMessage.includes('model not found')
-            
+            const isInvalidModel = errorMessage.includes('is not a valid model ID') ||
+              errorMessage.includes('invalid model') ||
+              errorMessage.includes('model not found')
+
             if (isInvalidModel) {
               // Invalid model ID - try next model instead of retrying
               console.warn(`Model ${model} is invalid, trying next model in fallback chain`)
@@ -210,7 +210,7 @@ export async function generateContent(
         }
 
         const data: OpenRouterResponse = await response.json()
-        
+
         if (!data.choices || data.choices.length === 0) {
           // Non-retryable error: API returned invalid response
           // Try next model if available
@@ -252,7 +252,7 @@ export async function generateContent(
 
         // Check if it's a non-retryable API response error
         if (error instanceof Error && (
-          error.message.includes('no choices') || 
+          error.message.includes('no choices') ||
           error.message.includes('empty content')
         )) {
           // Already handled above, but if we get here, try next model
@@ -264,7 +264,7 @@ export async function generateContent(
 
         // Network errors or other retryable errors
         lastError = error instanceof Error ? error : new Error(String(error))
-        
+
         if (attempt < maxRetries - 1) {
           const delay = baseDelay * Math.pow(2, attempt) // Exponential backoff: 1s, 2s, 4s
           await new Promise(resolve => setTimeout(resolve, delay))

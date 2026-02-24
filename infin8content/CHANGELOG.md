@@ -2,6 +2,22 @@
 
 All notable changes to the Infin8Content platform will be documented in this file.
 
+## [2.1.0] - 2026-02-24
+
+### 🚀 Quota Telemetry & Concurrency Hardening
+- **Implemented**: Centralized `PLAN_LIMITS` configuration in `lib/config/plan-limits.ts`.
+- **Standardized**: All quota-related `403 Forbidden` responses now include structured metadata (`limit`, `usage`, `plan`, `metric`).
+- **Unified**: All usage tracking points (Articles, Keywords, CMS, Workflows) now emit `quota.*.limit_hit` telemetry logs.
+- **Refactored**: Workflow concurrency guard moved from execution layer to creation boundary for architectural integrity.
+- **Improved**: UI logic transformed technically-dry errors into "Upgrade" or "Deactivate" user pathways.
+- **Security**: Service role client usage hardened in quota enforcement layers.
+
+### 🧪 Technical Achievements
+- 100% Zero Drift Protocol compliance (no FSM or Worker logic changes).
+- Elimination of "self-blocking" race conditions on Starter plans.
+- High-impact modal upgrade flows for Article generation.
+- Consistent point-of-creation enforcement for active workflows.
+
 ## [2026-02-14] - DataForSEO Geo Consistency Release
 
 ### 🚀 New Features

@@ -4,10 +4,11 @@ import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/servic
 import { AuditAction } from '@/types/audit'
 import { isFeatureFlagEnabled } from '@/lib/utils/feature-flags'
 import { FEATURE_FLAG_KEYS } from '@/lib/types/feature-flag'
+import { PLAN_LIMITS } from '@/lib/config/plan-limits'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
-import type { 
-  CreateIntentWorkflowRequest, 
+import type {
+  CreateIntentWorkflowRequest,
   CreateIntentWorkflowResponse,
   IntentWorkflow
 } from '@/lib/types/intent-workflow'
@@ -73,10 +74,10 @@ export async function POST(request: Request) {
     // Parse and validate request body
     const body = await request.json()
     const validationResult = createWorkflowSchema.safeParse(body)
-    
+
     if (!validationResult.success) {
       return NextResponse.json(
-        { 
+        {
           error: 'Validation failed',
           details: validationResult.error.issues
         },
@@ -99,10 +100,10 @@ export async function POST(request: Request) {
 
     // Check if intent engine feature flag is enabled for this organization
     const isIntentEngineEnabled = await isFeatureFlagEnabled(
-      targetOrgId, 
+      targetOrgId,
       FEATURE_FLAG_KEYS.ENABLE_INTENT_ENGINE
     )
-    
+
     if (!isIntentEngineEnabled) {
       console.warn(`Intent engine not enabled for organization ${targetOrgId}`)
       return NextResponse.json(
@@ -132,6 +133,56 @@ export async function POST(request: Request) {
       )
     }
 
+    // --- Workflow Concurrency Guard (Phase 9 Refactor)
+    const plan = (currentUser.organizations?.plan || 'starter').toLowerCase() as keyof typeof PLAN_LIMITS.workflow_active
+    const workflowLimit = PLAN_LIMITS.workflow_active[plan]
+
+    if (workflowLimit !== null) {
+      const { count, error: countError } = await supabase
+        .from('intent_workflows')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', targetOrgId)
+        .not('state', 'in', '(completed,cancelled)')
+
+      if (countError) {
+        console.error('[Workflow Concurrency] Count failed:', countError)
+        return NextResponse.json(
+          { error: 'Failed to verify workflow limits' },
+          { status: 500 }
+        )
+      }
+
+      const activeCount = count ?? 0
+
+      if (activeCount >= workflowLimit) {
+        // 📊 QUOTA TELEMETRY
+        await logActionAsync({
+          orgId: targetOrgId,
+          userId: currentUser.id,
+          action: 'quota.workflow_active.limit_hit' as any,
+          details: {
+            plan,
+            currentActive: activeCount,
+            limit: workflowLimit,
+            metric: 'workflow_active',
+          },
+          ipAddress: extractIpAddress(request.headers),
+          userAgent: extractUserAgent(request.headers),
+        })
+
+        return NextResponse.json(
+          {
+            error: 'Active workflow limit reached for your plan',
+            limit: workflowLimit,
+            currentActive: activeCount,
+            plan,
+            metric: 'workflow_active',
+          },
+          { status: 403 }
+        )
+      }
+    }
+
     // Check for duplicate workflow name within the organization
     const { data: existingWorkflow, error: checkError } = await supabase
       .from('intent_workflows')
@@ -150,7 +201,7 @@ export async function POST(request: Request) {
     if (existingWorkflow) {
       const existing = existingWorkflow as unknown as { id: string; name: string }
       return NextResponse.json(
-        { 
+        {
           error: 'Workflow with this name already exists in your organization',
           existing_workflow: {
             id: existing.id,
@@ -286,7 +337,7 @@ export async function GET(request: Request) {
 
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
-    
+
     // Parse pagination parameters
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
