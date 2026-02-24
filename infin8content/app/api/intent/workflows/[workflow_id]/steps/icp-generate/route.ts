@@ -159,6 +159,7 @@ export async function POST(
         .select('id', { count: 'exact', head: true })
         .eq('organization_id', organizationId)
         .not('state', 'in', '(completed,cancelled)')
+        .neq('id', workflowId)
 
       if (error) {
         console.error('[Workflow Concurrency] Count failed:', error)
