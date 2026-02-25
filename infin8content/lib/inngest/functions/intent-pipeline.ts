@@ -327,11 +327,32 @@ export const step9Articles = inngest.createFunction(
     }
 
     try {
-      await queueArticlesForWorkflow(workflowId)
+      const queueingResult = await queueArticlesForWorkflow(workflowId)
+
+      // 🎯 AUTOMATION TRIGGER: Kick off generation for each newly created article
+      // This ensures we run the worker on the EXACT IDs that just had sections seeded.
+      if (queueingResult.articles && queueingResult.articles.length > 0) {
+        console.log(`[Step9] Triggering generation for ${queueingResult.articles.length} articles`)
+
+        // Batch trigger generation events
+        const generationEvents = queueingResult.articles.map(article => ({
+          name: 'article/generate',
+          data: {
+            articleId: article.id,
+            workflowId: workflowId
+          }
+        }))
+
+        await inngest.send(generationEvents)
+      }
 
       await transitionWithAutomation(workflowId, 'ARTICLES_SUCCESS', SYSTEM_USER_ID)
 
-      return { success: true, articlesQueued: true }
+      return {
+        success: true,
+        articlesQueued: queueingResult.articles_created,
+        articles: queueingResult.articles.map(a => a.id)
+      }
 
     } catch (error) {
       await transitionWithAutomation(workflowId, 'ARTICLES_FAILED', SYSTEM_USER_ID)
