@@ -107,7 +107,7 @@ export async function POST(request: Request) {
         }
 
         // 4. Set status and trigger generation
-        const { error: updateError } = await supabase
+        const { data: updatedRows, error: updateError } = await supabase
             .from('articles')
             .update({
                 status: 'generating',
@@ -115,10 +115,17 @@ export async function POST(request: Request) {
             })
             .eq('id', articleId)
             .eq('org_id', currentUser.org_id)
-            .eq('status', 'queued') // ATOMIC LOCK
+            .eq('status', 'queued') // ATOMIC LOCK Verification
+            .select('id')
 
         if (updateError) {
             return NextResponse.json({ error: 'Failed to update article status' }, { status: 500 })
+        }
+
+        if (!updatedRows || (updatedRows as any[]).length === 0) {
+            return NextResponse.json({
+                error: 'Article was already triggered by another process.'
+            }, { status: 409 })
         }
 
         // 5. Emit Inngest Event
