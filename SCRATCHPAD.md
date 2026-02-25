@@ -73,7 +73,8 @@
   12. **Research Model Upgrade & Robust Parsing**: Switched research agent to `openai/gpt-4o-mini` and implemented a non-greedy JSON extractor with explicit validation. This ensures 100% reliability in processing LLM research outputs.
   13. **Latency Optimization**: Removed artificial 500ms delays in the queuing layer, as Inngest concurrency and database atomic transitions now provide sufficient safety without performance penalties.
   14. **Clean Architecture**: Restored `WorkflowStepLayoutClient.tsx` to a clean UI-only state by removing all legacy polling and layout-level logic.
-- **Result:** Pipeline is now mathematically stable. JSON parsing is robust, concurrency is natively throttled per organization, and the system is free of arbitrary sleep statements.
+  15. **Memory Management Hardening**: Implemented `clearTimeout` in both Research and Writing agents to ensure background timers are destroyed immediately upon task completion or failure, eliminating memory leak risks in long-running worker processes.
+- **Result:** Pipeline is now mathematically stable. JSON parsing is robust, concurrency is natively throttled per organization, and the system is free of arbitrary sleep statements and orphaned timers.
 - **Zero Drift Protocol:** Verified; no changes to FSM machine, Inngest events, or DB schema.
 
 ---
