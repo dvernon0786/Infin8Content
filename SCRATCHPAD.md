@@ -63,8 +63,11 @@
   2. **Page Re-render Trigger**: Implemented `router.refresh()` in `Step9ArticlesForm.tsx` (Client component) upon detecting terminal state via polling. This forces the Server Component to re-render and hit the guard.
   3. **Audit Standardization**: Refactored `intent-audit-logger.ts` and `longtail-keyword-expander.ts` to use centralized `SYSTEM_USER_ID` constant, eliminating `actor_id` foreign key violations in background workers.
   4. **Worker Stability**: Hardened `generate-article.ts` by replacing brittle `.single()` calls with `.maybeSingle()` and improved error logging for organization lookups.
-  5. **Clean Architecture**: Removed all client-side layout hacks and polling-based redirects, restoring `WorkflowStepLayoutClient.tsx` to a clean UI-only state.
-- **Result:** 100% deterministic post-completion UX. As soon as the backend completes article queuing, the user is automatically and securely redirected to the dashboard.
+  5. **Section Seeding**: Modified `article-queuing-processor.ts` to automatically seed `article_sections` for each created article using subtopic data.
+  6. **ID Wiring & Automation**: Tied the `article/generate` trigger directly to the article IDs returned from the queuing processor. Articles now transition to `generating` immediately, ensuring the worker processes the correct records.
+  7. **Race Condition Mitigation**: Implemented a 500ms delay in Step 9 before triggering the Inngest worker to ensure database commit visibility for `article_sections`.
+  8. **Clean Architecture**: Restored `WorkflowStepLayoutClient.tsx` to a clean UI-only state by removing all legacy polling and layout-level logic.
+- **Result:** 100% deterministic article generation pipeline. As soon as a user approves content, the system seeds sections, waits for commit visibility, and kicks off parallel generation with exact ID mapping.
 - **Zero Drift Protocol:** Verified; no changes to FSM machine, Inngest events, or DB schema.
 
 ---
