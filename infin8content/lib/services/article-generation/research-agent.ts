@@ -169,7 +169,14 @@ async function executeResearchWithRetry(userPrompt: string) {
  */
 function parseResearchResponse(content: string): ResearchAgentOutput {
   try {
-    const parsed = JSON.parse(content)
+    // 🔍 Hardening: Extract JSON block if LLM included commentary
+    const jsonMatch = content.match(/\{[\s\S]*\}/)
+
+    if (!jsonMatch) {
+      throw new Error('No JSON object found in research response')
+    }
+
+    const parsed = JSON.parse(jsonMatch[0])
 
     // Validate structure
     if (!parsed.queries || !Array.isArray(parsed.queries)) {

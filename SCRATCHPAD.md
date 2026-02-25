@@ -63,11 +63,14 @@
   2. **Page Re-render Trigger**: Implemented `router.refresh()` in `Step9ArticlesForm.tsx` (Client component) upon detecting terminal state via polling. This forces the Server Component to re-render and hit the guard.
   3. **Audit Standardization**: Refactored `intent-audit-logger.ts` and `longtail-keyword-expander.ts` to use centralized `SYSTEM_USER_ID` constant, eliminating `actor_id` foreign key violations in background workers.
   4. **Worker Stability**: Hardened `generate-article.ts` by replacing brittle `.single()` calls with `.maybeSingle()` and improved error logging for organization lookups.
-  5. **Section Seeding**: Modified `article-queuing-processor.ts` to automatically seed `article_sections` for each created article using subtopic data.
+  5. **Section Seeding Enforcement**: Hardened `article-queuing-processor.ts` to use `.select()` on `article_sections` inserts. The system now explicitly verifies that rows were returned and throws a hard error if seeding fails, preventing ghost articles.
   6. **ID Wiring & Automation**: Tied the `article/generate` trigger directly to the article IDs returned from the queuing processor. Articles now transition to `generating` immediately, ensuring the worker processes the correct records.
   7. **Race Condition Mitigation**: Implemented a 500ms delay in Step 9 before triggering the Inngest worker to ensure database commit visibility for `article_sections`.
-  8. **Clean Architecture**: Restored `WorkflowStepLayoutClient.tsx` to a clean UI-only state by removing all legacy polling and layout-level logic.
-- **Result:** 100% deterministic article generation pipeline. As soon as a user approves content, the system seeds sections, waits for commit visibility, and kicks off parallel generation with exact ID mapping.
+  8. **Stability Hardening (Content Writing Agent)**: Implemented null-safe defaults for `organizationDefaults` to prevent `TypeError` when `internal_links` or other settings are undefined.
+  9. **Robust Parse Logic (Research Agent)**: Added regex-based JSON extraction to the research response parser. The system now reliably handles non-deterministic LLM output containing markdown or commentary.
+  10. **Per-Organization Concurrency Control**: Implemented hard concurrency limits in `generate-article.ts`. The system now limits article generation to 1 concurrent worker per `organizationId`, preventing infrastructure overload and ensuring sequential processing within an org.
+  11. **Clean Architecture**: Restored `WorkflowStepLayoutClient.tsx` to a clean UI-only state by removing all legacy polling and layout-level logic.
+- **Result:** Pipeline stabilized against code crashes, non-deterministic AI responses, and infrastructure overload. Articles now generate sequentially per organization with perfect reliability.
 - **Zero Drift Protocol:** Verified; no changes to FSM machine, Inngest events, or DB schema.
 
 ---

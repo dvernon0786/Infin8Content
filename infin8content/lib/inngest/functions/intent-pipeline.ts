@@ -327,19 +327,21 @@ export const step9Articles = inngest.createFunction(
     }
 
     try {
+      const organizationId = await getOrganizationId(workflowId)
       const queueingResult = await queueArticlesForWorkflow(workflowId)
 
       // 🎯 AUTOMATION TRIGGER: Kick off generation for each newly created article
       // This ensures we run the worker on the EXACT IDs that just had sections seeded.
       if (queueingResult.articles && queueingResult.articles.length > 0) {
-        console.log(`[Step9] Triggering generation for ${queueingResult.articles.length} articles`)
+        console.log(`[Step9] Triggering generation for ${queueingResult.articles.length} articles for org ${organizationId}`)
 
         // Batch trigger generation events
         const generationEvents = queueingResult.articles.map(article => ({
           name: 'article/generate',
           data: {
             articleId: article.id,
-            workflowId: workflowId
+            workflowId: workflowId,
+            organizationId: organizationId
           }
         }))
 

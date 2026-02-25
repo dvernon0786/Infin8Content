@@ -29,7 +29,10 @@ async function withRetries<T>(
 export const generateArticle = inngest.createFunction(
   {
     id: 'article/generate', // PRESERVED: Same function ID as original
-    concurrency: { limit: 5 }, // PRESERVED: Same concurrency limits
+    concurrency: {
+      limit: 1,
+      key: 'event.data.organizationId'
+    }
   },
   { event: 'article/generate' }, // PRESERVED: Same event name
   async ({ event, step }: any) => {
