@@ -6,7 +6,7 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { RetryPolicy, retryWithPolicy } from './retry-utils'
 import { emitAnalyticsEvent } from '../analytics/event-emitter'
-import { getOrganizationGeoOrThrow } from '@/lib/config/dataforseo-geo'
+import { getOrganizationGeoOrThrow, LANGUAGE_NAME_MAP } from '@/lib/config/dataforseo-geo'
 import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 import { logIntentAction } from './intent-audit-logger'
 import { AuditAction } from '@/types/audit'
@@ -287,6 +287,34 @@ function deduplicate(keywords: LongtailKeywordData[]): LongtailKeywordData[] {
 }
 
 /* -------------------------------------------------------------------------- */
+/*                             PAYLOAD BUILDER                                */
+/* -------------------------------------------------------------------------- */
+
+function buildGeoPayload(
+  endpoint: string,
+  seed: string,
+  locationCode: number,
+  languageCode: string
+) {
+  const base: any = {
+    keyword: seed,
+    location_code: locationCode
+  }
+
+  // SERP APIs use language_name
+  if (endpoint.startsWith('/serp/')) {
+    base.language_name = LANGUAGE_NAME_MAP[languageCode]
+  }
+
+  // DATAFORSEO LABS APIs use language_code
+  else if (endpoint.startsWith('/dataforseo_labs/')) {
+    base.language_code = languageCode
+  }
+
+  return [base]
+}
+
+/* -------------------------------------------------------------------------- */
 /*                             SOURCE FETCHERS                                */
 /* -------------------------------------------------------------------------- */
 
@@ -300,12 +328,8 @@ async function fetchSource(
   organizationId?: string
 ): Promise<LongtailKeywordData[]> {
 
-  const payload = [{
-    keyword: seed,
-    location_code: locationCode,
-    language_code: languageCode,
-    limit: 3
-  }]
+  const payload = buildGeoPayload(endpoint, seed, locationCode, languageCode)
+  payload[0].limit = 3
 
   try {
     const response = await retryWithPolicy(

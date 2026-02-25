@@ -24,11 +24,59 @@ export const LOCATION_CODE_MAP: Record<string, number> = {
 
 // Supported DataForSEO language codes (48 languages)
 export const SUPPORTED_LANGUAGE_CODES = new Set([
-  'ar','az','bg','bn','bs','cs','da','de','el','en','es',
-  'et','fi','fr','he','hi','hr','hu','hy','id','it','ja',
-  'ko','lt','lv','mk','ms','nb','nl','pl','pt','ro','ru',
-  'sk','sl','sq','sr','sv','th','tl','tr','uk','ur','vi'
+  'ar', 'az', 'bg', 'bn', 'bs', 'cs', 'da', 'de', 'el', 'en', 'es',
+  'et', 'fi', 'fr', 'he', 'hi', 'hr', 'hu', 'hy', 'id', 'it', 'ja',
+  'ko', 'lt', 'lv', 'mk', 'ms', 'nb', 'nl', 'pl', 'pt', 'ro', 'ru',
+  'sk', 'sl', 'sq', 'sr', 'sv', 'th', 'tl', 'tr', 'uk', 'ur', 'vi'
 ])
+
+// Supported DataForSEO language names (48 languages) - Required for SERP endpoints
+export const LANGUAGE_NAME_MAP: Record<string, string> = {
+  ar: 'Arabic',
+  az: 'Azerbaijani',
+  bg: 'Bulgarian',
+  bn: 'Bengali',
+  bs: 'Bosnian',
+  cs: 'Czech',
+  da: 'Danish',
+  de: 'German',
+  el: 'Greek',
+  en: 'English',
+  es: 'Spanish',
+  et: 'Estonian',
+  fi: 'Finnish',
+  fr: 'French',
+  he: 'Hebrew',
+  hi: 'Hindi',
+  hr: 'Croatian',
+  hu: 'Hungarian',
+  hy: 'Armenian',
+  id: 'Indonesian',
+  it: 'Italian',
+  ja: 'Japanese',
+  ko: 'Korean',
+  lt: 'Lithuanian',
+  lv: 'Latvian',
+  mk: 'Macedonian',
+  ms: 'Malay',
+  nb: 'Norwegian',
+  nl: 'Dutch',
+  pl: 'Polish',
+  pt: 'Portuguese',
+  ro: 'Romanian',
+  ru: 'Russian',
+  sk: 'Slovak',
+  sl: 'Slovenian',
+  sq: 'Albanian',
+  sr: 'Serbian',
+  sv: 'Swedish',
+  th: 'Thai',
+  tl: 'Tagalog',
+  tr: 'Turkish',
+  uk: 'Ukrainian',
+  ur: 'Urdu',
+  vi: 'Vietnamese'
+}
 
 // LEGACY resolvers - DO NOT EXPORT (fallback logic removed from production)
 function resolveLocationCode(region?: string): number {
