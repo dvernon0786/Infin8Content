@@ -311,6 +311,10 @@ function buildGeoPayload(
     base.language_code = languageCode
   }
 
+  else {
+    throw new Error(`Unsupported DataForSEO endpoint family: ${endpoint}`)
+  }
+
   return [base]
 }
 
