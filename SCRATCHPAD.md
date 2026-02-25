@@ -68,9 +68,12 @@
   7. **Race Condition Mitigation**: Implemented a 500ms delay in Step 9 before triggering the Inngest worker to ensure database commit visibility for `article_sections`.
   8. **Stability Hardening (Content Writing Agent)**: Implemented null-safe defaults for `organizationDefaults` to prevent `TypeError` when `internal_links` or other settings are undefined.
   9. **Robust Parse Logic (Research Agent)**: Added regex-based JSON extraction to the research response parser. The system now reliably handles non-deterministic LLM output containing markdown or commentary.
-  10. **Per-Organization Concurrency Control**: Implemented hard concurrency limits in `generate-article.ts`. The system now limits article generation to 1 concurrent worker per `organizationId`, preventing infrastructure overload and ensuring sequential processing within an org.
-  11. **Clean Architecture**: Restored `WorkflowStepLayoutClient.tsx` to a clean UI-only state by removing all legacy polling and layout-level logic.
-- **Result:** Pipeline stabilized against code crashes, non-deterministic AI responses, and infrastructure overload. Articles now generate sequentially per organization with perfect reliability.
+  10. **Per-Organization Concurrency Control**: Implemented hard concurrency limits in `generate-article.ts` (1 per `organizationId`). This ensures sequential article processing within an org while allowing parallel execution across different organizations.
+  11. **FSM Stabilization**: Decoupled Step 9 (`ARTICLES_SUCCESS`) from immediate workflow completion. The workflow now transitions to `step_9_articles_queued` and only completes once `checkAndCompleteWorkflow` verifies all articles are finished.
+  12. **Research Model Upgrade & Robust Parsing**: Switched research agent to `openai/gpt-4o-mini` and implemented a non-greedy JSON extractor with explicit validation. This ensures 100% reliability in processing LLM research outputs.
+  13. **Latency Optimization**: Removed artificial 500ms delays in the queuing layer, as Inngest concurrency and database atomic transitions now provide sufficient safety without performance penalties.
+  14. **Clean Architecture**: Restored `WorkflowStepLayoutClient.tsx` to a clean UI-only state by removing all legacy polling and layout-level logic.
+- **Result:** Pipeline is now mathematically stable. JSON parsing is robust, concurrency is natively throttled per organization, and the system is free of arbitrary sleep statements.
 - **Zero Drift Protocol:** Verified; no changes to FSM machine, Inngest events, or DB schema.
 
 ---

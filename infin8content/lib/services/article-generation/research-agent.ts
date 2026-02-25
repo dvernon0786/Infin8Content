@@ -169,47 +169,59 @@ async function executeResearchWithRetry(userPrompt: string) {
  */
 function parseResearchResponse(content: string): ResearchAgentOutput {
   try {
-    // 🔍 Hardening: Extract JSON block if LLM included commentary
-    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    // Trim whitespace
+    const trimmed = content.trim()
 
-    if (!jsonMatch) {
+    // Fast path: direct JSON
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      const parsed = JSON.parse(trimmed)
+      return validateResearch(parsed)
+    }
+
+    // Extract first valid JSON object safely
+    const firstBrace = trimmed.indexOf('{')
+    const lastBrace = trimmed.lastIndexOf('}')
+
+    if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
       throw new Error('No JSON object found in research response')
     }
 
-    const parsed = JSON.parse(jsonMatch[0])
+    const candidate = trimmed.slice(firstBrace, lastBrace + 1)
+    const parsed = JSON.parse(candidate)
 
-    // Validate structure
-    if (!parsed.queries || !Array.isArray(parsed.queries)) {
-      throw new Error('Invalid research response: missing queries array')
-    }
+    return validateResearch(parsed)
 
-    if (!parsed.results || !Array.isArray(parsed.results)) {
-      throw new Error('Invalid research response: missing results array')
-    }
-
-    // Validate each result has required fields
-    for (const result of parsed.results) {
-      if (!result.query || typeof result.query !== 'string') {
-        throw new Error('Invalid research response: result missing query')
-      }
-      if (!result.answer || typeof result.answer !== 'string') {
-        throw new Error('Invalid research response: result missing answer')
-      }
-      if (!result.citations || !Array.isArray(result.citations)) {
-        throw new Error('Invalid research response: result missing citations array')
-      }
-    }
-
-    return {
-      queries: parsed.queries,
-      results: parsed.results,
-      totalSearches: parsed.total_searches || parsed.queries.length
-    }
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new Error('Invalid JSON response from research service')
-    }
-    throw error
+    throw new Error('Invalid JSON response from research service')
   }
 }
+
+function validateResearch(parsed: any): ResearchAgentOutput {
+  if (!Array.isArray(parsed.queries)) {
+    throw new Error('Invalid research response: missing queries')
+  }
+
+  if (!Array.isArray(parsed.results)) {
+    throw new Error('Invalid research response: missing results')
+  }
+
+  for (const r of parsed.results) {
+    if (typeof r.query !== 'string') {
+      throw new Error('Invalid research result: missing query')
+    }
+    if (typeof r.answer !== 'string') {
+      throw new Error('Invalid research result: missing answer')
+    }
+    if (!Array.isArray(r.citations)) {
+      throw new Error('Invalid research result: missing citations')
+    }
+  }
+
+  return {
+    queries: parsed.queries,
+    results: parsed.results,
+    totalSearches: parsed.total_searches ?? parsed.queries.length
+  }
+}
+
 
