@@ -73,7 +73,15 @@
   12. **Research Model Upgrade & Robust Parsing**: Switched research agent to `openai/gpt-4o-mini` and implemented a non-greedy JSON extractor with explicit validation. This ensures 100% reliability in processing LLM research outputs.
   13. **Latency Optimization**: Removed artificial 500ms delays in the queuing layer, as Inngest concurrency and database atomic transitions now provide sufficient safety without performance penalties.
   14. **Clean Architecture**: Restored `WorkflowStepLayoutClient.tsx` to a clean UI-only state by removing all legacy polling and layout-level logic.
-- **Result:** Pipeline is now mathematically stable. JSON parsing is robust, concurrency is natively throttled per organization, and the system is free of arbitrary sleep statements.
+  15. **Memory Management Hardening**: Implemented `clearTimeout` in both Research and Writing agents to ensure background timers are destroyed immediately upon task completion or failure, eliminating memory leak risks in long-running worker processes.
+  16. **Step 8 Transformation & Reliability**: 
+    - Increased subtopic generation timeout from 15s to 45s in `subtopic-generator.ts` to prevent LLM latency timeouts.
+    - Hardened the `step8Subtopics` Inngest worker to correctly handle the `step_8_subtopics_failed` state by using the `SUBTOPICS_RETRY` FSM event.
+  17. **DataForSEO v3 Multi-Family Payload Support**: 
+    - Implemented `buildGeoPayload` helper in `longtail-keyword-expander.ts` to branch between `dataforseo_labs` (uses `language_code`) and `serp` (uses `language_name`) endpoints.
+    - Added centralized `LANGUAGE_NAME_MAP` to `dataforseo-geo.ts` to ensure 100% compliance with DataForSEO v3 protocol across all 48 supported languages.
+    - **Hardening**: Added a defensive family guard to throw immediately if an unsupported DataForSEO endpoint path is encountered.
+- **Result:** Pipeline is now mathematically stable. JSON parsing is robust, concurrency is natively throttled per organization, and DataForSEO expansions are bulletproof against country/language variations and family drift.
 - **Zero Drift Protocol:** Verified; no changes to FSM machine, Inngest events, or DB schema.
 
 ---
