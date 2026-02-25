@@ -43,7 +43,7 @@ export const generateArticle = inngest.createFunction(
     const article = await step.run('load-article', async () => {
       // 🔍 DIAGNOSTIC: Verify database environment and ID alignment
       console.log('SUPABASE URL (Worker Context):', process.env.NEXT_PUBLIC_SUPABASE_URL)
-      console.log('Attempting to load article with ID:', articleId)
+      console.log('🔥🔥🔥 [Worker] Processing article ID:', articleId)
 
       const { data, error } = await supabase
         .from('articles' as any)
@@ -58,11 +58,13 @@ export const generateArticle = inngest.createFunction(
 
       const row = data?.[0]
       if (!row) {
+        console.error('❌❌❌ [Worker] Article NOT FOUND in database:', articleId)
         throw new Error(`Article ${articleId} not found`)
       }
 
       // Type guard to ensure we have the expected data structure
       const articleData = row as unknown as { id: string; org_id: string; status: string }
+      console.log(`[Worker] Article loaded status: ${articleData.status}`)
 
       // 🔴 PRODUCTION HARDENING: Idempotency against duplicate events
       // 🚨 AUDIT FIX: Adding 'failed' to terminal states to prevent retry loops

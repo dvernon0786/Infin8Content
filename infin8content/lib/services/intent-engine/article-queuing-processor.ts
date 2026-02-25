@@ -118,7 +118,7 @@ export async function queueArticlesForWorkflow(
           keyword: keyword.keyword,
           subtopic_data: keyword.subtopics, // Mapped 'subtopics' to 'subtopic_data'
           target_word_count: 2000,
-          status: 'queued',
+          status: 'generating',
           created_by: SYSTEM_USER_ID, // Worker context - system actor
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -204,6 +204,7 @@ export async function queueArticlesForWorkflow(
           keyword: typedArticle.keyword,
           status: typedArticle.status
         })
+        console.log(`[QueueArticles] Successfully created article ${typedArticle.id} with sections for keyword "${keyword.keyword}"`)
         queuedCount++
       }
     } catch (error) {
