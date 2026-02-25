@@ -153,7 +153,7 @@ async function executeResearchWithRetry(userPrompt: string) {
         content: userPrompt
       }
     ], {
-      model: 'perplexity/llama-3.1-sonar-small-128k-online',
+      model: 'openai/gpt-4o-mini',
       maxTokens: 2000,
       temperature: 0,
       maxRetries: 3,

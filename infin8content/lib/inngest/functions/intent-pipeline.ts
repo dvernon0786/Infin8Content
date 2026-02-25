@@ -330,6 +330,13 @@ export const step9Articles = inngest.createFunction(
       const organizationId = await getOrganizationId(workflowId)
       const queueingResult = await queueArticlesForWorkflow(workflowId)
 
+      // 🟠 PRODUCTION HARDENING: Prevent ghost triggers if no articles created
+      if (queueingResult.articles_created === 0) {
+        console.log(`[Step9] No articles created for workflow ${workflowId}, skipping generation trigger`)
+        await transitionWithAutomation(workflowId, 'ARTICLES_SUCCESS', SYSTEM_USER_ID)
+        return { success: true }
+      }
+
       // 🎯 AUTOMATION TRIGGER: Kick off generation for each newly created article
       // This ensures we run the worker on the EXACT IDs that just had sections seeded.
       if (queueingResult.articles && queueingResult.articles.length > 0) {
