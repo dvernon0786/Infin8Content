@@ -81,7 +81,10 @@
     - Implemented `buildGeoPayload` helper in `longtail-keyword-expander.ts` to branch between `dataforseo_labs` (uses `language_code`) and `serp` (uses `language_name`) endpoints.
     - Added centralized `LANGUAGE_NAME_MAP` to `dataforseo-geo.ts` to ensure 100% compliance with DataForSEO v3 protocol across all 48 supported languages.
     - **Hardening**: Added a defensive family guard to throw immediately if an unsupported DataForSEO endpoint path is encountered.
-- **Result:** Pipeline is now mathematically stable. JSON parsing is robust, concurrency is natively throttled per organization, and DataForSEO expansions are bulletproof against country/language variations and family drift.
+  18. **Competitor Seed Extraction Hardening**:
+    - **Fixed Bug**: Removed the unsupported `language_code` field from the DataForSEO `keywords_for_site/live` payload in `competitor-seed-extractor.ts`.
+    - **Result**: Resolved the `Invalid Field: 'language_code'` error, allowing competitor analysis to proceed correctly regardless of the organization's language settings.
+- **Result:** Pipeline is now mathematically stable. JSON parsing is robust, concurrency is natively throttled per organization, and DataForSEO expansions/extractions are bulletproof against country/language variations and family drift.
 - **Zero Drift Protocol:** Verified; no changes to FSM machine, Inngest events, or DB schema.
 
 ---
