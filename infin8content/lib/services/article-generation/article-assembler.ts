@@ -33,6 +33,7 @@ export class ArticleAssembler {
         .from('article_sections')
         .select('*', { count: 'exact', head: true })
         .eq('article_id', input.articleId)
+        .neq('status', 'failed') // 🔒 INTEGRITY: Exclude explicitly failed sections
 
       if (countError) throw countError
 
@@ -200,7 +201,7 @@ ${body}
   }) {
     // SINGLE AUTHORITY: Update sections and set terminal generation_completed_at.
     // The FSM transition to 'completed' happens in the Inngest worker.
-    const { error } = await this.supabaseAdmin
+    const { data, error } = await this.supabaseAdmin
       .from('articles')
       .update({
         sections: args.sections,
@@ -210,9 +211,15 @@ ${body}
       })
       .eq('id', args.articleId)
       .eq('status', 'generating') // 🔒 PRODUCTION GUARD: Prevent racing assembly updates
+      .select('id')
 
     if (error) {
       throw error
+    }
+
+    // 🔴 OBSERVABILITY: If 0 rows affected, it means the article wasn't in 'generating' state (Race condition)
+    if (!data || data.length === 0) {
+      throw new Error(`Assembly persistence skipped: Article ${args.articleId} is no longer in 'generating' state.`)
     }
   }
 }
