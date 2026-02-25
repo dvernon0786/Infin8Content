@@ -173,9 +173,11 @@ export async function queueArticlesForWorkflow(
           if (sectionError) {
             console.error(`Failed to create sections for article ${typedArticle.id}:`, sectionError)
             // Rollback article insertion to prevent ghost articles with no sections
+            console.log('[Queue] Rolling back article', typedArticle.id)
             await supabase.from('articles').delete().eq('id', typedArticle.id)
             continue
           }
+          console.log('[Queue] Inserted sections count:', sectionRows.length, 'for article:', typedArticle.id)
         } else {
           console.warn(`No subtopics found for keyword "${keyword.keyword}", skipping article creation.`)
           await supabase.from('articles').delete().eq('id', typedArticle.id)
