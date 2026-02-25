@@ -343,6 +343,9 @@ export const step9Articles = inngest.createFunction(
           }
         }))
 
+        // 🔎 PHASE 5 — Race Condition Check
+        await new Promise(r => setTimeout(r, 500))
+
         await inngest.send(generationEvents)
       }
 
