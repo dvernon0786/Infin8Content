@@ -256,8 +256,16 @@ export const step8Subtopics = inngest.createFunction(
   async ({ event }) => {
     const workflowId = event.data.workflowId
 
+    // Check state to properly handle retries
+    const { getWorkflowState } = await import('@/lib/fsm/unified-workflow-engine')
+    const currentState = await getWorkflowState(workflowId)
+
+    const startEvent = currentState === 'step_8_subtopics_failed'
+      ? 'SUBTOPICS_RETRY'
+      : 'SUBTOPICS_START'
+
     // Pure minimal: transition-driven only (no race window)
-    const start = await transitionWithAutomation(workflowId, 'SUBTOPICS_START', SYSTEM_USER_ID)
+    const start = await transitionWithAutomation(workflowId, startEvent, SYSTEM_USER_ID)
     if (!start.success) return { skipped: true }
 
     try {

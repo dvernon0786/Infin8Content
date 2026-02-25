@@ -59,7 +59,7 @@ interface OrganizationGeo {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SUBTOPIC_COUNT = 3
-const AI_TIMEOUT_MS = 15_000
+const AI_TIMEOUT_MS = 45_000
 const VALID_TYPES: SubtopicType[] = ['informational', 'commercial', 'transactional', 'navigational']
 const FALLBACK_TYPES: SubtopicType[] = ['informational', 'commercial', 'transactional']
 
@@ -123,7 +123,7 @@ export class KeywordSubtopicGenerator {
       ),
       this.rejectAfter<OpenRouterGenerationResult>(
         AI_TIMEOUT_MS,
-        `OpenRouter timed out after ${AI_TIMEOUT_MS}ms for keyword ${keywordId}` 
+        `OpenRouter timed out after ${AI_TIMEOUT_MS}ms for keyword ${keywordId}`
       ),
     ])
 
@@ -331,7 +331,7 @@ Return ONLY this JSON — no markdown fences, no explanation:
 
     return [
       { title: t[0], type: 'informational', keywords: [topic] },
-      { title: t[1], type: 'commercial',    keywords: [topic] },
+      { title: t[1], type: 'commercial', keywords: [topic] },
       { title: t[2], type: 'transactional', keywords: [topic] },
     ]
   }
@@ -352,7 +352,7 @@ Return ONLY this JSON — no markdown fences, no explanation:
       .from('keywords')
       .select(
         'id, keyword, seed_keyword, workflow_id, organization_id, ' +
-          'longtail_status, subtopics_status, main_intent, search_volume, detected_language'
+        'longtail_status, subtopics_status, main_intent, search_volume, detected_language'
       )
       .eq('id', keywordId)
       .single()
@@ -421,7 +421,7 @@ Return ONLY this JSON — no markdown fences, no explanation:
   ): Promise<void> {
     const { error } = await this.supabase.from('intent_audit_logs').insert({
       organization_id: organizationId,
-actor_id: SYSTEM_USER_ID, // System actor UUID
+      actor_id: SYSTEM_USER_ID, // System actor UUID
       action: 'subtopics_generated',
       entity_type: 'keyword',
       entity_id: keywordId,
@@ -430,7 +430,7 @@ actor_id: SYSTEM_USER_ID, // System actor UUID
 
     if (error) {
       console.warn(
-        `[KeywordSubtopicGenerator] Audit log failed for keyword ${keywordId}: ${error.message}` 
+        `[KeywordSubtopicGenerator] Audit log failed for keyword ${keywordId}: ${error.message}`
       )
     }
   }
