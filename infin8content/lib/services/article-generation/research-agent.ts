@@ -58,7 +58,29 @@ Provide comprehensive research with:
 4. Actionable insights
 
 Include citations for all claims.
-Limit searches to 10 maximum.`
+Limit searches to 10 maximum.
+
+You MUST return ONLY valid JSON in this exact format:
+
+{
+  "queries": string[],
+  "results": [
+    {
+      "query": string,
+      "answer": string,
+      "citations": string[]
+    }
+  ],
+  "total_searches": number
+}
+
+Rules:
+- Do not include markdown.
+- Do not include triple backticks.
+- Do not include explanations.
+- Do not include commentary.
+- Do not include any text before or after the JSON.
+- Return ONLY raw JSON.`;
 
 /**
  * Run research agent for a given section
@@ -72,10 +94,10 @@ export async function runResearchAgent(
   const { sectionHeader, sectionType, priorSections, organizationContext } = input
 
   // Build structured user prompt per story specification
-  const priorSectionsSummary = priorSections.length > 0 
+  const priorSectionsSummary = priorSections.length > 0
     ? priorSections.map(section => `- ${section.section_header}: ${section.section_type}`).join('\n')
     : 'No prior sections'
-  
+
   const organizationDescription = `${organizationContext.name} - ${organizationContext.description}${organizationContext.industry ? ` (${organizationContext.industry})` : ''}`
 
   const userPrompt = `Section: ${sectionHeader}
@@ -101,7 +123,7 @@ ${organizationDescription}`.trim()
 
     // Parse and validate response
     const researchData = parseResearchResponse(result.content)
-    
+
     // Enforce 10 search limit
     if (researchData.queries.length > 10) {
       researchData.queries = researchData.queries.slice(0, 10)
@@ -133,7 +155,7 @@ async function executeResearchWithRetry(userPrompt: string) {
     ], {
       model: 'perplexity/llama-3.1-sonar-small-128k-online',
       maxTokens: 2000,
-      temperature: 0.7,
+      temperature: 0,
       maxRetries: 3,
       retryDelay: 2000
     }),
@@ -148,12 +170,12 @@ async function executeResearchWithRetry(userPrompt: string) {
 function parseResearchResponse(content: string): ResearchAgentOutput {
   try {
     const parsed = JSON.parse(content)
-    
+
     // Validate structure
     if (!parsed.queries || !Array.isArray(parsed.queries)) {
       throw new Error('Invalid research response: missing queries array')
     }
-    
+
     if (!parsed.results || !Array.isArray(parsed.results)) {
       throw new Error('Invalid research response: missing results array')
     }

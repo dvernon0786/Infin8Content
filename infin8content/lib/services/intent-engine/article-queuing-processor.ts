@@ -166,18 +166,16 @@ export async function queueArticlesForWorkflow(
             }
           })
 
-          const { error: sectionError } = await supabase
+          const { data: insertedSections, error: sectionError } = await supabase
             .from('article_sections')
             .insert(sectionRows)
+            .select(); // REQUIRED
 
-          if (sectionError) {
-            console.error(`Failed to create sections for article ${typedArticle.id}:`, sectionError)
-            // Rollback article insertion to prevent ghost articles with no sections
-            console.log('[Queue] Rolling back article', typedArticle.id)
-            await supabase.from('articles').delete().eq('id', typedArticle.id)
-            continue
+          if (sectionError || !insertedSections || insertedSections.length === 0) {
+            throw new Error(
+              `Section seeding failed for article ${typedArticle.id}. Insert returned no rows.`
+            );
           }
-          console.log('[Queue] Inserted sections count:', sectionRows.length, 'for article:', typedArticle.id)
         } else {
           console.warn(`No subtopics found for keyword "${keyword.keyword}", skipping article creation.`)
           await supabase.from('articles').delete().eq('id', typedArticle.id)
