@@ -28,11 +28,20 @@ export class ArticleAssembler {
     })
 
     return retryWithPolicy(async () => {
+      // 1. Fetch total expected sections count
+      const { count: expectedSectionCount, error: countError } = await this.supabaseAdmin
+        .from('article_sections')
+        .select('*', { count: 'exact', head: true })
+        .eq('article_id', input.articleId)
+
+      if (countError) throw countError
+
       const article = await this.loadArticle(input)
       const sections = await this.loadSections(input)
 
-      if (!sections.length) {
-        throw new Error('No completed sections found')
+      // 🔴 ENTERPRISE VALIDATION: Ensure all sections are present before assembly
+      if (!sections.length || sections.length !== expectedSectionCount) {
+        throw new Error(`Assembly failed: Expected ${expectedSectionCount} sections, but found ${sections.length} completed sections.`)
       }
 
       const toc = this.buildTOC(sections)
@@ -42,12 +51,17 @@ export class ArticleAssembler {
       const wordCount = this.countWords(markdown)
       const readingTimeMinutes = Math.ceil(wordCount / 200)
 
+      // Normalize sections into canonical JSONB structure
+      const sectionsJson = sections.map((s: any) => ({
+        header: s.section_header,
+        markdown: s.content_markdown,
+        html: s.content_html,
+        order: s.section_order
+      }))
+
       await this.persistResult({
         articleId: input.articleId,
-        markdown,
-        html,
-        wordCount,
-        readingTimeMinutes
+        sections: sectionsJson
       })
 
       // Exact contract analytics events only
@@ -74,16 +88,11 @@ export class ArticleAssembler {
       .from('articles')
       .select('id, title, status')
       .eq('id', articleId)
-      .eq('org_id', organizationId) // FIXED: organization_id -> org_id
+      .eq('org_id', organizationId)
       .single()
 
     if (error || !data) {
       throw new Error('Article not found or access denied')
-    }
-
-    // Assertion: Article should be in generating state
-    if (data.status !== 'generating') {
-      logger.warn('Article not in generating state during assembly', data)
     }
 
     return data
@@ -92,9 +101,8 @@ export class ArticleAssembler {
   private async loadSections({ articleId }: AssemblyInput) {
     const { data, error } = await this.supabaseAdmin
       .from('article_sections')
-      .select('section_order, section_header, content_markdown, content_html') // FIXED: section_header matches schema
+      .select('section_order, section_header, content_markdown, content_html')
       .eq('article_id', articleId)
-      // organization_id removed: doesn't exist on article_sections
       .eq('status', 'completed')
       .order('section_order', { ascending: true })
 
@@ -167,7 +175,6 @@ ${body}
   }
 
   private countWords(markdown: string): number {
-    // Extract only the actual content words, not headers or TOC
     const contentLines = markdown.split('\n')
       .filter(line => !line.startsWith('#') && !line.startsWith('- [') && line.trim())
 
@@ -189,22 +196,20 @@ ${body}
 
   private async persistResult(args: {
     articleId: string
-    markdown: string
-    html: string
-    wordCount: number
-    readingTimeMinutes: number
+    sections: any[]
   }) {
-    // Update content ONLY. Status transition handled by Inngest worker.
+    // SINGLE AUTHORITY: Update sections and set terminal generation_completed_at.
+    // The FSM transition to 'completed' happens in the Inngest worker.
     const { error } = await this.supabaseAdmin
       .from('articles')
       .update({
-        content_markdown: args.markdown,
-        content_html: args.html,
-        word_count: args.wordCount,
-        reading_time_minutes: args.readingTimeMinutes,
+        sections: args.sections,
+        status: 'completed', // Assembler marks the ARTICLE row as completed
+        generation_completed_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .eq('id', args.articleId)
+      .eq('status', 'generating') // 🔒 PRODUCTION GUARD: Prevent racing assembly updates
 
     if (error) {
       throw error

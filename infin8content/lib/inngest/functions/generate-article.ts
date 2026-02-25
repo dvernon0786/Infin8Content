@@ -288,11 +288,6 @@ export const generateArticle = inngest.createFunction(
     /* -------------------------------------------------- */
 
     await step.run('complete-article', async () => {
-      await supabase
-        .from('articles')
-        .update({ status: 'completed' })
-        .eq('id', articleId)
-
       // CANONICAL COMPLETION: Check if all articles are done and mark workflow terminal
       const workflowId = (event.data as any).workflowId
       if (workflowId) {
@@ -355,6 +350,7 @@ async function checkAndCompleteWorkflow(
 
     // If no incomplete articles, complete workflow via FSM transition
     if (!incompleteArticles || incompleteArticles.length === 0) {
+      console.log(`[WorkflowCompletion] Workflow ${workflowId} successfully transitioned to completed`)
       await transitionWithAutomation(workflowId, 'WORKFLOW_COMPLETED', SYSTEM_USER_ID)
     }
   } catch (error) {
