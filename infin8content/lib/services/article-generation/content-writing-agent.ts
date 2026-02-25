@@ -75,8 +75,9 @@ export async function runContentWritingAgent(
     let lastError;
 
     // Create timeout promise (60 seconds)
+    let timeoutId: NodeJS.Timeout | undefined;
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Content writing timeout: 60 seconds exceeded')), 60000)
+      timeoutId = setTimeout(() => reject(new Error('Content writing timeout: 60 seconds exceeded')), 60000)
     });
 
     for (let attempt = 1; attempt <= 3; attempt++) {
@@ -88,10 +89,13 @@ export async function runContentWritingAgent(
           generateContent(messages, {
             maxTokens: 2000,
             temperature: 0.7,
-            model: 'perplexity/sonar'
+            model: 'openai/gpt-4o-mini' // HARDENED: Use mini for prose stability too if needed
           }),
           timeoutPromise
         ]);
+
+        // 🛡️ Cleanup: Stop the timer if writing succeeded
+        if (timeoutId) clearTimeout(timeoutId);
 
         console.log(`Content writing succeeded on attempt ${attempt}`);
         break; // Success
@@ -104,6 +108,8 @@ export async function runContentWritingAgent(
           console.log(`Retrying in ${delayMs}ms...`);
           await new Promise(resolve => setTimeout(resolve, delayMs));
         } else if (attempt === 3) {
+          // 🛡️ Cleanup: Ensure timer is cleared on final failure
+          if (timeoutId) clearTimeout(timeoutId);
           console.error('All retry attempts exhausted');
           break;
         }
