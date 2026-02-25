@@ -4,12 +4,12 @@ import {
 } from '@/lib/llm/prompts/content-writing.prompt';
 import { assertPromptIntegrity, assertNoUnresolvedPlaceholders } from '@/lib/llm/prompts/assert-prompt-integrity';
 import { generateContent, type OpenRouterMessage } from '@/lib/services/openrouter/openrouter-client';
-import type { 
-  ResearchPayload, 
-  ArticleSection, 
-  ContentWritingAgentInput, 
+import type {
+  ResearchPayload,
+  ArticleSection,
+  ContentWritingAgentInput,
   ContentWritingAgentOutput,
-  ContentDefaults 
+  ContentDefaults
 } from '@/types/article';
 
 export async function runContentWritingAgent(
@@ -23,7 +23,7 @@ export async function runContentWritingAgent(
   );
 
   const startTime = Date.now();
-  
+
   try {
     // Build context from prior sections
     const priorSectionsMarkdown = input.priorSections
@@ -32,16 +32,24 @@ export async function runContentWritingAgent(
       .map(section => `## ${section.section_header}\n${section.content_markdown}`)
       .join('\n\n');
 
+    // Build context-aware defaults for writing
+    const defaults = {
+      tone: input.organizationDefaults?.tone ?? 'professional',
+      language: input.organizationDefaults?.language ?? 'en',
+      internal_links: input.organizationDefaults?.internal_links ?? true,
+      global_instructions: input.organizationDefaults?.global_instructions ?? ''
+    }
+
     // Build system prompt with variables
     const systemPrompt = CONTENT_WRITING_SYSTEM_PROMPT
       .replace('{section_header}', input.sectionHeader)
       .replace('{section_type}', input.sectionType)
       .replace('{research_results}', JSON.stringify(input.researchPayload, null, 2))
       .replace('{prior_sections_markdown}', priorSectionsMarkdown)
-      .replace('{tone}', input.organizationDefaults.tone)
-      .replace('{language}', input.organizationDefaults.language)
-      .replace('{internal_links}', input.organizationDefaults.internal_links.toString())
-      .replace('{global_instructions}', input.organizationDefaults.global_instructions);
+      .replace('{tone}', defaults.tone)
+      .replace('{language}', defaults.language)
+      .replace('{internal_links}', String(defaults.internal_links))
+      .replace('{global_instructions}', defaults.global_instructions);
 
     // 🔒 Runtime safety: verify all placeholders were resolved
     assertNoUnresolvedPlaceholders(systemPrompt);
@@ -65,16 +73,16 @@ export async function runContentWritingAgent(
     // Call LLM with fixed prompt and retry logic
     let result;
     let lastError;
-    
+
     // Create timeout promise (60 seconds)
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error('Content writing timeout: 60 seconds exceeded')), 60000)
     });
-    
+
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         console.log(`Content writing attempt ${attempt}/3`);
-        
+
         // Race between generation and timeout
         result = await Promise.race([
           generateContent(messages, {
@@ -84,13 +92,13 @@ export async function runContentWritingAgent(
           }),
           timeoutPromise
         ]);
-        
+
         console.log(`Content writing succeeded on attempt ${attempt}`);
         break; // Success
       } catch (error) {
         lastError = error;
         console.error(`Attempt ${attempt} failed:`, error);
-        
+
         if (attempt < 3 && isRetryableError(error)) {
           const delayMs = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
           console.log(`Retrying in ${delayMs}ms...`);
@@ -141,7 +149,7 @@ async function convertMarkdownToHtml(markdown: string): Promise<string> {
   };
 
   let html = escapeHtml(markdown);
-  
+
   // Process headers (must come before other patterns)
   html = html
     .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
@@ -162,7 +170,7 @@ async function convertMarkdownToHtml(markdown: string): Promise<string> {
     html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
     html = html.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
   }
-  
+
   const orderedListItems = html.match(/^\d+\. (.+)$/gm);
   if (orderedListItems) {
     html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
@@ -210,7 +218,7 @@ function isRetryableError(error: unknown): boolean {
       /ECONNRESET/i,
       /ETIMEDOUT/i
     ];
-    
+
     return retryablePatterns.some(pattern => pattern.test(error.message));
   }
   // Retry on unknown errors by default
