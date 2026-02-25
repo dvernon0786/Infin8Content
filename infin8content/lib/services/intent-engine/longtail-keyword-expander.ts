@@ -398,12 +398,7 @@ async function fetchSource(
       await logLongtailError(workflowId, organizationId, seed, 'API_CALL_FAILED', errorMessage, {
         source,
         endpoint,
-        payload: {
-          keyword: seed,
-          location_code: locationCode,
-          language_code: languageCode,
-          limit: 3
-        }
+        payload: payload[0]
       })
     }
 
