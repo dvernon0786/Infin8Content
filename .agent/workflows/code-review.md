@@ -34,12 +34,12 @@ This workflow guides you through submitting a completed story for code review.
    ```
 
 4. **Verify acceptance criteria**
-   - Review story file: `_bmad-output/stories/[story-id].yaml`
+   - Review story file: `_bmad-output/implementation-artifacts/[story-id].md`
    - Confirm all acceptance criteria are met
    - Test manually if needed
 
 5. **Update story status to `review`**
-   - Edit `_bmad-output/sprint-status.yaml`
+   - Edit `_bmad-output/implementation-artifacts/sprint-status.yaml`
    - Change story status from `in-progress` → `review`
 
 6. **Commit changes** (if using git)

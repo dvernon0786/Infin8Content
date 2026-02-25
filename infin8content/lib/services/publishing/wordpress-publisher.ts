@@ -30,9 +30,9 @@ export async function getExistingPublishReference(db: any, articleId: string) {
 export async function getArticleForPublishing(db: any, articleId: string, orgId: string) {
   return db
     .from('articles')
-    .select('title, content_html, status')
+    .select('title, sections, status')
     .eq('id', articleId)
-    .eq('organization_id', orgId)
+    .eq('org_id', orgId)
     .single()
 }
 
@@ -88,11 +88,16 @@ export async function publishArticleToWordPress(
       throw new Error(`Article not found: ${articleError?.message || 'Unknown error'}`)
     }
 
+    // Combine all sections into a single HTML body for publishing
+    const fullHtml = Array.isArray(article.sections)
+      ? article.sections.map((s: any) => s.html).join('\n')
+      : ''
+
     // 3. Publish via WordPress adapter
     const adapter = new WordPressAdapter(credentials)
     const result = await adapter.publishPost({
       title: article.title,
-      content: article.content_html,
+      content: fullHtml,
       status: 'publish'
     })
 
@@ -121,7 +126,7 @@ export async function publishArticleToWordPress(
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString()
     })
-    
+
     throw error
   }
 }

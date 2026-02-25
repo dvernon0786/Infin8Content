@@ -18,18 +18,18 @@ This workflow guides you through deploying the Infin8Content application.
 1. **Run pre-deployment checks**
    // turbo
    ```bash
-   cd /home/dghost/Infin8Content-1/infin8content && npm test
+   cd /home/dghost/Infin8Content/infin8content && npm test
    ```
 
 2. **Run linter**
    // turbo
    ```bash
-   cd /home/dghost/Infin8Content-1/infin8content && npm run lint
+   cd /home/dghost/Infin8Content/infin8content && npm run lint
    ```
 
 3. **Build production bundle**
    ```bash
-   cd /home/dghost/Infin8Content-1/infin8content && npm run build
+   cd /home/dghost/Infin8Content/infin8content && npm run build
    ```
 
 4. **Run database migrations** (if needed)

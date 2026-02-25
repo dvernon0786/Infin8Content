@@ -1,213 +1,153 @@
-import { createServiceRoleClient } from '@/lib/supabase/server'
-import { validateSupabaseEnv } from '@/lib/supabase/env'
+import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
-import { inngest } from '@/lib/inngest/client'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { AuditAction } from '@/types/audit'
 import { PLAN_LIMITS } from '@/lib/config/plan-limits'
-import { z } from 'zod'
+import { inngest } from '@/lib/inngest/client'
 import { NextResponse } from 'next/server'
 
 /**
- * Request schema — generation trigger only
+ * POST /api/articles/generate
+ * 
+ * Manually triggers article generation for a specific article.
+ * Enforces organizational isolation and plan-based quotas.
  */
-const articleGenerateSchema = z.object({
-  articleId: z.string().uuid('Invalid article ID'),
-})
-
-
 export async function POST(request: Request) {
-  try {
-    validateSupabaseEnv()
-
-    const body = await request.json()
-    const parsed = articleGenerateSchema.parse(body)
-
-    const currentUser = await getCurrentUser()
-    if (!currentUser || !currentUser.org_id) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-    }
-
-    const organizationId = currentUser.org_id
-    const userId = currentUser.id
-    const plan = currentUser.organizations?.plan || 'starter'
-    const supabaseAdmin = createServiceRoleClient()
-
-    // --------------------------------------------
-    // 1️⃣ Fetch Article + Validate Ownership
-    // --------------------------------------------
-    const { data: article, error: fetchError } = await (supabaseAdmin
-      .from('articles' as any)
-      .select('id, status, org_id')
-      .eq('id', parsed.articleId)
-      .single() as any)
-
-    if (fetchError || !article) {
-      return NextResponse.json({ error: 'Article not found' }, { status: 404 })
-    }
-
-    if (article.org_id !== organizationId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    if (article.status !== 'queued') {
-      return NextResponse.json(
-        { error: `Article is already ${article.status}` },
-        { status: 409 }
-      )
-    }
-
-    // --------------------------------------------
-    // 2️⃣ Quota Enforcement
-    // --------------------------------------------
-    const currentMonth = new Date().toISOString().slice(0, 7)
-
-    const { data: usageData, error: usageError } = await (supabaseAdmin
-      .from('usage_tracking' as any)
-      .select('usage_count')
-      .eq('organization_id', organizationId)
-      .eq('metric_type', 'article_generation')
-      .eq('billing_period', currentMonth)
-      .single() as any)
-
-    if (usageError && usageError.code !== 'PGRST116') {
-      console.error('[Article Generation] Usage check failed:', usageError)
-    }
-
-    const currentUsage = usageData?.usage_count || 0
-    const limit = PLAN_LIMITS.article_generation[plan as keyof typeof PLAN_LIMITS.article_generation]
-
-    if (limit !== null && currentUsage >= limit) {
-      // 📊 QUOTA TELEMETRY
-      await logActionAsync({
-        orgId: organizationId,
-        userId,
-        action: 'quota.article_generation.limit_hit' as any,
-        details: {
-          plan,
-          currentUsage,
-          limit,
-          metric: 'article_generation'
-        },
-        ipAddress: extractIpAddress(request.headers),
-        userAgent: extractUserAgent(request.headers),
-      })
-
-      return NextResponse.json(
-        {
-          error: "You've reached your article limit for this month",
-          currentUsage,
-          limit,
-          plan,
-          metric: 'article_generation'
-        },
-        { status: 403 }
-      )
-    }
-
-    // --------------------------------------------
-    // 3️⃣ Atomic Status Transition (CRITICAL)
-    // --------------------------------------------
-    const { data: updatedArticle } = await (supabaseAdmin
-      .from('articles' as any)
-      .update({
-        status: 'generating',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', parsed.articleId)
-      .eq('status', 'queued') // ensures atomicity
-      .select('id')
-      .single() as any)
-
-    if (!updatedArticle) {
-      return NextResponse.json(
-        { error: 'Article already processing or invalid state' },
-        { status: 409 }
-      )
-    }
-
-    // --------------------------------------------
-    // 4️⃣ Emit Inngest Event
-    // --------------------------------------------
-    let inngestEventId: string | null = null
-
     try {
-      const result = await inngest.send({
-        name: 'article/generate',
-        data: { articleId: parsed.articleId },
-      })
-
-      inngestEventId = result.ids?.[0] || null
-    } catch (inngestError) {
-      console.error('[Article Generation] Failed to send Inngest event:', inngestError)
-
-      // rollback status
-      await (supabaseAdmin
-        .from('articles' as any)
-        .update({ status: 'queued' })
-        .eq('id', parsed.articleId) as any)
-
-      return NextResponse.json(
-        { error: 'Failed to queue article generation' },
-        { status: 500 }
-      )
-    }
-
-    // Store Inngest event ID if available
-    if (inngestEventId) {
-      await (supabaseAdmin
-        .from('articles' as any)
-        .update({ inngest_event_id: inngestEventId })
-        .eq('id', parsed.articleId) as any)
-    }
-
-    // --------------------------------------------
-    // 5️⃣ Increment Usage
-    // --------------------------------------------
-    await (supabaseAdmin
-      .from('usage_tracking' as any)
-      .upsert(
-        {
-          organization_id: organizationId,
-          metric_type: 'article_generation',
-          billing_period: currentMonth,
-          usage_count: currentUsage + 1,
-          last_updated: new Date().toISOString(),
-        },
-        {
-          onConflict: 'organization_id,metric_type,billing_period',
+        const currentUser = await getCurrentUser()
+        if (!currentUser || !currentUser.org_id) {
+            return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
         }
-      ) as any)
 
-    // --------------------------------------------
-    // 6️⃣ Audit Log
-    // --------------------------------------------
-    logActionAsync({
-      orgId: organizationId,
-      userId,
-      action: 'article.generation.started',
-      details: { articleId: parsed.articleId },
-      ipAddress: extractIpAddress(request.headers),
-      userAgent: extractUserAgent(request.headers),
-    })
+        const body = await request.json()
+        const { articleId } = body
 
-    return NextResponse.json({
-      success: true,
-      articleId: parsed.articleId,
-      status: 'generating',
-    })
+        if (!articleId) {
+            return NextResponse.json({ error: 'Article ID is required' }, { status: 400 })
+        }
 
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: error.issues?.[0]?.message || 'Validation error' },
-        { status: 400 }
-      )
+        const supabase = await createClient()
+
+        // 1. Fetch article and verify ownership
+        const { data: articleData, error: fetchError } = await supabase
+            .from('articles')
+            .select('id, org_id, status, keyword, intent_workflow_id')
+            .eq('id', articleId)
+            .eq('org_id', currentUser.org_id)
+            .single()
+
+        if (fetchError || !articleData) {
+            return NextResponse.json({ error: 'Article not found' }, { status: 404 })
+        }
+
+        const article = (articleData as unknown) as {
+            id: string;
+            org_id: string;
+            status: string;
+            keyword: string;
+            intent_workflow_id: string;
+        }
+
+        // 2. Validate current status
+        if (article.status !== 'queued' && article.status !== 'failed') {
+            return NextResponse.json({
+                error: `Article is currently in ${article.status} state. Only queued or failed articles can be generated.`
+            }, { status: 400 })
+        }
+
+        // 3. Quota Enforcement
+        const plan = (currentUser.organizations?.plan || 'starter').toLowerCase() as keyof typeof PLAN_LIMITS.article_generation
+        const articleLimit = PLAN_LIMITS.article_generation[plan]
+
+        if (articleLimit !== null) {
+            // Get current month start
+            const startOfMonth = new Date()
+            startOfMonth.setDate(1)
+            startOfMonth.setHours(0, 0, 0, 0)
+
+            // Count articles generated this month via audit logs (canonical usage source)
+            const { count: usageCount, error: usageError } = await supabase
+                .from('audit_logs' as any)
+                .select('id', { count: 'exact', head: true })
+                .eq('organization_id', currentUser.org_id)
+                .eq('action', 'article.generation.started') // Audit logging event for worker start
+                .gte('created_at', startOfMonth.toISOString())
+
+            if (usageError) {
+                console.error('[Quota Check] Usage count failed:', usageError)
+                return NextResponse.json({ error: 'Failed to verify usage limits' }, { status: 500 })
+            }
+
+            const currentUsage = usageCount ?? 0
+
+            if (currentUsage >= articleLimit) {
+                // 📊 QUOTA TELEMETRY
+                await logActionAsync({
+                    orgId: currentUser.org_id,
+                    userId: currentUser.id,
+                    action: 'quota.article_generation.limit_hit' as any,
+                    details: {
+                        plan,
+                        currentUsage,
+                        limit: articleLimit,
+                        metric: 'article_generation',
+                    },
+                    ipAddress: extractIpAddress(request.headers),
+                    userAgent: extractUserAgent(request.headers),
+                })
+
+                return NextResponse.json({
+                    error: 'Monthly article limit reached',
+                    limit: articleLimit,
+                    currentUsage,
+                    plan,
+                    metric: 'article_generation',
+                }, { status: 403 })
+            }
+        }
+
+        // 4. Set status and trigger generation
+        const { error: updateError } = await supabase
+            .from('articles' as any)
+            .update({
+                status: 'generating',
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', articleId)
+            .eq('org_id', currentUser.org_id)
+
+        if (updateError) {
+            return NextResponse.json({ error: 'Failed to update article status' }, { status: 500 })
+        }
+
+        // 5. Emit Inngest Event
+        await inngest.send({
+            name: 'article/generate',
+            data: {
+                articleId,
+                workflowId: article.intent_workflow_id,
+                organizationId: article.org_id
+            }
+        })
+
+        // 6. Log Audit
+        await logActionAsync({
+            orgId: currentUser.org_id,
+            userId: currentUser.id,
+            action: AuditAction.ARTICLE_GENERATION_STARTED,
+            details: {
+                article_id: article.id,
+                keyword: article.keyword,
+                trigger: 'manual'
+            },
+            ipAddress: extractIpAddress(request.headers),
+            userAgent: extractUserAgent(request.headers),
+        })
+
+        return NextResponse.json({ success: true, status: 'generating' })
+
+    } catch (error) {
+        console.error('Unexpected error in POST /api/articles/generate:', error)
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
-
-    console.error('[Article Generation] Error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
 }

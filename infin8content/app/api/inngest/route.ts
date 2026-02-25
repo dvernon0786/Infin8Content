@@ -3,7 +3,7 @@ import { generateArticle } from '@/lib/inngest/functions/generate-article'
 import { cleanupStuckArticles } from '@/lib/inngest/functions/cleanup-stuck-articles'
 import { uxMetricsRollup } from '@/lib/inngest/functions/ux-metrics-rollup'
 import { inngest } from '@/lib/inngest/client'
-import { 
+import {
   step4Longtails,
   step5Filtering,
   step6Clustering,
@@ -12,6 +12,7 @@ import {
   step9Articles,
   workflowCompleted
 } from '@/lib/inngest/functions/intent-pipeline'
+import { articleScheduler } from '@/lib/inngest/functions/scheduler'
 
 // Validate environment variables at runtime
 const eventKey = process.env.INNGEST_EVENT_KEY
@@ -25,8 +26,8 @@ export const { GET, POST, PUT } = serve({
   client: inngest,
   signingKey: isTest ? undefined : process.env.INNGEST_SIGNING_KEY,
   functions: [
-    generateArticle, 
-    cleanupStuckArticles, 
+    generateArticle,
+    cleanupStuckArticles,
     uxMetricsRollup,
     step4Longtails,
     step5Filtering,
@@ -34,7 +35,8 @@ export const { GET, POST, PUT } = serve({
     step7Validation,
     step8Subtopics,
     step9Articles,
-    workflowCompleted
+    workflowCompleted,
+    articleScheduler
   ],
 })
 

@@ -2,6 +2,27 @@
 
 All notable changes to the Infin8Content platform will be documented in this file.
 
+## [2.3.0] - 2026-02-26
+### Added
+- **Separated Planning & Execution**: Decoupled article content planning from execution to support quota-governed platforms.
+- **Article Scheduler**: New Inngest cron service (`articleScheduler`) that processes queued articles every 30 minutes.
+- **Manual Generation Route**: Restored and hardened `/api/articles/generate` with real-time quota validation.
+- **Scheduling Schema**: Added `scheduled_at` to `articles` for prioritized background processing.
+
+### Changed
+- **Step 9 Article Queuing**: Now operates as a "Planning Only" stage, seeding data without triggering immediate AI writing.
+- **Keyword Lifecycle**: Added `ready` status to keywords to indicate approval for generation.
+
+## [2.2.0] - 2026-02-26
+
+### 🚀 Article Architecture Consolidation & Enterprise Hardening
+- **Consolidated**: Officially designated "Intent Engine + FSM + Inngest" as the single source of truth for article generation.
+- **Removed**: Deleted legacy queue-based systems (`lib/article-generation`), redundant API routes (`app/api/articles`), and legacy migrations to eliminate architectural drift.
+- **Normalized**: Updated `articles` table to use `org_id` and `intent_workflow_id`, and transition to storing content in a deterministic `sections` JSONB column.
+- **Hardened**: Implemented `status: 'generating'` guards and strict section-count validation in `ArticleAssembler` to prevent race conditions and partial assembly.
+- **Improved**: Added real-time production logging for terminal FSM transitions (`checkAndCompleteWorkflow`), resolving the Step 9 redirect hang.
+- **Standardized**: Aligned `ArticleAssembler` and `WordPressPublisher` with the new unified JSONB storage model.
+
 ## [2.1.1] - 2026-02-25
 
 ### 🚀 Audit Logging & Workflow UX Improvements

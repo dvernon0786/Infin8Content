@@ -90,12 +90,27 @@ supabase gen types typescript --project-id ybsgllsnaqkpxgdjdvcz > lib/supabase/d
 
 **Note:** The script method (Method 1) is recommended as it works reliably without requiring CLI project access privileges.
 
-## Current Migration File
-Location: `supabase/migrations/20260101124156_initial_schema.sql`
+## Article Architecture Consolidation Migration (2026-02-26)
 
-This migration creates:
-- `organizations` table (multi-tenant organization data)
-- `users` table (user data with org_id foreign key)
-- Indexes and constraints
-- Trigger for `updated_at` timestamp
+### 🚀 Purpose
+Consolidate to a single FSM-driven article generation system and normalize the database schema to eliminate architectural drift.
+
+### ⚠️ Critical Step: Schema Normalization
+This migration is **destructive** for legacy tables that are no longer used. It removes:
+- `article_generation_queue`
+- `article_usage`
+- `article_progress`
+
+It also renames `organization_id` to `org_id` in the `articles` table to match the production FSM engine.
+
+### How to Run
+1. Go to **SQL Editor** in Supabase Dashboard.
+2. Run the contents of `supabase/migrations/20260226090000_normalize_article_schema.sql`.
+3. Force a schema cache refresh by running:
+   ```sql
+   NOTIFY pgrst, 'reload schema';
+   ```
+
+### Verification
+Run the verification query found in the `SCRATCHPAD.md` or as described in the console logs to ensure all 8 core columns are present and `LOADED`.
 

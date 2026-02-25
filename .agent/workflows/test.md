@@ -11,7 +11,7 @@ This workflow runs all tests for the Infin8Content project.
 1. **Navigate to project directory**
    // turbo
    ```bash
-   cd /home/dghost/Infin8Content-1/infin8content
+   cd /home/dghost/Infin8Content/infin8content
    ```
 
 2. **Install dependencies** (if needed)
