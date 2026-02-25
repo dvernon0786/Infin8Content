@@ -115,7 +115,7 @@ export async function POST(request: Request) {
             })
             .eq('id', articleId)
             .eq('org_id', currentUser.org_id)
-            .eq('status', 'queued') // ATOMIC LOCK Verification
+            .in('status', ['queued', 'failed']) // ATOMIC LOCK Verification (Supports Retries)
             .select('id')
 
         if (updateError) {
