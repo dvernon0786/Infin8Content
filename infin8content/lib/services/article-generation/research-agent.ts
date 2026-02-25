@@ -110,8 +110,9 @@ Organization context:
 ${organizationDescription}`.trim()
 
   // Create timeout promise (30 seconds)
+  let timeoutId: NodeJS.Timeout | undefined = undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => reject(new Error('Research timeout: 30 seconds exceeded')), 30000)
+    timeoutId = setTimeout(() => reject(new Error('Research timeout: 30 seconds exceeded')), 30000)
   })
 
   try {
@@ -120,6 +121,9 @@ ${organizationDescription}`.trim()
       executeResearchWithRetry(userPrompt),
       timeoutPromise
     ])
+
+    // 🛡️ Cleanup: Stop the timer if research succeeded
+    if (timeoutId) clearTimeout(timeoutId)
 
     // Parse and validate response
     const researchData = parseResearchResponse(result.content)
@@ -133,6 +137,8 @@ ${organizationDescription}`.trim()
 
     return researchData
   } catch (error) {
+    // 🛡️ Cleanup: Ensure timer is cleared on failure too
+    if (timeoutId) clearTimeout(timeoutId)
     console.error('Research agent failed:', error)
     throw error
   }
