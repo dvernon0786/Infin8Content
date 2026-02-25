@@ -41,10 +41,6 @@ export const generateArticle = inngest.createFunction(
     /* -------------------------------------------------- */
 
     const article = await step.run('load-article', async () => {
-      // 🔍 DIAGNOSTIC: Verify database environment and ID alignment
-      console.log('SUPABASE URL (Worker Context):', process.env.NEXT_PUBLIC_SUPABASE_URL)
-      console.log('🔥🔥🔥 [Worker] Processing article ID:', articleId)
-
       const { data, error } = await supabase
         .from('articles' as any)
         .select('id, org_id, status')
@@ -64,7 +60,6 @@ export const generateArticle = inngest.createFunction(
 
       // Type guard to ensure we have the expected data structure
       const articleData = row as unknown as { id: string; org_id: string; status: string }
-      console.log(`[Worker] Article loaded status: ${articleData.status}`)
 
       // 🔴 PRODUCTION HARDENING: Idempotency against duplicate events
       // 🚨 AUDIT FIX: Adding 'failed' to terminal states to prevent retry loops
@@ -89,7 +84,6 @@ export const generateArticle = inngest.createFunction(
 
     const organization = await step.run('load-organization', async () => {
       const orgId = (article as any).org_id
-      console.log('Org ID being queried (Worker Context):', orgId)
 
       const { data, error } = await supabase
         .from('organizations')
@@ -221,6 +215,12 @@ export const generateArticle = inngest.createFunction(
                 status: 'completed',
               })
               .eq('id', section.id)
+
+            // 🔍 DIAGNOSTIC: Log section completion and current article status
+            console.log(`[Worker] Section ${section.section_order} (${section.section_header}) completed for article ${articleId}`)
+
+            // 🔍 DIAGNOSTIC: Add a small delay to help with observability in logs
+            await new Promise(resolve => setTimeout(resolve, 500));
           })
 
           // B-4: Add completed section to context for next sections
