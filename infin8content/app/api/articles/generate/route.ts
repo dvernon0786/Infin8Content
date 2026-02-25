@@ -108,13 +108,14 @@ export async function POST(request: Request) {
 
         // 4. Set status and trigger generation
         const { error: updateError } = await supabase
-            .from('articles' as any)
+            .from('articles')
             .update({
                 status: 'generating',
                 updated_at: new Date().toISOString()
             })
             .eq('id', articleId)
             .eq('org_id', currentUser.org_id)
+            .eq('status', 'queued') // ATOMIC LOCK
 
         if (updateError) {
             return NextResponse.json({ error: 'Failed to update article status' }, { status: 500 })
