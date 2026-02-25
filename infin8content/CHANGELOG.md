@@ -2,6 +2,17 @@
 
 All notable changes to the Infin8Content platform will be documented in this file.
 
+## [2.3.0] - 2026-02-26
+### Added
+- **Separated Planning & Execution**: Decoupled article content planning from execution to support quota-governed platforms.
+- **Article Scheduler**: New Inngest cron service (`articleScheduler`) that processes queued articles every 30 minutes.
+- **Manual Generation Route**: Restored and hardened `/api/articles/generate` with real-time quota validation.
+- **Scheduling Schema**: Added `scheduled_at` to `articles` for prioritized background processing.
+
+### Changed
+- **Step 9 Article Queuing**: Now operates as a "Planning Only" stage, seeding data without triggering immediate AI writing.
+- **Keyword Lifecycle**: Added `ready` status to keywords to indicate approval for generation.
+
 ## [2.2.0] - 2026-02-26
 
 ### 🚀 Article Architecture Consolidation & Enterprise Hardening

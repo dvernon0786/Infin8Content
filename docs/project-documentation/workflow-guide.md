@@ -1,18 +1,17 @@
 # Infin8Content Workflow Engine Documentation
 
-*Last Updated: 2026-02-20*  
-*System Version: v2.1.0 - Zero-Legacy FSM Architecture*
+*Last Updated: 2026-02-26*  
+*System Version: v2.3.0 - Transition-Driven Automation*
 
 ## Overview
 
-The Infin8Content Workflow Engine is a production-grade deterministic FSM (Finite State Machine) system that orchestrates the entire 9-step content creation pipeline, from initial research to final publication. It features zero-legacy architecture, human approval gates, and comprehensive audit trails.
+The Infin8Content Workflow Engine is a production-grade deterministic FSM (Finite State Machine) system that orchestrates the entire 9-step content creation pipeline. It features **Transition-Driven Automation**, where state changes automatically trigger background workers via Inngest, ensuring no partial states or race conditions.
 
-**Key Features:**
-- **Deterministic FSM**: Single state enum with legal transitions
-- **Zero-Legacy Design**: No status/current_step columns
-- **Atomic Transitions**: Database-level WHERE clause protection
-- **Human-in-the-Loop**: Approval gates at critical decision points
-- **Event-Driven**: Inngest functions for background automation
+### **Core Principles:**
+- **Deterministic FSM**: Single state enum with legal transitions.
+- **Atomic Transitions**: Database-level WHERE clause protection in `InternalWorkflowFSM.transition`.
+- **Structural Coupling**: The `AUTOMATION_GRAPH` in `unified-workflow-engine.ts` guarantees event emission for every required step.
+- **Human-in-the-Loop**: Explicit pauses at Step 3 (Seeds) and Step 8 (Subtopics) for user verification.
 
 ## FSM State Machine
 
@@ -124,9 +123,9 @@ The workflow engine is organized into 5 main epics, each containing multiple sto
 - `lib/services/article-generation/section-processor.ts`
 - `lib/services/publishing/wordpress-publisher.ts`
 
-## Automation Graph
+## Automation Graph & Chaining
 
-The automation graph defines which FSM events trigger background workers:
+The `AUTOMATION_GRAPH` in `lib/fsm/unified-workflow-engine.ts` is the single source of truth for all automated triggers.
 
 ```typescript
 export const AUTOMATION_GRAPH = {
@@ -139,9 +138,15 @@ export const AUTOMATION_GRAPH = {
   'FILTERING_SUCCESS': 'intent.step6.clustering',
   'CLUSTERING_SUCCESS': 'intent.step7.validation',
   'VALIDATION_SUCCESS': 'intent.step8.subtopics',
-  'ARTICLES_SUCCESS': 'WORKFLOW_COMPLETED',
 } as const
 ```
+
+### **Transition Pattern**
+Every automated worker follows a strict execution pattern:
+1. **Transition to START**: `transitionWithAutomation(workflowId, 'STEP_START', SYSTEM_USER_ID)`
+2. **Execute Business Logic**: Call specialized service (e.g., `expandSeedKeywordsToLongtails`).
+3. **Transition to SUCCESS**: `transitionWithAutomation(workflowId, 'STEP_SUCCESS', SYSTEM_USER_ID)`
+4. **Handle Failure**: Catch errors and trigger `transitionWithAutomation(workflowId, 'STEP_FAILED', SYSTEM_USER_ID)`.
 
 ## FSM Implementation
 

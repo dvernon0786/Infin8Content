@@ -84,7 +84,22 @@
   18. **Competitor Seed Extraction Hardening**:
     - **Fixed Bug**: Removed the unsupported `language_code` field from the DataForSEO `keywords_for_site/live` payload in `competitor-seed-extractor.ts`.
     - **Result**: Resolved the `Invalid Field: 'language_code'` error, allowing competitor analysis to proceed correctly regardless of the organization's language settings.
-- **Result:** Pipeline is now mathematically stable. JSON parsing is robust, concurrency is natively throttled per organization, and DataForSEO expansions/extractions are bulletproof against country/language variations and family drift.
+  19. **Article Architecture Consolidation**:
+    - **Decision**: Officially designated the "Intent Engine + FSM + Inngest" pipeline as the single source of truth for article generation.
+    - **Actions**: Deprecated legacy queue-based systems, normalized the `articles` table schema to use `org_id` and `intent_workflow_id`, and aligned the `ArticleAssembler` with a deterministic JSONB-based sections model.
+    - **Result**: Eliminated architectural "drift" between legacy migrations and production-grade FSM orchestration, ensuring stable Step 9 completion and redirects.
+  20. **Enterprise Hardening & Observability**:
+    - **Guards**: Added an observable guard to the assembler via `.select('id')`, throwing an error if 0 rows are affected to expose race conditions.
+    - **Validation**: Implemented an explicit section-count verification (excluding failed sections) in the `ArticleAssembler` to ensure no partial articles are assembled.
+    - **Observability**: Added production logs to the `checkAndCompleteWorkflow` helper to track terminal FSM transitions in real-time.
+
+21. **Step 9: Separation of Planning and Execution**:
+    - **Planning**: Updated `ArticleQueuingProcessor` to seed articles in `queued` status and keywords in `ready` status.
+    - **Execution Control**: Removed automatic generation trigger from Step 9 worker.
+    - **Manual Trigger**: Re-implemented `/api/articles/generate` with strict quota enforcement and ownership checks.
+    - **Scheduled Trigger**: Added `articleScheduler` Inngest cron (30 min) to pick up eligible articles while respecting organizational quotas.
+    - **Schema**: Added `scheduled_at` and optimized index for the scheduler.
+- **Result:** Pipeline is now mathematically stable and production-grade. JSON parsing is robust, concurrency is natively throttled per organization, and the system is protected against race conditions and partial states.
 - **Zero Drift Protocol:** Verified; no changes to FSM machine, Inngest events, or DB schema.
 
 ---

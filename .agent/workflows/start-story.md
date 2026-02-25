@@ -8,7 +8,7 @@ This workflow guides you through starting work on a new story from the sprint ba
 
 ## Prerequisites
 
-- Sprint status file exists at `_bmad-output/sprint-status.yaml`
+- Sprint status file exists at `_bmad-output/implementation-artifacts/sprint-status.yaml`
 - Story is in `ready-for-dev` or `backlog` status
 - Previous story is completed or you have capacity for parallel work
 
@@ -16,19 +16,19 @@ This workflow guides you through starting work on a new story from the sprint ba
 
 1. **Review sprint status**
    ```bash
-   cat _bmad-output/sprint-status.yaml | grep -A 5 "development_status:"
+   cat _bmad-output/implementation-artifacts/sprint-status.yaml | grep -A 5 "development_status:"
    ```
 
 2. **Identify next story**
-   - Check Epic 1 for next `ready-for-dev` or `backlog` story
+   - Check the relevant epic for the next `ready-for-dev` or `backlog` story
    - Confirm story priority (P0 for MVP, P1 for post-MVP)
 
 3. **Read story file**
-   - Location: `_bmad-output/stories/[story-id].yaml`
+   - Location: `_bmad-output/implementation-artifacts/[story-id].md`
    - Review acceptance criteria and technical requirements
 
 4. **Update story status to `in-progress`**
-   - Edit `_bmad-output/sprint-status.yaml`
+   - Edit `_bmad-output/implementation-artifacts/sprint-status.yaml`
    - Change story status from `ready-for-dev` → `in-progress`
 
 5. **Create feature branch** (if using git)

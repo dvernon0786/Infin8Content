@@ -1,9 +1,8 @@
 {
   "workflow_version": "1.2.0",
   "timestamps": {
-    "started": "2026-01-23T09:44:00+11:00",
-    "last_updated": "2026-01-23T09:55:00+11:00",
-    "completed": "2026-01-23T09:55:00+11:00"
+    "started": "2026-02-26T07:54:00+11:00",
+    "last_updated": "2026-02-26T07:54:00+11:00"
   },
   "mode": "full_rescan",
   "scan_level": "deep",
@@ -13,68 +12,68 @@
     {
       "step": "step_1",
       "status": "completed",
-      "timestamp": "2026-01-23T09:45:00+11:00",
-      "summary": "Classified as monorepo with 3 parts"
+      "timestamp": "2026-02-26T07:55:00+11:00",
+      "summary": "Classified as monorepo with 3 parts: infin8content (web), tools (library), _bmad (framework)"
     },
     {
       "step": "step_2",
       "status": "completed",
-      "timestamp": "2026-01-23T09:46:00+11:00",
-      "summary": "Found 15 existing docs"
+      "timestamp": "2026-02-26T07:57:00+11:00",
+      "summary": "Found 467+ documentation files, including master index and specialized guides in docs/"
     },
     {
       "step": "step_3",
       "status": "completed",
-      "timestamp": "2026-01-23T09:47:00+11:00",
-      "summary": "Tech stack: Next.js 16.1.1, React 19.2.3, TypeScript"
+      "timestamp": "2026-02-26T07:58:00+11:00",
+      "summary": "Tech stack analyzed: Next.js 16, React 19, Supabase, Inngest, Stripe, OpenRouter"
     },
     {
       "step": "step_4",
       "status": "completed",
-      "timestamp": "2026-01-23T09:48:00+11:00",
-      "summary": "Conditional analysis complete, 2 files written"
+      "timestamp": "2026-02-26T08:02:00+11:00",
+      "summary": "Conditional analysis complete: 80+ API routes, 75 migrations (complex schema), 120+ components, and 16+ hooks documented"
     },
     {
       "step": "step_5",
       "status": "completed",
-      "timestamp": "2026-01-23T09:49:00+11:00",
-      "summary": "Source tree documented"
+      "timestamp": "2026-02-26T08:04:00+11:00",
+      "summary": "Source tree documented: Monorepo structure with 3 parts (infin8content, tools, _bmad)"
     },
     {
       "step": "step_6",
       "status": "completed",
-      "timestamp": "2026-01-23T09:50:00+11:00",
-      "summary": "Dev setup and deployment guides written"
+      "timestamp": "2026-02-26T08:06:00+11:00",
+      "summary": "Dev/operational info extracted: CI/CD workflows, utility scripts, and deployment configurations documented"
     },
     {
       "step": "step_7",
       "status": "completed",
-      "timestamp": "2026-01-23T09:51:00+11:00",
-      "summary": "Integration architecture documented"
+      "timestamp": "2026-02-26T08:08:00+11:00",
+      "summary": "Integration architecture analyzed: infin8content usage of _bmad and tools documented"
     },
     {
       "step": "step_8",
       "status": "completed",
-      "timestamp": "2026-01-23T09:52:00+11:00",
-      "summary": "Architecture docs written for infin8content"
+      "timestamp": "2026-02-26T08:10:00+11:00",
+      "summary": "Architecture documentation generated for infin8content"
     },
     {
       "step": "step_9",
       "status": "completed",
-      "timestamp": "2026-01-23T09:53:00+11:00",
-      "summary": "All supporting docs written"
+      "timestamp": "2026-02-26T08:12:00+11:00",
+      "summary": "Supporting guides (Overview, Dev, Deployment) generated"
     },
     {
       "step": "step_10",
       "status": "completed",
-      "timestamp": "2026-01-23T09:54:00+11:00",
-      "summary": "Master index generated"
+      "timestamp": "2026-02-26T08:14:00+11:00",
+      "summary": "Master index generated and links validated"
     },
     {
       "step": "step_11",
       "status": "completed",
-      "timestamp": "2026-01-23T09:55:00+11:00",
-      "summary": "Validation complete - no incomplete items"
+      "timestamp": "2026-02-26T08:16:00+11:00",
+      "summary": "Validation complete: all documentation artifacts verified and consistent"
     }
   ],
   "current_step": "completed",
@@ -84,39 +83,45 @@
       "parts_count": 3,
       "primary_tech": "Next.js"
     },
-    "existing_docs_count": 15,
+    "existing_docs_count": 467,
     "technology_stack": {
       "infin8content": {
         "framework": "Next.js 16.1.1",
-        "language": "TypeScript",
         "ui": "React 19.2.3",
+        "language": "TypeScript 5",
         "styling": "Tailwind CSS 4",
-        "database": "Supabase",
-        "payment": "Stripe",
-        "testing": "Vitest + Playwright"
+        "database": "Supabase (PostgreSQL)",
+        "jobs": "Inngest",
+        "payments": "Stripe",
+        "testing": "Vitest + Playwright + Storybook"
       },
       "tools": {
         "type": "ESLint Plugin",
         "language": "JavaScript",
-        "testing": "Jest"
+        "purpose": "Design system compliance"
       },
       "_bmad": {
-        "type": "Workflow Framework"
+        "type": "Workflow Framework",
+        "format": "YAML/Markdown"
       }
-    }
+    },
+    "api_count": 80,
+    "table_count": 10,
+    "component_count": 120
   },
   "outputs_generated": [
     "project-scan-report.json",
-    "api-contracts.md",
-    "data-models.md",
+    "api-contracts-infin8content.md",
+    "data-models-infin8content.md",
+    "component-inventory-infin8content.md",
     "source-tree-analysis.md",
-    "development-guide-infin8content-updated.md",
-    "integration-architecture-updated.md",
-    "architecture-infin8content-updated.md",
-    "component-inventory-infin8content-updated.md",
-    "index-updated.md"
+    "architecture-infin8content.md",
+    "project-overview.md",
+    "development-guide-infin8content.md",
+    "deployment-guide.md",
+    "index.md"
   ],
-  "resume_instructions": "Starting from step 1",
+  "resume_instructions": "Documentation complete. Use deep-dive for specific module analysis.",
   "project_types": [
     {
       "part_id": "infin8content",
@@ -126,26 +131,12 @@
     {
       "part_id": "tools",
       "project_type_id": "library",
-      "display_name": "Development Utilities"
+      "display_name": "Development Utilities (ESLint Plugin)"
     },
     {
       "part_id": "_bmad",
       "project_type_id": "framework",
       "display_name": "BMad Framework"
     }
-  ],
-  "validation": {
-    "incomplete_docs": [],
-    "all_links_valid": true,
-    "file_sizes": {
-      "api-contracts.md": 8,
-      "data-models.md": 12,
-      "source-tree-analysis.md": 10,
-      "development-guide-infin8content-updated.md": 15,
-      "integration-architecture-updated.md": 12,
-      "architecture-infin8content-updated.md": 20,
-      "component-inventory-infin8content-updated.md": 18,
-      "index-updated.md": 15
-    }
-  }
+  ]
 }
