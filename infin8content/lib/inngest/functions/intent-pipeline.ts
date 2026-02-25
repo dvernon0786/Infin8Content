@@ -345,23 +345,10 @@ export const step9Articles = inngest.createFunction(
         return { success: true }
       }
 
-      // 🎯 AUTOMATION TRIGGER: Kick off generation for each newly created article
-      // This ensures we run the worker on the EXACT IDs that just had sections seeded.
-      if (queueingResult.articles && queueingResult.articles.length > 0) {
-        console.log(`[Step9] Triggering generation for ${queueingResult.articles.length} articles for org ${organizationId}`)
-
-        // Batch trigger generation events
-        const generationEvents = queueingResult.articles.map(article => ({
-          name: 'article/generate',
-          data: {
-            articleId: article.id,
-            workflowId: workflowId,
-            organizationId: organizationId
-          }
-        }))
-
-        await inngest.send(generationEvents)
-      }
+      // 🟠 PRODUCTION HARDENING: Workflow transition to completed summary state
+      // FSM state 'step_9_articles_queued' allows the UI to show the final summary
+      // while the background scheduler or user manually kicks off generation.
+      console.log(`[Step9] Planning complete for workflow ${workflowId}. Articles remain in 'queued'.`)
 
       await transitionWithAutomation(workflowId, 'ARTICLES_SUCCESS', SYSTEM_USER_ID)
 
