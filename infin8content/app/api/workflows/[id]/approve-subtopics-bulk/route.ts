@@ -19,6 +19,14 @@ export async function POST(
             request.headers
         )
 
+        if (!result?.success) {
+            const errorResult = result as any
+            return NextResponse.json(
+                { error: errorResult?.error || 'Bulk approval failed' },
+                { status: 500 }
+            )
+        }
+
         return NextResponse.redirect(
             new URL('/dashboard/articles', request.url)
         )
