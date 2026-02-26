@@ -34,7 +34,7 @@ export class RealtimeDashboardService {
       enableFallback: true,
       ...config,
     };
-    
+
     this.status = {
       isConnected: false,
       isPolling: false,
@@ -68,11 +68,11 @@ export class RealtimeDashboardService {
         orgId: this.config.orgId,
         limit: (options.limit || 50).toString(),
       });
-      
+
       if (options.since) {
         params.append('since', options.since);
       }
-      
+
       if (options.status) {
         params.append('status', options.status);
       }
@@ -80,19 +80,19 @@ export class RealtimeDashboardService {
       const response = await fetch(`/api/articles/status?${params}`, {
         signal: this.abortController?.signal,
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch articles: ${response.statusText}`);
       }
 
       const data = await response.json();
-      
+
       this.updateStatus({
         lastUpdate: data.lastUpdated,
         errorCount: 0,
         lastError: null,
       });
-      
+
       return data;
     } catch (error) {
       this.handleError(error as Error);
@@ -115,7 +115,7 @@ export class RealtimeDashboardService {
         orgId: this.config.orgId,
         limit: (options.limit || 20).toString(),
       });
-      
+
       if (options.includeCompleted === false) {
         params.append('includeCompleted', 'false');
       }
@@ -123,19 +123,19 @@ export class RealtimeDashboardService {
       const response = await fetch(`/api/articles/queue?${params}`, {
         signal: this.abortController?.signal,
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch queue status: ${response.statusText}`);
       }
 
       const data = await response.json();
-      
+
       this.updateStatus({
         lastUpdate: new Date().toISOString(),
         errorCount: 0,
         lastError: null,
       });
-      
+
       return {
         articles: data.articles.map((article: any) => ({
           id: article.id,
@@ -162,11 +162,25 @@ export class RealtimeDashboardService {
   }> {
     try {
       const supabase = await createClient();
-      
+
       // Get article details
       const { data: article, error: articleError } = await (supabase
         .from('articles' as any)
-        .select('*')
+        .select(`
+          id,
+          org_id,
+          title,
+          keyword,
+          status,
+          created_at,
+          updated_at,
+          sections,
+          generation_started_at,
+          generation_completed_at,
+          error_details,
+          intent_workflow_id,
+          scheduled_at
+        `)
         .eq('id', articleId)
         .eq('org_id', this.config.orgId)
         .single() as unknown as Promise<{ data: any; error: any }>);
@@ -216,8 +230,8 @@ export class RealtimeDashboardService {
    * Update article status (internal use)
    */
   async updateArticleStatus(
-    articleId: string, 
-    status: string, 
+    articleId: string,
+    status: string,
     progress?: Partial<ArticleProgress>
   ): Promise<void> {
     try {
@@ -341,15 +355,15 @@ export class RealtimeDashboardService {
   } {
     // This would be enhanced with actual metrics tracking in a production implementation
     const isHealthy = this.status.errorCount < (this.config.maxRetries || 3);
-    const uptime = this.status.lastUpdate 
+    const uptime = this.status.lastUpdate
       ? Date.now() - new Date(this.status.lastUpdate).getTime()
       : 0;
-    
+
     return {
       isHealthy,
       uptime,
       averageResponseTime: 0, // Would be calculated from actual response times
-      successRate: this.status.errorCount > 0 
+      successRate: this.status.errorCount > 0
         ? Math.max(0, 1 - this.status.errorCount / 10) // Simplified calculation
         : 1,
     };
