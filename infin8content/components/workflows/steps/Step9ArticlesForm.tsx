@@ -16,9 +16,9 @@ export function Step9ArticlesForm({ workflowId, workflowState }: Step9ArticlesFo
   const router = useRouter()
 
   useEffect(() => {
-    // If the server-side state is already terminal, no need to refresh or poll
+    // 🚀 REDIRECT: Step 9 terminal state is queueing. Redirect to articles dashboard.
     if (workflowState === 'completed' || workflowState === 'step_9_articles_queued') {
-      setState('completed')
+      router.push('/dashboard/articles')
       return
     }
 
@@ -36,20 +36,11 @@ export function Step9ArticlesForm({ workflowId, workflowState }: Step9ArticlesFo
         const data = await res.json()
         const currentState = data.workflow?.state
 
-        if (currentState === 'completed') {
+        if (currentState === 'completed' || currentState === 'step_9_articles_queued') {
           setState('completed')
           clearInterval(interval)
-
-          // 🎯 CRITICAL: Trigger server refresh to let the guard handle terminal redirect.
-          // This forces the server component to re-render and hit the guard.
-          setTimeout(() => {
-            router.refresh()
-          }, 500)
-        }
-
-        if (currentState === 'step_9_articles_queued') {
-          setState('completed')
-          // No refresh on queued - wait for 'completed' for deterministic redirect
+          router.push('/dashboard/articles')
+          return
         }
 
         if (currentState === 'step_9_articles_failed') {
