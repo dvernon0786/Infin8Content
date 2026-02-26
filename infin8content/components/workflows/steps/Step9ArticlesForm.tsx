@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 interface Step9ArticlesFormProps {
   workflowId: string
@@ -14,6 +15,7 @@ export function Step9ArticlesForm({ workflowId, workflowState }: Step9ArticlesFo
   const [error, setError] = useState<string | null>(null)
 
   const router = useRouter()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     // 🚀 REDIRECT: Step 9 terminal state is queueing. Redirect to articles dashboard.
@@ -28,33 +30,34 @@ export function Step9ArticlesForm({ workflowId, workflowState }: Step9ArticlesFo
       return
     }
 
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/intent/workflows/${workflowId}`)
-        if (!res.ok) return
-
-        const data = await res.json()
-        const currentState = data.workflow?.state
-
-        if (currentState === 'completed' || currentState === 'step_9_articles_queued') {
-          setState('completed')
-          clearInterval(interval)
-          router.push('/dashboard/articles')
-          return
+    // 📡 REALTIME SUBSCRIPTION: Listen for workflow state changes directly
+    const channel = supabase
+      .channel(`workflow-status-${workflowId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'intent_workflows',
+          filter: `id=eq.${workflowId}`
+        },
+        (payload) => {
+          const newState = payload.new.state
+          if (newState === 'completed' || newState === 'step_9_articles_queued') {
+            setState('completed')
+            router.push('/dashboard/articles')
+          } else if (newState === 'step_9_articles_failed') {
+            setState('error')
+            setError('Article queuing failed.')
+          }
         }
+      )
+      .subscribe()
 
-        if (currentState === 'step_9_articles_failed') {
-          setState('error')
-          setError('Article queuing failed.')
-          clearInterval(interval)
-        }
-      } catch {
-        // ignore
-      }
-    }, 3000)
-
-    return () => clearInterval(interval)
-  }, [workflowId, workflowState, router])
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [workflowId, workflowState, router, supabase])
 
 
   return (
