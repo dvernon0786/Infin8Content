@@ -13,7 +13,7 @@ export const articleScheduler = inngest.createFunction(
         id: 'article-scheduler',
         concurrency: { limit: 1 }
     },
-    { cron: '*/30 * * * *' },
+    { cron: '0 0 * * *' },
     async ({ step }) => {
         const supabase = createServiceRoleClient()
 
