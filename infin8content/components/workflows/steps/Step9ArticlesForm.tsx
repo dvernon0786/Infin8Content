@@ -32,6 +32,21 @@ export function Step9ArticlesForm({ workflowId, workflowState }: Step9ArticlesFo
       return
     }
 
+    // 🛡️ MOUNT SAFETY GUARD: One-time direct check on mount to catch missed realtime events
+    async function checkCurrentState() {
+      const { data } = await supabase
+        .from('intent_workflows')
+        .select('state')
+        .eq('id', workflowId)
+        .single() as any
+
+      if (!redirectedRef.current && (data?.state === 'completed' || data?.state === 'step_9_articles_queued')) {
+        redirectedRef.current = true
+        router.push('/dashboard/articles')
+      }
+    }
+    checkCurrentState()
+
     // 📡 REALTIME SUBSCRIPTION: Listen for workflow state changes directly
     const channel = supabase
       .channel(`workflow-status-${workflowId}`)

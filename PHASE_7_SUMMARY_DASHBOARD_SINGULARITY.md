@@ -26,7 +26,7 @@ The `use-realtime-articles.ts` hook has been rewritten for clinical architectura
 - **Client Stability**: Memoized the Supabase client in `use-realtime-articles.ts` to ensure total stability of the subscription dependency array.
 - **Atomic Lock Safety**: Verified correct implement of atomic row-count verification in both the Manual Generate API and the Background Scheduler.
 - **Quota Telemetry Consistency**: Fixed a critical column mismatch bug (`organization_id` vs `org_id`) in quota-counting queries and integrated `logActionAsync` into the Scheduler to ensure automated triggers are canonically tracked in the monthly audit ledger.
-- **UI Redirect Alignment**: Hardened the Step 9 terminal redirect logic in `Step9ArticlesForm.tsx` to handle the decoupled `step_9_articles_queued` state via a pure Supabase Realtime subscription (removing REST polling), ensuring immediate zero-drift navigation to the Dashboard.
+- **UI Redirect Alignment**: Hardened the Step 9 terminal redirect logic in `Step9ArticlesForm.tsx` to handle the decoupled `step_9_articles_queued` state via a pure Supabase Realtime subscription (removing REST polling). Added a **Mount Safety Guard** directed database check to prevent UI stalls if the realtime event is missed due to session expiry or timing gaps.
 
 ## 🔍 Validation Results
 - **Atomic Safety**: ✅ TESTED. Illegal state transitions are rejected.
