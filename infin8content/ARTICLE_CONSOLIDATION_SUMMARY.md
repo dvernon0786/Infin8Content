@@ -34,6 +34,10 @@ Consolidate the diverse article generation systems into a single, high-performan
 - **WordPress Publisher**:
   - Updated to read from the new `sections` JSONB map.
   - Aligned with the `org_id` schema.
+- **Dashboard Hooks**:
+  - Deleted legacy `RealtimeDashboardService` abstraction.
+  - Rewrote `use-realtime-articles` to use direct Supabase RLS polling (`select` without wildcards).
+  - Eliminated legacy `/api/articles` polling routing to enforce Single Source of Truth.
 
 ### 3. Worker Orchestration ✅
 - **Generate Worker**:
