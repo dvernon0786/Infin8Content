@@ -4283,10 +4283,12 @@ Eliminate race conditions and architectural drift in the Article Engine by stric
 4. **Targeted DB Normalization**: Cleaned up the legacy database schema by dropping deprecated tracking fields (`current_section`, `inngest_event_id`, `generated_content`) and centralizing section structure via JSONB arrays.
 5. **Schema Cache Consistency**: Traced and eliminated wildcard database query `select('*')` inside the `RealtimeDashboardService` that was crashing the FSM due to obsolete column cache references (`PGRST204`).
 6. **Robust FSM Transitions**: Validated that `checkAndCompleteWorkflow` fires effectively only after entire article assembly succeeds, executing its terminal guard check perfectly and concluding the pipeline logically.
+7. **Frontend Dashboard Alignment**: Deleted legacy abstraction service `lib/services/dashboard/realtime-service.ts` and refactored `hooks/use-realtime-articles.ts` to connect to Supabase and subscribe to Realtime directly via RLS, enforcing the DB as the single source of truth.
 
 ### **Zero Drift Verification:**
 - ✅ Planners plan. Workers work. Decoupling achieved.
 - ✅ No duplicate event emissions.
+- ✅ Legacy wrapper layers eliminated.
 - ✅ Missing dashboard endpoints added natively (`/queue`, `/status`).
 - ✅ Wildcard selectors eliminated.
 - ✅ PostgREST cache (`NOTIFY pgrst, 'reload schema'`) synced.
@@ -4295,6 +4297,7 @@ Eliminate race conditions and architectural drift in the Article Engine by stric
 - **State Logic**: Deterministic FSM
 - **Execution Locks**: Hardware-verified Atomic Updates
 - **Pipeline Integrity**: 🔒 100% Sealed
+- **Data Fetching**: Pure Supabase React Hooks
 
 ---
 
