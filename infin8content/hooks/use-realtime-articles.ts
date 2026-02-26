@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { DashboardArticle, DashboardUpdateEvent } from '@/lib/supabase/realtime'
 
@@ -19,7 +19,7 @@ export function useRealtimeArticles({
   onError,
   onConnectionChange
 }: UseRealtimeArticlesOptions) {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const [articles, setArticles] = useState<DashboardArticle[]>([])
   const [isConnected, setIsConnected] = useState(false)
@@ -119,7 +119,7 @@ export function useRealtimeArticles({
           fetchArticlesRef.current()
         }
       )
-      .subscribe((status) => {
+      .subscribe((status: string) => {
         const connected = status === 'SUBSCRIBED'
         setIsConnected(connected)
         if (connectionChangeRef.current) {

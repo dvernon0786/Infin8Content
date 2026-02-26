@@ -70,7 +70,7 @@ export const articleScheduler = inngest.createFunction(
             const { count } = await supabase
                 .from('audit_logs' as any)
                 .select('id', { count: 'exact', head: true })
-                .eq('organization_id', article.org_id)
+                .eq('org_id', article.org_id)
                 .eq('action', 'article.generation.started')
                 .gte('created_at', startOfMonth.toISOString())
 
@@ -112,6 +112,21 @@ export const articleScheduler = inngest.createFunction(
                     articleId: article.id,
                     workflowId: article.intent_workflow_id,
                     organizationId: article.org_id
+                }
+            })
+
+            // 📊 QUOTA TELEMETRY: Log audit event for tracking monthly usage
+            // Use dummy values for IP/UA as this is a background system task
+            const { logActionAsync } = await import('@/lib/services/audit-logger')
+            const { AuditAction } = await import('@/types/audit')
+            await logActionAsync({
+                orgId: article.org_id,
+                userId: SYSTEM_USER_ID,
+                action: AuditAction.ARTICLE_GENERATION_STARTED,
+                details: {
+                    article_id: article.id,
+                    keyword: article.keyword,
+                    trigger: 'scheduler'
                 }
             })
 

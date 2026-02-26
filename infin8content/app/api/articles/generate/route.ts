@@ -69,7 +69,7 @@ export async function POST(request: Request) {
             const { count: usageCount, error: usageError } = await supabase
                 .from('audit_logs' as any)
                 .select('id', { count: 'exact', head: true })
-                .eq('organization_id', currentUser.org_id)
+                .eq('org_id', currentUser.org_id)
                 .eq('action', 'article.generation.started') // Audit logging event for worker start
                 .gte('created_at', startOfMonth.toISOString())
 
