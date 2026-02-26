@@ -19,7 +19,9 @@ export async function POST(
             request.headers
         )
 
-        return NextResponse.json(result)
+        return NextResponse.redirect(
+            new URL('/dashboard/articles', request.url)
+        )
     } catch (err: any) {
         console.error('Bulk subtopic approval error:', err)
 
