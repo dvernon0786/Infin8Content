@@ -27,40 +27,57 @@ export function useRealtimeArticles({
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
 
   const channelRef = useRef<any>(null)
+  const fetchingRef = useRef(false)
+
+  const dashboardUpdateRef = useRef(onDashboardUpdate)
+  const connectionChangeRef = useRef(onConnectionChange)
+  const errorRef = useRef(onError)
+
+  // Keep refs up to date without triggering re-renders/re-subscriptions
+  useEffect(() => {
+    dashboardUpdateRef.current = onDashboardUpdate
+    connectionChangeRef.current = onConnectionChange
+    errorRef.current = onError
+  }, [onDashboardUpdate, onConnectionChange, onError])
 
   /* ---------------------------------------- */
   /* Initial Fetch (Single Source of Truth)  */
   /* ---------------------------------------- */
 
   const fetchArticles = useCallback(async () => {
-    if (!orgId) return
+    if (!orgId || fetchingRef.current) return
+    fetchingRef.current = true
 
-    const { data, error } = await (supabase
-      .from('articles')
-      .select(`
-        id,
-        keyword,
-        title,
-        status,
-        created_at,
-        updated_at,
-        generation_started_at,
-        generation_completed_at,
-        error_details,
-        scheduled_at
-      `)
-      .eq('org_id', orgId)
-      .order('created_at', { ascending: false }) as any)
+    try {
+      const { data, error } = await (supabase
+        .from('articles')
+        .select(`
+          id,
+          keyword,
+          title,
+          status,
+          created_at,
+          updated_at,
+          generation_started_at,
+          generation_completed_at,
+          error_details,
+          scheduled_at
+        `)
+        .eq('org_id', orgId)
+        .order('created_at', { ascending: false }) as any)
 
-    if (error) {
-      setError(error)
-      if (onError) onError(error)
-      return
+      if (error) {
+        setError(error)
+        if (errorRef.current) errorRef.current(error)
+        return
+      }
+
+      setArticles(data || [])
+      setLastUpdated(new Date().toISOString())
+    } finally {
+      fetchingRef.current = false
     }
-
-    setArticles(data || [])
-    setLastUpdated(new Date().toISOString())
-  }, [orgId, supabase, onError])
+  }, [orgId, supabase])
 
   /* ---------------------------------------- */
   /* Realtime Subscription                   */
@@ -82,9 +99,9 @@ export function useRealtimeArticles({
           filter: `org_id=eq.${orgId}`
         },
         (payload: any) => {
-          // Trigger optional callback
-          if (onDashboardUpdate) {
-            onDashboardUpdate({
+          // Trigger optional callback using ref to avoid subscription churn
+          if (dashboardUpdateRef.current) {
+            dashboardUpdateRef.current({
               type: payload.eventType === 'INSERT' ? 'new_article' : 'status_change',
               articleId: payload.new?.id,
               status: payload.new?.status
@@ -98,7 +115,7 @@ export function useRealtimeArticles({
       .subscribe((status) => {
         const connected = status === 'SUBSCRIBED'
         setIsConnected(connected)
-        if (onConnectionChange) onConnectionChange(connected)
+        if (connectionChangeRef.current) connectionChangeRef.current(connected)
       })
 
     channelRef.current = channel
@@ -113,7 +130,7 @@ export function useRealtimeArticles({
       }
       clearInterval(interval)
     }
-  }, [orgId, fetchArticles, supabase, onDashboardUpdate, onConnectionChange])
+  }, [orgId, fetchArticles, supabase])
 
   return {
     articles,
