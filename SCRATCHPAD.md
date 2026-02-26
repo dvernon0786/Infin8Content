@@ -4289,6 +4289,7 @@ Eliminate race conditions and architectural drift in the Article Engine by stric
 - ✅ Planners plan. Workers work. Decoupling achieved.
 - ✅ No duplicate event emissions.
 - ✅ Legacy wrapper layers eliminated.
+- ✅ Missing dashboard endpoints added natively (`/queue`, `/status`).
 - ✅ Wildcard selectors eliminated.
 - ✅ PostgREST cache (`NOTIFY pgrst, 'reload schema'`) synced.
 

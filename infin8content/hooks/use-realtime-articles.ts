@@ -82,7 +82,6 @@ export function useRealtimeArticles({
   /* ---------------------------------------- */
   /* Realtime Subscription                   */
   /* ---------------------------------------- */
-
   useEffect(() => {
     if (!orgId) return
 
