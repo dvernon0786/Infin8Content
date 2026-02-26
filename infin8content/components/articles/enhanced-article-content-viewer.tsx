@@ -10,12 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { 
-  ExternalLink, 
-  FileText, 
-  TrendingUp, 
-  Target, 
-  BarChart3, 
+import {
+  ExternalLink,
+  FileText,
+  TrendingUp,
+  Target,
+  BarChart3,
   Download,
   AlertTriangle,
   CheckCircle,
@@ -45,14 +45,41 @@ interface SEOData {
   isLoading: boolean
 }
 
-export function EnhancedArticleContentViewer({ 
-  sections, 
-  articleId, 
+export function EnhancedArticleContentViewer({
+  sections,
+  articleId,
   articleTitle,
   primaryKeyword,
   secondaryKeywords = [],
   targetWordCount = 300
 }: EnhancedArticleContentViewerProps) {
+  // 🔒 Normalize section shape from DB (Architecture B resilience)
+  const normalizedSections = Array.isArray(sections)
+    ? sections.map((s: any, index: number) => ({
+      section_index: s.section_index ?? s.order ?? index,
+      section_type: s.section_type ?? 'h2',
+      title: s.title ?? s.header ?? '',
+      content:
+        typeof s.content === 'string'
+          ? s.content
+          : typeof s.markdown === 'string'
+            ? s.markdown
+            : typeof s.html === 'string'
+              ? s.html
+              : '',
+      word_count: s.word_count ?? 0,
+      quality_metrics: s.quality_metrics ?? null,
+      citations_included: s.citations_included ?? 0,
+      model_used: s.model_used ?? null,
+      research_sources: s.research_sources ?? []
+    }))
+    : []
+
+  // Sort sections by section_index to ensure correct order
+  const sortedSections = [...normalizedSections].sort(
+    (a, b) => (a.section_index ?? 0) - (b.section_index ?? 0)
+  )
+
   const [seoData, setSeoData] = useState<SEOData>({
     score: null,
     validation: null,
@@ -65,24 +92,24 @@ export function EnhancedArticleContentViewer({
 
   // Load SEO data when component mounts
   useEffect(() => {
-    if (sections && sections.length > 0) {
+    if (sortedSections && sortedSections.length > 0) {
       loadSEOData()
     }
   }, [sections, articleId])
 
   const loadSEOData = async () => {
     setSeoData(prev => ({ ...prev, isLoading: true }))
-    
+
     try {
-      // Combine all section content for SEO analysis
-      const fullContent = sections.map(section => section.content).join('\n\n')
-      
+      // Combine all section content for SEO analysis (using normalized sorted content)
+      const fullContent = sortedSections.map(section => section.content).join('\n\n')
+
       if (!fullContent || fullContent.trim().length === 0) {
         console.warn('No content available for SEO analysis')
         setSeoData(prev => ({ ...prev, isLoading: false }))
         return
       }
-      
+
       // Fetch all SEO data in parallel
       const [scoreResponse, validationResponse, recommendationsResponse, reportResponse] = await Promise.all([
         fetch('/api/seo/score', {
@@ -131,12 +158,12 @@ export function EnhancedArticleContentViewer({
           })
         })
       ])
-      
+
       // Check if all requests were successful
       if (!scoreResponse.ok) {
         throw new Error(`SEO score API failed: ${scoreResponse.status}`)
       }
-      
+
       // Parse responses
       const [scoreData, validationData, recommendationsData, reportData] = await Promise.all([
         scoreResponse.json(),
@@ -144,20 +171,20 @@ export function EnhancedArticleContentViewer({
         recommendationsResponse.json(),
         reportResponse.json()
       ])
-      
+
       // Extract actual data from wrapped responses
       const actualScoreData = scoreData.data || scoreData
       const actualValidationData = validationData.data || validationData
       const actualRecommendationsData = recommendationsData.data || recommendationsData
       const actualReportData = reportData.data || reportData
-      
+
       // Validate score data
       if (!actualScoreData || typeof actualScoreData.overallScore !== 'number' || isNaN(actualScoreData.overallScore)) {
         console.warn('Invalid SEO score data received:', actualScoreData)
         setSeoData(prev => ({ ...prev, isLoading: false }))
         return
       }
-      
+
       setSeoData({
         score: actualScoreData,
         validation: actualValidationData,
@@ -171,7 +198,7 @@ export function EnhancedArticleContentViewer({
     }
   }
 
-  if (!sections || sections.length === 0) {
+  if (!sortedSections || sortedSections.length === 0) {
     return (
       <Card>
         <CardContent className="pt-6">
@@ -182,9 +209,6 @@ export function EnhancedArticleContentViewer({
       </Card>
     )
   }
-
-  // Sort sections by section_index to ensure correct order
-  const sortedSections = [...sections].sort((a, b) => a.section_index - b.section_index)
 
   return (
     <div className="flex flex-col gap-6">
@@ -200,10 +224,9 @@ export function EnhancedArticleContentViewer({
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center p-4 bg-neutral-100 rounded-lg border border-neutral-200">
-                <div className={`text-2xl font-bold font-lato ${
-                  seoData.score.overallScore >= 80 ? 'text-neutral-700' :
+                <div className={`text-2xl font-bold font-lato ${seoData.score.overallScore >= 80 ? 'text-neutral-700' :
                   seoData.score.overallScore >= 60 ? 'text-neutral-700' : 'text-neutral-700'
-                }`}>
+                  }`}>
                   {Math.round(seoData.score.overallScore)}
                 </div>
                 <div className="text-sm font-lato text-neutral-600">Overall Score</div>
@@ -221,7 +244,7 @@ export function EnhancedArticleContentViewer({
                 <div className="text-sm font-lato text-neutral-600">Recommendations</div>
               </div>
             </div>
-            
+
             {/* Action Buttons */}
             <div className="flex gap-2 mt-4">
               <Button
@@ -260,7 +283,7 @@ export function EnhancedArticleContentViewer({
           </CardHeader>
           <CardContent className="space-y-6">
             {/* SEO Score Display */}
-            <SEOScoreDisplay 
+            <SEOScoreDisplay
               scoreResult={seoData.score}
               showDetails={true}
               compact={false}
@@ -303,7 +326,7 @@ export function EnhancedArticleContentViewer({
                     <div className="text-sm font-lato text-neutral-600">Errors</div>
                   </div>
                 </div>
-                
+
                 {/* Issues Summary */}
                 {seoData.validation.issues.length > 0 && (
                   <div className="space-y-2">
@@ -362,7 +385,7 @@ export function EnhancedArticleContentViewer({
 
       {/* Reports Section */}
       {showReports && seoData.report && (
-        <SEOReports 
+        <SEOReports
           report={seoData.report}
           onExport={(format) => {
             // Handle export functionality
@@ -456,7 +479,7 @@ export function EnhancedArticleContentViewer({
                       Research Sources ({section.research_sources.length})
                     </p>
                     <ul className="space-y-1 text-sm">
-                      {section.research_sources.slice(0, 5).map((source, idx) => {
+                      {section.research_sources.slice(0, 5).map((source: any, idx: number) => {
                         const urlValid = isValidUrl(source.url)
                         return (
                           <li key={idx}>
@@ -495,7 +518,7 @@ export function EnhancedArticleContentViewer({
           )
         })}
       </div>
-      
+
       {seoData.isLoading && (
         <Card>
           <CardContent className="pt-6">
@@ -545,11 +568,11 @@ function MarkdownRenderer({ content }: { content: string }) {
           // Validate URL before rendering
           const url = href || ''
           const urlValid = isValidUrl(url)
-          
+
           if (!urlValid) {
             return <span className="font-lato text-small text-neutral-600">{children}</span>
           }
-          
+
           return (
             <a
               href={url}
