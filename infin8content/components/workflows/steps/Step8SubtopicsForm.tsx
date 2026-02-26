@@ -81,8 +81,8 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
 
       if (!res.ok) throw new Error(body.error)
 
-      // Redirect to Step 9
-      window.location.href = `/workflows/${workflowId}/steps/9`
+      // Redirect to Articles Dashboard (Architecture B)
+      window.location.href = `/dashboard/articles`
 
     } catch (err: any) {
       setError(err.message)
@@ -116,7 +116,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
       ) {
         // If the workflow already moved on, automatically redirect to next step
         if (['step_9_articles', 'step_9_articles_running', 'step_9_articles_queued', 'completed'].includes(data.workflowState)) {
-          window.location.href = `/workflows/${workflowId}/steps/9`
+          window.location.href = `/dashboard/articles`
           return
         }
         setError(`Workflow not in Step 8 state (currently: ${data.workflowState})`)
@@ -277,8 +277,8 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
               setSuccess(`Bulk approval successful for ${selectedIds.length} items`)
               setSelectedIds([])
 
-              // Frontend routing fix: redirect to Step 9 since the workflow successfully progressed
-              window.location.href = `/workflows/${workflowId}/steps/9`
+              // Frontend routing fix: redirect to Articles Dashboard (Architecture B)
+              window.location.href = `/dashboard/articles`
             } catch (err: any) {
               setError(err.message)
             } finally {
@@ -432,7 +432,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
             <div>
               <h3 className="text-lg font-medium">Ready to Complete Step 8</h3>
               <p className="text-sm text-muted-foreground">
-                All subtopics have been approved. Click to proceed to Step 9 (Article Generation).
+                All subtopics have been approved. Click to proceed to the Articles Dashboard to monitor generation.
               </p>
             </div>
             <Button

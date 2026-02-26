@@ -57,7 +57,7 @@ export async function POST(
 
     // 3️⃣ Transition workflow (THIS triggers Step 9)
     console.log('🔍 DEBUG: Starting HUMAN_SUBTOPICS_APPROVED transition for workflow:', workflowId)
-    
+
     const result = await transitionWithAutomation(
       workflowId,
       'HUMAN_SUBTOPICS_APPROVED',
@@ -75,11 +75,9 @@ export async function POST(
 
     console.log('🔍 DEBUG: Transition successful, emitted event:', result.emittedEvent)
 
-    return NextResponse.json({
-      success: true,
-      nextState: 'step_9_articles',
-      emittedEvent: result.emittedEvent
-    })
+    return NextResponse.redirect(
+      new URL('/dashboard/articles', request.url)
+    )
 
   } catch (error: any) {
     console.error('Step 8 completion failed:', error)
