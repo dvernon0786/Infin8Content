@@ -2,7 +2,6 @@
 
 import ReactMarkdown from 'react-markdown'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ExternalLink, FileText } from 'lucide-react'
 import type { ArticleSection } from '@/lib/types/article'
@@ -38,8 +37,28 @@ export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
     )
   }
 
+  // 🔒 Normalize section shape from DB (Architecture B resilience)
+  const normalizedSections = Array.isArray(sections)
+    ? sections.map((s: any, index: number) => ({
+      section_index: s.section_index ?? s.order ?? index,
+      section_type: s.section_type ?? 'h2',
+      title: s.title ?? s.header ?? '',
+      content:
+        typeof s.content === 'string'
+          ? s.content
+          : typeof s.markdown === 'string'
+            ? s.markdown
+            : typeof s.html === 'string'
+              ? s.html
+              : '',
+      research_sources: Array.isArray(s.research_sources) ? s.research_sources : []
+    }))
+    : []
+
   // Sort sections by section_index to ensure correct order
-  const sortedSections = [...sections].sort((a, b) => a.section_index - b.section_index)
+  const sortedSections = [...normalizedSections].sort(
+    (a, b) => (a.section_index ?? 0) - (b.section_index ?? 0)
+  )
 
   return (
     <div className="flex flex-col gap-8">
@@ -47,7 +66,7 @@ export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
         const isH3 = section.section_type === 'h3'
 
         return (
-          <div key={section.section_index} className="flex flex-col gap-4">
+          <div key={`${section.section_index}-${index}`} className="flex flex-col gap-4">
             {/* Section Header */}
             {!isH3 && (
               <div className="flex items-start justify-between gap-4">
@@ -55,13 +74,6 @@ export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
                   <h2 className="text-2xl font-bold tracking-tight mb-2">
                     {section.title}
                   </h2>
-                </div>
-                <div className="flex items-center gap-2">
-                  {section.quality_metrics?.quality_passed && (
-                    <Badge variant="default" className="text-xs">
-                      Quality Passed
-                    </Badge>
-                  )}
                 </div>
               </div>
             )}
@@ -83,84 +95,47 @@ export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
               </CardContent>
             </Card>
 
-            {/* Section Metadata (collapsible or always visible) */}
-            {(section.research_sources && section.research_sources.length > 0) ||
-            section.quality_metrics ? (
-              <Card className="bg-muted/50">
+            {/* Research Sources */}
+            {section.research_sources && section.research_sources.length > 0 && (
+              <Card className="bg-muted/50 mt-4">
                 <CardContent className="pt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    {section.word_count && (
-                      <div>
-                        <span className="font-medium">Word Count: </span>
-                        <span className="text-muted-foreground">{section.word_count}</span>
-                      </div>
+                  <p className="font-medium text-sm mb-2 flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Research Sources ({section.research_sources.length})
+                  </p>
+                  <ul className="space-y-1 text-sm">
+                    {section.research_sources.slice(0, 5).map((source: any, idx: number) => {
+                      const urlValid = isValidUrl(source.url)
+                      return (
+                        <li key={idx}>
+                          {urlValid ? (
+                            <a
+                              href={source.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline inline-flex items-center gap-1"
+                            >
+                              {source.title}
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground inline-flex items-center gap-1">
+                              {source.title}
+                              <span className="text-xs">(Invalid URL)</span>
+                            </span>
+                          )}
+                        </li>
+                      )
+                    })}
+                    {section.research_sources.length > 5 && (
+                      <li className="text-muted-foreground text-xs">
+                        +{section.research_sources.length - 5} more sources
+                      </li>
                     )}
-                    {section.citations_included !== undefined && (
-                      <div>
-                        <span className="font-medium">Citations: </span>
-                        <span className="text-muted-foreground">{section.citations_included}</span>
-                      </div>
-                    )}
-                    {section.quality_metrics?.readability_score !== undefined && (
-                      <div>
-                        <span className="font-medium">Readability Score: </span>
-                        <span className="text-muted-foreground">
-                          {section.quality_metrics.readability_score.toFixed(1)}
-                        </span>
-                      </div>
-                    )}
-                    {section.model_used && (
-                      <div>
-                        <span className="font-medium">Model: </span>
-                        <span className="text-muted-foreground text-xs">
-                          {section.model_used}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Research Sources */}
-                  {section.research_sources && section.research_sources.length > 0 && (
-                    <div className="mt-4 pt-4 border-t">
-                      <p className="font-medium text-sm mb-2 flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        Research Sources ({section.research_sources.length})
-                      </p>
-                      <ul className="space-y-1 text-sm">
-                        {section.research_sources.slice(0, 5).map((source, idx) => {
-                          const urlValid = isValidUrl(source.url)
-                          return (
-                            <li key={idx}>
-                              {urlValid ? (
-                                <a
-                                  href={source.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-primary hover:underline inline-flex items-center gap-1"
-                                >
-                                  {source.title}
-                                  <ExternalLink className="h-3 w-3" />
-                                </a>
-                              ) : (
-                                <span className="text-muted-foreground inline-flex items-center gap-1">
-                                  {source.title}
-                                  <span className="text-xs">(Invalid URL)</span>
-                                </span>
-                              )}
-                            </li>
-                          )
-                        })}
-                        {section.research_sources.length > 5 && (
-                          <li className="text-muted-foreground text-xs">
-                            +{section.research_sources.length - 5} more sources
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-                  )}
+                  </ul>
                 </CardContent>
               </Card>
-            ) : null}
+            )}
 
             {/* Separator between sections (except last) */}
             {index < sortedSections.length - 1 && <Separator className="my-4" />}
@@ -177,12 +152,8 @@ export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
  */
 function MarkdownRenderer({ content }: { content: string }) {
   // ReactMarkdown handles errors internally, but we validate content first
-  if (!content || typeof content !== 'string') {
-    return (
-      <div className="text-destructive text-sm py-4">
-        <p className="font-medium">Invalid content: Content must be a string</p>
-      </div>
-    )
+  if (typeof content !== 'string') {
+    return null
   }
 
   return (
@@ -193,11 +164,11 @@ function MarkdownRenderer({ content }: { content: string }) {
           // Validate URL before rendering
           const url = href || ''
           const urlValid = isValidUrl(url)
-          
+
           if (!urlValid) {
             return <span className="text-muted-foreground">{children}</span>
           }
-          
+
           return (
             <a
               href={url}

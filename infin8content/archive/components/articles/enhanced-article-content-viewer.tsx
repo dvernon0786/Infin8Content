@@ -26,7 +26,7 @@ import {
 import { SEOReports } from '@/components/seo/seo-reports'
 import { SEOScoreDisplay } from '@/components/seo/seo-score-display'
 import type { ArticleSection } from '@/lib/types/article'
-import { MarkdownErrorBoundary } from './markdown-error-boundary'
+import { MarkdownErrorBoundary } from '@/components/articles/markdown-error-boundary'
 
 interface EnhancedArticleContentViewerProps {
   sections: ArticleSection[]
