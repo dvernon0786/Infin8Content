@@ -39,25 +39,31 @@ export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
 
   // 🔒 Normalize section shape from DB (Architecture B resilience)
   const normalizedSections = Array.isArray(sections)
-    ? sections.map((s: any, index: number) => ({
-      section_index: s.section_index ?? s.order ?? index,
-      section_type: s.section_type ?? 'h2',
-      title: s.title ?? s.header ?? '',
-      content:
-        typeof s.content === 'string'
-          ? s.content
-          : typeof s.markdown === 'string'
-            ? s.markdown
-            : typeof s.html === 'string'
-              ? s.html
-              : '',
-      research_sources: Array.isArray(s.research_sources) ? s.research_sources : []
-    }))
+    ? sections.map((s: any, index: number) => {
+      const rawContent = typeof s.content === 'string'
+        ? s.content
+        : typeof s.markdown === 'string'
+          ? s.markdown
+          : typeof s.html === 'string'
+            ? s.html
+            : ''
+
+      // 🛡️ Heading Duplication Protection: Strip leading markdown headings that repeat the title
+      const cleanedContent = rawContent.replace(/^#{1,3}\s.+\n+/i, '')
+
+      return {
+        section_index: Number(s.section_index ?? s.order ?? index),
+        section_type: s.section_type ?? 'h2',
+        title: s.title ?? s.header ?? '',
+        content: cleanedContent,
+        research_sources: Array.isArray(s.research_sources) ? s.research_sources : []
+      }
+    })
     : []
 
   // Sort sections by section_index to ensure correct order
   const sortedSections = [...normalizedSections].sort(
-    (a, b) => (a.section_index ?? 0) - (b.section_index ?? 0)
+    (a, b) => (Number(a.section_index) ?? 0) - (Number(b.section_index) ?? 0)
   )
 
   return (
