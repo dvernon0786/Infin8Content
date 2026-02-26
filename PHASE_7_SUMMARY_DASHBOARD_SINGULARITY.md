@@ -27,6 +27,7 @@ The `use-realtime-articles.ts` hook has been rewritten for clinical architectura
 - **Atomic Lock Safety**: Verified correct implement of atomic row-count verification in both the Manual Generate API and the Background Scheduler.
 - **Quota Telemetry Consistency**: Fixed a critical column mismatch bug (`organization_id` vs `org_id`) in quota-counting queries and integrated `logActionAsync` into the Scheduler to ensure automated triggers are canonically tracked in the monthly audit ledger.
 - **UI Redirect Alignment (Step 9 Elimination)**: Fully eliminated the Step 9 UI layer. Workflow approval in Step 8 now transitions the FSM and triggers a direct server-side redirect to the Articles Dashboard. This removes all client-side polling, realtime dependencies, and mount guards from the terminal planning phase, solidifying the Dashboard as the Single UI Authority.
+- **Section Data Normalization**: Implemented a normalization layer in the `EnhancedArticleContentViewer` to reconcile data shape mismatches between the generated article database records (using `markdown/header/order`) and the SEO analysis engine (expecting `content/title/section_index`). This ensures zero-drift rendering for both current and legacy article formats.
 
 ## 🔍 Validation Results
 - **Atomic Safety**: ✅ TESTED. Illegal state transitions are rejected.
