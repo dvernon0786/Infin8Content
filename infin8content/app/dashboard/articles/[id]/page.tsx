@@ -1,11 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Breadcrumb, generateArticleBreadcrumbs } from '@/components/ui/breadcrumb'
-import { ArticleQueueStatus } from '@/components/articles/article-queue-status'
 import { ArticleContentViewer } from '@/components/articles/article-content-viewer'
-import { EnhancedArticleContentViewer } from '@/components/articles/enhanced-article-content-viewer'
 import { ArticleStatusMonitor } from '@/components/articles/article-status-monitor'
 import { PublishToWordPressButton } from '@/components/articles/publish-to-wordpress-button'
 import { GenerateArticleButton } from '@/components/articles/generate-article-button'
@@ -198,9 +195,6 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
               </div>
             </div>
 
-            {(article.status === 'queued' || article.status === 'generating') && (
-              <ArticleQueueStatus organizationId={currentUser.org_id!} />
-            )}
 
             <Card>
               <CardHeader>
@@ -298,13 +292,8 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                   <h2 className="font-poppins text-neutral-900 text-h3-desktop">Article content</h2>
                   <Card>
                     <CardContent className="p-6">
-                      <EnhancedArticleContentViewer
+                      <ArticleContentViewer
                         sections={sections}
-                        articleId={article.id}
-                        articleTitle={article.title || 'Untitled Article'}
-                        primaryKeyword={article.keyword || ''}
-                        secondaryKeywords={[]}
-                        targetWordCount={article.target_word_count || 300}
                       />
                     </CardContent>
                   </Card>
