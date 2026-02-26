@@ -1,6 +1,6 @@
 # Project File Manifest - Infin8Content
 
-*Last Updated: 2026-02-26*
+*Last Updated: 2026-02-27*
 *Scope: Monorepo Technical Reference*
 
 ## 🏗️ Core Orchestration (infin8content/lib/fsm)
@@ -45,9 +45,10 @@
 
 ## 🎨 UI Component Library (infin8content/components)
 
-| Directory | Purpose |
+| Directory / File | Purpose |
 |-----------|---------|
 | `ui/` | Base primitives (Button, Input, Card) built with Radix and Tailwind 4. |
+| `articles/article-content-viewer.tsx` | Pure content renderer with architectural resilience for legacy DB variants and heading duplication protection. |
 | `dashboard/` | Data-heavy views Including `efficiency-metrics-dashboard.tsx`. |
 | `workflows/` | Form-driven components for each of the 9 FSM steps. |
 | `analytics/` | UX metric visualizations and weekly report generators. |
