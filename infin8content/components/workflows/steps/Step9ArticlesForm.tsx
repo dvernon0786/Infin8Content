@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -16,10 +16,12 @@ export function Step9ArticlesForm({ workflowId, workflowState }: Step9ArticlesFo
 
   const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
+  const redirectedRef = useRef(false)
 
   useEffect(() => {
     // 🚀 REDIRECT: Step 9 terminal state is queueing. Redirect to articles dashboard.
-    if (workflowState === 'completed' || workflowState === 'step_9_articles_queued') {
+    if (!redirectedRef.current && (workflowState === 'completed' || workflowState === 'step_9_articles_queued')) {
+      redirectedRef.current = true
       router.push('/dashboard/articles')
       return
     }
@@ -44,8 +46,11 @@ export function Step9ArticlesForm({ workflowId, workflowState }: Step9ArticlesFo
         (payload) => {
           const newState = payload.new.state
           if (newState === 'completed' || newState === 'step_9_articles_queued') {
-            setState('completed')
-            router.push('/dashboard/articles')
+            if (!redirectedRef.current) {
+              redirectedRef.current = true
+              setState('completed')
+              router.push('/dashboard/articles')
+            }
           } else if (newState === 'step_9_articles_failed') {
             setState('error')
             setError('Article queuing failed.')
@@ -57,7 +62,7 @@ export function Step9ArticlesForm({ workflowId, workflowState }: Step9ArticlesFo
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [workflowId, workflowState, router, supabase])
+  }, [workflowId, router, supabase])
 
 
   return (
