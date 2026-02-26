@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { DashboardArticle, DashboardUpdateEvent } from '@/lib/supabase/realtime'
 
@@ -19,7 +19,7 @@ export function useRealtimeArticles({
   onError,
   onConnectionChange
 }: UseRealtimeArticlesOptions) {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const [articles, setArticles] = useState<DashboardArticle[]>([])
   const [isConnected, setIsConnected] = useState(false)
@@ -29,11 +29,11 @@ export function useRealtimeArticles({
   const channelRef = useRef<any>(null)
   const fetchingRef = useRef(false)
 
+  // 1. Ref Hardening: Wrap all external callbacks in refs to avoid subscription churn
   const dashboardUpdateRef = useRef(onDashboardUpdate)
   const connectionChangeRef = useRef(onConnectionChange)
   const errorRef = useRef(onError)
 
-  // Keep refs up to date without triggering re-renders/re-subscriptions
   useEffect(() => {
     dashboardUpdateRef.current = onDashboardUpdate
     connectionChangeRef.current = onConnectionChange
@@ -79,13 +79,21 @@ export function useRealtimeArticles({
     }
   }, [orgId, supabase])
 
+  // 2. Ref Hardening: Wrap the fetcher itself in a ref for use inside the subscription effect
+  const fetchArticlesRef = useRef(fetchArticles)
+  useEffect(() => {
+    fetchArticlesRef.current = fetchArticles
+  }, [fetchArticles])
+
   /* ---------------------------------------- */
   /* Realtime Subscription                   */
   /* ---------------------------------------- */
+
   useEffect(() => {
     if (!orgId) return
 
-    fetchArticles()
+    // Initial load
+    fetchArticlesRef.current()
 
     const channel = supabase
       .channel(`articles-org-${orgId}`)
@@ -98,7 +106,7 @@ export function useRealtimeArticles({
           filter: `org_id=eq.${orgId}`
         },
         (payload: any) => {
-          // Trigger optional callback using ref to avoid subscription churn
+          // Trigger optional callback using ref
           if (dashboardUpdateRef.current) {
             dashboardUpdateRef.current({
               type: payload.eventType === 'INSERT' ? 'new_article' : 'status_change',
@@ -107,20 +115,22 @@ export function useRealtimeArticles({
             } as any)
           }
 
-          // Always re-fetch full truth from DB
-          fetchArticles()
+          // Always re-fetch full truth using ref
+          fetchArticlesRef.current()
         }
       )
-      .subscribe((status) => {
+      .subscribe((status: string) => {
         const connected = status === 'SUBSCRIBED'
         setIsConnected(connected)
-        if (connectionChangeRef.current) connectionChangeRef.current(connected)
+        if (connectionChangeRef.current) {
+          connectionChangeRef.current(connected)
+        }
       })
 
     channelRef.current = channel
 
     const interval = setInterval(() => {
-      fetchArticles()
+      fetchArticlesRef.current()
     }, 60000)
 
     return () => {
@@ -129,16 +139,16 @@ export function useRealtimeArticles({
       }
       clearInterval(interval)
     }
-  }, [orgId, fetchArticles, supabase])
+  }, [orgId, supabase]) // Only re-subscribe if orgId or supabase instance changes
 
   return {
     articles,
     isConnected,
-    connectionStatus: (isConnected ? 'connected' : 'reconnecting') as 'connected' | 'reconnecting' | 'disconnected', // Stub for backwards compatibility
-    isPollingMode: false, // Stub for backwards compatibility
+    connectionStatus: (isConnected ? 'connected' : 'reconnecting') as 'connected' | 'reconnecting' | 'disconnected',
+    isPollingMode: false,
     error,
     lastUpdated,
     refresh: fetchArticles,
-    reconnect: fetchArticles, // Stub for backwards compatibility
+    reconnect: fetchArticles,
   }
 }

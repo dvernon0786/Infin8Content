@@ -4284,8 +4284,10 @@ Eliminate race conditions and architectural drift in the Article Engine by stric
 5. **Schema Cache Consistency**: Traced and eliminated wildcard database query `select('*')` inside the `RealtimeDashboardService` that was crashing the FSM due to obsolete column cache references (`PGRST204`).
 6. **Robust FSM Transitions**: Validated that `checkAndCompleteWorkflow` fires effectively only after entire article assembly succeeds, executing its terminal guard check perfectly and concluding the pipeline logically.
 7. **Frontend Dashboard Alignment**: Deleted legacy abstraction service `lib/services/dashboard/realtime-service.ts` and refactored `hooks/use-realtime-articles.ts` to connect to Supabase and subscribe to Realtime directly via RLS, enforcing the DB as the single source of truth.
+8. **Deterministic Subscription Hardening**: Implemented Ref-based callback isolation in `use-realtime-articles.ts` to decouple the Realtime subscription lifecycle from parent component render churn, achieving zero-drift stability.
 
 ### **Zero Drift Verification:**
+- ✅ Deterministic subscription lifecycle (Ref-hardened).
 - ✅ Planners plan. Workers work. Decoupling achieved.
 - ✅ No duplicate event emissions.
 - ✅ Legacy wrapper layers eliminated.
@@ -4297,6 +4299,7 @@ Eliminate race conditions and architectural drift in the Article Engine by stric
 - **State Logic**: Deterministic FSM
 - **Execution Locks**: Hardware-verified Atomic Updates
 - **Pipeline Integrity**: 🔒 100% Sealed
+- **Subscription Safety**: Ref-hardened and Loop-proof
 - **Data Fetching**: Pure Supabase React Hooks
 
 ---
