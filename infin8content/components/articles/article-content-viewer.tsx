@@ -40,6 +40,7 @@ export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
   // 🔒 Normalize section shape from DB (Architecture B resilience)
   const normalizedSections = Array.isArray(sections)
     ? sections.map((s: any, index: number) => {
+      const title = s.title ?? s.header ?? ''
       const rawContent = typeof s.content === 'string'
         ? s.content
         : typeof s.markdown === 'string'
@@ -48,13 +49,18 @@ export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
             ? s.html
             : ''
 
-      // 🛡️ Heading Duplication Protection: Strip leading markdown headings that repeat the title
-      const cleanedContent = rawContent.replace(/^#{1,3}\s.+\n+/i, '')
+      // 🛡️ Heading Duplication Protection: Only strip leading markdown headings if they repeat the actual section title
+      let cleanedContent = rawContent
+      if (title && typeof title === 'string') {
+        const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        const headerRegex = new RegExp(`^#{1,3}\\s+${escapedTitle}\\s*\\n*`, 'i')
+        cleanedContent = rawContent.replace(headerRegex, '')
+      }
 
       return {
         section_index: Number(s.section_index ?? s.order ?? index),
         section_type: s.section_type ?? 'h2',
-        title: s.title ?? s.header ?? '',
+        title: title,
         content: cleanedContent,
         research_sources: Array.isArray(s.research_sources) ? s.research_sources : []
       }
