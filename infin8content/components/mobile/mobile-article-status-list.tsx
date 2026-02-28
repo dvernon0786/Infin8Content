@@ -31,7 +31,7 @@ export interface MobileArticleStatusListProps {
   onArticleSelect?: (article: Article) => void;
   onArticleEdit?: (articleId: string) => void;
   onArticleDelete?: (articleId: string) => void;
-  onArticleStatusChange?: (articleId: string, status: Article['status']) => void;
+
   className?: string;
 }
 
@@ -50,7 +50,7 @@ export function MobileArticleStatusList({
   onArticleSelect,
   onArticleEdit,
   onArticleDelete,
-  onArticleStatusChange,
+
   className = '',
 }: MobileArticleStatusListProps) {
   const {

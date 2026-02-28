@@ -6,7 +6,7 @@
 import { z } from 'zod';
 
 // Types for bulk operations
-export type BulkOperationType = 'delete' | 'export' | 'archive' | 'assign';
+export type BulkOperationType = 'delete' | 'export' | 'soft_delete' | 'assign';
 export type ExportFormat = 'csv' | 'pdf';
 
 export interface BulkOperationRequest {
@@ -105,11 +105,12 @@ class BulkOperationsService {
   }
 
   /**
-   * Archive multiple articles
+   * Soft delete multiple articles.
+   * Note: This operation MUST NOT modify articles.status. It is purely for soft deletion.
    */
   async archiveArticles(articleIds: string[]): Promise<BulkOperationResult> {
     return this.executeBulkOperation({
-      operation: 'archive',
+      operation: 'soft_delete',
       articleIds,
     });
   }
