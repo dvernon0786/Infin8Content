@@ -3,7 +3,8 @@
  * Shared types for article data structures
  */
 
-export type ArticleStatus = 'queued' | 'generating' | 'completed' | 'failed' | 'cancelled'
+import { ArticleStatus } from '@/types/article';
+export type { ArticleStatus };
 
 export interface ArticleMetadata {
   id: string

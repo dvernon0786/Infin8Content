@@ -63,7 +63,16 @@ export function useRealtimeArticles({
         .eq('org_id', orgId)
         .order('created_at', { ascending: false })
 
-      const articlesData = data as unknown as DashboardArticle[]
+      const articlesData: DashboardArticle[] = (data ?? []).map(
+        (row: ArticlesRow) => ({
+          id: row.id,
+          keyword: row.keyword,
+          title: row.title,
+          status: row.status,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+        })
+      )
 
       if (error) {
         setError(error)
