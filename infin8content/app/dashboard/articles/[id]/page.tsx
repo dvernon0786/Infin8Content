@@ -10,7 +10,7 @@ import ArticleErrorBoundary from './article-error-boundary'
 import { redirect } from 'next/navigation'
 import { Loader2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import type { ArticleMetadata, ArticleSection, ArticleWithSections } from '@/lib/types/article'
+import type { ArticleMetadata, SnapshotSection, ArticleWithSections } from '@/lib/types/article'
 
 interface ArticleDetailPageProps {
   params: Promise<{ id: string }>
@@ -100,7 +100,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
   const article = articleData as unknown as ArticleMetadata
 
   // If article is completed, fetch sections in the same query if possible
-  let sections: ArticleSection[] | null = null
+  let sections: SnapshotSection[] | null = null
   let sectionsError: string | null = null
 
   if (article.status === 'completed') {
@@ -126,11 +126,10 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
       } else if (articleWithSections) {
         const typedData = articleWithSections as unknown as ArticleWithSections
         sections = typedData.sections || null
-
-        // If article title is null, generate it from the first section title or keyword
-        if (!article.title && sections && sections.length > 0) {
-          article.title = sections[0].title || article.keyword || 'Untitled Article'
-          console.log('[ArticleDetailPage] Generated title from first section:', article.title)
+        // Note: Title derivation has been moved upstream to the ArticleAssembler.
+        // We strictly use the server's persisted title or a base keyword fallback.
+        if (!article.title) {
+          article.title = article.keyword || 'Untitled Article'
         }
       } else {
         console.warn('Article not found when fetching sections:', { articleId: id })

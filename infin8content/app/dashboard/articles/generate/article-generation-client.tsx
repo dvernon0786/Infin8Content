@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { ArticleGenerationForm } from '@/components/articles/article-generation-form'
-import { ArticleQueueStatus } from '@/components/articles/article-queue-status'
 import { AlertCircle } from 'lucide-react'
 
 interface ArticleGenerationPageClientProps {
@@ -165,8 +164,6 @@ export function ArticleGenerationPageClient({ organizationId }: ArticleGeneratio
         </Card>
       )}
 
-      {/* Queue Status */}
-      <ArticleQueueStatus organizationId={organizationId} />
 
       {/* Usage Limit Warning */}
       {error && usageInfo && usageInfo.limit !== null && (

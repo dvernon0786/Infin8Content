@@ -8,7 +8,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   X,
   Search,
   Filter,
@@ -19,12 +19,12 @@ import {
 } from 'lucide-react';
 import { hasActiveFilters, isFilterActive } from '@/lib/utils/filter-utils';
 import { getSortOption } from '@/lib/utils/sort-utils';
-import type { 
-  ActiveFiltersProps, 
-  FilterState, 
-  SearchState, 
-  ActiveFilterBadge,
-  ArticleStatus 
+import type {
+  ActiveFiltersProps,
+  FilterState,
+  SearchState,
+  ActiveFilterBadge as ActiveFilterBadgeType,
+  DashboardArticleStatus as ArticleStatus
 } from '@/lib/types/dashboard.types';
 import { cn } from '@/lib/utils';
 
@@ -45,7 +45,7 @@ export function ActiveFilters({
   return (
     <div className={cn('flex items-center gap-2 flex-wrap', className)}>
       <span className="text-sm text-gray-500">Active filters:</span>
-      
+
       {activeFilters.map((filter) => (
         <ActiveFilterBadge
           key={filter.id}
@@ -54,7 +54,7 @@ export function ActiveFilters({
           disabled={disabled}
         />
       ))}
-      
+
       <Button
         variant="ghost"
         size="sm"
@@ -76,11 +76,11 @@ function ActiveFilterBadge({
   onClear,
   disabled = false,
 }: {
-  filter: ActiveFilterBadge;
+  filter: ActiveFilterBadgeType;
   onClear: () => void;
   disabled?: boolean;
 }) {
-  const getFilterIcon = (type: ActiveFilterBadge['type']) => {
+  const getFilterIcon = (type: ActiveFilterBadgeType['type']) => {
     switch (type) {
       case 'search':
         return <Search className="h-3 w-3" />;
@@ -90,8 +90,6 @@ function ActiveFilterBadge({
         return <Calendar className="h-3 w-3" />;
       case 'keyword':
         return <Hash className="h-3 w-3" />;
-      case 'wordCount':
-        return <Hash className="h-3 w-3" />;
       case 'sort':
         return <ArrowUpDown className="h-3 w-3" />;
       default:
@@ -99,7 +97,7 @@ function ActiveFilterBadge({
     }
   };
 
-  const getFilterColor = (type: ActiveFilterBadge['type']) => {
+  const getFilterColor = (type: ActiveFilterBadgeType['type']) => {
     switch (type) {
       case 'search':
         return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -109,8 +107,6 @@ function ActiveFilterBadge({
         return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'keyword':
         return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'wordCount':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'sort':
         return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
@@ -149,8 +145,8 @@ function ActiveFilterBadge({
 export function generateActiveFilters(
   filters: FilterState,
   search: SearchState
-): ActiveFilterBadge[] {
-  const badges: ActiveFilterBadge[] = [];
+): ActiveFilterBadgeType[] {
+  const badges: ActiveFilterBadgeType[] = [];
 
   // Search filter
   if (search.query.trim()) {
@@ -188,7 +184,7 @@ export function generateActiveFilters(
   if (filters.dateRange.start || filters.dateRange.end) {
     const start = filters.dateRange.start?.toLocaleDateString();
     const end = filters.dateRange.end?.toLocaleDateString();
-    
+
     let value = '';
     if (start && end) {
       value = `${start} - ${end}`;
@@ -228,28 +224,6 @@ export function generateActiveFilters(
     }
   }
 
-  // Word count filter
-  if (filters.wordCountRange.min !== undefined || filters.wordCountRange.max !== undefined) {
-    const min = filters.wordCountRange.min;
-    const max = filters.wordCountRange.max;
-    
-    let value = '';
-    if (min !== undefined && max !== undefined) {
-      value = `${min} - ${max} words`;
-    } else if (min !== undefined) {
-      value = `${min}+ words`;
-    } else if (max !== undefined) {
-      value = `≤ ${max} words`;
-    }
-
-    badges.push({
-      id: 'wordCount',
-      type: 'wordCount',
-      label: 'Word Count',
-      value,
-      removable: true,
-    });
-  }
 
   // Sort filter
   if (filters.sortBy) {
@@ -294,7 +268,7 @@ export function CompactActiveFilters({
       <Badge variant="secondary" className="text-xs">
         {filterCount} filter{filterCount !== 1 ? 's' : ''} active
       </Badge>
-      
+
       <Button
         variant="ghost"
         size="sm"
@@ -333,7 +307,7 @@ export function ExpandableActiveFilters({
     <div className={cn('space-y-2', className)}>
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-sm text-gray-500">Filters:</span>
-        
+
         {displayFilters.map((filter) => (
           <ActiveFilterBadge
             key={filter.id}
@@ -342,7 +316,7 @@ export function ExpandableActiveFilters({
             disabled={disabled}
           />
         ))}
-        
+
         {hasMore && !isExpanded && (
           <Button
             variant="ghost"
@@ -353,7 +327,7 @@ export function ExpandableActiveFilters({
             +{activeFilters.length - 3} more
           </Button>
         )}
-        
+
         {isExpanded && (
           <Button
             variant="ghost"
@@ -364,7 +338,7 @@ export function ExpandableActiveFilters({
             Show less
           </Button>
         )}
-        
+
         <Button
           variant="ghost"
           size="sm"

@@ -9,7 +9,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -20,7 +20,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
-import { 
+import {
   Filter,
   Calendar,
   Hash,
@@ -29,8 +29,8 @@ import {
   X,
   Check
 } from 'lucide-react';
-import { DATE_RANGE_PRESETS, WORD_COUNT_PRESETS } from '@/lib/utils/filter-utils';
-import type { FilterDropdownProps, FilterState, ArticleStatus } from '@/lib/types/dashboard.types';
+import { DATE_RANGE_PRESETS } from '@/lib/utils/filter-utils';
+import type { FilterDropdownProps, FilterState, DashboardArticleStatus as ArticleStatus } from '@/lib/types/dashboard.types';
 import { cn } from '@/lib/utils';
 
 interface FilterSectionProps {
@@ -75,7 +75,7 @@ export function FilterDropdown({
     const newStatuses = checked
       ? [...tempFilters.status, status]
       : tempFilters.status.filter(s => s !== status);
-    
+
     setTempFilters({ ...tempFilters, status: newStatuses });
   };
 
@@ -96,14 +96,6 @@ export function FilterDropdown({
     });
   };
 
-  // Handle word count preset selection
-  const handleWordCountPreset = (preset: keyof typeof WORD_COUNT_PRESETS) => {
-    const range = WORD_COUNT_PRESETS[preset].range;
-    setTempFilters({
-      ...tempFilters,
-      wordCountRange: range,
-    });
-  };
 
   // Handle keyword addition
   const handleKeywordAdd = (keyword: string) => {
@@ -135,7 +127,6 @@ export function FilterDropdown({
       status: [],
       dateRange: {},
       keywords: [],
-      wordCountRange: {},
       sortBy: undefined,
     };
     setTempFilters(emptyFilters);
@@ -146,7 +137,7 @@ export function FilterDropdown({
   // Clear specific filter type
   const handleClearFilterType = (filterType: keyof FilterState) => {
     const clearedFilters = { ...tempFilters };
-    
+
     switch (filterType) {
       case 'status':
         clearedFilters.status = [];
@@ -157,14 +148,11 @@ export function FilterDropdown({
       case 'keywords':
         clearedFilters.keywords = [];
         break;
-      case 'wordCountRange':
-        clearedFilters.wordCountRange = {};
-        break;
       case 'sortBy':
         clearedFilters.sortBy = undefined;
         break;
     }
-    
+
     setTempFilters(clearedFilters);
   };
 
@@ -226,7 +214,7 @@ export function FilterDropdown({
                   <Checkbox
                     id={`status-${status}`}
                     checked={tempFilters.status.includes(status as ArticleStatus)}
-                    onCheckedChange={(checked: boolean) => 
+                    onCheckedChange={(checked: boolean) =>
                       handleStatusChange(status as ArticleStatus, checked)
                     }
                   />
@@ -260,7 +248,7 @@ export function FilterDropdown({
                   </Button>
                 ))}
               </div>
-              
+
               {/* Custom date range */}
               <div className="flex items-center gap-2 text-xs font-lato text-neutral-500">
                 <span>Custom:</span>
@@ -289,59 +277,6 @@ export function FilterDropdown({
 
           <DropdownMenuSeparator />
 
-          {/* Word Count Filter */}
-          <FilterSection title="Word Count" icon={<Hash className="h-4 w-4" />}>
-            <div className="px-3 space-y-2">
-              {/* Word count presets */}
-              <div className="space-y-1">
-                {Object.entries(WORD_COUNT_PRESETS).map(([key, preset]) => (
-                  <Button
-                    key={key}
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleWordCountPreset(key as keyof typeof WORD_COUNT_PRESETS)}
-                    className="text-xs justify-start h-7 w-full font-lato text-neutral-600 hover:text-[--color-primary-blue]"
-                  >
-                    {preset.label}
-                  </Button>
-                ))}
-              </div>
-              
-              {/* Custom word count range */}
-              <div className="flex items-center gap-2 text-xs font-lato text-neutral-500">
-                <span>Custom:</span>
-                <input
-                  type="number"
-                  placeholder="Min"
-                  value={tempFilters.wordCountRange.min || ''}
-                  onChange={(e) => {
-                    const min = e.target.value ? parseInt(e.target.value, 10) : undefined;
-                    handleWordCountPreset('custom' as any);
-                    setTempFilters({
-                      ...tempFilters,
-                      wordCountRange: { ...tempFilters.wordCountRange, min },
-                    });
-                  }}
-                  className="border rounded px-1 py-0.5 w-16 text-xs"
-                />
-                <span>to</span>
-                <input
-                  type="number"
-                  placeholder="Max"
-                  value={tempFilters.wordCountRange.max || ''}
-                  onChange={(e) => {
-                    const max = e.target.value ? parseInt(e.target.value, 10) : undefined;
-                    handleWordCountPreset('custom' as any);
-                    setTempFilters({
-                      ...tempFilters,
-                      wordCountRange: { ...tempFilters.wordCountRange, max },
-                    });
-                  }}
-                  className="border rounded px-1 py-0.5 w-16 text-xs"
-                />
-              </div>
-            </div>
-          </FilterSection>
 
           <DropdownMenuSeparator />
 
@@ -366,7 +301,7 @@ export function FilterDropdown({
                     </button>
                   </Badge>
                 ))}
-                
+
                 {/* Date range badge */}
                 {(tempFilters.dateRange.start || tempFilters.dateRange.end) && (
                   <Badge
@@ -382,22 +317,7 @@ export function FilterDropdown({
                     </button>
                   </Badge>
                 )}
-                
-                {/* Word count badge */}
-                {(tempFilters.wordCountRange.min !== undefined || tempFilters.wordCountRange.max !== undefined) && (
-                  <Badge
-                    variant="secondary"
-                    className="text-xs flex items-center gap-1"
-                  >
-                    Word Count
-                    <button
-                      onClick={() => handleClearFilterType('wordCountRange')}
-                      className="ml-1 text-neutral-500 hover:text-[--color-primary-blue]"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                )}
+
               </div>
             </div>
           )}
@@ -412,13 +332,12 @@ export function FilterDropdown({
  */
 function getActiveFilterCount(filters: FilterState): number {
   let count = 0;
-  
+
   if (filters.status.length > 0) count++;
   if (filters.dateRange.start || filters.dateRange.end) count++;
   if (filters.keywords.length > 0) count++;
-  if (filters.wordCountRange.min !== undefined || filters.wordCountRange.max !== undefined) count++;
   if (filters.sortBy) count++;
-  
+
   return count;
 }
 
@@ -474,7 +393,7 @@ export function QuickFilters({
           {filter.label}
         </Button>
       ))}
-      
+
       {/* Bulk selection clear button */}
       {selectedCount > 0 && onClearSelection && (
         <Button

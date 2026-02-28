@@ -1,31 +1,38 @@
-/**
- * TypeScript types for dashboard search and filtering
- * Story 15.4: Dashboard Search and Filtering
- */
+import type { ArticleStatus } from '@/types/article';
+export type { ArticleStatus };
 
-import type { DashboardArticle } from '@/lib/supabase/realtime';
+export interface DashboardArticle {
+  id: string;
+  keyword: string;
+  title: string;
+  status: ArticleStatus;
+  created_at: string;
+  updated_at: string;
+}
 
-// Re-export DashboardArticle for convenience
-export type { DashboardArticle };
+export interface DashboardUpdateEvent {
+  type: 'article_completed' | 'article_status_changed';
+  articleId: string;
+  status: ArticleStatus;
+  timestamp: string;
+  orgId: string;
+  metadata?: Record<string, unknown>;
+}
 
-// Article status types from database
-export type ArticleStatus = 'queued' | 'generating' | 'completed' | 'failed' | 'cancelled';
+// Map the core status for dashboard use, allowing for potential future extensions like 'cancelled'
+export type DashboardArticleStatus = ArticleStatus | 'cancelled';
 
 // Sort options for article ordering
 export type SortOption = 'mostRecent' | 'oldest' | 'titleAZ' | 'titleZA';
 
 // Filter state interface
 export interface FilterState {
-  status: ArticleStatus[];
+  status: DashboardArticleStatus[];
   dateRange: {
     start?: Date;
     end?: Date;
   };
   keywords: string[];
-  wordCountRange: {
-    min?: number;
-    max?: number;
-  };
   sortBy?: SortOption;
 }
 
@@ -51,8 +58,6 @@ export interface FilterQueryParams {
   dateStart?: string; // ISO date string
   dateEnd?: string; // ISO date string
   keywords?: string; // Comma-separated keywords
-  wordCountMin?: string;
-  wordCountMax?: string;
 }
 
 // Search result with highlighting
@@ -76,7 +81,7 @@ export interface FilterMetrics {
 // Active filter badge data
 export interface ActiveFilterBadge {
   id: string;
-  type: 'status' | 'dateRange' | 'keyword' | 'wordCount' | 'search' | 'sort';
+  type: 'status' | 'dateRange' | 'keyword' | 'search' | 'sort';
   label: string;
   value: string;
   removable: boolean;
@@ -98,7 +103,7 @@ export interface SearchInputProps {
 export interface FilterDropdownProps {
   value: FilterState;
   onChange: (filters: Partial<FilterState>) => void;
-  availableStatuses: ArticleStatus[];
+  availableStatuses: DashboardArticleStatus[];
   disabled?: boolean;
   className?: string;
 }
@@ -146,7 +151,7 @@ export interface UseDashboardFiltersReturn {
   filteredArticles: DashboardArticle[];
   activeFilters: ActiveFilterBadge[];
   metrics: FilterMetrics;
-  
+
   // Actions
   setSearchQuery: (query: string) => void;
   setFilters: (filters: Partial<FilterState>) => void;
@@ -154,11 +159,11 @@ export interface UseDashboardFiltersReturn {
   clearFilters: () => void;
   clearAll: () => void;
   removeFilter: (filterId: string) => void;
-  
+
   // URL synchronization
   syncToUrl: () => void;
   syncFromUrl: () => void;
-  
+
   // Utilities
   hasActiveFilters: boolean;
   isFilterActive: (filterType: keyof FilterState) => boolean;
@@ -183,7 +188,6 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   status: [],
   dateRange: {},
   keywords: [],
-  wordCountRange: {},
   sortBy: undefined,
 };
 

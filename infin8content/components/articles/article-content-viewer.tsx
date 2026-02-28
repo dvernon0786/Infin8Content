@@ -4,11 +4,11 @@ import ReactMarkdown from 'react-markdown'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { ExternalLink, FileText } from 'lucide-react'
-import type { ArticleSection } from '@/lib/types/article'
+import type { SnapshotSection } from '@/lib/types/article'
 import { MarkdownErrorBoundary } from './markdown-error-boundary'
 
 interface ArticleContentViewerProps {
-  sections: ArticleSection[]
+  sections: SnapshotSection[]
 }
 
 /**

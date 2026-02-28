@@ -256,13 +256,37 @@ export const generateArticle = inngest.createFunction(
       /* Article Assembly (LIFECYCLE HARDENING)            */
       /* -------------------------------------------------- */
 
-      // 🔴 AUDIT FIX: Assembly MUST run before final completion state
+      // 🏗️ ARTICLE ASSEMBLY & SNAPSHOT PROJECTION
+      // 🔒 AUTHORITY: The worker now explicitly manages the 'generating' -> 'completed' transition.
+      // 📂 INVARIANT: The Assembler MUST persist the snapshot projection BEFORE the 
+      // terminal status update to ensure the UI reads from a completed projection.
       await step.run('assemble-article', async () => {
         const assembler = new ArticleAssembler()
+
+        // 1. Collate sections and write JSONB snapshot projection
         await assembler.assemble({
           articleId,
           organizationId: (article as any).org_id
         })
+
+        // 2. 🔒 TERMINAL STATE LOCK: Explicitly mark article as completed
+        const { error: completionError, data } = await supabase
+          .from('articles')
+          .update({
+            status: 'completed',
+            generation_completed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', articleId)
+          .eq('status', 'generating') // 🔒 ATOMIC GUARD: Only complete if still in 'generating'
+          .select('id')
+
+        if (completionError) throw completionError
+        if (!data || data.length === 0) {
+          throw new Error(`Terminal update failed: Article ${articleId} status was not 'generating' during completion.`)
+        }
+
+        console.log(`[Worker] Article ${articleId} generation lifecycle COMPLETED successfully.`)
       })
 
     } catch (pipelineError) {

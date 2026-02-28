@@ -101,13 +101,13 @@ export async function generateICPDocument(
   for (let attempt = 0; attempt < retryPolicy.maxAttempts; attempt++) {
     try {
       const result = await generateICPDocumentAttempt(request, organizationId, timeoutMs, retryCount, workflowId)
-      
+
       // Success on first attempt or after retry
       if (attempt > 0) {
         result.retryCount = attempt
         console.log(`[ICP-Generator] ICP generation succeeded on retry attempt ${attempt}`)
       }
-      
+
       return result
     } catch (error) {
       lastError = error as Error
@@ -123,7 +123,7 @@ export async function generateICPDocument(
       if (attempt < retryPolicy.maxAttempts - 1) {
         const delayMs = calculateBackoffDelay(attempt, retryPolicy)
         const errorType = classifyErrorType(error)
-        
+
         console.warn(
           `[ICP-Generator] Retryable error on attempt ${attempt + 1} (${errorType}). ` +
           `Retrying in ${delayMs}ms...`,
@@ -149,7 +149,7 @@ export async function generateICPDocument(
   // All retries exhausted
   const finalError = lastError || new Error('ICP generation failed after all retry attempts')
   const errorType = classifyErrorType(finalError)
-  
+
   console.error(
     `[ICP-Generator] ICP generation failed after ${retryCount} attempts. ` +
     `Final error type: ${errorType}`,
@@ -175,24 +175,24 @@ export async function generateICPDocument(
  * Atomically check if workflow can accept additional cost (no update)
  */
 async function checkWorkflowCostLimit(
-  workflowId: string, 
-  estimatedCost: number, 
+  workflowId: string,
+  estimatedCost: number,
   maxCost: number = 1.00
 ): Promise<boolean> {
   const supabase = createServiceRoleClient()
-  
+
   const { data, error } = await supabase
     .rpc('check_workflow_cost_limit', {
       p_workflow_id: workflowId,
       p_additional_cost: estimatedCost,
       p_max_cost: maxCost
     })
-  
+
   if (error) {
     console.error('Cost limit check failed:', error)
     throw new Error('Cost enforcement system error')
   }
-  
+
   return data === true
 }
 
@@ -214,18 +214,18 @@ async function generateICPDocumentAttempt(
     const maxInputTokens = 800 // Conservative estimate for prompt
     const maxOutputTokens = 700 // Max tokens allowed
     const sonarPricing = MODEL_PRICING['perplexity/sonar']
-    
+
     const estimatedMaxCost = (
       (maxInputTokens / 1000) * sonarPricing.inputPer1k +
       (maxOutputTokens / 1000) * sonarPricing.outputPer1k
     )
-    
+
     const canProceed = await checkWorkflowCostLimit(
-      workflowId, 
-      estimatedMaxCost, 
+      workflowId,
+      estimatedMaxCost,
       1.00 // $1.00 max per workflow
     )
-    
+
     if (!canProceed) {
       throw new Error(`Workflow AI cost limit exceeded (estimated: $${estimatedMaxCost.toFixed(4)})`)
     }
@@ -367,12 +367,12 @@ Return EXACTLY:
 
     // Validate model used is in our allowed set (using normalized comparison)
     const allowedModels = ['perplexity/sonar', 'openai/gpt-4o-mini']
-    const normalizedUsedModel = result.modelUsed.startsWith('perplexity/sonar') ? 'perplexity/sonar' :
-                               result.modelUsed.startsWith('openai/gpt-4o-mini') ? 'openai/gpt-4o-mini' :
-                               result.modelUsed
+    const normalizedUsedModel = (result.modelUsed.startsWith('perplexity/sonar') || result.modelUsed.startsWith('perplexity/llama')) ? 'perplexity/sonar' :
+      result.modelUsed.startsWith('openai/gpt-4o-mini') ? 'openai/gpt-4o-mini' :
+        result.modelUsed
 
     if (!allowedModels.includes(normalizedUsedModel)) {
-      throw new Error(`Model drift detected: expected one of ${allowedModels.join(', ')}, got ${result.modelUsed}`)
+      throw new Error(`Validation error: Model drift detected: expected one of ${allowedModels.join(', ')}, got ${result.modelUsed}`)
     }
 
     console.log(`[ICP] Model Used: ${result.modelUsed}, Cost: $${result.cost}`)
@@ -391,7 +391,7 @@ Return EXACTLY:
         apiVersion: '1.0'
       }
     } catch (parseError) {
-      throw new Error(`Failed to parse ICP response: ${parseError instanceof Error ? parseError.message : String(parseError)}`)
+      throw new Error(`Validation error: Failed to parse ICP response: ${parseError instanceof Error ? parseError.message : String(parseError)}`)
     }
 
     // Validate ICP data structure
@@ -421,16 +421,16 @@ Return EXACTLY:
  */
 function validateICPData(data: ICPData): void {
   if (!Array.isArray(data.industries) || data.industries.length === 0) {
-    throw new Error('ICP data must include at least one industry')
+    throw new Error('Validation error: ICP data must include at least one industry')
   }
   if (!Array.isArray(data.buyerRoles) || data.buyerRoles.length === 0) {
-    throw new Error('ICP data must include at least one buyer role')
+    throw new Error('Validation error: ICP data must include at least one buyer role')
   }
   if (!Array.isArray(data.painPoints) || data.painPoints.length === 0) {
-    throw new Error('ICP data must include at least one pain point')
+    throw new Error('Validation error: ICP data must include at least one pain point')
   }
   if (!data.valueProposition || data.valueProposition.trim().length === 0) {
-    throw new Error('ICP data must include a value proposition')
+    throw new Error('Validation error: ICP data must include a value proposition')
   }
 }
 

@@ -10,23 +10,31 @@ import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  Loader2, 
+import {
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
   RefreshCw,
   Sparkles,
   XCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ArticleProgress, ArticleProgressStatus } from '@/types/article';
+import type { ArticleStatus } from '@/types/article';
 import { statusConfigs, type StatusConfig } from '@/lib/constants/status-configs';
 import './visual-status-indicator.css';
 
 interface VisualStatusIndicatorProps {
-  status: ArticleProgressStatus | 'cancelled' | string;
-  progress?: Partial<ArticleProgress> | null;
+  status: ArticleStatus | 'cancelled';
+  progress?: {
+    progress_percentage?: number;
+    current_stage?: string;
+    estimated_time_remaining?: number | null;
+    current_section?: number;
+    total_sections?: number;
+    word_count?: number;
+    error_message?: string | null;
+  } | null;
   title?: string;
   className?: string;
   onAnimationComplete?: () => void;
@@ -61,7 +69,7 @@ export function VisualStatusIndicator({
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-contrast: high)');
     setIsHighContrast(mediaQuery.matches);
-    
+
     const handleChange = (e: MediaQueryListEvent) => setIsHighContrast(e.matches);
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
@@ -96,7 +104,7 @@ export function VisualStatusIndicator({
   };
 
   return (
-    <div 
+    <div
       data-testid="status-indicator-container"
       className={cn(
         'visual-status-indicator',
@@ -121,9 +129,9 @@ export function VisualStatusIndicator({
       )}
     >
       {/* Status announcement for screen readers */}
-      <div 
-        role="status" 
-        aria-live="polite" 
+      <div
+        role="status"
+        aria-live="polite"
         aria-atomic="true"
         className="sr-only"
       >
@@ -147,9 +155,9 @@ export function VisualStatusIndicator({
               )}
             </div>
           )}
-          
+
           {/* Status Badge */}
-          <Badge 
+          <Badge
             data-testid="article-status-badge"
             variant={statusConfig.variant}
             className={cn(
@@ -231,10 +239,10 @@ export function VisualStatusIndicator({
               )}
             </div>
           </div>
-          
-          <Progress 
+
+          <Progress
             data-testid="article-progress-bar"
-            value={progress.progress_percentage || 0} 
+            value={progress.progress_percentage || 0}
             className={cn(
               'h-2 sm:h-3', // Larger on desktop
               // Accessibility
@@ -246,7 +254,7 @@ export function VisualStatusIndicator({
             aria-valuemax={100}
             aria-label={`Progress: ${(progress.progress_percentage || 0).toFixed(1)}% complete`}
           />
-          
+
           {/* Additional progress details */}
           {!compact && (
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs text-gray-500">
@@ -273,7 +281,7 @@ export function VisualStatusIndicator({
 
       {/* Completion Celebration Animation */}
       {showCelebration && (
-        <div 
+        <div
           data-testid="completion-celebration"
           className="absolute inset-0 flex items-center justify-center pointer-events-none"
         >
