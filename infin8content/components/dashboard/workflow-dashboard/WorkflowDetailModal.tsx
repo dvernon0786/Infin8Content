@@ -282,22 +282,20 @@ export function WorkflowDetailModal({
 
                         if (!res.ok) {
                           const body = await res.json()
-                          const error = new Error(body.error || 'Step failed') as any
-                          error.limit = body.limit
-                          error.currentActive = body.currentActive
-                          error.plan = body.plan
-                          error.metric = body.metric
-                          throw error
+                          setStepError({
+                            message: body.error || 'Step failed',
+                            limit: body.limit,
+                            currentActive: body.currentActive,
+                            plan: body.plan,
+                            metric: body.metric
+                          })
+                          return
                         }
 
                         // realtime subscription will refresh workflow
-                      } catch (err: any) {
+                      } catch (err) {
                         setStepError({
-                          message: err.message || 'Something went wrong',
-                          limit: err.limit,
-                          currentActive: err.currentActive,
-                          plan: err.plan,
-                          metric: err.metric
+                          message: err instanceof Error ? err.message : 'Something went wrong'
                         })
                       } finally {
                         setIsRunningStep(false)

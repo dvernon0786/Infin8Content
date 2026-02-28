@@ -98,20 +98,20 @@ export function sleep(ms: number): Promise<void> {
 export function classifyErrorType(error: unknown): string {
   if (error instanceof Error) {
     const message = error.message.toLowerCase()
-    
+
     // Check for specific status codes first
     if (message.includes('401') || message.includes('403')) return 'auth_error'
     if (message.includes('429')) return 'rate_limit'
     if (message.includes('5xx') || message.match(/\b5\d{2}\b/)) return 'server_error'
     if (message.includes('4xx') || message.match(/\b4\d{2}\b/)) return 'client_error'
-    
+
     // Then check for general error types
     if (message.includes('timeout') || message.includes('etimedout')) return 'timeout'
     if (message.includes('validation') || message.includes('schema')) return 'validation_error'
     if (message.includes('auth')) return 'auth_error'
     if (message.includes('network') || message.includes('econnrefused') || message.includes('enotfound')) return 'network_error'
   }
-  
+
   return 'unknown_error'
 }
 
@@ -142,33 +142,33 @@ export async function retryWithPolicy<T>(
   context?: string
 ): Promise<T> {
   let lastError: unknown
-  
+
   for (let attempt = 0; attempt < policy.maxAttempts; attempt++) {
     try {
       return await fn()
     } catch (error) {
       lastError = error
-      
+
       // Don't retry on last attempt
       if (attempt === policy.maxAttempts - 1) {
         break
       }
-      
+
       // Check if error is retryable
       if (!isRetryableError(error)) {
         break
       }
-      
+
       // Calculate delay and wait before retry
       const delay = calculateBackoffDelay(attempt, policy)
       await sleep(delay)
     }
   }
-  
+
   // Log final error with context if provided
   if (context && lastError instanceof Error) {
     console.error(`Error in ${context} after ${policy.maxAttempts} attempts:`, lastError.message)
   }
-  
+
   throw lastError
 }

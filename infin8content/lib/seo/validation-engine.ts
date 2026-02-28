@@ -3,7 +3,7 @@
 // Task 2: Automated Validation Framework
 
 import { calculateSEOScore, type SEOScoreInput, type SEOIssue } from './seo-scoring'
-import { calculateReadabilityScore, validateContentStructure } from '@/lib/services/article-generation/section-processor'
+import { calculateReadabilityScore, validateContentStructure } from '@/lib/utils/seo-utils'
 
 export interface ValidationRule {
   id: string
@@ -62,14 +62,14 @@ export interface ValidationMetrics {
  */
 export function validateSEOContent(input: ValidationInput): ValidationResult {
   const startTime = performance.now()
-  
+
   try {
     // Get all validation rules
     const rules = getValidationRules(input.options)
-    
+
     // Run all validations
     const results: Array<{ rule: ValidationRule; result: ValidationResult }> = []
-    
+
     for (const rule of rules) {
       try {
         const result = rule.validate(input)
@@ -100,23 +100,23 @@ export function validateSEOContent(input: ValidationInput): ValidationResult {
         })
       }
     }
-    
+
     // Aggregate results
     const allIssues = results.flatMap(r => r.result.issues)
     const allRecommendations = results.flatMap(r => r.result.recommendations)
     const totalScore = results.reduce((sum, r) => sum + r.result.score, 0) / results.length
-    
+
     const passedRules = results.filter(r => r.result.passed).length
     const failedRules = results.length - passedRules
-    
+
     const errorCount = allIssues.filter(i => i.type === 'error').length
     const warningCount = allIssues.filter(i => i.type === 'warning').length
     const infoCount = allIssues.filter(i => i.type === 'info').length
-    
+
     const endTime = performance.now()
     const validationTime = Math.round((endTime - startTime) * 100) / 100
-    
-    
+
+
     return {
       passed: failedRules === 0,
       score: Math.round(totalScore),
@@ -133,7 +133,7 @@ export function validateSEOContent(input: ValidationInput): ValidationResult {
       }
     }
   } catch (error) {
-    
+
     return {
       passed: false,
       score: 0,
@@ -187,7 +187,7 @@ function getValidationRules(options?: ValidationOptions): ValidationRule[] {
       severity: 'info',
       validate: validateSemanticCoverage
     },
-    
+
     // Readability validation rules
     {
       id: 'readability-grade',
@@ -205,7 +205,7 @@ function getValidationRules(options?: ValidationOptions): ValidationRule[] {
       severity: 'info',
       validate: validateSentenceLength
     },
-    
+
     // Structure validation rules
     {
       id: 'structure-heading-hierarchy',
@@ -223,7 +223,7 @@ function getValidationRules(options?: ValidationOptions): ValidationRule[] {
       severity: 'info',
       validate: validateContentFlow
     },
-    
+
     // Meta validation rules
     {
       id: 'meta-title-length',
@@ -249,7 +249,7 @@ function getValidationRules(options?: ValidationOptions): ValidationRule[] {
       severity: 'info',
       validate: validateImageAltText
     },
-    
+
     // Performance validation rules
     {
       id: 'performance-content-length',
@@ -268,17 +268,17 @@ function getValidationRules(options?: ValidationOptions): ValidationRule[] {
       validate: validateInternalLinks
     }
   ]
-  
+
   // Add custom rules if provided
   if (options?.customRules) {
     baseRules.push(...options.customRules)
   }
-  
+
   // Filter rules based on options
   if (options?.skipPerformanceTests) {
     return baseRules.filter(rule => rule.category !== 'performance')
   }
-  
+
   return baseRules
 }
 
@@ -312,16 +312,16 @@ function validateKeywordDensity(input: ValidationInput): ValidationResult {
   const wordCount = input.content.split(/\s+/).filter(w => w.length > 0).length
   const keywordCount = (input.content.toLowerCase().match(new RegExp(input.primaryKeyword.toLowerCase(), 'g')) || []).length
   const density = wordCount > 0 ? (keywordCount / wordCount) * 100 : 0
-  
+
   const optimalMin = 1.0
   const optimalMax = 2.0
-  
+
   const passed = density >= optimalMin && density <= optimalMax
   const score = passed ? 100 : Math.max(0, 100 - Math.abs(density - ((optimalMin + optimalMax) / 2)) * 50)
-  
+
   const issues: SEOIssue[] = []
   const recommendations: ValidationRecommendation[] = []
-  
+
   if (!passed) {
     if (density < optimalMin) {
       issues.push({
@@ -330,7 +330,7 @@ function validateKeywordDensity(input: ValidationInput): ValidationResult {
         message: `Keyword density too low: ${density.toFixed(2)}% (optimal: ${optimalMin}-${optimalMax}%)`,
         suggestion: `Add ${Math.ceil((optimalMin * wordCount / 100) - keywordCount)} more occurrences of "${input.primaryKeyword}"`
       })
-      
+
       recommendations.push({
         ruleId: 'keyword-density-primary',
         type: 'fix',
@@ -347,7 +347,7 @@ function validateKeywordDensity(input: ValidationInput): ValidationResult {
         message: `Keyword density too high: ${density.toFixed(2)}% (optimal: ${optimalMin}-${optimalMax}%)`,
         suggestion: `Reduce keyword usage to avoid stuffing penalties`
       })
-      
+
       recommendations.push({
         ruleId: 'keyword-density-primary',
         type: 'improve',
@@ -359,7 +359,7 @@ function validateKeywordDensity(input: ValidationInput): ValidationResult {
       })
     }
   }
-  
+
   return {
     passed,
     score,
@@ -405,19 +405,19 @@ function validateKeywordPlacement(input: ValidationInput): ValidationResult {
   const content = input.content
   const keyword = input.primaryKeyword.toLowerCase()
   const contentLower = content.toLowerCase()
-  
+
   const first100Words = contentLower.split(/\s+/).slice(0, 100).join(' ')
   const hasKeywordInFirst100 = first100Words.includes(keyword)
-  
+
   const headings = content.match(/^#{1,6}\s+(.+)$/gm) || []
   const hasKeywordInHeading = headings.some(heading => heading.toLowerCase().includes(keyword))
-  
+
   const passed = hasKeywordInFirst100 && hasKeywordInHeading
   const score = (hasKeywordInFirst100 ? 50 : 0) + (hasKeywordInHeading ? 50 : 0)
-  
+
   const issues: SEOIssue[] = []
   const recommendations: ValidationRecommendation[] = []
-  
+
   if (!hasKeywordInFirst100) {
     issues.push({
       type: 'warning',
@@ -425,7 +425,7 @@ function validateKeywordPlacement(input: ValidationInput): ValidationResult {
       message: 'Primary keyword not found in first 100 words',
       suggestion: 'Include keyword early in content for better SEO'
     })
-    
+
     recommendations.push({
       ruleId: 'keyword-placement',
       type: 'improve',
@@ -436,7 +436,7 @@ function validateKeywordPlacement(input: ValidationInput): ValidationResult {
       actualValue: 'Keyword not in first 100 words'
     })
   }
-  
+
   if (!hasKeywordInHeading) {
     issues.push({
       type: 'info',
@@ -444,7 +444,7 @@ function validateKeywordPlacement(input: ValidationInput): ValidationResult {
       message: 'Primary keyword not found in any heading',
       suggestion: 'Include keyword in at least one heading for better structure'
     })
-    
+
     recommendations.push({
       ruleId: 'keyword-placement',
       type: 'consider',
@@ -455,7 +455,7 @@ function validateKeywordPlacement(input: ValidationInput): ValidationResult {
       actualValue: 'Keyword not in headings'
     })
   }
-  
+
   return {
     passed,
     score,
@@ -500,30 +500,30 @@ function validateSemanticCoverage(input: ValidationInput): ValidationResult {
 
   const semanticKeywords = input.secondaryKeywords || []
   const contentLower = input.content.toLowerCase()
-  
-  const foundKeywords = semanticKeywords.filter(keyword => 
+
+  const foundKeywords = semanticKeywords.filter(keyword =>
     contentLower.includes(keyword.toLowerCase())
   )
-  
+
   const coveragePercentage = semanticKeywords.length > 0 ? (foundKeywords.length / semanticKeywords.length) * 100 : 100
   const passed = coveragePercentage >= 50
   const score = coveragePercentage
-  
+
   const issues: SEOIssue[] = []
   const recommendations: ValidationRecommendation[] = []
-  
+
   if (!passed) {
-    const missingKeywords = semanticKeywords.filter(keyword => 
+    const missingKeywords = semanticKeywords.filter(keyword =>
       !contentLower.includes(keyword.toLowerCase())
     )
-    
+
     issues.push({
       type: 'info',
       category: 'keyword',
       message: `Low semantic coverage: ${foundKeywords.length}/${semanticKeywords.length} keywords found`,
       suggestion: 'Include more semantic keywords for better topical authority'
     })
-    
+
     recommendations.push({
       ruleId: 'keyword-semantic-coverage',
       type: 'improve',
@@ -534,7 +534,7 @@ function validateSemanticCoverage(input: ValidationInput): ValidationResult {
       actualValue: `${coveragePercentage.toFixed(1)}% coverage`
     })
   }
-  
+
   return {
     passed,
     score,
@@ -557,13 +557,13 @@ function validateReadabilityGrade(input: ValidationInput): ValidationResult {
     const readabilityScore = calculateReadabilityScore(input.content)
     const optimalMin = 10
     const optimalMax = 12
-    
+
     const passed = readabilityScore >= optimalMin && readabilityScore <= optimalMax
     const score = passed ? 100 : Math.max(0, 100 - Math.abs(readabilityScore - ((optimalMin + optimalMax) / 2)) * 20)
-    
+
     const issues: SEOIssue[] = []
     const recommendations: ValidationRecommendation[] = []
-    
+
     if (!passed) {
       if (readabilityScore < optimalMin) {
         issues.push({
@@ -572,7 +572,7 @@ function validateReadabilityGrade(input: ValidationInput): ValidationResult {
           message: `Content too simple: Grade ${readabilityScore} (optimal: ${optimalMin}-${optimalMax})`,
           suggestion: 'Use more complex sentences and vocabulary'
         })
-        
+
         recommendations.push({
           ruleId: 'readability-grade',
           type: 'improve',
@@ -589,7 +589,7 @@ function validateReadabilityGrade(input: ValidationInput): ValidationResult {
           message: `Content too complex: Grade ${readabilityScore} (optimal: ${optimalMin}-${optimalMax})`,
           suggestion: 'Simplify content for better readability'
         })
-        
+
         recommendations.push({
           ruleId: 'readability-grade',
           type: 'improve',
@@ -602,9 +602,9 @@ function validateReadabilityGrade(input: ValidationInput): ValidationResult {
       }
     }
 
-    return { 
-      score: Math.round(score), 
-      recommendations, 
+    return {
+      score: Math.round(score),
+      recommendations,
       issues,
       passed,
       metrics: {
@@ -618,8 +618,8 @@ function validateReadabilityGrade(input: ValidationInput): ValidationResult {
       }
     }
   } catch (error) {
-    return { 
-      score: 0, 
+    return {
+      score: 0,
       recommendations: [{
         ruleId: 'readability-grade',
         type: 'improve',
@@ -652,13 +652,13 @@ function validateReadabilityGrade(input: ValidationInput): ValidationResult {
 function validateSentenceLength(input: ValidationInput): ValidationResult {
   const sentences = input.content.split(/[.!?]+/).filter(s => s.trim().length > 0)
   const longSentences = sentences.filter(s => s.split(/\s+/).length > 25)
-  
+
   const passed = longSentences.length === 0
   const score = Math.max(0, 100 - (longSentences.length * 10))
-  
+
   const issues: SEOIssue[] = []
   const recommendations: ValidationRecommendation[] = []
-  
+
   if (longSentences.length > 0) {
     issues.push({
       type: 'info',
@@ -666,7 +666,7 @@ function validateSentenceLength(input: ValidationInput): ValidationResult {
       message: `Found ${longSentences.length} sentences longer than 25 words`,
       suggestion: 'Break long sentences for better readability'
     })
-    
+
     recommendations.push({
       ruleId: 'readability-sentence-length',
       type: 'consider',
@@ -677,7 +677,7 @@ function validateSentenceLength(input: ValidationInput): ValidationResult {
       actualValue: `${longSentences.length} long sentences`
     })
   }
-  
+
   return {
     passed,
     score,
@@ -700,10 +700,10 @@ function validateHeadingHierarchy(input: ValidationInput): ValidationResult {
     const structureValidation = validateContentStructure(input.content)
     const passed = structureValidation.isValid
     const score = passed ? 100 : Math.max(0, 100 - (structureValidation.issues.length * 20))
-    
+
     const issues: SEOIssue[] = []
     const recommendations: ValidationRecommendation[] = []
-    
+
     if (!passed) {
       structureValidation.issues.forEach((issue: string) => {
         issues.push({
@@ -713,7 +713,7 @@ function validateHeadingHierarchy(input: ValidationInput): ValidationResult {
           suggestion: 'Fix heading hierarchy and structure'
         })
       })
-      
+
       recommendations.push({
         ruleId: 'structure-heading-hierarchy',
         type: 'fix',
@@ -725,9 +725,9 @@ function validateHeadingHierarchy(input: ValidationInput): ValidationResult {
       })
     }
 
-    return { 
-      score: Math.round(score), 
-      recommendations, 
+    return {
+      score: Math.round(score),
+      recommendations,
       issues,
       passed,
       metrics: {
@@ -741,8 +741,8 @@ function validateHeadingHierarchy(input: ValidationInput): ValidationResult {
       }
     }
   } catch (error) {
-    return { 
-      score: 0, 
+    return {
+      score: 0,
       recommendations: [{
         ruleId: 'structure-heading-hierarchy',
         type: 'fix',
@@ -775,13 +775,13 @@ function validateHeadingHierarchy(input: ValidationInput): ValidationResult {
 function validateContentFlow(input: ValidationInput): ValidationResult {
   const paragraphs = input.content.split('\n\n').filter(p => p.trim().length > 0)
   const hasGoodFlow = paragraphs.length >= 3 // At least intro, body, conclusion
-  
+
   const passed = hasGoodFlow
   const score = hasGoodFlow ? 100 : 70
-  
+
   const issues: SEOIssue[] = []
   const recommendations: ValidationRecommendation[] = []
-  
+
   if (!hasGoodFlow) {
     issues.push({
       type: 'info',
@@ -789,7 +789,7 @@ function validateContentFlow(input: ValidationInput): ValidationResult {
       message: `Content has only ${paragraphs.length} paragraphs (optimal: 3+)`,
       suggestion: 'Structure content with clear introduction, body, and conclusion'
     })
-    
+
     recommendations.push({
       ruleId: 'structure-content-flow',
       type: 'consider',
@@ -800,7 +800,7 @@ function validateContentFlow(input: ValidationInput): ValidationResult {
       actualValue: `${paragraphs.length} paragraphs`
     })
   }
-  
+
   return {
     passed,
     score,
@@ -821,16 +821,16 @@ function validateContentFlow(input: ValidationInput): ValidationResult {
 function validateTitleLength(input: ValidationInput): ValidationResult {
   const firstLine = input.content.split('\n')[0].trim()
   const titleLength = firstLine.length
-  
+
   const optimalMin = 50
   const optimalMax = 60
-  
+
   const passed = titleLength >= optimalMin && titleLength <= optimalMax
   const score = passed ? 100 : Math.max(0, 100 - Math.abs(titleLength - ((optimalMin + optimalMax) / 2)) * 2)
-  
+
   const issues: SEOIssue[] = []
   const recommendations: ValidationRecommendation[] = []
-  
+
   if (!passed && titleLength > 0) {
     if (titleLength < optimalMin) {
       issues.push({
@@ -839,7 +839,7 @@ function validateTitleLength(input: ValidationInput): ValidationResult {
         message: `Title too short: ${titleLength} characters (optimal: ${optimalMin}-${optimalMax})`,
         suggestion: 'Expand title for better SEO'
       })
-      
+
       recommendations.push({
         ruleId: 'meta-title-length',
         type: 'improve',
@@ -856,7 +856,7 @@ function validateTitleLength(input: ValidationInput): ValidationResult {
         message: `Title too long: ${titleLength} characters (optimal: ${optimalMin}-${optimalMax})`,
         suggestion: 'Shorten title for better display in search results'
       })
-      
+
       recommendations.push({
         ruleId: 'meta-title-length',
         type: 'improve',
@@ -868,7 +868,7 @@ function validateTitleLength(input: ValidationInput): ValidationResult {
       })
     }
   }
-  
+
   return {
     passed,
     score,
@@ -889,16 +889,16 @@ function validateTitleLength(input: ValidationInput): ValidationResult {
 function validateMetaDescriptionLength(input: ValidationInput): ValidationResult {
   const firstParagraph = input.content.split('\n\n')[0].trim()
   const descriptionLength = firstParagraph.length
-  
+
   const optimalMin = 150
   const optimalMax = 160
-  
+
   const passed = descriptionLength >= optimalMin && descriptionLength <= optimalMax
   const score = passed ? 100 : Math.max(0, 100 - Math.abs(descriptionLength - ((optimalMin + optimalMax) / 2)) * 2)
-  
+
   const issues: SEOIssue[] = []
   const recommendations: ValidationRecommendation[] = []
-  
+
   if (!passed) {
     if (descriptionLength < optimalMin) {
       issues.push({
@@ -907,7 +907,7 @@ function validateMetaDescriptionLength(input: ValidationInput): ValidationResult
         message: `First paragraph too short: ${descriptionLength} characters (optimal: ${optimalMin}-${optimalMax})`,
         suggestion: 'Expand first paragraph for better meta description'
       })
-      
+
       recommendations.push({
         ruleId: 'meta-description-length',
         type: 'improve',
@@ -924,7 +924,7 @@ function validateMetaDescriptionLength(input: ValidationInput): ValidationResult
         message: `First paragraph too long: ${descriptionLength} characters (optimal: ${optimalMin}-${optimalMax})`,
         suggestion: 'Shorten first paragraph for better meta description'
       })
-      
+
       recommendations.push({
         ruleId: 'meta-description-length',
         type: 'improve',
@@ -936,7 +936,7 @@ function validateMetaDescriptionLength(input: ValidationInput): ValidationResult
       })
     }
   }
-  
+
   return {
     passed,
     score,
@@ -960,13 +960,13 @@ function validateImageAltText(input: ValidationInput): ValidationResult {
     const altMatch = img.match(/!\[([^\]]*)\]/)
     return !altMatch || altMatch[1].trim() === ''
   })
-  
+
   const passed = imagesWithoutAlt.length === 0
   const score = images.length > 0 ? Math.max(0, 100 - (imagesWithoutAlt.length * 20)) : 100
-  
+
   const issues: SEOIssue[] = []
   const recommendations: ValidationRecommendation[] = []
-  
+
   if (imagesWithoutAlt.length > 0) {
     issues.push({
       type: 'info',
@@ -974,7 +974,7 @@ function validateImageAltText(input: ValidationInput): ValidationResult {
       message: `${imagesWithoutAlt.length} images missing alt text`,
       suggestion: 'Add descriptive alt text to all images'
     })
-    
+
     recommendations.push({
       ruleId: 'meta-alt-text',
       type: 'consider',
@@ -985,7 +985,7 @@ function validateImageAltText(input: ValidationInput): ValidationResult {
       actualValue: `${imagesWithoutAlt.length} images missing alt text`
     })
   }
-  
+
   return {
     passed,
     score,
@@ -1030,16 +1030,16 @@ function validateContentLength(input: ValidationInput): ValidationResult {
 
   const wordCount = input.content.split(/\s+/).filter(w => w.length > 0).length
   const targetWordCount = input.targetWordCount || 300
-  
+
   const minLength = targetWordCount * 0.8
   const maxLength = targetWordCount * 1.5
-  
+
   const passed = wordCount >= minLength && wordCount <= maxLength
   const score = passed ? 100 : Math.max(0, 100 - Math.abs(wordCount - targetWordCount) / targetWordCount * 100)
-  
+
   const issues: SEOIssue[] = []
   const recommendations: ValidationRecommendation[] = []
-  
+
   if (!passed) {
     if (wordCount < minLength) {
       issues.push({
@@ -1048,7 +1048,7 @@ function validateContentLength(input: ValidationInput): ValidationResult {
         message: `Content too short: ${wordCount} words (target: ${targetWordCount})`,
         suggestion: 'Expand content to provide more comprehensive coverage'
       })
-      
+
       recommendations.push({
         ruleId: 'performance-content-length',
         type: 'improve',
@@ -1065,7 +1065,7 @@ function validateContentLength(input: ValidationInput): ValidationResult {
         message: `Content quite long: ${wordCount} words (target: ${targetWordCount})`,
         suggestion: 'Consider condensing content for better readability'
       })
-      
+
       recommendations.push({
         ruleId: 'performance-content-length',
         type: 'consider',
@@ -1077,7 +1077,7 @@ function validateContentLength(input: ValidationInput): ValidationResult {
       })
     }
   }
-  
+
   return {
     passed,
     score,
@@ -1125,13 +1125,13 @@ function validateInternalLinks(input: ValidationInput): ValidationResult {
     const url = link.match(/\[([^\]]+)\]\(([^)]+)\)/)?.[2] || ''
     return !url.startsWith('http') && !url.startsWith('www')
   })
-  
+
   const passed = internalLinks.length >= 1
   const score = passed ? 100 : Math.max(0, 100 - (1 * 25))
-  
+
   const issues: SEOIssue[] = []
   const recommendations: ValidationRecommendation[] = []
-  
+
   if (!passed) {
     issues.push({
       type: 'info',
@@ -1139,7 +1139,7 @@ function validateInternalLinks(input: ValidationInput): ValidationResult {
       message: 'No internal links found',
       suggestion: 'Add internal links to improve site structure and SEO'
     })
-    
+
     recommendations.push({
       ruleId: 'performance-internal-links',
       type: 'consider',
@@ -1150,7 +1150,7 @@ function validateInternalLinks(input: ValidationInput): ValidationResult {
       actualValue: '0 internal links'
     })
   }
-  
+
   return {
     passed,
     score,

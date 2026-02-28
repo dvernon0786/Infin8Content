@@ -108,9 +108,6 @@ export async function extractSeedKeywords(
     throw new Error('Organization ID is required for seed keyword extraction')
   }
 
-  if (!workflowId) {
-    throw new Error('Workflow ID is required for seed keyword extraction')
-  }
 
   console.log(`[CompetitorSeedExtractor] Starting extraction for ${competitors.length} competitors`)
 
@@ -408,7 +405,7 @@ async function extractKeywordsFromCompetitor(
  */
 export async function persistSeedKeywords(
   organizationId: string,
-  workflowId: string,
+  workflowId: string | undefined,
   competitorUrlId: string,
   keywords: SeedKeywordData[]
 ): Promise<number> {

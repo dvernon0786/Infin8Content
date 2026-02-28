@@ -2,15 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { DashboardArticle, DashboardUpdateEvent } from '@/lib/supabase/realtime'
+import type { DashboardArticle, DashboardUpdateEvent } from '@/lib/types/dashboard.types'
 
 interface UseRealtimeArticlesOptions {
   orgId: string
   onDashboardUpdate?: (event: DashboardUpdateEvent) => void
   onError?: (error: Error) => void
   onConnectionChange?: (connected: boolean) => void
-  pollingInterval?: number
-  enablePolling?: boolean
 }
 
 export function useRealtimeArticles({
@@ -57,11 +55,7 @@ export function useRealtimeArticles({
           title,
           status,
           created_at,
-          updated_at,
-          generation_started_at,
-          generation_completed_at,
-          error_details,
-          scheduled_at
+          updated_at
         `)
         .eq('org_id', orgId)
         .order('created_at', { ascending: false }) as any)
@@ -108,11 +102,26 @@ export function useRealtimeArticles({
         (payload: any) => {
           // Trigger optional callback using ref
           if (dashboardUpdateRef.current) {
-            dashboardUpdateRef.current({
-              type: payload.eventType === 'INSERT' ? 'new_article' : 'status_change',
-              articleId: payload.new?.id,
-              status: payload.new?.status
-            } as any)
+            const oldStatus = payload.old?.status
+            const newStatus = payload.new?.status
+
+            let eventType: DashboardUpdateEvent['type'] | null = null
+
+            if (newStatus === 'completed' && oldStatus !== 'completed') {
+              eventType = 'article_completed'
+            } else if (newStatus !== oldStatus) {
+              eventType = 'article_status_changed'
+            }
+
+            if (eventType) {
+              dashboardUpdateRef.current({
+                type: eventType,
+                articleId: payload.new.id,
+                status: newStatus,
+                timestamp: payload.new.updated_at,
+                orgId: payload.new.org_id
+              })
+            }
           }
 
           // Always re-fetch full truth using ref

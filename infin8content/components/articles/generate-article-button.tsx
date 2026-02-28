@@ -60,8 +60,8 @@ export function GenerateArticleButton({ articleId }: GenerateArticleButtonProps)
             // Refresh page to update status immediately
             router.refresh()
 
-        } catch (err: any) {
-            setError(err.message || 'Something went wrong')
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Something went wrong')
         } finally {
             setIsLoading(false)
         }
