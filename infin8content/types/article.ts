@@ -9,6 +9,13 @@ export type ArticleStatus =
   | 'completed'
   | 'failed';
 
+export const ARTICLE_STATUSES: ArticleStatus[] = [
+  'queued',
+  'generating',
+  'completed',
+  'failed'
+];
+
 export interface GenerationStatistics {
   total_time: number; // seconds
   word_count: number;

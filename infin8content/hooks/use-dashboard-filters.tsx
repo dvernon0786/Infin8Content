@@ -31,7 +31,6 @@ import {
 export function useDashboardFilters(
   articles: DashboardArticle[] = []
 ): UseDashboardFiltersReturn {
-  console.log('🔍 useDashboardFilters initializing with articles:', articles.length);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -39,22 +38,19 @@ export function useDashboardFilters(
 
   // Initialize search state
   const [search, setSearch] = useState<SearchState>(() => {
-    console.log('🔍 Initializing search state');
     try {
       const initialQuery = searchParams?.get('search') || '';
       return {
         query: initialQuery,
-        isSearching: false,
-        suggestions: [],
-        debouncedQuery: initialQuery
+        isSearching: false
       };
     } catch (error) {
-      console.error('🚨 Error initializing search state:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('🚨 Error initializing search state:', error);
+      }
       return {
         query: '',
-        isSearching: false,
-        suggestions: [],
-        debouncedQuery: ''
+        isSearching: false
       };
     }
   });
@@ -136,7 +132,9 @@ export function useDashboardFilters(
         lastSearchTime: Date.now()
       }));
     } catch (error) {
-      console.error('Search error:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Search error:', error);
+      }
       setSearch(prev => ({ ...prev, isSearching: false }));
     }
   }, [articles]);

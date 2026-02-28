@@ -19,14 +19,15 @@ import {
   Eye
 } from 'lucide-react';
 import type { ActivityWithUser } from '@/types/activity';
+import type { ArticleStatus } from '@/lib/types/dashboard.types';
 
 interface ActivityData {
   title?: string;
   keyword?: string;
   article_title?: string;
   comment_preview?: string;
-  oldStatus?: string;
-  newStatus?: string;
+  oldStatus?: ArticleStatus;
+  newStatus?: ArticleStatus;
   change_reason?: string;
   sources_found?: number;
   research_time?: string;

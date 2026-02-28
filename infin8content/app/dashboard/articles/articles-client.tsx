@@ -13,6 +13,7 @@ import { Loader2, FileText, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
+import { ARTICLE_STATUSES } from '@/lib/types/dashboard.types'
 
 // Client component for interactive features
 function ArticlesClient({ orgId }: { orgId: string }) {
@@ -36,7 +37,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
       clearAll,
       removeFilter,
       hasActiveFilters,
-    } = useDashboardFilters(articles || []);
+    } = useDashboardFilters(articles);
 
     if (error) {
       return (
@@ -88,7 +89,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
             <FilterDropdown
               value={filters}
               onChange={setFilters}
-              availableStatuses={['queued', 'generating', 'completed', 'failed']}
+              availableStatuses={ARTICLE_STATUSES}
             />
             <SortDropdown
               value={filters.sortBy}
@@ -161,9 +162,9 @@ function ArticlesClient({ orgId }: { orgId: string }) {
           <ScrollableArticleList
             articles={filteredArticles}
             className="border rounded-lg"
-            selectedArticle={''}
+            selectedArticle={null}
             onArticleSelect={(id) => {
-              router.push(`/dashboard/articles/${id}`)
+              if (id) router.push(`/dashboard/articles/${id}`)
             }}
             onArticleNavigation={(id, e) => {
               if (e?.defaultPrevented) return

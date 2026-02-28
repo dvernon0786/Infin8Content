@@ -11,10 +11,12 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useMobileLayout } from '@/hooks/use-mobile-layout';
 import { debounce, throttle } from '@/lib/utils/mobile-layout-utils';
 
+import { ArticleStatus } from '@/types/article';
+
 export interface Article {
   id: string;
   title: string;
-  status: 'draft' | 'published' | 'under_review' | 'archived';
+  status: ArticleStatus;
   lastModified: string;
   author: string;
   wordCount: number;
@@ -131,7 +133,7 @@ export function MobileArticleStatusList({
 
     if (deltaX > swipeThreshold && swipeState.direction) {
       const articleId = swipeState.articleId;
-      
+
       if (swipeState.direction === 'right' && onArticleEdit) {
         onArticleEdit(articleId);
       } else if (swipeState.direction === 'left' && onArticleDelete) {
@@ -155,27 +157,27 @@ export function MobileArticleStatusList({
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    
+
     if (diffHours < 1) return 'Just now';
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffHours < 48) return 'Yesterday';
-    
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
+
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
     });
   }, []);
 
   // Get status color classes
   const getStatusColor = useCallback((status: Article['status']) => {
     switch (status) {
-      case 'draft':
+      case 'queued':
         return 'text-gray-600 bg-gray-100';
-      case 'published':
+      case 'completed':
         return 'text-green-600 bg-green-100';
-      case 'under_review':
+      case 'generating':
         return 'text-yellow-600 bg-yellow-100';
-      case 'archived':
+      case 'failed':
         return 'text-red-600 bg-red-100';
       default:
         return 'text-gray-600 bg-gray-100';
@@ -216,9 +218,8 @@ export function MobileArticleStatusList({
         {isSwiped && (
           <div
             data-testid={`swipe-actions-${article.id}`}
-            className={`absolute inset-y-0 flex items-center px-4 pointer-events-none ${
-              swipeState.direction === 'right' ? 'left-0 bg-blue-500' : 'right-0 bg-red-500'
-            }`}
+            className={`absolute inset-y-0 flex items-center px-4 pointer-events-none ${swipeState.direction === 'right' ? 'left-0 bg-blue-500' : 'right-0 bg-red-500'
+              }`}
           >
             {swipeState.direction === 'right' ? (
               <span data-testid={`edit-action-${article.id}`} className="text-white font-medium">
@@ -259,7 +260,7 @@ export function MobileArticleStatusList({
             >
               {article.status.replace('_', ' ')}
             </span>
-            
+
             <span className="text-xs text-gray-500">
               {article.wordCount} words
             </span>
@@ -279,7 +280,7 @@ export function MobileArticleStatusList({
             >
               Edit
             </button>
-            
+
             <button
               role="button"
               tabIndex={0}

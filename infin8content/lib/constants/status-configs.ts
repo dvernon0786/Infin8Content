@@ -4,11 +4,11 @@
  */
 
 import React from 'react';
-import { 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  Loader2, 
+import {
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
   XCircle
 } from 'lucide-react';
 
@@ -27,7 +27,9 @@ export interface StatusConfig {
   patternClass: string;
 }
 
-export const statusConfigs: Record<string, StatusConfig> = {
+import { ArticleStatus } from '@/types/article';
+
+export const statusConfigs: Record<ArticleStatus, StatusConfig> = {
   queued: {
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
@@ -80,22 +82,10 @@ export const statusConfigs: Record<string, StatusConfig> = {
     highContrastColor: 'text-red-800',
     patternClass: 'bg-crossed-red', // CSS pattern for colorblind accessibility
   },
-  cancelled: {
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-50',
-    borderColor: 'border-gray-200',
-    icon: React.createElement(AlertCircle, { className: "h-4 w-4" }),
-    label: 'Cancelled',
-    variant: 'secondary',
-    ariaLabel: 'Article status: cancelled',
-    // Accessibility enhancements
-    pattern: 'dashed', // Visual pattern for colorblind users
-    highContrastColor: 'text-gray-800',
-    patternClass: 'bg-dashed-gray', // CSS pattern for colorblind accessibility
-  },
+
 };
 
 // Helper function to get status configuration
-export function getStatusConfig(status: string): StatusConfig {
-  return statusConfigs[status] || statusConfigs.queued;
+export function getStatusConfig(status: ArticleStatus): StatusConfig {
+  return statusConfigs[status];
 }
