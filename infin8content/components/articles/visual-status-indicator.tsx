@@ -22,7 +22,7 @@ export function VisualStatusIndicator({
   status,
   compact = false,
 }: VisualStatusIndicatorProps) {
-  const statusConfig = statusConfigs[status] || statusConfigs.queued;
+  const statusConfig = statusConfigs[status];
 
   return (
     <div

@@ -127,8 +127,8 @@ export interface ActiveFiltersProps {
 export interface ScrollableArticleListProps {
   articles: DashboardArticle[];
   className?: string;
-  selectedArticle: string;
-  onArticleSelect: (id: string) => void;
+  selectedArticle: string | null;
+  onArticleSelect: (id: string | null) => void;
   onArticleNavigation: (id: string, e?: React.MouseEvent) => void;
   onKeyDown: (id: string, e: React.KeyboardEvent) => void;
   onTouchStart: (id: string, e: React.TouchEvent, element: HTMLElement) => void;

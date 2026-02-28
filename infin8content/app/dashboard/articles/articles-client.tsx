@@ -36,7 +36,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
       clearAll,
       removeFilter,
       hasActiveFilters,
-    } = useDashboardFilters(articles || []);
+    } = useDashboardFilters(articles);
 
     if (error) {
       return (
@@ -161,9 +161,9 @@ function ArticlesClient({ orgId }: { orgId: string }) {
           <ScrollableArticleList
             articles={filteredArticles}
             className="border rounded-lg"
-            selectedArticle={''}
+            selectedArticle={null}
             onArticleSelect={(id) => {
-              router.push(`/dashboard/articles/${id}`)
+              if (id) router.push(`/dashboard/articles/${id}`)
             }}
             onArticleNavigation={(id, e) => {
               if (e?.defaultPrevented) return

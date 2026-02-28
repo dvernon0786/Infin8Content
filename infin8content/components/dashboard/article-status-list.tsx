@@ -55,7 +55,7 @@ interface ArticleStatusListProps {
   onDelete?: (articleIds: string[]) => Promise<void>;
   onExport?: (articleIds: string[], format: 'csv' | 'pdf') => Promise<void>;
   onArchive?: (articleIds: string[]) => Promise<void>;
-  onChangeStatus?: (articleIds: string[], status: string) => Promise<void>;
+  onChangeStatus?: (articleIds: string[], status: ArticleStatus) => Promise<void>;
   onAssignToTeam?: (articleIds: string[], teamMemberId: string) => Promise<void>;
   teamMembers?: Array<{ id: string; name: string; email: string }>;
 }
@@ -204,8 +204,7 @@ export function ArticleStatusList({
   return (
     <DashboardErrorBoundary
       onError={(error, errorInfo) => {
-        console.error('ArticleStatusList error:', error, errorInfo);
-        // In production, send to error reporting service
+        // Silently capture error boundary triggers in UI layer
       }}
     >
       <div className={`space-y-4 ${className}`}>
@@ -549,15 +548,6 @@ export function ArticleStatusList({
             })
           )}
         </div>
-
-        {/* Load more indicator */}
-        {filteredArticles.length >= maxItems && rawArticles.length > maxItems && (
-          <div className="text-center">
-            <Button variant="outline" onClick={() => { }} className="font-lato text-neutral-600 hover:text-[--brand-electric-blue]">
-              Load more articles
-            </Button>
-          </div>
-        )}
       </div>
     </DashboardErrorBoundary>
   );

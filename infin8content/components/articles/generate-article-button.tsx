@@ -107,7 +107,7 @@ export function GenerateArticleButton({ articleId }: GenerateArticleButtonProps)
                         <Button
                             variant="primary"
                             className="w-full sm:w-auto bg-primary-blue hover:bg-primary-blue/90"
-                            onClick={() => window.location.href = '/dashboard/settings/billing'}
+                            onClick={() => router.push('/dashboard/settings/billing')}
                         >
                             Upgrade to {quotaError?.plan === 'starter' ? 'Pro' : 'Agency'}
                         </Button>

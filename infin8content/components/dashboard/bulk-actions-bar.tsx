@@ -9,12 +9,12 @@ import React, { useState, useCallback } from 'react';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
-import { 
-  Trash2, 
-  Download, 
-  Archive, 
-  Tag, 
-  Users, 
+import {
+  Trash2,
+  Download,
+  Archive,
+  Tag,
+  Users,
   MoreHorizontal,
   CheckCircle,
   XCircle,
@@ -41,7 +41,7 @@ import {
 import { useBulkOperationProgress } from '../../hooks/use-bulk-selection';
 import { bulkOperationsService } from '../../lib/services/bulk-operations';
 import type { TeamMember } from '../../lib/services/bulk-operations';
-import type { DashboardArticle } from '../../lib/types/dashboard.types';
+import type { DashboardArticle, ArticleStatus } from '../../lib/types/dashboard.types';
 
 export interface BulkActionsBarProps {
   selectedArticles: DashboardArticle[];
@@ -49,7 +49,7 @@ export interface BulkActionsBarProps {
   onDelete?: (articleIds: string[]) => Promise<void>;
   onExport?: (articleIds: string[], format: 'csv' | 'pdf') => Promise<void>;
   onArchive?: (articleIds: string[]) => Promise<void>;
-  onChangeStatus?: (articleIds: string[], status: string) => Promise<void>;
+  onChangeStatus?: (articleIds: string[], status: ArticleStatus) => Promise<void>;
   onAssignToTeam?: (articleIds: string[], teamMemberId: string) => Promise<void>;
   teamMembers?: TeamMember[];
   className?: string;
@@ -71,7 +71,7 @@ export function BulkActionsBar({
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedTeamMember, setSelectedTeamMember] = useState('');
-  
+
   const bulkProgress = useBulkOperationProgress();
 
   const selectedCount = selectedArticles.length;
@@ -82,9 +82,9 @@ export function BulkActionsBar({
     try {
       bulkProgress.startOperation(selectedCount);
       const articleIds = selectedArticles.map(a => a.id);
-      
+
       const result = await bulkOperationsService.deleteArticles(articleIds);
-      
+
       if (result.success) {
         bulkProgress.completeOperation();
         onClearSelection();
@@ -107,9 +107,9 @@ export function BulkActionsBar({
     try {
       bulkProgress.startOperation(selectedCount);
       const articleIds = selectedArticles.map(a => a.id);
-      
+
       const result = await bulkOperationsService.exportArticles(articleIds, format);
-      
+
       if (result.success) {
         bulkProgress.completeOperation();
         onClearSelection();
@@ -131,9 +131,9 @@ export function BulkActionsBar({
     try {
       bulkProgress.startOperation(selectedCount);
       const articleIds = selectedArticles.map(a => a.id);
-      
+
       const result = await bulkOperationsService.archiveArticles(articleIds);
-      
+
       if (result.success) {
         bulkProgress.completeOperation();
         onClearSelection();
@@ -153,20 +153,20 @@ export function BulkActionsBar({
   // Handle bulk status change
   const handleBulkStatusChange = useCallback(async () => {
     if (!selectedStatus) return;
-    
+
     try {
       bulkProgress.startOperation(selectedCount);
       const articleIds = selectedArticles.map(a => a.id);
-      
+
       const result = await bulkOperationsService.changeStatus(articleIds, selectedStatus);
-      
+
       if (result.success) {
         bulkProgress.completeOperation();
         onClearSelection();
         setIsStatusDialogOpen(false);
         setSelectedStatus('');
         if (onChangeStatus) {
-          await onChangeStatus(articleIds, selectedStatus);
+          await onChangeStatus(articleIds, selectedStatus as ArticleStatus);
         }
       } else {
         bulkProgress.resetProgress();
@@ -181,13 +181,13 @@ export function BulkActionsBar({
   // Handle bulk team assignment
   const handleBulkAssign = useCallback(async () => {
     if (!selectedTeamMember) return;
-    
+
     try {
       bulkProgress.startOperation(selectedCount);
       const articleIds = selectedArticles.map(a => a.id);
-      
+
       const result = await bulkOperationsService.assignArticles(articleIds, selectedTeamMember);
-      
+
       if (result.success) {
         bulkProgress.completeOperation();
         onClearSelection();
@@ -219,7 +219,7 @@ export function BulkActionsBar({
             <Badge variant="secondary" className="text-sm">
               {selectedCount} article{selectedCount !== 1 ? 's' : ''} selected
             </Badge>
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -290,7 +290,7 @@ export function BulkActionsBar({
                   <Tag className="h-4 w-4 mr-2" />
                   Change Status
                 </DropdownMenuItem>
-                
+
                 {teamMembers.length > 0 && (
                   <DropdownMenuItem onClick={() => setIsAssignDialogOpen(true)}>
                     <Users className="h-4 w-4 mr-2" />
@@ -314,7 +314,7 @@ export function BulkActionsBar({
               </span>
             </div>
             <Progress value={bulkProgress.progress} className="h-2" />
-            
+
             {bulkProgress.failed > 0 && (
               <div className="flex items-center gap-2 text-sm text-red-600">
                 <AlertCircle className="h-4 w-4" />
@@ -331,7 +331,7 @@ export function BulkActionsBar({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Selected Articles</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {selectedCount} article{selectedCount !== 1 ? 's' : ''}? 
+              Are you sure you want to delete {selectedCount} article{selectedCount !== 1 ? 's' : ''}?
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

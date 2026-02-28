@@ -66,7 +66,7 @@ export function ScrollableArticleList({
                   'mx-2 cursor-pointer transition-colors hover:bg-neutral-50',
                   isSelected && 'ring-2 ring-[--brand-electric-blue]'
                 )}
-                onClick={() => onArticleSelect(isSelected ? '' : article.id)}
+                onClick={() => onArticleSelect(isSelected ? null : article.id)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">

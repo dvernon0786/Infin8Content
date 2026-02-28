@@ -10,12 +10,12 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../components/ui/sheet';
-import { 
-  Trash2, 
-  Download, 
-  Archive, 
-  Tag, 
-  Users, 
+import {
+  Trash2,
+  Download,
+  Archive,
+  Tag,
+  Users,
   MoreHorizontal,
   X,
   CheckCircle
@@ -23,7 +23,7 @@ import {
 import { useBulkOperationProgress } from '../../hooks/use-bulk-selection';
 import { bulkOperationsService } from '../../lib/services/bulk-operations';
 import type { TeamMember } from '../../lib/services/bulk-operations';
-import type { DashboardArticle } from '../../lib/types/dashboard.types';
+import type { DashboardArticle, ArticleStatus } from '../../lib/types/dashboard.types';
 
 export interface MobileBulkActionsProps {
   selectedArticles: DashboardArticle[];
@@ -31,7 +31,7 @@ export interface MobileBulkActionsProps {
   onDelete?: (articleIds: string[]) => Promise<void>;
   onExport?: (articleIds: string[], format: 'csv' | 'pdf') => Promise<void>;
   onArchive?: (articleIds: string[]) => Promise<void>;
-  onChangeStatus?: (articleIds: string[], status: string) => Promise<void>;
+  onChangeStatus?: (articleIds: string[], status: ArticleStatus) => Promise<void>;
   onAssignToTeam?: (articleIds: string[], teamMemberId: string) => Promise<void>;
   teamMembers?: TeamMember[];
   className?: string;
@@ -52,7 +52,7 @@ export function MobileBulkActions({
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedTeamMember, setSelectedTeamMember] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   const bulkProgress = useBulkOperationProgress();
 
   const selectedCount = selectedArticles.length;
@@ -61,14 +61,14 @@ export function MobileBulkActions({
   // Handle bulk operations
   const handleBulkDelete = useCallback(async () => {
     if (isProcessing) return;
-    
+
     setIsProcessing(true);
     try {
       bulkProgress.startOperation(selectedCount);
       const articleIds = selectedArticles.map(a => a.id);
-      
+
       const result = await bulkOperationsService.deleteArticles(articleIds);
-      
+
       if (result.success) {
         bulkProgress.completeOperation();
         onClearSelection();
@@ -90,14 +90,14 @@ export function MobileBulkActions({
 
   const handleBulkExport = useCallback(async (format: 'csv' | 'pdf') => {
     if (isProcessing) return;
-    
+
     setIsProcessing(true);
     try {
       bulkProgress.startOperation(selectedCount);
       const articleIds = selectedArticles.map(a => a.id);
-      
+
       const result = await bulkOperationsService.exportArticles(articleIds, format);
-      
+
       if (result.success) {
         bulkProgress.completeOperation();
         onClearSelection();
@@ -119,14 +119,14 @@ export function MobileBulkActions({
 
   const handleBulkArchive = useCallback(async () => {
     if (isProcessing) return;
-    
+
     setIsProcessing(true);
     try {
       bulkProgress.startOperation(selectedCount);
       const articleIds = selectedArticles.map(a => a.id);
-      
+
       const result = await bulkOperationsService.archiveArticles(articleIds);
-      
+
       if (result.success) {
         bulkProgress.completeOperation();
         onClearSelection();
@@ -148,21 +148,21 @@ export function MobileBulkActions({
 
   const handleBulkStatusChange = useCallback(async () => {
     if (!selectedStatus || isProcessing) return;
-    
+
     setIsProcessing(true);
     try {
       bulkProgress.startOperation(selectedCount);
       const articleIds = selectedArticles.map(a => a.id);
-      
+
       const result = await bulkOperationsService.changeStatus(articleIds, selectedStatus);
-      
+
       if (result.success) {
         bulkProgress.completeOperation();
         onClearSelection();
         setIsSheetOpen(false);
         setSelectedStatus('');
         if (onChangeStatus) {
-          await onChangeStatus(articleIds, selectedStatus);
+          await onChangeStatus(articleIds, selectedStatus as ArticleStatus);
         }
       } else {
         bulkProgress.resetProgress();
@@ -178,14 +178,14 @@ export function MobileBulkActions({
 
   const handleBulkAssign = useCallback(async () => {
     if (!selectedTeamMember || isProcessing) return;
-    
+
     setIsProcessing(true);
     try {
       bulkProgress.startOperation(selectedCount);
       const articleIds = selectedArticles.map(a => a.id);
-      
+
       const result = await bulkOperationsService.assignArticles(articleIds, selectedTeamMember);
-      
+
       if (result.success) {
         bulkProgress.completeOperation();
         onClearSelection();
@@ -219,7 +219,7 @@ export function MobileBulkActions({
             <Badge variant="secondary" className="text-sm">
               {selectedCount} selected
             </Badge>
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -255,7 +255,7 @@ export function MobileBulkActions({
                   </Button>
                 </SheetTitle>
               </SheetHeader>
-              
+
               <div className="mt-6 space-y-6">
                 {/* Progress Indicator */}
                 {bulkProgress.isRunning && (
