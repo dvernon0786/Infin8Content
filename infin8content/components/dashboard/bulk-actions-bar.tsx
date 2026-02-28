@@ -49,7 +49,7 @@ export interface BulkActionsBarProps {
   onDelete?: (articleIds: string[]) => Promise<void>;
   onExport?: (articleIds: string[], format: 'csv' | 'pdf') => Promise<void>;
   onArchive?: (articleIds: string[]) => Promise<void>;
-  onChangeStatus?: (articleIds: string[], status: ArticleStatus) => Promise<void>;
+
   onAssignToTeam?: (articleIds: string[], teamMemberId: string) => Promise<void>;
   teamMembers?: TeamMember[];
   className?: string;
@@ -61,15 +61,14 @@ export function BulkActionsBar({
   onDelete,
   onExport,
   onArchive,
-  onChangeStatus,
+
   onAssignToTeam,
   teamMembers = [],
   className = '',
 }: BulkActionsBarProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState('');
+
   const [selectedTeamMember, setSelectedTeamMember] = useState('');
 
   const bulkProgress = useBulkOperationProgress();
@@ -150,33 +149,7 @@ export function BulkActionsBar({
     }
   }, [selectedArticles, selectedCount, bulkProgress, onClearSelection, onArchive]);
 
-  // Handle bulk status change
-  const handleBulkStatusChange = useCallback(async () => {
-    if (!selectedStatus) return;
 
-    try {
-      bulkProgress.startOperation(selectedCount);
-      const articleIds = selectedArticles.map(a => a.id);
-
-      const result = await bulkOperationsService.changeStatus(articleIds, selectedStatus);
-
-      if (result.success) {
-        bulkProgress.completeOperation();
-        onClearSelection();
-        setIsStatusDialogOpen(false);
-        setSelectedStatus('');
-        if (onChangeStatus) {
-          await onChangeStatus(articleIds, selectedStatus as ArticleStatus);
-        }
-      } else {
-        bulkProgress.resetProgress();
-        console.error('Bulk status change failed:', result.message);
-      }
-    } catch (error) {
-      console.error('Bulk status change failed:', error);
-      bulkProgress.resetProgress();
-    }
-  }, [selectedArticles, selectedCount, selectedStatus, bulkProgress, onClearSelection, onChangeStatus]);
 
   // Handle bulk team assignment
   const handleBulkAssign = useCallback(async () => {
@@ -286,10 +259,7 @@ export function BulkActionsBar({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setIsStatusDialogOpen(true)}>
-                  <Tag className="h-4 w-4 mr-2" />
-                  Change Status
-                </DropdownMenuItem>
+
 
                 {teamMembers.length > 0 && (
                   <DropdownMenuItem onClick={() => setIsAssignDialogOpen(true)}>
@@ -347,39 +317,7 @@ export function BulkActionsBar({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Status Change Dialog */}
-      <AlertDialog open={isStatusDialogOpen} onOpenChange={setIsStatusDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Change Article Status</AlertDialogTitle>
-            <AlertDialogDescription>
-              Select a new status for {selectedCount} article{selectedCount !== 1 ? 's' : ''}:
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="py-4">
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md"
-            >
-              <option value="">Select status...</option>
-              <option value="draft">Draft</option>
-              <option value="in-review">In Review</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleBulkStatusChange}
-              disabled={!selectedStatus}
-            >
-              Change Status
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+
 
       {/* Team Assignment Dialog */}
       <AlertDialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>

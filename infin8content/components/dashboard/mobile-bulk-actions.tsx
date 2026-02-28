@@ -31,7 +31,7 @@ export interface MobileBulkActionsProps {
   onDelete?: (articleIds: string[]) => Promise<void>;
   onExport?: (articleIds: string[], format: 'csv' | 'pdf') => Promise<void>;
   onArchive?: (articleIds: string[]) => Promise<void>;
-  onChangeStatus?: (articleIds: string[], status: ArticleStatus) => Promise<void>;
+
   onAssignToTeam?: (articleIds: string[], teamMemberId: string) => Promise<void>;
   teamMembers?: TeamMember[];
   className?: string;
@@ -43,13 +43,13 @@ export function MobileBulkActions({
   onDelete,
   onExport,
   onArchive,
-  onChangeStatus,
+
   onAssignToTeam,
   teamMembers = [],
   className = '',
 }: MobileBulkActionsProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState('');
+
   const [selectedTeamMember, setSelectedTeamMember] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -146,35 +146,7 @@ export function MobileBulkActions({
     }
   }, [selectedArticles, selectedCount, bulkProgress, onClearSelection, onArchive]);
 
-  const handleBulkStatusChange = useCallback(async () => {
-    if (!selectedStatus || isProcessing) return;
 
-    setIsProcessing(true);
-    try {
-      bulkProgress.startOperation(selectedCount);
-      const articleIds = selectedArticles.map(a => a.id);
-
-      const result = await bulkOperationsService.changeStatus(articleIds, selectedStatus);
-
-      if (result.success) {
-        bulkProgress.completeOperation();
-        onClearSelection();
-        setIsSheetOpen(false);
-        setSelectedStatus('');
-        if (onChangeStatus) {
-          await onChangeStatus(articleIds, selectedStatus as ArticleStatus);
-        }
-      } else {
-        bulkProgress.resetProgress();
-        console.error('Bulk status change failed:', result.message);
-      }
-    } catch (error) {
-      console.error('Bulk status change failed:', error);
-      bulkProgress.resetProgress();
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [selectedArticles, selectedCount, selectedStatus, bulkProgress, onClearSelection, onChangeStatus]);
 
   const handleBulkAssign = useCallback(async () => {
     if (!selectedTeamMember || isProcessing) return;
@@ -319,30 +291,7 @@ export function MobileBulkActions({
                   </Button>
                 </div>
 
-                {/* Status Change */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-gray-900">Change Status</h3>
-                  <select
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-md"
-                    disabled={bulkProgress.isRunning || isProcessing}
-                  >
-                    <option value="">Select status...</option>
-                    <option value="draft">Draft</option>
-                    <option value="in-review">In Review</option>
-                    <option value="published">Published</option>
-                    <option value="archived">Archived</option>
-                  </select>
-                  <Button
-                    variant="outline"
-                    onClick={handleBulkStatusChange}
-                    disabled={!selectedStatus || bulkProgress.isRunning || isProcessing}
-                    className="w-full"
-                  >
-                    Change Status
-                  </Button>
-                </div>
+
 
                 {/* Team Assignment */}
                 {teamMembers.length > 0 && (

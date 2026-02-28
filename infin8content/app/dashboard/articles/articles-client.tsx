@@ -13,6 +13,7 @@ import { Loader2, FileText, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
+import { ARTICLE_STATUSES } from '@/lib/types/dashboard.types'
 
 // Client component for interactive features
 function ArticlesClient({ orgId }: { orgId: string }) {
@@ -88,7 +89,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
             <FilterDropdown
               value={filters}
               onChange={setFilters}
-              availableStatuses={['queued', 'generating', 'completed', 'failed']}
+              availableStatuses={ARTICLE_STATUSES}
             />
             <SortDropdown
               value={filters.sortBy}

@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { DashboardArticle, DashboardUpdateEvent } from '@/lib/types/dashboard.types'
+import type { Database } from '@/lib/supabase/database.types'
+
+type ArticlesRow = Database['public']['Tables']['articles']['Row']
 
 interface UseRealtimeArticlesOptions {
   orgId: string
@@ -47,7 +50,7 @@ export function useRealtimeArticles({
     fetchingRef.current = true
 
     try {
-      const { data, error } = await (supabase
+      const { data, error } = await supabase
         .from('articles')
         .select(`
           id,
@@ -58,7 +61,9 @@ export function useRealtimeArticles({
           updated_at
         `)
         .eq('org_id', orgId)
-        .order('created_at', { ascending: false }) as any)
+        .order('created_at', { ascending: false })
+
+      const articlesData = data as unknown as DashboardArticle[]
 
       if (error) {
         setError(error)
@@ -66,7 +71,7 @@ export function useRealtimeArticles({
         return
       }
 
-      setArticles(data || [])
+      setArticles(articlesData || [])
       setLastUpdated(new Date().toISOString())
     } finally {
       fetchingRef.current = false

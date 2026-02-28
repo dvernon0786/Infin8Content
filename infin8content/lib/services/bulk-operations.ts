@@ -6,14 +6,14 @@
 import { z } from 'zod';
 
 // Types for bulk operations
-export type BulkOperationType = 'delete' | 'export' | 'archive' | 'status_change' | 'assign';
+export type BulkOperationType = 'delete' | 'export' | 'archive' | 'assign';
 export type ExportFormat = 'csv' | 'pdf';
 
 export interface BulkOperationRequest {
   operation: BulkOperationType;
   articleIds: string[];
   format?: ExportFormat;
-  status?: string;
+
   assigneeId?: string;
 }
 
@@ -53,13 +53,13 @@ class BulkOperationsService {
 
       // Handle different response types
       const contentType = response.headers.get('content-type');
-      
+
       if (contentType?.includes('text/csv') || contentType?.includes('text/plain')) {
         // This is an export operation - trigger download
         const blob = await response.blob();
         const filename = this.getExportFilename(request.format || 'csv');
         this.downloadFile(blob, filename);
-        
+
         return {
           success: true,
           processed: request.articleIds.length,
@@ -114,16 +114,7 @@ class BulkOperationsService {
     });
   }
 
-  /**
-   * Change status of multiple articles
-   */
-  async changeStatus(articleIds: string[], status: string): Promise<BulkOperationResult> {
-    return this.executeBulkOperation({
-      operation: 'status_change',
-      articleIds,
-      status,
-    });
-  }
+
 
   /**
    * Assign articles to a team member
@@ -174,11 +165,7 @@ class BulkOperationsService {
           errors.push('Valid export format (csv or pdf) is required');
         }
         break;
-      case 'status_change':
-        if (!request.status) {
-          errors.push('Status is required for status change operation');
-        }
-        break;
+
     }
 
     return {

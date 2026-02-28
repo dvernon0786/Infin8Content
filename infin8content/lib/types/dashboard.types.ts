@@ -1,5 +1,7 @@
 import type { ArticleStatus } from '@/types/article';
+import { ARTICLE_STATUSES } from '@/types/article';
 export type { ArticleStatus };
+export { ARTICLE_STATUSES };
 
 export interface DashboardArticle {
   id: string;

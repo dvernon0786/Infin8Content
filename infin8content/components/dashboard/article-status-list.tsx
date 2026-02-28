@@ -55,7 +55,7 @@ interface ArticleStatusListProps {
   onDelete?: (articleIds: string[]) => Promise<void>;
   onExport?: (articleIds: string[], format: 'csv' | 'pdf') => Promise<void>;
   onArchive?: (articleIds: string[]) => Promise<void>;
-  onChangeStatus?: (articleIds: string[], status: ArticleStatus) => Promise<void>;
+
   onAssignToTeam?: (articleIds: string[], teamMemberId: string) => Promise<void>;
   teamMembers?: Array<{ id: string; name: string; email: string }>;
 }
@@ -71,7 +71,7 @@ export function ArticleStatusList({
   onDelete,
   onExport,
   onArchive,
-  onChangeStatus,
+
   onAssignToTeam,
   teamMembers = [],
 }: ArticleStatusListProps) {
@@ -365,7 +365,7 @@ export function ArticleStatusList({
                 onDelete={onDelete}
                 onExport={onExport}
                 onArchive={onArchive}
-                onChangeStatus={onChangeStatus}
+
                 onAssignToTeam={onAssignToTeam}
                 teamMembers={teamMembers}
                 className="mb-4"
@@ -380,7 +380,7 @@ export function ArticleStatusList({
                 onDelete={onDelete}
                 onExport={onExport}
                 onArchive={onArchive}
-                onChangeStatus={onChangeStatus}
+
                 onAssignToTeam={onAssignToTeam}
                 teamMembers={teamMembers}
               />
