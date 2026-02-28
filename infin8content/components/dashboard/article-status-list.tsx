@@ -43,7 +43,7 @@ import {
   Square
 } from 'lucide-react';
 import { DashboardErrorBoundary, useErrorHandler } from './error-boundary';
-import type { DashboardArticle, DashboardUpdateEvent, DashboardArticleStatus as ArticleStatus } from '../../lib/types/dashboard.types';
+import type { DashboardArticle, DashboardUpdateEvent, ArticleStatus as ArticleStatus } from '../../lib/types/dashboard.types';
 
 interface ArticleStatusListProps {
   orgId: string;
@@ -84,7 +84,6 @@ export function ArticleStatusList({
   const navigation = useArticleNavigation({
     onError: (error, context) => handleError(error, context),
     onSuccess: (articleId) => {
-      console.log(`Successfully navigated to article: ${articleId}`);
     },
   });
 
@@ -103,7 +102,6 @@ export function ArticleStatusList({
     onDashboardUpdate: handleDashboardUpdate,
     onError: (err) => handleError(err, 'useRealtimeArticles'),
     onConnectionChange: (connected) => {
-      console.log('Dashboard connection changed:', connected);
     },
   });
 
@@ -120,7 +118,6 @@ export function ArticleStatusList({
     ? useMobileBulkSelection({
       articles: filteredArticles,
       onSelectionChange: (selectedIds) => {
-        console.log('Selection changed:', selectedIds.size, 'articles selected');
       },
       enableKeyboardShortcuts: true,
       maxSelection: 100,
@@ -153,14 +150,7 @@ export function ArticleStatusList({
 
   function handleDashboardUpdate(event: DashboardUpdateEvent) {
     try {
-      console.log('Dashboard update received:', event);
       setLastUpdate(event.timestamp);
-
-      // Show a brief notification for completed articles
-      if (event.type === 'article_completed') {
-        // Could integrate with a toast notification system here
-        console.log(`Article "${event.metadata?.title}" completed!`);
-      }
     } catch (err) {
       handleError(err as Error, 'handleDashboardUpdate');
     }
@@ -415,7 +405,7 @@ export function ArticleStatusList({
               </CardContent>
             </Card>
           ) : (
-            filteredArticles.map((article) => {
+            displayArticles.map((article) => {
               const isSelected = selectedArticle === article.id;
               const isBulkSelected = bulkSelection?.isSelected(article.id) || false;
 
@@ -527,14 +517,7 @@ export function ArticleStatusList({
                       {/* Enhanced Visual Status Indicator */}
                       <VisualStatusIndicator
                         status={article.status}
-                        title={article.title || article.keyword}
                         compact={true}
-                        isRealtime={true}
-                        connectionStatus={connectionStatus}
-                        lastUpdated={lastUpdated}
-                        onRetry={() => {
-                          // Handle retry logic for failed articles
-                        }}
                       />
                     </div>
 

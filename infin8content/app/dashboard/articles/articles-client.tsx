@@ -6,31 +6,22 @@ import { SearchInput } from '@/components/dashboard/search-input'
 import { FilterDropdown } from '@/components/dashboard/filter-dropdown'
 import { SortDropdown } from '@/components/dashboard/sort-dropdown'
 import { ActiveFilters } from '@/components/dashboard/active-filters'
-import { VirtualizedArticleList } from '@/components/dashboard/virtualized-article-list'
+import { ScrollableArticleList } from '@/components/dashboard/scrollable-article-list'
 import { useDashboardFilters } from '@/hooks/use-dashboard-filters'
 import { useRealtimeArticles } from '@/hooks/use-realtime-articles'
 import { Loader2, FileText, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
 
 // Client component for interactive features
 function ArticlesClient({ orgId }: { orgId: string }) {
-  console.log('🔧 ArticlesClient initializing with orgId:', orgId);
+  const router = useRouter();
 
   try {
     const { articles, isConnected, error, lastUpdated, refresh } = useRealtimeArticles({
-      orgId,
-      onError: (error) => {
-        console.error('🚨 Real-time articles error:', error);
-      }
+      orgId
     })
-
-    console.log('📊 useRealtimeArticles result:', {
-      articlesCount: articles?.length || 0,
-      isConnected,
-      error: error?.message,
-      lastUpdated
-    });
 
     const {
       search,
@@ -46,13 +37,6 @@ function ArticlesClient({ orgId }: { orgId: string }) {
       removeFilter,
       hasActiveFilters,
     } = useDashboardFilters(articles || []);
-
-    console.log('🔍 useDashboardFilters result:', {
-      search,
-      filters,
-      filteredArticlesCount: filteredArticles?.length || 0,
-      activeFiltersCount: activeFilters?.length || 0
-    });
 
     if (error) {
       return (
@@ -174,46 +158,37 @@ function ArticlesClient({ orgId }: { orgId: string }) {
             </CardContent>
           </Card>
         ) : (
-          <VirtualizedArticleList
+          <ScrollableArticleList
             articles={filteredArticles}
-            itemHeight={160}
-            height={600}
-            overscanCount={5}
             className="border rounded-lg"
-            selectedArticle={null}
+            selectedArticle={''}
             onArticleSelect={(id) => {
-              // Navigate to article detail page
-              window.location.href = `/dashboard/articles/${id}`
+              router.push(`/dashboard/articles/${id}`)
             }}
             onArticleNavigation={(id, e) => {
               if (e?.defaultPrevented) return
-              window.location.href = `/dashboard/articles/${id}`
+              router.push(`/dashboard/articles/${id}`)
             }}
             onKeyDown={(id, e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
-                window.location.href = `/dashboard/articles/${id}`
+                router.push(`/dashboard/articles/${id}`)
               }
             }}
             onTouchStart={(id, e, element) => {
               // Handle touch start for mobile navigation
-              console.log('Touch start:', id);
             }}
             onTouchMove={(id, e, element) => {
               // Handle touch move for mobile navigation
-              console.log('Touch move:', id);
             }}
             onTouchEnd={(id, e, element) => {
-              // Navigate on touch end for mobile
-              window.location.href = `/dashboard/articles/${id}`
+              router.push(`/dashboard/articles/${id}`)
             }}
-            showProgress={true}
           />
         )}
       </div>
     )
   } catch (error) {
-    console.error('🚨 ArticlesClient error:', error);
     return (
       <Card className="border-destructive">
         <CardContent className="pt-6">

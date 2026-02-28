@@ -57,9 +57,6 @@ export function GenerateArticleButton({ articleId }: GenerateArticleButtonProps)
                 throw new Error(data?.error || 'Failed to start generation')
             }
 
-            // Refresh page to update status immediately
-            router.refresh()
-
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Something went wrong')
         } finally {

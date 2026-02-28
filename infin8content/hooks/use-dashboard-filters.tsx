@@ -20,7 +20,7 @@ import type {
   ActiveFilterBadge as ActiveFilterBadgeType,
   FilterMetrics,
   SortOption,
-  DashboardArticleStatus as ArticleStatus
+  ArticleStatus as ArticleStatus
 } from '@/lib/types/dashboard.types';
 import {
   DEFAULT_FILTER_STATE,
@@ -226,7 +226,6 @@ export function useDashboardFilters(
     filteredArticles: filteredArticles.length,
     filterTime: performanceRef.current.filterTime,
     searchTime: performanceRef.current.searchTime,
-    hasVirtualScrolling: filteredArticles.length >= DASHBOARD_FILTER_CONFIG.VIRTUAL_SCROLL_THRESHOLD,
   }), [articles.length, filteredArticles.length]);
 
   // Utility functions
