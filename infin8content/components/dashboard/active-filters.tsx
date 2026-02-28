@@ -24,7 +24,7 @@ import type {
   FilterState,
   SearchState,
   ActiveFilterBadge as ActiveFilterBadgeType,
-  DashboardArticleStatus as ArticleStatus
+  ArticleStatus as ArticleStatus
 } from '@/lib/types/dashboard.types';
 import { cn } from '@/lib/utils';
 

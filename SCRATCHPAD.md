@@ -3,6 +3,18 @@
 **Last Updated:** 2026-02-28 12:25 UTC+11  
 **Current Focus:** ICP GENERATION SERVICE HARDENING & RETRY RESILIENCE
 
+## **🔥 DASHBOARD FINAL PROJECTION & LIFECYCLE PURENESS**
+
+### **✅ Achievement: Dashboard Hardening Directive Executed**
+- **Status:** Complete UI minimalization enforcing zero shadow state.
+- **Deliverables:**
+  1. **Enum Closure:** Unilaterally adopted `ArticleStatus` array typing to extinguish rogue UI lifecycles (e.g. `cancelled`), ensuring accurate synchronization with Postgres constraints.
+  2. **Phantom Progress Purge:** Stripped all legacy UI inference bars, estimators, percentage maps, and retry hooks from `VisualStatusIndicator`, aligning the element as a strict static read model component dependent directly off realtime updates.
+  3. **Event Source Integrity & SPA Purity:** Replaced full-window reloads (`window.location.href`) crossing activity log timelines with smooth Next.js `router.push()`, while actively disposing manual forced fetches (`router.refresh()`) over generation clicks, letting `useRealtimeArticles` channel events transparently.
+  4. **Code Defensiveness Corrections:** Removed component-crashing masked `catch(e) { return null }` wrappers around child lists ensuring deterministic rendering paths, while correcting array mapping indices directly utilizing `displayArticles`.
+  5. **Component Structuring:** Rectified deceptive component labels (`VirtualizedArticleList` to `ScrollableArticleList`) correctly framing semantic behavior instead of implying nonexistent windowing logic.  
+- **Result:** Dashboard layer strictly adheres to the Minimal Dashboard Contract with unified dataflow and absolute zero shadow state.
+
 ## **🔥 ICP GENERATION SERVICE HARDENING & RETRY RESILIENCE**
 
 ### **✅ Achievement: Deterministic Retry Protocol & Error Classification**

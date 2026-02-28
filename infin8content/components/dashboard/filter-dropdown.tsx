@@ -30,7 +30,7 @@ import {
   Check
 } from 'lucide-react';
 import { DATE_RANGE_PRESETS } from '@/lib/utils/filter-utils';
-import type { FilterDropdownProps, FilterState, DashboardArticleStatus as ArticleStatus } from '@/lib/types/dashboard.types';
+import type { FilterDropdownProps, FilterState, ArticleStatus as ArticleStatus } from '@/lib/types/dashboard.types';
 import { cn } from '@/lib/utils';
 
 interface FilterSectionProps {

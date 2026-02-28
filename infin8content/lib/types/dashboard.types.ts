@@ -19,15 +19,13 @@ export interface DashboardUpdateEvent {
   metadata?: Record<string, unknown>;
 }
 
-// Map the core status for dashboard use, allowing for potential future extensions like 'cancelled'
-export type DashboardArticleStatus = ArticleStatus | 'cancelled';
 
 // Sort options for article ordering
 export type SortOption = 'mostRecent' | 'oldest' | 'titleAZ' | 'titleZA';
 
 // Filter state interface
 export interface FilterState {
-  status: DashboardArticleStatus[];
+  status: ArticleStatus[];
   dateRange: {
     start?: Date;
     end?: Date;
@@ -75,7 +73,6 @@ export interface FilterMetrics {
   filteredArticles: number;
   filterTime: number; // milliseconds
   searchTime: number; // milliseconds
-  hasVirtualScrolling: boolean;
 }
 
 // Active filter badge data
@@ -103,7 +100,7 @@ export interface SearchInputProps {
 export interface FilterDropdownProps {
   value: FilterState;
   onChange: (filters: Partial<FilterState>) => void;
-  availableStatuses: DashboardArticleStatus[];
+  availableStatuses: ArticleStatus[];
   disabled?: boolean;
   className?: string;
 }
@@ -126,21 +123,17 @@ export interface ActiveFiltersProps {
   className?: string;
 }
 
-// Virtualized list component props
-export interface VirtualizedArticleListProps {
+// Scrollable list component props
+export interface ScrollableArticleListProps {
   articles: DashboardArticle[];
-  itemHeight: number;
-  height: number;
-  overscanCount?: number;
   className?: string;
-  selectedArticle?: string | null;
-  onArticleSelect?: (id: string) => void;
-  onArticleNavigation?: (id: string, e?: React.MouseEvent) => void;
-  onKeyDown?: (id: string, e: React.KeyboardEvent) => void;
-  onTouchStart?: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
-  onTouchMove?: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
-  onTouchEnd?: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
-  showProgress?: boolean;
+  selectedArticle: string;
+  onArticleSelect: (id: string) => void;
+  onArticleNavigation: (id: string, e?: React.MouseEvent) => void;
+  onKeyDown: (id: string, e: React.KeyboardEvent) => void;
+  onTouchStart: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
+  onTouchMove: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
+  onTouchEnd: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
 }
 
 // Dashboard filters hook return type
@@ -178,7 +171,6 @@ export type SortFunction = (articles: DashboardArticle[], sortBy: SortOption) =>
 export const DASHBOARD_FILTER_CONFIG = {
   SEARCH_DEBOUNCE_MS: 300,
   SEARCH_DEBOUNCE_MS_MOBILE: 500,
-  VIRTUAL_SCROLL_THRESHOLD: 50,
   MAX_FILTERED_ARTICLES: 1000,
   PERFORMANCE_TARGET_MS: 100,
 } as const;

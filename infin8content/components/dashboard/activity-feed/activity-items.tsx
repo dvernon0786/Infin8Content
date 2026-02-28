@@ -5,6 +5,8 @@
 
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -155,8 +157,8 @@ const getActivityDescription = (activity: ActivityWithUser) => {
   }
 };
 
-// Article Created Activity
 export const ArticleCreatedActivity: React.FC<BaseActivityItemProps> = ({ activity, onClick }) => {
+  const router = useRouter();
   const activityData = activity.activity_data as ActivityData;
   const userName = activity.user.first_name || activity.user.email;
 
@@ -191,7 +193,7 @@ export const ArticleCreatedActivity: React.FC<BaseActivityItemProps> = ({ activi
               onClick={(e) => {
                 e.stopPropagation();
                 // Navigate to article
-                window.location.href = `/articles/${activity.article_id}`;
+                router.push(`/dashboard/articles/${activity.article_id}`);
               }}
             >
               <ExternalLink className="h-3 w-3" />
@@ -219,8 +221,8 @@ export const ArticleCreatedActivity: React.FC<BaseActivityItemProps> = ({ activi
   );
 };
 
-// Article Updated Activity
 export const ArticleUpdatedActivity: React.FC<BaseActivityItemProps> = ({ activity, onClick }) => {
+  const router = useRouter();
   const activityData = activity.activity_data as ActivityData;
   const userName = activity.user.first_name || activity.user.email;
 
@@ -255,7 +257,7 @@ export const ArticleUpdatedActivity: React.FC<BaseActivityItemProps> = ({ activi
               onClick={(e) => {
                 e.stopPropagation();
                 // Navigate to article
-                window.location.href = `/articles/${activity.article_id}`;
+                router.push(`/dashboard/articles/${activity.article_id}`);
               }}
             >
               <Eye className="h-3 w-3" />
