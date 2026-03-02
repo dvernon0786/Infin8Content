@@ -230,7 +230,7 @@ Generation Config:
             const response = await generateContent(messages, {
                 model: 'z-ai/glm-5',
                 temperature: 0.3, // Lower temp for structural stability
-                maxTokens: 2000
+                maxTokens: 4000
             })
 
             const rawJson = extractJson(response.content)
@@ -256,7 +256,7 @@ Generation Config:
         const response = await generateContent(messages, {
             model: 'openai/gpt-4o-mini',
             temperature: 0.3,
-            maxTokens: 2000
+            maxTokens: 4000
         })
 
         const rawJson = extractJson(response.content)
@@ -273,16 +273,37 @@ Generation Config:
  * Safely extract JSON from LLM output
  */
 function extractJson(content: string): any {
-    const trimmed = content.trim();
+    let trimmed = content.trim();
 
+    // 1️⃣ Strip ALL markdown code fences (glm-5 sometimes wraps with extra text before/after)
+    trimmed = trimmed.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
+
+    // 2️⃣ Try direct parse first
     try {
         return JSON.parse(trimmed);
     } catch { }
 
-    const match = trimmed.match(/\{[\s\S]*\}$/);
+    // 3️⃣ Extract outermost JSON object (handles preamble/postamble text)
+    const match = trimmed.match(/\{[\s\S]*\}/);
     if (match) {
+        let candidate = match[0];
+
+        // 4️⃣ Remove trailing commas before ] or }
+        candidate = candidate.replace(/,\s*([\]}])/g, '$1');
+
+        // 5️⃣ Handle escaped newlines/tabs that break strict JSON
+        candidate = candidate.replace(/[\x00-\x1F\x7F]/g, (c) =>
+            c === '\n' || c === '\r' || c === '\t' ? c : ''
+        );
+
         try {
-            return JSON.parse(match[0]);
+            return JSON.parse(candidate);
+        } catch { }
+
+        // 6️⃣ Last resort: try jsonrepair-style single→double quote fix
+        candidate = candidate.replace(/'/g, '"');
+        try {
+            return JSON.parse(candidate);
         } catch { }
     }
 

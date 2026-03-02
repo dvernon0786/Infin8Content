@@ -192,21 +192,35 @@ ${input.organizationContext.name} — ${input.organizationContext.description}`
 }
 
 function extractJson(content: string): any {
-  const trimmed = content.trim();
+  let trimmed = content.trim();
 
-  // 1️⃣ Try direct parse first
+  // 1️⃣ Strip ALL markdown code fences (glm-4.7 sometimes wraps with extra text before/after)
+  trimmed = trimmed.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
+
+  // 2️⃣ Try direct parse first
   try {
     return JSON.parse(trimmed);
   } catch { }
 
-  // 2️⃣ Extract outermost JSON object
-  const match = trimmed.match(/\{[\s\S]*\}$/);
+  // 3️⃣ Extract outermost JSON object (handles preamble/postamble text)
+  const match = trimmed.match(/\{[\s\S]*\}/);
   if (match) {
     let candidate = match[0];
 
-    // 3️⃣ Remove trailing commas (very common LLM issue)
+    // 4️⃣ Remove trailing commas before ] or }
     candidate = candidate.replace(/,\s*([\]}])/g, '$1');
 
+    // 5️⃣ Handle escaped newlines/tabs that break strict JSON
+    candidate = candidate.replace(/[\x00-\x1F\x7F]/g, (c) =>
+      c === '\n' || c === '\r' || c === '\t' ? c : ''
+    );
+
+    try {
+      return JSON.parse(candidate);
+    } catch { }
+
+    // 6️⃣ Last resort: try jsonrepair-style single→double quote fix
+    candidate = candidate.replace(/'/g, '"');
     try {
       return JSON.parse(candidate);
     } catch { }
