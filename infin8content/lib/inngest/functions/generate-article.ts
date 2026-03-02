@@ -56,7 +56,7 @@ export const generateArticle = inngest.createFunction(
         .from('articles')
         .select(`
           id,
-          organization_id,
+          organization_id:org_id,
           status,
           intent_workflow_id,
           keyword,
@@ -67,7 +67,12 @@ export const generateArticle = inngest.createFunction(
         .eq('id', articleId)
         .single()
 
-      if (artError || !artData) throw new Error(`Article ${articleId} not found`)
+      if (artError) {
+        console.error(`[Worker] Supabase error loading article ${articleId}:`, artError)
+        throw new Error(`Database error: ${artError.message}`)
+      }
+
+      if (!artData) throw new Error(`Article ${articleId} not found`)
       const article = artData as unknown as Article
 
       if (article.status === 'completed' || article.status === 'failed') {
