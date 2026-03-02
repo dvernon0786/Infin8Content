@@ -162,14 +162,14 @@ ${input.organizationContext.name} — ${input.organizationContext.description}`
     response = await generateContent(messages, {
       model: 'z-ai/glm-4.7',
       temperature: 0.0,
-      maxTokens: 2500
+      maxTokens: 4000
     })
   } catch (error) {
     console.warn('[ResearchAgent] Primary model failed, using fallback gpt-4o-mini')
     response = await generateContent(messages, {
       model: 'openai/gpt-4o-mini',
       temperature: 0.0,
-      maxTokens: 2500
+      maxTokens: 4000
     })
   }
 
