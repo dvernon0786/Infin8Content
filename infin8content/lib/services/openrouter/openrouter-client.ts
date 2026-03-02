@@ -73,12 +73,17 @@ export const MODEL_PRICING: Record<string, {
   'openai/gpt-4o-mini': {
     inputPer1k: 0.00015,   // $0.00015 per 1k input tokens
     outputPer1k: 0.0006     // $0.0006 per 1k output tokens
+  },
+  'z-ai/glm-5': {
+    inputPer1k: 0.0001,    // Placeholder - update with actual cost
+    outputPer1k: 0.0001
   }
 }
 
 function normalizeModel(model: string): string {
   if (model.startsWith('perplexity/sonar')) return 'perplexity/sonar'
   if (model.startsWith('openai/gpt-4o-mini')) return 'openai/gpt-4o-mini'
+  if (model.startsWith('z-ai/glm-5')) return 'z-ai/glm-5'
   return model
 }
 
