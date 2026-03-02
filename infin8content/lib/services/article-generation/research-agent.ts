@@ -192,19 +192,22 @@ ${input.organizationContext.name} — ${input.organizationContext.description}`
 }
 
 function extractJson(content: string): any {
-  const trimmed = content.trim();
+  let trimmed = content.trim();
 
-  // 1️⃣ Try direct parse first
+  // 1️⃣ Strip markdown code fences — some models (e.g., glm-4.7) wrap output
+  trimmed = trimmed.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+
+  // 2️⃣ Try direct parse first
   try {
     return JSON.parse(trimmed);
   } catch { }
 
-  // 2️⃣ Extract outermost JSON object
-  const match = trimmed.match(/\{[\s\S]*\}$/);
+  // 3️⃣ Extract outermost JSON object if direct parse failed (e.g., if there's conversational text)
+  const match = trimmed.match(/\{[\s\S]*\}/);
   if (match) {
     let candidate = match[0];
 
-    // 3️⃣ Remove trailing commas (very common LLM issue)
+    // 4️⃣ Remove trailing commas (critical for strict JSON parsing)
     candidate = candidate.replace(/,\s*([\]}])/g, '$1');
 
     try {

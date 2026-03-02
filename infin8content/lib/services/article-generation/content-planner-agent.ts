@@ -273,16 +273,26 @@ Generation Config:
  * Safely extract JSON from LLM output
  */
 function extractJson(content: string): any {
-    const trimmed = content.trim();
+    let trimmed = content.trim();
 
+    // 1️⃣ Strip markdown code fences — some models (e.g., glm-5) wrap output
+    trimmed = trimmed.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+
+    // 2️⃣ Try direct parse first
     try {
         return JSON.parse(trimmed);
     } catch { }
 
-    const match = trimmed.match(/\{[\s\S]*\}$/);
+    // 3️⃣ Extract outermost JSON object if direct parse failed (e.g., if there's conversational text)
+    const match = trimmed.match(/\{[\s\S]*\}/);
     if (match) {
+        let candidate = match[0];
+
+        // 4️⃣ Remove trailing commas (critical for strict JSON parsing)
+        candidate = candidate.replace(/,\s*([\]}])/g, '$1');
+
         try {
-            return JSON.parse(match[0]);
+            return JSON.parse(candidate);
         } catch { }
     }
 
