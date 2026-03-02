@@ -215,7 +215,7 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
     let timeoutId: NodeJS.Timeout | undefined;
 
     const timeoutPromise = new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(() => reject(new Error('Content writing timeout: 60 seconds exceeded')), 60000)
+      timeoutId = setTimeout(() => reject(new Error('Content writing timeout: 180 seconds exceeded')), 180000)
     });
 
     for (let attempt = 1; attempt <= 3; attempt++) {

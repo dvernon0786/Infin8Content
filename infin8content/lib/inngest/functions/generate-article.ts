@@ -233,65 +233,86 @@ export const generateArticle = inngest.createFunction(
         const section = sections[i]
         const position = i === 0 ? 'first' : i === sections.length - 1 ? 'final' : 'middle'
 
-        // ---- Research Agent (Agent 2)
-        const research = await step.run(`research-${section.section_order}`, async () => {
-          // Update status
-          await supabase.from('article_sections').update({ status: 'researching' }).eq('id', section.id)
+        try {
+          // ---- Research Agent (Agent 2)
+          const research = await step.run(`research-${section.section_order}`, async () => {
+            // Update status
+            await supabase.from('article_sections').update({ status: 'researching' }).eq('id', section.id)
 
-          const result = await withRetries(() => runResearchAgent({
-            sectionHeader: section.section_header,
-            sectionType: section.section_type,
-            researchQuestions: (section.planner_output as any).research_questions || [],
-            supportingPoints: (section.planner_output as any).supporting_points || [],
-            priorSectionsSummary: completedSections.map(s => `${s.section_header} (${s.section_type})`).join('\n'),
-            organizationContext: {
-              name: organization.name,
-              description: organization.business_description || ''
-            }
-          }))
+            const result = await withRetries(() => runResearchAgent({
+              sectionHeader: section.section_header,
+              sectionType: section.section_type,
+              researchQuestions: (section.planner_output as any).research_questions || [],
+              supportingPoints: (section.planner_output as any).supporting_points || [],
+              priorSectionsSummary: completedSections.map(s => `${s.section_header} (${s.section_type})`).join('\n'),
+              organizationContext: {
+                name: organization.name,
+                description: organization.business_description || ''
+              }
+            }))
 
-          await supabase.from('article_sections').update({
-            research_payload: result,
-            status: 'researched'
-          }).eq('id', section.id)
+            await supabase.from('article_sections').update({
+              research_payload: result,
+              status: 'researched'
+            }).eq('id', section.id)
 
-          return result
-        })
+            return result
+          })
 
-        // ---- Writing Agent (Agent 3)
-        const content = await step.run(`write-${section.section_order}`, async () => {
-          await supabase.from('article_sections').update({ status: 'writing' }).eq('id', section.id)
+          // ---- Writing Agent (Agent 3)
+          const content = await step.run(`write-${section.section_order}`, async () => {
+            await supabase.from('article_sections').update({ status: 'writing' }).eq('id', section.id)
 
-          const result = await withRetries(() => runContentWritingAgent({
-            sectionHeader: section.section_header,
-            sectionType: section.section_type,
-            researchPayload: research,
-            plannerOutput: section.planner_output as any,
-            articlePlan: plan as any,
-            position,
-            generationConfig,
-            priorContentMarkdown: completedSections.map(s => s.content_markdown).join('\n\n'),
-            organizationContext: {
-              name: organization.name,
-              description: organization.business_description || ''
-            }
-          }))
+            const result = await withRetries(() => runContentWritingAgent({
+              sectionHeader: section.section_header,
+              sectionType: section.section_type,
+              researchPayload: research,
+              plannerOutput: section.planner_output as any,
+              articlePlan: plan as any,
+              position,
+              generationConfig,
+              priorContentMarkdown: completedSections.map(s => s.content_markdown).join('\n\n'),
+              organizationContext: {
+                name: organization.name,
+                description: organization.business_description || ''
+              }
+            }))
 
-          await supabase.from('article_sections').update({
-            content_markdown: result.markdown,
-            content_html: result.html,
+            await supabase.from('article_sections').update({
+              content_markdown: result.markdown,
+              content_html: result.html,
+              status: 'completed'
+            }).eq('id', section.id)
+
+            return result
+          })
+
+          // Build context for next loop
+          completedSections.push({
+            ...section,
+            content_markdown: content.markdown,
             status: 'completed'
-          }).eq('id', section.id)
+          } as ArticleSection)
+        } catch (sectionError) {
+          console.error(`[Worker] Section ${section.id} failed:`, sectionError)
 
-          return result
-        })
+          // Mark section as failed so the article can still "complete" with missing pieces
+          await step.run(`mark-section-failed-${section.section_order}`, async () => {
+            await supabase
+              .from('article_sections')
+              .update({
+                status: 'failed',
+                error_details: {
+                  message: sectionError instanceof Error ? sectionError.message : String(sectionError),
+                  failed_at: new Date().toISOString()
+                },
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', section.id)
+          })
 
-        // Build context for next loop
-        completedSections.push({
-          ...section,
-          content_markdown: content.markdown,
-          status: 'completed'
-        } as ArticleSection)
+          continue // 🔥 CRITICAL: Proceed to next section instead of crashing the whole loop
+        }
       }
 
       /* -------------------------------------------------- */

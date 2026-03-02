@@ -155,7 +155,11 @@ Solutions (Error Handling)
  If research questions yield limited results, provide alternative research angles
  If the topic lacks sufficient depth for a full article, suggest related subtopics to expand coverage
  
-Return ONLY valid JSON. No markdown fences. No explanation. Raw JSON only.
+Return ONLY valid JSON.
+Do not include explanations.
+Do not include markdown.
+Do not include trailing commas.
+JSON only.
 
 Output schema:
 {
@@ -269,25 +273,18 @@ Generation Config:
  * Safely extract JSON from LLM output
  */
 function extractJson(content: string): any {
-    const trimmed = content.trim()
+    const trimmed = content.trim();
 
-    // Try direct parse
     try {
-        return JSON.parse(trimmed)
-    } catch (e) {
-        // Try to find braces if model included conversational filler
-        const firstBrace = trimmed.indexOf('{')
-        const lastBrace = trimmed.lastIndexOf('}')
+        return JSON.parse(trimmed);
+    } catch { }
 
-        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-            const candidate = trimmed.substring(firstBrace, lastBrace + 1)
-            try {
-                return JSON.parse(candidate)
-            } catch (inner) {
-                throw new Error('LLM output contained unparseable JSON structure')
-            }
-        }
-
-        throw new Error('LLM output did not contain a valid JSON object')
+    const match = trimmed.match(/\{[\s\S]*\}$/);
+    if (match) {
+        try {
+            return JSON.parse(match[0]);
+        } catch { }
     }
+
+    throw new Error('LLM output contained unparseable JSON structure');
 }
