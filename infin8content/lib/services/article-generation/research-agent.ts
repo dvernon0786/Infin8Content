@@ -2,8 +2,8 @@
  * Research Agent Service
  * Story B-2: Research Agent Service
  * 
- * Calls Perplexity Sonar with fixed prompt to gather current information
- * for each article section, ensuring content is grounded in accurate data.
+ * Synthesises structured research using training knowledge per section,
+ * ensuring content is grounded in accurate, cited data.
  */
 
 import { z } from 'zod'
@@ -95,21 +95,8 @@ Step 3: Complete Answer Documentation
   • Source Analysis: Brief note on source diversity and relevance to supporting points
 
 Conclusions
-
-The output must follow this exact format for each research query:
-
-Research Query #1: [Exact question/search term]  
-Research Answer: [Complete, unedited response]  
-Citations: [All URLs and sources provided]
-
-Research Query #2: [Exact question/search term]  
-Research Answer: [Complete, unedited response]  
-Citations: [All URLs and sources provided]
-
-[Continue for all research questions up to 10]
-
-Summary of Source Types Found: Overview of diversity in sources discovered  
-Relevance to Supporting Points: How findings connect to original supporting points
+Compile all research into the JSON output schema below. 
+Do not output free-form text — JSON only.
 
 Solutions
 • If questions are too similar, consolidate them and explain the consolidation approach
