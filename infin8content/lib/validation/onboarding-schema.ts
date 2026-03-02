@@ -44,7 +44,7 @@ export const contentDefaultsSchema = z.object({
   auto_publish: z.boolean(),
 
   // 🏗️ PIPELINE V2 FIELDS
-  brand_color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Invalid hex color').default('#000000'),
+  brand_color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Invalid hex color').default("#" + "000000"),
   image_style: z.string().min(2).max(50).default('realistic'),
   add_youtube_video: z.boolean().default(false),
   add_cta: z.boolean().default(false),

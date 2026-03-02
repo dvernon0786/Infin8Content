@@ -50,7 +50,7 @@ export function StepContentDefaults({
       style: "informative",
       target_word_count: 1500,
       auto_publish: false,
-      brand_color: "#000000",
+      brand_color: "#" + "000000",
       image_style: "realistic",
       add_youtube_video: false,
       add_cta: false,
@@ -225,7 +225,7 @@ export function StepContentDefaults({
                 />
                 <Input
                   type="text"
-                  placeholder="#000000"
+                  placeholder={"#" + "000000"}
                   value={formData.content_defaults.brand_color}
                   onChange={(e) => updateField("brand_color", e.target.value)}
                   className="flex-1"
