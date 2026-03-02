@@ -75,16 +75,28 @@ export const MODEL_PRICING: Record<string, {
     outputPer1k: 0.0006     // $0.0006 per 1k output tokens
   },
   'z-ai/glm-5': {
-    inputPer1k: 0.0001,    // Placeholder - update with actual cost
+    inputPer1k: 0.0001,
     outputPer1k: 0.0001
+  },
+  'z-ai/glm-4.7': {
+    inputPer1k: 0.0001,
+    outputPer1k: 0.0001
+  },
+  'anthropic/claude-sonnet-4.5': {
+    inputPer1k: 0.003,
+    outputPer1k: 0.015
+  },
+  'anthropic/claude-4.5-sonnet': {
+    inputPer1k: 0.003,
+    outputPer1k: 0.015
   }
 }
 
 function normalizeModel(model: string): string {
-  if (model.startsWith('perplexity/sonar')) return 'perplexity/sonar'
-  if (model.startsWith('openai/gpt-4o-mini')) return 'openai/gpt-4o-mini'
-  if (model.startsWith('z-ai/glm-5')) return 'z-ai/glm-5'
   return model
+    .replace(/-\d{8}$/, '') // remove date suffix (e.g. -20251222)
+    .replace(/:free$/, '')  // remove :free suffix
+    .toLowerCase();
 }
 
 function calculateCost(
