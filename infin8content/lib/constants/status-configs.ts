@@ -82,7 +82,19 @@ export const statusConfigs: Record<ArticleStatus, StatusConfig> = {
     highContrastColor: 'text-red-800',
     patternClass: 'bg-crossed-red', // CSS pattern for colorblind accessibility
   },
-
+  cancelled: {
+    color: 'text-gray-600',
+    bgColor: 'bg-gray-50',
+    borderColor: 'border-gray-200',
+    icon: React.createElement(AlertCircle, { className: "h-4 w-4" }),
+    label: 'Cancelled',
+    variant: 'secondary',
+    ariaLabel: 'Article status: cancelled',
+    // Accessibility enhancements
+    pattern: 'dashed', // Visual pattern for colorblind users
+    highContrastColor: 'text-gray-800',
+    patternClass: 'bg-dashed-gray', // CSS pattern for colorblind accessibility
+  },
 };
 
 // Helper function to get status configuration

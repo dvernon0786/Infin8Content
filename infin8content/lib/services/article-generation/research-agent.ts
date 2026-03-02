@@ -6,227 +6,211 @@
  * for each article section, ensuring content is grounded in accurate data.
  */
 
-import { generateContent } from '../openrouter/openrouter-client'
-import { retryWithPolicy, DEFAULT_RETRY_POLICY } from '../intent-engine/retry-utils'
-import { ResearchAgentOutput, ArticleSection } from '../../../types/article'
+import { z } from 'zod'
+import { generateContent, type OpenRouterMessage } from '../openrouter/openrouter-client'
+import { ResearchPayload } from '../../../types/article'
 
-// Re-export ResearchAgentOutput for other modules
-export type { ResearchAgentOutput }
+/**
+ * 🏗️ PIPELINE V2 RESEARCH SCHEMA
+ */
+const ResearchOutputSchema = z.object({
+  research_questions: z.array(z.string()),
+  consolidated_queries: z.array(z.string()),
+  research_results: z.array(
+    z.object({
+      query: z.string(),
+      answer: z.string(),
+      citations: z.array(z.string()),
+      source_types_found: z.array(z.string())
+    })
+  ),
+  total_searches: z.number()
+})
 
-// Export the input interface for API endpoint use
+export type { ResearchPayload }
+
 export interface ResearchAgentInput {
   sectionHeader: string
   sectionType: string
-  priorSections: ArticleSection[]
+  researchQuestions: string[]
+  supportingPoints: string[]
+  priorSectionsSummary: string
   organizationContext: {
     name: string
     description: string
-    website?: string
-    industry?: string
   }
 }
 
 /**
- * Research Agent Retry Policy
- * Centralized to prevent drift and ensure consistency
+ * RESEARCH SYSTEM PROMPT (LOCKED)
  */
-export const RESEARCH_AGENT_RETRY_POLICY = {
-  ...DEFAULT_RETRY_POLICY,
-  initialDelayMs: 2000, // 2s, 4s, 8s backoff
-  maxAttempts: 3
-} as const
+export const RESEARCH_AGENT_SYSTEM_PROMPT = `Role
+You are an expert Research Analyst specialized in conducting targeted research using multiple web searches. Your purpose is to analyze research questions, consolidate overlapping queries, and gather diverse, high-quality sources that support specific points with actionable conclusions.
 
-/**
- * Fixed system prompt - LOCKED, never to be modified or configurable
- * This is the exact specification from Story B-2 requirements
- */
-export const RESEARCH_AGENT_SYSTEM_PROMPT = `You are a research assistant. Your task is to research the following section:
+Constraints
+• Analyze and consolidate research questions to eliminate redundancy
+• Execute up to 10 individual Perplexity searches based on consolidated questions
+• Focus on diverse source types (studies, news articles, social media)
+• Detail source types found (YouTube, data tables, news, studies, etc)
+• Each source summary must include a clear conclusion
+• Focus on recent sources (last 12 months) when available
+• Maintain objectivity while supporting the provided points
+• Do not fabricate information not found in sources
+• For each research question, provide the complete Perplexity answer and all citations
 
-Section: {section_header}
-Type: {section_type}
+Inputs
+• Research Questions: Specific questions to be researched directly through Perplexity
+• Supporting Points: Key points that need research backing and evidence
+• Additional Context: article structure from content planner
+Tools
+None. Synthesise research from your training knowledge.
+Provide citations in format: [Author/Publication, Year, Topic].
+Do not fabricate URLs. If a specific source is unknown, cite the
+publication type and topic area instead (e.g., "McKinsey Global Institute,
+2024 report on digital transformation").
 
-Context from prior sections:
-{prior_sections_summary}
+Instructions
 
-Organization context:
-{organization_description}
+Step 1: Question Analysis
+• Review all incoming research questions
+• Identify overlapping themes and topics
+• Consolidate similar questions to avoid redundant searches
+• Create a streamlined list of unique research angles
 
-Provide comprehensive research with:
-1. Direct answers to the section topic
-2. Current data and statistics
-3. Expert perspectives
-4. Actionable insights
+Step 2: Strategic Search Execution
+• Execute up to 10 targeted Perplexity searches based on consolidated questions
+• Vary search terms to capture different source types:
+  • "[topic] statistics data tables"
+  • "[topic] YouTube video explanations"
+  • "[topic] recent studies research"
+  • "[topic] case studies examples"
+  • "[topic] news updates 2024/2025"
+• Focus searches on supporting the provided supporting points
 
-Include citations for all claims.
-Limit searches to 10 maximum.
+Step 3: Complete Answer Documentation
+• For each research question searched, document:
+  • Original Research Question: The exact question or search term used
+  • Complete Perplexity Answer: The full response provided by Perplexity (not summarized)
+  • All Citations: Every URL, source, and reference provided in the Perplexity response
+  • Source Analysis: Brief note on source diversity and relevance to supporting points
 
-You MUST return ONLY valid JSON in this exact format:
+Conclusions
 
+The output must follow this exact format for each research question:
+
+Research Question #1: [Exact question/search term]  
+Perplexity Answer: [Complete, unedited response from Perplexity]  
+Citations: [All URLs and sources provided by Perplexity]
+
+Research Question #2: [Exact question/search term]  
+Perplexity Answer: [Complete, unedited response from Perplexity]  
+Citations: [All URLs and sources provided by Perplexity]
+
+[Continue for all research questions up to 10]
+
+Summary of Source Types Found: Overview of diversity in sources discovered  
+Relevance to Supporting Points: How findings connect to original supporting points
+
+Solutions
+• If questions are too similar, consolidate them and explain the consolidation approach
+• If fewer than 10 searches yield sufficient information, explain why additional searches weren’t needed
+• If certain source types aren’t available for the topic, note this limitation
+• If supporting points lack sufficient research backing, clearly identify these gaps
+• If conflicting information emerges, highlight discrepancies and provide multiple perspectives
+• If Perplexity responses are extensive, include them in full rather than summarizing 
+- Return ONLY valid JSON. No markdown fences. No preamble. Raw JSON only.
+
+Output schema:
 {
-  "queries": string[],
-  "results": [
+  "research_questions": ["string"],
+  "consolidated_queries": ["string"],
+  "research_results": [
     {
-      "query": string,
-      "answer": string,
-      "citations": string[]
+      "query": "string",
+      "answer": "string",
+      "citations": ["string"],
+      "source_types_found": ["string"]
     }
   ],
   "total_searches": number
-}
-
-Rules:
-- Do not include markdown.
-- Do not include triple backticks.
-- Do not include explanations.
-- Do not include commentary.
-- Do not include any text before or after the JSON.
-- Return ONLY raw JSON.`;
+}`
 
 /**
  * Run research agent for a given section
- * 
- * @param input - Section context and requirements
- * @returns Research results with queries, answers, and citations
  */
 export async function runResearchAgent(
   input: ResearchAgentInput
-): Promise<ResearchAgentOutput> {
-  const { sectionHeader, sectionType, priorSections, organizationContext } = input
+): Promise<ResearchPayload> {
+  const userMessage = `Section header:
+${input.sectionHeader}
 
-  // Build structured user prompt per story specification
-  const priorSectionsSummary = priorSections.length > 0
-    ? priorSections.map(section => `- ${section.section_header}: ${section.section_type}`).join('\n')
-    : 'No prior sections'
+Section type:
+${input.sectionType}
 
-  const organizationDescription = `${organizationContext.name} - ${organizationContext.description}${organizationContext.industry ? ` (${organizationContext.industry})` : ''}`
+Research questions:
+${input.researchQuestions.join(', ')}
 
-  const userPrompt = `Section: ${sectionHeader}
-Type: ${sectionType}
+Supporting points to back with evidence:
+${input.supportingPoints.join(', ')}
 
-Context from prior sections:
-${priorSectionsSummary}
+Article context (prior completed sections):
+${input.priorSectionsSummary}
 
 Organization context:
-${organizationDescription}`.trim()
+${input.organizationContext.name} — ${input.organizationContext.description}`
 
-  // Create timeout promise (30 seconds)
-  let timeoutId: NodeJS.Timeout | undefined = undefined;
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error('Research timeout: 30 seconds exceeded')), 30000)
-  })
+  const messages: OpenRouterMessage[] = [
+    { role: 'system', content: RESEARCH_AGENT_SYSTEM_PROMPT },
+    { role: 'user', content: userMessage }
+  ]
+
+  let response;
 
   try {
-    // Execute research with timeout and retry policy
-    const result = await Promise.race([
-      executeResearchWithRetry(userPrompt),
-      timeoutPromise
-    ])
-
-    // 🛡️ Cleanup: Stop the timer if research succeeded
-    if (timeoutId) clearTimeout(timeoutId)
-
-    // Parse and validate response
-    const researchData = parseResearchResponse(result.content)
-
-    // Enforce 10 search limit
-    if (researchData.queries.length > 10) {
-      researchData.queries = researchData.queries.slice(0, 10)
-      researchData.results = researchData.results.slice(0, 10)
-      researchData.totalSearches = 10
-    }
-
-    return researchData
+    console.log('[ResearchAgent] Attempting research with z-ai/glm-4.7')
+    response = await generateContent(messages, {
+      model: 'z-ai/glm-4.7',
+      temperature: 0.0,
+      maxTokens: 2500
+    })
   } catch (error) {
-    // 🛡️ Cleanup: Ensure timer is cleared on failure too
-    if (timeoutId) clearTimeout(timeoutId)
-    console.error('Research agent failed:', error)
-    throw error
-  }
-}
-
-/**
- * Execute research with retry policy
- */
-async function executeResearchWithRetry(userPrompt: string) {
-  return retryWithPolicy(
-    () => generateContent([
-      {
-        role: 'system',
-        content: RESEARCH_AGENT_SYSTEM_PROMPT
-      },
-      {
-        role: 'user',
-        content: userPrompt
-      }
-    ], {
+    console.warn('[ResearchAgent] Primary model failed, using fallback gpt-4o-mini')
+    response = await generateContent(messages, {
       model: 'openai/gpt-4o-mini',
-      maxTokens: 2000,
-      temperature: 0,
-      maxRetries: 3,
-      retryDelay: 2000
-    }),
-    RESEARCH_AGENT_RETRY_POLICY,
-    'research-agent'
-  )
-}
-
-/**
- * Parse and validate research response from Perplexity
- */
-function parseResearchResponse(content: string): ResearchAgentOutput {
-  try {
-    // Trim whitespace
-    const trimmed = content.trim()
-
-    // Fast path: direct JSON
-    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-      const parsed = JSON.parse(trimmed)
-      return validateResearch(parsed)
-    }
-
-    // Extract first valid JSON object safely
-    const firstBrace = trimmed.indexOf('{')
-    const lastBrace = trimmed.lastIndexOf('}')
-
-    if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
-      throw new Error('No JSON object found in research response')
-    }
-
-    const candidate = trimmed.slice(firstBrace, lastBrace + 1)
-    const parsed = JSON.parse(candidate)
-
-    return validateResearch(parsed)
-
-  } catch (error) {
-    throw new Error('Invalid JSON response from research service')
-  }
-}
-
-function validateResearch(parsed: any): ResearchAgentOutput {
-  if (!Array.isArray(parsed.queries)) {
-    throw new Error('Invalid research response: missing queries')
+      temperature: 0.0,
+      maxTokens: 2500
+    })
   }
 
-  if (!Array.isArray(parsed.results)) {
-    throw new Error('Invalid research response: missing results')
-  }
+  const rawJson = extractJson(response.content)
+  const validated = ResearchOutputSchema.parse(rawJson)
 
-  for (const r of parsed.results) {
-    if (typeof r.query !== 'string') {
-      throw new Error('Invalid research result: missing query')
-    }
-    if (typeof r.answer !== 'string') {
-      throw new Error('Invalid research result: missing answer')
-    }
-    if (!Array.isArray(r.citations)) {
-      throw new Error('Invalid research result: missing citations')
-    }
-  }
-
+  // Map to the public ResearchPayload type expected by the pipeline
   return {
-    queries: parsed.queries,
-    results: parsed.results,
-    totalSearches: parsed.total_searches ?? parsed.queries.length
+    queries: validated.research_questions,
+    consolidated_queries: validated.consolidated_queries,
+    results: validated.research_results.map(r => ({
+      query: r.query,
+      answer: r.answer,
+      citations: r.citations
+    })),
+    total_searches: validated.total_searches,
+    source_types_found: Array.from(new Set(validated.research_results.flatMap(r => r.source_types_found))),
+    research_timestamp: new Date().toISOString()
+  }
+}
+
+function extractJson(content: string): any {
+  const trimmed = content.trim()
+  try {
+    return JSON.parse(trimmed)
+  } catch (e) {
+    const start = trimmed.indexOf('{')
+    const end = trimmed.lastIndexOf('}')
+    if (start !== -1 && end !== -1) {
+      return JSON.parse(trimmed.substring(start, end + 1))
+    }
+    throw new Error('LLM did not return a parseable JSON object')
   }
 }
 

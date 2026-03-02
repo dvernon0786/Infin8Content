@@ -138,30 +138,16 @@ export async function queueArticlesForWorkflow(
       if (article) {
         const typedArticle = article as unknown as { id: string; keyword: string; status: string }
 
-        // 🟠 PRODUCTION HARDENING: Create article sections before generation
-        // Each subtopic becomes an article section that the worker can process
         const subtopicArray = (keyword.subtopics || []) as any[]
-        const VALID_SECTION_TYPES = ['introduction', 'h2', 'h3', 'conclusion', 'faq']
-
         if (subtopicArray.length > 0) {
           const sectionRows = subtopicArray.map((subtopic, index) => {
-            const sectionType = VALID_SECTION_TYPES.includes(subtopic.type?.toLowerCase())
-              ? subtopic.type.toLowerCase()
-              : 'h2'
-
             return {
               article_id: typedArticle.id,
               section_order: index + 1,
               section_header: subtopic.title,
-              section_type: sectionType,
+              section_type: 'h2',
               status: 'pending',
-              planner_payload: {
-                section_header: subtopic.title,
-                section_type: sectionType,
-                instructions: `Write a high-quality ${sectionType} section about "${subtopic.title}". Include coverage for the following keywords: ${(subtopic.keywords || []).join(', ')}. Maintain a professional tone and ensure technical accuracy.`,
-                context_requirements: subtopic.keywords || [],
-                estimated_words: 500
-              },
+              planner_output: null,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             }

@@ -21,7 +21,16 @@ const onboardingSchema = z.object({
     tone: z.enum(['professional', 'casual', 'formal', 'friendly']),
     style: z.enum(['informative', 'persuasive', 'educational']),
     target_word_count: z.number().min(500).max(10000),
-    auto_publish: z.boolean()
+    auto_publish: z.boolean(),
+    // 🏗️ PIPELINE V2 FIELDS
+    brand_color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).optional(),
+    image_style: z.string().min(2).optional(),
+    add_youtube_video: z.boolean().optional(),
+    add_cta: z.boolean().optional(),
+    add_infographics: z.boolean().optional(),
+    add_emojis: z.boolean().optional(),
+    internal_links: z.boolean().optional(),
+    num_internal_links: z.number().min(0).max(10).optional()
   }).optional(),
   integration: z.object({
     type: z.enum(['wordpress']),
@@ -81,7 +90,21 @@ export async function POST(req: Request) {
       if (body.business_description !== undefined) updateData.business_description = body.business_description
       if (body.target_audiences !== undefined) updateData.target_audiences = body.target_audiences
       if (body.keyword_settings !== undefined) updateData.keyword_settings = body.keyword_settings
-      if (body.content_defaults !== undefined) updateData.content_defaults = body.content_defaults
+
+      if (body.content_defaults !== undefined) {
+        // 🔒 SAFE JSONB MERGE PATTERN (Phase 2, Step 2)
+        const { data: currentOrg } = await supabase
+          .from('organizations')
+          .select('content_defaults')
+          .eq('id', user.org_id)
+          .single() as any
+
+        const existingDefaults = currentOrg?.content_defaults || {}
+        updateData.content_defaults = {
+          ...existingDefaults,
+          ...body.content_defaults
+        }
+      }
 
       if (body.integration !== undefined) {
         // 🔒 CMS QUOTA CHECK

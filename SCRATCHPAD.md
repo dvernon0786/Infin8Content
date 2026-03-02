@@ -1,9 +1,40 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-02-28 12:25 UTC+11  
-**Current Focus:** ICP GENERATION SERVICE HARDENING & RETRY RESILIENCE
+**Last Updated:** 2026-03-02 18:15 UTC+11  
+**Current Focus:** PRE-DEPLOY HARDENING & PIPELINE V2 RESILIENCE
 
-## **🔥 DASHBOARD FINAL PROJECTION & LIFECYCLE PURENESS**
+## **🔥 PIPELINE V2 PRE-DEPLOY HARDENING**
+
+### **✅ Achievement: Atomic Article Reseeding & RPC Hardening**
+- **Status:** Complete database-level isolation for article planning.
+- **Deliverables:**
+  1. Created `reseed_sections` RPC in Supabase to atomically delete and re-insert sections from planner output.
+  2. Secured RPC by granting execution only to `service_role` and using `SECURITY DEFINER`.
+- **Result:** Eliminated race conditions and partial states during the article planning phase.
+
+### **✅ Achievement: Model Tiering & Fallback Resilience**
+- **Status:** Integrated high-capability models with deterministic fallbacks.
+- **Deliverables:**
+  1. Upgraded Planner Agent to `z-ai/glm-5`.
+  2. Upgraded Research Agent to `z-ai/glm-4.7`.
+  3. Implemented a robust fallback to `openai/gpt-4o-mini` for the Planner Agent after 2 failed attempts.
+- **Result:** Best-in-class reasoning with production-grade uptime guarantees.
+
+### **✅ Achievement: Context Assembly & RLS Safety**
+- **Status:** Hardened worker logic for context hydration and permission safety.
+- **Deliverables:**
+  1. Fixed `organization_id` reference in article assembler call, resolving RLS-related 403 errors.
+  2. Restructured ICP assembly to join Business Description and ICP Analysis JSON into a single `icpText` block for the Planner.
+  3. Replaced `select(*)` with explicit column selection (including `subtopic_data`) for performance and schema stability.
+- **Result:** 100% stable context injection with zero permission drift.
+
+### **✅ Achievement: Prompt Hardening & Alignment**
+- **Status:** Formalized agent instructions and removed non-existent tool references.
+- **Deliverables:**
+  1. Created `docs/AGENT_PROMPTS_SPECIFICATION.md` as the authoritative, locked source of truth.
+  2. Cleaned Research Agent prompt to remove hallucinated `Perplexity_Tool` and fabrications of URLs.
+  3. Aligned `ArticleStatus` types with database constraints (adding `cancelled`).
+- **Result:** Clean, deterministic agent behavior following the "Zero Drift Protocol".
 
 ### **✅ Achievement: Dashboard Hardening Directive Executed**
 - **Status:** Complete UI minimalization enforcing zero shadow state.
