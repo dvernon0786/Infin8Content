@@ -15,52 +15,36 @@ DROP FUNCTION IF EXISTS public.record_usage_increment_and_complete_step() CASCAD
 -- Recreate with proper search_path
 
 -- 1. increment_version
-CREATE OR REPLACE FUNCTION public.increment_version()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION increment_version()
+RETURNS void AS $$
 BEGIN
   RAISE NOTICE 'increment_version called';
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 2. check_and_update_workflow_cost
-CREATE OR REPLACE FUNCTION public.check_and_update_workflow_cost()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION check_and_update_workflow_cost()
+RETURNS void AS $$
 BEGIN
   RAISE NOTICE 'check_and_update_workflow_cost called';
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 3. check_organization_monthly_quota
-CREATE OR REPLACE FUNCTION public.check_organization_monthly_quota()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION check_organization_monthly_quota()
+RETURNS void AS $$
 BEGIN
   RAISE NOTICE 'check_organization_monthly_quota called';
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 4. record_usage_and_increment
-CREATE OR REPLACE FUNCTION public.record_usage_and_increment()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION record_usage_and_increment()
+RETURNS void AS $$
 BEGIN
   RAISE NOTICE 'record_usage_and_increment called';
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 5. check_workflow_cost_limit (with implementation)
 CREATE OR REPLACE FUNCTION public.check_workflow_cost_limit(
@@ -87,19 +71,15 @@ END;
 $$;
 
 -- 6. increment_workflow_cost
-CREATE OR REPLACE FUNCTION public.increment_workflow_cost()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION increment_workflow_cost()
+RETURNS void AS $$
 BEGIN
   RAISE NOTICE 'increment_workflow_cost called';
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 7. record_usage_increment_and_complete_step (with implementation)
-CREATE OR REPLACE FUNCTION public.record_usage_increment_and_complete_step(
+CREATE OR REPLACE FUNCTION record_usage_increment_and_complete_step(
   p_workflow_id uuid,
   p_organization_id uuid,
   p_model text,
@@ -107,11 +87,7 @@ CREATE OR REPLACE FUNCTION public.record_usage_increment_and_complete_step(
   p_tokens integer,
   p_step_number integer
 )
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
+RETURNS void AS $$
 BEGIN
   INSERT INTO public.usage_tracking (
     workflow_id,
@@ -151,7 +127,7 @@ BEGIN
     public.NOW()
   );
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Grant permissions
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO service_role;
