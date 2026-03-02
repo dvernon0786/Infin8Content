@@ -18,6 +18,9 @@ All notable changes to the Infin8Content platform will be documented in this fil
 ### Fixed
 - **Organization ID Resolution**: Corrected `organization_id` reference in the article assembler call to resolve RLS issues.
 - **ICP Context Assembly**: Fixed malformed ICP context string by joining business description and ICP analysis correctly.
+- **CTA Branding Naming**: Renamed `has_cta` to `add_cta` in the database to align with the authoritative agent code.
+- **Research Prompt Cleanup**: Removed brand-name references and contradictory search instructions in the research agent.
+- **Type Safety**: Updated the research-agent integration test to import types from the correct service and match the updated agent interface.
 
 ## [2.3.0] - 2026-02-26
 ### Added
