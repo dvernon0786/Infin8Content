@@ -105,7 +105,11 @@ Solutions
 • If supporting points lack sufficient research backing, clearly identify these gaps
 • If conflicting information emerges, highlight discrepancies and provide multiple perspectives
 • If research findings are extensive, include them in full rather than summarizing 
-- Return ONLY valid JSON. No markdown fences. No preamble. Raw JSON only.
+Return ONLY valid JSON.
+Do not include explanations.
+Do not include markdown.
+Do not include trailing commas.
+JSON only.
 
 Output schema:
 {
@@ -188,17 +192,27 @@ ${input.organizationContext.name} — ${input.organizationContext.description}`
 }
 
 function extractJson(content: string): any {
-  const trimmed = content.trim()
+  const trimmed = content.trim();
+
+  // 1️⃣ Try direct parse first
   try {
-    return JSON.parse(trimmed)
-  } catch (e) {
-    const start = trimmed.indexOf('{')
-    const end = trimmed.lastIndexOf('}')
-    if (start !== -1 && end !== -1) {
-      return JSON.parse(trimmed.substring(start, end + 1))
-    }
-    throw new Error('LLM did not return a parseable JSON object')
+    return JSON.parse(trimmed);
+  } catch { }
+
+  // 2️⃣ Extract outermost JSON object
+  const match = trimmed.match(/\{[\s\S]*\}$/);
+  if (match) {
+    let candidate = match[0];
+
+    // 3️⃣ Remove trailing commas (very common LLM issue)
+    candidate = candidate.replace(/,\s*([\]}])/g, '$1');
+
+    try {
+      return JSON.parse(candidate);
+    } catch { }
   }
+
+  throw new Error('LLM did not return a parseable JSON object');
 }
 
 
