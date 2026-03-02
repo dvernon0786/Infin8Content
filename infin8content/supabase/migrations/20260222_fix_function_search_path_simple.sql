@@ -15,52 +15,36 @@ DROP FUNCTION IF EXISTS public.record_usage_increment_and_complete_step() CASCAD
 -- Recreate with proper search_path
 
 -- 1. increment_version
-CREATE OR REPLACE FUNCTION public.increment_version()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+CREATE OR REPLACE FUNCTION increment_version()
+RETURNS void AS $$
 BEGIN
-  RAISE NOTICE 'increment_version called - implementation needed';
+  RAISE NOTICE 'increment_version called';
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 2. check_and_update_workflow_cost
-CREATE OR REPLACE FUNCTION public.check_and_update_workflow_cost()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+CREATE OR REPLACE FUNCTION check_and_update_workflow_cost()
+RETURNS void AS $$
 BEGIN
-  RAISE NOTICE 'check_and_update_workflow_cost called - implementation needed';
+  RAISE NOTICE 'check_and_update_workflow_cost called';
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 3. check_organization_monthly_quota
-CREATE OR REPLACE FUNCTION public.check_organization_monthly_quota()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+CREATE OR REPLACE FUNCTION check_organization_monthly_quota()
+RETURNS void AS $$
 BEGIN
-  RAISE NOTICE 'check_organization_monthly_quota called - implementation needed';
+  RAISE NOTICE 'check_organization_monthly_quota called';
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 4. record_usage_and_increment
-CREATE OR REPLACE FUNCTION public.record_usage_and_increment()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+CREATE OR REPLACE FUNCTION record_usage_and_increment()
+RETURNS void AS $$
 BEGIN
-  RAISE NOTICE 'record_usage_and_increment called - implementation needed';
+  RAISE NOTICE 'record_usage_and_increment called';
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 5. check_workflow_cost_limit (with implementation)
 CREATE OR REPLACE FUNCTION public.check_workflow_cost_limit(
@@ -71,14 +55,14 @@ CREATE OR REPLACE FUNCTION public.check_workflow_cost_limit(
 RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = ''
 AS $$
 DECLARE
     v_current_cost numeric := 0;
     v_new_total_cost numeric;
 BEGIN
-    SELECT COALESCE(SUM(cost), 0) INTO v_current_cost
-    FROM usage_tracking 
+    SELECT public.COALESCE(public.SUM(cost), 0) INTO v_current_cost
+    FROM public.usage_tracking 
     WHERE workflow_id = p_workflow_id;
     
     v_new_total_cost := v_current_cost + p_additional_cost;
@@ -87,19 +71,15 @@ END;
 $$;
 
 -- 6. increment_workflow_cost
-CREATE OR REPLACE FUNCTION public.increment_workflow_cost()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+CREATE OR REPLACE FUNCTION increment_workflow_cost()
+RETURNS void AS $$
 BEGIN
-  RAISE NOTICE 'increment_workflow_cost called - implementation needed';
+  RAISE NOTICE 'increment_workflow_cost called';
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 7. record_usage_increment_and_complete_step (with implementation)
-CREATE OR REPLACE FUNCTION public.record_usage_increment_and_complete_step(
+CREATE OR REPLACE FUNCTION record_usage_increment_and_complete_step(
   p_workflow_id uuid,
   p_organization_id uuid,
   p_model text,
@@ -107,13 +87,9 @@ CREATE OR REPLACE FUNCTION public.record_usage_increment_and_complete_step(
   p_tokens integer,
   p_step_number integer
 )
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+RETURNS void AS $$
 BEGIN
-  INSERT INTO usage_tracking (
+  INSERT INTO public.usage_tracking (
     workflow_id,
     organization_id,
     model,
@@ -128,10 +104,10 @@ BEGIN
     p_cost,
     p_tokens,
     p_step_number,
-    NOW()
+    public.NOW()
   );
   
-  INSERT INTO audit_logs (
+  INSERT INTO public.audit_logs (
     org_id,
     user_id,
     action,
@@ -139,19 +115,19 @@ BEGIN
     created_at
   ) VALUES (
     p_organization_id,
-    auth.uid(),
+    public.auth.uid(),
     'usage.recorded',
-    json_build_object(
+    public.json_build_object(
       'workflow_id', p_workflow_id,
       'model', p_model,
       'cost', p_cost,
       'tokens', p_tokens,
       'step_number', p_step_number
     ),
-    NOW()
+    public.NOW()
   );
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Grant permissions
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO service_role;

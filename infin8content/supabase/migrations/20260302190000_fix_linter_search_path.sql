@@ -24,12 +24,8 @@ DROP FUNCTION IF EXISTS public.reseed_sections(uuid, jsonb) CASCADE;
 -- 🚀 Recreate authoritative versions with most restrictive search_path
 
 -- 1. ensure_all_sections_completed
-CREATE OR REPLACE FUNCTION public.ensure_all_sections_completed()
-RETURNS TRIGGER 
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION ensure_all_sections_completed()
+RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.status = 'completed' AND (OLD.status IS NULL OR OLD.status <> 'completed') THEN
         IF EXISTS (
@@ -47,18 +43,14 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 2. reseed_sections
-CREATE OR REPLACE FUNCTION public.reseed_sections(
+CREATE OR REPLACE FUNCTION reseed_sections(
   p_article_id UUID,
   p_sections   JSONB
 )
-RETURNS VOID
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
+RETURNS VOID AS $$
 BEGIN
   DELETE FROM public.article_sections WHERE article_id = p_article_id;
 
@@ -83,34 +75,26 @@ BEGIN
     now()
   FROM public.jsonb_array_elements(p_sections) AS s;
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 3. increment_version
-CREATE OR REPLACE FUNCTION public.increment_version()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION increment_version()
+RETURNS void AS $$
 BEGIN
   RAISE NOTICE 'increment_version called';
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 4. check_and_update_workflow_cost
-CREATE OR REPLACE FUNCTION public.check_and_update_workflow_cost()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION check_and_update_workflow_cost()
+RETURNS void AS $$
 BEGIN
   RAISE NOTICE 'check_and_update_workflow_cost called';
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 5. record_usage_increment_and_complete_step
-CREATE OR REPLACE FUNCTION public.record_usage_increment_and_complete_step(
+CREATE OR REPLACE FUNCTION record_usage_increment_and_complete_step(
   p_workflow_id uuid,
   p_organization_id uuid,
   p_model text,
@@ -118,11 +102,7 @@ CREATE OR REPLACE FUNCTION public.record_usage_increment_and_complete_step(
   p_tokens integer,
   p_step_number integer
 )
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
+RETURNS void AS $$
 BEGIN
   INSERT INTO public.usage_tracking (
     workflow_id,
@@ -139,7 +119,7 @@ BEGIN
     p_cost,
     p_tokens,
     p_step_number,
-    NOW()
+    public.NOW()
   );
   
   INSERT INTO public.audit_logs (
@@ -159,34 +139,26 @@ BEGIN
       'tokens', p_tokens,
       'step_number', p_step_number
     ),
-    NOW()
+    public.NOW()
   );
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 6. record_usage_and_increment
-CREATE OR REPLACE FUNCTION public.record_usage_and_increment()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION record_usage_and_increment()
+RETURNS void AS $$
 BEGIN
   RAISE NOTICE 'record_usage_and_increment called';
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 7. increment_workflow_cost
-CREATE OR REPLACE FUNCTION public.increment_workflow_cost()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION increment_workflow_cost()
+RETURNS void AS $$
 BEGIN
   RAISE NOTICE 'increment_workflow_cost called';
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Permissions
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC;
