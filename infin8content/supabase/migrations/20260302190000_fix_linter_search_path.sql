@@ -94,14 +94,6 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 5. record_usage_increment_and_complete_step
-CREATE OR REPLACE FUNCTION public.record_usage_increment_and_complete_step(
-  p_workflow_id uuid,
-  p_organization_id uuid,
-  p_model text,
-  p_cost numeric,
-  p_tokens integer,
-  p_step_number integer
--- 5. record_usage_increment_and_complete_step
 CREATE OR REPLACE FUNCTION record_usage_increment_and_complete_step(
   p_workflow_id uuid,
   p_organization_id uuid,
