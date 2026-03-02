@@ -230,7 +230,7 @@ Generation Config:
             const response = await generateContent(messages, {
                 model: 'z-ai/glm-5',
                 temperature: 0.3, // Lower temp for structural stability
-                maxTokens: 2000
+                maxTokens: 4000
             })
 
             const rawJson = extractJson(response.content)
@@ -256,7 +256,7 @@ Generation Config:
         const response = await generateContent(messages, {
             model: 'openai/gpt-4o-mini',
             temperature: 0.3,
-            maxTokens: 2000
+            maxTokens: 4000
         })
 
         const rawJson = extractJson(response.content)
@@ -275,22 +275,33 @@ Generation Config:
 function extractJson(content: string): any {
     let trimmed = content.trim();
 
-    // 1️⃣ Strip markdown code fences — some models (e.g., glm-5) wrap output
-    trimmed = trimmed.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    // 1️⃣ Strip ALL markdown code fences (glm-5 sometimes wraps with extra text before/after)
+    trimmed = trimmed.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
 
     // 2️⃣ Try direct parse first
     try {
         return JSON.parse(trimmed);
     } catch { }
 
-    // 3️⃣ Extract outermost JSON object if direct parse failed (e.g., if there's conversational text)
+    // 3️⃣ Extract outermost JSON object (handles preamble/postamble text)
     const match = trimmed.match(/\{[\s\S]*\}/);
     if (match) {
         let candidate = match[0];
 
-        // 4️⃣ Remove trailing commas (critical for strict JSON parsing)
+        // 4️⃣ Remove trailing commas before ] or }
         candidate = candidate.replace(/,\s*([\]}])/g, '$1');
 
+        // 5️⃣ Handle escaped newlines/tabs that break strict JSON
+        candidate = candidate.replace(/[\x00-\x1F\x7F]/g, (c) =>
+            c === '\n' || c === '\r' || c === '\t' ? c : ''
+        );
+
+        try {
+            return JSON.parse(candidate);
+        } catch { }
+
+        // 6️⃣ Last resort: try jsonrepair-style single→double quote fix
+        candidate = candidate.replace(/'/g, '"');
         try {
             return JSON.parse(candidate);
         } catch { }
