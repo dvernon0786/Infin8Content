@@ -2,6 +2,23 @@
 
 All notable changes to the Infin8Content platform will be documented in this file.
 
+## [2.4.0] - 2026-03-02
+### Added
+- **reseed_sections RPC**: Implemented atomic article section reseeding to prevent race conditions and partial states.
+- **Planner Fallback**: Added `openai/gpt-4o-mini` fallback for the Content Planner Agent for increased resilience.
+- **Agent Prompts Specification**: Created `docs/AGENT_PROMPTS_SPECIFICATION.md` as the authoritative source for agent models and prompts.
+
+### Changed
+- **Model Upgrades**: Upgraded Planner Agent to `z-ai/glm-5` and Research Agent to `z-ai/glm-4.7`.
+- **Content Writing Agent**: Switched to `anthropic/claude-sonnet-4.5` for premium prose generation.
+- **Research Agent Prompt**: Removed legacy tool references and hallucinated URL requirements to improve synthesis reliability.
+- **Worker Hardening**: Replaced `select(*)` with explicit column selection in the article generation worker.
+- **Type Safety**: Updated `ArticleStatus` to include `cancelled` and removed stale agent input interfaces from global types.
+
+### Fixed
+- **Organization ID Resolution**: Corrected `organization_id` reference in the article assembler call to resolve RLS issues.
+- **ICP Context Assembly**: Fixed malformed ICP context string by joining business description and ICP analysis correctly.
+
 ## [2.3.0] - 2026-02-26
 ### Added
 - **Separated Planning & Execution**: Decoupled article content planning from execution to support quota-governed platforms.
