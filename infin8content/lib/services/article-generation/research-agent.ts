@@ -2,8 +2,8 @@
  * Research Agent Service
  * Story B-2: Research Agent Service
  * 
- * Calls Perplexity Sonar with fixed prompt to gather current information
- * for each article section, ensuring content is grounded in accurate data.
+ * Synthesises structured research using training knowledge per section,
+ * ensuring content is grounded in accurate, cited data.
  */
 
 import { z } from 'zod'
@@ -49,17 +49,17 @@ You are an expert Research Analyst specialized in conducting targeted research u
 
 Constraints
 • Analyze and consolidate research questions to eliminate redundancy
-• Execute up to 10 individual Perplexity searches based on consolidated questions
+• Develop up to 10 structured research queries based on consolidated questions
 • Focus on diverse source types (studies, news articles, social media)
 • Detail source types found (YouTube, data tables, news, studies, etc)
 • Each source summary must include a clear conclusion
 • Focus on recent sources (last 12 months) when available
 • Maintain objectivity while supporting the provided points
 • Do not fabricate information not found in sources
-• For each research question, provide the complete Perplexity answer and all citations
+• For each research question, provide the complete research answer and all citations
 
 Inputs
-• Research Questions: Specific questions to be researched directly through Perplexity
+• Research Questions: Specific questions to be researched directly
 • Supporting Points: Key points that need research backing and evidence
 • Additional Context: article structure from content planner
 Tools
@@ -78,7 +78,7 @@ Step 1: Question Analysis
 • Create a streamlined list of unique research angles
 
 Step 2: Strategic Search Execution
-• Execute up to 10 targeted Perplexity searches based on consolidated questions
+• Execute up to 10 targeted research queries based on consolidated questions
 • Vary search terms to capture different source types:
   • "[topic] statistics data tables"
   • "[topic] YouTube video explanations"
@@ -88,28 +88,15 @@ Step 2: Strategic Search Execution
 • Focus searches on supporting the provided supporting points
 
 Step 3: Complete Answer Documentation
-• For each research question searched, document:
-  • Original Research Question: The exact question or search term used
-  • Complete Perplexity Answer: The full response provided by Perplexity (not summarized)
-  • All Citations: Every URL, source, and reference provided in the Perplexity response
+• For each research query searched, document:
+  • Original Research Query: The exact query or search term used
+  • Complete Research Answer: The full research response (not summarized)
+  • All Citations: Every URL, source, and reference provided
   • Source Analysis: Brief note on source diversity and relevance to supporting points
 
 Conclusions
-
-The output must follow this exact format for each research question:
-
-Research Question #1: [Exact question/search term]  
-Perplexity Answer: [Complete, unedited response from Perplexity]  
-Citations: [All URLs and sources provided by Perplexity]
-
-Research Question #2: [Exact question/search term]  
-Perplexity Answer: [Complete, unedited response from Perplexity]  
-Citations: [All URLs and sources provided by Perplexity]
-
-[Continue for all research questions up to 10]
-
-Summary of Source Types Found: Overview of diversity in sources discovered  
-Relevance to Supporting Points: How findings connect to original supporting points
+Compile all research into the JSON output schema below. 
+Do not output free-form text — JSON only.
 
 Solutions
 • If questions are too similar, consolidate them and explain the consolidation approach
@@ -117,7 +104,7 @@ Solutions
 • If certain source types aren’t available for the topic, note this limitation
 • If supporting points lack sufficient research backing, clearly identify these gaps
 • If conflicting information emerges, highlight discrepancies and provide multiple perspectives
-• If Perplexity responses are extensive, include them in full rather than summarizing 
+• If research findings are extensive, include them in full rather than summarizing 
 - Return ONLY valid JSON. No markdown fences. No preamble. Raw JSON only.
 
 Output schema:
