@@ -1,44 +1,49 @@
 # Infin8Content - Master Project Documentation Index
 
-Generated: 2026-02-26  
-Project Status: Active Development  
+Generated: 2026-02-28  
+Project Status: **Production Hardened**  
+Authority: **Zero Drift Protocol**
 
 ## Welcome
 
-Welcome to the central documentation for Infin8Content. This guide provides a comprehensive overview of the system architecture, development workflows, and core technical components.
+Welcome to the central documentation for Infin8Content. This guide provides a comprehensive overview of the system architecture, development workflows, and core technical components, all verified through an exhaustive deep scan.
 
 ## Project Quick Reference
 
 - **Type**: Multi-tenant SaaS Platform (Monorepo)
 - **Primary Tech**: Next.js 16, React 19, Supabase, Inngest
-- **Architecture**: Component-based, state-driven workflows
-- **License**: Proprietary
+- **Architecture**: **Zero Drift / Deterministic State Machine**
+- **Lifecycle Mode**: Pure Generation Engine Locked
 
 ## Core Documentation
 
 ### 📚 Project Overview
-- [Project Overview](./project-overview.md): High-level summary of the platform's purpose and capabilities.
-- [Source Tree Analysis](./source-tree-analysis.md): Annotated directory structure for all monorepo parts.
+- [Project Overview](./project-overview.md): Strategic summary of purpose and high-level architecture.
+- [Source Tree Analysis](./source-tree-analysis.md): Annotated structure for the monorepo.
+- [Complete Codebase Analysis](./COMPLETE_CODEBASE_ANALYSIS.md): Synthesis of system purity and architecture.
 
 ### 🏗️ Technical Architecture
-- [Architecture Overview](file:///home/dghost/Infin8Content/docs/architecture-infin8content.md)
-- [Source Tree Analysis](file:///home/dghost/Infin8Content/docs/source-tree-analysis.md)
-- [File Manifest (Granular)](file:///home/dghost/Infin8Content/docs/project-documentation/file-manifest.md)
-- [Data Models](file:///home/dghost/Infin8Content/docs/data-models-infin8content.md)
-: Database schema, tables, and relationships documentation.
-- [API Contracts](./api-contracts-infin8content.md): Catalog of Next.js API endpoints and their requirements.
+- [Workflow Guide](./workflow-guide.md): Deep-dive into the FSM and Generation Pipeline.
+- [Architecture Overview](./architecture-infin8content.md): Core platform design.
+- [Data Models](./data-models.md): Database schema and RLS policies.
+- [API Contracts](./api-contracts.md): Catalog of endpoints and integration layers.
+- [Dependency Analysis](./DEPENDENCY_ANALYSIS_DEEP_SCAN.md): Deep scan of module relationships.
 
 ### 💻 Development & Maintenance
-- [Development Guide](./development-guide-infin8content.md): Instructions for local setup, testing, and coding standards.
-- [Deployment Guide](./deployment-guide.md): CI/CD pipeline details and infrastructure overview.
-- [Component Inventory](./component-inventory-infin8content.md): catalog of UI components and design system tokens.
+- [Development Guide](./development-guide.md): Setup, standards, and deployment.
+- [Component Inventory](./component-inventory.md): Library of UI components and tokens.
+- [Deployment Guide](./deployment-guide.md): CI/CD and infrastructure details.
+
+### 🛡️ Specialized Stability Guides
+- [State Machine Purity](./workflow-engine-state-machine-purity.md)
+- [Realtime Stability Engineering](./realtime-stability-engineering-guide.md)
+- [Zero Legacy FSM Completion](./zero-legacy-fsm-completion.md)
 
 ## Monorepo Parts
 
-- [infin8content](./infin8content/): The main web platform.
-- [tools/eslint-plugin-design-system](./tools/eslint-plugin-design-system/): Custom linting for design compliance.
-- [_bmad](./_bmad/): Framework for agentic workflow orchestration.
+- [infin8content/](./infin8content/): Primary web application.
+- [_bmad/](./_bmad/): Management framework.
+- [supabase/](./supabase/): Infrastructure layer.
 
 ---
-
-*This documentation is auto-generated and updated via the `document-project` workflow.*
+*Documentation updated via the `document-project` exhaustive workflow.*

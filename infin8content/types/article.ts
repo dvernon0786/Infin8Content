@@ -7,14 +7,46 @@ export type ArticleStatus =
   | 'queued'
   | 'generating'
   | 'completed'
-  | 'failed';
+  | 'failed'
+  | 'cancelled';
 
 export const ARTICLE_STATUSES: ArticleStatus[] = [
   'queued',
   'generating',
   'completed',
-  'failed'
+  'failed',
+  'cancelled'
 ];
+
+/**
+ * Domain-aligned Article interface matching Supabase schema v2.2
+ */
+export interface Article {
+  id: string;
+  organization_id: string;
+  workflow_id?: string;
+  keyword_id?: string;
+  title: string;
+  slug?: string;
+  content?: string;
+  html_content?: string;
+  word_count: number;
+  reading_time_minutes: number;
+  status: ArticleStatus;
+  published_at?: string;
+  created_at: string;
+  updated_at: string;
+  workflow_step?: string;
+  generation_metadata: Record<string, any>;
+  subtopic_id?: string;
+  generation_queue_id?: string;
+
+  // 🏗️ PIPELINE V2 FIELDS
+  article_plan: ArticlePlannerOutput | null;
+  generation_config: ContentDefaults | null;
+  intent_workflow_id?: string;
+  subtopic_data?: Array<{ title: string; type: string; keywords: string[] }> | null;
+}
 
 export interface GenerationStatistics {
   total_time: number; // seconds
@@ -38,12 +70,28 @@ export type SectionStatus =
   | 'completed'
   | 'failed';
 
-export interface PlannerPayload {
-  section_header: string;
+/**
+ * Structured output from Content Planner Agent (Per Section)
+ */
+export interface SectionPlannerOutput {
   section_type: string;
-  instructions: string;
-  context_requirements: string[];
+  header: string;
+  supporting_points: string[];
+  research_questions: string[];
+  supporting_elements: string;
   estimated_words: number;
+}
+
+/**
+ * Structured output from Content Planner Agent (Top Level)
+ */
+export interface ArticlePlannerOutput {
+  article_title: string;
+  content_style: 'informative' | 'listicle';
+  target_keyword: string;
+  semantic_keywords: string[];
+  total_estimated_words: number;
+  article_structure: SectionPlannerOutput[]; // 🆕 NEW: Stored for re-generation integrity
 }
 
 export interface ResearchPayload {
@@ -55,6 +103,10 @@ export interface ResearchPayload {
   }[];
   total_searches: number;
   research_timestamp: string;
+
+  // 🏗️ PIPELINE V2 FIELDS
+  consolidated_queries: string[];
+  source_types_found: string[];
 }
 
 export interface ArticleSection {
@@ -63,7 +115,10 @@ export interface ArticleSection {
   section_order: number;
   section_header: string;
   section_type: string;
-  planner_payload: PlannerPayload;
+
+  // 🏗️ PIPELINE V2 FIELD (Single source of truth)
+  planner_output: SectionPlannerOutput | null;
+
   research_payload?: ResearchPayload;
   content_markdown?: string;
   content_html?: string;
@@ -74,17 +129,6 @@ export interface ArticleSection {
 }
 
 // Research Agent Types (Story B-2)
-export interface ResearchAgentInput {
-  sectionHeader: string;
-  sectionType: string;
-  priorSections: ArticleSection[];
-  organizationContext: {
-    name: string;
-    description: string;
-    website?: string;
-    industry?: string;
-  };
-}
 
 export interface ResearchAgentOutput {
   queries: string[];
@@ -101,7 +145,7 @@ export interface CreateArticleSectionParams {
   section_order: number;
   section_header: string;
   section_type: string;
-  planner_payload: PlannerPayload;
+  planner_output: SectionPlannerOutput;
 }
 
 export interface UpdateArticleSectionParams {
@@ -113,13 +157,6 @@ export interface UpdateArticleSectionParams {
 }
 
 // Content Writing Agent Types (Story B-3)
-export interface ContentWritingAgentInput {
-  sectionHeader: string
-  sectionType: string
-  researchPayload: ResearchPayload
-  priorSections: ArticleSection[]
-  organizationDefaults: ContentDefaults
-}
 
 export interface ContentWritingAgentOutput {
   markdown: string
@@ -128,11 +165,26 @@ export interface ContentWritingAgentOutput {
 }
 
 export interface ContentDefaults {
-  tone: string
-  language: string
-  internal_links: boolean
-  global_instructions: string
-  auto_publish_rules?: Record<string, any>
+  // LEGACY BASE
+  tone: string;
+  language: string;
+  style: string;
+  target_word_count: number;
+  auto_publish: boolean;
+
+  // 🏗️ PIPELINE V2 CONFIG (ONBOARDING)
+  brand_color: string;
+  image_style: string;
+  add_youtube_video: boolean;
+  add_cta: boolean;
+  add_infographics: boolean;
+  add_emojis: boolean;
+  internal_links: boolean;
+  num_internal_links: number;
+
+  // OPTIONAL EXTRAS
+  global_instructions?: string;
+  auto_publish_rules?: Record<string, any>;
 }
 
 // Article Progress Tracking Types (Story B-5)

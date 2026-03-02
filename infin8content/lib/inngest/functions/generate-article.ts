@@ -1,13 +1,20 @@
 import { inngest } from '@/lib/inngest/client'
 import { createServiceRoleClient } from '@/lib/supabase/server'
-import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
+import { runContentPlannerAgent } from '@/lib/services/article-generation/content-planner-agent'
 import { runResearchAgent } from '@/lib/services/article-generation/research-agent'
 import { runContentWritingAgent } from '@/lib/services/article-generation/content-writing-agent'
 import { ArticleAssembler } from '@/lib/services/article-generation/article-assembler'
 import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
-import type { ArticleSection, ResearchPayload, ContentDefaults } from '@/types/article'
+import type {
+  Article,
+  ArticleSection,
+  ResearchPayload,
+  ContentDefaults,
+  ArticlePlannerOutput,
+  SectionPlannerOutput
+} from '@/types/article'
 
-// B-4 Required: Retry wrapper with exponential backoff (matches existing retryWithBackoff)
+// B-4 Required: Retry wrapper with exponential backoff
 async function withRetries<T>(
   fn: () => Promise<T>,
   attempts = 3
@@ -28,228 +35,258 @@ async function withRetries<T>(
 
 export const generateArticle = inngest.createFunction(
   {
-    id: 'article/generate', // PRESERVED: Same function ID as original
+    id: 'article/generate',
     concurrency: {
       limit: 1,
       key: 'event.data.organizationId'
     }
   },
-  { event: 'article/generate' }, // PRESERVED: Same event name
+  { event: 'article/generate' },
   async ({ event, step }: any) => {
     const { articleId } = event.data
     const supabase = createServiceRoleClient()
 
     /* -------------------------------------------------- */
-    /* Load article                                      */
+    /* 1. Load Article & Organization context            */
     /* -------------------------------------------------- */
 
-    const article = await step.run('load-article', async () => {
-      const { data, error } = await supabase
-        .from('articles' as any)
-        .select('id, org_id, status')
+    const { article, organization, workflow } = await step.run('load-context', async () => {
+      // Load Article
+      const { data: artData, error: artError } = await supabase
+        .from('articles')
+        .select(`
+          id,
+          organization_id,
+          status,
+          intent_workflow_id,
+          keyword,
+          subtopic_data,
+          article_plan,
+          generation_config
+        `)
         .eq('id', articleId)
-        .limit(1)
+        .single()
 
-      if (error) {
-        console.error('Article query error:', error)
-        throw error
+      if (artError || !artData) throw new Error(`Article ${articleId} not found`)
+      const article = artData as unknown as Article
+
+      if (article.status === 'completed' || article.status === 'failed') {
+        return { skipped: true } as any
       }
 
-      const row = data?.[0]
-      if (!row) {
-        console.error('❌❌❌ [Worker] Article NOT FOUND in database:', articleId)
-        throw new Error(`Article ${articleId} not found`)
-      }
+      // Load Organization
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', article.organization_id)
+        .single()
 
-      // Type guard to ensure we have the expected data structure
-      const articleData = row as unknown as { id: string; org_id: string; status: string }
+      if (orgError || !orgData) throw new Error(`Organization ${article.organization_id} not found`)
 
-      // 🔴 PRODUCTION HARDENING: Idempotency against duplicate events
-      // 🚨 AUDIT FIX: Adding 'failed' to terminal states to prevent retry loops
-      if (articleData.status === 'completed' || articleData.status === 'failed') {
-        return { skipped: true }
-      }
+      // Load Workflow for ICP context (Phase 6 req)
+      const { data: wfData } = await supabase
+        .from('intent_workflows')
+        .select('icp_analysis')
+        .eq('id', article.intent_workflow_id)
+        .single()
 
-      // 🔴 STRUCTURAL CORRECTION: The API now owns the 'queued' -> 'generating' transition.
-      // We must assert that the article is already in the 'generating' state.
-      if (articleData.status !== 'generating') {
-        throw new Error(`Invalid article state: ${articleData.status}. Expected 'generating'.`)
-      }
-
-      return articleData
+      return { article, organization: orgData, workflow: wfData }
     })
 
     if ((article as any).skipped) return { success: true, skipped: true }
 
-    /* -------------------------------------------------- */
-    /* Load organization context                         */
-    /* -------------------------------------------------- */
+    // 🔒 TERMINAL STATE LOCK: Move to 'generating' if not already there
+    await step.run('transition-to-generating', async () => {
+      if (article.status === 'generating') return
 
-    const organization = await step.run('load-organization', async () => {
-      const orgId = (article as any).org_id
+      const { error } = await supabase
+        .from('articles')
+        .update({ status: 'generating', updated_at: new Date().toISOString() })
+        .eq('id', articleId)
+        .eq('status', 'queued')
 
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('id, name, content_defaults')
-        .eq('id', orgId)
-        .limit(1)
-
-      if (error) {
-        console.error('Org query error:', error)
-        throw error
-      }
-
-      const row = data?.[0]
-      if (!row) {
-        throw new Error(`Organization ${orgId} not found`)
-      }
-
-      return row
+      if (error) throw new Error(`Status transition failed: ${error.message}`)
     })
 
     /* -------------------------------------------------- */
-    /* Load sections                                     */
+    /* 2. Snapshot Generation Config                     */
     /* -------------------------------------------------- */
 
-    const sections = await step.run('load-sections', async () => {
-      const { data, error } = await supabase
+    const generationConfig = await step.run('snapshot-config', async () => {
+      // If already snapshotted, return it
+      if (article.generation_config) return article.generation_config as ContentDefaults
+
+      // Otherwise, snapshot now for determinism (Phase 5, Step 3)
+      const config = organization.content_defaults as ContentDefaults
+
+      await supabase
+        .from('articles')
+        .update({ generation_config: config })
+        .eq('id', articleId)
+
+      return config
+    })
+
+    /* -------------------------------------------------- */
+    /* 3. Run Content Planner Agent                      */
+    /* -------------------------------------------------- */
+
+    const plan = await step.run('run-planner', async () => {
+      // Determinism: If plan already exists, skip
+      if (article.article_plan) return article.article_plan as ArticlePlannerOutput
+
+      const icpText = [
+        `Business Description:\n${organization.business_description || ''}`,
+        workflow?.icp_analysis
+          ? `ICP Analysis:\n${JSON.stringify(workflow.icp_analysis, null, 2)}`
+          : ''
+      ].filter(Boolean).join('\n\n')
+
+      const plannerOutput = await runContentPlannerAgent({
+        targetKeyword: (article as any).keyword || (article as any).target_keyword || 'unknown',
+        subtopicData: (article as any).subtopic_data || [],
+        organizationContext: {
+          name: organization.name,
+          description: organization.business_description || '',
+          icpText
+        },
+        generationConfig: generationConfig
+      })
+
+      // Update article with top-level plan
+      const topLevelPlan: ArticlePlannerOutput = {
+        article_title: plannerOutput.article_title,
+        content_style: plannerOutput.content_style,
+        target_keyword: plannerOutput.target_keyword,
+        semantic_keywords: plannerOutput.semantic_keywords,
+        total_estimated_words: plannerOutput.total_estimated_words,
+        article_structure: plannerOutput.article_structure // Store structure for reseed persistence
+      }
+
+      await supabase
+        .from('articles')
+        .update({ article_plan: topLevelPlan })
+        .eq('id', articleId)
+
+      return plannerOutput
+    })
+
+    /* -------------------------------------------------- */
+    /* 4. Transactional Reseed (HARDENED)                */
+    /* -------------------------------------------------- */
+
+    const sections = await step.run('reseed-sections', async () => {
+      const { data: existingSections } = await supabase
+        .from('article_sections')
+        .select('id')
+        .eq('article_id', articleId)
+        .not('planner_output', 'is', null)
+
+      // 🛡️ STRUCTURAL INTEGRITY GUARD:
+      // Only skip if count matches exactly what the planner intended.
+      if (existingSections && existingSections.length === (plan as any).article_structure.length) {
+        const { data } = await supabase.from('article_sections').select('*').eq('article_id', articleId).order('section_order')
+        return data as unknown as ArticleSection[]
+      }
+
+      console.log(`[Worker] Reseeding sections for ${articleId}. Reason: Count mismatch or first run.`)
+
+      // 🔒 ATOMIC TRANSACTION: Use the new reseed_sections RPC
+      const sectionPayload = (plan as any).article_structure.map((s: SectionPlannerOutput, i: number) => ({
+        section_order: i + 1,
+        section_header: s.header,
+        section_type: s.section_type,
+        planner_output: s
+      }))
+
+      const { error: rpcError } = await supabase.rpc('reseed_sections', {
+        p_article_id: articleId,
+        p_sections: sectionPayload
+      })
+
+      if (rpcError) throw new Error(`Atomic reseed failed: ${rpcError.message}`)
+
+      const { data: inserted, error: fetchError } = await supabase
         .from('article_sections')
         .select('*')
         .eq('article_id', articleId)
         .order('section_order')
 
-      if (error || !data) throw new Error('Failed to load sections')
+      if (fetchError || !inserted) throw new Error('Failed to fetch reseeded sections')
 
-      // 🔴 REQUIRED FIX 2: Explicit section ordering assertion
-      const sectionsArray = data as unknown as ArticleSection[]
-      sectionsArray.sort((a, b) => a.section_order - b.section_order)
-      return sectionsArray
+      return inserted as unknown as ArticleSection[]
     })
+
+    /* -------------------------------------------------- */
+    /* 5. Generation Pipeline Loop                       */
+    /* -------------------------------------------------- */
 
     const completedSections: ArticleSection[] = []
 
-    /* -------------------------------------------------- */
-    /* Sequential section processing (B-4 CORE)          */
-    /* -------------------------------------------------- */
-
     try {
-      for (const section of sections) {
-        if (section.status === 'completed') {
-          completedSections.push(section)
-          continue
-        }
+      for (let i = 0; i < sections.length; i++) {
+        const section = sections[i]
+        const position = i === 0 ? 'first' : i === sections.length - 1 ? 'final' : 'middle'
 
-        try {
-          // ---- Research (B-2) - SEQUENTIAL with exactly-once persistence
-          const research = await step.run(
-            `research-${section.section_order}`,
-            async () => {
-              await supabase
-                .from('article_sections')
-                .update({ status: 'researching' })
-                .eq('id', section.id)
+        // ---- Research Agent (Agent 2)
+        const research = await step.run(`research-${section.section_order}`, async () => {
+          // Update status
+          await supabase.from('article_sections').update({ status: 'researching' }).eq('id', section.id)
 
-              // 🔴 REQUIRED FIX 3: Research persistence inside retry block
-              const researchResult = await withRetries(async () =>
-                runResearchAgent({
-                  sectionHeader: section.section_header,
-                  sectionType: section.section_type,
-                  priorSections: completedSections, // B-4: Context accumulation
-                  organizationContext: organization,
-                })
-              )
-
-              // Convert to ResearchPayload format and persist immediately
-              const researchPayload = {
-                queries: researchResult.queries,
-                results: researchResult.results,
-                total_searches: researchResult.totalSearches,
-                research_timestamp: new Date().toISOString(),
-              } as ResearchPayload
-
-              // Exactly-once persistence - inside retry block
-              await supabase
-                .from('article_sections')
-                .update({
-                  research_payload: researchPayload,
-                  status: 'researched',
-                })
-                .eq('id', section.id)
-
-              return researchPayload
+          const result = await withRetries(() => runResearchAgent({
+            sectionHeader: section.section_header,
+            sectionType: section.section_type,
+            researchQuestions: (section.planner_output as any).research_questions || [],
+            supportingPoints: (section.planner_output as any).supporting_points || [],
+            priorSectionsSummary: completedSections.map(s => `${s.section_header} (${s.section_type})`).join('\n'),
+            organizationContext: {
+              name: organization.name,
+              description: organization.business_description || ''
             }
-          )
+          }))
 
-          // ---- Writing (B-3) - SEQUENTIAL
-          const content = await step.run(
-            `write-${section.section_order}`,
-            async () => {
-              await supabase
-                .from('article_sections')
-                .update({ status: 'writing' })
-                .eq('id', section.id)
+          await supabase.from('article_sections').update({
+            research_payload: result,
+            status: 'researched'
+          }).eq('id', section.id)
 
-              // Use organization content_defaults or fallback
-              const organizationDefaults: ContentDefaults = (organization as any).content_defaults || {
-                tone: 'professional',
-                language: 'en',
-                internal_links: true,
-                global_instructions: '',
-              }
+          return result
+        })
 
-              return await withRetries(async () =>
-                runContentWritingAgent({
-                  sectionHeader: section.section_header,
-                  sectionType: section.section_type,
-                  researchPayload: research, // B-4: Pass research from this section
-                  priorSections: completedSections, // B-4: Context accumulation
-                  organizationDefaults,
-                })
-              )
+        // ---- Writing Agent (Agent 3)
+        const content = await step.run(`write-${section.section_order}`, async () => {
+          await supabase.from('article_sections').update({ status: 'writing' }).eq('id', section.id)
+
+          const result = await withRetries(() => runContentWritingAgent({
+            sectionHeader: section.section_header,
+            sectionType: section.section_type,
+            researchPayload: research,
+            plannerOutput: section.planner_output as any,
+            articlePlan: plan as any,
+            position,
+            generationConfig,
+            priorContentMarkdown: completedSections.map(s => s.content_markdown).join('\n\n'),
+            organizationContext: {
+              name: organization.name,
+              description: organization.business_description || ''
             }
-          )
+          }))
 
-          await step.run(`persist-content-${section.section_order}`, async () => {
-            await supabase
-              .from('article_sections')
-              .update({
-                content_markdown: content.markdown,
-                content_html: content.html,
-                status: 'completed',
-              })
-              .eq('id', section.id)
+          await supabase.from('article_sections').update({
+            content_markdown: result.markdown,
+            content_html: result.html,
+            status: 'completed'
+          }).eq('id', section.id)
 
-            // 🔍 DIAGNOSTIC: Log section completion and current article status
-            console.log(`[Worker] Section ${section.section_order} (${section.section_header}) completed for article ${articleId}`)
+          return result
+        })
 
-            // 🔍 DIAGNOSTIC: Add a small delay to help with observability in logs
-            await new Promise(resolve => setTimeout(resolve, 500));
-          })
-
-          // B-4: Add completed section to context for next sections
-          completedSections.push({
-            ...section,
-            content_markdown: content.markdown,
-            status: 'completed',
-          } as ArticleSection)
-
-        } catch (sectionError) {
-          // B-4: Stop pipeline on section failure
-          await step.run(`fail-section-${section.section_order}`, async () => {
-            await supabase
-              .from('article_sections')
-              .update({
-                status: 'failed',
-                error_details: {
-                  message: sectionError instanceof Error ? sectionError.message : String(sectionError),
-                  failed_at: new Date().toISOString(),
-                },
-              })
-              .eq('id', section.id)
-          })
-
-          throw new Error(`Sequential processing stopped: Section ${section.section_order} failed - ${sectionError instanceof Error ? sectionError.message : String(sectionError)}`)
-        }
+        // Build context for next loop
+        completedSections.push({
+          ...section,
+          content_markdown: content.markdown,
+          status: 'completed'
+        } as ArticleSection)
       }
 
       /* -------------------------------------------------- */
@@ -266,7 +303,7 @@ export const generateArticle = inngest.createFunction(
         // 1. Collate sections and write JSONB snapshot projection
         await assembler.assemble({
           articleId,
-          organizationId: (article as any).org_id
+          organizationId: article.organization_id
         })
 
         // 2. 🔒 TERMINAL STATE LOCK: Explicitly mark article as completed
