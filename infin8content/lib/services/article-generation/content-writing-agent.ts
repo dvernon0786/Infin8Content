@@ -40,6 +40,8 @@ Constraints
 • Include natural calls-to-action and product/service mentions where contextually appropriate
 • Embed YouTube video links when referencing video content (for later embedding)
 • Output only the complete article with no additional commentary or supporting text
+• Citations from research are in [Publication, Year, Topic] format. Render them inline as plain text e.g. (McKinsey Global Institute, 2024) — NEVER as markdown hyperlinks [text](url).
+• Do not add hyperlinks to any claims. No markdown link syntax anywhere in the article.
 
 Inputs
 You will receive structured article briefs containing:
