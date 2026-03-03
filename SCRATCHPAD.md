@@ -4520,7 +4520,8 @@ The generation pipeline is now architecturally sealed and operationally stabiliz
 ### **🔧 Technical Fixes Applied**
 - **Writing Agent Length Caps**: 
   - *Prompt Intent*: Added explicit `STRICT LENGTH RULE` constraints to the user message dynamically based on section position (`first`, `middle`, `final`).
-  - *Physical Ceiling*: Set `maxTokens: 800` (Raised from 500 to allow strucutred Content like tables).
+  - *Structural Enforcement*: Introduced `INFORMATIVE_SECTION_TEMPLATE` and `LISTICLE_SECTION_TEMPLATE` injected into every user message to force prose vs. numbered list structures.
+  - *Physical Ceiling*: Set `maxTokens: 800` (Raised from 500 to allow structured content like tables).
   - *Fallback Clamp*: Added a JS-level deterministic substring clamp at **1200 characters** per section (Raised from 700 to prevent table truncation).
   - *HTML Protection*: Updated `convertMarkdownToHtml` to strip all markdown links at the converter level, preventing rendering even if AI attempts them.
 - **Research Agent URL Ban**: Rewrote the `Tools` block to strictly ban URL fabrication and require omitted citations if a valid source isn't found in training knowledge. Max 5 citations.
