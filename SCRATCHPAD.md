@@ -4580,4 +4580,3 @@ The LLM's natural tendency to bloat word counts and hallucinate hyperlinks has b
   3. **Global Article Tracking**: Integrated `useRealtimeArticles` directly into the dashboard for a unified view.
   4. **FSM Enforcement**: Action banners and progress tracks are tied directly to the native FSM states.
 - **Result:** Dashboard now feels like a premium enterprise command center, providing immediate UX visibility into the generation pipeline.
-

@@ -37,11 +37,11 @@ export async function researchQuery(
 
   const maxRetries = options.maxRetries ?? 3
   const baseDelay = options.retryDelay ?? 1000 // 1 second base delay
-  
+
   // Get configurable limits from options or environment variables (with defaults)
-  const maxResults = options.maxResults ?? 
+  const maxResults = options.maxResults ??
     parseInt(process.env.TAVILY_MAX_RESULTS || '20', 10)
-  const maxSources = options.maxSources ?? 
+  const maxSources = options.maxSources ??
     parseInt(process.env.TAVILY_MAX_SOURCES || '10', 10)
 
   let lastError: Error | null = null
@@ -56,7 +56,8 @@ export async function researchQuery(
         },
         body: JSON.stringify({
           query,
-          search_depth: 'advanced',
+          search_depth: 'basic',
+          days: 365,
           include_answer: false,
           include_images: false,
           include_raw_content: false,
@@ -71,7 +72,7 @@ export async function researchQuery(
         const error = new Error(
           `Tavily API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`
         )
-        
+
         // Don't retry on 401 (invalid API key)
         if (response.status === 401) {
           throw error
@@ -92,7 +93,7 @@ export async function researchQuery(
       }
 
       const data = await response.json()
-      
+
       // Parse and rank sources by relevance score
       const sources: TavilySource[] = (data.results || [])
         .map((result: any) => ({
@@ -109,7 +110,7 @@ export async function researchQuery(
       return sources
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
-      
+
       // If this is the last attempt, throw the error
       if (attempt === maxRetries - 1) {
         throw lastError
