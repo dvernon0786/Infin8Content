@@ -53,6 +53,12 @@ Consolidate the diverse article generation systems into a single, high-performan
 - **Research Agent Citation Lockdown**: Rewrote system prompt Tools block to enforce strict `[Publication, Year, Topic]` format and explicit prohibition of URL hallucination.
 - **Contradiction Purge**: Removed legacy prompt directives from the writing agent that previously requested markdown link rendering.
 
+### 5. Grounded Research & UX Hardening ✅
+- **Tavily Web Grounding**: `ResearchAgent` now fetches real sources (title, domain, date, excerpt), providing the LLM with verifiable grounding metadata while stripping raw URLs to eliminate link hallucination.
+- **Deterministic Link Stripping**: Added a post-generation regex purge in `content-writing-agent.ts` to ensure all links are stored as plain text.
+- **Invisible Link Rendering**: `ArticleContentViewer` handles legacy links as plain `<span>` tags, ensuring zero visual disruption.
+- **Premium Article UX**: Constrained prose width to `max-w-3xl` and centered the content in the detail page for enhanced readability.
+
 ## 🧪 Testing Verification
 - **Schema Health**: Verified using automated "Health Report" SQL, confirming 100% column alignment.
 - **FSM Transition**: Confirmed `WORKFLOW_COMPLETED` event fires correctly after last article assembly.

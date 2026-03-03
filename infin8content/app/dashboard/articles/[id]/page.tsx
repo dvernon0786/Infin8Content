@@ -290,10 +290,12 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                 <div className="space-y-4">
                   <h2 className="font-poppins text-neutral-900 text-h3-desktop">Article content</h2>
                   <Card>
-                    <CardContent className="p-6">
-                      <ArticleContentViewer
-                        sections={sections}
-                      />
+                    <CardContent className="p-6 sm:p-10">
+                      <div className="max-w-3xl mx-auto">
+                        <ArticleContentViewer
+                          sections={sections}
+                        />
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
