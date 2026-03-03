@@ -180,7 +180,9 @@ function ArticleMarkdown({ content }: { content: string }) {
 
         // ── Links — strip to plain text (citations are plain text, not URLs) ──
         a: ({ children }) => (
-          <span className="text-neutral-700">{children}</span>
+          <span className="text-neutral-500 text-sm not-italic">
+            {children}
+          </span>
         ),
 
         // ── Lists ────────────────────────────────────────────────────────────

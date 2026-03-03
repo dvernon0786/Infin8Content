@@ -396,8 +396,8 @@ async function convertMarkdownToHtml(markdown: string): Promise<string> {
   // ── 4. Headings ───────────────────────────────────────────────────────────
   html = html
     .replace(/^### (.+)$/gm, `<h3 style="${styles.h3}">$1</h3>`)
-    .replace(/^## (.+)$/gm, `<h2 style="${styles.h2}">$2</h2>`)
-    .replace(/^# (.+)$/gm, `<h1 style="${styles.h1}">$3</h1>`)
+    .replace(/^## (.+)$/gm, `<h2 style="${styles.h2}">$1</h2>`)
+    .replace(/^# (.+)$/gm, `<h1 style="${styles.h1}">$1</h1>`)
 
   // ── 5. Blockquotes ────────────────────────────────────────────────────────
   html = html.replace(/^&gt; (.+)$/gm, `<blockquote style="${styles.blockquote}">$1</blockquote>`)
