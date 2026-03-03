@@ -236,6 +236,18 @@ export const generateArticle = inngest.createFunction(
         try {
           // ---- Research Agent (Agent 2)
           const research = await step.run(`research-${section.section_order}`, async () => {
+            // Idempotency: skip Tavily if research already exists (e.g., from retry)
+            const { data: cached } = await supabase
+              .from('article_sections')
+              .select('research_payload')
+              .eq('id', section.id)
+              .single() as any
+
+            if (cached?.research_payload) {
+              console.log(`[ResearchAgent] Using cached research for section ${section.section_order}, skipping Tavily.`)
+              return cached.research_payload as any
+            }
+
             // Update status
             await supabase.from('article_sections').update({ status: 'researching' }).eq('id', section.id)
 

@@ -93,7 +93,8 @@ Citation Rules (strictly enforced)
   — Year: extracted from the source Published Date field (YYYY format)
   — Topic: a 2–5 word description of what the source covers
   — Example: [Gartner, 2025, Supply Chain Disruption Costs]
-• If a source has no published date, do NOT cite it
+• If Published date says "Date unknown" — that source MUST NOT appear in citations at all.
+  Do not use "n/a", "unknown", or any placeholder. Simply omit it.
 • If a source title does not clearly indicate a publication, use the Domain (e.g. "mckinsey.com" → "McKinsey")
 • NEVER invent a citation not present in the GROUNDING SOURCES
 • Maximum 5 citations across ALL research_results in a single response
@@ -288,7 +289,13 @@ export async function runResearchAgent(
 ): Promise<ResearchPayload> {
 
   // ── Step 1: Fetch real grounding sources from Tavily ──────────────────────
-  const groundingSources = await fetchGroundingSources(input.researchQuestions)
+  let groundingSources = await fetchGroundingSources(input.researchQuestions)
+
+  // Broaden fallback if queries were too specific and returned no sources
+  if (groundingSources.length === 0 && input.researchQuestions.length > 0) {
+    console.log('[ResearchAgent] Queries too specific (0 sources). Falling back to broader query.')
+    groundingSources = await fetchGroundingSources([input.sectionHeader])
+  }
 
   // ── Step 2: Build grounded prompt ─────────────────────────────────────────
   const userMessage = buildUserMessage(input, groundingSources)
