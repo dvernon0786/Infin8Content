@@ -33,13 +33,15 @@ Constraints
 • Avoid technical jargon, em dashes, and overly complex sentence structures
 • Focus on providing factual information and value rather than aggressive selling
 • Naturally incorporate target keywords and semantic variations without keyword stuffing
-• Include diverse, properly cited sources from provided research materials using markdown links
+• Include diverse, properly cited sources from provided research materials using plain-text citations
 • Maintain the specified word count for each article section (±20% tolerance)
 • Use markdown formatting with tables, bullet points, and proper headers
 • Keep tone conversational and engaging, not overly serious or corporate
 • Include natural calls-to-action and product/service mentions where contextually appropriate
 • Embed YouTube video links when referencing video content (for later embedding)
 • Output only the complete article with no additional commentary or supporting text
+• Citations from research are in [Publication, Year, Topic] format. Render them inline as plain text e.g. (McKinsey Global Institute, 2024) — NEVER as markdown hyperlinks [text](url).
+• Do not add hyperlinks to any claims. No markdown link syntax anywhere in the article.
 
 Inputs
 You will receive structured article briefs containing:
@@ -63,7 +65,7 @@ Content Creation Workflow:
 3. Plan content flow ensuring logical progression and natural keyword integration throughout
 4. Write the introduction that hooks readers with relatable problems or compelling
 5. Develop each section following the provided structure while weaving in supporting points and research naturally  
-6. Incorporate citations using markdown links [descriptive text](source URL) from the research materials  
+6. Incorporate citations using inline plain-text citations e.g. (McKinsey Global Institute, 2024)
 7. Add tables or structured data where appropriate to enhance readability and value  
 8. Include natural CTAs that guide readers toward relevant next steps or resources  
 9. Review for SEO optimization ensuring target and semantic keywords appear naturally throughout  
@@ -86,18 +88,16 @@ SEO Integration:
 • Use related terms and synonyms to build topical authority  
 
 Citation and Source Management:
-• Reference provided research answers and statistics with markdown links [descriptive text](source URL)  
+• Reference provided research answers and statistics using inline plain-text citations e.g. (McKinsey Global Institute, 2024)
 • Ensure diversity of sources across different sections  
 • Integrate quotes and statistics naturally within narrative flow using inline citations  
-• Maintain factual accuracy while making information accessible  
-• Use descriptive link text that adds context to citation
+• Maintain factual accuracy while making information accessible
 
 Conclusions
 Your output will be a complete, publication-ready markdown blog article that:
 • Delivers genuine value and actionable insights to readers  
 • Naturally incorporates SEO elements without compromising readability  
 • Maintains consistent tone aligned with provided voice guidelines  
-• Includes proper markdown citations with source URLs  
 • Features engaging, conversational writing that builds trust and authority  
 • Provides clear next steps or resources for reader engagement  
 • Adheres to specified word counts and structural requirements  
@@ -122,7 +122,9 @@ export async function runContentWritingAgent(
     let userMessage = '';
 
     if (input.position === 'first') {
-      userMessage = `Article title:
+      userMessage = `STRICT LENGTH RULE: This section must be 400-550 characters maximum. The entire article target is 4,000-5,000 characters across all sections. Be concise.
+
+Article title:
 ${input.articlePlan.article_title}
 
 Target keyword:
@@ -160,7 +162,9 @@ Generation config:
 - Brand color: ${input.generationConfig.brand_color}
 - Image style: ${input.generationConfig.image_style}`;
     } else if (input.position === 'final') {
-      userMessage = `Full article draft so far:
+      userMessage = `STRICT LENGTH RULE: This conclusion must be 350-500 characters maximum. Close cleanly with one CTA.
+
+Full article draft so far:
 ${input.priorContentMarkdown || ''}
 
 Final section header:
@@ -180,7 +184,9 @@ Reminder — close the article with:
 - A natural CTA aligned with: ${input.generationConfig.add_cta}
 - No repetition of content already covered above.`;
     } else {
-      userMessage = `Article so far (do not repeat, only continue):
+      userMessage = `STRICT LENGTH RULE: This section must be 450-650 characters maximum. Do not pad. Be direct and concise.
+
+Article so far (do not repeat, only continue):
 ${input.priorContentMarkdown || ''}
 
 Current section header:
@@ -225,7 +231,7 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
         result = await Promise.race([
           generateContent(messages, {
             model: 'anthropic/claude-sonnet-4.5',
-            maxTokens: 2000,
+            maxTokens: 500,
             temperature: 0.7
           }),
           timeoutPromise
@@ -251,11 +257,27 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
       throw lastError || new Error('Content writing failed after all attempts');
     }
 
-    const html = await convertMarkdownToHtml(result.content);
-    const wordCount = countWords(result.content);
+    // Extract result text, default empty for safety
+    let sectionContent = result.content || '';
+
+    // Hard cap: enforce section character ceiling length
+    const SECTION_CHAR_LIMIT = 700;
+    if (sectionContent.length > SECTION_CHAR_LIMIT) {
+      // Trim to last complete sentence within limit
+      const trimmed = sectionContent.substring(0, SECTION_CHAR_LIMIT);
+      const lastPeriod = trimmed.lastIndexOf('.');
+      sectionContent = lastPeriod > 400 ? trimmed.substring(0, lastPeriod + 1) : trimmed;
+    }
+
+    const html = await convertMarkdownToHtml(sectionContent);
+    const wordCount = countWords(sectionContent);
+
+    // Track total time spent in LLM loop
+    const executionMs = Date.now() - startTime;
+    console.log(`[WritingAgent] Completed in ${executionMs}ms (words: ${wordCount})`)
 
     return {
-      markdown: result.content,
+      markdown: sectionContent,
       html,
       wordCount
     };
