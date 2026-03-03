@@ -658,29 +658,6 @@ export function WorkflowDashboard({ orgId }: { orgId: string }) {
           <ArticlesPanel articles={articles} />
         </div>
       )}
-
-      {/* Status footer */}
-      <div style={{
-        marginTop: 20, display: "flex", gap: 18, paddingTop: 14,
-        borderTop: `1px solid ${T.neutral200}`,
-      }}>
-        {[
-          { label: "DataForSEO", status: "Operational", ok: true },
-          { label: "OpenRouter AI", status: loading ? "Syncing..." : "Operational", ok: true },
-          { label: "Inngest Jobs", status: isConnected ? "Connected" : "Reconnecting...", ok: isConnected },
-          { label: "Last Sync", status: "Real-time", ok: true },
-        ].map(s => (
-          <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{
-              width: 5, height: 5, borderRadius: "50%",
-              background: s.ok ? T.success : T.error,
-              boxShadow: s.ok ? `0 0 0 2px rgba(34,197,94,0.2)` : "none",
-            }} />
-            <span style={{ fontSize: 10, color: T.neutral800, fontFamily: "var(--font-lato,'Lato',sans-serif)" }}>{s.label}</span>
-            <span style={{ fontSize: 10, color: T.neutral500, fontFamily: "var(--font-lato,'Lato',sans-serif)" }}>· {s.status}</span>
-          </div>
-        ))}
-      </div>
     </div>
   )
 }
