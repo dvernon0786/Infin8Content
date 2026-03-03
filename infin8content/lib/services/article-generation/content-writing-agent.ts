@@ -122,7 +122,9 @@ export async function runContentWritingAgent(
     let userMessage = '';
 
     if (input.position === 'first') {
-      userMessage = `Article title:
+      userMessage = `STRICT LENGTH RULE: This section must be 400-550 characters maximum. The entire article target is 4,000-5,000 characters across all sections. Be concise.
+
+Article title:
 ${input.articlePlan.article_title}
 
 Target keyword:
@@ -160,7 +162,9 @@ Generation config:
 - Brand color: ${input.generationConfig.brand_color}
 - Image style: ${input.generationConfig.image_style}`;
     } else if (input.position === 'final') {
-      userMessage = `Full article draft so far:
+      userMessage = `STRICT LENGTH RULE: This conclusion must be 350-500 characters maximum. Close cleanly with one CTA.
+
+Full article draft so far:
 ${input.priorContentMarkdown || ''}
 
 Final section header:
@@ -180,7 +184,9 @@ Reminder — close the article with:
 - A natural CTA aligned with: ${input.generationConfig.add_cta}
 - No repetition of content already covered above.`;
     } else {
-      userMessage = `Article so far (do not repeat, only continue):
+      userMessage = `STRICT LENGTH RULE: This section must be 450-650 characters maximum. Do not pad. Be direct and concise.
+
+Article so far (do not repeat, only continue):
 ${input.priorContentMarkdown || ''}
 
 Current section header:
@@ -225,7 +231,7 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
         result = await Promise.race([
           generateContent(messages, {
             model: 'anthropic/claude-sonnet-4.5',
-            maxTokens: 2000,
+            maxTokens: 500,
             temperature: 0.7
           }),
           timeoutPromise
@@ -251,11 +257,27 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
       throw lastError || new Error('Content writing failed after all attempts');
     }
 
-    const html = await convertMarkdownToHtml(result.content);
-    const wordCount = countWords(result.content);
+    // Extract result text, default empty for safety
+    let sectionContent = result.content || '';
+
+    // Hard cap: enforce section character ceiling length
+    const SECTION_CHAR_LIMIT = 700;
+    if (sectionContent.length > SECTION_CHAR_LIMIT) {
+      // Trim to last complete sentence within limit
+      const trimmed = sectionContent.substring(0, SECTION_CHAR_LIMIT);
+      const lastPeriod = trimmed.lastIndexOf('.');
+      sectionContent = lastPeriod > 400 ? trimmed.substring(0, lastPeriod + 1) : trimmed;
+    }
+
+    const html = await convertMarkdownToHtml(sectionContent);
+    const wordCount = countWords(sectionContent);
+
+    // Track total time spent in LLM loop
+    const executionMs = Date.now() - startTime;
+    console.log(`[WritingAgent] Completed in ${executionMs}ms (words: ${wordCount})`)
 
     return {
-      markdown: result.content,
+      markdown: sectionContent,
       html,
       wordCount
     };
