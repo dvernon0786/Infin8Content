@@ -323,6 +323,19 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
   }
 }
 
+/**
+ * convertMarkdownToHtml
+ * 
+ * Converts markdown section content to responsive, self-contained HTML
+ * suitable for WordPress or any CMS export.
+ * 
+ * Design principles:
+ * - Inline styles only — no external CSS dependency
+ * - Mobile-first responsive via max-width + fluid type
+ * - Multiple ul/ol groups handled correctly
+ * - Citation links stripped to plain text (no fabricated URLs)
+ * - Tables wrapped in scrollable container for mobile
+ */
 async function convertMarkdownToHtml(markdown: string): Promise<string> {
   const escapeHtml = (text: string): string => {
     const map: Record<string, string> = {
@@ -331,44 +344,149 @@ async function convertMarkdownToHtml(markdown: string): Promise<string> {
       '>': '&gt;',
       '"': '&quot;',
       "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, (char) => map[char]);
-  };
+    }
+    return text.replace(/[&<>"']/g, (char) => map[char])
+  }
 
-  let html = escapeHtml(markdown);
+  // ── Inline styles ────────────────────────────────────────────────────────
+  // All styles are inline so the output is portable to any CMS.
 
+  const styles = {
+    wrapper: 'font-family: Georgia, "Times New Roman", serif; max-width: 720px; margin: 0 auto; padding: 0 16px; color: #1a1a1a; line-height: 1.75; font-size: 17px;',
+    h1: 'font-family: system-ui, -apple-system, sans-serif; font-size: clamp(1.75rem, 4vw, 2.25rem); font-weight: 700; color: #111; line-height: 1.2; margin: 0 0 1.5rem 0;',
+    h2: 'font-family: system-ui, -apple-system, sans-serif; font-size: clamp(1.35rem, 3vw, 1.75rem); font-weight: 600; color: #111; line-height: 1.3; margin: 2.5rem 0 1rem 0;',
+    h3: 'font-family: system-ui, -apple-system, sans-serif; font-size: clamp(1.1rem, 2.5vw, 1.35rem); font-weight: 600; color: #222; line-height: 1.35; margin: 2rem 0 0.75rem 0;',
+    p: 'margin: 0 0 1.25rem 0; line-height: 1.8;',
+    ul: 'margin: 0 0 1.25rem 0; padding-left: 1.5rem; list-style-type: disc;',
+    ol: 'margin: 0 0 1.25rem 0; padding-left: 1.5rem; list-style-type: decimal;',
+    li: 'margin-bottom: 0.5rem; line-height: 1.7;',
+    strong: 'font-weight: 700; color: #111;',
+    em: 'font-style: italic;',
+    blockquote: 'border-left: 4px solid #d1d5db; margin: 1.5rem 0; padding: 0.5rem 0 0.5rem 1.25rem; color: #555; font-style: italic;',
+    tableWrap: 'overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.5rem 0;',
+    table: 'border-collapse: collapse; width: 100%; min-width: 400px; font-size: 0.9375rem;',
+    th: 'background: #f3f4f6; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 2px solid #e5e7eb;',
+    td: 'padding: 10px 14px; border-bottom: 1px solid #e5e7eb; vertical-align: top;',
+    code_inline: 'background: #f3f4f6; color: #1f2937; padding: 2px 6px; border-radius: 4px; font-family: "Fira Code", "Cascadia Code", monospace; font-size: 0.875em;',
+    code_block: 'display: block; background: #111827; color: #f9fafb; padding: 1.25rem; border-radius: 8px; overflow-x: auto; font-family: "Fira Code", "Cascadia Code", monospace; font-size: 0.875rem; line-height: 1.6; margin: 1.5rem 0;',
+    hr: 'border: none; border-top: 1px solid #e5e7eb; margin: 2.5rem 0;',
+    // Citations render as plain (Author, Year) — no <a> tags
+    citation: 'color: #374151;',
+  }
+
+  let html = markdown
+
+  // ── 1. Fenced code blocks (before escaping) ──────────────────────────────
+  const codeBlocks: string[] = []
+  html = html.replace(/```[\w]*\n([\s\S]*?)```/g, (_, code) => {
+    const escaped = escapeHtml(code.trim())
+    const idx = codeBlocks.length
+    codeBlocks.push(`<code style="${styles.code_block}">${escaped}</code>`)
+    return `__CODE_BLOCK_${idx}__`
+  })
+
+  // ── 2. Escape HTML in remaining text ─────────────────────────────────────
+  html = escapeHtml(html)
+
+  // ── 3. Restore code blocks ────────────────────────────────────────────────
+  codeBlocks.forEach((block, idx) => {
+    html = html.replace(`__CODE_BLOCK_${idx}__`, block)
+  })
+
+  // ── 4. Headings ───────────────────────────────────────────────────────────
   html = html
-    .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+    .replace(/^### (.+)$/gm, `<h3 style="${styles.h3}">$1</h3>`)
+    .replace(/^## (.+)$/gm, `<h2 style="${styles.h2}">$2</h2>`)
+    .replace(/^# (.+)$/gm, `<h1 style="${styles.h1}">$3</h1>`)
 
+  // ── 5. Blockquotes ────────────────────────────────────────────────────────
+  html = html.replace(/^&gt; (.+)$/gm, `<blockquote style="${styles.blockquote}">$1</blockquote>`)
+
+  // ── 6. Bold / italic ─────────────────────────────────────────────────────
   html = html
-    .replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-      const escapedCode = escapeHtml(code.trim());
-      return `<pre><code class="language-${lang || ''}">${escapedCode}</code></pre>`;
+    .replace(/\*\*(.+?)\*\*/g, `<strong style="${styles.strong}">$1</strong>`)
+    .replace(/\*(.+?)\*/g, `<em style="${styles.em}">$1</em>`)
+
+  // ── 7. Inline code ────────────────────────────────────────────────────────
+  html = html.replace(/`([^`]+)`/g, `<code style="${styles.code_inline}">$1</code>`)
+
+  // ── 8. Markdown links → plain text (citation safety: no fabricated URLs) ──
+  html = html.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+
+  // ── 9. Horizontal rules ───────────────────────────────────────────────────
+  html = html.replace(/^---$/gm, `<hr style="${styles.hr}">`)
+
+  // ── 10. Lists (handles multiple non-contiguous groups correctly) ──────────
+  // Process bullet lists — find all contiguous blocks of "* item" lines
+  html = html.replace(/((?:^\* .+$\n?)+)/gm, (block) => {
+    const items = block
+      .trim()
+      .split('\n')
+      .map(line => line.replace(/^\* /, '').trim())
+      .filter(Boolean)
+      .map(item => `<li style="${styles.li}">${item}</li>`)
+      .join('\n')
+    return `<ul style="${styles.ul}">\n${items}\n</ul>\n`
+  })
+
+  // Process ordered lists
+  html = html.replace(/((?:^\d+\. .+$\n?)+)/gm, (block) => {
+    const items = block
+      .trim()
+      .split('\n')
+      .map(line => line.replace(/^\d+\. /, '').trim())
+      .filter(Boolean)
+      .map(item => `<li style="${styles.li}">${item}</li>`)
+      .join('\n')
+    return `<ol style="${styles.ol}">\n${items}\n</ol>\n`
+  })
+
+  // ── 11. Tables ────────────────────────────────────────────────────────────
+  // Match markdown tables: header row | separator | data rows
+  html = html.replace(
+    /(^\|.+\|\n\|[-| :]+\|\n(?:\|.+\|\n?)*)/gm,
+    (tableBlock) => {
+      const rows = tableBlock.trim().split('\n').filter(r => !r.match(/^\|[-| :]+\|$/))
+      if (rows.length < 1) return tableBlock
+
+      const parseRow = (row: string) =>
+        row.split('|').slice(1, -1).map(cell => cell.trim())
+
+      const [headerRow, ...dataRows] = rows
+      const headers = parseRow(headerRow)
+        .map(h => `<th style="${styles.th}">${h}</th>`)
+        .join('')
+
+      const bodyRows = dataRows
+        .map(row => {
+          const cells = parseRow(row)
+            .map(c => `<td style="${styles.td}">${c}</td>`)
+            .join('')
+          return `<tr>${cells}</tr>`
+        })
+        .join('\n')
+
+      return `<div style="${styles.tableWrap}"><table style="${styles.table}"><thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table></div>\n`
+    }
+  )
+
+  // ── 12. Paragraphs ────────────────────────────────────────────────────────
+  // Split on double newlines; skip lines that are already block elements
+  const blockTags = /^<(h[1-6]|ul|ol|li|blockquote|pre|code|table|div|hr)/
+  const paragraphs = html
+    .split(/\n{2,}/)
+    .map(block => {
+      const trimmed = block.trim()
+      if (!trimmed) return ''
+      if (blockTags.test(trimmed)) return trimmed
+      // Single-newline lines within a paragraph become <br>
+      return `<p style="${styles.p}">${trimmed.replace(/\n/g, '<br>')}</p>`
     })
-    .replace(/`([^`]+)`/g, '<code>$1</code>');
+    .filter(Boolean)
+    .join('\n')
 
-  html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
-  if (html.includes('<li>')) {
-    html = html.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
-  }
-
-  html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-  if (html.includes('<li>') && !html.includes('<ul>')) {
-    html = html.replace(/(<li>.*<\/li>)/g, '<ol>$1</ol>');
-  }
-
-  html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
-  // Strip markdown links — keep display text, drop URL (citation safety net)
-  html = html.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-  html = html
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>');
-
-  html = html.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-
-  return html;
+  // ── 13. Wrap in responsive container ─────────────────────────────────────
+  return `<div style="${styles.wrapper}">${paragraphs}</div>`
 }
 
 function countWords(text: string): number {

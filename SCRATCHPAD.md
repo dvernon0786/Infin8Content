@@ -4523,7 +4523,13 @@ The generation pipeline is now architecturally sealed and operationally stabiliz
   - *Structural Enforcement*: Introduced `INFORMATIVE_SECTION_TEMPLATE` and `LISTICLE_SECTION_TEMPLATE` injected into every user message to force prose vs. numbered list structures.
   - *Physical Ceiling*: Set `maxTokens: 800` (Raised from 500 to allow structured content like tables).
   - *Fallback Clamp*: Added a JS-level deterministic substring clamp at **1200 characters** per section (Raised from 700 to prevent table truncation).
+  - *Styled Export*: Rewrote `convertMarkdownToHtml` with portable inline styles, responsive fluid type, and robust table/list handling for CMS portability.
   - *HTML Protection*: Updated `convertMarkdownToHtml` to strip all markdown links at the converter level, preventing rendering even if AI attempts them.
+- **Reader Experience (UX)**:
+  - *Article Mode*: Overhauled `ArticleContentViewer` with section-type styling (H1 intro, border separators) to move from "dashboard look" to "article look".
+  - *Readability*: Constrained content column to `max-w-prose` (~65-70ch) for optimal reading line lengths.
+  - *Hyperlink Lockdown*: Rendering all markdown links as `<span>` tags in the viewer to maintain zero-drift citation rules.
+  - *Mobile Ready*: Implemented horizontal overflow scrolling for all tables.
 - **Research Agent URL Ban**: Rewrote the `Tools` block to strictly ban URL fabrication and require omitted citations if a valid source isn't found in training knowledge. Max 5 citations.
 - **Writing Agent Citation Rules**: Added `NEVER as markdown hyperlinks [text](url).` to the system constraints and removed 4 legacy bullet points demanding markdown link generation.
 
