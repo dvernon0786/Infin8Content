@@ -13,7 +13,7 @@ import type { WorkflowState } from '@/lib/fsm/workflow-events'
 // Pure FSM state order for progress calculation
 const STATE_ORDER: string[] = [
   'step_1_icp',
-  'step_2_competitors', 
+  'step_2_competitors',
   'step_3_seeds',
   'step_4_longtails',
   'step_5_filtering',
@@ -33,6 +33,8 @@ export interface WorkflowDashboardItem {
   updated_at: string
   created_by: string
   estimated_completion?: string
+  keywords?: number
+  articles?: number
 }
 
 export interface DashboardSummary {
@@ -110,7 +112,7 @@ export function formatWorkflows(workflows: IntentWorkflow[]): WorkflowDashboardI
     // Pure FSM: Derive progress from state order only
     const stateIndex = STATE_ORDER.indexOf(workflow.state)
     const progress = stateIndex >= 0 ? (stateIndex / (STATE_ORDER.length - 1)) * 100 : 0
-    
+
     return {
       id: workflow.id,
       name: workflow.name,
@@ -123,7 +125,9 @@ export function formatWorkflows(workflows: IntentWorkflow[]): WorkflowDashboardI
         workflow.created_at,
         workflow.updated_at,
         progress
-      )
+      ),
+      keywords: (workflow as any).keywords?.[0]?.count || 0,
+      articles: (workflow as any).articles?.[0]?.count || 0
     }
   })
 }
@@ -144,7 +148,9 @@ export async function getWorkflowDashboard(
       organization_id,
       created_at,
       updated_at,
-      created_by
+      created_by,
+      keywords:keywords(count),
+      articles:articles(count)
     `)
     .eq('organization_id', organizationId)
     .order('updated_at', { ascending: false })
