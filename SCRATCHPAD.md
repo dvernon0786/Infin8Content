@@ -4520,8 +4520,9 @@ The generation pipeline is now architecturally sealed and operationally stabiliz
 ### **🔧 Technical Fixes Applied**
 - **Writing Agent Length Caps**: 
   - *Prompt Intent*: Added explicit `STRICT LENGTH RULE` constraints to the user message dynamically based on section position (`first`, `middle`, `final`).
-  - *Physical Ceiling*: Reduced `maxTokens` from 2000 down to **500** for the writing agent.
-  - *Fallback Clamp*: Added a JS-level deterministic substring clamp at **700 characters** per section that truncates cleanly to the last complete sentence.
+  - *Physical Ceiling*: Set `maxTokens: 800` (Raised from 500 to allow strucutred Content like tables).
+  - *Fallback Clamp*: Added a JS-level deterministic substring clamp at **1200 characters** per section (Raised from 700 to prevent table truncation).
+  - *HTML Protection*: Updated `convertMarkdownToHtml` to strip all markdown links at the converter level, preventing rendering even if AI attempts them.
 - **Research Agent URL Ban**: Rewrote the `Tools` block to strictly ban URL fabrication and require omitted citations if a valid source isn't found in training knowledge. Max 5 citations.
 - **Writing Agent Citation Rules**: Added `NEVER as markdown hyperlinks [text](url).` to the system constraints and removed 4 legacy bullet points demanding markdown link generation.
 
@@ -4529,8 +4530,9 @@ The generation pipeline is now architecturally sealed and operationally stabiliz
 | Metric | Previous State | Current State |
 |---|---|---|
 | **Section Size** | Unrestricted (Bloat) | **Strict 400-650 Chars** |
-| **Max Tokens** | 2000 | **500** |
+| **Max Tokens** | 2000 | **800** |
 | **Citation Format** | Markdown Hyperlinks | **Inline Plain-Text** |
+| **Link Rendering** | Enabled (<a> Tags) | **Stripped (Text Only)** |
 | **URL Fabrication** | Frequent LLM Guesses | **Banned (Text Only)** |
 
 ### **🎉 FINAL CERTIFICATION**
