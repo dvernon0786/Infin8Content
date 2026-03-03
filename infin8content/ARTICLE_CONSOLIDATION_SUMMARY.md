@@ -44,6 +44,11 @@ Consolidate the diverse article generation systems into a single, high-performan
   - Optimized completion check (`checkAndCompleteWorkflow`) with production logging.
   - Ensures clean transition from `step_9_articles` -> `completed`.
 
+### 4. Generation Quality Hardening ✅
+- **Writing Agent Length Caps**: Implemented "Triple Threat" constraints (Strict dynamic prompt bounds, `maxTokens: 500`, and a hard 700-character JS-level substring clamp).
+- **Research Agent Citation Lockdown**: Rewrote system prompt Tools block to enforce strict `[Publication, Year, Topic]` format and explicit prohibition of URL hallucination.
+- **Contradiction Purge**: Removed legacy prompt directives from the writing agent that previously requested markdown link rendering.
+
 ## 🧪 Testing Verification
 - **Schema Health**: Verified using automated "Health Report" SQL, confirming 100% column alignment.
 - **FSM Transition**: Confirmed `WORKFLOW_COMPLETED` event fires correctly after last article assembly.
