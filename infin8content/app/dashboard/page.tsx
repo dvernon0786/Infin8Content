@@ -35,5 +35,5 @@ export default async function DashboardPage() {
     )
   }
 
-  return <WorkflowDashboard />
+  return <WorkflowDashboard orgId={user.org_id} />
 }
