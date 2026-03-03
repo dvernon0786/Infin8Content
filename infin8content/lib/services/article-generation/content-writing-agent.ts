@@ -296,6 +296,10 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
     // Extract result text, default empty for safety
     let sectionContent = result.content || '';
 
+    // 🔒 DETERMINISTIC STRIP: Remove all markdown links regardless of LLM compliance.
+    // Keeps the display text, drops the URL entirely.
+    sectionContent = sectionContent.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+
     // Hard cap: enforce section character ceiling length
     const SECTION_CHAR_LIMIT = 1200;
     if (sectionContent.length > SECTION_CHAR_LIMIT) {

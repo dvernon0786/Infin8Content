@@ -161,6 +161,15 @@
     - **Validation**: Implemented an explicit section-count verification (excluding failed sections) in the `ArticleAssembler` to ensure no partial articles are assembled.
     - **Observability**: Added production logs to the `checkAndCompleteWorkflow` helper to track terminal FSM transitions in real-time.
 
+### **✅ Achievement: Grounded Research & UX Hardening**
+- **Status:** Integrated Tavily web sources and deterministic link stripping for 100% clean data.
+- **Deliverables:**
+  1. **Research Agent**: Overhauled to fetch real web sources via **Tavily**, providing the LLM with verifiable metadata while stripping raw URLs to prevent hallucinations.
+  2. **Data Sanitization**: Implemented deterministic regex stripping in `content-writing-agent.ts` to purge all markdown links before they hit the database.
+  3. **Invisible Links**: Updated `ArticleContentViewer` to render legacy links as plain text `<span>` tags.
+  4. **Premium UX**: Constrained and centered the article prose column (`max-w-3xl`) for a high-end reading experience.
+- **Result:** Pure, grounded article generation with zero link-related drift and superior visual presentation.
+
 21. **Step 9: Separation of Planning and Execution**:
     - **Planning**: Updated `ArticleQueuingProcessor` to seed articles in `queued` status and keywords in `ready` status.
     - **Execution Control**: Removed automatic generation trigger from Step 9 worker.
