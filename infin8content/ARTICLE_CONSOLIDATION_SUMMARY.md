@@ -46,6 +46,7 @@ Consolidate the diverse article generation systems into a single, high-performan
 
 ### 4. Generation Quality Hardening ✅
 - **Writing Agent Length Caps**: Implemented "Triple Threat" constraints (Strict prompt bounds, `maxTokens: 800`, and a hard 1200-character JS-level clamp to protect tables).
+- **Structural Enforcement**: Injected style-specific templates (Informative vs Listicle) into every writing prompt to ensure deterministic article layout.
 - **Embedded Link Protection**: Updated HTML converter to strip all markdown links at the source, enforcing plain-text-only references.
 - **Research Agent Citation Lockdown**: Rewrote system prompt Tools block to enforce strict `[Publication, Year, Topic]` format and explicit prohibition of URL hallucination.
 - **Contradiction Purge**: Removed legacy prompt directives from the writing agent that previously requested markdown link rendering.

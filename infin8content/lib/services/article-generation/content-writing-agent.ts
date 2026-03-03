@@ -22,6 +22,28 @@ export interface ContentWritingAgentInput {
   priorContentMarkdown?: string // 🆕 NEW: For section continuity (Phase 6)
 }
 
+// ─── Style Templates ──────────────────────────────────────────────────────────
+// Injected into every user message so the LLM knows exactly how to structure
+// each section based on the locked content_style from article_plan.
+
+const INFORMATIVE_SECTION_TEMPLATE = `SECTION FORMAT — informative style (follow exactly):
+- Open with 1–2 sentences stating the core idea of this section
+- Use prose paragraphs as the primary structure — no numbered lists as the main format
+- One optional markdown table OR bullet group is allowed if directly comparing options or listing steps
+- Each paragraph should cover one distinct supporting point from the brief
+- Close with a short transition sentence that sets up the next section
+- Do NOT use numbered items (1. 2. 3.) as the dominant structure`
+
+const LISTICLE_SECTION_TEMPLATE = `SECTION FORMAT — listicle style (follow exactly):
+- Every main point must be a numbered item: "1. **Point Title**"
+- Follow each numbered item with 2–3 sentences of explanation — no long prose blocks
+- Items must be self-contained: a reader can skim any single item and get value
+- An optional summary table at the end of the section is allowed
+- Do NOT use flowing prose paragraphs as the primary structure
+- Minimum 3 numbered items per section, maximum 7`
+
+// ─── Writing System Prompt ────────────────────────────────────────────────────
+
 /**
  * WRITING SYSTEM PROMPT (LOCKED)
  */
@@ -42,11 +64,12 @@ Constraints
 • Output only the complete article with no additional commentary or supporting text
 • Citations from research are in [Publication, Year, Topic] format. Render them inline as plain text e.g. (McKinsey Global Institute, 2024) — NEVER as markdown hyperlinks [text](url).
 • Do not add hyperlinks to any claims. No markdown link syntax anywhere in the article.
+• You will receive a SECTION FORMAT block in each request — follow its structure rules exactly.
 
 Inputs
 You will receive structured article briefs containing:
 • Article title and target keyword
-• Content style (informative, educational, comparative, etc.)
+• Content style (informative or listicle)
 • Semantic keywords list for natural incorporation
 • Article structure with sections including:
   • Section type and header
@@ -63,54 +86,54 @@ Content Creation Workflow:
 1. Analyze the article structure and identify key themes, target audience, and primary value proposition
 2. Review all supporting research and citation sources to understand available evidence and statistics
 3. Plan content flow ensuring logical progression and natural keyword integration throughout
-4. Write the introduction that hooks readers with relatable problems or compelling
-5. Develop each section following the provided structure while weaving in supporting points and research naturally  
+4. Write the introduction that hooks readers with relatable problems or compelling questions
+5. Develop each section following the SECTION FORMAT template provided in the request exactly
 6. Incorporate citations using inline plain-text citations e.g. (McKinsey Global Institute, 2024)
-7. Add tables or structured data where appropriate to enhance readability and value  
-8. Include natural CTAs that guide readers toward relevant next steps or resources  
-9. Review for SEO optimization ensuring target and semantic keywords appear naturally throughout  
-10. Final polish for tone consistency, readability, and flow  
+7. Add tables or structured data where appropriate to enhance readability and value
+8. Include natural CTAs that guide readers toward relevant next steps or resources
+9. Review for SEO optimization ensuring target and semantic keywords appear naturally throughout
+10. Final polish for tone consistency, readability, and flow
 
 Writing Style Guidelines:
-• Use “we” language and collaborative tone: “Let’s figure this out together”  
-• Share practical insights: “Here’s what actually works…”  
-• Include relatable examples: “We’ve all been there when…”  
-• Focus on business value: “This impacts your day-to-day efficiency”  
-• Ask engaging questions: “What manual process is eating your time?”  
-• Provide step-by-step solutions when appropriate  
-• Use conversational transitions and natural language patterns  
+• Use "we" language and collaborative tone: "Let's figure this out together"
+• Share practical insights: "Here's what actually works…"
+• Include relatable examples: "We've all been there when…"
+• Focus on business value: "This impacts your day-to-day efficiency"
+• Ask engaging questions: "What manual process is eating your time?"
+• Provide step-by-step solutions when appropriate
+• Use conversational transitions and natural language patterns
 
 SEO Integration:
-• Include target keyword in H1 title naturally  
-• Use semantic keywords in H2 and H3 headers where relevant  
-• Distribute keyword variations throughout body content organically  
-• Create descriptive, keyword-rich meta descriptions through compelling introductions  
-• Use related terms and synonyms to build topical authority  
+• Include target keyword in H1 title naturally
+• Use semantic keywords in H2 and H3 headers where relevant
+• Distribute keyword variations throughout body content organically
+• Create descriptive, keyword-rich meta descriptions through compelling introductions
+• Use related terms and synonyms to build topical authority
 
 Citation and Source Management:
 • Reference provided research answers and statistics using inline plain-text citations e.g. (McKinsey Global Institute, 2024)
-• Ensure diversity of sources across different sections  
-• Integrate quotes and statistics naturally within narrative flow using inline citations  
+• Ensure diversity of sources across different sections
+• Integrate quotes and statistics naturally within narrative flow using inline citations
 • Maintain factual accuracy while making information accessible
 
 Conclusions
 Your output will be a complete, publication-ready markdown blog article that:
-• Delivers genuine value and actionable insights to readers  
-• Naturally incorporates SEO elements without compromising readability  
-• Maintains consistent tone aligned with provided voice guidelines  
-• Features engaging, conversational writing that builds trust and authority  
-• Provides clear next steps or resources for reader engagement  
-• Adheres to specified word counts and structural requirements  
-• Contains no additional commentary, explanations, or supporting text  
+• Delivers genuine value and actionable insights to readers
+• Naturally incorporates SEO elements without compromising readability
+• Maintains consistent tone aligned with provided voice guidelines
+• Features engaging, conversational writing that builds trust and authority
+• Provides clear next steps or resources for reader engagement
+• Adheres to specified word counts and structural requirements
+• Contains no additional commentary, explanations, or supporting text
 
 Solutions
-• If research data is insufficient: Request additional sources or clarification on specific statistics needed  
-• If word count requirements conflict with content depth: Prioritize value delivery and suggest section adjustments  
-• If tone guidelines seem unclear: Ask for specific examples of preferred writing style or voice  
-• If keyword integration feels forced: Focus on natural language first, then optimize semantically  
+• If research data is insufficient: Request additional sources or clarification on specific statistics needed
+• If word count requirements conflict with content depth: Prioritize value delivery and suggest section adjustments
+• If tone guidelines seem unclear: Ask for specific examples of preferred writing style or voice
+• If keyword integration feels forced: Focus on natural language first, then optimize semantically
 • If citation sources lack diversity: Request additional research materials or alternative sources
-• If technical topics require simplification: Break down complex concepts using analogies and everyday examples  
-• If CTA placement seems unnatural: Integrate product mentions within helpful context rather than forced promotional sections 
+• If technical topics require simplification: Break down complex concepts using analogies and everyday examples
+• If CTA placement seems unnatural: Integrate product mentions within helpful context rather than forced promotional sections
 `
 
 export async function runContentWritingAgent(
@@ -118,11 +141,18 @@ export async function runContentWritingAgent(
 ): Promise<ContentWritingAgentOutput> {
   const startTime = Date.now();
 
+  // ── Resolve style template once, used in all three position blocks ──────────
+  const styleTemplate = input.articlePlan.content_style === 'listicle'
+    ? LISTICLE_SECTION_TEMPLATE
+    : INFORMATIVE_SECTION_TEMPLATE
+
   try {
     let userMessage = '';
 
     if (input.position === 'first') {
-      userMessage = `STRICT LENGTH RULE: This section must be 400–550 characters maximum. The entire article target is 4,000–5,000 characters across all sections. Be concise.
+      userMessage = `${styleTemplate}
+
+STRICT LENGTH RULE: This section must be 400–550 characters maximum. The entire article target is 4,000–5,000 characters across all sections. Be concise.
 
 Article title:
 ${input.articlePlan.article_title}
@@ -161,8 +191,11 @@ Generation config:
 - Add emojis: ${input.generationConfig.add_emojis}
 - Brand color: ${input.generationConfig.brand_color}
 - Image style: ${input.generationConfig.image_style}`;
+
     } else if (input.position === 'final') {
-      userMessage = `STRICT LENGTH RULE: This conclusion must be 350–500 characters maximum. Close cleanly with one CTA.
+      userMessage = `${styleTemplate}
+
+STRICT LENGTH RULE: This conclusion must be 350–500 characters maximum. Close cleanly with one CTA.
 
 Full article draft so far:
 ${input.priorContentMarkdown || ''}
@@ -183,8 +216,11 @@ Reminder — close the article with:
 - A clear, actionable conclusion.
 - A natural CTA aligned with: ${input.generationConfig.add_cta}
 - No repetition of content already covered above.`;
+
     } else {
-      userMessage = `STRICT LENGTH RULE: This section must be 450–650 characters maximum. Do not pad. Be direct and concise.
+      userMessage = `${styleTemplate}
+
+STRICT LENGTH RULE: This section must be 450–650 characters maximum. Do not pad. Be direct and concise.
 
 Article so far (do not repeat, only continue):
 ${input.priorContentMarkdown || ''}
@@ -226,7 +262,7 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        console.log(`[WritingAgent] Attempt ${attempt}/3 using anthropic/claude-sonnet-4.5`)
+        console.log(`[WritingAgent] Attempt ${attempt}/3 using anthropic/claude-sonnet-4.5 (style: ${input.articlePlan.content_style})`)
 
         result = await Promise.race([
           generateContent(messages, {
@@ -271,6 +307,9 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
 
     const html = await convertMarkdownToHtml(sectionContent);
     const wordCount = countWords(sectionContent);
+
+    const executionMs = Date.now() - startTime;
+    console.log(`[WritingAgent] Completed in ${executionMs}ms (words: ${wordCount}, style: ${input.articlePlan.content_style})`)
 
     return {
       markdown: sectionContent,
@@ -321,6 +360,7 @@ async function convertMarkdownToHtml(markdown: string): Promise<string> {
   }
 
   html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+  // Strip markdown links — keep display text, drop URL (citation safety net)
   html = html.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
   html = html
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
