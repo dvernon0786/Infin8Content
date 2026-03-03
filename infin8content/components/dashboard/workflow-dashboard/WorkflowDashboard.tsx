@@ -570,11 +570,14 @@ export function WorkflowDashboard({ orgId }: { orgId: string }) {
 
   return (
     <div style={{
-      flex: 1, overflowY: "auto",
+      flex: 1, overflowY: "auto", padding: 24,
       animation: "i8c-slide 0.3s ease",
       background: T.lightGray,
     }}>
       <style>{`
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(33, 124, 235, 0.2); border-radius: 2px; }
         @keyframes i8c-pulse {
           0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.5); }
           50%      { box-shadow: 0 0 0 7px rgba(245,158,11,0); }
@@ -640,15 +643,25 @@ export function WorkflowDashboard({ orgId }: { orgId: string }) {
       {view === "cards" ? (
         <div>
           <div style={{
-            display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16, marginBottom: 16,
+            display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 16,
           }}>
-            {workflows.map(wf => (
+            {workflows.slice(0, 3).map(wf => (
               <WorkflowCard key={wf.id} workflow={wf} onNavigate={() => onNavigate(wf.id, wf.state)} />
             ))}
           </div>
-          {workflows.length > 0 && (
-            <div style={{ marginTop: 24 }}>
-              <ArticlesPanel articles={articles} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr) 340px", gap: 16, marginBottom: 16 }}>
+            {workflows.slice(3, 5).map(wf => (
+              <WorkflowCard key={wf.id} workflow={wf} onNavigate={() => onNavigate(wf.id, wf.state)} />
+            ))}
+            <ArticlesPanel articles={articles} />
+          </div>
+          {workflows.length > 5 && (
+            <div style={{
+              display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16,
+            }}>
+              {workflows.slice(5).map(wf => (
+                <WorkflowCard key={wf.id} workflow={wf} onNavigate={() => onNavigate(wf.id, wf.state)} />
+              ))}
             </div>
           )}
         </div>
@@ -658,6 +671,28 @@ export function WorkflowDashboard({ orgId }: { orgId: string }) {
           <ArticlesPanel articles={articles} />
         </div>
       )}
+
+      {/* Status footer */}
+      <div style={{
+        marginTop: 20, display: "flex", gap: 18, paddingTop: 14,
+        borderTop: `1px solid ${T.neutral200}`,
+      }}>
+        {[
+          { label: "Generation Engine", status: "Operational", ok: true },
+          { label: "Last Sync", status: "Just now", ok: true },
+        ].map(s => (
+          <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{
+              width: 5, height: 5, borderRadius: "50%",
+              background: s.ok ? T.success : T.error,
+              boxShadow: s.ok ? `0 0 0 2px rgba(34,197,94,0.2)` : "none",
+            }} />
+            <span style={{ fontSize: 10, color: T.neutral800, fontFamily: "var(--font-lato,'Lato',sans-serif)" }}>{s.label}</span>
+            <span style={{ fontSize: 10, color: T.neutral500, fontFamily: "var(--font-lato,'Lato',sans-serif)" }}>· {s.status}</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
+
