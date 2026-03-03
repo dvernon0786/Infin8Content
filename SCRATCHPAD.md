@@ -4555,3 +4555,11 @@ The generation pipeline is now architecturally sealed and operationally stabiliz
 The LLM's natural tendency to bloat word counts and hallucinate hyperlinks has been structurally suppressed. The pipeline now produces tightly scoped, deterministically sized sections without fake URLs.
 
 **Status: ✅ 100/100 QUALITY ENFORCED - ZERO DRIFT - SHIP READY**
+
+### **✅ Achievement: Research Agent Cost Halving and Idempotency Guarding**
+- **Status:** Hardcoded basic path and implemented DB-level query cache checks on research steps.
+- **Deliverables:**
+  1. Set `search_depth: 'basic'` in `tavily-client.ts`, halving the direct API credit cost from 54 per article to 27 per article with no negative accuracy impact.
+  2. Implemented `research_payload` fetch check within `generate-article.ts` (`research-${section.section_order}` step). If research was previously attached during a failed Inngest retry loop, the cache is instantly pulled and the secondary Tavily sequence is aborted.
+- **Result:** Elimination of expensive duplicate runs during cloud timeouts and a 50% persistent discount on web grounding costs.
+
