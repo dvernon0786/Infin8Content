@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArticleStatusList } from '@/components/dashboard/article-status-list'
 import { SearchInput } from '@/components/dashboard/search-input'
@@ -19,7 +19,7 @@ import { ARTICLE_STATUSES, type DashboardArticle } from '@/lib/types/dashboard.t
 // ─── Metrics ──────────────────────────────────────────────────────────────────
 function MetricCard({ label, value, alert, icon }: { label: string; value: string | number; alert?: boolean; icon?: string }) {
   return (
-    <div className={`bg-white rounded-[10px] border px-4 py-[14px] relative overflow-hidden ${alert ? 'border-amber-500/30 shadow-[0_4px_12px_rgba(245,158,11,0.1)]' : 'border-neutral-200 shadow-sm'}`}>
+    <div className={`bg-white rounded-[10px] border px-3.5 py-2.5 relative overflow-hidden ${alert ? 'border-amber-500/30 shadow-[0_4px_12px_rgba(245,158,11,0.1)]' : 'border-neutral-200 shadow-sm'}`}>
       <div className={`absolute top-0 left-0 right-0 h-[2px] ${alert ? 'bg-gradient-to-r from-amber-500 to-red-500 opacity-100' : 'bg-gradient-brand opacity-60'}`} />
       <div className="relative">
         <div className="flex justify-between items-start mb-2">
@@ -28,7 +28,7 @@ function MetricCard({ label, value, alert, icon }: { label: string; value: strin
           </span>
           {icon && <span className={`text-[13px] ${alert ? 'text-amber-500' : 'text-neutral-200'}`}>{icon}</span>}
         </div>
-        <div className={`text-[26px] font-extrabold leading-none mb-1 font-poppins ${alert ? 'text-amber-500' : 'text-neutral-800'}`}>
+        <div className={`text-[22px] font-extrabold leading-none mb-1 font-poppins ${alert ? 'text-amber-500' : 'text-neutral-800'}`}>
           {value}
         </div>
       </div>
@@ -45,7 +45,7 @@ function ArticlesKPI({ articles }: { articles: DashboardArticle[] }) {
   const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
 
   return (
-    <div className="grid grid-cols-5 gap-3 mb-6">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4 mb-4">
       <MetricCard label="Total Articles" value={total} icon="▤" />
       <MetricCard label="Completed" value={completed} icon="✓" />
       <MetricCard label="Generating" value={generating} icon="◈" alert={generating > 0} />
@@ -59,12 +59,17 @@ function ArticlesClient({ orgId }: { orgId: string }) {
 
   const [recentlyUpdatedId, setRecentlyUpdatedId] = useState<string | null>(null);
 
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
   const { articles, isConnected, error, lastUpdated, refresh } = useRealtimeArticles({
     orgId,
     onDashboardUpdate: (event) => {
       setRecentlyUpdatedId(event.articleId);
-      // Clear highlight after 3 seconds
-      setTimeout(() => setRecentlyUpdatedId(null), 3000);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        setRecentlyUpdatedId(null);
+        timerRef.current = null;
+      }, 3000);
     }
   })
 
@@ -124,20 +129,23 @@ function ArticlesClient({ orgId }: { orgId: string }) {
 
       {/* Action Banner */}
       {blockedArticles.length > 0 && (
-        <div className="px-4 py-3 bg-red-500/5 border border-red-500/15 rounded-lg mb-6 flex items-center gap-3">
+        <div className="px-4 py-3 bg-red-500/5 border border-red-500/15 rounded-lg mb-4 flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-red-500 animate-[i8c-pulse_2s_infinite]" />
           <span className="text-[13px] font-bold text-red-500">
             {blockedArticles.length} Article{blockedArticles.length > 1 ? 's' : ''} Failed — Action Required
           </span>
           <button
-            onClick={() => setFilters({ ...filters, status: ['failed'] })}
+            onClick={() => {
+              clearSearch()
+              setFilters({ status: ['failed'], sortBy: filters.sortBy })
+            }}
             className="ml-auto px-3.5 py-1.5 rounded-md bg-red-500 text-white border-none text-[11px] font-extrabold cursor-pointer"
           >Review Failures →</button>
         </div>
       )}
 
       {/* Control Bar */}
-      <div className="flex items-center gap-3 p-2 px-3 border rounded-lg bg-white mb-6">
+      <div className="flex items-center gap-4 px-4 py-2 border border-neutral-200 bg-white rounded-md shadow-sm mb-4">
         <div className="flex-1">
           <SearchInput
             value={search.query}
@@ -172,7 +180,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
       )}
 
       {/* Results Summary */}
-      <div className="flex justify-between items-center mb-3">
+      <div className="flex justify-between items-center mb-4 px-1">
         <div className="font-lato text-neutral-600 text-xs font-semibold uppercase tracking-wider">
           Showing {filteredArticles.length} of {articles.length} Articles
         </div>
@@ -184,7 +192,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
       </div>
 
       {/* Articles List */}
-      <div className="flex-1 bg-white border rounded-xl overflow-hidden shadow-sm min-h-[50vh]">
+      <div className="flex-1 min-h-[50vh]">
         {filteredArticles.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-20 text-center">
             <FileText className="h-12 w-12 text-neutral-300 mb-4" />
@@ -196,11 +204,12 @@ function ArticlesClient({ orgId }: { orgId: string }) {
         ) : (
           <ScrollableArticleList
             articles={filteredArticles}
-            className="h-full border-none rounded-none"
-            selectedArticle={null}
+            className="h-full"
             highlightArticleId={recentlyUpdatedId}
-            onArticleSelect={(id) => id && router.push(`/dashboard/articles/${id}`)}
-            onArticleNavigation={(id) => router.push(`/dashboard/articles/${id}`)}
+            onArticleNavigation={(id, e) => {
+              if (e) e.preventDefault()
+              router.push(`/dashboard/articles/${id}`)
+            }}
             onKeyDown={(id, e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
@@ -217,13 +226,13 @@ function ArticlesClient({ orgId }: { orgId: string }) {
       </div>
 
       {/* System Status Footer */}
-      <div className="mt-6 py-4 border-t border-neutral-200 flex items-center gap-[18px]">
+      <div className="mt-4 py-4 border-t border-neutral-200 flex items-center gap-[18px]">
         {[
           { label: "Realtime", status: isConnected ? "Live" : "Polling", ok: isConnected },
           { label: "Last Sync", status: lastUpdated ? new Date(lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "Never", ok: true },
         ].map(s => (
           <div key={s.label} className="flex items-center gap-1.5">
-            <div className={`w-[5px] h-[5px] rounded-full ${s.ok ? 'bg-green-500 shadow-[0_0_0_2px_rgba(34,197,94,0.2)]' : 'bg-amber-500 shadow-[0_0_0_2px_rgba(245,158,11,0.2)]'}`} />
+            <div className={`w-1 h-1 rounded-full ${s.ok ? 'bg-green-500 shadow-[0_0_0_2px_rgba(34,197,94,0.2)]' : 'bg-amber-500 shadow-[0_0_0_2px_rgba(245,158,11,0.2)]'}`} />
             <span className="text-[10px] text-neutral-800 font-lato font-bold">{s.label}</span>
             <span className="text-[10px] text-neutral-500 font-lato">· {s.status}</span>
           </div>

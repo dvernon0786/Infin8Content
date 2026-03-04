@@ -12,14 +12,74 @@ import { GenerateArticleButton } from '@/components/articles/generate-article-bu
 import { VisualStatusIndicator } from '@/components/articles/visual-status-indicator';
 import { Eye, FileText } from 'lucide-react';
 import type { DashboardArticle } from '@/lib/types/dashboard.types';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import type { ScrollableArticleListProps } from '@/lib/types/dashboard.types';
+
+function ArticleAction({ article }: { article: DashboardArticle }) {
+  const [pending, setPending] = useState(false)
+
+  // Clear pending state if article status actually changes (e.g. from realtime update)
+  useEffect(() => {
+    if (article.status !== 'failed') {
+      setPending(false)
+    }
+  }, [article.status])
+
+  if (article.status === 'completed') {
+    return (
+      <Button
+        size="sm"
+        className="bg-[--brand-electric-blue] text-white hover:opacity-90 font-semibold h-7 text-xs px-3"
+      >
+        View →
+      </Button>
+    )
+  }
+
+  if (article.status === 'failed') {
+    return (
+      <Button
+        size="sm"
+        disabled={pending}
+        className="bg-red-600 text-white hover:bg-red-700 font-semibold h-7 text-xs px-3"
+        onClick={async (e) => {
+          e.stopPropagation();
+          setPending(true);
+          try {
+            await fetch('/api/articles/generate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ articleId: article.id }),
+            });
+          } catch (error) {
+            console.error('Retry failed:', error);
+          }
+        }}
+      >
+        {pending ? 'Starting...' : 'Retry'}
+      </Button>
+    )
+  }
+
+  if (article.status === 'queued') {
+    return (
+      <div onClick={(e) => e.stopPropagation()}>
+        <GenerateArticleButton articleId={article.id} />
+      </div>
+    )
+  }
+
+  return (
+    <span className="text-neutral-400 font-semibold text-xs">
+      Processing…
+    </span>
+  )
+}
 
 export function ScrollableArticleList({
   articles,
   className,
-  selectedArticle,
-  onArticleSelect,
   onArticleNavigation,
   onKeyDown,
   onTouchStart,
@@ -28,17 +88,7 @@ export function ScrollableArticleList({
   highlightArticleId,
 }: ScrollableArticleListProps) {
   if (articles.length === 0) {
-    return (
-      <div className={cn('flex items-center justify-center h-64', className)}>
-        <div className="text-center">
-          <FileText className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
-          <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">No articles found</h3>
-          <p className="font-lato text-neutral-600 text-body">
-            Try adjusting your search or filters to find articles.
-          </p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const formatTimeAgo = (timestamp: string): string => {
@@ -57,97 +107,77 @@ export function ScrollableArticleList({
 
   return (
     <div className={cn('scrollable-article-list', className)}>
-      <div className="overflow-y-auto h-[600px]">
-        {articles.map((article) => {
-          const isSelected = selectedArticle === article.id;
+      <div className="overflow-y-auto flex-1 min-h-0">
+        {articles.map((article, index) => {
+          const statusColor =
+            article.status === 'completed'
+              ? '#22C55E' // success green
+              : article.status === 'failed'
+                ? '#EF4444' // error red
+                : article.status === 'queued'
+                  ? '#8B5CF6' // purple
+                  : '#217CEB'; // info blue
+
           return (
-            <div key={article.id} className="mb-4">
+            <div
+              key={article.id}
+              className="mb-4 relative"
+              style={{
+                contentVisibility: 'auto',
+                containIntrinsicSize: '120px',
+                transform: 'translateZ(0)',
+                willChange: 'transform',
+                backfaceVisibility: 'hidden'
+              }}
+            >
+              <div
+                className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg z-10"
+                style={{ background: statusColor }}
+              />
               <Card
                 className={cn(
-                  'mx-2 cursor-pointer transition-colors hover:bg-neutral-50',
-                  isSelected && 'ring-2 ring-[--brand-electric-blue]',
-                  highlightArticleId === article.id && 'animate-[i8c-pulse_2s_infinite] border-[--color-warning]'
+                  'cursor-pointer border border-neutral-200 transition-all sm:hover:-translate-y-[1px] pl-4',
+                  'hover:border-[--brand-electric-blue]/40 hover:shadow-sm bg-white',
+                  index % 2 === 1 && 'bg-neutral-50/40',
+                  highlightArticleId === article.id && 'animate-[i8c-pulse_1.5s_ease-out] border-[--color-warning]'
                 )}
-                onClick={() => onArticleSelect(isSelected ? null : article.id)}
+                role="button"
+                tabIndex={0}
+                aria-label={`Open article ${article.title || article.keyword}`}
+                onClick={(e) => onArticleNavigation(article.id, e)}
+                onKeyDown={(e) => onKeyDown(article.id, e)}
+                onTouchStart={(e) => onTouchStart(article.id, e, e.currentTarget)}
+                onTouchMove={(e) => onTouchMove(article.id, e, e.currentTarget)}
+                onTouchEnd={(e) => onTouchEnd(article.id, e, e.currentTarget)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
                       <h3
-                        className={cn(
-                          'font-poppins text-neutral-900 text-small font-semibold truncate',
-                          article.status === 'completed' && 'cursor-pointer hover:text-primary focus:outline-none focus:ring-2 focus:ring-[--brand-electric-blue]/50 focus:ring-offset-2 rounded'
-                        )}
-                        title={article.status === 'completed' ? 'Click to view completed article' : undefined}
-                        role={article.status === 'completed' ? 'button' : undefined}
-                        tabIndex={article.status === 'completed' ? 0 : undefined}
-                        aria-label={article.status === 'completed'
-                          ? `completed article: ${article.title || article.keyword}, click to view`
-                          : undefined
-                        }
-                        onClick={(e) => {
-                          if (article.status === 'completed') {
-                            onArticleNavigation(article.id, e);
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (article.status === 'completed') {
-                            onKeyDown(article.id, e);
-                          }
-                        }}
-                        onTouchStart={(e) => {
-                          if (article.status === 'completed') {
-                            onTouchStart(article.id, e, e.currentTarget);
-                          }
-                        }}
-                        onTouchMove={(e) => {
-                          if (article.status === 'completed') {
-                            onTouchMove(article.id, e, e.currentTarget);
-                          }
-                        }}
-                        onTouchEnd={(e) => {
-                          if (article.status === 'completed') {
-                            onTouchEnd(article.id, e, e.currentTarget);
-                          }
-                        }}
+                        className="font-poppins text-neutral-900 text-small font-semibold truncate"
                       >
                         {article.title || article.keyword}
                       </h3>
-                      <p className="font-lato text-neutral-500 text-small truncate">
+                      <p className="font-lato text-neutral-500 text-sm truncate">
                         {article.keyword}
                       </p>
                     </div>
 
-                    <VisualStatusIndicator
-                      status={article.status}
-                      compact={true}
-                    />
+                    <div className="opacity-90">
+                      <VisualStatusIndicator
+                        status={article.status}
+                        compact={true}
+                      />
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between font-lato text-small text-neutral-500">
+                  <div className="flex items-center justify-between font-lato text-xs text-neutral-400">
                     <div className="flex items-center gap-4">
                       <span>Created {formatTimeAgo(article.created_at)}</span>
                       <span>Updated {formatTimeAgo(article.updated_at)}</span>
                     </div>
 
-                    {article.status === 'completed' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center gap-1 font-lato text-neutral-500"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onArticleNavigation(article.id, e);
-                        }}
-                      >
-                        <Eye className="h-3 w-3 text-neutral-500" />
-                        <span className="text-neutral-500">View</span>
-                      </Button>
-                    )}
-
-                    {article.status === 'queued' && (
-                      <GenerateArticleButton articleId={article.id} />
-                    )}
+                    <ArticleAction article={article} />
                   </div>
                 </CardContent>
               </Card>
