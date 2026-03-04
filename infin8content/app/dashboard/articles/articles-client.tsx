@@ -175,7 +175,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
       )}
 
       {/* Results Summary */}
-      <div className="flex justify-between items-center mb-3">
+      <div className="flex justify-between items-center mb-4 px-1">
         <div className="font-lato text-neutral-600 text-xs font-semibold uppercase tracking-wider">
           Showing {filteredArticles.length} of {articles.length} Articles
         </div>
@@ -187,7 +187,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
       </div>
 
       {/* Articles List */}
-      <div className="flex-1 bg-white border rounded-xl overflow-hidden shadow-sm min-h-[50vh]">
+      <div className="flex-1 min-h-[50vh]">
         {filteredArticles.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-20 text-center">
             <FileText className="h-12 w-12 text-neutral-300 mb-4" />
@@ -199,7 +199,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
         ) : (
           <ScrollableArticleList
             articles={filteredArticles}
-            className="h-full border-none rounded-none"
+            className="h-full"
             highlightArticleId={recentlyUpdatedId}
             onArticleNavigation={(id, e) => {
               if (e) e.preventDefault()

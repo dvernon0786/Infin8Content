@@ -12,10 +12,20 @@ import { GenerateArticleButton } from '@/components/articles/generate-article-bu
 import { VisualStatusIndicator } from '@/components/articles/visual-status-indicator';
 import { Eye, FileText } from 'lucide-react';
 import type { DashboardArticle } from '@/lib/types/dashboard.types';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import type { ScrollableArticleListProps } from '@/lib/types/dashboard.types';
 
 function ArticleAction({ article }: { article: DashboardArticle }) {
+  const [pending, setPending] = useState(false)
+
+  // Clear pending state if article status actually changes (e.g. from realtime update)
+  useEffect(() => {
+    if (article.status !== 'failed') {
+      setPending(false)
+    }
+  }, [article.status])
+
   switch (true) {
     case article.status === 'completed':
       return (
@@ -31,10 +41,14 @@ function ArticleAction({ article }: { article: DashboardArticle }) {
       return (
         <Button
           size="sm"
+          disabled={pending}
           className="bg-red-600 text-white hover:bg-red-700 font-semibold h-7 text-xs px-3"
-          onClick={(e) => { e.stopPropagation(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setPending(true);
+          }}
         >
-          Retry
+          {pending ? 'Starting...' : 'Retry'}
         </Button>
       )
 
@@ -86,11 +100,32 @@ export function ScrollableArticleList({
     <div className={cn('scrollable-article-list', className)}>
       <div className="overflow-y-auto flex-1 min-h-0">
         {articles.map((article) => {
+          const statusColor =
+            article.status === 'completed'
+              ? '#22C55E' // success green
+              : article.status === 'failed'
+                ? '#EF4444' // error red
+                : article.status === 'queued'
+                  ? '#8B5CF6' // purple
+                  : '#217CEB'; // info blue
+
           return (
-            <div key={article.id} className="mb-4">
+            <div
+              key={article.id}
+              className="mb-4 relative"
+              style={{
+                contentVisibility: 'auto',
+                containIntrinsicSize: '110px'
+              }}
+            >
+              <div
+                className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-md z-10"
+                style={{ background: statusColor }}
+              />
               <Card
                 className={cn(
-                  'mx-2 cursor-pointer border border-neutral-200 hover:border-[--brand-electric-blue]/40 hover:shadow-sm transition-all',
+                  'cursor-pointer border border-neutral-200 transition-all sm:hover:-translate-y-[1px] pl-4',
+                  'hover:border-[--brand-electric-blue]/40 hover:shadow-sm',
                   highlightArticleId === article.id && 'animate-[i8c-pulse_1.5s_ease-out] border-[--color-warning]'
                 )}
                 role="button"
@@ -109,7 +144,7 @@ export function ScrollableArticleList({
                       >
                         {article.title || article.keyword}
                       </h3>
-                      <p className="font-lato text-neutral-500 text-small truncate">
+                      <p className="font-lato text-neutral-500 text-sm truncate">
                         {article.keyword}
                       </p>
                     </div>
@@ -122,7 +157,7 @@ export function ScrollableArticleList({
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between font-lato text-small text-neutral-500">
+                  <div className="flex items-center justify-between font-lato text-xs text-neutral-400">
                     <div className="flex items-center gap-4">
                       <span>Created {formatTimeAgo(article.created_at)}</span>
                       <span>Updated {formatTimeAgo(article.updated_at)}</span>
