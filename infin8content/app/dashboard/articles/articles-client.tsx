@@ -16,53 +16,21 @@ import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import { ARTICLE_STATUSES, type DashboardArticle } from '@/lib/types/dashboard.types'
 
-// ─── Brand Tokens ─────────────────────────────────────────────────────────────
-const T = {
-  blue: "#217CEB",
-  purple: "#4A42CC",
-  charcoal: "#2C2C2E",
-  lightGray: "#F4F4F6",
-  white: "#FFFFFF",
-  neutral200: "#E5E5E7",
-  neutral500: "#71717A",
-  neutral600: "#52525B",
-  success: "#22C55E",
-  warning: "#F59E0B",
-  error: "#EF4444",
-  gradient: "linear-gradient(90deg, #217CEB 0%, #4A42CC 100%)",
-  info: "#0EA5E9",
-}
-
 // ─── Metrics ──────────────────────────────────────────────────────────────────
 function MetricCard({ label, value, alert, icon }: { label: string; value: string | number; alert?: boolean; icon?: string }) {
   return (
-    <div style={{
-      background: T.white,
-      borderRadius: 10,
-      border: `1px solid ${alert ? "rgba(245,158,11,0.3)" : T.neutral200}`,
-      padding: "14px 16px",
-      position: "relative", overflow: "hidden",
-      boxShadow: alert ? "0 4px 12px rgba(245,158,11,0.1)" : "0 1px 3px rgba(0,0,0,0.04)",
-    }}>
-      <div style={{
-        position: "absolute", top: 0, left: 0, right: 0, height: 2,
-        background: alert ? "linear-gradient(90deg, #F59E0B, #EF4444)" : T.gradient,
-        opacity: alert ? 1 : 0.6,
-      }} />
-      <div style={{ position: "relative" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-          <span style={{
-            fontSize: 10, color: T.neutral500, textTransform: "uppercase",
-            letterSpacing: "0.08em", fontWeight: 700,
-            fontFamily: "var(--font-lato,'Lato',sans-serif)",
-          }}>{label}</span>
-          {icon && <span style={{ fontSize: 13, color: alert ? T.warning : T.neutral200 }}>{icon}</span>}
+    <div className={`bg-white rounded-[10px] border px-4 py-[14px] relative overflow-hidden ${alert ? 'border-amber-500/30 shadow-[0_4px_12px_rgba(245,158,11,0.1)]' : 'border-neutral-200 shadow-sm'}`}>
+      <div className={`absolute top-0 left-0 right-0 h-[2px] ${alert ? 'bg-gradient-to-r from-amber-500 to-red-500 opacity-100' : 'bg-gradient-brand opacity-60'}`} />
+      <div className="relative">
+        <div className="flex justify-between items-start mb-2">
+          <span className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold font-lato">
+            {label}
+          </span>
+          {icon && <span className={`text-[13px] ${alert ? 'text-amber-500' : 'text-neutral-200'}`}>{icon}</span>}
         </div>
-        <div style={{
-          fontSize: 26, fontWeight: 800, lineHeight: 1, marginBottom: 5,
-          fontFamily: "var(--font-poppins,'Poppins',sans-serif)",
-          ...(alert ? { color: T.warning } : { color: T.charcoal })
-        }}>{value}</div>
+        <div className={`text-[26px] font-extrabold leading-none mb-1 font-poppins ${alert ? 'text-amber-500' : 'text-neutral-800'}`}>
+          {value}
+        </div>
       </div>
     </div>
   )
@@ -77,7 +45,7 @@ function ArticlesKPI({ articles }: { articles: DashboardArticle[] }) {
   const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 24 }}>
+    <div className="grid grid-cols-5 gap-3 mb-6">
       <MetricCard label="Total Articles" value={total} icon="▤" />
       <MetricCard label="Completed" value={completed} icon="✓" />
       <MetricCard label="Generating" value={generating} icon="◈" alert={generating > 0} />
@@ -156,25 +124,14 @@ function ArticlesClient({ orgId }: { orgId: string }) {
 
       {/* Action Banner */}
       {blockedArticles.length > 0 && (
-        <div style={{
-          padding: "12px 16px", background: "rgba(239,68,68,0.04)",
-          border: `1px solid rgba(239,68,68,0.15)`, borderRadius: 8,
-          marginBottom: 24, display: "flex", alignItems: "center", gap: 12
-        }}>
-          <div style={{
-            width: 8, height: 8, borderRadius: "50%", background: T.error,
-            animation: "i8c-pulse 2s infinite"
-          }} />
-          <span style={{ fontSize: 13, fontWeight: 700, color: T.error }}>
+        <div className="px-4 py-3 bg-red-500/5 border border-red-500/15 rounded-lg mb-6 flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-red-500 animate-[i8c-pulse_2s_infinite]" />
+          <span className="text-[13px] font-bold text-red-500">
             {blockedArticles.length} Article{blockedArticles.length > 1 ? 's' : ''} Failed — Action Required
           </span>
           <button
             onClick={() => setFilters({ ...filters, status: ['failed'] })}
-            style={{
-              marginLeft: "auto", padding: "6px 14px", borderRadius: 6,
-              background: T.error, color: T.white, border: "none",
-              fontSize: 11, fontWeight: 800, cursor: "pointer"
-            }}
+            className="ml-auto px-3.5 py-1.5 rounded-md bg-red-500 text-white border-none text-[11px] font-extrabold cursor-pointer"
           >Review Failures →</button>
         </div>
       )}
@@ -227,7 +184,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
       </div>
 
       {/* Articles List */}
-      <div className="flex-1 bg-white border rounded-xl overflow-hidden shadow-sm" style={{ minHeight: "50vh" }}>
+      <div className="flex-1 bg-white border rounded-xl overflow-hidden shadow-sm min-h-[50vh]">
         {filteredArticles.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-20 text-center">
             <FileText className="h-12 w-12 text-neutral-300 mb-4" />
@@ -260,22 +217,15 @@ function ArticlesClient({ orgId }: { orgId: string }) {
       </div>
 
       {/* System Status Footer */}
-      <div style={{
-        marginTop: 24, padding: "16px 0", borderTop: `1px solid ${T.neutral200}`,
-        display: "flex", gap: 18
-      }}>
+      <div className="mt-6 py-4 border-t border-neutral-200 flex items-center gap-[18px]">
         {[
           { label: "Realtime", status: isConnected ? "Live" : "Polling", ok: isConnected },
           { label: "Last Sync", status: lastUpdated ? new Date(lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "Never", ok: true },
         ].map(s => (
-          <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{
-              width: 5, height: 5, borderRadius: "50%",
-              background: s.ok ? T.success : T.warning,
-              boxShadow: s.ok ? "0 0 0 2px rgba(34,197,94,0.2)" : "0 0 0 2px rgba(245,158,11,0.2)",
-            }} />
-            <span style={{ fontSize: 10, color: T.charcoal, fontFamily: "var(--font-lato,'Lato',sans-serif)", fontWeight: 700 }}>{s.label}</span>
-            <span style={{ fontSize: 10, color: T.neutral500, fontFamily: "var(--font-lato,'Lato',sans-serif)" }}>· {s.status}</span>
+          <div key={s.label} className="flex items-center gap-1.5">
+            <div className={`w-[5px] h-[5px] rounded-full ${s.ok ? 'bg-green-500 shadow-[0_0_0_2px_rgba(34,197,94,0.2)]' : 'bg-amber-500 shadow-[0_0_0_2px_rgba(245,158,11,0.2)]'}`} />
+            <span className="text-[10px] text-neutral-800 font-lato font-bold">{s.label}</span>
+            <span className="text-[10px] text-neutral-500 font-lato">· {s.status}</span>
           </div>
         ))}
       </div>
