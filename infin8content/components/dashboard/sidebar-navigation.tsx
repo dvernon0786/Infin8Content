@@ -75,9 +75,19 @@ const items = [
     },
 */
 
-export function SidebarNavigation() {
+interface SidebarNavigationProps {
+    orgName?: string
+    plan?: string
+    usage?: number
+    limit?: number | null
+}
+
+export function SidebarNavigation({ orgName = "Acme Agency", plan = "pro", usage = 18, limit = 50 }: SidebarNavigationProps) {
     const pathname = usePathname()
     const { isMobile, setSidebarOpenMobile } = useResponsiveNavigation()
+
+    const progressPercentage = limit ? Math.min(100, Math.round((usage / limit) * 100)) : 0
+    const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1)
 
     return (
         <Sidebar className="border-right border-[#E5E5E7] bg-white">
@@ -94,8 +104,12 @@ export function SidebarNavigation() {
 
                 <div className="p-2 border border-[#E5E5E7] bg-[#F4F4F6] rounded-lg cursor-pointer flex items-center justify-between hover:bg-[#E5E5E7] transition-colors group">
                     <div className="flex flex-col">
-                        <span className="font-poppins text-[11px] font-bold text-[#2C2C2E] leading-4">Acme Agency</span>
-                        <span className="font-lato text-[9px] font-bold text-[#71717A] uppercase tracking-wider">Pro Plan</span>
+                        <span className="font-poppins text-[11px] font-bold text-[#2C2C2E] leading-4 truncate max-w-[120px]">
+                            {orgName}
+                        </span>
+                        <span className="font-lato text-[9px] font-bold text-[#71717A] uppercase tracking-wider">
+                            {planLabel} Plan
+                        </span>
                     </div>
                     <MoreHorizontal className="h-3 w-3 text-[#71717A] group-hover:text-[#217CEB] transition-colors" />
                 </div>
@@ -132,9 +146,9 @@ export function SidebarNavigation() {
                                                 )}>
                                                     {item.title}
                                                 </span>
-                                                {item.title === "Articles" && (
+                                                {item.title === "Articles" && usage > 0 && (
                                                     <Badge className="ml-auto bg-[#F59E0B]/10 text-[#F59E0B] text-[9px] font-black border-none px-1.5 py-0 h-4">
-                                                        2
+                                                        {usage}
                                                     </Badge>
                                                 )}
                                             </Link>
@@ -148,24 +162,26 @@ export function SidebarNavigation() {
             </SidebarContent>
 
             {/* 3. Usage Meter / Footer */}
-            <div className="p-4 mt-auto">
-                <div className="p-3 bg-[#217CEB]/5 border border-[#217CEB]/15 rounded-lg">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="font-lato text-[10px] font-black text-[#217CEB] uppercase tracking-wider">
-                            Pro Plan
-                        </span>
-                        <span className="font-lato text-[10px] font-bold text-[#71717A]">
-                            18 / 50 articles
-                        </span>
-                    </div>
-                    <div className="h-1.5 bg-[#E5E5E7] rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-gradient-to-r from-[#217CEB] to-[#4A42CC] rounded-full transition-all duration-500 ease-out shadow-[0_0_4px_rgba(33,124,235,0.3)]"
-                            style={{ width: '36%' }}
-                        />
+            {limit && (
+                <div className="p-4 mt-auto">
+                    <div className="p-3 bg-[#217CEB]/5 border border-[#217CEB]/15 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="font-lato text-[10px] font-black text-[#217CEB] uppercase tracking-wider">
+                                {planLabel} Plan
+                            </span>
+                            <span className="font-lato text-[10px] font-bold text-[#71717A]">
+                                {usage} / {limit} articles
+                            </span>
+                        </div>
+                        <div className="h-1.5 bg-[#E5E5E7] rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-gradient-to-r from-[#217CEB] to-[#4A42CC] rounded-full transition-all duration-500 ease-out shadow-[0_0_4px_rgba(33,124,235,0.3)]"
+                                style={{ width: `${progressPercentage}%` }}
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </Sidebar>
     )
 }

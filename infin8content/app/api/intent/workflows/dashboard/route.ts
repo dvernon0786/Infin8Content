@@ -24,9 +24,13 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Extract range from query params
+    const searchParams = request.nextUrl.searchParams
+    const range = (searchParams.get('range') || 'all') as '7d' | '30d' | '90d' | 'all'
+
     // Fetch dashboard data
     const supabase = await createClient()
-    const dashboardData = await getWorkflowDashboard(supabase, currentUser.org_id)
+    const dashboardData = await getWorkflowDashboard(supabase, currentUser.org_id, range)
 
     // Log dashboard view
     logActionAsync({

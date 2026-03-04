@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, useDeferredValue } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { searchArticles, createDebouncedSearch } from '@/lib/utils/search-utils';
 import { applyFilters, hasActiveFilters, filtersToQueryParams, queryParamsToFilters } from '@/lib/utils/filter-utils';
@@ -31,6 +31,7 @@ import {
 export function useDashboardFilters(
   articles: DashboardArticle[] = []
 ): UseDashboardFiltersReturn {
+  const deferredArticles = useDeferredValue(articles);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -137,7 +138,7 @@ export function useDashboardFilters(
       }
       setSearch(prev => ({ ...prev, isSearching: false }));
     }
-  }, [articles]);
+  }, [deferredArticles]);
 
   // Filter functionality
   const setFilters = useCallback((newFilters: Partial<FilterState>) => {
@@ -188,7 +189,7 @@ export function useDashboardFilters(
   // Apply search, filters, and sorting to articles
   const filteredArticles = useMemo(() => {
     const startTime = performance.now();
-    let result = [...articles];
+    let result = [...deferredArticles];
 
     // Apply search
     if (search.query.trim()) {
@@ -211,7 +212,7 @@ export function useDashboardFilters(
     performanceRef.current.lastUpdate = Date.now();
 
     return result;
-  }, [articles, search.query, filters]);
+  }, [deferredArticles, search.query, filters]);
 
   // Generate active filter badges
   const activeFilters = useMemo(() => {
@@ -220,11 +221,11 @@ export function useDashboardFilters(
 
   // Calculate metrics
   const metrics = useMemo((): FilterMetrics => ({
-    totalArticles: articles.length,
+    totalArticles: deferredArticles.length,
     filteredArticles: filteredArticles.length,
     filterTime: performanceRef.current.filterTime,
     searchTime: performanceRef.current.searchTime,
-  }), [articles.length, filteredArticles.length]);
+  }), [deferredArticles.length, filteredArticles.length]);
 
   // Utility functions
   const hasActiveFiltersValue = useMemo(() => {

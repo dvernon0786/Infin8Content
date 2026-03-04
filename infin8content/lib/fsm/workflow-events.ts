@@ -75,4 +75,17 @@ export type WorkflowEvent =
   // Final
   | 'WORKFLOW_COMPLETED'
 
-  
+// Canonical FSM state order for progress calculation (Zero Drift)
+export const STATE_ORDER: WorkflowState[] = [
+  'step_1_icp',
+  'step_2_competitors',
+  'step_3_seeds',
+  'step_4_longtails',
+  'step_5_filtering',
+  'step_6_clustering',
+  'step_7_validation',
+  'step_8_subtopics',
+  'step_9_articles',
+  'completed'
+]
+
