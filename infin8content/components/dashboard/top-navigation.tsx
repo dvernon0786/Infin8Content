@@ -2,7 +2,7 @@
 
 import { LogOut, User, Bell, Search, MoreHorizontal } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -42,11 +42,15 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
             .slice(0, 2)
         : email.substring(0, 2).toUpperCase()
 
-    const today = new Date().toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-    });
+    const [today, setToday] = useState<string>("")
+
+    useEffect(() => {
+        setToday(new Date().toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        }))
+    }, [])
 
     const handleLogout = async () => {
         try {

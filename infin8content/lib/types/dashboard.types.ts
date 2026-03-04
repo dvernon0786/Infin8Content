@@ -130,6 +130,7 @@ export interface ScrollableArticleListProps {
   articles: DashboardArticle[];
   className?: string;
   selectedArticle: string | null;
+  highlightArticleId?: string | null;
   onArticleSelect: (id: string | null) => void;
   onArticleNavigation: (id: string, e?: React.MouseEvent) => void;
   onKeyDown: (id: string, e: React.KeyboardEvent) => void;

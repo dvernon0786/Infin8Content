@@ -4580,3 +4580,18 @@ The LLM's natural tendency to bloat word counts and hallucinate hyperlinks has b
   3. **Global Article Tracking**: Integrated `useRealtimeArticles` directly into the dashboard for a unified view.
   4. **FSM Enforcement**: Action banners and progress tracks are tied directly to the native FSM states.
 - **Result:** Dashboard now feels like a premium enterprise command center, providing immediate UX visibility into the generation pipeline.
+
+### **✅ Achievement: Articles Dashboard Intelligence and Zero-Drift Hardening (Phase 24)**
+- **Status:** Overhauled the `/dashboard/articles` page and hardened the backend service layer for total architectural integrity.
+- **Deliverables:**
+  1. **Articles KPI Strip**: High-density metric cards for Total Articles, Completed, Generating, Failed, and Completion Rate.
+  2. **Operational Action Banner**: Automated "Action Required" alert for failed articles with one-click filtering.
+  3. **High-Density Control Bar**: Consolidated search, status filtering, and sorting into a professional "Command Bar" matching the main dashboard.
+  4. **Real-time Pulse Animation**: Implemented `recentlyUpdatedId` tracking in `ArticlesClient`. Updated articles pulse with a brand-glow for 3s to provide immediate visual confirmation of status changes.
+  5. **Deferred Value Optimization**: Integrated `useDeferredValue` into `useDashboardFilters` for zero-flicker filtering and sorting on large datasets.
+  6. **System Status Footer**: Transparent connectivity monitoring (Live vs Polling) and precise "Last Sync" timestamps using native `toLocaleTimeString`.
+  7. **Single Authority Summary Logic**: Refactored `workflow-dashboard-service.ts` to derive all summary metrics from formatted workflows, eliminating calculation drift.
+  8. **Canonical FSM Centralization**: Moved `STATE_ORDER` to `lib/fsm/workflow-events.ts`, making it the single source of truth for both service and UI.
+  9. **Approval Gate Guard**: Hardened `calculateEstimatedCompletion` to suppress linear time estimates while workflows are at human approval gates (Seeds, Subtopics).
+  10. **Type-Safe Domain Hardening**: Removed all `as any` casts in the service layer via proper `WorkflowWithCounts` interface definitions.
+- **Result:** The Articles dashboard is now an enterprise-grade command center, providing immediate UX visibility and architecturally sealed data integrity.

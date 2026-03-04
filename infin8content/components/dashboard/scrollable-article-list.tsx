@@ -25,6 +25,7 @@ export function ScrollableArticleList({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
+  highlightArticleId,
 }: ScrollableArticleListProps) {
   if (articles.length === 0) {
     return (
@@ -64,7 +65,8 @@ export function ScrollableArticleList({
               <Card
                 className={cn(
                   'mx-2 cursor-pointer transition-colors hover:bg-neutral-50',
-                  isSelected && 'ring-2 ring-[--brand-electric-blue]'
+                  isSelected && 'ring-2 ring-[--brand-electric-blue]',
+                  highlightArticleId === article.id && 'animate-[i8c-pulse_2s_infinite] border-[--color-warning]'
                 )}
                 onClick={() => onArticleSelect(isSelected ? null : article.id)}
               >

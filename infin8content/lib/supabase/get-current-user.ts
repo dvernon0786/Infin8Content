@@ -1,7 +1,7 @@
-// Reusable helper to get current user with organization data
 import { createClient } from './server'
 import { cache } from 'react'
 import type { Database } from './database.types'
+import { PLAN_LIMITS } from '../config/plan-limits'
 
 type UserRecord = Database['public']['Tables']['users']['Row']
 type OrganizationRecord = Database['public']['Tables']['organizations']['Row']
@@ -16,7 +16,10 @@ export interface CurrentUser {
   first_name: string | null
   role: string
   org_id: string | null
-  organizations?: OrganizationRecord | null
+  organizations?: (OrganizationRecord & {
+    article_usage?: number;
+    article_limit?: number | null;
+  }) | null
 }
 
 /**
@@ -46,7 +49,7 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
   }
 
   // Query organization if org_id exists
-  let organization: OrganizationRecord | null = null
+  let organization: (OrganizationRecord & { article_usage?: number; article_limit?: number | null }) | null = null
   if ((userRecord as any).org_id) {
     const { data: orgData } = await supabase
       .from('organizations')
@@ -54,7 +57,29 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
       .eq('id', (userRecord as any).org_id)
       .single()
 
-    organization = orgData || null
+    if (orgData) {
+      // Calculate current month's article usage
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { count: articleUsage } = await supabase
+        .from('articles')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', (userRecord as any).org_id)
+        .gte('created_at', startOfMonth.toISOString());
+
+      // Get plan limit
+      const organizationData = orgData as any
+      const planKey = (organizationData.plan || 'starter').toLowerCase() as keyof typeof PLAN_LIMITS.article_generation;
+      const articleLimit = PLAN_LIMITS.article_generation[planKey];
+
+      organization = {
+        ...organizationData,
+        article_usage: articleUsage || 0,
+        article_limit: articleLimit,
+      }
+    }
   }
 
   return {
