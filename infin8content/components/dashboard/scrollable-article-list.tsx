@@ -43,9 +43,18 @@ function ArticleAction({ article }: { article: DashboardArticle }) {
           size="sm"
           disabled={pending}
           className="bg-red-600 text-white hover:bg-red-700 font-semibold h-7 text-xs px-3"
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
             setPending(true);
+            try {
+              await fetch('/api/articles/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ articleId: article.id }),
+              });
+            } catch (error) {
+              console.error('Retry failed:', error);
+            }
           }}
         >
           {pending ? 'Starting...' : 'Retry'}
@@ -115,11 +124,14 @@ export function ScrollableArticleList({
               className="mb-4 relative"
               style={{
                 contentVisibility: 'auto',
-                containIntrinsicSize: '110px'
+                containIntrinsicSize: '120px',
+                transform: 'translateZ(0)',
+                willChange: 'transform',
+                backfaceVisibility: 'hidden'
               }}
             >
               <div
-                className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-md z-10"
+                className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg z-10"
                 style={{ background: statusColor }}
               />
               <Card
@@ -130,6 +142,7 @@ export function ScrollableArticleList({
                 )}
                 role="button"
                 tabIndex={0}
+                aria-label={`Open article ${article.title || article.keyword}`}
                 onClick={(e) => onArticleNavigation(article.id, e)}
                 onKeyDown={(e) => onKeyDown(article.id, e)}
                 onTouchStart={(e) => onTouchStart(article.id, e, e.currentTarget)}

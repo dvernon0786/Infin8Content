@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArticleStatusList } from '@/components/dashboard/article-status-list'
 import { SearchInput } from '@/components/dashboard/search-input'
@@ -45,7 +45,7 @@ function ArticlesKPI({ articles }: { articles: DashboardArticle[] }) {
   const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3 mb-6">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4 mb-4">
       <MetricCard label="Total Articles" value={total} icon="▤" />
       <MetricCard label="Completed" value={completed} icon="✓" />
       <MetricCard label="Generating" value={generating} icon="◈" alert={generating > 0} />
@@ -59,12 +59,17 @@ function ArticlesClient({ orgId }: { orgId: string }) {
 
   const [recentlyUpdatedId, setRecentlyUpdatedId] = useState<string | null>(null);
 
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
   const { articles, isConnected, error, lastUpdated, refresh } = useRealtimeArticles({
     orgId,
     onDashboardUpdate: (event) => {
       setRecentlyUpdatedId(event.articleId);
-      // Clear highlight after 3 seconds
-      setTimeout(() => setRecentlyUpdatedId(null), 3000);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        setRecentlyUpdatedId(null);
+        timerRef.current = null;
+      }, 3000);
     }
   })
 
@@ -124,7 +129,7 @@ function ArticlesClient({ orgId }: { orgId: string }) {
 
       {/* Action Banner */}
       {blockedArticles.length > 0 && (
-        <div className="px-4 py-3 bg-red-500/5 border border-red-500/15 rounded-lg mb-6 flex items-center gap-3">
+        <div className="px-4 py-3 bg-red-500/5 border border-red-500/15 rounded-lg mb-4 flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-red-500 animate-[i8c-pulse_2s_infinite]" />
           <span className="text-[13px] font-bold text-red-500">
             {blockedArticles.length} Article{blockedArticles.length > 1 ? 's' : ''} Failed — Action Required
