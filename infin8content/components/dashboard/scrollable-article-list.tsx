@@ -108,7 +108,7 @@ export function ScrollableArticleList({
   return (
     <div className={cn('scrollable-article-list', className)}>
       <div className="overflow-y-auto flex-1 min-h-0">
-        {articles.map((article) => {
+        {articles.map((article, index) => {
           const statusColor =
             article.status === 'completed'
               ? '#22C55E' // success green
@@ -121,7 +121,7 @@ export function ScrollableArticleList({
           return (
             <div
               key={article.id}
-              className="mb-4 relative odd:bg-neutral-50/40"
+              className="mb-4 relative"
               style={{
                 contentVisibility: 'auto',
                 containIntrinsicSize: '120px',
@@ -137,7 +137,8 @@ export function ScrollableArticleList({
               <Card
                 className={cn(
                   'cursor-pointer border border-neutral-200 transition-all sm:hover:-translate-y-[1px] pl-4',
-                  'hover:border-[--brand-electric-blue]/40 hover:shadow-sm',
+                  'hover:border-[--brand-electric-blue]/40 hover:shadow-sm bg-white',
+                  index % 2 === 1 && 'bg-neutral-50/40',
                   highlightArticleId === article.id && 'animate-[i8c-pulse_1.5s_ease-out] border-[--color-warning]'
                 )}
                 role="button"
