@@ -15,11 +15,48 @@ import type { DashboardArticle } from '@/lib/types/dashboard.types';
 import { cn } from '@/lib/utils';
 import type { ScrollableArticleListProps } from '@/lib/types/dashboard.types';
 
+function ArticleAction({ article }: { article: DashboardArticle }) {
+  switch (true) {
+    case article.status === 'completed':
+      return (
+        <Button
+          size="sm"
+          className="bg-[--brand-electric-blue] text-white hover:opacity-90 font-semibold h-7 text-xs px-3"
+        >
+          View →
+        </Button>
+      )
+
+    case article.status === 'failed':
+      return (
+        <Button
+          size="sm"
+          className="bg-red-600 text-white hover:bg-red-700 font-semibold h-7 text-xs px-3"
+          onClick={(e) => { e.stopPropagation(); }}
+        >
+          Retry
+        </Button>
+      )
+
+    case article.status === 'queued':
+      return (
+        <div onClick={(e) => e.stopPropagation()}>
+          <GenerateArticleButton articleId={article.id} />
+        </div>
+      )
+
+    default:
+      return (
+        <span className="text-neutral-400 font-semibold text-xs">
+          Processing…
+        </span>
+      )
+  }
+}
+
 export function ScrollableArticleList({
   articles,
   className,
-  selectedArticle,
-  onArticleSelect,
   onArticleNavigation,
   onKeyDown,
   onTouchStart,
@@ -28,17 +65,7 @@ export function ScrollableArticleList({
   highlightArticleId,
 }: ScrollableArticleListProps) {
   if (articles.length === 0) {
-    return (
-      <div className={cn('flex items-center justify-center h-64', className)}>
-        <div className="text-center">
-          <FileText className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
-          <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">No articles found</h3>
-          <p className="font-lato text-neutral-600 text-body">
-            Try adjusting your search or filters to find articles.
-          </p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const formatTimeAgo = (timestamp: string): string => {
@@ -57,59 +84,28 @@ export function ScrollableArticleList({
 
   return (
     <div className={cn('scrollable-article-list', className)}>
-      <div className="overflow-y-auto h-[600px]">
+      <div className="overflow-y-auto flex-1 min-h-0">
         {articles.map((article) => {
-          const isSelected = selectedArticle === article.id;
           return (
             <div key={article.id} className="mb-4">
               <Card
                 className={cn(
-                  'mx-2 cursor-pointer transition-colors hover:bg-neutral-50',
-                  isSelected && 'ring-2 ring-[--brand-electric-blue]',
-                  highlightArticleId === article.id && 'animate-[i8c-pulse_2s_infinite] border-[--color-warning]'
+                  'mx-2 cursor-pointer border border-neutral-200 hover:border-[--brand-electric-blue]/40 hover:shadow-sm transition-all',
+                  highlightArticleId === article.id && 'animate-[i8c-pulse_1.5s_ease-out] border-[--color-warning]'
                 )}
-                onClick={() => onArticleSelect(isSelected ? null : article.id)}
+                role="button"
+                tabIndex={0}
+                onClick={(e) => onArticleNavigation(article.id, e)}
+                onKeyDown={(e) => onKeyDown(article.id, e)}
+                onTouchStart={(e) => onTouchStart(article.id, e, e.currentTarget)}
+                onTouchMove={(e) => onTouchMove(article.id, e, e.currentTarget)}
+                onTouchEnd={(e) => onTouchEnd(article.id, e, e.currentTarget)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
                       <h3
-                        className={cn(
-                          'font-poppins text-neutral-900 text-small font-semibold truncate',
-                          article.status === 'completed' && 'cursor-pointer hover:text-primary focus:outline-none focus:ring-2 focus:ring-[--brand-electric-blue]/50 focus:ring-offset-2 rounded'
-                        )}
-                        title={article.status === 'completed' ? 'Click to view completed article' : undefined}
-                        role={article.status === 'completed' ? 'button' : undefined}
-                        tabIndex={article.status === 'completed' ? 0 : undefined}
-                        aria-label={article.status === 'completed'
-                          ? `completed article: ${article.title || article.keyword}, click to view`
-                          : undefined
-                        }
-                        onClick={(e) => {
-                          if (article.status === 'completed') {
-                            onArticleNavigation(article.id, e);
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (article.status === 'completed') {
-                            onKeyDown(article.id, e);
-                          }
-                        }}
-                        onTouchStart={(e) => {
-                          if (article.status === 'completed') {
-                            onTouchStart(article.id, e, e.currentTarget);
-                          }
-                        }}
-                        onTouchMove={(e) => {
-                          if (article.status === 'completed') {
-                            onTouchMove(article.id, e, e.currentTarget);
-                          }
-                        }}
-                        onTouchEnd={(e) => {
-                          if (article.status === 'completed') {
-                            onTouchEnd(article.id, e, e.currentTarget);
-                          }
-                        }}
+                        className="font-poppins text-neutral-900 text-small font-semibold truncate"
                       >
                         {article.title || article.keyword}
                       </h3>
@@ -118,10 +114,12 @@ export function ScrollableArticleList({
                       </p>
                     </div>
 
-                    <VisualStatusIndicator
-                      status={article.status}
-                      compact={true}
-                    />
+                    <div className="opacity-90">
+                      <VisualStatusIndicator
+                        status={article.status}
+                        compact={true}
+                      />
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between font-lato text-small text-neutral-500">
@@ -130,24 +128,7 @@ export function ScrollableArticleList({
                       <span>Updated {formatTimeAgo(article.updated_at)}</span>
                     </div>
 
-                    {article.status === 'completed' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center gap-1 font-lato text-neutral-500"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onArticleNavigation(article.id, e);
-                        }}
-                      >
-                        <Eye className="h-3 w-3 text-neutral-500" />
-                        <span className="text-neutral-500">View</span>
-                      </Button>
-                    )}
-
-                    {article.status === 'queued' && (
-                      <GenerateArticleButton articleId={article.id} />
-                    )}
+                    <ArticleAction article={article} />
                   </div>
                 </CardContent>
               </Card>
