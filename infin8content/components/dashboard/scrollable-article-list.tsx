@@ -26,55 +26,55 @@ function ArticleAction({ article }: { article: DashboardArticle }) {
     }
   }, [article.status])
 
-  switch (true) {
-    case article.status === 'completed':
-      return (
-        <Button
-          size="sm"
-          className="bg-[--brand-electric-blue] text-white hover:opacity-90 font-semibold h-7 text-xs px-3"
-        >
-          View →
-        </Button>
-      )
-
-    case article.status === 'failed':
-      return (
-        <Button
-          size="sm"
-          disabled={pending}
-          className="bg-red-600 text-white hover:bg-red-700 font-semibold h-7 text-xs px-3"
-          onClick={async (e) => {
-            e.stopPropagation();
-            setPending(true);
-            try {
-              await fetch('/api/articles/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ articleId: article.id }),
-              });
-            } catch (error) {
-              console.error('Retry failed:', error);
-            }
-          }}
-        >
-          {pending ? 'Starting...' : 'Retry'}
-        </Button>
-      )
-
-    case article.status === 'queued':
-      return (
-        <div onClick={(e) => e.stopPropagation()}>
-          <GenerateArticleButton articleId={article.id} />
-        </div>
-      )
-
-    default:
-      return (
-        <span className="text-neutral-400 font-semibold text-xs">
-          Processing…
-        </span>
-      )
+  if (article.status === 'completed') {
+    return (
+      <Button
+        size="sm"
+        className="bg-[--brand-electric-blue] text-white hover:opacity-90 font-semibold h-7 text-xs px-3"
+      >
+        View →
+      </Button>
+    )
   }
+
+  if (article.status === 'failed') {
+    return (
+      <Button
+        size="sm"
+        disabled={pending}
+        className="bg-red-600 text-white hover:bg-red-700 font-semibold h-7 text-xs px-3"
+        onClick={async (e) => {
+          e.stopPropagation();
+          setPending(true);
+          try {
+            await fetch('/api/articles/generate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ articleId: article.id }),
+            });
+          } catch (error) {
+            console.error('Retry failed:', error);
+          }
+        }}
+      >
+        {pending ? 'Starting...' : 'Retry'}
+      </Button>
+    )
+  }
+
+  if (article.status === 'queued') {
+    return (
+      <div onClick={(e) => e.stopPropagation()}>
+        <GenerateArticleButton articleId={article.id} />
+      </div>
+    )
+  }
+
+  return (
+    <span className="text-neutral-400 font-semibold text-xs">
+      Processing…
+    </span>
+  )
 }
 
 export function ScrollableArticleList({
