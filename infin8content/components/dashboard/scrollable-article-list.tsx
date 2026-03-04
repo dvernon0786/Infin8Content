@@ -121,7 +121,7 @@ export function ScrollableArticleList({
           return (
             <div
               key={article.id}
-              className="mb-4 relative"
+              className="mb-4 relative odd:bg-neutral-50/40"
               style={{
                 contentVisibility: 'auto',
                 containIntrinsicSize: '120px',
