@@ -52,6 +52,7 @@
   1. **Strict Mapping:** Deprecated fallback values in local `.env` and `prices.ts` constants and instead instantiated a strict non-retryable throw parameter for missing Trial Price keys natively enforcing system alignment prior to booting up pipelines.
   2. **Smart Webhook Resolvers:** Instantiated `PRICE_PLAN_MAP` dictionary natively mapping explicit Stripe `price_ID` endpoints straight into deterministic SaaS `.plan` nomenclature. Updated `app/api/webhooks/stripe/route.ts` so `handleSubscriptionUpdated` can securely intercept any missing `strip.metadata` and aggressively fallback into correct Plan mappings instead of throwing false-positives under load.
   3. **Payment Recovery Alignment:** Confirmed `invoice.payment_failed` grace period recovery rules are perfectly mapped!
+  4. **Build Phase Protection:** Intercepted NextJS static generation evaluation issues in GitHub Action runners by conditionally shielding the `throw new Error` inside `lib/stripe/prices.ts` from executing on `npm run build` when missing injected environments, falling back to soft-logging while still aggressively crashing at deployment runtime.
 
 ## **🔥 PIPELINE V2 PRE-DEPLOY HARDENING**
 
