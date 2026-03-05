@@ -11,18 +11,11 @@ const requiredPriceEnvVars = [
   'STRIPE_PRICE_AGENCY_ANNUAL',
 ] as const
 
-const isBuildPhase = process.env.npm_lifecycle_event === 'build' || process.env.CI || process.env.NODE_ENV === 'test'
-
 for (const envVar of requiredPriceEnvVars) {
   if (!process.env[envVar]) {
-    if (isBuildPhase) {
-      console.warn(`[Build Warning] Missing required Stripe price env var: ${envVar}`)
-    } else {
-      throw new Error(`Missing required Stripe price env var: ${envVar}`)
-    }
+    throw new Error(`Missing required Stripe price env var: ${envVar}`)
   }
 }
-
 export const STRIPE_PRICE_IDS = {
   trial: {
     monthly: process.env.STRIPE_PRICE_TRIAL_MONTHLY as string,

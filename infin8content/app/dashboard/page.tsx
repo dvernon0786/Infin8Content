@@ -25,7 +25,7 @@ export default async function DashboardPage() {
     if (isTrial) {
       return (
         <div className="space-y-6 mx-auto max-w-xl py-20">
-          <TrialChecklist hasKeyword={false} hasCompletedArticle={false} />
+          <TrialChecklist hasWorkflow={false} hasCompletedArticle={false} />
           <div className="text-center">
             <h1 className="text-2xl font-semibold">Your $1 trial is active ✨</h1>
             <p className="mt-2 text-muted-foreground">
@@ -60,12 +60,12 @@ export default async function DashboardPage() {
 
   const isTrial = (user.organizations?.plan_type || user.organizations?.plan)?.toLowerCase() === 'trial'
 
-  let hasKeyword = false
+  let hasWorkflow = false
   let hasCompletedArticle = false
 
   if (isTrial) {
     // workflows is already fetched above — no extra query needed
-    hasKeyword = (workflows?.length ?? 0) > 0
+    hasWorkflow = (workflows?.length ?? 0) > 0
 
     // Only one extra query needed instead of two
     const { count: artCount } = await supabase
@@ -81,7 +81,7 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       {isTrial && (
         <TrialChecklist
-          hasKeyword={hasKeyword}
+          hasWorkflow={hasWorkflow}
           hasCompletedArticle={hasCompletedArticle}
         />
       )}

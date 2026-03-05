@@ -11,13 +11,13 @@ interface Step {
 }
 
 interface TrialChecklistProps {
-    hasKeyword: boolean
+    hasWorkflow: boolean
     hasCompletedArticle: boolean
 }
 
-export function TrialChecklist({ hasKeyword, hasCompletedArticle }: TrialChecklistProps) {
+export function TrialChecklist({ hasWorkflow, hasCompletedArticle }: TrialChecklistProps) {
     const steps: Step[] = [
-        { label: 'Create your first workflow', completed: hasKeyword },
+        { label: 'Create your first workflow', completed: hasWorkflow },
         { label: 'Generate your first article', completed: hasCompletedArticle },
         { label: 'Unlock remaining articles', completed: false },
     ]
