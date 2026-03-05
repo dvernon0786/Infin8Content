@@ -1,6 +1,10 @@
 // Stripe Price IDs - Update when prices change in Stripe Dashboard
 // Format: { plan: { billingFrequency: 'price_xxx' } }
 export const STRIPE_PRICE_IDS = {
+  trial: {
+    monthly: process.env.STRIPE_PRICE_TRIAL_MONTHLY || 'price_1T7kHN8wvFkYBEADWQbfj88H',
+    annual: process.env.STRIPE_PRICE_TRIAL_ANNUAL || 'price_trial_annual_fallback',
+  },
   starter: {
     monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY || 'price_xxx',
     annual: process.env.STRIPE_PRICE_STARTER_ANNUAL || 'price_yyy',
