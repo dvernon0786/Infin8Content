@@ -17,7 +17,7 @@ interface TrialChecklistProps {
 
 export function TrialChecklist({ hasKeyword, hasCompletedArticle }: TrialChecklistProps) {
     const steps: Step[] = [
-        { label: 'Create your keyword cluster', completed: hasKeyword },
+        { label: 'Create your first workflow', completed: hasKeyword },
         { label: 'Generate your first article', completed: hasCompletedArticle },
         { label: 'Unlock remaining articles', completed: false },
     ]

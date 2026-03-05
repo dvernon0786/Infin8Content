@@ -343,8 +343,12 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
 
       if (!newPlan && subscription.items?.data?.length > 0) {
         // Try getting from price metadata, fallback to mapping if needed
-        const price = subscription.items.data[0].price
-        newPlan = price.metadata?.plan || getPlanFromPriceId(price.id)
+        const priceItem = subscription.items.data.find(
+          (item: any) => item.price.metadata?.plan || getPlanFromPriceId(item.price.id)
+        )
+        if (priceItem) {
+          newPlan = priceItem.price.metadata?.plan || getPlanFromPriceId(priceItem.price.id)
+        }
       }
 
       if (!newPlan) {

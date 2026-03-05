@@ -64,18 +64,16 @@ export default async function DashboardPage() {
   let hasCompletedArticle = false
 
   if (isTrial) {
-    const { count: kwCount } = await supabase
-      .from('keywords')
-      .select('id', { count: 'exact', head: true })
-      .eq('org_id', user.org_id)
+    // workflows is already fetched above — no extra query needed
+    hasKeyword = (workflows?.length ?? 0) > 0
 
+    // Only one extra query needed instead of two
     const { count: artCount } = await supabase
       .from('articles')
       .select('id', { count: 'exact', head: true })
       .eq('org_id', user.org_id)
       .eq('status', 'completed')
 
-    hasKeyword = (kwCount ?? 0) > 0
     hasCompletedArticle = (artCount ?? 0) > 0
   }
 

@@ -1,25 +1,38 @@
 // Stripe Price IDs - Update when prices change in Stripe Dashboard
 // Format: { plan: { billingFrequency: 'price_xxx' } }
-if (!process.env.STRIPE_PRICE_TRIAL_MONTHLY) {
-  throw new Error("Missing STRIPE_PRICE_TRIAL_MONTHLY")
+const requiredPriceEnvVars = [
+  'STRIPE_PRICE_TRIAL_MONTHLY',
+  'STRIPE_PRICE_TRIAL_ANNUAL',
+  'STRIPE_PRICE_STARTER_MONTHLY',
+  'STRIPE_PRICE_STARTER_ANNUAL',
+  'STRIPE_PRICE_PRO_MONTHLY',
+  'STRIPE_PRICE_PRO_ANNUAL',
+  'STRIPE_PRICE_AGENCY_MONTHLY',
+  'STRIPE_PRICE_AGENCY_ANNUAL',
+] as const
+
+for (const envVar of requiredPriceEnvVars) {
+  if (!process.env[envVar]) {
+    throw new Error(`Missing required Stripe price env var: ${envVar}`)
+  }
 }
 
 export const STRIPE_PRICE_IDS = {
   trial: {
-    monthly: process.env.STRIPE_PRICE_TRIAL_MONTHLY,
-    annual: process.env.STRIPE_PRICE_TRIAL_ANNUAL || 'price_trial_annual_fallback',
+    monthly: process.env.STRIPE_PRICE_TRIAL_MONTHLY as string,
+    annual: process.env.STRIPE_PRICE_TRIAL_ANNUAL as string,
   },
   starter: {
-    monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY || 'price_xxx',
-    annual: process.env.STRIPE_PRICE_STARTER_ANNUAL || 'price_yyy',
+    monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY as string,
+    annual: process.env.STRIPE_PRICE_STARTER_ANNUAL as string,
   },
   pro: {
-    monthly: process.env.STRIPE_PRICE_PRO_MONTHLY || 'price_zzz',
-    annual: process.env.STRIPE_PRICE_PRO_ANNUAL || 'price_aaa',
+    monthly: process.env.STRIPE_PRICE_PRO_MONTHLY as string,
+    annual: process.env.STRIPE_PRICE_PRO_ANNUAL as string,
   },
   agency: {
-    monthly: process.env.STRIPE_PRICE_AGENCY_MONTHLY || 'price_bbb',
-    annual: process.env.STRIPE_PRICE_AGENCY_ANNUAL || 'price_ccc',
+    monthly: process.env.STRIPE_PRICE_AGENCY_MONTHLY as string,
+    annual: process.env.STRIPE_PRICE_AGENCY_ANNUAL as string,
   },
 } as const
 
