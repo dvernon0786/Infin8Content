@@ -58,7 +58,7 @@ export function TrialChecklist({ hasKeyword, hasCompletedArticle }: TrialCheckli
                     />
                 </div>
 
-                {!steps[2].completed && (
+                {hasCompletedArticle && (
                     <Button size="sm" asChild className="w-full bg-[--brand-electric-blue] text-white">
                         <Link href="/dashboard/settings/billing">
                             Unlock Remaining Articles

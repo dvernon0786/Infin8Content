@@ -6,7 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
 
-export function CreateWorkflowForm() {
+export interface CreateWorkflowFormProps {
+  isTrial?: boolean
+}
+
+export function CreateWorkflowForm({ isTrial = false }: CreateWorkflowFormProps) {
   const router = useRouter()
   const [name, setName] = useState('AI Marketing Strategy')
   const [creating, setCreating] = useState(false)
@@ -56,9 +60,11 @@ export function CreateWorkflowForm() {
       )}
 
       <div>
-        <p className="font-lato text-xs text-neutral-500 text-center mb-2">
-          Most users generate their first article in under 3 minutes.
-        </p>
+        {isTrial && (
+          <p className="font-lato text-xs text-neutral-500 text-center mb-2">
+            Most users generate their first article in under 3 minutes.
+          </p>
+        )}
         <Button
           type="submit"
           disabled={creating || !name.trim()}
