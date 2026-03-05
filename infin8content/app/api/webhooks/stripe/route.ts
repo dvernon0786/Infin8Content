@@ -29,15 +29,15 @@ function logWebhookEvent(event: any, action: string, details?: any) {
  */
 function logWebhookError(event: any, action: string, error: any, context?: any) {
   const errorData = {
-    eventId: event.id,
-    eventType: event.type,
+    eventId: event?.id,
+    eventType: event?.type,
     action,
-    error: {
+    error: error ? {
       message: error.message,
       code: error.code,
       statusCode: error.statusCode,
       type: error.type,
-    },
+    } : null,
     context,
     timestamp: new Date().toISOString(),
   }
@@ -433,7 +433,7 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
       stripe_subscription_id: null, // Clear subscription ID
       plan: 'trial',
       plan_type: 'trial',
-      has_used_trial: false,
+      // Note: Trial limits are enforced dynamically via count(status='completed') in generate route.
     }
 
     // If payment_status was 'active', start grace period

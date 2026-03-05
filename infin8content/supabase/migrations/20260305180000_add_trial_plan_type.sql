@@ -19,8 +19,5 @@ BEGIN
     END IF;
 END $$;
 
-ALTER TABLE organizations
-ADD COLUMN IF NOT EXISTS has_used_trial BOOLEAN NOT NULL DEFAULT false;
-
 -- Update the comment
 COMMENT ON COLUMN organizations.plan_type IS 'Plan type for organizational limits: trial, starter, pro, agency';
