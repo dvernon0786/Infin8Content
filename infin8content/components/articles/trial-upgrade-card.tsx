@@ -52,12 +52,15 @@ export function TrialUpgradeCard({ lockedCount, lockedTitles }: TrialUpgradeCard
                     <div className="flex flex-col gap-3 min-w-[200px] w-full md:w-auto">
                         <Button size="lg" className="bg-[--brand-electric-blue] hover:bg-[--brand-electric-blue]/90 text-white font-bold h-12" asChild>
                             <Link href="/dashboard/settings/billing">
-                                Upgrade Plan
+                                Unlock All Articles
                                 <ChevronRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>
-                        <p className="text-center font-lato text-[10px] text-neutral-400">
-                            Instant access to all {lockedCount} locked articles
+                        <p className="text-center font-lato text-xs text-neutral-400 mt-1">
+                            Upgrade takes less than 10 seconds
+                        </p>
+                        <p className="text-center font-lato text-xs text-neutral-400 mt-0.5">
+                            Your $1 trial credit will be applied
                         </p>
                     </div>
                 </div>

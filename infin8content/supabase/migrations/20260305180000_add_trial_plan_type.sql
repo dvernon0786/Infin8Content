@@ -19,8 +19,10 @@ BEGIN
     END IF;
 END $$;
 
-ALTER TABLE organizations
-ADD COLUMN IF NOT EXISTS has_used_trial BOOLEAN NOT NULL DEFAULT false;
-
 -- Update the comment
 COMMENT ON COLUMN organizations.plan_type IS 'Plan type for organizational limits: trial, starter, pro, agency';
+
+-- Add partial index to optimize Trial plan article limiting checks
+CREATE INDEX IF NOT EXISTS idx_articles_org_completed
+ON articles (org_id)
+WHERE status = 'completed';
