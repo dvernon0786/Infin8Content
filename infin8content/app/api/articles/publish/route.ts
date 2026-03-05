@@ -39,11 +39,11 @@ export async function POST(request: Request) {
         const supabase = await createClient()
 
         // 2. Verify ownership and get CMS config
-        const { data: orgData, error: orgError } = await supabase
+        const { data: orgData, error: orgError } = await (supabase
             .from('organizations')
             .select('blog_config')
             .eq('id', currentUser.org_id)
-            .single()
+            .single() as any)
 
         if (orgError || !orgData || !orgData.blog_config) {
             return NextResponse.json({ error: 'Organization or CMS config not found' }, { status: 404 })
