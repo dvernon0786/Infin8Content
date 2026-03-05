@@ -46,6 +46,22 @@
   3. **RECOMMENDATION ACTIONED:** Appended a `CREATE INDEX idx_articles_org_completed ON articles (org_id) WHERE status = 'completed'` specifically into the migration to prevent Postgres sequential scancasting during the trial limit checks, ensuring instant evaluations scaling infinitely.
 - **Result:** Codebase is structurally clean across 3 rigid audits with native typescript compilation passing.
 
+### **✅ Achievement: Stripe Billing Final Robustness**
+- **Status:** Integrated SaaS foundational billing best practices directly across Stripe logic configurations.
+- **Deliverables:**
+  1. **Strict Mapping:** Deprecated fallback values in local `.env` and `prices.ts` constants and instead instantiated a strict non-retryable throw parameter for missing Trial Price keys natively enforcing system alignment prior to booting up pipelines.
+  2. **Smart Webhook Resolvers:** Instantiated `PRICE_PLAN_MAP` dictionary natively mapping explicit Stripe `price_ID` endpoints straight into deterministic SaaS `.plan` nomenclature. Updated `app/api/webhooks/stripe/route.ts` so `handleSubscriptionUpdated` can securely intercept any missing `strip.metadata` and aggressively fallback into correct Plan mappings instead of throwing false-positives under load.
+  3. **Payment Recovery Alignment:** Confirmed `invoice.payment_failed` grace period recovery rules are perfectly mapped!
+  4. **Build Phase Protection:** Intercepted NextJS static generation evaluation issues in GitHub Action runners by conditionally shielding the `throw new Error` inside `lib/stripe/prices.ts` from executing on `npm run build` when missing injected environments, falling back to soft-logging while still aggressively crashing at deployment runtime.
+
+### **✅ Achievement: Final Edge-Case Deprecation & Naming Convergence**
+- **Status:** Aligned final variable names with active workflow endpoints and restored pure throw rules in `prices.ts` for ultimate Vercel lock.
+- **Deliverables:**
+  1. **Strict Pricing Lockdown:** Demolished the conditional `isBuildPhase` wrapper entirely from `lib/stripe/prices.ts`. CI/CD builds successfully ingest variables during runtime, cementing the logic solely as `throw new Error()` for completely zero-drift configurations in production.
+  2. **Naming Semantics:** Eradicated the legacy terminology referencing `hasKeyword` inside `DashboardPage` and `TrialChecklist` explicitly, migrating variable names directly into `hasWorkflow` syncing with the updated database logic.
+  3. **Vercel Build Unblocked:** Resolved the `STRIPE_PRICE_TRIAL_ANNUAL` crash in active Vercel runners. Trials natively lack logical annual pricing models; as such, it was formally extracted from `requiredPriceEnvVars` ensuring it doesn't crash builds, safely typing it as `string | undefined` and conditionally pushing it into `PRICE_PLAN_MAP` if provided.
+  4. **GitHub Actions Unblocked:** Resolved `Error: Missing required Stripe price env var: STRIPE_PRICE_TRIAL_MONTHLY` happening on GitHub Actions by migrating placeholder Stripe environments natively inside the `env:` payloads of `ci.yml`, `visual-regression.yml`, and `performance.yml`, fully restoring the zero-drift Vercel production locks.
+
 ## **🔥 PIPELINE V2 PRE-DEPLOY HARDENING**
 
 ### **✅ Achievement: Atomic Article Reseeding & RPC Hardening**

@@ -24,17 +24,20 @@ export default async function DashboardPage() {
 
     if (isTrial) {
       return (
-        <div className="mx-auto max-w-xl py-20 text-center">
-          <h1 className="text-2xl font-semibold">Your $1 trial is active ✨</h1>
-          <p className="mt-2 text-muted-foreground">
-            Experience the power of Infin8Content. You can generate one complete, full-length article during your trial to see the quality of our AI engine.
-          </p>
-          <Link
-            href="/dashboard/workflows/new"
-            className="inline-block mt-6 rounded-md bg-primary px-6 py-3 text-white"
-          >
-            Generate your first article
-          </Link>
+        <div className="space-y-6 mx-auto max-w-xl py-20">
+          <TrialChecklist hasWorkflow={false} hasCompletedArticle={false} />
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold">Your $1 trial is active ✨</h1>
+            <p className="mt-2 text-muted-foreground">
+              Experience the power of Infin8Content. You can generate one complete, full-length article during your trial to see the quality of our AI engine.
+            </p>
+            <Link
+              href="/dashboard/workflows/new"
+              className="inline-block mt-6 rounded-md bg-primary px-6 py-3 text-white"
+            >
+              Generate your first article
+            </Link>
+          </div>
         </div>
       )
     }
@@ -57,22 +60,20 @@ export default async function DashboardPage() {
 
   const isTrial = (user.organizations?.plan_type || user.organizations?.plan)?.toLowerCase() === 'trial'
 
-  let hasKeyword = false
+  let hasWorkflow = false
   let hasCompletedArticle = false
 
   if (isTrial) {
-    const { count: kwCount } = await supabase
-      .from('keywords')
-      .select('id', { count: 'exact', head: true })
-      .eq('org_id', user.org_id)
+    // workflows is already fetched above — no extra query needed
+    hasWorkflow = (workflows?.length ?? 0) > 0
 
+    // Only one extra query needed instead of two
     const { count: artCount } = await supabase
       .from('articles')
       .select('id', { count: 'exact', head: true })
       .eq('org_id', user.org_id)
       .eq('status', 'completed')
 
-    hasKeyword = (kwCount ?? 0) > 0
     hasCompletedArticle = (artCount ?? 0) > 0
   }
 
@@ -80,7 +81,7 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       {isTrial && (
         <TrialChecklist
-          hasKeyword={hasKeyword}
+          hasWorkflow={hasWorkflow}
           hasCompletedArticle={hasCompletedArticle}
         />
       )}

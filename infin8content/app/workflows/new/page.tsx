@@ -10,6 +10,8 @@ export default async function NewWorkflowPage() {
   // 🔒 HARD GATE — production authority
   await requireOnboardingComplete(user.org_id)
 
+  const isTrial = (user.organizations?.plan_type || user.organizations?.plan)?.toLowerCase() === 'trial'
+
   return (
     <div className="mx-auto max-w-xl py-16">
       <h1 className="text-3xl font-bold">Create workflow</h1>
@@ -18,7 +20,7 @@ export default async function NewWorkflowPage() {
       </p>
 
       <div className="mt-6">
-        <CreateWorkflowForm />
+        <CreateWorkflowForm isTrial={isTrial} />
       </div>
     </div>
   )

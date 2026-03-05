@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server'
 import { sendPaymentFailureEmail, sendPaymentReactivationEmail } from '@/lib/services/payment-notifications'
 import { logActionAsync } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
+import { getPlanFromPriceId } from '@/lib/stripe/prices'
 
 // Required for webhooks - must use Node.js runtime for raw body access
 export const runtime = 'nodejs'
@@ -342,7 +343,12 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
 
       if (!newPlan && subscription.items?.data?.length > 0) {
         // Try getting from price metadata, fallback to mapping if needed
-        newPlan = subscription.items.data[0].price.metadata?.plan
+        const priceItem = subscription.items.data.find(
+          (item: any) => item.price.metadata?.plan || getPlanFromPriceId(item.price.id)
+        )
+        if (priceItem) {
+          newPlan = priceItem.price.metadata?.plan || getPlanFromPriceId(priceItem.price.id)
+        }
       }
 
       if (!newPlan) {

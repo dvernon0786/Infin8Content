@@ -20,16 +20,16 @@ export async function POST(request: Request) {
     // Validate environment variables
     validateStripeEnv()
     const appUrl = validateAppUrl()
-    
+
     // Parse and validate request body
     const body = await request.json()
     const { plan, billingFrequency, redirect } = checkoutSchema.parse(body)
 
     const supabase = await createClient()
-    
+
     // Get current user from session
     const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-    
+
     if (authError || !authUser) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
 
     // Create or retrieve Stripe customer
     let customerId: string
-    
+
     if (organization.stripe_customer_id) {
       // Use existing customer ID
       customerId = organization.stripe_customer_id
@@ -105,13 +105,13 @@ export async function POST(request: Request) {
             user_id: userRecord.id,
           },
         })
-        
+
         customerId = customer.id
         console.log(`[Checkout] Created new Stripe customer: ${customerId}`, {
           organizationId: organization.id,
           email: userRecord.email,
         })
-        
+
         // Store stripe_customer_id in organization record
         // Retry up to 3 times if update fails (customer was created, we must store the ID)
         let updateSuccess = false
@@ -121,12 +121,12 @@ export async function POST(request: Request) {
             .from('organizations')
             .update({ stripe_customer_id: customerId })
             .eq('id', organization.id)
-          
+
           if (!updateError) {
             updateSuccess = true
             break
           }
-          
+
           if (attempt < 2) {
             // Wait before retry (exponential backoff: 100ms, 200ms)
             await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, attempt)))
@@ -137,7 +137,7 @@ export async function POST(request: Request) {
             })
           }
         }
-        
+
         if (!updateSuccess) {
           // Log critical error - customer created but ID not stored
           // This requires manual intervention to fix data consistency
@@ -167,15 +167,15 @@ export async function POST(request: Request) {
 
     // Validate price ID format (Stripe price IDs start with 'price_' and are 27+ characters)
     // Also check for placeholder values
-    if (!priceId.startsWith('price_') || priceId.length < 27 || 
-        priceId.startsWith('price_xxx') || priceId.startsWith('price_yyy') || 
-        priceId.startsWith('price_zzz') || priceId.startsWith('price_aaa') ||
-        priceId.startsWith('price_bbb') || priceId.startsWith('price_ccc')) {
+    if (!priceId || !priceId.startsWith('price_') || priceId.length < 27 ||
+      priceId.startsWith('price_xxx') || priceId.startsWith('price_yyy') ||
+      priceId.startsWith('price_zzz') || priceId.startsWith('price_aaa') ||
+      priceId.startsWith('price_bbb') || priceId.startsWith('price_ccc')) {
       console.error('[Checkout] Invalid price ID (placeholder or invalid format detected):', {
         plan,
         billingFrequency,
         priceId,
-        priceIdLength: priceId.length,
+        priceIdLength: priceId?.length,
         organizationId: organization.id,
       })
       return NextResponse.json(
@@ -282,7 +282,7 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    
+
     console.error('[Checkout] Unexpected error:', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
