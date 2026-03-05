@@ -60,6 +60,7 @@
   1. **Strict Pricing Lockdown:** Demolished the conditional `isBuildPhase` wrapper entirely from `lib/stripe/prices.ts`. CI/CD builds successfully ingest variables during runtime, cementing the logic solely as `throw new Error()` for completely zero-drift configurations in production.
   2. **Naming Semantics:** Eradicated the legacy terminology referencing `hasKeyword` inside `DashboardPage` and `TrialChecklist` explicitly, migrating variable names directly into `hasWorkflow` syncing with the updated database logic.
   3. **Vercel Build Unblocked:** Resolved the `STRIPE_PRICE_TRIAL_ANNUAL` crash in active Vercel runners. Trials natively lack logical annual pricing models; as such, it was formally extracted from `requiredPriceEnvVars` ensuring it doesn't crash builds, safely typing it as `string | undefined` and conditionally pushing it into `PRICE_PLAN_MAP` if provided.
+  4. **GitHub Actions Unblocked:** Resolved `Error: Missing required Stripe price env var: STRIPE_PRICE_TRIAL_MONTHLY` happening on GitHub Actions by migrating placeholder Stripe environments natively inside the `env:` payloads of `ci.yml`, `visual-regression.yml`, and `performance.yml`, fully restoring the zero-drift Vercel production locks.
 
 ## **🔥 PIPELINE V2 PRE-DEPLOY HARDENING**
 
