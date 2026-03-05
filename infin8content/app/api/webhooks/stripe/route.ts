@@ -231,6 +231,7 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   // Update organizations table with retry logic
   const updateData: any = {
     plan: plan,
+    plan_type: plan, // Sync plan_type with plan
     stripe_customer_id: session.customer,
     stripe_subscription_id: session.subscription,
     payment_status: 'active',
@@ -334,6 +335,43 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
     .single()
 
   if (organization) {
+    if (subscription.status === 'active') {
+      let newPlan = subscription.metadata?.plan
+
+      if (!newPlan && subscription.items?.data?.length > 0) {
+        // Try getting from price metadata, fallback to mapping if needed
+        newPlan = subscription.items.data[0].price.metadata?.plan
+      }
+
+      if (!newPlan) {
+        logWebhookEvent(event, 'Warning: Could not determine plan from subscription, defaulting to starter', {
+          subscriptionId: subscription.id,
+          items: subscription.items?.data
+        })
+        newPlan = 'starter'
+      }
+
+      const updateData: any = {
+        plan: newPlan,
+        plan_type: newPlan,
+        payment_status: 'active',
+      }
+
+      const { error: updateError } = await (supabase as any)
+        .from('organizations')
+        .update(updateData)
+        .eq('id', organization.id)
+
+      if (updateError) {
+        logWebhookError(event, 'Failed to update plan upon subscription update', updateError, {
+          organizationId: organization.id,
+          subscriptionId: subscription.id,
+        })
+          ; (updateError as any).retryable = true
+        throw updateError
+      }
+    }
+
     // Update subscription status if needed
     // For now, just log and store the event
     logWebhookEvent(event, 'Subscription updated', {
@@ -386,6 +424,8 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
     const updateData: any = {
       payment_status: 'canceled',
       stripe_subscription_id: null, // Clear subscription ID
+      plan: 'trial',
+      plan_type: 'trial',
     }
 
     // If payment_status was 'active', start grace period
@@ -490,7 +530,7 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
   if (organization) {
     // Process payment failure: reset grace period if already past_due, or start grace period if active
     const shouldProcessFailure = organization.payment_status === 'active' || organization.payment_status === 'past_due'
-    
+
     if (shouldProcessFailure) {
       // Update payment status to 'past_due' and reset/start grace period
       // This ensures repeated payment failures reset the grace period clock
@@ -498,7 +538,7 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
         payment_status: 'past_due',
         grace_period_started_at: new Date().toISOString(),
       }
-      
+
       // If account was suspended, clear suspension when new payment failure occurs
       // This allows users to retry payment even after suspension
       if (organization.payment_status === 'suspended') {

@@ -17,6 +17,7 @@ export interface ArticleMetadata {
   created_at: string
   updated_at: string
   org_id: string
+  intent_workflow_id?: string | null
 }
 
 export interface SnapshotSection {

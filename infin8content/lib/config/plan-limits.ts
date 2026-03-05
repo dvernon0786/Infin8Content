@@ -8,16 +8,19 @@
 export const PLAN_LIMITS = {
     // Existing monthly quotas
     article_generation: {
-        starter: 10,
-        pro: 50,
+        trial: 1,
+        starter: 30,
+        pro: 150,
         agency: null,
     },
     keyword_research: {
+        trial: 5,
         starter: 50,
         pro: 200, // Matching current hardcoded code limit
         agency: null,
     },
     cms_connection: {
+        trial: 0,
         starter: 1,
         pro: 3,
         agency: null,
@@ -25,6 +28,7 @@ export const PLAN_LIMITS = {
 
     // New concurrency caps
     workflow_active: {
+        trial: 1,
         starter: 1,
         pro: 5,
         agency: null,

@@ -33,6 +33,7 @@ export const AuditAction = {
     ARTICLE_GENERATION_STARTED: 'article.generation.started',
     ARTICLE_GENERATION_COMPLETED: 'article.generation.completed',
     ARTICLE_GENERATION_FAILED: 'article.generation.failed',
+    ARTICLE_PUBLISHED: 'article.published',
 
     // Intent workflow actions
     INTENT_WORKFLOW_CREATED: 'intent.workflow.created',
