@@ -56,29 +56,60 @@ export async function POST(request: Request) {
         }
 
         // 3. Quota Enforcement
-        const plan = (currentUser.organizations?.plan || 'starter').toLowerCase() as keyof typeof PLAN_LIMITS.article_generation
-        const articleLimit = PLAN_LIMITS.article_generation[plan]
+        const org = currentUser.organizations as any
+        const planType = (org?.plan_type || org?.plan || 'starter').toLowerCase()
+        const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
+        const articleLimit = PLAN_LIMITS.article_generation[planKey] ?? (() => {
+            console.error(`[Quota] Unknown plan key: ${planKey}, defaulting to trial limit`)
+            return PLAN_LIMITS.article_generation.trial
+        })();
 
         if (articleLimit !== null) {
-            // Get current month start
-            const startOfMonth = new Date()
-            startOfMonth.setDate(1)
-            startOfMonth.setHours(0, 0, 0, 0)
+            let currentUsage = 0
 
-            // Count articles generated this month via audit logs (canonical usage source)
-            const { count: usageCount, error: usageError } = await supabase
-                .from('audit_logs' as any)
-                .select('id', { count: 'exact', head: true })
-                .eq('org_id', currentUser.org_id)
-                .eq('action', 'article.generation.started') // Audit logging event for worker start
-                .gte('created_at', startOfMonth.toISOString())
+            if (planType === 'trial') {
+                // Trial users: Use atomic has_used_trial boolean lock
+                if (org.has_used_trial) {
+                    currentUsage = articleLimit;
+                } else {
+                    // Attempt to claim the trial usage atomically
+                    const { data: lockData, error: lockError } = await supabase
+                        .from('organizations')
+                        .update({ has_used_trial: true })
+                        .eq('id', currentUser.org_id)
+                        .eq('has_used_trial', false)
+                        .select('id')
 
-            if (usageError) {
-                console.error('[Quota Check] Usage count failed:', usageError)
-                return NextResponse.json({ error: 'Failed to verify usage limits' }, { status: 500 })
+                    if (lockError) {
+                        console.error('[Quota Check] Trial lock error:', lockError)
+                        return NextResponse.json({ error: 'Failed to verify trial limits' }, { status: 500 })
+                    }
+
+                    if (!lockData || lockData.length === 0) {
+                        currentUsage = articleLimit; // Lock claim failed => limit reached
+                    } else {
+                        currentUsage = 0; // Lock claimed successfully => proceed
+                    }
+                }
+            } else {
+                // Paid users: Check current month's usage
+                const startOfMonth = new Date()
+                startOfMonth.setDate(1)
+                startOfMonth.setHours(0, 0, 0, 0)
+
+                const { count: usageCount, error: usageError } = await supabase
+                    .from('articles')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('org_id', currentUser.org_id)
+                    .gte('created_at', startOfMonth.toISOString())
+                    .in('status', ['queued', 'generating', 'completed', 'reviewing'])
+
+                if (usageError) {
+                    console.error('[Quota Check] Monthly usage count failed:', usageError)
+                    return NextResponse.json({ error: 'Failed to verify monthly limits' }, { status: 500 })
+                }
+                currentUsage = usageCount ?? 0
             }
-
-            const currentUsage = usageCount ?? 0
 
             if (currentUsage >= articleLimit) {
                 // 📊 QUOTA TELEMETRY
@@ -87,7 +118,7 @@ export async function POST(request: Request) {
                     userId: currentUser.id,
                     action: 'quota.article_generation.limit_hit' as any,
                     details: {
-                        plan,
+                        plan: planType,
                         currentUsage,
                         limit: articleLimit,
                         metric: 'article_generation',
@@ -96,11 +127,15 @@ export async function POST(request: Request) {
                     userAgent: extractUserAgent(request.headers),
                 })
 
+                const errorMsg = planType === 'trial'
+                    ? "Trial users can only generate one article. Please upgrade."
+                    : "Monthly article limit reached. Please upgrade your plan."
+
                 return NextResponse.json({
-                    error: 'Monthly article limit reached',
+                    error: errorMsg,
                     limit: articleLimit,
                     currentUsage,
-                    plan,
+                    plan: planType,
                     metric: 'article_generation',
                 }, { status: 403 })
             }

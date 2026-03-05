@@ -6,6 +6,7 @@ import { ArticleContentViewer } from '@/components/articles/article-content-view
 import { ArticleStatusMonitor } from '@/components/articles/article-status-monitor'
 import { PublishToWordPressButton } from '@/components/articles/publish-to-wordpress-button'
 import { GenerateArticleButton } from '@/components/articles/generate-article-button'
+import { TrialUpgradeCard } from '@/components/articles/trial-upgrade-card'
 import ArticleErrorBoundary from './article-error-boundary'
 import { redirect } from 'next/navigation'
 import { Loader2, ArrowLeft } from 'lucide-react'
@@ -29,7 +30,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
   // First, get basic article info with authorization check
   const { data: articleData, error } = await supabase
     .from('articles')
-    .select('id, title, keyword, status, target_word_count, writing_style, target_audience, created_at, updated_at, org_id')
+    .select('id, title, keyword, status, target_word_count, writing_style, target_audience, created_at, updated_at, org_id, intent_workflow_id')
     .eq('id', id)
     .eq('org_id', currentUser.org_id)
     .maybeSingle()
@@ -141,11 +142,30 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
     }
   }
 
+  // Trial Upgrade info
+  const planType = (currentUser.organizations as any)?.plan_type || (currentUser.organizations as any)?.plan || 'starter'
+  const isTrial = planType.toLowerCase() === 'trial'
+
+  let lockedArticlesCount = 0
+  let lockedArticleTitles: string[] = []
+
+  if (isTrial && article.intent_workflow_id && article.status === 'completed') {
+    const { data: lockedData, count } = await supabase
+      .from('articles')
+      .select('keyword', { count: 'exact' })
+      .eq('intent_workflow_id', article.intent_workflow_id)
+      .neq('id', id)
+      .limit(3)
+
+    lockedArticlesCount = count || 0
+    lockedArticleTitles = (lockedData as any[])?.map(a => a.keyword) || []
+  }
+
   const isLoading = article.status === 'queued' || article.status === 'generating'
 
   // Compute WordPress publishing eligibility server-side
   const isPublishEnabled = process.env.WORDPRESS_PUBLISH_ENABLED === 'true';
-  const canPublish = isPublishEnabled && article.status === 'completed';
+  const canPublish = isPublishEnabled && article.status === 'completed' && !isTrial;
 
   console.log('[ArticleDetailPage] Rendering with state:', {
     articleTitle: article.title,
@@ -311,6 +331,16 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                 </Card>
               )}
             </ArticleErrorBoundary>
+
+            {/* Trial Upgrade Nudge */}
+            {isTrial && article.status === 'completed' && (lockedArticlesCount > 0) && (
+              <div className="mt-8 pb-12">
+                <TrialUpgradeCard
+                  lockedCount={lockedArticlesCount}
+                  lockedTitles={lockedArticleTitles}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

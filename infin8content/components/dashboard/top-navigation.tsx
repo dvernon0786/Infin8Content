@@ -23,9 +23,12 @@ interface TopNavigationProps {
     email: string
     name?: string
     avatarUrl?: string
+    plan?: string
+    usage?: number
+    limit?: number | null
 }
 
-export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
+export function TopNavigation({ email, name, avatarUrl, plan, usage, limit }: TopNavigationProps) {
     const pathname = usePathname()
     const router = useRouter()
     const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -112,6 +115,36 @@ export function TopNavigation({ email, name, avatarUrl }: TopNavigationProps) {
 
             {/* Right side Actions */}
             <div className="flex items-center gap-4">
+                {/* Trial Plan Indicator */}
+                {plan === 'trial' && (
+                    <div className="hidden lg:flex items-center gap-3 px-4 py-1.5 bg-[#F59E0B]/5 border border-[#F59E0B]/15 rounded-lg mr-2">
+                        <div className="flex flex-col">
+                            <span className="font-lato text-[9px] font-black text-[#F59E0B] uppercase tracking-wider leading-none mb-1">
+                                Trial Usage
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <div className="h-1.5 w-24 bg-[#E5E5E7] rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-gradient-to-r from-[#F59E0B] to-[#D97706] rounded-full transition-all duration-500 ease-out"
+                                        style={{ width: `${limit ? Math.min(100, Math.round(((usage || 0) / limit) * 100)) : 0}%` }}
+                                    />
+                                </div>
+                                <span className="font-lato text-[11px] font-bold text-[#F59E0B]">
+                                    {usage || 0} / {limit || 1}
+                                </span>
+                            </div>
+                        </div>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            className="bg-[#217CEB] hover:bg-[#217CEB]/90 text-white border-none font-bold text-[11px] h-8 shadow-sm"
+                            onClick={() => router.push('/dashboard/settings/billing')}
+                        >
+                            Upgrade
+                        </Button>
+                    </div>
+                )}
+
                 {/* Mobile Search - Icon only */}
                 <Button variant="ghost" size="icon" className="md:hidden h-9 w-9 text-[#71717A]">
                     <Search className="h-5 w-5" />

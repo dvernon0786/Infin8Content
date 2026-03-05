@@ -49,7 +49,11 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
   }
 
   // Query organization if org_id exists
-  let organization: (OrganizationRecord & { article_usage?: number; article_limit?: number | null }) | null = null
+  let organization: (OrganizationRecord & {
+    article_usage?: number;
+    article_limit?: number | null;
+    total_completed_usage?: number;
+  }) | null = null
   if ((userRecord as any).org_id) {
     const { data: orgData } = await supabase
       .from('organizations')
@@ -58,26 +62,52 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
       .single()
 
     if (orgData) {
-      // Calculate current month's article usage
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-
-      const { count: articleUsage } = await supabase
-        .from('articles')
-        .select('*', { count: 'exact', head: true })
-        .eq('org_id', (userRecord as any).org_id)
-        .gte('created_at', startOfMonth.toISOString());
-
-      // Get plan limit
       const organizationData = orgData as any
-      const planKey = (organizationData.plan || 'starter').toLowerCase() as keyof typeof PLAN_LIMITS.article_generation;
-      const articleLimit = PLAN_LIMITS.article_generation[planKey];
+      // Determine effective plan - use plan_type if available, fallback to plan
+      const planType = (organizationData.plan_type || organizationData.plan || 'starter').toLowerCase()
+      const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
+
+      // Calculate usage
+      let articleUsage = 0
+      let totalCompletedUsage = 0
+
+      if (planType === 'trial') {
+        // Trial users: count TOTAL completed articles
+        const { count } = await supabase
+          .from('articles')
+          .select('id', { count: 'exact', head: true })
+          .eq('org_id', (userRecord as any).org_id)
+          .in('status', ['queued', 'generating', 'completed', 'reviewing']);
+
+        articleUsage = count || 0
+        totalCompletedUsage = count || 0
+      } else {
+        // Paid users: count current month's article usage
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const { count } = await supabase
+          .from('articles')
+          .select('id', { count: 'exact', head: true })
+          .eq('org_id', (userRecord as any).org_id)
+          .gte('created_at', startOfMonth.toISOString())
+          .in('status', ['queued', 'generating', 'completed', 'reviewing']);
+
+        articleUsage = count || 0
+      }
+
+      // Get plan limit from centralized config
+      const articleLimit = PLAN_LIMITS.article_generation[planKey] ?? (() => {
+        console.error(`[Quota] Unknown plan key: ${planKey}, defaulting to trial limit`)
+        return PLAN_LIMITS.article_generation.trial
+      })();
 
       organization = {
         ...organizationData,
-        article_usage: articleUsage || 0,
+        article_usage: articleUsage,
         article_limit: articleLimit,
+        total_completed_usage: totalCompletedUsage
       }
     }
   }
