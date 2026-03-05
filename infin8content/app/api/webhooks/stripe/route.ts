@@ -335,6 +335,8 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
     .single()
 
   if (organization) {
+    let resolvedPlan: string | undefined;
+
     if (subscription.status === 'active') {
       let newPlan = subscription.metadata?.plan
 
@@ -344,12 +346,16 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
       }
 
       if (!newPlan) {
-        logWebhookEvent(event, 'Warning: Could not determine plan from subscription, defaulting to starter', {
+        logWebhookError(event, 'ALERT: Cannot determine plan from subscription update - manual review required', null, {
           subscriptionId: subscription.id,
-          items: subscription.items?.data
+          priceId: subscription.items?.data?.[0]?.price?.id,
         })
-        newPlan = 'starter'
+        const err = new Error('Unable to resolve plan from subscription metadata')
+          ; (err as any).retryable = false
+        throw err
       }
+
+      resolvedPlan = newPlan
 
       const updateData: any = {
         plan: newPlan,
@@ -388,6 +394,7 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
       details: {
         subscriptionId: subscription.id,
         status: subscription.status,
+        plan: resolvedPlan,
       },
     })
 
@@ -426,6 +433,7 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
       stripe_subscription_id: null, // Clear subscription ID
       plan: 'trial',
       plan_type: 'trial',
+      has_used_trial: false,
     }
 
     // If payment_status was 'active', start grace period
