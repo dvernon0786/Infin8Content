@@ -68,29 +68,19 @@ export async function POST(request: Request) {
             let currentUsage = 0
 
             if (planType === 'trial') {
-                // Trial users: Use atomic has_used_trial boolean lock
-                if (org.has_used_trial) {
-                    currentUsage = articleLimit;
-                } else {
-                    // Attempt to claim the trial usage atomically
-                    const { data: lockData, error: lockError } = await supabase
-                        .from('organizations')
-                        .update({ has_used_trial: true })
-                        .eq('id', currentUser.org_id)
-                        .eq('has_used_trial', false)
-                        .select('id')
+                // Trial users: Check if they have ever successfully completed an article
+                const { count, error: countError } = await supabase
+                    .from('articles')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('org_id', currentUser.org_id)
+                    .eq('status', 'completed')
 
-                    if (lockError) {
-                        console.error('[Quota Check] Trial lock error:', lockError)
-                        return NextResponse.json({ error: 'Failed to verify trial limits' }, { status: 500 })
-                    }
-
-                    if (!lockData || lockData.length === 0) {
-                        currentUsage = articleLimit; // Lock claim failed => limit reached
-                    } else {
-                        currentUsage = 0; // Lock claimed successfully => proceed
-                    }
+                if (countError) {
+                    console.error('[Quota Check] Trial count error:', countError)
+                    return NextResponse.json({ error: 'Failed to verify trial limits' }, { status: 500 })
                 }
+
+                currentUsage = count ?? 0
             } else {
                 // Paid users: Check current month's usage
                 const startOfMonth = new Date()
