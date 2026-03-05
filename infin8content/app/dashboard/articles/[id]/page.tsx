@@ -280,6 +280,16 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
               />
             )}
 
+            {/* Trial Upgrade Nudge */}
+            {isTrial && article.status === 'completed' && (lockedArticlesCount > 0) && (
+              <div className="mb-8">
+                <TrialUpgradeCard
+                  lockedCount={lockedArticlesCount}
+                  lockedTitles={lockedArticleTitles}
+                />
+              </div>
+            )}
+
             <ArticleErrorBoundary
               fallback={
                 <Card className="border-destructive">
@@ -332,15 +342,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
               )}
             </ArticleErrorBoundary>
 
-            {/* Trial Upgrade Nudge */}
-            {isTrial && article.status === 'completed' && (lockedArticlesCount > 0) && (
-              <div className="mt-8 pb-12">
-                <TrialUpgradeCard
-                  lockedCount={lockedArticlesCount}
-                  lockedTitles={lockedArticleTitles}
-                />
-              </div>
-            )}
+
           </div>
         </div>
       </div>

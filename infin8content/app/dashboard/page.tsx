@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/supabase/get-current-user"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { WorkflowDashboard } from "@/components/dashboard/workflow-dashboard/WorkflowDashboard"
+import { TrialChecklist } from "@/components/dashboard/trial-checklist"
 
 export default async function DashboardPage() {
   const user = await getCurrentUser()
@@ -54,5 +55,36 @@ export default async function DashboardPage() {
     )
   }
 
-  return <WorkflowDashboard orgId={user.org_id} />
+  const isTrial = (user.organizations?.plan_type || user.organizations?.plan)?.toLowerCase() === 'trial'
+
+  let hasKeyword = false
+  let hasCompletedArticle = false
+
+  if (isTrial) {
+    const { count: kwCount } = await supabase
+      .from('keywords')
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', user.org_id)
+
+    const { count: artCount } = await supabase
+      .from('articles')
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', user.org_id)
+      .eq('status', 'completed')
+
+    hasKeyword = (kwCount ?? 0) > 0
+    hasCompletedArticle = (artCount ?? 0) > 0
+  }
+
+  return (
+    <div className="space-y-6">
+      {isTrial && (
+        <TrialChecklist
+          hasKeyword={hasKeyword}
+          hasCompletedArticle={hasCompletedArticle}
+        />
+      )}
+      <WorkflowDashboard orgId={user.org_id} />
+    </div>
+  )
 }
