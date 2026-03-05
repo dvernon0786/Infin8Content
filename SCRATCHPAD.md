@@ -43,6 +43,7 @@
 - **Deliverables:**
   1. **MEDIUM NEW #1:** Fixed null reference crash in `logWebhookError` by conditionally constructing the `errorData.error` object based on null/undefined input. This guarantees critical error paths accurately throw and log rather than crashing prematurely.
   2. **LOW NEW #2:** Cleanly eliminated the `has_used_trial` atomic boolean completely. I stripped the `organizations` column explicitly out of the recent SQL migration so we don't deploy useless database schemas, and purged the property from Stripe Webhook reset functions, eliminating any stale writes or confusion around trial locks.
+  3. **RECOMMENDATION ACTIONED:** Appended a `CREATE INDEX idx_articles_org_completed ON articles (org_id) WHERE status = 'completed'` specifically into the migration to prevent Postgres sequential scancasting during the trial limit checks, ensuring instant evaluations scaling infinitely.
 - **Result:** Codebase is structurally clean across 3 rigid audits with native typescript compilation passing.
 
 ## **🔥 PIPELINE V2 PRE-DEPLOY HARDENING**
