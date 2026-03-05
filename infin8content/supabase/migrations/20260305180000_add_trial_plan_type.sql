@@ -21,3 +21,8 @@ END $$;
 
 -- Update the comment
 COMMENT ON COLUMN organizations.plan_type IS 'Plan type for organizational limits: trial, starter, pro, agency';
+
+-- Add partial index to optimize Trial plan article limiting checks
+CREATE INDEX IF NOT EXISTS idx_articles_org_completed
+ON articles (org_id)
+WHERE status = 'completed';
