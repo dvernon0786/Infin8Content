@@ -120,6 +120,12 @@ export default function PaymentForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const handlePlanSelect = (plan: PlanType) => {
+    setSelectedPlan(plan)
+    // Clear URL error params when user starts fresh
+    router.replace('/payment')
+  }
+
   // Check for error from canceled payment or payment failure
   const canceled = searchParams.get('canceled') === 'true'
   const paymentError = searchParams.get('error')
@@ -190,13 +196,15 @@ export default function PaymentForm({
     setIsSubmitting(true)
     setError(null)
 
+    const effectiveBillingFrequency = selectedPlan === 'trial' ? 'monthly' : billingFrequency
+
     try {
       const response = await fetch('/api/payment/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan: selectedPlan,
-          billingFrequency,
+          billingFrequency: effectiveBillingFrequency,
           redirect: redirectTo,
         }),
       })
@@ -221,10 +229,8 @@ export default function PaymentForm({
     }
   }
 
+  // Only used to determine if we are in annual mode on the UI toggles, the actual savings logic is now per-card
   const currentPrice = planPrices[selectedPlan][billingFrequency]
-  const monthlyPrice = planPrices[selectedPlan].monthly
-  const annualPrice = planPrices[selectedPlan].annual
-  const annualSavings = monthlyPrice - annualPrice
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -241,8 +247,8 @@ export default function PaymentForm({
               type="button"
               onClick={() => setBillingFrequency('monthly')}
               className={`px-6 py-3 text-sm font-medium rounded-l-lg border ${billingFrequency === 'monthly'
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
             >
               Monthly
@@ -251,8 +257,8 @@ export default function PaymentForm({
               type="button"
               onClick={() => setBillingFrequency('annual')}
               className={`px-6 py-3 text-sm font-medium rounded-r-lg border ${billingFrequency === 'annual'
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
             >
               Annual
@@ -266,21 +272,22 @@ export default function PaymentForm({
             const price = planPrices[plan][billingFrequency]
             const isSelected = selectedPlan === plan
             const features = planFeatures[plan]
+            const cardSavings = planPrices[plan].monthly - planPrices[plan].annual
 
             return (
               <div
                 key={plan}
                 className={`relative rounded-lg border-2 p-6 ${isSelected
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
+                  ? 'border-blue-600 bg-blue-50'
+                  : 'border-gray-200 bg-white hover:border-gray-300'
                   } cursor-pointer transition-colors`}
-                onClick={() => setSelectedPlan(plan)}
+                onClick={() => handlePlanSelect(plan)}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    setSelectedPlan(plan)
+                    handlePlanSelect(plan)
                   }
                 }}
                 aria-pressed={isSelected}
@@ -303,7 +310,7 @@ export default function PaymentForm({
                   )}
                   {billingFrequency === 'annual' && plan !== 'trial' && (
                     <p className="text-sm text-gray-500 mt-1">
-                      Billed annually (save ${annualSavings}/month)
+                      Billed annually (save ${cardSavings}/month)
                     </p>
                   )}
                 </div>
@@ -391,8 +398,8 @@ export default function PaymentForm({
         {(errorInfo || error) && (
           <div className="max-w-3xl mx-auto mb-6">
             <div className={`rounded-lg p-4 ${errorInfo?.type === 'warning'
-                ? 'bg-yellow-50 border border-yellow-200'
-                : 'bg-red-50 border border-red-200'
+              ? 'bg-yellow-50 border border-yellow-200'
+              : 'bg-red-50 border border-red-200'
               }`}>
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -421,8 +428,8 @@ export default function PaymentForm({
                         onClick={handleSubscribe}
                         disabled={isSubmitting}
                         className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md ${errorInfo.type === 'warning'
-                            ? 'text-yellow-800 bg-yellow-100 hover:bg-yellow-200'
-                            : 'text-red-800 bg-red-100 hover:bg-red-200'
+                          ? 'text-yellow-800 bg-yellow-100 hover:bg-yellow-200'
+                          : 'text-red-800 bg-red-100 hover:bg-red-200'
                           } focus:outline-none focus:ring-2 focus:ring-offset-2 ${errorInfo.type === 'warning'
                             ? 'focus:ring-yellow-500'
                             : 'focus:ring-red-500'
@@ -439,15 +446,17 @@ export default function PaymentForm({
         )}
 
         {/* Subscribe Button */}
-        <div className="max-w-3xl mx-auto text-center">
-          <button
-            onClick={handleSubscribe}
-            disabled={isSubmitting}
-            className="w-full sm:w-auto px-8 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isSubmitting ? 'Processing...' : `Subscribe to ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan`}
-          </button>
-        </div>
+        {!(errorInfo || error) && (
+          <div className="max-w-3xl mx-auto text-center">
+            <button
+              onClick={handleSubscribe}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto px-8 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isSubmitting ? 'Processing...' : `Subscribe to ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan`}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

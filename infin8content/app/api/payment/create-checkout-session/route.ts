@@ -112,41 +112,33 @@ export async function POST(request: Request) {
           email: userRecord.email,
         })
 
-        // Store stripe_customer_id in organization record
-        // Retry up to 3 times if update fails (customer was created, we must store the ID)
-        let updateSuccess = false
-        for (let attempt = 0; attempt < 3; attempt++) {
-          // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-          const { error: updateError } = await (supabase as any)
+        // Store stripe_customer_id in organization record, preventing race conditions
+        const { error: updateError, data: updateData } = await (supabase as any)
+          .from('organizations')
+          .update({ stripe_customer_id: customerId })
+          .eq('id', organization.id)
+          .is('stripe_customer_id', null)
+          .select()
+
+        if (updateError || !updateData || updateData.length === 0) {
+          // Another request won the race — fetch their customer ID and use it instead
+          const { data: freshOrg } = await (supabase as any)
             .from('organizations')
-            .update({ stripe_customer_id: customerId })
+            .select('stripe_customer_id')
             .eq('id', organization.id)
+            .single()
 
-          if (!updateError) {
-            updateSuccess = true
-            break
-          }
-
-          if (attempt < 2) {
-            // Wait before retry (exponential backoff: 100ms, 200ms)
-            await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, attempt)))
-            console.warn(`[Checkout] Retry ${attempt + 1}/3 storing Stripe customer ID:`, {
+          if (freshOrg && freshOrg.stripe_customer_id) {
+            console.log(`[Checkout] Race condition detected. Using previously created Stripe customer: ${freshOrg.stripe_customer_id}`)
+            customerId = freshOrg.stripe_customer_id
+          } else {
+            // Log critical error - customer created but ID not stored and no existing ID found
+            console.error('[Checkout] CRITICAL: Failed to store Stripe customer ID and no existing ID found:', {
               organizationId: organization.id,
               customerId,
-              error: updateError.message,
+              action: 'MANUAL_INTERVENTION_REQUIRED',
             })
           }
-        }
-
-        if (!updateSuccess) {
-          // Log critical error - customer created but ID not stored
-          // This requires manual intervention to fix data consistency
-          console.error('[Checkout] CRITICAL: Failed to store Stripe customer ID after 3 retries:', {
-            organizationId: organization.id,
-            customerId,
-            action: 'MANUAL_INTERVENTION_REQUIRED',
-          })
-          // Continue anyway - customer was created, webhook will update it later
         }
       } catch (error: any) {
         console.error('[Checkout] Failed to create Stripe customer:', {
