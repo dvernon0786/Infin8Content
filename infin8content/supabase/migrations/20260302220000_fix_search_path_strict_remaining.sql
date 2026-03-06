@@ -77,7 +77,7 @@ DECLARE
     v_current_cost numeric := 0;
     v_new_total_cost numeric;
 BEGIN
-    SELECT public.COALESCE(public.SUM(cost), 0) INTO v_current_cost
+    SELECT COALESCE(SUM(cost), 0) INTO v_current_cost
     FROM public.usage_tracking 
     WHERE workflow_id = p_workflow_id;
     

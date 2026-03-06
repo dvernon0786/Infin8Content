@@ -1,7 +1,27 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-03-05 15:38 UTC+11  
-**Current Focus:** $1 TRIAL PLAN IMPLEMENTATION & CODE AUDIT HARDENING
+**Last Updated:** 2026-03-07 09:40 UTC+11  
+**Current Focus:** TRIAL PLAN REFINEMENT & DATABASE FUNCTION HARDENING
+
+## **🔥 TRIAL PLAN REFINEMENT & DB HARDENING**
+
+### **✅ Achievement: Plan Limits & Trial Policy Alignment**
+- **Status:** Standardized trial limits and enforced zero-drift policy for resource caps.
+- **Deliverables:**
+  1. **Standardized Limits**: Updated `lib/config/plan-limits.ts` to set `workflow_active.trial = null` (unlimited concurrent workflows) while maintaining the 1-article generation cap.
+  2. **Stripe Integration**: Fixed `trial_period_days: 3` hard-coded injection in `create-checkout-session/route.ts` specifically for the trial plan.
+  3. **Onboarding Integration**: Verified multi-step onboarding flow ensures CMS integration is optional for trial users while maintaining complete gatekeeper security.
+- **Result:** Frictionless trial entry with mathematically enforced article caps and unlimited workflow experimentation.
+
+### **✅ Achievement: Production Database Function Hardening**
+- **Status:** Resolved critical RPC level-2 regressions blocking the generation pipeline.
+- **Deliverables:**
+  1. **Cost Limit Fix**: Resolved `public.sum(numeric)` error (42883) in `check_workflow_cost_limit` by removing invalid schema prefixes from `pg_catalog` aggregate functions.
+  2. **Usage Recording Sync**: Updated `record_usage_increment_and_complete_step` to match the 10-parameter signature required by the V2 ICP Generator.
+  3. **FSM State Correction**: Fixed invalid enum value `step_2_keywords` to the correct `step_2_competitors` in the atomic transition logic.
+  4. **Column Mapping Alignment**: Remapped usage recording to existing `usage_tracking` schema (`tokens`, `cost`, `model`) resolving "column does not exist" (42703) fatal errors.
+  5. **Feature Flag Fail-Open**: Modified `isFeatureFlagEnabled` to default to `true` if a flag row is missing, preventing new organizations from being blocked by lack of explicit seat-provisioning.
+- **Result:** 100% stable workflow advancement across ALL plans (Trial, Starter, Pro, Agency).
 
 ## **🔥 $1 TRIAL PLAN & AUDIT BUG FIXES**
 
@@ -71,6 +91,7 @@
   4. **Supabase Auth Sync:** Linked the custom OTP success state back to Supabase Auth via `service_role` admin updates, ensuring `email_confirm: true` stays in sync with our internal `otp_verified` flag.
   5. **Full Normalization Alignment:** Synchronized `storeOTPCode` and `sendOTPEmail` in the registration route to use the identical normalized email variable, eliminating any remaining casing drift between Supabase and our custom verification logic.
   6. **Registration Transaction HARDENING:** Implemented database `upsert` for `users` table records to safely handle retries/double-submits, and added an administrative rollback to delete orphan Supabase Auth accounts if the database synchronization fails.
+  7. **Structural Constraint REINFORCEMENT:** Proactively provisioned `users_auth_user_id_unique` UNIQUE constraint in `supabase/migrations` to enable strictly idempotent `upsert` logic, alongside partial indexing for high-performance scale.
 
 ## **🔥 PIPELINE V2 PRE-DEPLOY HARDENING**
 

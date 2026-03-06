@@ -65,12 +65,16 @@ $$;
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.record_usage_increment_and_complete_step(
-  p_workflow_id uuid,
-  p_organization_id uuid,
-  p_model text,
-  p_cost numeric,
-  p_tokens integer,
-  p_step_number integer
+    p_completion_tokens integer,
+    p_cost numeric,
+    p_generated_at timestamptz,
+    p_icp_data jsonb,
+    p_idempotency_key text,
+    p_model text,
+    p_organization_id uuid,
+    p_prompt_tokens integer,
+    p_tokens_used integer,
+    p_workflow_id uuid
 )
 RETURNS void
 LANGUAGE plpgsql
@@ -80,44 +84,34 @@ AS $$
 BEGIN
 
   INSERT INTO public.usage_tracking (
-    workflow_id,
     organization_id,
+    workflow_id,
     model,
+    prompt_tokens,
+    completion_tokens,
+    tokens_used,
     cost,
-    tokens,
-    step_number,
-    created_at
+    generated_at,
+    idempotency_key
   )
   VALUES (
-    p_workflow_id,
     p_organization_id,
+    p_workflow_id,
     p_model,
+    p_prompt_tokens,
+    p_completion_tokens,
+    p_tokens_used,
     p_cost,
-    p_tokens,
-    p_step_number,
-    pg_catalog.now()
+    p_generated_at,
+    p_idempotency_key
   );
 
-  INSERT INTO public.audit_logs (
-    org_id,
-    user_id,
-    action,
-    details,
-    created_at
-  )
-  VALUES (
-    p_organization_id,
-    public.auth.uid(),
-    'usage.recorded',
-    pg_catalog.json_build_object(
-      'workflow_id', p_workflow_id,
-      'model', p_model,
-      'cost', p_cost,
-      'tokens', p_tokens,
-      'step_number', p_step_number
-    ),
-    pg_catalog.now()
-  );
+  UPDATE public.intent_workflows
+  SET
+    icp_data = p_icp_data,
+    state = 'step_2_competitors',
+    updated_at = pg_catalog.now()
+  WHERE id = p_workflow_id;
 
 END;
 $$;
