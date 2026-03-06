@@ -79,9 +79,6 @@ export async function validateOnboarding(orgId: string): Promise<OnboardingValid
     missing.push('content_defaults')
   }
 
-  if (!org.integration || typeof org.integration !== 'object' || Object.keys(org.integration).length === 0) {
-    missing.push('integration')
-  }
 
   if (!competitorCount || competitorCount < 1) {
     missing.push('competitors')
