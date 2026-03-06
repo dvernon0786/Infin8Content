@@ -10,7 +10,7 @@ import type { Database } from '@/lib/supabase/database.types'
 type Organization = Database['public']['Tables']['organizations']['Row']
 
 const checkoutSchema = z.object({
-  plan: z.enum(['starter', 'pro', 'agency']),
+  plan: z.enum(['trial', 'starter', 'pro', 'agency']),
   billingFrequency: z.enum(['monthly', 'annual']),
   redirect: z.string().optional(),
 })
