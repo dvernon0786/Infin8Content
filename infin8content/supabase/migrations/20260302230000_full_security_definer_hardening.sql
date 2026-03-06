@@ -109,7 +109,7 @@ BEGIN
   UPDATE public.intent_workflows
   SET
     icp_data = p_icp_data,
-    state = 'step_2_keywords',
+    state = 'step_2_competitors',
     updated_at = pg_catalog.now()
   WHERE id = p_workflow_id;
 
