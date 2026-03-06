@@ -24,6 +24,7 @@ function normalizeSiteUrl(url: string): string {
 interface StepIntegrationProps {
   className?: string
   onNext: (state: any) => void
+  onSkip: () => void
 }
 
 type IntegrationPayload = {
@@ -35,7 +36,7 @@ type IntegrationPayload = {
   }
 }
 
-function StepIntegration({ className, onNext }: StepIntegrationProps) {
+function StepIntegration({ className, onNext, onSkip }: StepIntegrationProps) {
   const { user } = useCurrentUser()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<{
@@ -137,10 +138,15 @@ function StepIntegration({ className, onNext }: StepIntegrationProps) {
     <main className={cn("mx-auto w-full max-w-2xl", className)}>
       <Card>
         <CardHeader>
-          <CardTitle>Integration</CardTitle>
+          <CardTitle>Connect WordPress</CardTitle>
         </CardHeader>
 
         <CardContent>
+          <p className="text-sm text-muted-foreground mb-5">
+            Connect your WordPress site so we can publish content directly.
+            You can also skip this step and connect later from your dashboard.
+          </p>
+
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="p-4 bg-orange-50 border border-orange-200 rounded-md">
@@ -173,6 +179,7 @@ function StepIntegration({ className, onNext }: StepIntegrationProps) {
                 </div>
               </div>
             )}
+
             {/* Site URL */}
             <div className="space-y-2">
               <label className="text-sm font-medium">WordPress Site URL</label>
@@ -214,14 +221,25 @@ function StepIntegration({ className, onNext }: StepIntegrationProps) {
               </p>
             </div>
 
-            {/* Submit */}
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full"
-            >
-              {isSubmitting ? "Connecting…" : "Test & Complete Setup"}
-            </Button>
+            {/* Actions */}
+            <div className="flex flex-col gap-2 pt-1">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full"
+              >
+                {isSubmitting ? "Connecting…" : "Test & Connect"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full text-muted-foreground"
+                onClick={onSkip}
+                disabled={isSubmitting}
+              >
+                Skip for now — I'll connect later
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
