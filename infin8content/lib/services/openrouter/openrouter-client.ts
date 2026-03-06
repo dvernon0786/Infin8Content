@@ -74,6 +74,10 @@ export const MODEL_PRICING: Record<string, {
     inputPer1k: 0.00015,   // $0.00015 per 1k input tokens
     outputPer1k: 0.0006     // $0.0006 per 1k output tokens
   },
+  'x-ai/grok-4-fast': {
+    inputPer1k: 0.0002,    // $0.20 per 1M input tokens
+    outputPer1k: 0.0005    // $0.50 per 1M output tokens
+  },
   'z-ai/glm-5': {
     inputPer1k: 0.0001,
     outputPer1k: 0.0001
@@ -81,14 +85,6 @@ export const MODEL_PRICING: Record<string, {
   'z-ai/glm-4.7': {
     inputPer1k: 0.0001,
     outputPer1k: 0.0001
-  },
-  'anthropic/claude-sonnet-4.5': {
-    inputPer1k: 0.003,
-    outputPer1k: 0.015
-  },
-  'anthropic/claude-4.5-sonnet': {
-    inputPer1k: 0.003,
-    outputPer1k: 0.015
   }
 }
 

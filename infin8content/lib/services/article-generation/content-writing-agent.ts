@@ -136,6 +136,15 @@ Solutions
 • If CTA placement seems unnatural: Integrate product mentions within helpful context rather than forced promotional sections
 `
 
+// ─── Content Writing Agent ────────────────────────────────────────────────────
+
+/**
+ * Model used for content writing.
+ * x-ai/grok-4-fast: $0.20/M input, $0.50/M output via OpenRouter.
+ * Falls back to FREE_MODELS chain if the model is unavailable.
+ */
+const WRITING_MODEL = 'x-ai/grok-4-fast'
+
 export async function runContentWritingAgent(
   input: ContentWritingAgentInput
 ): Promise<ContentWritingAgentOutput> {
@@ -262,11 +271,13 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        console.log(`[WritingAgent] Attempt ${attempt}/3 using anthropic/claude-sonnet-4.5 (style: ${input.articlePlan.content_style})`)
+        console.log(
+          `[WritingAgent] Attempt ${attempt}/3 using ${WRITING_MODEL} (style: ${input.articlePlan.content_style})`
+        )
 
         result = await Promise.race([
           generateContent(messages, {
-            model: 'anthropic/claude-sonnet-4.5',
+            model: WRITING_MODEL,
             maxTokens: 800,
             temperature: 0.7
           }),
@@ -313,7 +324,9 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
     const wordCount = countWords(sectionContent);
 
     const executionMs = Date.now() - startTime;
-    console.log(`[WritingAgent] Completed in ${executionMs}ms (words: ${wordCount}, style: ${input.articlePlan.content_style})`)
+    console.log(
+      `[WritingAgent] Completed in ${executionMs}ms (words: ${wordCount}, model: ${result.modelUsed}, style: ${input.articlePlan.content_style})`
+    )
 
     return {
       markdown: sectionContent,
