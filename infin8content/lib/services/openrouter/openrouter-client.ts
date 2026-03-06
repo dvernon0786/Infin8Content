@@ -104,8 +104,8 @@ function calculateCost(
   const normalized = normalizeModel(model)
   const pricing = MODEL_PRICING[normalized]
   if (!pricing) {
-    console.error(`Missing pricing configuration for model: ${model} (normalized: ${normalized})`)
-    throw new Error('AI pricing configuration error')
+    console.warn(`No pricing config for: ${model} (normalized: ${normalized}) — cost logged as 0`)
+    return 0
   }
 
   const inputCost = (promptTokens / 1000) * pricing.inputPer1k
