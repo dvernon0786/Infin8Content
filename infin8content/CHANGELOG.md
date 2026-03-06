@@ -2,6 +2,20 @@
 
 All notable changes to the Infin8Content platform will be documented in this file.
 
+## [2.5.0] - 2026-03-07
+### Added
+- **Stripe Trial Support**: Added `trial_period_days: 3` to Stripe checkout sessions for the trial plan.
+- **Trial Policy Strategy**: Set `workflow_active.trial = null` in `PLAN_LIMITS` to allow unlimited active workflows, staying consistent with the "experiment freely" trial value prop.
+
+### Changed
+- **Feature Flag Resilience**: Modified `isFeatureFlagEnabled` to default to `true` (fail-open) when a flag row is missing, ensuring new organizations aren't blocked from the Intent Engine by default.
+- **Workflow State Mapping**: Corrected the next-state transition in the atomic usage-recording RPC from `step_2_keywords` to the actual enum value `step_2_competitors`.
+
+### Fixed
+- **Critical RPC Regression**: Resolved `public.SUM(numeric)` error (42883) by removing invalid schema qualification from `pg_catalog` aggregate functions in `check_workflow_cost_limit`.
+- **ICP Usage Recording**: Updated `record_usage_increment_and_complete_step` signature and mapped it to correctly existing `usage_tracking` columns (`tokens`, `cost`, `model`), resolving "column does not exist" (42703) fatal errors.
+- **User Permission Logic**: Refined `PLAN_LIMITS` enforcement to accurately distinguish between trial and paid tiers without causing false 403 blocks on legacy accounts.
+
 ## [2.4.0] - 2026-03-02
 ### Added
 - **reseed_sections RPC**: Implemented atomic article section reseeding to prevent race conditions and partial states.
