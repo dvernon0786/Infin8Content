@@ -89,9 +89,9 @@ export async function POST(request: Request) {
       // Generate and send OTP code via Brevo
       try {
         const otpCode = generateOTP()
-        await storeOTPCode(userRecord.id, data.user.email, otpCode)
+        await storeOTPCode(userRecord.id, email, otpCode)
         await sendOTPEmail({
-          to: data.user.email,
+          to: email,
           otpCode,
         })
       } catch (otpError) {
