@@ -208,8 +208,14 @@ export async function generateContent(
             throw error
           }
 
-          // Retry on 429 (rate limit) or 500 (server error) with exponential backoff
-          if (response.status === 429 || response.status === 500) {
+          // Retry on 429 (rate limit) or 50x (server error) with exponential backoff
+          if (
+            response.status === 429 ||
+            response.status === 500 ||
+            response.status === 502 ||
+            response.status === 503 ||
+            response.status === 504
+          ) {
             lastError = error
             if (attempt < maxRetries - 1) {
               const delay = baseDelay * Math.pow(2, attempt) // Exponential backoff: 1s, 2s, 4s
