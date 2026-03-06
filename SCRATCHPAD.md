@@ -62,6 +62,14 @@
   3. **Vercel Build Unblocked:** Resolved the `STRIPE_PRICE_TRIAL_ANNUAL` crash in active Vercel runners. Trials natively lack logical annual pricing models; as such, it was formally extracted from `requiredPriceEnvVars` ensuring it doesn't crash builds, safely typing it as `string | undefined` and conditionally pushing it into `PRICE_PLAN_MAP` if provided.
   4. **GitHub Actions Unblocked:** Resolved `Error: Missing required Stripe price env var: STRIPE_PRICE_TRIAL_MONTHLY` happening on GitHub Actions by migrating placeholder Stripe environments natively inside the `env:` payloads of `ci.yml`, `visual-regression.yml`, and `performance.yml`, fully restoring the zero-drift Vercel production locks.
 
+### **✅ Achievement: High-Integrity OTP Hardening**
+- **Status:** Standardized the custom authentication flow against edge-case mismatches and security best practices.
+- **Deliverables:**
+  1. **Strict Normalization:** Enforced `.toLowerCase().trim()` across registration and verification routes, ensuring `users` table consistency and stopping case-sensitive lookup failures.
+  2. **SHA-256 Hashing:** Migrated OTP storage from raw 6-digit strings to cryptographically secure SHA-256 hashes, protecting user verification vectors even in database compromise scenarios.
+  3. **Atomic Resilience:** Replaced `.single()` with `.maybeSingle()` in verification lookups to prevent runtime crashes during transient duplication or race conditions.
+  4. **Supabase Auth Sync:** Linked the custom OTP success state back to Supabase Auth via `service_role` admin updates, ensuring `email_confirm: true` stays in sync with our internal `otp_verified` flag.
+
 ## **🔥 PIPELINE V2 PRE-DEPLOY HARDENING**
 
 ### **✅ Achievement: Atomic Article Reseeding & RPC Hardening**
