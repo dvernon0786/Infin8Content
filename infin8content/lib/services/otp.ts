@@ -1,6 +1,7 @@
 // OTP generation and verification utilities
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import crypto from 'crypto'
 
 const OTP_LENGTH = 6
 const OTP_EXPIRY_MINUTES = 10
@@ -20,6 +21,13 @@ export function generateOTP(): string {
   // Fallback for environments without crypto (should not happen in Node.js/Browser)
   // This is less secure but provides backward compatibility
   return Math.floor(100000 + Math.random() * 900000).toString()
+}
+
+/**
+ * Hash an OTP code for secure storage
+ */
+export function hashOTP(code: string): string {
+  return crypto.createHash('sha256').update(code).digest('hex')
 }
 
 /**
@@ -48,7 +56,7 @@ export async function storeOTPCode(
     .insert({
       user_id: userId,
       email,
-      code,
+      code: hashOTP(code), // Store hashed code
       expires_at: expiresAt.toISOString(),
     })
 
@@ -74,12 +82,12 @@ export async function verifyOTPCode(
     .from('otp_codes' as any)
     .select('id, user_id, expires_at, verified_at')
     .ilike('email', email)
-    .eq('code', code)
+    .eq('code', hashOTP(code)) // Search for hashed code
     .is('verified_at', null)
     .gt('expires_at', now)
     .order('created_at', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
   if (findError || !otpData) {
     // OTP is invalid, expired, or already verified
@@ -94,7 +102,7 @@ export async function verifyOTPCode(
     .eq('id', (otpData as any).id)
     .is('verified_at', null) // Only update if not already verified (atomic check)
     .select('user_id')
-    .single()
+    .maybeSingle()
 
   if (updateError || !updatedOTP) {
     // Another request verified this OTP first (race condition handled)

@@ -42,9 +42,20 @@ export async function POST(request: Request) {
       )
     }
 
-    // Note: We don't update Supabase Auth email_confirmed_at here
-    // Instead, we rely on the otp_verified flag in the users table
-    // Middleware checks otp_verified instead of email_confirmed_at
+    // Sync status with Supabase Auth to ensure session consistency
+    try {
+      const { createServiceRoleClient } = await import('@/lib/supabase/server')
+      const supabaseAdmin = createServiceRoleClient()
+      await supabaseAdmin.auth.admin.updateUserById(user.auth_user_id, {
+        email_confirm: true
+      })
+    } catch (syncError) {
+      console.error('Failed to sync OTP status with Supabase Auth:', syncError)
+      // Non-blocking: we still have the flag in our 'users' table which middleware checks
+    }
+
+    // Note: Middleware checks otp_verified in the 'users' table
+    // verifyOTPCode() already set that to true atomically.
 
     return NextResponse.json({
       success: true,

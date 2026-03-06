@@ -62,7 +62,7 @@ export async function POST(request: Request) {
         .from('users')
         .insert({
           auth_user_id: data.user.id,
-          email: data.user.email,
+          email: email, // Enforce normalized email casing from parsed input
           role: 'owner', // Default role, will be updated in Story 1.6
           org_id: null, // Will be set in Story 1.6 when organization is created (MUST be nullable)
           otp_verified: false, // Will be set to true after OTP verification
