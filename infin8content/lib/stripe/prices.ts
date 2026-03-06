@@ -10,11 +10,7 @@ const requiredPriceEnvVars = [
   'STRIPE_PRICE_AGENCY_ANNUAL',
 ] as const
 
-for (const envVar of requiredPriceEnvVars) {
-  if (!process.env[envVar]) {
-    throw new Error(`Missing required Stripe price env var: ${envVar}`)
-  }
-}
+// Validation moved to getPriceId to prevent build-time crashes
 
 export const STRIPE_PRICE_IDS = {
   trial: {
@@ -40,7 +36,18 @@ export type PlanType = keyof typeof STRIPE_PRICE_IDS
 export type BillingFrequency = 'monthly' | 'annual'
 
 export function getPriceId(plan: PlanType, billingFrequency: BillingFrequency): string | undefined {
-  return STRIPE_PRICE_IDS[plan][billingFrequency]
+  // Validate env vars at request time instead of build/startup time
+  for (const envVar of requiredPriceEnvVars) {
+    if (!process.env[envVar]) {
+      throw new Error(`Missing required Stripe price env var: ${envVar}`)
+    }
+  }
+
+  const priceId = STRIPE_PRICE_IDS[plan][billingFrequency]
+  if (!priceId && plan !== 'trial') { // trial may not have an annual definition
+    throw new Error(`Missing Stripe price ID for ${plan}/${billingFrequency}`)
+  }
+  return priceId
 }
 
 export const PRICE_PLAN_MAP: Record<string, PlanType> = {
