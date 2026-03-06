@@ -1,5 +1,5 @@
 // Registration API route with OTP verification via Brevo
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { validateBrevoEnv } from '@/lib/supabase/env'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
@@ -28,7 +28,6 @@ export async function POST(request: Request) {
       email,
       password,
       options: {
-        emailRedirectTo: undefined, // No email verification link needed
         data: {
           email_verified: false, // Will be set to true after OTP verification
         },
@@ -57,26 +56,36 @@ export async function POST(request: Request) {
         )
       }
 
-      // TODO: Remove type assertion after regenerating types from Supabase Dashboard
+      // Use upsert to prevent unique constraint violations on retries
       const { data: userRecord, error: dbError } = await (supabase as any)
         .from('users')
-        .insert({
+        .upsert({
           auth_user_id: data.user.id,
           email: email, // Enforce normalized email casing from parsed input
           role: 'owner', // Default role, will be updated in Story 1.6
           org_id: null, // Will be set in Story 1.6 when organization is created (MUST be nullable)
           otp_verified: false, // Will be set to true after OTP verification
+        }, {
+          onConflict: 'auth_user_id'
         })
         .select()
         .single()
 
       if (dbError || !userRecord) {
+        // Rollback: delete the auth user if we can't create the database record
+        // This prevents "orphan" auth users that have no corresponding record in 'users'
+        try {
+          const supabaseAdmin = createServiceRoleClient()
+          await supabaseAdmin.auth.admin.deleteUser(data.user.id)
+        } catch (rollbackError) {
+          console.error('Critical: Failed to rollback orphan auth user:', rollbackError)
+        }
+
         // Log detailed error for debugging
-        console.error('Failed to create user record:', {
+        console.error('Failed to create/upsert user record:', {
           error: dbError,
           userId: data.user.id,
           email: data.user.email,
-          message: 'User created in auth.users but failed to create record in users table. Manual cleanup may be required.',
         })
 
         // Return error - user exists in auth.users but not in users table
