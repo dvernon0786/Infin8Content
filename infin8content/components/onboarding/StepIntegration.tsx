@@ -24,7 +24,7 @@ function normalizeSiteUrl(url: string): string {
 interface StepIntegrationProps {
   className?: string
   onNext: (state: any) => void
-  onSkip: () => void
+  onSkip?: () => void
 }
 
 type IntegrationPayload = {
@@ -231,20 +231,22 @@ function StepIntegration({ className, onNext, onSkip }: StepIntegrationProps) {
               >
                 {isSubmitting ? "Connecting…" : "Test & Connect"}
               </Button>
-              <div className="text-center">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="w-full text-muted-foreground"
-                  onClick={onSkip}
-                  disabled={isSubmitting}
-                >
-                  Skip for now — I'll connect later
-                </Button>
-                <p className="text-[11px] text-muted-foreground/60 italic -mt-1">
-                  (Recommended to connect now to enable auto-publishing)
-                </p>
-              </div>
+              {onSkip && (
+                <div className="text-center">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full text-muted-foreground"
+                    onClick={onSkip}
+                    disabled={isSubmitting}
+                  >
+                    Skip for now — I'll connect later
+                  </Button>
+                  <p className="text-[11px] text-muted-foreground/60 italic -mt-1">
+                    (Recommended to connect now to enable auto-publishing)
+                  </p>
+                </div>
+              )}
             </div>
           </form>
         </CardContent>
