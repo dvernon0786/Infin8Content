@@ -15,12 +15,14 @@ export async function POST(request: Request) {
   try {
     // Validate Brevo API key before proceeding
     validateBrevoEnv()
-    
+
     const body = await request.json()
-    const { email, password } = registerSchema.parse(body)
+    const parsed = registerSchema.parse(body)
+    const email = parsed.email.toLowerCase().trim()
+    const password = parsed.password
 
     const supabase = await createClient()
-    
+
     // Sign up user in Supabase Auth (disable email confirmation - we use OTP instead)
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -60,7 +62,7 @@ export async function POST(request: Request) {
         .from('users')
         .insert({
           auth_user_id: data.user.id,
-          email: data.user.email,
+          email: email, // Enforce normalized email casing from parsed input
           role: 'owner', // Default role, will be updated in Story 1.6
           org_id: null, // Will be set in Story 1.6 when organization is created (MUST be nullable)
           otp_verified: false, // Will be set to true after OTP verification
@@ -76,7 +78,7 @@ export async function POST(request: Request) {
           email: data.user.email,
           message: 'User created in auth.users but failed to create record in users table. Manual cleanup may be required.',
         })
-        
+
         // Return error - user exists in auth.users but not in users table
         return NextResponse.json(
           { error: 'Account creation failed. Please try again or contact support.' },
@@ -97,8 +99,8 @@ export async function POST(request: Request) {
         // User is created, but OTP send failed - return success but note OTP issue
         // User can request OTP resend later
         return NextResponse.json(
-          { 
-            success: true, 
+          {
+            success: true,
             user: data.user,
             message: 'Account created, but verification email failed to send. Please try logging in to resend.',
           },
@@ -107,8 +109,8 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       user: data.user,
       message: 'Account created. Please check your email for the verification code.',
     })
@@ -119,7 +121,7 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -1,6 +1,7 @@
 // OTP generation and verification utilities
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import crypto from 'crypto'
 
 const OTP_LENGTH = 6
 const OTP_EXPIRY_MINUTES = 10
@@ -23,6 +24,13 @@ export function generateOTP(): string {
 }
 
 /**
+ * Hash an OTP code for secure storage
+ */
+export function hashOTP(code: string): string {
+  return crypto.createHash('sha256').update(code).digest('hex')
+}
+
+/**
  * Store OTP code in database
  */
 export async function storeOTPCode(
@@ -32,19 +40,26 @@ export async function storeOTPCode(
 ): Promise<void> {
   // Use service role client to bypass RLS for OTP storage
   const supabase = createServiceRoleClient()
-  
+
   const expiresAt = new Date()
   expiresAt.setMinutes(expiresAt.getMinutes() + OTP_EXPIRY_MINUTES)
-  
+
+  // Invalidate previous OTPs for this email to prevent multiple valid codes
+  await supabase
+    .from('otp_codes' as any)
+    .update({ expires_at: new Date().toISOString() })
+    .eq('email', email)
+    .is('verified_at', null)
+
   const { error } = await supabase
     .from('otp_codes' as any)
     .insert({
       user_id: userId,
       email,
-      code,
+      code: hashOTP(code), // Store hashed code
       expires_at: expiresAt.toISOString(),
     })
-  
+
   if (error) {
     console.error('Failed to store OTP code:', error)
     throw new Error('Failed to generate verification code')
@@ -58,26 +73,27 @@ export async function verifyOTPCode(
   email: string,
   code: string
 ): Promise<{ valid: boolean; userId?: string }> {
-  const supabase = await createClient()
+  // Use service role client to bypass RLS since user is unauthenticated
+  const supabase = createServiceRoleClient()
   const now = new Date().toISOString()
-  
+
   // First, find the OTP code to get its ID (for potential rollback)
   const { data: otpData, error: findError } = await supabase
     .from('otp_codes' as any)
     .select('id, user_id, expires_at, verified_at')
-    .eq('email', email)
-    .eq('code', code)
+    .ilike('email', email)
+    .eq('code', hashOTP(code)) // Search for hashed code
     .is('verified_at', null)
     .gt('expires_at', now)
     .order('created_at', { ascending: false })
     .limit(1)
-    .single()
-  
+    .maybeSingle()
+
   if (findError || !otpData) {
     // OTP is invalid, expired, or already verified
     return { valid: false }
   }
-  
+
   // Use atomic update to mark OTP as verified
   // This prevents race conditions where multiple requests verify the same OTP
   const { data: updatedOTP, error: updateError } = await supabase
@@ -86,20 +102,20 @@ export async function verifyOTPCode(
     .eq('id', (otpData as any).id)
     .is('verified_at', null) // Only update if not already verified (atomic check)
     .select('user_id')
-    .single()
-  
+    .maybeSingle()
+
   if (updateError || !updatedOTP) {
     // Another request verified this OTP first (race condition handled)
     return { valid: false }
   }
-  
+
   // Mark user as OTP verified
   // If this fails, rollback the OTP verification
   const { error: userUpdateError } = await supabase
     .from('users')
     .update({ otp_verified: true } as any)
     .eq('id', (updatedOTP as any).user_id)
-  
+
   if (userUpdateError) {
     console.error('Failed to update user OTP verification status:', userUpdateError)
     // Rollback: Mark OTP as unverified since user update failed
@@ -107,10 +123,10 @@ export async function verifyOTPCode(
       .from('otp_codes' as any)
       .update({ verified_at: null })
       .eq('id', (otpData as any).id)
-    
+
     return { valid: false }
   }
-  
+
   return { valid: true, userId: (updatedOTP as any).user_id }
 }
 
@@ -118,14 +134,14 @@ export async function verifyOTPCode(
  * Clean up expired OTP codes (can be called periodically)
  */
 export async function cleanupExpiredOTPCodes(): Promise<void> {
-  const supabase = await createClient()
-  
+  const supabase = createServiceRoleClient()
+
   // Delete expired OTP codes directly instead of using RPC
   const { error } = await supabase
     .from('otp_codes' as any)
     .delete()
     .lt('expires_at', new Date().toISOString())
-  
+
   if (error) {
     console.error('Failed to cleanup expired OTP codes:', error)
   }
