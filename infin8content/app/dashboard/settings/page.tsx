@@ -22,8 +22,8 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button 
-                asChild 
+              <Button
+                asChild
                 variant="outline"
                 className="font-lato text-neutral-600 hover:text-primary border-neutral-200"
               >
@@ -40,8 +40,8 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button 
-                asChild 
+              <Button
+                asChild
                 variant="outline"
                 className="font-lato text-neutral-600 hover:text-primary border-neutral-200"
               >
@@ -58,12 +58,30 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button 
-                asChild 
+              <Button
+                asChild
                 variant="outline"
                 className="font-lato text-neutral-600 hover:text-primary border-neutral-200"
               >
                 <Link href="/settings/team">Manage Team</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-poppins text-neutral-900 text-h3-desktop">Integrations</CardTitle>
+              <CardDescription className="font-lato text-neutral-600 text-body">
+                Connect your CMS platforms for auto-publishing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                asChild
+                variant="outline"
+                className="font-lato text-neutral-600 hover:text-primary border-neutral-200"
+              >
+                <Link href="/dashboard/settings/integrations">Manage Integrations</Link>
               </Button>
             </CardContent>
           </Card>
