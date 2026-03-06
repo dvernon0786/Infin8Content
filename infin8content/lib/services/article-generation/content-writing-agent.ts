@@ -265,11 +265,17 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
     let lastError: any;
     let timeoutId: NodeJS.Timeout | undefined;
 
+    let timedOut = false;
     const timeoutPromise = new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(() => reject(new Error('Content writing timeout: 180 seconds exceeded')), 180000)
+      timeoutId = setTimeout(() => {
+        timedOut = true;
+        reject(new Error('Content writing timeout: 180 seconds exceeded'))
+      }, 180000)
     });
 
     for (let attempt = 1; attempt <= 3; attempt++) {
+      if (timedOut) break;
+
       try {
         console.log(
           `[WritingAgent] Attempt ${attempt}/3 using ${WRITING_MODEL} (style: ${input.articlePlan.content_style})`
@@ -278,7 +284,7 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
         result = await Promise.race([
           generateContent(messages, {
             model: WRITING_MODEL,
-            maxTokens: 800,
+            maxTokens: 1200,
             temperature: 0.7
           }),
           timeoutPromise
@@ -312,7 +318,12 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
     sectionContent = sectionContent.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
 
     // Hard cap: enforce section character ceiling length
-    const SECTION_CHAR_LIMIT = 1200;
+    const CHAR_LIMITS: Record<typeof input.position, number> = {
+      first: 550,
+      middle: 650,
+      final: 500,
+    }
+    const SECTION_CHAR_LIMIT = CHAR_LIMITS[input.position];
     if (sectionContent.length > SECTION_CHAR_LIMIT) {
       // Trim to last complete sentence within limit
       const trimmed = sectionContent.substring(0, SECTION_CHAR_LIMIT);
@@ -421,8 +432,9 @@ async function convertMarkdownToHtml(markdown: string): Promise<string> {
 
   // ── 6. Bold / italic ─────────────────────────────────────────────────────
   html = html
+    .replace(/\*\*\*(.+?)\*\*\*/g, `<strong style="${styles.strong}"><em style="${styles.em}">$1</em></strong>`)
     .replace(/\*\*(.+?)\*\*/g, `<strong style="${styles.strong}">$1</strong>`)
-    .replace(/\*(.+?)\*/g, `<em style="${styles.em}">$1</em>`)
+    .replace(/(?<!\w)\*(?!\s)(.+?)(?<!\s)\*(?!\w)/g, `<em style="${styles.em}">$1</em>`)
 
   // ── 7. Inline code ────────────────────────────────────────────────────────
   html = html.replace(/`([^`]+)`/g, `<code style="${styles.code_inline}">$1</code>`)

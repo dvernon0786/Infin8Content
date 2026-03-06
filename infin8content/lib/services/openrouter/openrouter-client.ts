@@ -90,6 +90,7 @@ export const MODEL_PRICING: Record<string, {
 
 function normalizeModel(model: string): string {
   return model
+    .replace(/@[\w-]+$/, '') // strip @provider suffix
     .replace(/-\d{8}$/, '') // remove date suffix (e.g. -20251222)
     .replace(/:free$/, '')  // remove :free suffix
     .toLowerCase();
@@ -143,6 +144,10 @@ export async function generateContent(
   const modelsToTry = requestedModel
     ? [requestedModel, ...FREE_MODELS]
     : [...FREE_MODELS]
+
+  if (options.disableFallback && requestedModel) {
+    modelsToTry.length = 1  // only try the requested model
+  }
 
   let lastError: Error | null = null
 
