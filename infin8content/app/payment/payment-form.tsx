@@ -123,7 +123,9 @@ export default function PaymentForm({
   const handlePlanSelect = (plan: PlanType) => {
     setSelectedPlan(plan)
     // Clear URL error params when user starts fresh
-    router.replace('/payment')
+    if (searchParams.toString()) {
+      router.replace('/payment')
+    }
   }
 
   // Check for error from canceled payment or payment failure
@@ -228,9 +230,6 @@ export default function PaymentForm({
       setIsSubmitting(false)
     }
   }
-
-  // Only used to determine if we are in annual mode on the UI toggles, the actual savings logic is now per-card
-  const currentPrice = planPrices[selectedPlan][billingFrequency]
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -422,15 +421,15 @@ export default function PaymentForm({
                     }`}>
                     <p>{errorInfo?.message || error}</p>
                   </div>
-                  {errorInfo && (
+                  {(errorInfo || error) && (
                     <div className="mt-4">
                       <button
                         onClick={handleSubscribe}
                         disabled={isSubmitting}
-                        className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md ${errorInfo.type === 'warning'
+                        className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md ${errorInfo?.type === 'warning'
                           ? 'text-yellow-800 bg-yellow-100 hover:bg-yellow-200'
                           : 'text-red-800 bg-red-100 hover:bg-red-200'
-                          } focus:outline-none focus:ring-2 focus:ring-offset-2 ${errorInfo.type === 'warning'
+                          } focus:outline-none focus:ring-2 focus:ring-offset-2 ${errorInfo?.type === 'warning'
                             ? 'focus:ring-yellow-500'
                             : 'focus:ring-red-500'
                           } disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
