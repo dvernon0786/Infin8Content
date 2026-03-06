@@ -68,7 +68,14 @@ export function WordPressIntegrationForm({ initialData, onSuccess, onCancel }: W
             await fetch("/api/onboarding/persist", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ integration: { ...payload.wordpress, type: 'wordpress' } }),
+                body: JSON.stringify({
+                    integration: {
+                        type: 'wordpress',
+                        site_url: payload.wordpress.url,
+                        username: payload.wordpress.username,
+                        application_password: payload.wordpress.application_password
+                    }
+                }),
             })
 
             onSuccess(payload)
