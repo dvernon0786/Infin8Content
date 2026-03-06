@@ -28,7 +28,7 @@ export const PLAN_LIMITS = {
 
     // New concurrency caps
     workflow_active: {
-        trial: 1,
+        trial: null,
         starter: 1,
         pro: 5,
         agency: null,

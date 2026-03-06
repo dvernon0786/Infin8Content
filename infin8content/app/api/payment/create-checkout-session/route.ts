@@ -187,6 +187,11 @@ export async function POST(request: Request) {
             quantity: 1,
           },
         ],
+        ...(plan === 'trial' && {
+          subscription_data: {
+            trial_period_days: 3
+          }
+        }),
         success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${appUrl}/payment?canceled=true`,
         metadata: {
