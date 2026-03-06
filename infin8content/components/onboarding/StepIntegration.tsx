@@ -70,6 +70,7 @@ function StepIntegration({ className, onNext, onSkip }: StepIntegrationProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setError(null)
 
     if (!user?.org_id) {
       console.error("[StepIntegration] Missing org context")
@@ -230,15 +231,20 @@ function StepIntegration({ className, onNext, onSkip }: StepIntegrationProps) {
               >
                 {isSubmitting ? "Connecting…" : "Test & Connect"}
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full text-muted-foreground"
-                onClick={onSkip}
-                disabled={isSubmitting}
-              >
-                Skip for now — I'll connect later
-              </Button>
+              <div className="text-center">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full text-muted-foreground"
+                  onClick={onSkip}
+                  disabled={isSubmitting}
+                >
+                  Skip for now — I'll connect later
+                </Button>
+                <p className="text-[11px] text-muted-foreground/60 italic -mt-1">
+                  (Recommended to connect now to enable auto-publishing)
+                </p>
+              </div>
             </div>
           </form>
         </CardContent>
