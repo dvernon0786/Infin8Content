@@ -69,6 +69,8 @@
   2. **SHA-256 Hashing:** Migrated OTP storage from raw 6-digit strings to cryptographically secure SHA-256 hashes, protecting user verification vectors even in database compromise scenarios.
   3. **Atomic Resilience:** Replaced `.single()` with `.maybeSingle()` in verification lookups to prevent runtime crashes during transient duplication or race conditions.
   4. **Supabase Auth Sync:** Linked the custom OTP success state back to Supabase Auth via `service_role` admin updates, ensuring `email_confirm: true` stays in sync with our internal `otp_verified` flag.
+  5. **Full Normalization Alignment:** Synchronized `storeOTPCode` and `sendOTPEmail` in the registration route to use the identical normalized email variable, eliminating any remaining casing drift between Supabase and our custom verification logic.
+  6. **Registration Transaction HARDENING:** Implemented database `upsert` for `users` table records to safely handle retries/double-submits, and added an administrative rollback to delete orphan Supabase Auth accounts if the database synchronization fails.
 
 ## **🔥 PIPELINE V2 PRE-DEPLOY HARDENING**
 
