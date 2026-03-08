@@ -1,14 +1,18 @@
 import { createClient } from './server'
 import { PLAN_LIMITS } from '@/lib/config/plan-limits'
 
+export type PlanType = 'trial' | 'starter' | 'pro' | 'agency';
+
 export interface OrganizationRecord {
   id: string
   name: string
-  plan?: string
-  plan_type?: string
+  plan?: PlanType | string
+  plan_type?: PlanType | string
   payment_status?: string
   created_at?: string
   updated_at?: string
+  role?: string
+  white_label_settings?: any
 }
 
 export interface UserRecord {
@@ -21,11 +25,28 @@ export interface UserRecord {
   last_name?: string
 }
 
+export interface CurrentUser {
+  user: {
+    id: string
+    email: string
+  }
+  id: string
+  email: string
+  first_name: string | null
+  role: string
+  org_id: string
+  organizations: (OrganizationRecord & {
+    article_usage?: number;
+    article_limit?: number | null;
+    total_completed_usage?: number;
+  }) | null
+}
+
 /**
- * getCurrentUser - Standard utility to fetch the authenticatd user 
+ * getCurrentUser - Standard utility to fetch the authenticated user 
  * and their organization context with reinforced plan-metering truth.
  */
-export const getCurrentUser = (async () => {
+export const getCurrentUser = async (): Promise<CurrentUser | null> => {
   const supabase = await createClient()
 
   // Get Auth Service User
@@ -46,9 +67,8 @@ export const getCurrentUser = (async () => {
     article_usage?: number;
     article_limit?: number | null;
     total_completed_usage?: number;
-    created_at?: string;
-    updated_at?: string;
   }) | null = null
+
   if ((userRecord as any).org_id) {
     const { data: orgData } = await supabase
       .from('organizations')
@@ -59,9 +79,8 @@ export const getCurrentUser = (async () => {
     if (orgData) {
       const organizationData = orgData as any
       // Determine effective plan - use plan_type if available, fallback to plan
-      // BUG NB5 FIX: Fallback back to 'starter' for existing orgs
-      const planType = (organizationData.plan_type || organizationData.plan || 'starter').toLowerCase()
-      const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
+      const planType = (organizationData.plan_type || organizationData.plan || 'starter').toLowerCase() as PlanType
+      const planKey = (['trial', 'starter', 'pro', 'agency'].includes(planType) ? planType : 'starter') as PlanType;
 
       // Calculate usage
       let articleUsage = organizationData.article_usage || 0
@@ -70,9 +89,9 @@ export const getCurrentUser = (async () => {
       if (planType === 'trial') {
         const { count } = await supabase
           .from('articles')
-          .select('id', { count: 'exact', head: true }) // BUG NB6 FIX: select 'id'
+          .select('id', { count: 'exact', head: true })
           .eq('org_id', (userRecord as any).org_id)
-          .eq('status', 'completed') // BUG E FIX: count only completed
+          .eq('status', 'completed')
 
         articleUsage = count || 0
       }
@@ -84,9 +103,12 @@ export const getCurrentUser = (async () => {
 
       organization = {
         ...organizationData,
+        plan: planKey,
         article_usage: articleUsage,
         article_limit: articleLimit,
-        total_completed_usage: totalCompletedUsage
+        total_completed_usage: totalCompletedUsage,
+        // Fallback role if missing on org itself - often owners are admins
+        role: organizationData.role || (userRecord as any).role
       }
     }
   }
@@ -98,9 +120,9 @@ export const getCurrentUser = (async () => {
     },
     id: (userRecord as any).id,
     email: (userRecord as any).email,
-    first_name: (userRecord as any).first_name,
+    first_name: (userRecord as any).first_name || null,
     role: (userRecord as any).role,
     org_id: (userRecord as any).org_id,
     organizations: organization,
   }
-})
+}

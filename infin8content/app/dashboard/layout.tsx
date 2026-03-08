@@ -42,14 +42,14 @@ export default async function DashboardLayout({
                 <SidebarProvider>
                     <SidebarNavigation
                         orgName={currentUser.organizations?.name}
-                        plan={currentUser.organizations?.plan}
+                        plan={currentUser.organizations?.plan as any}
                         usage={currentUser.organizations?.article_usage}
                     />
                     <SidebarInset>
                         <TopNavigation
                             email={currentUser.email}
                             name={currentUser.first_name || currentUser.email.split('@')[0]}
-                            plan={currentUser.organizations?.plan}
+                            plan={currentUser.organizations?.plan as any}
                             usage={currentUser.organizations?.article_usage}
                         />
                         <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">

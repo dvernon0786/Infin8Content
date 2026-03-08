@@ -36,9 +36,6 @@ const icpGenerationSchema = z.object({
   organization_linkedin_url: z.string().url('Invalid LinkedIn URL format'),
 })
 
-// Concurrent prevention handled by database status gate (step_0_auth only)
-// This provides multi-instance safety and restart resilience
-
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ workflow_id: string }> }
@@ -145,7 +142,6 @@ export async function POST(
     // Generate UUID idempotency key at request boundary
     const idempotencyKey = crypto.randomUUID()
 
-
     // Generate ICP document with automatic retry
     const icpResult = await generateICPDocument(mappedRequest, organizationId, 300000, undefined, workflowId, idempotencyKey)
 
@@ -179,7 +175,7 @@ export async function POST(
         },
         timestamp: new Date().toISOString()
       }
-      await emitAnalyticsEvent(analyticsEvent)
+      await emitAnalyticsEvent(analyticsEvent as any)
       console.log(`[ICP-Generate] Analytics event emitted: ${JSON.stringify(analyticsEvent)}`)
     } catch (analyticsError) {
       console.error(`[ICP-Generate] Failed to emit analytics event:`, analyticsError)

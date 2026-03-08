@@ -12,9 +12,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
-import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
-import { inngest } from '@/lib/inngest/client'
 
 export async function GET(
   request: NextRequest,
@@ -89,7 +87,7 @@ export async function GET(
         selection_source,
         selection_updated_at
       `, { count: 'exact' })
-      .eq('organization_id', organizationId)
+      .eq('organization_id', organizationId!)
       .eq('workflow_id', workflowId)
       .is('parent_seed_keyword_id', null) // Seed keywords only
       .order('search_volume', { ascending: false })
@@ -130,8 +128,8 @@ export async function GET(
 
     // Log action
     await logActionAsync({
-      orgId: organizationId,
-      userId: userId,
+      orgId: organizationId!,
+      userId: userId!,
       action: AuditAction.WORKFLOW_STEP_COMPLETED,
       details: {
         workflow_id: workflowId,
@@ -157,12 +155,12 @@ export async function GET(
 
   } catch (error: any) {
     console.error('Keyword review failed:', error)
-    
+
     // Log failure
     if (organizationId && userId) {
       await logActionAsync({
-        orgId: organizationId,
-        userId: userId,
+        orgId: organizationId!,
+        userId: userId!,
         action: AuditAction.WORKFLOW_STEP_FAILED,
         details: {
           workflow_id: workflowId,
@@ -240,7 +238,7 @@ export async function POST(
       .from('intent_workflows')
       .select('id, state')
       .eq('id', workflowId)
-      .eq('organization_id', organizationId)
+      .eq('organization_id', organizationId!)
       .single() as { data: { id: string; state: string } | null; error: any }
 
     if (workflowFetchError || !workflow) {
@@ -271,7 +269,7 @@ export async function POST(
         selection_source: null,
         selection_updated_at: new Date().toISOString()
       })
-      .eq('organization_id', organizationId)
+      .eq('organization_id', organizationId!)
       .eq('workflow_id', workflowId)
       .is('parent_seed_keyword_id', null)
 
@@ -290,7 +288,7 @@ export async function POST(
         selection_source: 'human',
         selection_updated_at: new Date().toISOString()
       })
-      .eq('organization_id', organizationId)
+      .eq('organization_id', organizationId!)
       .eq('workflow_id', workflowId)
       .in('id', selectedKeywordIds)
 
@@ -305,14 +303,14 @@ export async function POST(
     try {
       // Unified transition - automatic event emission guaranteed
       const result = await transitionWithAutomation(
-        workflowId, 
-        'SEEDS_APPROVED', 
+        workflowId,
+        'SEEDS_APPROVED',
         currentUser.id
       )
 
       if (!result.success) {
         return NextResponse.json(
-          { 
+          {
             error: 'Failed to advance workflow',
             message: result.error
           },
@@ -323,7 +321,7 @@ export async function POST(
       console.log(`✅✅✅ [SeedExtract] Unified transition completed for workflow ${workflowId}`)
     } catch (error) {
       return NextResponse.json(
-        { 
+        {
           error: 'Failed to advance workflow',
           message: error instanceof Error ? error.message : 'Unknown error'
         },
@@ -335,8 +333,8 @@ export async function POST(
     // 7. AUDIT LOGGING
     // --------------------------------------------------
     await logActionAsync({
-      orgId: organizationId,
-      userId: userId,
+      orgId: organizationId!,
+      userId: userId!,
       action: AuditAction.WORKFLOW_STEP_COMPLETED,
       details: {
         workflow_id: workflowId,
@@ -362,14 +360,14 @@ export async function POST(
 
   } catch (error: any) {
     console.error('Step 3 POST failed:', error)
-    
+
     // --------------------------------------------------
     // 9. ERROR HANDLING & AUDIT
     // --------------------------------------------------
     if (organizationId && userId) {
       await logActionAsync({
-        orgId: organizationId,
-        userId: userId,
+        orgId: organizationId!,
+        userId: userId!,
         action: AuditAction.WORKFLOW_STEP_FAILED,
         details: {
           workflow_id: workflowId,

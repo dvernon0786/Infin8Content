@@ -36,7 +36,7 @@ export async function POST(
     userId = currentUser.id
 
     // 1️⃣ AUTH: Already handled above
-    
+
     // 2️⃣ FETCH WORKFLOW (READ ONLY)
     const supabase = createServiceRoleClient()
     const { data: workflow, error } = await supabase
@@ -67,14 +67,12 @@ export async function POST(
     }
 
     // 4️⃣ STRICT FSM GUARD
-    // For validation, we need to check if transition is allowed
-    // Use internal FSM for validation since unified engine doesn't export canTransition
     const { InternalWorkflowFSM } = await import('@/lib/fsm/fsm.internal')
     if (!InternalWorkflowFSM.canTransition(currentState as any, 'VALIDATION_START')) {
       return NextResponse.json(
         {
           error: 'INVALID_STATE',
-          message: `Workflow must be in step_7_validation. Current state: ${currentState}` 
+          message: `Workflow must be in step_7_validation. Current state: ${currentState}`
         },
         { status: 409 }
       )
@@ -82,8 +80,8 @@ export async function POST(
 
     // Log audit action
     await logActionAsync({
-      orgId: organizationId,
-      userId: userId,
+      orgId: organizationId!,
+      userId: userId!,
       action: AuditAction.WORKFLOW_CLUSTER_VALIDATION_STARTED,
       details: {
         workflow_id: workflowId,
@@ -94,11 +92,10 @@ export async function POST(
     })
 
     // 5️⃣ UNIFIED TRANSITION (async trigger)
-    // This automatically emits the required event
-    const result = await transitionWithAutomation(workflowId, 'VALIDATION_START', userId)
+    const result = await transitionWithAutomation(workflowId, 'VALIDATION_START', userId!)
     if (!result.success) {
       return NextResponse.json(
-        { 
+        {
           error: 'Failed to advance workflow',
           message: result.error || 'Unknown error'
         },
@@ -110,7 +107,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       workflow_id: workflowId,
-      workflow_state: 'step_7_validation', // Still in idle until worker processes
+      workflow_state: 'step_7_validation',
       status: 'triggered',
       message: 'Cluster validation triggered. Check workflow state for progress.'
     }, { status: 202 })
@@ -121,8 +118,8 @@ export async function POST(
     // Log error audit action
     if (organizationId && userId) {
       await logActionAsync({
-        orgId: organizationId,
-        userId: userId,
+        orgId: organizationId!,
+        userId: userId!,
         action: AuditAction.WORKFLOW_CLUSTER_VALIDATION_FAILED,
         details: {
           workflow_id: workflowId,
