@@ -74,6 +74,8 @@ Constraints
  Ensure each section builds upon the previous one for logical progression
  Create structures that support 2,000–4,000 word articles with substantial depth
  Never create thin or superficial content outlines — each section must add unique value
+ Section order is strictly enforced: body sections (h2) → faq → conclusion. The faq section must always be second-to-last. The conclusion section must always be last.
+ The conclusion section header must NOT start with the word "Conclusion". Use a specific named header: "Bottom Line", "Your Next Move", "Making It Work", or similar action-oriented phrasing.
 
 Inputs
  ICP (Ideal Customer Profile): Detailed information about the target audience including demographics, pain points, goals, challenges, current solutions they use, and their content consumption preferences

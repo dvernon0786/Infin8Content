@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Breadcrumb, generateArticleBreadcrumbs } from '@/components/ui/breadcrumb'
-import { ArticleContentViewer } from '@/components/articles/article-content-viewer'
+import { ArticleContentViewer, ArticleMarkdownViewer } from '@/components/articles/article-content-viewer'
 import { ArticleStatusMonitor } from '@/components/articles/article-status-monitor'
 import { PublishToWordPressButton } from '@/components/articles/publish-to-wordpress-button'
 import { GenerateArticleButton } from '@/components/articles/generate-article-button'
@@ -103,16 +103,19 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
   // If article is completed, fetch sections in the same query if possible
   let sections: SnapshotSection[] | null = null
   let sectionsError: string | null = null
+  let articleWithSections: any = null
 
   if (article.status === 'completed') {
     try {
       // Optimized: Single query with conditional section loading
-      const { data: articleWithSections, error: fetchError } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('articles' as any)
-        .select('sections')
+        .select('sections, final_markdown')
         .eq('id', id)
         .eq('org_id', currentUser.org_id)
         .maybeSingle()
+
+      articleWithSections = data
 
       console.log('[ArticleDetailPage] Sections fetch result:', {
         articleId: id,
@@ -125,8 +128,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
         console.error('Failed to fetch article sections:', fetchError)
         sectionsError = fetchError.message
       } else if (articleWithSections) {
-        const typedData = articleWithSections as unknown as ArticleWithSections
-        sections = typedData.sections || null
+        sections = articleWithSections.sections || null
         // Note: Title derivation has been moved upstream to the ArticleAssembler.
         // We strictly use the server's persisted title or a base keyword fallback.
         if (!article.title) {
@@ -322,9 +324,13 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                   <Card>
                     <CardContent className="p-6 sm:p-10">
                       <div className="max-w-3xl mx-auto">
-                        <ArticleContentViewer
-                          sections={sections}
-                        />
+                        {(articleWithSections as any)?.final_markdown ? (
+                          <ArticleMarkdownViewer markdown={(articleWithSections as any).final_markdown} />
+                        ) : (
+                          <ArticleContentViewer
+                            sections={sections}
+                          />
+                        )}
                       </div>
                     </CardContent>
                   </Card>
