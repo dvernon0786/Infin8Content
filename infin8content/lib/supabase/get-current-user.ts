@@ -1,5 +1,6 @@
 import { createClient } from './server'
 import { PLAN_LIMITS } from '@/lib/config/plan-limits'
+import { cache } from 'react'
 
 export type PlanType = 'trial' | 'starter' | 'pro' | 'agency';
 
@@ -46,7 +47,7 @@ export interface CurrentUser {
  * getCurrentUser - Standard utility to fetch the authenticated user 
  * and their organization context with reinforced plan-metering truth.
  */
-export const getCurrentUser = async (): Promise<CurrentUser | null> => {
+export const getCurrentUser = cache(async function getCurrentUser(): Promise<CurrentUser | null> {
   const supabase = await createClient()
 
   // Get Auth Service User
@@ -125,4 +126,4 @@ export const getCurrentUser = async (): Promise<CurrentUser | null> => {
     org_id: (userRecord as any).org_id,
     organizations: organization,
   }
-}
+})

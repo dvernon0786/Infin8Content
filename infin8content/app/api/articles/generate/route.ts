@@ -55,9 +55,60 @@ export async function POST(request: Request) {
             }, { status: 400 })
         }
 
-        // 3. Set status to processing (Atomic Lock)
-        // BUG 4 FIX: Update status FIRST so we don't consume quota if status update fails
-        const originalStatus = article.status
+        // 3. Quota Enforcement (Standard Query - No RPC Dependency)
+        // Reverted to Quota-First ordering to eliminate stuck-state windows.
+        const orgData = currentUser.organizations as any
+        const planType = (orgData?.plan_type || orgData?.plan || 'starter').toLowerCase()
+        const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
+        const articleLimit = PLAN_LIMITS.article_generation[planKey];
+
+        // Trial users: count 'completed' articles
+        // Others: count 'completed' + 'processing'
+        const targetStatuses = planType === 'trial' ? ['completed'] : ['completed', 'processing']
+
+        const { count, error: countError } = await supabase
+            .from('articles')
+            .select('id', { count: 'exact', head: true })
+            .eq('org_id', currentUser.org_id)
+            .in('status', targetStatuses)
+
+        if (countError) {
+            console.error('[Quota Check] Count failed:', countError)
+            return NextResponse.json({ error: 'Failed to verify usage limits' }, { status: 500 })
+        }
+
+        const currentUsage = count || 0
+        if (currentUsage >= articleLimit) {
+            // 📊 QUOTA TELEMETRY
+            await logActionAsync({
+                orgId: currentUser.org_id,
+                userId: currentUser.id,
+                action: 'quota.article_generation.limit_hit' as any,
+                details: {
+                    plan: planType,
+                    currentUsage,
+                    limit: articleLimit,
+                    metric: 'article_generation',
+                },
+                ipAddress: extractIpAddress(request.headers),
+                userAgent: extractUserAgent(request.headers),
+            })
+
+            const errorMsg = planType === 'trial'
+                ? "Trial users can only generate one article. Please upgrade."
+                : "Monthly article limit reached. Please upgrade your plan."
+
+            return NextResponse.json({
+                error: errorMsg,
+                limit: articleLimit,
+                currentUsage,
+                plan: planType,
+                metric: 'article_generation',
+            }, { status: 403 })
+        }
+
+        // 4. Set status to processing (Atomic Lock)
+        // This update will only succeed if the article is still in a triggerable state.
         const { data: updatedRows, error: updateError } = await supabase
             .from('articles')
             .update({
@@ -74,60 +125,6 @@ export async function POST(request: Request) {
             return NextResponse.json({
                 error: updateError ? 'Failed to update article status' : 'Article was already triggered or not found.'
             }, { status: updateError ? 500 : 409 })
-        }
-
-        // 4. Quota Enforcement (Atomic & Billing-Cycle Aware RPC)
-        const orgData = currentUser.organizations as any
-        const planType = (orgData?.plan_type || orgData?.plan || 'starter').toLowerCase()
-        const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
-        const articleLimit = PLAN_LIMITS.article_generation[planKey];
-
-        // Call Atomic RPC for high-concurrency safety
-        const { data: rpcData, error: rpcError } = await supabase.rpc('increment_article_usage', {
-            target_org_id: currentUser.org_id,
-            max_limit: articleLimit
-        })
-
-        const quotaResult = rpcData?.[0] as { success: boolean; new_usage: number; new_reset: string } | undefined;
-
-        if (rpcError || !quotaResult || !quotaResult.success) {
-            // 🚨 REVERT STATUS: Quota failed, so article shouldn't be 'processing'
-            await supabase
-                .from('articles')
-                .update({ status: originalStatus })
-                .eq('id', articleId)
-
-            if (!rpcError && quotaResult && !quotaResult.success) {
-                // 📊 QUOTA TELEMETRY
-                await logActionAsync({
-                    orgId: currentUser.org_id,
-                    userId: currentUser.id,
-                    action: 'quota.article_generation.limit_hit' as any,
-                    details: {
-                        plan: planType,
-                        currentUsage: quotaResult.new_usage,
-                        limit: articleLimit,
-                        metric: 'article_generation',
-                    },
-                    ipAddress: extractIpAddress(request.headers),
-                    userAgent: extractUserAgent(request.headers),
-                })
-
-                const errorMsg = planType === 'trial'
-                    ? "Trial users can only generate one article. Please upgrade."
-                    : "Monthly article limit reached. Please upgrade your plan."
-
-                return NextResponse.json({
-                    error: errorMsg,
-                    limit: articleLimit,
-                    currentUsage: quotaResult.new_usage,
-                    plan: planType,
-                    metric: 'article_generation',
-                }, { status: 403 })
-            }
-
-            console.error('[Quota Check] Atomic RPC failed:', rpcError)
-            return NextResponse.json({ error: 'Failed to verify usage limits' }, { status: 500 })
         }
 
         // 5. Emit Inngest Event (Idempotent Job Submission)
