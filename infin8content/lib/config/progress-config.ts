@@ -10,7 +10,7 @@ export const PROGRESS_CONFIG = {
     RESEARCHING: 5,
     WRITING_START: 10,
     WRITING_END: 90,
-    GENERATING: 95,
+    PROCESSING: 95,
     COMPLETED: 100,
   } as const,
 
@@ -35,20 +35,20 @@ export const PROGRESS_CONFIG = {
 export function calculateProgressPercentage(
   currentSection: number,
   totalSections: number,
-  stage: 'researching' | 'writing' | 'generating' | 'completed'
+  stage: 'researching' | 'writing' | 'processing' | 'completed'
 ): number {
   if (stage === 'completed') return PROGRESS_CONFIG.STAGE_WEIGHTS.COMPLETED;
   if (stage === 'researching') return PROGRESS_CONFIG.STAGE_WEIGHTS.RESEARCHING;
-  if (stage === 'generating') return PROGRESS_CONFIG.STAGE_WEIGHTS.GENERATING;
-  
+  if (stage === 'processing') return PROGRESS_CONFIG.STAGE_WEIGHTS.PROCESSING;
+
   // For writing stage, calculate based on section progress
   if (stage === 'writing' && totalSections > 0) {
     const sectionProgress = (currentSection - 1) / totalSections;
-    const writingProgress = PROGRESS_CONFIG.CALCULATION.BASE_WRITING_PERCENTAGE + 
+    const writingProgress = PROGRESS_CONFIG.CALCULATION.BASE_WRITING_PERCENTAGE +
       (sectionProgress * PROGRESS_CONFIG.CALCULATION.WRITING_RANGE_PERCENTAGE);
     return Math.min(writingProgress, PROGRESS_CONFIG.STAGE_WEIGHTS.WRITING_END);
   }
-  
+
   return PROGRESS_CONFIG.STAGE_WEIGHTS.QUEUED;
 }
 
@@ -60,10 +60,10 @@ export function calculateEstimatedTimeRemaining(
   progressPercentage: number
 ): number | null {
   if (elapsedSeconds <= 0 || progressPercentage <= 0) return null;
-  
+
   // Simple linear extrapolation
   const estimatedTotalSeconds = elapsedSeconds / (progressPercentage / 100);
   const remainingSeconds = estimatedTotalSeconds - elapsedSeconds;
-  
+
   return Math.max(remainingSeconds, PROGRESS_CONFIG.TIME_ESTIMATION.MINIMUM_SECONDS);
 }

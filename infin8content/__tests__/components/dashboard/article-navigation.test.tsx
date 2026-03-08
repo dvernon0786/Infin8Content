@@ -53,11 +53,11 @@ describe('Article Navigation', () => {
     updated_at: '2024-01-10T12:00:00Z',
   }
 
-  const mockGeneratingArticle: DashboardArticle = {
+  const mockProcessingArticle: DashboardArticle = {
     id: 'test-article-2',
-    title: 'Test Generating Article',
+    title: 'Test Processing Article',
     keyword: 'test keyword',
-    status: 'generating',
+    status: 'processing',
     created_at: '2024-01-10T10:00:00Z',
     updated_at: '2024-01-10T11:30:00Z',
   }
@@ -96,7 +96,7 @@ describe('Article Navigation', () => {
   it('should not make non-completed article titles clickable', async () => {
     const { useRealtimeArticles } = await import('@/hooks/use-realtime-articles')
     vi.mocked(useRealtimeArticles).mockReturnValue({
-      articles: [mockGeneratingArticle],
+      articles: [mockProcessingArticle],
       isConnected: true,
       connectionStatus: 'connected',
       isPollingMode: false,
@@ -109,7 +109,7 @@ describe('Article Navigation', () => {
     render(<ArticleStatusList orgId="test-org" />)
 
     // Target the h3 element (non-completed articles don't have button role)
-    const articleTitle = screen.getByRole('heading', { name: 'Test Generating Article' })
+    const articleTitle = screen.getByRole('heading', { name: 'Test Processing Article' })
     expect(articleTitle).toBeInTheDocument()
 
     // Should not have cursor-pointer class for non-completed articles

@@ -9,7 +9,8 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
-  XCircle
+  XCircle,
+  FileText
 } from 'lucide-react';
 
 export interface StatusConfig {
@@ -30,6 +31,19 @@ export interface StatusConfig {
 import { ArticleStatus } from '@/types/article';
 
 export const statusConfigs: Record<ArticleStatus, StatusConfig> = {
+  draft: {
+    color: 'text-gray-600',
+    bgColor: 'bg-gray-100',
+    borderColor: 'border-gray-200',
+    icon: React.createElement(FileText, { className: "h-4 w-4" }),
+    label: 'Draft',
+    variant: 'secondary',
+    ariaLabel: 'Article status: draft',
+    // Accessibility enhancements
+    pattern: 'solid',
+    highContrastColor: 'text-gray-800',
+    patternClass: 'bg-solid-gray',
+  },
   queued: {
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
@@ -43,14 +57,14 @@ export const statusConfigs: Record<ArticleStatus, StatusConfig> = {
     highContrastColor: 'text-blue-800',
     patternClass: 'bg-stripes-blue', // CSS pattern for colorblind accessibility
   },
-  generating: {
+  processing: {
     color: 'text-orange-600',
     bgColor: 'bg-orange-50',
     borderColor: 'border-orange-200',
     icon: React.createElement(Loader2, { className: "h-4 w-4 animate-spin" }),
-    label: 'Generating',
+    label: 'Processing',
     variant: 'default',
-    ariaLabel: 'Article status: generating',
+    ariaLabel: 'Article status: processing',
     // Accessibility enhancements
     pattern: 'dotted', // Visual pattern for colorblind users
     highContrastColor: 'text-orange-800',
