@@ -161,7 +161,7 @@ export async function runContentWritingAgent(
     if (input.position === 'first') {
       userMessage = `${styleTemplate}
 
-STRICT LENGTH RULE: This section must be 400–550 characters maximum. The entire article target is 4,000–5,000 characters across all sections. Be concise.
+STRICT LENGTH RULE: This section must be 150–200 words.
 
 Article title:
 ${input.articlePlan.article_title}
@@ -204,10 +204,16 @@ Generation config:
     } else if (input.position === 'final') {
       userMessage = `${styleTemplate}
 
-STRICT LENGTH RULE: This conclusion must be 350–500 characters maximum. Close cleanly with one CTA.
+STRICT LENGTH RULE: This conclusion must be 150–200 words. Close cleanly with one CTA.
 
-Full article draft so far:
-${input.priorContentMarkdown || ''}
+Article topic:
+${input.articlePlan.article_title}
+
+Target keyword:
+${input.articlePlan.target_keyword}
+
+Previous section (continue logically from this, then close the article):
+${getContextSnippet(input.priorContentMarkdown)}
 
 Final section header:
 ${input.sectionHeader}
@@ -229,10 +235,16 @@ Reminder — close the article with:
     } else {
       userMessage = `${styleTemplate}
 
-STRICT LENGTH RULE: This section must be 450–650 characters maximum. Do not pad. Be direct and concise.
+STRICT LENGTH RULE: This section must be 200–300 words.
 
-Article so far (do not repeat, only continue):
-${input.priorContentMarkdown || ''}
+Article topic:
+${input.articlePlan.article_title}
+
+Target keyword:
+${input.articlePlan.target_keyword}
+
+Previous section (continue logically from this):
+${getContextSnippet(input.priorContentMarkdown)}
 
 Current section header:
 ${input.sectionHeader}
@@ -265,6 +277,10 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
     let lastError: any;
     let timeoutId: NodeJS.Timeout | undefined;
 
+    // Conclusion prompt includes context snippet + all other fields —
+    // give it extra headroom so the actual output isn't silently truncated.
+    const maxTokensForPosition = input.position === 'final' ? 1800 : 1200;
+
     let timedOut = false;
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeoutId = setTimeout(() => {
@@ -273,37 +289,39 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
       }, 180000)
     });
 
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      if (timedOut) break;
+    try {
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        if (timedOut) break;
 
-      try {
-        console.log(
-          `[WritingAgent] Attempt ${attempt}/3 using ${WRITING_MODEL} (style: ${input.articlePlan.content_style})`
-        )
+        try {
+          console.log(
+            `[WritingAgent] Attempt ${attempt}/3 using ${WRITING_MODEL} (style: ${input.articlePlan.content_style})`
+          )
 
-        result = await Promise.race([
-          generateContent(messages, {
-            model: WRITING_MODEL,
-            maxTokens: 1200,
-            temperature: 0.7
-          }),
-          timeoutPromise
-        ]);
+          result = await Promise.race([
+            generateContent(messages, {
+              model: WRITING_MODEL,
+              maxTokens: maxTokensForPosition,
+              temperature: 0.7
+            }),
+            timeoutPromise
+          ]);
 
-        if (timeoutId) clearTimeout(timeoutId);
-        break;
-      } catch (error) {
-        lastError = error;
-        console.warn(`[WritingAgent] Attempt ${attempt} failed:`, error);
-
-        if (attempt < 3 && isRetryableError(error)) {
-          const delayMs = Math.pow(2, attempt) * 1000;
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-        } else {
-          if (timeoutId) clearTimeout(timeoutId);
           break;
+        } catch (error) {
+          lastError = error;
+          console.warn(`[WritingAgent] Attempt ${attempt} failed:`, error);
+
+          if (attempt < 3 && isRetryableError(error)) {
+            const delayMs = Math.pow(2, attempt) * 1000;
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+          } else {
+            break;
+          }
         }
       }
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
     }
 
     if (!result) {
@@ -317,21 +335,25 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
     // Keeps the display text, drops the URL entirely.
     sectionContent = sectionContent.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
 
-    // Hard cap: enforce section character ceiling length
-    const CHAR_LIMITS: Record<typeof input.position, number> = {
-      first: 550,
-      middle: 650,
-      final: 500,
+    // Word-based soft guard: only trim if massively over the limit
+    const WORD_LIMITS: Record<typeof input.position, number> = {
+      first: 200,
+      middle: 300,
+      final: 200,
     }
-    const SECTION_CHAR_LIMIT = CHAR_LIMITS[input.position];
-    if (sectionContent.length > SECTION_CHAR_LIMIT) {
-      // Trim to last complete sentence within limit
-      const trimmed = sectionContent.substring(0, SECTION_CHAR_LIMIT);
-      const lastPeriod = trimmed.lastIndexOf('.');
-      sectionContent = lastPeriod > 400 ? trimmed.substring(0, lastPeriod + 1) : trimmed;
+    const wordLimitForPosition = WORD_LIMITS[input.position];
+    if (countWords(sectionContent) > wordLimitForPosition * 1.5) {
+      // Split at paragraph boundary to avoid mid-sentence cuts
+      const paragraphs = sectionContent.split('\n\n');
+      let trimmed = '';
+      for (const p of paragraphs) {
+        if (countWords(trimmed + p) > wordLimitForPosition * 1.3) break;
+        trimmed += (trimmed ? '\n\n' : '') + p;
+      }
+      sectionContent = trimmed || sectionContent;
     }
 
-    const html = await convertMarkdownToHtml(sectionContent);
+    const html = convertMarkdownToHtml(sectionContent);
     const wordCount = countWords(sectionContent);
 
     const executionMs = Date.now() - startTime;
@@ -364,7 +386,7 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
  * - Citation links stripped to plain text (no fabricated URLs)
  * - Tables wrapped in scrollable container for mobile
  */
-async function convertMarkdownToHtml(markdown: string): Promise<string> {
+function convertMarkdownToHtml(markdown: string): string {
   const escapeHtml = (text: string): string => {
     const map: Record<string, string> = {
       '&': '&amp;',
@@ -446,12 +468,24 @@ async function convertMarkdownToHtml(markdown: string): Promise<string> {
   html = html.replace(/^---$/gm, `<hr style="${styles.hr}">`)
 
   // ── 10. Lists (handles multiple non-contiguous groups correctly) ──────────
-  // Process bullet lists — find all contiguous blocks of "* item" lines
+  // Process * bullet lists
   html = html.replace(/((?:^\* .+$\n?)+)/gm, (block) => {
     const items = block
       .trim()
       .split('\n')
       .map(line => line.replace(/^\* /, '').trim())
+      .filter(Boolean)
+      .map(item => `<li style="${styles.li}">${item}</li>`)
+      .join('\n')
+    return `<ul style="${styles.ul}">\n${items}\n</ul>\n`
+  })
+
+  // Process - bullet lists (LLM frequently uses dash style, especially in listicle mode)
+  html = html.replace(/((?:^- .+$\n?)+)/gm, (block) => {
+    const items = block
+      .trim()
+      .split('\n')
+      .map(line => line.replace(/^- /, '').trim())
       .filter(Boolean)
       .map(item => `<li style="${styles.li}">${item}</li>`)
       .join('\n')
@@ -520,6 +554,29 @@ async function convertMarkdownToHtml(markdown: string): Promise<string> {
 
 function countWords(text: string): number {
   return text.split(/\s+/).filter(word => word.length > 0).length;
+}
+
+/**
+ * getContextSnippet
+ *
+ * Returns only the last H2 section from the accumulated article markdown.
+ * Prevents prompt explosion on long articles: instead of sending the entire
+ * article-so-far (which causes OpenRouter to truncate earlier tokens and
+ * triggers repeated/duplicated sections), we send only the immediately
+ * preceding section so the writer can maintain narrative continuity.
+ */
+function getContextSnippet(markdown: string | undefined): string {
+  if (!markdown) return ''
+
+  // Find all top-level H2 section boundaries
+  const matches = [...markdown.matchAll(/^## .+$/gm)]
+
+  // Article is still short — send it in full
+  if (matches.length < 2) return markdown
+
+  // Extract only the last completed H2 section
+  const lastSectionStart = matches.at(-1)!.index!
+  return markdown.slice(lastSectionStart)
 }
 
 function isRetryableError(error: unknown): boolean {
