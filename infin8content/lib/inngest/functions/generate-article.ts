@@ -4,6 +4,7 @@ import { runContentPlannerAgent } from '@/lib/services/article-generation/conten
 import { runResearchAgent } from '@/lib/services/article-generation/research-agent'
 import { runContentWritingAgent } from '@/lib/services/article-generation/content-writing-agent'
 import { ArticleAssembler } from '@/lib/services/article-generation/article-assembler'
+import { generateArticleImage, getSectionImagePurpose } from '@/lib/services/image-generation/image-generation-agent'
 import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 import type {
   Article,
@@ -193,6 +194,48 @@ export const generateArticle = inngest.createFunction(
     })
 
     /* -------------------------------------------------- */
+    /* 3.5 Generate Cover Image                         */
+    /* -------------------------------------------------- */
+
+    await step.run('generate-cover-image', async () => {
+      // Idempotency: skip if already generated
+      const { data: existing } = await supabase
+        .from('articles')
+        .select('cover_image_url')
+        .eq('id', articleId)
+        .single()
+
+      if ((existing as any)?.cover_image_url) {
+        console.log('[ImageAgent] Cover image already exists, skipping.')
+        return (existing as any).cover_image_url
+      }
+
+      try {
+        const result = await generateArticleImage({
+          prompt: (plan as any).article_title,
+          purpose: 'cover',
+          articleTitle: (plan as any).article_title,
+          keyword: (article as any).keyword || '',
+          articleId,
+          imageStyle: (generationConfig as any).image_style,
+          brandColor: (generationConfig as any).brand_color,
+        })
+
+        await supabase
+          .from('articles')
+          .update({ cover_image_url: result.url })
+          .eq('id', articleId)
+
+        console.log(`[ImageAgent] Cover image saved for article ${articleId}`)
+        return result.url
+      } catch (err) {
+        // Non-fatal — article completes without cover image
+        console.warn('[ImageAgent] Cover image generation failed (non-fatal):', err)
+        return null
+      }
+    })
+
+    /* -------------------------------------------------- */
     /* 4. Transactional Reseed (HARDENED)                */
     /* -------------------------------------------------- */
 
@@ -324,6 +367,7 @@ export const generateArticle = inngest.createFunction(
             content_markdown: content.markdown,
             status: 'completed'
           } as ArticleSection)
+
         } catch (sectionError) {
           console.error(`[Worker] Section ${section.id} failed:`, sectionError)
 
@@ -344,6 +388,43 @@ export const generateArticle = inngest.createFunction(
 
           continue // 🔥 CRITICAL: Proceed to next section instead of crashing the whole loop
         }
+
+        // ---- Section Image (inline illustration or chart)
+        // 🔒 ISOLATION: Runs OUTSIDE the inner try/catch so image failure never
+        // triggers mark-section-failed on a successfully written section.
+        await step.run(`generate-section-image-${section.section_order}`, async () => {
+          const purpose = getSectionImagePurpose(
+            section.section_type,
+            section.section_order,
+            section.section_header
+          )
+
+          if (!purpose) return null  // skip intro, faq, conclusion, odd-numbered sections
+
+          try {
+            const result = await generateArticleImage({
+              prompt: section.section_header,
+              purpose,
+              articleTitle: (plan as any).article_title,
+              keyword: (article as any).keyword || '',
+              articleId,
+              imageStyle: (generationConfig as any).image_style,
+              brandColor: (generationConfig as any).brand_color,
+            }, `section-${section.section_order}`)
+
+            await supabase
+              .from('article_sections')
+              .update({ section_image_url: result.url })
+              .eq('id', section.id)
+
+            console.log(`[ImageAgent] Section image saved (${purpose}) for section ${section.section_order}`)
+            return result.url
+          } catch (err) {
+            // Non-fatal — section renders without image
+            console.warn(`[ImageAgent] Section ${section.section_order} image failed (non-fatal):`, err)
+            return null
+          }
+        })
       }
 
       /* -------------------------------------------------- */
