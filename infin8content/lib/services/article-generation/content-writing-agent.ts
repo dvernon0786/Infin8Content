@@ -55,15 +55,17 @@ Constraints
 • Avoid technical jargon, em dashes, and overly complex sentence structures
 • Focus on providing factual information and value rather than aggressive selling
 • Naturally incorporate target keywords and semantic variations without keyword stuffing
-• Include diverse, properly cited sources from provided research materials using plain-text citations
+• Include diverse, properly cited sources from provided research materials
 • Maintain the specified word count for each article section (±20% tolerance)
 • Use markdown formatting with tables, bullet points, and proper headers
 • Keep tone conversational and engaging, not overly serious or corporate
 • Include natural calls-to-action and product/service mentions where contextually appropriate
 • Embed YouTube video links when referencing video content (for later embedding)
 • Output only the complete article with no additional commentary or supporting text
-• Citations from research are in [Publication, Year, Topic] format. Render them inline as plain text e.g. (McKinsey Global Institute, 2024) — NEVER as markdown hyperlinks [text](url).
-• Do not add hyperlinks to any claims. No markdown link syntax anywhere in the article.
+• Only add hyperlinks when a URL is explicitly provided in the Supporting research block
+• Format inline links as: [anchor text](URL) — use the source title or publication name as anchor text
+• Maximum 4–5 external links per article section — do not link every sentence
+• Never fabricate a URL. If no URL is in the research, do not add a link.
 • You will receive a SECTION FORMAT block in each request — follow its structure rules exactly.
 
 Inputs
@@ -331,9 +333,20 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
     // Extract result text, default empty for safety
     let sectionContent = result.content || '';
 
-    // 🔒 DETERMINISTIC STRIP: Remove all markdown links regardless of LLM compliance.
-    // Keeps the display text, drops the URL entirely.
-    sectionContent = sectionContent.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // 🔒 WHITELIST STRIP: Only allow links whose URLs exist in the research payload (Phase 6)
+    const normalizeUrl = (url: string) =>
+      url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '').toLowerCase()
+
+    const approvedUrls = new Set(
+      (input.researchPayload.results ?? [])
+        .flatMap(r => r.source_urls ?? [])
+        .filter(Boolean)
+        .map(normalizeUrl)
+    )
+    sectionContent = sectionContent.replace(
+      /\[([^\]]+)\]\(([^)]+)\)/g,
+      (match, text, url) => approvedUrls.has(normalizeUrl(url)) ? match : text
+    )
     sectionContent = sectionContent
       .replace(/[\[(]?\bword[s]?\s*count[:\s]*\d+\s*\w*[\])]?\s*$/i, '')
       .trim() // Strip LLM metadata leaking into output
@@ -429,7 +442,7 @@ function convertMarkdownToHtml(markdown: string): string {
 
   let html = markdown
 
-  // ── 1. Fenced code blocks (before escaping) ──────────────────────────────
+  // ── 1. Protect code blocks and links from escaping ──────────────────────
   const codeBlocks: string[] = []
   html = html.replace(/```[\w]*\n([\s\S]*?)```/g, (_, code) => {
     const escaped = escapeHtml(code.trim())
@@ -438,12 +451,23 @@ function convertMarkdownToHtml(markdown: string): string {
     return `__CODE_BLOCK_${idx}__`
   })
 
+  const linkPlaceholders: string[] = []
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => {
+    const idx = linkPlaceholders.length
+    linkPlaceholders.push(`[${text}](${url})`)
+    return `__LINK_PLACEHOLDER_${idx}__`
+  })
+
   // ── 2. Escape HTML in remaining text ─────────────────────────────────────
   html = escapeHtml(html)
 
-  // ── 3. Restore code blocks ────────────────────────────────────────────────
+  // ── 3. Restore code blocks and links ──────────────────────────────────────
   codeBlocks.forEach((block, idx) => {
     html = html.replace(`__CODE_BLOCK_${idx}__`, block)
+  })
+
+  linkPlaceholders.forEach((link, idx) => {
+    html = html.replace(`__LINK_PLACEHOLDER_${idx}__`, link)
   })
 
   // ── 4. Headings ───────────────────────────────────────────────────────────
@@ -464,8 +488,12 @@ function convertMarkdownToHtml(markdown: string): string {
   // ── 7. Inline code ────────────────────────────────────────────────────────
   html = html.replace(/`([^`]+)`/g, `<code style="${styles.code_inline}">$1</code>`)
 
-  // ── 8. Markdown links → plain text (citation safety: no fabricated URLs) ──
-  html = html.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+  // ── 8. Markdown links → <a> tags ─────────────────────────────────────────
+  const linkStyle = 'color: #2563eb; text-decoration: underline;'
+  html = html.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    `<a href="$2" style="${linkStyle}" target="_blank" rel="noopener noreferrer">$1</a>`
+  )
 
   // ── 9. Horizontal rules ───────────────────────────────────────────────────
   html = html.replace(/^---$/gm, `<hr style="${styles.hr}">`)

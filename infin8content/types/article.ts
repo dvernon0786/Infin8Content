@@ -100,6 +100,7 @@ export interface ResearchPayload {
     query: string;
     answer: string;
     citations: string[];
+    source_urls?: string[]; // 🔗 NEW: Carry URLs through to the writer (Phase 6)
   }[];
   total_searches: number;
   research_timestamp: string;
@@ -136,8 +137,11 @@ export interface ResearchAgentOutput {
     query: string;
     answer: string;
     citations: string[];
+    source_urls?: string[];
   }[];
-  totalSearches: number;
+  total_searches: number;
+  consolidated_queries: string[];
+  source_types_found: string[];
 }
 
 export interface CreateArticleSectionParams {
