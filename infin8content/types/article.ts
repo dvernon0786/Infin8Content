@@ -74,7 +74,7 @@ export type SectionStatus =
  * Structured output from Content Planner Agent (Per Section)
  */
 export interface SectionPlannerOutput {
-  section_type: string;
+  section_type: 'introduction' | 'h2' | 'h3' | 'conclusion' | 'faq';
   header: string;
   supporting_points: string[];
   research_questions: string[];
@@ -114,7 +114,7 @@ export interface ArticleSection {
   article_id: string;
   section_order: number;
   section_header: string;
-  section_type: string;
+  section_type: 'introduction' | 'h2' | 'h3' | 'conclusion' | 'faq';
 
   // 🏗️ PIPELINE V2 FIELD (Single source of truth)
   planner_output: SectionPlannerOutput | null;

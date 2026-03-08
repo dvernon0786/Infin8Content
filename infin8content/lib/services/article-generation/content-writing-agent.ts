@@ -334,6 +334,9 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
     // 🔒 DETERMINISTIC STRIP: Remove all markdown links regardless of LLM compliance.
     // Keeps the display text, drops the URL entirely.
     sectionContent = sectionContent.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    sectionContent = sectionContent
+      .replace(/[\[(]?\bword[s]?\s*count[:\s]*\d+\s*\w*[\])]?\s*$/i, '')
+      .trim() // Strip LLM metadata leaking into output
 
     // Word-based soft guard: only trim if massively over the limit
     const WORD_LIMITS: Record<typeof input.position, number> = {

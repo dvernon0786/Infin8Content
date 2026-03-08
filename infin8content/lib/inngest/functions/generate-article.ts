@@ -122,7 +122,11 @@ export const generateArticle = inngest.createFunction(
       if (article.generation_config) return article.generation_config as ContentDefaults
 
       // Otherwise, snapshot now for determinism (Phase 5, Step 3)
-      const config = organization.content_defaults as ContentDefaults
+      const config = {
+        ...(organization.content_defaults as ContentDefaults),
+        // Safety default: emojis off unless explicitly enabled by user
+        add_emojis: (organization.content_defaults as ContentDefaults)?.add_emojis ?? false,
+      }
 
       await supabase
         .from('articles')
@@ -283,7 +287,10 @@ export const generateArticle = inngest.createFunction(
               articlePlan: plan as any,
               position,
               generationConfig,
-              priorContentMarkdown: completedSections.map(s => s.content_markdown).join('\n\n'),
+              priorContentMarkdown: completedSections
+                .map(s => s.content_markdown)
+                .filter(Boolean)
+                .join('\n\n'),
               organizationContext: {
                 name: organization.name,
                 description: organization.business_description || ''
