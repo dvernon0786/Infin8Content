@@ -20,7 +20,7 @@ export interface UserRecord {
   email: string
   auth_user_id: string
   role: string
-  org_id: string
+  org_id: string | null
   first_name?: string
   last_name?: string
 }
@@ -34,7 +34,7 @@ export interface CurrentUser {
   email: string
   first_name: string | null
   role: string
-  org_id: string
+  org_id: string | null
   organizations: (OrganizationRecord & {
     article_usage?: number;
     article_limit?: number | null;

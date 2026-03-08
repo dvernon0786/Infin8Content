@@ -57,7 +57,8 @@ describe('/api/intent/workflows - Feature Flag Checks', () => {
         email: 'test@example.com',
         first_name: 'Test',
         role: 'admin',
-        org_id: 'org-123'
+        org_id: 'org-123',
+        organizations: null
       };
 
       vi.mocked(getCurrentUser).mockResolvedValue(mockSession);
@@ -136,7 +137,8 @@ describe('/api/intent/workflows - Feature Flag Checks', () => {
         email: 'test@example.com',
         first_name: 'Test',
         role: 'admin',
-        org_id: 'org-123'
+        org_id: 'org-123',
+        organizations: null
       };
 
       vi.mocked(getCurrentUser).mockResolvedValue(mockSession);
@@ -178,7 +180,8 @@ describe('/api/intent/workflows - Feature Flag Checks', () => {
         email: 'test@example.com',
         first_name: 'Test',
         role: 'admin',
-        org_id: 'org-123'
+        org_id: 'org-123',
+        organizations: null
       };
 
       vi.mocked(getCurrentUser).mockResolvedValue(mockSession);
@@ -220,7 +223,8 @@ describe('/api/intent/workflows - Feature Flag Checks', () => {
         email: 'test@example.com',
         first_name: 'Test',
         role: 'admin',
-        org_id: '12345678-1234-1234-1234-123456789012' // User belongs to this org
+        org_id: '12345678-1234-1234-1234-123456789012', // User belongs to this org
+        organizations: null
       };
 
       vi.mocked(getCurrentUser).mockResolvedValue(mockSession);
