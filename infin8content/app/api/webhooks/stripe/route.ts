@@ -849,8 +849,13 @@ async function storeWebhookEvent(event: any, supabase: any, organizationId: stri
       })
 
     if (insertError) {
+      // BUG 2 FIX: Handle unique constraint conflict as success (already processed)
+      if ((insertError as any).code === '23505') {
+        logWebhookEvent(event, 'Event already recorded (idempotent ignore)', { organizationId })
+        return
+      }
+
       // Log error but don't throw - idempotency is best effort
-      // This is a non-critical operation
       logWebhookError(event, 'Failed to store webhook event (non-critical)', insertError, {
         organizationId,
       })

@@ -1,52 +1,66 @@
 import { createClient } from './server'
-import { cache } from 'react'
-import type { Database } from './database.types'
-import { PLAN_LIMITS } from '../config/plan-limits'
+import { PLAN_LIMITS } from '@/lib/config/plan-limits'
 
-type UserRecord = Database['public']['Tables']['users']['Row']
-type OrganizationRecord = Database['public']['Tables']['organizations']['Row']
+export type PlanType = 'trial' | 'starter' | 'pro' | 'agency';
+
+export interface OrganizationRecord {
+  id: string
+  name: string
+  plan?: PlanType | string
+  plan_type?: PlanType | string
+  payment_status?: string
+  created_at?: string
+  updated_at?: string
+  role?: string
+  white_label_settings?: any
+}
+
+export interface UserRecord {
+  id: string
+  email: string
+  auth_user_id: string
+  role: string
+  org_id: string | null
+  first_name?: string
+  last_name?: string
+}
 
 export interface CurrentUser {
   user: {
     id: string
-    email?: string
+    email: string
   }
   id: string
   email: string
   first_name: string | null
   role: string
   org_id: string | null
-  organizations?: (OrganizationRecord & {
+  organizations: (OrganizationRecord & {
     article_usage?: number;
     article_limit?: number | null;
+    total_completed_usage?: number;
   }) | null
 }
 
 /**
- * Get the current authenticated user with their organization data
- * @returns Current user with organization data, or null if not authenticated
+ * getCurrentUser - Standard utility to fetch the authenticated user 
+ * and their organization context with reinforced plan-metering truth.
  */
-export const getCurrentUser = cache(async function getCurrentUser(): Promise<CurrentUser | null> {
+export const getCurrentUser = async (): Promise<CurrentUser | null> => {
   const supabase = await createClient()
 
-  // Get authenticated user from Supabase Auth
+  // Get Auth Service User
   const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return null
 
-  if (authError || !user) {
-    return null
-  }
-
-  // Query users table to get user record
-  const { data: userRecord, error: userError } = await supabase
+  // Get DB User Profile
+  const { data: userRecord, error: profileError } = await supabase
     .from('users')
-    .select('id, email, first_name, role, org_id')
+    .select('*')
     .eq('auth_user_id', user.id)
     .single()
 
-  if (userError || !userRecord) {
-    console.error('Failed to load user record in getCurrentUser:', userError)
-    return null
-  }
+  if (profileError || !userRecord) return null
 
   // Query organization if org_id exists
   let organization: (OrganizationRecord & {
@@ -54,6 +68,7 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
     article_limit?: number | null;
     total_completed_usage?: number;
   }) | null = null
+
   if ((userRecord as any).org_id) {
     const { data: orgData } = await supabase
       .from('organizations')
@@ -64,33 +79,36 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
     if (orgData) {
       const organizationData = orgData as any
       // Determine effective plan - use plan_type if available, fallback to plan
-      const planType = (organizationData.plan_type || organizationData.plan || 'trial').toLowerCase()
-      const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
+      const planType = (organizationData.plan_type || organizationData.plan || 'starter').toLowerCase() as PlanType
+      const planKey = (['trial', 'starter', 'pro', 'agency'].includes(planType) ? planType : 'starter') as PlanType;
 
-      // Calculate usage - use atomic counter from DB for reliability
+      // Calculate usage
       let articleUsage = organizationData.article_usage || 0
 
-      // BUG E FIX: Trial users need strict live counting to match generate API gate
+      // BUG E FIX: Trial users need strict sync with generate API's 'completed' gate
       if (planType === 'trial') {
         const { count } = await supabase
           .from('articles')
-          .select('*', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true })
           .eq('org_id', (userRecord as any).org_id)
-          .in('status', ['queued', 'processing', 'completed', 'reviewing'])
+          .eq('status', 'completed')
 
         articleUsage = count || 0
       }
 
-      const totalCompletedUsage = articleUsage // Simplified for now
+      const totalCompletedUsage = articleUsage
 
       // Resolve plan limit from centralized config
       const articleLimit = PLAN_LIMITS.article_generation[planKey];
 
       organization = {
         ...organizationData,
+        plan: planKey,
         article_usage: articleUsage,
         article_limit: articleLimit,
-        total_completed_usage: totalCompletedUsage
+        total_completed_usage: totalCompletedUsage,
+        // Fallback role if missing on org itself - often owners are admins
+        role: organizationData.role || (userRecord as any).role
       }
     }
   }
@@ -102,9 +120,9 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
     },
     id: (userRecord as any).id,
     email: (userRecord as any).email,
-    first_name: (userRecord as any).first_name,
+    first_name: (userRecord as any).first_name || null,
     role: (userRecord as any).role,
     org_id: (userRecord as any).org_id,
     organizations: organization,
   }
-})
+}

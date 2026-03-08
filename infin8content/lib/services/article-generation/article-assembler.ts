@@ -31,16 +31,16 @@ export class ArticleAssembler {
       const article = await this.loadArticle(input)
       const sections = await this.loadSections(input)
 
+      if (!sections.length) {
+        throw new Error(`Assembly failed: No completed sections found for article ${input.articleId}.`)
+      }
+
       // 🔴 ENTERPRISE VALIDATION: Ensure all sections are present before assembly
       // 🔒 BUG F FIX: Derive expected counts from JS filter truth to ensure consistency
       const expectedSectionCount = sections.length
 
       if (!input.allowReassembly && article.status !== 'processing') {
         throw new Error(`Assembly aborted: Article ${input.articleId} is in status '${article.status}', expected 'processing'.`)
-      }
-
-      if (!sections.length) {
-        throw new Error(`Assembly failed: No completed sections found for article ${input.articleId}.`)
       }
 
       // 🔍 ANALYTICS: Compute metrics from relational truth

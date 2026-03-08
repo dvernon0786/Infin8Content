@@ -69,7 +69,7 @@ export async function POST(
 
     // FSM GUARD: Only allow step_9_articles for article queuing
     const typedWorkflow = workflow as unknown as { id: string; state: string; organization_id: string }
-    
+
     // IDEMPOTENCY CASE: Already completed
     if (typedWorkflow.state === 'completed') {
       return NextResponse.json({
@@ -80,7 +80,7 @@ export async function POST(
         message: 'Workflow already completed'
       })
     }
-    
+
     if (typedWorkflow.state !== 'step_9_articles') {
       return NextResponse.json(
         {
@@ -94,8 +94,8 @@ export async function POST(
     // Log action start
     try {
       await logActionAsync({
-        orgId: organizationId,
-        userId: userId,
+        orgId: organizationId!,
+        userId: userId!,
         action: AuditAction.WORKFLOW_ARTICLE_QUEUING_STARTED,
         details: {
           workflow_id: workflowId,
@@ -106,7 +106,6 @@ export async function POST(
       })
     } catch (logError) {
       console.error('Failed to log workflow start:', logError)
-      // Continue anyway - logging is non-blocking
     }
 
     console.log(`[QueueArticles] Starting article queuing for workflow ${workflowId}`)
@@ -134,8 +133,8 @@ export async function POST(
     // Log completion
     try {
       await logActionAsync({
-        orgId: organizationId,
-        userId: userId,
+        orgId: organizationId!,
+        userId: userId!,
         action: AuditAction.WORKFLOW_ARTICLE_QUEUING_COMPLETED,
         details: {
           workflow_id: workflowId,
@@ -149,7 +148,6 @@ export async function POST(
       })
     } catch (logError) {
       console.error('Failed to log workflow completion:', logError)
-      // Continue anyway - logging is non-blocking
     }
 
     // Return success response
@@ -173,8 +171,8 @@ export async function POST(
     if (organizationId && userId) {
       try {
         await logActionAsync({
-          orgId: organizationId,
-          userId: userId,
+          orgId: organizationId!,
+          userId: userId!,
           action: AuditAction.WORKFLOW_ARTICLE_QUEUING_FAILED,
           details: {
             workflow_id: workflowId,

@@ -102,26 +102,10 @@ export async function validateWorkflowAccess(
 
 /**
  * Fetches progress data for a single article
+ * BUG NB3 FIX: article_progress table does not exist. Handled gracefully.
  */
 export async function getArticleProgress(articleId: string) {
-  const supabase = createServiceRoleClient()
-
-  try {
-    const { data, error } = await supabase
-      .from('article_progress')
-      .select('*')
-      .eq('article_id', articleId)
-      .single()
-
-    if (error) {
-      return null
-    }
-
-    return data
-  } catch (error) {
-    console.error('Error fetching article progress:', error)
-    return null
-  }
+  return null
 }
 
 /**
