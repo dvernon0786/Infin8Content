@@ -61,7 +61,8 @@ export class ArticleAssembler {
         header: s.section_header,
         markdown: s.content_markdown,
         html: s.content_html,
-        order: s.section_order
+        order: s.section_order,
+        section_image_url: s.section_image_url ?? null
       }))
 
       // 🏷️ TITLE DERIVATION: If title is missing, derive it from first section or keyword
@@ -143,7 +144,7 @@ export class ArticleAssembler {
   private async loadSections({ articleId }: AssemblyInput) {
     const { data, error } = await this.supabaseAdmin
       .from('article_sections')
-      .select('section_order, section_header, content_markdown, content_html')
+      .select('section_order, section_header, content_markdown, content_html, section_image_url')
       .eq('article_id', articleId)
       .eq('status', 'completed')
       .order('section_order', { ascending: true })
@@ -289,7 +290,12 @@ export class ArticleAssembler {
           md = ''
         }
 
-        return `## ${s.header}\n\n${md}`.trimEnd()
+        // Inject section image below content if one was generated
+        const sectionImg = s.section_image_url
+          ? `\n\n![${s.header}](${s.section_image_url})`
+          : ''
+
+        return `## ${s.header}\n\n${md}${sectionImg}`.trimEnd()
       })
       .join('\n\n')
 
