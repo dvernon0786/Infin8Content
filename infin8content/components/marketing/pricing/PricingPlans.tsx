@@ -138,7 +138,7 @@ export default function PricingPlans({ billing }: Props) {
               </div>
 
               {/* Cost-Per-Article Value Anchor */}
-              {plan.name !== "Agency" && (
+              {plan.name !== "Agency" && articleLimit && (
                 <p className="text-xs text-neutral-500 mt-2">
                   At only ${(currentPrice / articleLimit).toFixed(2)} per article
                 </p>

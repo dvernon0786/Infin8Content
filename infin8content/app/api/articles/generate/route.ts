@@ -55,72 +55,52 @@ export async function POST(request: Request) {
             }, { status: 400 })
         }
 
-        // 3. Quota Enforcement (Atomic & Billing-Cycle Aware)
+        // 3. Quota Enforcement (Atomic & Billing-Cycle Aware RPC)
         const orgData = currentUser.organizations as any
         const planType = (orgData?.plan || 'trial').toLowerCase()
         const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
         const articleLimit = PLAN_LIMITS.article_generation[planKey];
 
-        if (articleLimit !== null) {
-            const now = new Date()
-            const resetDate = orgData.usage_reset_at ? new Date(orgData.usage_reset_at) : null
-            let isNewCycle = resetDate && now > resetDate
+        // Call Atomic RPC for high-concurrency safety
+        const { data: rpcData, error: rpcError } = await supabase.rpc('increment_article_usage', {
+            target_org_id: currentUser.org_id,
+            max_limit: articleLimit
+        })
 
-            const updateData: any = {
-                article_usage: isNewCycle ? 1 : orgData.article_usage + 1
-            }
-            if (isNewCycle && resetDate) {
-                const nextReset = new Date(resetDate)
-                nextReset.setMonth(nextReset.getMonth() + 1)
-                updateData.usage_reset_at = nextReset.toISOString()
-            }
+        const quotaResult = rpcData?.[0] as { success: boolean; new_usage: number; new_reset: string } | undefined;
 
-            const query = supabase
-                .from('organizations')
-                .update(updateData)
-                .eq('id', currentUser.org_id)
-
-            // CRITICAL: Condition for atomic enforcement
-            if (!isNewCycle) {
-                query.lt('article_usage', articleLimit)
-            }
-
-            const { data: orgUpdate, error: orgUpdateError } = await query.select('article_usage').single()
-
-            if (orgUpdateError || !orgUpdate) {
-                // If the update failed or returned nothing, it's either an error or the limit was hit
-                if (orgUpdateError?.code === 'PGRST116' || (!orgUpdate && !orgUpdateError)) {
-                    // 📊 QUOTA TELEMETRY
-                    await logActionAsync({
-                        orgId: currentUser.org_id,
-                        userId: currentUser.id,
-                        action: 'quota.article_generation.limit_hit' as any,
-                        details: {
-                            plan: planType,
-                            currentUsage: orgData.article_usage,
-                            limit: articleLimit,
-                            metric: 'article_generation',
-                        },
-                        ipAddress: extractIpAddress(request.headers),
-                        userAgent: extractUserAgent(request.headers),
-                    })
-
-                    const errorMsg = planType === 'trial'
-                        ? "Trial users can only generate one article. Please upgrade."
-                        : "Monthly article limit reached. Please upgrade your plan."
-
-                    return NextResponse.json({
-                        error: errorMsg,
-                        limit: articleLimit,
-                        currentUsage: orgData.article_usage,
+        if (rpcError || !quotaResult || !quotaResult.success) {
+            if (!rpcError && quotaResult && !quotaResult.success) {
+                // 📊 QUOTA TELEMETRY
+                await logActionAsync({
+                    orgId: currentUser.org_id,
+                    userId: currentUser.id,
+                    action: 'quota.article_generation.limit_hit' as any,
+                    details: {
                         plan: planType,
+                        currentUsage: quotaResult.new_usage,
+                        limit: articleLimit,
                         metric: 'article_generation',
-                    }, { status: 403 })
-                }
+                    },
+                    ipAddress: extractIpAddress(request.headers),
+                    userAgent: extractUserAgent(request.headers),
+                })
 
-                console.error('[Quota Check] Atomic update failed:', orgUpdateError)
-                return NextResponse.json({ error: 'Failed to verify usage limits' }, { status: 500 })
+                const errorMsg = planType === 'trial'
+                    ? "Trial users can only generate one article. Please upgrade."
+                    : "Monthly article limit reached. Please upgrade your plan."
+
+                return NextResponse.json({
+                    error: errorMsg,
+                    limit: articleLimit,
+                    currentUsage: quotaResult.new_usage,
+                    plan: planType,
+                    metric: 'article_generation',
+                }, { status: 403 })
             }
+
+            console.error('[Quota Check] Atomic RPC failed:', rpcError)
+            return NextResponse.json({ error: 'Failed to verify usage limits' }, { status: 500 })
         }
 
         // 4. Set status and trigger generation
@@ -145,9 +125,10 @@ export async function POST(request: Request) {
             }, { status: 409 })
         }
 
-        // 5. Emit Inngest Event
+        // 5. Emit Inngest Event (Idempotent Job Submission)
         await inngest.send({
             name: 'article/generate',
+            id: `article-gen-${articleId}`, // BUG 2 FIX: Idempotency Key
             data: {
                 articleId,
                 workflowId: article.intent_workflow_id,

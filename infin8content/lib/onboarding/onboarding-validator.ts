@@ -41,15 +41,17 @@ export async function validateOnboarding(orgId: string): Promise<OnboardingValid
     }
   }
 
-  // Check competitor count
-  const { count: competitorCount } = await supabase
+  // Optimized check: Exit as soon as we find 1 competitor instead of full count
+  const { data: competitors } = await supabase
     .from('organization_competitors')
-    .select('*', { count: 'exact', head: true })
+    .select('id')
     .eq('organization_id', orgId)
     .eq('is_active', true)
+    .limit(1)
+
+  const hasCompetitors = (competitors?.length ?? 0) > 0
 
   const missing: string[] = []
-
   // Strict validation of each field
   if (!org.website_url || org.website_url.trim() === '') {
     missing.push('website_url')
@@ -79,8 +81,7 @@ export async function validateOnboarding(orgId: string): Promise<OnboardingValid
     missing.push('content_defaults')
   }
 
-
-  if (!competitorCount || competitorCount < 1) {
+  if (!hasCompetitors) {
     missing.push('competitors')
   }
 

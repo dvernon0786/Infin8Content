@@ -75,10 +75,12 @@ export interface ContextManagement {
   optimizationRate: number; // percentage
 }
 
+import { ArticleStatus } from '@/types/article';
+
 export interface GenerationProgressProps {
   articleId: string;
   orgId: string;
-  status: 'queued' | 'researching' | 'processing' | 'completed' | 'failed';
+  status: ArticleStatus;
   overallProgress: number; // 0-100
   parallelSections: ParallelSection[];
   performanceMetrics: PerformanceMetrics;
@@ -151,14 +153,19 @@ export function GenerationProgress({
     switch (status) {
       case 'queued':
         return { color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Queued' };
-      case 'researching':
-        return { color: 'text-blue-600', bgColor: 'bg-blue-100', label: 'Researching' };
       case 'processing':
-        return { color: 'text-blue-600', bgColor: 'bg-blue-100', label: 'Processing' };
+      case 'generating':
+        return { color: 'text-blue-600', bgColor: 'bg-blue-100', label: 'Generating' };
+      case 'reviewing':
+        return { color: 'text-indigo-600', bgColor: 'bg-indigo-100', label: 'Reviewing' };
       case 'completed':
         return { color: 'text-green-600', bgColor: 'bg-green-100', label: 'Completed' };
       case 'failed':
         return { color: 'text-red-600', bgColor: 'bg-red-100', label: 'Failed' };
+      case 'draft':
+        return { color: 'text-gray-500', bgColor: 'bg-gray-50', label: 'Draft' };
+      case 'cancelled':
+        return { color: 'text-gray-400', bgColor: 'bg-gray-200', label: 'Cancelled' };
       default:
         return { color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Unknown' };
     }
@@ -264,11 +271,12 @@ export function GenerationProgress({
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className={cn('font-medium', overallStatusConfig.color)}>
-                {status === 'processing' ? `${activeSections.length} sections processing` :
-                  status === 'researching' ? 'Research phase' :
+                {status === 'processing' || status === 'generating' ? `${activeSections.length} sections processing` :
+                  status === 'reviewing' ? 'Article in review' :
                     status === 'completed' ? 'Generation complete' :
                       status === 'failed' ? 'Generation failed' :
-                        'Waiting to start'}
+                        status === 'draft' ? 'Draft article' :
+                          'Waiting to start'}
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-gray-600">

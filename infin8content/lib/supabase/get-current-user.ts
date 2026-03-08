@@ -68,8 +68,20 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
       const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
 
       // Calculate usage - use atomic counter from DB for reliability
-      const articleUsage = organizationData.article_usage || 0
-      const totalCompletedUsage = articleUsage // Simplified for now as it's the primary metric
+      let articleUsage = organizationData.article_usage || 0
+
+      // BUG E FIX: Trial users need strict live counting to match generate API gate
+      if (planType === 'trial') {
+        const { count } = await supabase
+          .from('articles')
+          .select('*', { count: 'exact', head: true })
+          .eq('org_id', (userRecord as any).org_id)
+          .in('status', ['queued', 'processing', 'completed', 'reviewing'])
+
+        articleUsage = count || 0
+      }
+
+      const totalCompletedUsage = articleUsage // Simplified for now
 
       // Resolve plan limit from centralized config
       const articleLimit = PLAN_LIMITS.article_generation[planKey];

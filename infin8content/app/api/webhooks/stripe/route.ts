@@ -22,6 +22,7 @@ function logWebhookEvent(event: any, action: string, details?: any) {
     timestamp: new Date().toISOString(),
     ...details,
   }
+  // PII Protection: Only log sanitized IDs and types, never the full event payload
   console.log(`[Webhook] ${action}:`, JSON.stringify(logData, null, 2))
 }
 
@@ -226,17 +227,24 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   }
 
   // FIX 3: Store the subscription ID early to ensure later events find the org (subscription_id stored in atomic update below)
+  // Resolve the subscription to check status
   if (session.subscription) {
-    // FIX 1: Always verify using price mapping (Bug 1 Fix: avoid items.data[0])
     const subscription = await stripe.subscriptions.retrieve(session.subscription)
-    const planItem = subscription.items.data.find(
-      (item: any) => getPlanFromPriceId(item.price?.id)
-    )
-    const priceId = planItem?.price?.id
-    const resolvedPlan = priceId ? getPlanFromPriceId(priceId) : null
 
-    if (resolvedPlan) {
-      plan = resolvedPlan
+    // BUG 1 FIX: If status is trialing, force plan to 'trial' regardless of price ID
+    // until the trial period ends and it becomes 'active'.
+    if (subscription.status === 'trialing') {
+      plan = 'trial'
+    } else {
+      const planItem = subscription.items.data.find(
+        (item: any) => getPlanFromPriceId(item.price?.id)
+      )
+      const priceId = planItem?.price?.id
+      const resolvedPlan = priceId ? getPlanFromPriceId(priceId) : null
+
+      if (resolvedPlan) {
+        plan = resolvedPlan
+      }
     }
   }
 
@@ -361,10 +369,22 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
     .single()
 
   if (organization) {
+    // BUG 6 FIX: Respect remaining time for canceled subscriptions
+    if (subscription.cancel_at_period_end) {
+      logWebhookEvent(event, 'Subscription marked for cancellation (cancel_at_period_end) - keeping plan active until period ends', {
+        organizationId: organization.id,
+        cancelAt: new Date(subscription.cancel_at * 1000).toISOString()
+      })
+      await storeWebhookEvent(event, supabase, organization.id)
+      return
+    }
+
     let resolvedPlan: string | undefined;
 
-    if ((subscription.status === 'active' || subscription.status === 'trialing') && subscription.items?.data?.length > 0) {
-      // FIX: Always resolve from price ID for production safety (Bug 1 Fix: avoid items.data[0])
+    // BUG 1 FIX: If status is trialing, force plan to 'trial'
+    if (subscription.status === 'trialing') {
+      resolvedPlan = 'trial'
+    } else {
       const planItem = subscription.items.data.find(
         (item: any) => getPlanFromPriceId(item.price?.id)
       )
@@ -378,28 +398,27 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
       }
 
       resolvedPlan = newPlan
-
-      const updateData: any = {
-        plan: resolvedPlan || 'trial',
-        payment_status: 'active',
-        usage_reset_at: new Date(subscription.current_period_end * 1000).toISOString(),
-      }
-
-      const { error: updateError } = await (supabase as any)
-        .from('organizations')
-        .update(updateData)
-        .eq('id', organization.id)
-
-      if (updateError) {
-        logWebhookError(event, 'Failed to update plan upon subscription update', updateError, {
-          organizationId: organization.id,
-          subscriptionId: subscription.id,
-        })
-          ; (updateError as any).retryable = true
-        throw updateError
-      }
     }
 
+    const updateData: any = {
+      plan: resolvedPlan || 'trial',
+      payment_status: 'active',
+      usage_reset_at: new Date(subscription.current_period_end * 1000).toISOString(),
+    }
+
+    const { error: updateError } = await (supabase as any)
+      .from('organizations')
+      .update(updateData)
+      .eq('id', organization.id)
+
+    if (updateError) {
+      logWebhookError(event, 'Failed to update plan upon subscription update', updateError, {
+        organizationId: organization.id,
+        subscriptionId: subscription.id,
+      })
+        ; (updateError as any).retryable = true
+      throw updateError
+    }
     // Update subscription status if needed
     // For now, just log and store the event
     logWebhookEvent(event, 'Subscription updated', {
@@ -719,11 +738,15 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
     if (invoice.subscription) {
       const subscription = await stripe.subscriptions.retrieve(invoice.subscription) as any
       updateData.usage_reset_at = new Date(subscription.current_period_end * 1000).toISOString()
-    }
 
-    // Sync plan if resolved from invoice (ensures upgrades reflect immediately)
-    if (currentInvoicedPlan) {
-      updateData.plan = currentInvoicedPlan || 'trial'
+      // BUG 1 FIX: If subscription is currently trialing, force plan to trial
+      if (subscription.status === 'trialing') {
+        updateData.plan = 'trial'
+      } else if (currentInvoicedPlan) {
+        updateData.plan = currentInvoicedPlan
+      }
+    } else if (currentInvoicedPlan) {
+      updateData.plan = currentInvoicedPlan
     }
 
     // If reactivating, clear grace period and suspension fields
