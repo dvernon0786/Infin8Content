@@ -282,6 +282,14 @@ export function ArticleMarkdownViewer({ markdown }: { markdown: string }) {
     <div className="prose prose-neutral max-w-none">
       <ReactMarkdown
         components={{
+          img: ({ src, alt }) => (
+            <img
+              src={src}
+              alt={alt || ''}
+              className="w-full rounded-lg my-6 object-cover shadow-sm"
+              loading="lazy"
+            />
+          ),
           // Reuse the same link treatment as the section viewer
           a: ({ href, children }) => (
             <a

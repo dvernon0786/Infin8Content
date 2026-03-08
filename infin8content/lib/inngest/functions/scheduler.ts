@@ -94,7 +94,7 @@ export const articleScheduler = inngest.createFunction(
             const { data, error } = await supabase
                 .from('articles' as any)
                 .update({
-                    status: 'generating',
+                    status: 'processing',
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', article.id)

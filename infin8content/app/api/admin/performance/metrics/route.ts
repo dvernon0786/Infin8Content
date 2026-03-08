@@ -29,7 +29,7 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   try {
     const currentUser = await getCurrentUser()
-    
+
     if (!currentUser || !currentUser.org_id) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -70,7 +70,7 @@ export async function GET(request: Request) {
     // Fetch performance metrics from database
     const [
       generationMetrics,
-      researchMetrics, 
+      researchMetrics,
       contextMetrics,
       systemHealth,
       historicalData,
@@ -124,7 +124,7 @@ async function fetchGenerationMetrics(supabase: any, orgId: string, timeRangeSta
       `)
       .eq('org_id', orgId)
       .gte('updated_at', timeRangeStart.toISOString())
-      .in('status', ['completed', 'generating'])
+      .in('status', ['completed', 'processing'])
 
     if (error) {
       console.error('Generation metrics query error:', error)
@@ -147,7 +147,7 @@ async function fetchGenerationMetrics(supabase: any, orgId: string, timeRangeSta
 
     const articles = data || []
     const completedArticles = articles.filter((a: any) => a.status === 'completed')
-    const generatingArticles = articles.filter((a: any) => a.status === 'generating')
+    const generatingArticles = articles.filter((a: any) => a.status === 'processing')
 
     // Calculate Epic 20 performance metrics with safe defaults
     const totalApiCalls = completedArticles.reduce((sum: number, article: any) => {
@@ -156,26 +156,26 @@ async function fetchGenerationMetrics(supabase: any, orgId: string, timeRangeSta
       return sum + (metrics.total_api_calls || 0)
     }, 0)
 
-    const avgGenerationTime = completedArticles.length > 0 
+    const avgGenerationTime = completedArticles.length > 0
       ? completedArticles.reduce((sum: number, article: any) => {
-          const progress = article.article_progress?.[0]
-          return sum + (progress?.generation_time || 0)
-        }, 0) / completedArticles.length
+        const progress = article.article_progress?.[0]
+        return sum + (progress?.generation_time || 0)
+      }, 0) / completedArticles.length
       : 0
 
     const avgRetryAttempts = completedArticles.length > 0
       ? completedArticles.reduce((sum: number, article: any) => {
-          const progress = article.article_progress?.[0]
-          return sum + (progress?.retry_attempts || 0)
-        }, 0) / completedArticles.length
+        const progress = article.article_progress?.[0]
+        return sum + (progress?.retry_attempts || 0)
+      }, 0) / completedArticles.length
       : 0
 
     const parallelProcessingEfficiency = completedArticles.length > 0
       ? completedArticles.reduce((sum: number, article: any) => {
-          const progress = article.article_progress?.[0]
-          const sections = progress?.parallel_sections || []
-          return sum + (Array.isArray(sections) ? sections.length : 0)
-        }, 0) / completedArticles.length
+        const progress = article.article_progress?.[0]
+        const sections = progress?.parallel_sections || []
+        return sum + (Array.isArray(sections) ? sections.length : 0)
+      }, 0) / completedArticles.length
       : 0
 
     // Calculate Epic 20 benchmark comparisons
@@ -187,7 +187,7 @@ async function fetchGenerationMetrics(supabase: any, orgId: string, timeRangeSta
     }
 
     const actualApiCallsPerArticle = Math.max(completedArticles.length, 1)
-    const apiCallReduction = epic20Baseline.apiCallsPerArticle > 0 
+    const apiCallReduction = epic20Baseline.apiCallsPerArticle > 0
       ? ((epic20Baseline.apiCallsPerArticle - (totalApiCalls / actualApiCallsPerArticle)) / epic20Baseline.apiCallsPerArticle) * 100
       : 0
 
@@ -196,7 +196,7 @@ async function fetchGenerationMetrics(supabase: any, orgId: string, timeRangeSta
       : 0
 
     const timeRangeMs = Date.now() - timeRangeStart.getTime()
-    const throughputPerHour = completedArticles.length > 0 
+    const throughputPerHour = completedArticles.length > 0
       ? (completedArticles.length / (timeRangeMs / 3600000)) // articles per hour
       : 0
 
@@ -247,7 +247,7 @@ async function fetchResearchMetrics(supabase: any, orgId: string, timeRangeStart
     `)
     .eq('org_id', orgId)
     .gte('updated_at', timeRangeStart.toISOString())
-    .in('status', ['completed', 'generating'])
+    .in('status', ['completed', 'processing'])
 
   if (error) throw error
 
@@ -269,7 +269,7 @@ async function fetchResearchMetrics(supabase: any, orgId: string, timeRangeStart
   }, 0)
 
   const avgResearchApiCalls = totalResearchApiCalls / articlesWithProgress.length
-  
+
   // Epic 20 benchmark: 8-13 API calls before optimization → 1-2 after
   const epic20Baseline = { apiCalls: 10.5 } // Average of 8-13
   const costSavingsPerArticle = epic20Baseline.apiCalls > 0
@@ -310,7 +310,7 @@ async function fetchContextMetrics(supabase: any, orgId: string, timeRangeStart:
     `)
     .eq('org_id', orgId)
     .gte('updated_at', timeRangeStart.toISOString())
-    .in('status', ['completed', 'generating'])
+    .in('status', ['completed', 'processing'])
 
   if (error) throw error
 
@@ -370,14 +370,14 @@ async function fetchSystemHealth(supabase: any, orgId: string) {
       .from('articles')
       .select('status, created_at')
       .eq('org_id', orgId)
-      .in('status', ['queued', 'generating']),
-    
+      .in('status', ['queued', 'processing']),
+
     supabase
       .from('article_progress')
       .select('status, updated_at, generation_time')
-      .eq('status', 'generating')
+      .eq('status', 'processing')
       .gte('updated_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()), // Active in last 5 minutes
-    
+
     supabase
       .from('articles')
       .select('updated_at, status')
@@ -391,19 +391,19 @@ async function fetchSystemHealth(supabase: any, orgId: string) {
 
   // Calculate system load based on actual activity
   const systemLoad = Math.min(100, (activeGenerationsCount * 15) + (queueLength * 2) + (recentActivityCount * 5))
-  
+
   // Estimate resource usage based on generation activity
   const avgGenerationTime = activeGenerations?.reduce((sum: number, gen: any) => sum + (gen.generation_time || 0), 0) / Math.max(activeGenerationsCount, 1) || 0
-  
+
   // CPU usage estimation based on active generations and queue length
   const cpuUsage = Math.min(100, Math.max(5, systemLoad + (avgGenerationTime > 300 ? 20 : 0)))
-  
+
   // Memory usage estimation based on queue and active work
   const memoryUsage = Math.min(100, Math.max(10, (queueLength * 3) + (activeGenerationsCount * 12) + (recentActivityCount * 2)))
 
   // Determine system status based on real metrics
   let systemStatus: 'healthy' | 'warning' | 'critical' = 'healthy'
-  
+
   if (queueLength > 50 || activeGenerationsCount > 10 || cpuUsage > 85 || memoryUsage > 90) {
     systemStatus = 'critical'
   } else if (queueLength > 20 || activeGenerationsCount > 5 || cpuUsage > 70 || memoryUsage > 75) {
@@ -427,7 +427,7 @@ async function fetchSystemHealth(supabase: any, orgId: string) {
 async function fetchHistoricalTrends(supabase: any, orgId: string, timeRange: string) {
   const timeRangeMs = getTimeRangeMs(timeRange)
   const timeRangeStart = new Date(Date.now() - timeRangeMs)
-  
+
   // Fetch real historical data from completed articles
   const { data, error } = await supabase
     .from('articles')
@@ -457,23 +457,23 @@ async function fetchHistoricalTrends(supabase: any, orgId: string, timeRange: st
 
   const articles = data || []
   const points = getTrendPoints(timeRange)
-  
+
   // Aggregate data by time intervals
   const aggregatedData = articles.reduce((acc: Record<string, { generationTimes: number[], apiCalls: number[], count: number }>, article: any) => {
     const progress = article.article_progress?.[0]
     if (!progress) return acc
-    
+
     const hourKey = new Date(article.updated_at).toISOString().slice(0, 13) // YYYY-MM-DDTHH
     const existingHour = acc[hourKey] || {
       generationTimes: [],
       apiCalls: [],
       count: 0
     }
-    
+
     existingHour.generationTimes.push(progress.generation_time || 0)
     existingHour.apiCalls.push(progress.research_api_calls || 0)
     existingHour.count += 1
-    
+
     acc[hourKey] = existingHour
     return acc
   }, {} as Record<string, { generationTimes: number[], apiCalls: number[], count: number }>)
@@ -481,15 +481,15 @@ async function fetchHistoricalTrends(supabase: any, orgId: string, timeRange: st
   // Convert to trend points
   const generationTime = Object.entries(aggregatedData).map(([hourKey, data]: [string, any]) => ({
     timestamp: new Date(hourKey + ':00:00.000Z').toISOString(),
-    value: data.generationTimes.length > 0 
-      ? data.generationTimes.reduce((sum: number, time: number) => sum + time, 0) / data.generationTimes.length 
+    value: data.generationTimes.length > 0
+      ? data.generationTimes.reduce((sum: number, time: number) => sum + time, 0) / data.generationTimes.length
       : 0
   }))
 
   const apiCalls = Object.entries(aggregatedData).map(([hourKey, data]: [string, any]) => ({
     timestamp: new Date(hourKey + ':00:00.000Z').toISOString(),
-    value: data.apiCalls.length > 0 
-      ? data.apiCalls.reduce((sum: number, calls: number) => sum + calls, 0) / data.apiCalls.length 
+    value: data.apiCalls.length > 0
+      ? data.apiCalls.reduce((sum: number, calls: number) => sum + calls, 0) / data.apiCalls.length
       : 0
   }))
 
@@ -510,7 +510,7 @@ async function fetchPerformanceAlerts(supabase: any, orgId: string) {
   // For now, return mock alerts. In a real implementation, you'd check
   // performance_alerts table and current metrics against thresholds
   const alerts = []
-  
+
   // Example alert generation logic
   const { data: queueData } = await supabase
     .from('articles')
@@ -550,17 +550,17 @@ function getTrendPoints(timeRange: string): { timestamp: string }[] {
     '7d': 28, // Every 6 hours
     '30d': 30 // Every day
   }
-  
+
   const count = intervals[timeRange as keyof typeof intervals] || 24
   const points = []
   const now = Date.now()
   const intervalMs = (24 * 60 * 60 * 1000) / count // Distribute across 24 hours
-  
+
   for (let i = count - 1; i >= 0; i--) {
     points.push({
       timestamp: new Date(now - (i * intervalMs)).toISOString()
     })
   }
-  
+
   return points
 }

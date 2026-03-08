@@ -175,7 +175,7 @@ export function MobileArticleStatusList({
         return 'text-gray-600 bg-gray-100';
       case 'completed':
         return 'text-green-600 bg-green-100';
-      case 'generating':
+      case 'processing':
         return 'text-yellow-600 bg-yellow-100';
       case 'failed':
         return 'text-red-600 bg-red-100';

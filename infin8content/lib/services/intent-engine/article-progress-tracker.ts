@@ -11,7 +11,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 
 export interface ProgressFilters {
-  status?: 'queued' | 'generating' | 'completed' | 'failed'
+  status?: 'queued' | 'processing' | 'completed' | 'failed'
   date_from?: string // ISO 8601
   date_to?: string // ISO 8601
   limit?: number
@@ -21,7 +21,7 @@ export interface ProgressFilters {
 export interface ArticleProgress {
   article_id: string
   subtopic_id?: string
-  status: 'queued' | 'generating' | 'completed' | 'failed'
+  status: 'queued' | 'processing' | 'completed' | 'failed'
   progress_percent: number
   sections_completed: number
   sections_total: number
@@ -45,7 +45,7 @@ export interface ProgressResponse {
   articles: ArticleProgress[]
   summary: {
     queued_count: number
-    generating_count: number
+    processing_count: number
     completed_count: number
     failed_count: number
     average_generation_time_seconds: number
@@ -70,7 +70,7 @@ export async function validateWorkflowAccess(
   workflowId: string
 ): Promise<boolean> {
   const supabase = createServiceRoleClient()
-  
+
   try {
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
@@ -105,7 +105,7 @@ export async function validateWorkflowAccess(
  */
 export async function getArticleProgress(articleId: string) {
   const supabase = createServiceRoleClient()
-  
+
   try {
     const { data, error } = await supabase
       .from('article_progress')
@@ -136,18 +136,18 @@ export function calculateEstimatedCompletion(article: {
   updated_at: string
 }): Date | null {
   // Only calculate for in-progress articles
-  if (article.status !== 'generating' && article.status !== 'writing') {
+  if (article.status !== 'processing' && article.status !== 'writing') {
     return null
   }
 
   const progress = article.progress_percentage || 0
-  
+
   // If no progress yet, estimate based on average time per section
   if (progress === 0) {
     const avgTimePerSection = 60 // 60 seconds per section (adjustable)
     const remainingSections = article.total_sections - article.current_section + 1
     const estimatedRemainingTime = remainingSections * avgTimePerSection * 1000 // Convert to milliseconds
-    
+
     return new Date(Date.now() + estimatedRemainingTime)
   }
 
@@ -169,7 +169,7 @@ export function formatProgressResponse(
 ): ProgressResponse {
   const summary = {
     queued_count: 0,
-    generating_count: 0,
+    processing_count: 0,
     completed_count: 0,
     failed_count: 0,
     average_generation_time_seconds: 0,
@@ -177,7 +177,7 @@ export function formatProgressResponse(
   }
 
   const completedArticles = articles.filter(a => a.status === 'completed')
-  const generatingArticles = articles.filter(a => a.status === 'generating')
+  const generatingArticles = articles.filter(a => a.status === 'processing')
 
   // Count by status
   articles.forEach(article => {
@@ -185,8 +185,8 @@ export function formatProgressResponse(
       case 'queued':
         summary.queued_count++
         break
-      case 'generating':
-        summary.generating_count++
+      case 'processing':
+        summary.processing_count++
         break
       case 'completed':
         summary.completed_count++
@@ -246,7 +246,7 @@ export async function getWorkflowArticleProgress(
   filters: ProgressFilters = {}
 ): Promise<ArticleProgress[]> {
   const supabase = createServiceRoleClient()
-  
+
   try {
     // Build query for articles in the workflow
     let query = supabase
@@ -258,7 +258,7 @@ export async function getWorkflowArticleProgress(
         status,
         created_at,
         updated_at,
-        article_progress!inner(
+        article_progress(
           id,
           article_id,
           status,
@@ -339,7 +339,7 @@ export async function getWorkflowArticleProgress(
         sections_completed: progress.current_section ? progress.current_section - 1 : 0,
         sections_total: progress.total_sections || 0,
         current_section: progress.current_stage,
-        estimated_completion_time: progress.estimated_time_remaining 
+        estimated_completion_time: progress.estimated_time_remaining
           ? new Date(Date.now() + progress.estimated_time_remaining * 1000).toISOString()
           : null,
         created_at: item.created_at,

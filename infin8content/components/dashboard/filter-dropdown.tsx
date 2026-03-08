@@ -363,7 +363,7 @@ export function QuickFilters({
     },
     {
       label: 'In Progress',
-      filters: { status: ['queued' as ArticleStatus, 'generating' as ArticleStatus] },
+      filters: { status: ['queued' as ArticleStatus, 'processing' as ArticleStatus] },
       color: 'bg-blue-100 text-blue-800',
     },
     {

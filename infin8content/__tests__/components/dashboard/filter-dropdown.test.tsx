@@ -18,7 +18,7 @@ describe('FilterDropdown', () => {
       sortBy: undefined,
     } as FilterState,
     onChange: vi.fn(),
-    availableStatuses: ['queued', 'generating', 'completed', 'failed'] as ArticleStatus[],
+    availableStatuses: ['queued', 'processing', 'completed', 'failed'] as ArticleStatus[],
   };
 
   beforeEach(() => {
@@ -70,7 +70,7 @@ describe('FilterDropdown', () => {
 
       expect(screen.getByText('Status')).toBeInTheDocument();
       expect(screen.getByText('queued')).toBeInTheDocument();
-      expect(screen.getByText('generating')).toBeInTheDocument();
+      expect(screen.getByText('processing')).toBeInTheDocument();
       expect(screen.getByText('completed')).toBeInTheDocument();
       expect(screen.getByText('failed')).toBeInTheDocument();
     });

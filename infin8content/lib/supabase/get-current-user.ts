@@ -77,7 +77,7 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
           .from('articles')
           .select('id', { count: 'exact', head: true })
           .eq('org_id', (userRecord as any).org_id)
-          .in('status', ['queued', 'generating', 'completed', 'reviewing']);
+          .in('status', ['queued', 'processing', 'completed', 'reviewing']);
 
         articleUsage = count || 0
         totalCompletedUsage = count || 0
@@ -92,7 +92,7 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
           .select('id', { count: 'exact', head: true })
           .eq('org_id', (userRecord as any).org_id)
           .gte('created_at', startOfMonth.toISOString())
-          .in('status', ['queued', 'generating', 'completed', 'reviewing']);
+          .in('status', ['queued', 'processing', 'completed', 'reviewing']);
 
         articleUsage = count || 0
       }

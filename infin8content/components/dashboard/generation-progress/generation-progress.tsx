@@ -14,11 +14,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  Loader2, 
+import {
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
   RefreshCw,
   Zap,
   Database,
@@ -78,7 +78,7 @@ export interface ContextManagement {
 export interface GenerationProgressProps {
   articleId: string;
   orgId: string;
-  status: 'queued' | 'researching' | 'generating' | 'completed' | 'failed';
+  status: 'queued' | 'researching' | 'processing' | 'completed' | 'failed';
   overallProgress: number; // 0-100
   parallelSections: ParallelSection[];
   performanceMetrics: PerformanceMetrics;
@@ -122,7 +122,7 @@ export function GenerationProgress({
     if (mobileOptimized && touchStart !== null) {
       const touchEnd = e.changedTouches[0].clientY;
       const touchDistance = touchStart - touchEnd;
-      
+
       // Swipe up to expand, swipe down to collapse (threshold: 50px)
       if (Math.abs(touchDistance) > 50) {
         setIsExpanded(touchDistance > 0);
@@ -132,7 +132,7 @@ export function GenerationProgress({
   }, [mobileOptimized, touchStart]);
 
   // Calculate derived metrics
-  const activeSections = useMemo(() => 
+  const activeSections = useMemo(() =>
     parallelSections.filter(section => section.status === 'processing' || section.status === 'retrying'),
     [parallelSections]
   );
@@ -153,8 +153,8 @@ export function GenerationProgress({
         return { color: 'text-gray-600', bgColor: 'bg-gray-100', label: 'Queued' };
       case 'researching':
         return { color: 'text-blue-600', bgColor: 'bg-blue-100', label: 'Researching' };
-      case 'generating':
-        return { color: 'text-blue-600', bgColor: 'bg-blue-100', label: 'Generating' };
+      case 'processing':
+        return { color: 'text-blue-600', bgColor: 'bg-blue-100', label: 'Processing' };
       case 'completed':
         return { color: 'text-green-600', bgColor: 'bg-green-100', label: 'Completed' };
       case 'failed':
@@ -176,10 +176,10 @@ export function GenerationProgress({
     const date = new Date(timestamp);
     const now = new Date();
     const diffMs = date.getTime() - now.getTime();
-    
+
     if (diffMs < 0) return 'Any moment';
     const diffMins = Math.ceil(diffMs / 60000);
-    
+
     if (diffMins < 1) return 'Any moment';
     if (diffMins < 60) return `~${diffMins} min`;
     const hours = Math.floor(diffMins / 60);
@@ -194,10 +194,10 @@ export function GenerationProgress({
       className
     )}>
       {/* Main Progress Card */}
-      <Card 
+      <Card
         className={cn(
           'transition-all duration-300',
-          status === 'generating' && 'border-blue-200 bg-blue-50/50',
+          status === 'processing' && 'border-blue-200 bg-blue-50/50',
           status === 'completed' && 'border-green-200 bg-green-50/50',
           status === 'failed' && 'border-red-200 bg-red-50/50'
         )}
@@ -223,13 +223,13 @@ export function GenerationProgress({
                 {overallStatusConfig.label}
               </Badge>
             </CardTitle>
-            
+
             <div className="flex items-center gap-2">
               {/* Connection Status */}
               <div className={cn(
                 'flex items-center gap-1',
-                connectionStatus === 'connected' ? 'text-green-600' : 
-                connectionStatus === 'reconnecting' ? 'text-orange-600' : 'text-red-600'
+                connectionStatus === 'connected' ? 'text-green-600' :
+                  connectionStatus === 'reconnecting' ? 'text-orange-600' : 'text-red-600'
               )}>
                 {connectionStatus === 'connected' ? (
                   <Wifi className="h-4 w-4" />
@@ -237,11 +237,11 @@ export function GenerationProgress({
                   <WifiOff className="h-4 w-4" />
                 )}
                 <span className="text-xs hidden sm:inline">
-                  {connectionStatus === 'connected' ? 'Live' : 
-                   connectionStatus === 'reconnecting' ? 'Reconnecting' : 'Offline'}
+                  {connectionStatus === 'connected' ? 'Live' :
+                    connectionStatus === 'reconnecting' ? 'Reconnecting' : 'Offline'}
                 </span>
               </div>
-              
+
               {/* Expand/Collapse Button */}
               <Button
                 variant="ghost"
@@ -259,37 +259,37 @@ export function GenerationProgress({
               </Button>
             </div>
           </div>
-          
+
           {/* Overall Progress Bar */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className={cn('font-medium', overallStatusConfig.color)}>
-                {status === 'generating' ? `${activeSections.length} sections processing` : 
-                 status === 'researching' ? 'Research phase' :
-                 status === 'completed' ? 'Generation complete' :
-                 status === 'failed' ? 'Generation failed' :
-                 'Waiting to start'}
+                {status === 'processing' ? `${activeSections.length} sections processing` :
+                  status === 'researching' ? 'Research phase' :
+                    status === 'completed' ? 'Generation complete' :
+                      status === 'failed' ? 'Generation failed' :
+                        'Waiting to start'}
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-gray-600">
                   {overallProgress.toFixed(1)}%
                 </span>
-                {estimatedCompletion && status === 'generating' && (
+                {estimatedCompletion && status === 'processing' && (
                   <span className="text-xs text-gray-500 hidden sm:inline">
                     ~{formatEstimatedCompletion(estimatedCompletion)}
                   </span>
                 )}
               </div>
             </div>
-            
-            <Progress 
-              value={overallProgress} 
+
+            <Progress
+              value={overallProgress}
               className={cn(
                 'h-3',
                 mobileOptimized && 'h-2'
               )}
             />
-            
+
             {/* Quick Stats */}
             <div className="flex items-center justify-between text-xs text-gray-500">
               <span>
@@ -308,7 +308,7 @@ export function GenerationProgress({
             </div>
           </div>
         </CardHeader>
-        
+
         {/* Expanded Details */}
         {isExpanded && (
           <CardContent className={cn(
@@ -322,19 +322,19 @@ export function GenerationProgress({
               showRetryAttempts={true}
               mobileOptimized={mobileOptimized}
             />
-            
+
             {/* Research Phase Visualization */}
             <ResearchPhaseVisualization
               researchPhase={researchPhase}
               mobileOptimized={mobileOptimized}
             />
-            
+
             {/* Context Management Metrics */}
             <ContextManagementMetrics
               contextManagement={contextManagement}
               mobileOptimized={mobileOptimized}
             />
-            
+
             {/* Performance Metrics Display */}
             {showPerformanceMetrics && (
               <PerformanceMetricsDisplay
@@ -342,7 +342,7 @@ export function GenerationProgress({
                 mobileOptimized={mobileOptimized}
               />
             )}
-            
+
             {/* Last Update */}
             <div className="text-xs text-gray-500 border-t pt-2">
               Last update: {new Date(lastUpdate).toLocaleTimeString()}

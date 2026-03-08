@@ -4,15 +4,17 @@
  */
 
 export type ArticleStatus =
+  | 'draft'
   | 'queued'
-  | 'generating'
+  | 'processing'
   | 'completed'
   | 'failed'
   | 'cancelled';
 
 export const ARTICLE_STATUSES: ArticleStatus[] = [
+  'draft',
   'queued',
-  'generating',
+  'processing',
   'completed',
   'failed',
   'cancelled'
@@ -236,6 +238,7 @@ export interface ProgressApiErrorResponse {
 export interface AssemblyInput {
   articleId: string
   organizationId: string
+  allowReassembly?: boolean
 }
 
 

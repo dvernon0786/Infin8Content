@@ -92,7 +92,7 @@ export async function POST(request: Request) {
                     .select('id', { count: 'exact', head: true })
                     .eq('org_id', currentUser.org_id)
                     .gte('created_at', startOfMonth.toISOString())
-                    .in('status', ['queued', 'generating', 'completed', 'reviewing'])
+                    .in('status', ['queued', 'processing', 'completed', 'reviewing'])
 
                 if (usageError) {
                     console.error('[Quota Check] Monthly usage count failed:', usageError)
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
         const { data: updatedRows, error: updateError } = await supabase
             .from('articles')
             .update({
-                status: 'generating',
+                status: 'processing',
                 updated_at: new Date().toISOString()
             })
             .eq('id', articleId)
@@ -177,7 +177,7 @@ export async function POST(request: Request) {
             userAgent: extractUserAgent(request.headers),
         })
 
-        return NextResponse.json({ success: true, status: 'generating' })
+        return NextResponse.json({ success: true, status: 'processing' })
 
     } catch (error) {
         console.error('Unexpected error in POST /api/articles/generate:', error)

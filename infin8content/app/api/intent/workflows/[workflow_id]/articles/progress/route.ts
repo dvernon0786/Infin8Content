@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
-import { 
+import {
   getWorkflowArticleProgress,
   formatProgressResponse,
   validateWorkflowAccess
@@ -43,11 +43,11 @@ export async function GET(
     const hasAccess = await validateWorkflowAccess(currentUser.id, workflowId)
     if (!hasAccess) {
       return NextResponse.json(
-        { 
-          error: { 
-            code: 'FORBIDDEN', 
-            message: 'Workflow does not exist or you do not have access' 
-          } 
+        {
+          error: {
+            code: 'FORBIDDEN',
+            message: 'Workflow does not exist or you do not have access'
+          }
         },
         { status: 403 }
       )
@@ -56,8 +56,8 @@ export async function GET(
     // Parse query parameters
     const { searchParams } = new URL(request.url)
     const filters = {
-      status: searchParams.get('status') as 
-        'queued' | 'generating' | 'completed' | 'failed' | undefined,
+      status: searchParams.get('status') as
+        'queued' | 'processing' | 'completed' | 'failed' | undefined,
       date_from: searchParams.get('date_from') || undefined,
       date_to: searchParams.get('date_to') || undefined,
       limit: Math.min(parseInt(searchParams.get('limit') || '100'), 1000), // Cap at 1000
@@ -67,11 +67,11 @@ export async function GET(
     // Validate date formats if provided
     if (filters.date_from && isNaN(Date.parse(filters.date_from))) {
       return NextResponse.json(
-        { 
-          error: { 
-            code: 'INVALID_DATE_FORMAT', 
-            message: 'date_from must be a valid ISO 8601 date' 
-          } 
+        {
+          error: {
+            code: 'INVALID_DATE_FORMAT',
+            message: 'date_from must be a valid ISO 8601 date'
+          }
         },
         { status: 400 }
       )
@@ -79,24 +79,24 @@ export async function GET(
 
     if (filters.date_to && isNaN(Date.parse(filters.date_to))) {
       return NextResponse.json(
-        { 
-          error: { 
-            code: 'INVALID_DATE_FORMAT', 
-            message: 'date_to must be a valid ISO 8601 date' 
-          } 
+        {
+          error: {
+            code: 'INVALID_DATE_FORMAT',
+            message: 'date_to must be a valid ISO 8601 date'
+          }
         },
         { status: 400 }
       )
     }
 
     // Validate status if provided
-    if (filters.status && !['queued', 'generating', 'completed', 'failed'].includes(filters.status)) {
+    if (filters.status && !['queued', 'processing', 'completed', 'failed'].includes(filters.status)) {
       return NextResponse.json(
-        { 
-          error: { 
-            code: 'INVALID_STATUS', 
-            message: 'Status must be one of: queued, generating, completed, failed' 
-          } 
+        {
+          error: {
+            code: 'INVALID_STATUS',
+            message: 'Status must be one of: queued, processing, completed, failed'
+          }
         },
         { status: 400 }
       )
@@ -104,7 +104,7 @@ export async function GET(
 
     // Fetch article progress data
     const articles = await getWorkflowArticleProgress(workflowId, filters)
-    
+
     // Format response with summary statistics
     const response = formatProgressResponse(articles, workflowId)
 
@@ -118,9 +118,9 @@ export async function GET(
         article_count: articles.length,
         filters_applied: filters
       },
-      ipAddress: request.headers.get('x-forwarded-for') || 
-                 request.headers.get('x-real-ip') || 
-                 'unknown',
+      ipAddress: request.headers.get('x-forwarded-for') ||
+        request.headers.get('x-real-ip') ||
+        'unknown',
       userAgent: request.headers.get('user-agent') || 'unknown'
     })
 
@@ -128,7 +128,7 @@ export async function GET(
 
   } catch (error) {
     console.error('Error in article progress endpoint:', error)
-    
+
     // Log error event
     try {
       const currentUser = await getCurrentUser()
@@ -143,9 +143,9 @@ export async function GET(
             workflow_id,
             error: error instanceof Error ? error.message : 'Unknown error'
           },
-          ipAddress: request.headers.get('x-forwarded-for') || 
-                     request.headers.get('x-real-ip') || 
-                     'unknown',
+          ipAddress: request.headers.get('x-forwarded-for') ||
+            request.headers.get('x-real-ip') ||
+            'unknown',
           userAgent: request.headers.get('user-agent') || 'unknown'
         })
       }
@@ -154,11 +154,11 @@ export async function GET(
     }
 
     return NextResponse.json(
-      { 
-        error: { 
-          code: 'INTERNAL_SERVER_ERROR', 
-          message: 'An error occurred while fetching article progress' 
-        } 
+      {
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'An error occurred while fetching article progress'
+        }
       },
       { status: 500 }
     )
