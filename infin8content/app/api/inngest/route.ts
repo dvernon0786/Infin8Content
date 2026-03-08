@@ -1,5 +1,5 @@
 import { serve } from 'inngest/next'
-import { generateArticle } from '@/lib/inngest/functions/generate-article'
+import { generateArticle, generateArticleImages } from '@/lib/inngest/functions/generate-article'
 import { cleanupStuckArticles } from '@/lib/inngest/functions/cleanup-stuck-articles'
 import { uxMetricsRollup } from '@/lib/inngest/functions/ux-metrics-rollup'
 import { inngest } from '@/lib/inngest/client'
@@ -27,6 +27,7 @@ export const { GET, POST, PUT } = serve({
   signingKey: isTest ? undefined : process.env.INNGEST_SIGNING_KEY,
   functions: [
     generateArticle,
+    generateArticleImages,
     cleanupStuckArticles,
     uxMetricsRollup,
     step4Longtails,

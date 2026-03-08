@@ -101,15 +101,15 @@ export const generateArticle = inngest.createFunction(
 
     if ((article as any).skipped) return { success: true, skipped: true }
 
-    // 🔒 TERMINAL STATE LOCK: Move to 'generating' if not already there
-    await step.run('transition-to-generating', async () => {
-      if (article.status === 'generating') return
+    // 🔒 TERMINAL STATE LOCK: Move to 'processing' if not already there
+    await step.run('ensure-processing-status', async () => {
+      if (article.status === 'processing') return
 
       const { error } = await supabase
         .from('articles')
-        .update({ status: 'generating', updated_at: new Date().toISOString() })
+        .update({ status: 'processing', updated_at: new Date().toISOString() })
         .eq('id', articleId)
-        .eq('status', 'queued')
+        .in('status', ['queued', 'failed'])
 
       if (error) throw new Error(`Status transition failed: ${error.message}`)
     })
@@ -389,42 +389,10 @@ export const generateArticle = inngest.createFunction(
           continue // 🔥 CRITICAL: Proceed to next section instead of crashing the whole loop
         }
 
-        // ---- Section Image (inline illustration or chart)
-        // 🔒 ISOLATION: Runs OUTSIDE the inner try/catch so image failure never
-        // triggers mark-section-failed on a successfully written section.
-        await step.run(`generate-section-image-${section.section_order}`, async () => {
-          const purpose = getSectionImagePurpose(
-            section.section_type,
-            section.section_order,
-            section.section_header
-          )
-
-          if (!purpose) return null  // skip intro, faq, conclusion, odd-numbered sections
-
-          try {
-            const result = await generateArticleImage({
-              prompt: section.section_header,
-              purpose,
-              articleTitle: (plan as any).article_title,
-              keyword: (article as any).keyword || '',
-              articleId,
-              imageStyle: (generationConfig as any).image_style,
-              brandColor: (generationConfig as any).brand_color,
-            }, `section-${section.section_order}`)
-
-            await supabase
-              .from('article_sections')
-              .update({ section_image_url: result.url })
-              .eq('id', section.id)
-
-            console.log(`[ImageAgent] Section image saved (${purpose}) for section ${section.section_order}`)
-            return result.url
-          } catch (err) {
-            // Non-fatal — section renders without image
-            console.warn(`[ImageAgent] Section ${section.section_order} image failed (non-fatal):`, err)
-            return null
-          }
-        })
+        // 🔒 IMAGE PIPELINE DECOUPLED (BUG 4 Fix)
+        // Image generation has been moved to the post-assembly worker to prevent
+        // Riverflow (4.2min/step) from timing out the main text generation pipeline.
+        // It now fires after 'complete-article' below.
       }
 
       /* -------------------------------------------------- */
@@ -432,7 +400,7 @@ export const generateArticle = inngest.createFunction(
       /* -------------------------------------------------- */
 
       // 🏗️ ARTICLE ASSEMBLY & SNAPSHOT PROJECTION
-      // 🔒 AUTHORITY: The worker now explicitly manages the 'generating' -> 'completed' transition.
+      // 🔒 AUTHORITY: The worker now explicitly manages the 'processing' -> 'completed' transition.
       // 📂 INVARIANT: The Assembler MUST persist the snapshot projection BEFORE the 
       // terminal status update to ensure the UI reads from a completed projection.
       await step.run('assemble-article', async () => {
@@ -443,7 +411,9 @@ export const generateArticle = inngest.createFunction(
           articleId,
           organizationId: article.organization_id
         })
+      })
 
+      await step.run('mark-completed', async () => {
         // 2. 🔒 TERMINAL STATE LOCK: Explicitly mark article as completed
         const { error: completionError, data } = await supabase
           .from('articles')
@@ -453,17 +423,16 @@ export const generateArticle = inngest.createFunction(
             updated_at: new Date().toISOString()
           })
           .eq('id', articleId)
-          .eq('status', 'generating') // 🔒 ATOMIC GUARD: Only complete if still in 'generating'
+          .eq('status', 'processing') // 🔒 ATOMIC GUARD: Only complete if still in 'processing'
           .select('id')
 
         if (completionError) throw completionError
         if (!data || data.length === 0) {
-          throw new Error(`Terminal update failed: Article ${articleId} status was not 'generating' during completion.`)
+          throw new Error(`Terminal update failed: Article ${articleId} status was not 'processing' during completion.`)
         }
 
         console.log(`[Worker] Article ${articleId} generation lifecycle COMPLETED successfully.`)
       })
-
     } catch (pipelineError) {
       // Mark article as failed
       await step.run('mark-article-failed', async () => {
@@ -492,6 +461,14 @@ export const generateArticle = inngest.createFunction(
       if (workflowId) {
         await checkAndCompleteWorkflow(supabase, workflowId)
       }
+
+      // 🎨 TRIGGER IMAGE PIPELINE (BUG 4 Fix)
+      // Fire-and-forget the image generation so the user sees the article text immediately
+      // and the slow Riverflow steps don't risk timing out this main worker.
+      await inngest.send({
+        name: 'article/images.generate',
+        data: { articleId }
+      })
     })
 
     return { success: true, articleId }
@@ -556,3 +533,95 @@ async function checkAndCompleteWorkflow(
     console.error(`[WorkflowCompletion] Error:`, error)
   }
 }
+
+/**
+ * Post-Assembly Image Generation Pipeline (BUG 4)
+ * Handles slow section image generation (Riverflow) without blocking text completion.
+ */
+export const generateArticleImages = inngest.createFunction(
+  {
+    id: 'article/images.generate',
+    concurrency: {
+      limit: 2, // Allow some parallelism for images
+      key: 'event.data.articleId'
+    }
+  },
+  { event: 'article/images.generate' },
+  async ({ event, step }: any) => {
+    const { articleId } = event.data
+    const supabase = createServiceRoleClient()
+
+    // 1. Load Article and Sections
+    const { article, sections } = await step.run('load-image-context', async () => {
+      const { data: artData } = await supabase
+        .from('articles')
+        .select('id, keyword, article_plan, generation_config, org_id')
+        .eq('id', articleId)
+        .single()
+
+      const { data: secData } = await supabase
+        .from('article_sections')
+        .select('*')
+        .eq('article_id', articleId)
+        .order('section_order')
+
+      return { article: artData, sections: secData }
+    })
+
+    if (!article || !sections) return { error: 'Context not found' }
+
+    const plan = article.article_plan as any
+    const generationConfig = article.generation_config as any
+
+    // 2. Generate Section Images
+    for (const section of sections) {
+      const purpose = getSectionImagePurpose(
+        section.section_type,
+        section.section_order,
+        section.section_header
+      )
+
+      if (!purpose) continue
+
+      await step.run(`generate-image-section-${section.section_order}`, async () => {
+        // Skip if already exists
+        if (section.section_image_url) return section.section_image_url
+
+        try {
+          const result = await generateArticleImage({
+            prompt: section.section_header,
+            purpose,
+            articleTitle: plan.article_title,
+            keyword: article.keyword || '',
+            articleId,
+            imageStyle: generationConfig.image_style,
+            brandColor: generationConfig.brand_color,
+          }, `section-${section.section_order}`)
+
+          await supabase
+            .from('article_sections')
+            .update({ section_image_url: result.url })
+            .eq('id', section.id)
+
+          return result.url
+        } catch (err) {
+          console.warn(`[ImageWorker] Section ${section.section_order} image failed:`, err)
+          return null
+        }
+      })
+    }
+
+    // 3. Final Assembly Update
+    // 🏗️ Re-run the assembler to inject the now-present image URLs into the JSONB snapshot
+    await step.run('final-image-assembly', async () => {
+      const assembler = new ArticleAssembler()
+      await assembler.assemble({
+        articleId,
+        organizationId: article.org_id,
+        allowReassembly: true   // ← bypass status guard for post-completion injection
+      })
+    })
+
+    return { success: true }
+  }
+)

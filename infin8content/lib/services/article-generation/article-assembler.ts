@@ -18,7 +18,7 @@ export class ArticleAssembler {
     this.supabaseAdmin = createServiceRoleClient()
   }
 
-  async assemble(input: AssemblyInput): Promise<AssemblyOutput> {
+  async assemble(input: AssemblyInput & { allowReassembly?: boolean }): Promise<AssemblyOutput> {
     const start = Date.now()
 
     // Exact contract analytics events only
@@ -52,8 +52,8 @@ export class ArticleAssembler {
       const wordCount = this.countWords(totalMarkdown)
       const readingTimeMinutes = Math.ceil(wordCount / 200)
 
-      if (article.status !== 'generating') {
-        throw new Error(`Assembly aborted: Article ${input.articleId} is in status '${article.status}', expected 'generating'.`)
+      if (!input.allowReassembly && article.status !== 'processing') {
+        throw new Error(`Assembly aborted: Article ${input.articleId} is in status '${article.status}', expected 'processing'.`)
       }
 
       // 📸 SNAPSHOT: Normalize sections into canonical JSONB structure for UI projection
@@ -62,6 +62,7 @@ export class ArticleAssembler {
         markdown: s.content_markdown,
         html: s.content_html,
         order: s.section_order,
+        type: s.section_type,
         section_image_url: s.section_image_url ?? null
       }))
 
@@ -92,7 +93,8 @@ export class ArticleAssembler {
         finalMarkdown,
         wordCount,
         readingTimeMinutes,
-        title: articleTitle !== article.title ? articleTitle : undefined
+        title: articleTitle !== article.title ? articleTitle : undefined,
+        skipStatusGuard: input.allowReassembly
       })
 
       // Exact contract analytics events only
@@ -144,7 +146,7 @@ export class ArticleAssembler {
   private async loadSections({ articleId }: AssemblyInput) {
     const { data, error } = await this.supabaseAdmin
       .from('article_sections')
-      .select('section_order, section_header, content_markdown, content_html, section_image_url')
+      .select('section_order, section_header, section_type, content_markdown, content_html, section_image_url')
       .eq('article_id', articleId)
       .eq('status', 'completed')
       .order('section_order', { ascending: true })
@@ -193,6 +195,7 @@ export class ArticleAssembler {
     wordCount: number
     readingTimeMinutes: number
     title?: string
+    skipStatusGuard?: boolean
   }) {
     // 🔒 SINGLE SOURCE OF TRUTH: Update ONLY the snapshot and audit metadata.
     // Explicitly removed 'status: completed' to ensure Worker owns lifecycle.
@@ -208,20 +211,24 @@ export class ArticleAssembler {
       updatePayload.title = args.title
     }
 
-    const { data, error } = await this.supabaseAdmin
+    const query = this.supabaseAdmin
       .from('articles')
       .update(updatePayload)
       .eq('id', args.articleId)
-      .eq('status', 'generating') // 🔒 PRODUCTION GUARD: Prevent racing assembly updates
-      .select('id')
+
+    if (!args.skipStatusGuard) {
+      query.eq('status', 'processing') // 🔒 PRODUCTION GUARD: Prevent racing assembly updates
+    }
+
+    const { data, error } = await query.select('id')
 
     if (error) {
       throw error
     }
 
-    // 🔴 OBSERVABILITY: If 0 rows affected, it means the article wasn't in 'generating' state (Race condition)
+    // 🔴 OBSERVABILITY: If 0 rows affected, it means the article wasn't found or update matched 0 rows (Race condition)
     if (!data || data.length === 0) {
-      throw new Error(`Assembly persistence skipped: Article ${args.articleId} is no longer in 'generating' state.`)
+      throw new Error(`Assembly persistence skipped: Article ${args.articleId} not found or update matched 0 rows.`)
     }
   }
   /**
@@ -249,7 +256,7 @@ export class ArticleAssembler {
     const today = new Date().toISOString().split('T')[0]
 
     const coverImage = article.cover_image_url
-      ? `![${article.title}](${article.cover_image_url})`
+      ? `![Cover image](${article.cover_image_url})`
       : null
 
     const authorBlock = `*Published: ${today} · By Editorial Team*`
@@ -272,7 +279,11 @@ export class ArticleAssembler {
         // 🔒 BUG FIX: Strip leading markdown heading from section content.
         // The LLM sometimes outputs the section header inside content_markdown.
         // buildFinalMarkdown adds ## ${s.header} itself — the duplicate must be removed.
-        md = md.replace(/^#+\s+[^\n]+\n+/, '').trim()
+        // 🛡️ PROTECTION (BUG 5): Do not strip if it's an FAQ section, as questions
+        // often start with # headers and would be erroneously removed.
+        if (s.type !== 'faq') {
+          md = md.replace(/^#+\s+[^\n]+\n+/, '').trim()
+        }
 
         // 🔒 BUG FIX: Safety truncation if the LLM reproduced the article title
         // or prior context verbatim (seen in conclusion sections when the model
@@ -292,7 +303,7 @@ export class ArticleAssembler {
 
         // Inject section image below content if one was generated
         const sectionImg = s.section_image_url
-          ? `\n\n![${s.header}](${s.section_image_url})`
+          ? `\n\n![Illustration for section ${s.order}](${s.section_image_url})`
           : ''
 
         return `## ${s.header}\n\n${md}${sectionImg}`.trimEnd()
@@ -301,7 +312,6 @@ export class ArticleAssembler {
 
     return [
       coverImage,
-      `# ${article.title}`,
       authorBlock,
       body,
       cta,

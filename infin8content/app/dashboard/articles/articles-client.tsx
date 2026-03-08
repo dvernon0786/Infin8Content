@@ -39,7 +39,7 @@ function MetricCard({ label, value, alert, icon }: { label: string; value: strin
 function ArticlesKPI({ articles }: { articles: DashboardArticle[] }) {
   const total = articles.length
   const completed = articles.filter(a => a.status === 'completed').length
-  const generating = articles.filter(a => (a.status as string) === 'generating' || (a.status as string).endsWith('_running')).length
+  const generating = articles.filter(a => (a.status as string) === 'processing' || (a.status as string).endsWith('_running')).length
   const failed = articles.filter(a => (a.status as string) === 'failed' || (a.status as string).endsWith('_failed')).length
 
   const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0

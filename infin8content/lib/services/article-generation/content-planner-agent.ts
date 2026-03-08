@@ -229,10 +229,10 @@ Generation Config:
     // 🔄 RETRY ONCE (Per Phase 4 Spec)
     for (let attempt = 1; attempt <= 2; attempt++) {
         try {
-            console.log(`[PlannerAgent] Attempt ${attempt}/2 using perplexity/sonar`)
+            console.log(`[PlannerAgent] Attempt ${attempt}/2 using openai/gpt-4o-mini`)
 
             const response = await generateContent(messages, {
-                model: 'perplexity/sonar',
+                model: 'openai/gpt-4o-mini',
                 temperature: 0.3, // Lower temp for structural stability
                 maxTokens: 4000
             })

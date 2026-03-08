@@ -163,7 +163,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
     lockedArticleTitles = (lockedData as any[])?.map(a => a.keyword) || []
   }
 
-  const isLoading = article.status === 'queued' || article.status === 'generating'
+  const isLoading = article.status === 'queued' || article.status === 'processing'
 
   // Compute WordPress publishing eligibility server-side
   const isPublishEnabled = process.env.WORDPRESS_PUBLISH_ENABLED === 'true';
