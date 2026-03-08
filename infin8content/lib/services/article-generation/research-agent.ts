@@ -9,7 +9,7 @@
  *   1. Tavily fetches real sources (title, excerpt, published_date, domain)
  *   2. Sources are injected into the LLM prompt as grounding context
  *   3. LLM synthesises answers and extracts citations FROM those sources only
- *   4. Writing agent receives clean [Publication, Year, Topic] citations — never URLs
+ *   4. Writing agent receives grounded [Publication, Year, Topic](URL) citations from verified sources only
  */
 
 import { z } from 'zod'
@@ -29,6 +29,7 @@ const ResearchOutputSchema = z.object({
       query: z.string(),
       answer: z.string(),
       citations: z.array(z.string()),
+      source_urls: z.array(z.string()).default([]), // 🔗 NEW: Capture URLs per result (Phase 6)
       source_types_found: z.array(z.string())
     })
   ),
@@ -88,16 +89,15 @@ None. Synthesise research from the GROUNDING SOURCES provided in the user messag
 
 Citation Rules (strictly enforced)
 • Citations must be derived ONLY from the GROUNDING SOURCES list provided
-• Format: [Publication Name, Year, Topic]
+• Format: [Publication Name, Year, Topic](URL)
   — Publication Name: extracted from the source Title or Domain field
-  — Year: extracted from the source Published Date field (YYYY format)
+  — Year: extracted from the source Published Date field, or omit if unavailable
   — Topic: a 2–5 word description of what the source covers
-  — Example: [Gartner, 2025, Supply Chain Disruption Costs]
-• If Published date says "Date unknown" — that source MUST NOT appear in citations at all.
-  Do not use "n/a", "unknown", or any placeholder. Simply omit it.
-• If a source title does not clearly indicate a publication, use the Domain (e.g. "mckinsey.com" → "McKinsey")
-• NEVER invent a citation not present in the GROUNDING SOURCES
+  — URL: the exact URL from the source's URL field
+  — Example: [Gartner, 2025, CRM Failure Rates](https://gartner.com/...)
+• NEVER invent a URL not present in the GROUNDING SOURCES
 • Maximum 5 citations across ALL research_results in a single response
+• If no sources are available for a query, state "Insufficient data found in provided sources" — do not guess.
 
 Instructions
 
@@ -119,6 +119,7 @@ Step 3: Synthesis and Documentation
   • Query: the research question being answered
   • Answer: full synthesised response from source content (not summarised)
   • Citations: extracted from source metadata using the citation format above
+  • Source URLs: list the raw URL strings for every source used in this result's answer
   • Source Types Found: describe the type of each source used (news, study, report, blog, etc.)
 
 Conclusions
@@ -140,6 +141,7 @@ Output schema:
       "query": "string",
       "answer": "string",
       "citations": ["string"],
+      "source_urls": ["string"],
       "source_types_found": ["string"]
     }
   ],
@@ -225,7 +227,8 @@ function formatGroundingSources(sources: TavilySource[]): string {
         `[Source ${i + 1}]`,
         `Title: ${s.title || 'No title'}`,
         `Domain: ${domain}`,
-        `Published: ${year ?? 'Date unknown — do not cite this source'}`,
+        `URL: ${s.url}`,                    // 🔗 ADDED: For LLM hyperlinking (Phase 6)
+        `Published: ${year ?? 'n/a'}`,      // 🔗 RELAXED: Don't block citation if undated
         `Relevance Score: ${s.relevance_score.toFixed(2)}`,
         `Excerpt: ${s.excerpt.slice(0, 500).trim()}`,
       ].join('\n')
@@ -264,9 +267,11 @@ GROUNDING SOURCES — synthesise from these only
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${formatGroundingSources(groundingSources)}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-REMINDER: Only cite sources that have a Published date above.
-Derive the citation Publication Name from the Title or Domain field.
-Format every citation as: [Publication Name, Year, Topic]
+REMINDER: Cite sources using the exact format: [Publication Name, Year, Topic](URL)
+— Use the URL field from the GROUNDING SOURCE block above.
+— Never invent a URL. Only use URLs explicitly listed in the sources.
+— If a source has no URL, omit the link: [Publication Name, Year, Topic]
+— Also populate source_urls with the raw URL for each source cited in this result.
 Do NOT invent any data, statistics, or claims not present in the excerpts above.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
 }
@@ -282,7 +287,7 @@ Do NOT invent any data, statistics, or claims not present in the excerpts above.
  *   1. Fetch real Tavily sources for the top research questions
  *   2. Inject sources as grounding context into the LLM prompt
  *   3. LLM synthesises answers and extracts citations from source metadata only
- *   4. Returns structured ResearchPayload with grounded [Publication, Year, Topic] citations
+ *   4. Returns structured ResearchPayload with grounded [Publication, Year, Topic](URL) citations
  */
 export async function runResearchAgent(
   input: ResearchAgentInput
@@ -328,6 +333,12 @@ export async function runResearchAgent(
   const rawJson = extractJson(response.content)
   const validated = ResearchOutputSchema.parse(rawJson)
 
+  // 🔗 VALIDATION LOG: Check if LLM followed source_urls schema
+  const totalUrls = validated.research_results.reduce((n, r) => n + (r.source_urls?.length ?? 0), 0)
+  if (totalUrls === 0 && groundingSources.length > 0) {
+    console.warn('[ResearchAgent] source_urls empty across all results — LLM may not have followed schema')
+  }
+
   // ── Step 5: Map to ResearchPayload ────────────────────────────────────────
   return {
     queries: validated.research_questions,
@@ -335,7 +346,8 @@ export async function runResearchAgent(
     results: validated.research_results.map(r => ({
       query: r.query,
       answer: r.answer,
-      citations: r.citations
+      citations: r.citations,
+      source_urls: r.source_urls ?? [], // 🔗 NEW: Map to payload (Phase 6)
     })),
     total_searches: validated.total_searches,
     source_types_found: Array.from(
