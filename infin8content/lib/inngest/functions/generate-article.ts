@@ -572,8 +572,8 @@ export const generateArticleImages = inngest.createFunction(
 
     if (!article || !sections) return { error: 'Context not found' }
 
-    const plan = article.article_plan as any
-    // BUG B FIX: Defensive fallback for null generation_config (legacy or race articles)
+    // BUG B / NB4 FIX: Defensive fallbacks for null plan/config
+    const plan = (article.article_plan as any) ?? {}
     const generationConfig = (article.generation_config as any) ?? {}
 
     // 2. Generate Section Images

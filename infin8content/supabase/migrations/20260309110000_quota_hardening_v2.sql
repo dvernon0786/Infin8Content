@@ -36,6 +36,18 @@ BEGIN
     WHERE id = target_org_id 
     FOR UPDATE;
 
+    -- BUG 3 FIX: Handle missing organization
+    IF NOT FOUND THEN
+        RETURN QUERY SELECT FALSE, 0, NULL::TIMESTAMPTZ;
+        RETURN;
+    END IF;
+
+    -- BUG 1 FIX: Unlimited plans (max_limit IS NULL) skip increment to prevent overflow
+    IF max_limit IS NULL THEN
+        RETURN QUERY SELECT TRUE, current_org_usage, current_reset;
+        RETURN;
+    END IF;
+
     -- Determine if we are starting a new billing cycle
     is_new_cycle := current_reset IS NOT NULL AND NOW() > current_reset;
 

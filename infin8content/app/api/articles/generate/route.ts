@@ -55,9 +55,30 @@ export async function POST(request: Request) {
             }, { status: 400 })
         }
 
-        // 3. Quota Enforcement (Atomic & Billing-Cycle Aware RPC)
+        // 3. Set status to processing (Atomic Lock)
+        // BUG 4 FIX: Update status FIRST so we don't consume quota if status update fails
+        const originalStatus = article.status
+        const { data: updatedRows, error: updateError } = await supabase
+            .from('articles')
+            .update({
+                status: 'processing',
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', articleId)
+            .eq('org_id', currentUser.org_id)
+            .in('status', ['queued', 'failed'])
+            .select('id')
+
+        if (updateError || !updatedRows || (updatedRows as any[]).length === 0) {
+            if (updateError) console.error('[Status Update] Failed:', updateError)
+            return NextResponse.json({
+                error: updateError ? 'Failed to update article status' : 'Article was already triggered or not found.'
+            }, { status: updateError ? 500 : 409 })
+        }
+
+        // 4. Quota Enforcement (Atomic & Billing-Cycle Aware RPC)
         const orgData = currentUser.organizations as any
-        const planType = (orgData?.plan || 'trial').toLowerCase()
+        const planType = (orgData?.plan_type || orgData?.plan || 'starter').toLowerCase()
         const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
         const articleLimit = PLAN_LIMITS.article_generation[planKey];
 
@@ -70,6 +91,12 @@ export async function POST(request: Request) {
         const quotaResult = rpcData?.[0] as { success: boolean; new_usage: number; new_reset: string } | undefined;
 
         if (rpcError || !quotaResult || !quotaResult.success) {
+            // 🚨 REVERT STATUS: Quota failed, so article shouldn't be 'processing'
+            await supabase
+                .from('articles')
+                .update({ status: originalStatus })
+                .eq('id', articleId)
+
             if (!rpcError && quotaResult && !quotaResult.success) {
                 // 📊 QUOTA TELEMETRY
                 await logActionAsync({
@@ -103,32 +130,10 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Failed to verify usage limits' }, { status: 500 })
         }
 
-        // 4. Set status and trigger generation
-        const { data: updatedRows, error: updateError } = await supabase
-            .from('articles')
-            .update({
-                status: 'processing',
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', articleId)
-            .eq('org_id', currentUser.org_id)
-            .in('status', ['queued', 'failed']) // ATOMIC LOCK Verification (Supports Retries)
-            .select('id')
-
-        if (updateError) {
-            return NextResponse.json({ error: 'Failed to update article status' }, { status: 500 })
-        }
-
-        if (!updatedRows || (updatedRows as any[]).length === 0) {
-            return NextResponse.json({
-                error: 'Article was already triggered by another process.'
-            }, { status: 409 })
-        }
-
         // 5. Emit Inngest Event (Idempotent Job Submission)
         await inngest.send({
             name: 'article/generate',
-            id: `article-gen-${articleId}`, // BUG 2 FIX: Idempotency Key
+            id: `article-gen-${articleId}`,
             data: {
                 articleId,
                 workflowId: article.intent_workflow_id,

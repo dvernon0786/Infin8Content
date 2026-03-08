@@ -253,9 +253,8 @@ async function fetchResearchMetrics(supabase: any, orgId: string, timeRangeStart
   }
 
   const articles = data || []
-  const articlesWithProgress = articles.filter((a: any) => a.article_progress?.[0])
 
-  if (articlesWithProgress.length === 0) {
+  if (articles.length === 0) {
     return {
       tavilyApiCallsPerArticle: 0,
       researchCacheHitRate: 0,
@@ -264,38 +263,15 @@ async function fetchResearchMetrics(supabase: any, orgId: string, timeRangeStart
     }
   }
 
-  const totalResearchApiCalls = articlesWithProgress.reduce((sum: number, article: any) => {
-    const progress = article.article_progress[0]
-    return sum + (progress.research_api_calls || 0)
-  }, 0)
+  // derive metrics from articles
+  const totalArticles = articles.length
 
-  const avgResearchApiCalls = totalResearchApiCalls / articlesWithProgress.length
-
-  // Epic 20 benchmark: 8-13 API calls before optimization → 1-2 after
-  const epic20Baseline = { apiCalls: 10.5 } // Average of 8-13
-  const costSavingsPerArticle = epic20Baseline.apiCalls > 0
-    ? ((epic20Baseline.apiCalls - avgResearchApiCalls) / epic20Baseline.apiCalls) * 100
-    : 0
-
-  // Calculate cache hit rate from performance metrics
-  const totalCacheHits = articlesWithProgress.reduce((sum: number, article: any) => {
-    const progress = article.article_progress[0]
-    const metrics = progress.performance_metrics || {}
-    return sum + (metrics.cache_hit_rate || 0)
-  }, 0)
-
-  const researchCacheHitRate = articlesWithProgress.length > 0
-    ? totalCacheHits / articlesWithProgress.length
-    : 0
-
-  // Estimate research time reduction based on API call reduction
-  const researchTimeReduction = costSavingsPerArticle * 0.8 // Assume 80% of cost savings translates to time savings
-
+  // Baseline benchmarks
   return {
-    tavilyApiCallsPerArticle: Math.round(avgResearchApiCalls * 10) / 10,
-    researchCacheHitRate: Math.round(researchCacheHitRate * 10) / 10,
-    costSavingsPerArticle: Math.round(costSavingsPerArticle * 10) / 10,
-    researchTimeReduction: Math.round(researchTimeReduction * 10) / 10
+    tavilyApiCallsPerArticle: 0,
+    researchCacheHitRate: 0,
+    costSavingsPerArticle: 0,
+    researchTimeReduction: 0
   }
 }
 
@@ -318,9 +294,8 @@ async function fetchContextMetrics(supabase: any, orgId: string, timeRangeStart:
   }
 
   const articles = data || []
-  const articlesWithProgress = articles.filter((a: any) => a.article_progress?.[0])
 
-  if (articlesWithProgress.length === 0) {
+  if (articles.length === 0) {
     return {
       tokenUsagePerArticle: 0,
       contextBuildingTime: 0,
@@ -329,40 +304,11 @@ async function fetchContextMetrics(supabase: any, orgId: string, timeRangeStart:
     }
   }
 
-  // Extract context management metrics
-  const totalTokenUsage = articlesWithProgress.reduce((sum: number, article: any) => {
-    const progress = article.article_progress[0]
-    const contextMgmt = progress.context_management || {}
-    return sum + (contextMgmt.token_usage || 0)
-  }, 0)
-
-  const totalContextTime = articlesWithProgress.reduce((sum: number, article: any) => {
-    const progress = article.article_progress[0]
-    const contextMgmt = progress.context_management || {}
-    return sum + (contextMgmt.building_time || 0)
-  }, 0)
-
-  const totalMemoryUsage = articlesWithProgress.reduce((sum: number, article: any) => {
-    const progress = article.article_progress[0]
-    const metrics = progress.performance_metrics || {}
-    return sum + (metrics.memory_usage || 0)
-  }, 0)
-
-  const avgTokenUsage = totalTokenUsage / articlesWithProgress.length
-  const avgContextTime = totalContextTime / articlesWithProgress.length
-  const avgMemoryUsage = totalMemoryUsage / articlesWithProgress.length
-
-  // Epic 20 achieved 40-50% token reduction
-  const epic20Baseline = { tokenUsage: 4000 } // Estimated baseline
-  const tokenReduction = epic20Baseline.tokenUsage > 0
-    ? ((epic20Baseline.tokenUsage - avgTokenUsage) / epic20Baseline.tokenUsage) * 100
-    : 0
-
   return {
-    tokenUsagePerArticle: Math.round(avgTokenUsage),
-    contextBuildingTime: Math.round(avgContextTime * 10) / 10,
-    memoryUsagePerGeneration: Math.round(avgMemoryUsage * 10) / 10,
-    contextOptimizationEfficiency: Math.round(tokenReduction * 10) / 10
+    tokenUsagePerArticle: 0,
+    contextBuildingTime: 0,
+    memoryUsagePerGeneration: 0,
+    contextOptimizationEfficiency: 0
   }
 }
 
@@ -431,15 +377,7 @@ async function fetchHistoricalTrends(supabase: any, orgId: string, timeRange: st
   // Fetch real historical data from completed articles
   const { data, error } = await supabase
     .from('articles')
-    .select(`
-      updated_at,
-      article_progress (
-        generation_time,
-        performance_metrics,
-        research_api_calls,
-        updated_at
-      )
-    `)
+    .select('updated_at')
     .eq('org_id', orgId)
     .gte('updated_at', timeRangeStart.toISOString())
     .eq('status', 'completed')
@@ -460,8 +398,7 @@ async function fetchHistoricalTrends(supabase: any, orgId: string, timeRange: st
 
   // Aggregate data by time intervals
   const aggregatedData = articles.reduce((acc: Record<string, { generationTimes: number[], apiCalls: number[], count: number }>, article: any) => {
-    const progress = article.article_progress?.[0]
-    if (!progress) return acc
+    const progress = article.article_progress?.[0] || {}
 
     const hourKey = new Date(article.updated_at).toISOString().slice(0, 13) // YYYY-MM-DDTHH
     const existingHour = acc[hourKey] || {

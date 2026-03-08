@@ -1,52 +1,43 @@
 import { createClient } from './server'
-import { cache } from 'react'
-import type { Database } from './database.types'
-import { PLAN_LIMITS } from '../config/plan-limits'
+import { PLAN_LIMITS } from '@/lib/config/plan-limits'
 
-type UserRecord = Database['public']['Tables']['users']['Row']
-type OrganizationRecord = Database['public']['Tables']['organizations']['Row']
+export interface OrganizationRecord {
+  id: string
+  name: string
+  plan?: string
+  plan_type?: string
+  payment_status?: string
+}
 
-export interface CurrentUser {
-  user: {
-    id: string
-    email?: string
-  }
+export interface UserRecord {
   id: string
   email: string
-  first_name: string | null
+  auth_user_id: string
   role: string
-  org_id: string | null
-  organizations?: (OrganizationRecord & {
-    article_usage?: number;
-    article_limit?: number | null;
-  }) | null
+  org_id: string
+  first_name?: string
+  last_name?: string
 }
 
 /**
- * Get the current authenticated user with their organization data
- * @returns Current user with organization data, or null if not authenticated
+ * getCurrentUser - Standard utility to fetch the authenticatd user 
+ * and their organization context with reinforced plan-metering truth.
  */
-export const getCurrentUser = cache(async function getCurrentUser(): Promise<CurrentUser | null> {
+export const getCurrentUser = (async () => {
   const supabase = await createClient()
 
-  // Get authenticated user from Supabase Auth
+  // Get Auth Service User
   const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return null
 
-  if (authError || !user) {
-    return null
-  }
-
-  // Query users table to get user record
-  const { data: userRecord, error: userError } = await supabase
+  // Get DB User Profile
+  const { data: userRecord, error: profileError } = await supabase
     .from('users')
-    .select('id, email, first_name, role, org_id')
+    .select('*')
     .eq('auth_user_id', user.id)
     .single()
 
-  if (userError || !userRecord) {
-    console.error('Failed to load user record in getCurrentUser:', userError)
-    return null
-  }
+  if (profileError || !userRecord) return null
 
   // Query organization if org_id exists
   let organization: (OrganizationRecord & {
@@ -64,24 +55,25 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
     if (orgData) {
       const organizationData = orgData as any
       // Determine effective plan - use plan_type if available, fallback to plan
-      const planType = (organizationData.plan_type || organizationData.plan || 'trial').toLowerCase()
+      // BUG NB5 FIX: Fallback back to 'starter' for existing orgs
+      const planType = (organizationData.plan_type || organizationData.plan || 'starter').toLowerCase()
       const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
 
-      // Calculate usage - use atomic counter from DB for reliability
+      // Calculate usage
       let articleUsage = organizationData.article_usage || 0
 
-      // BUG E FIX: Trial users need strict live counting to match generate API gate
+      // BUG E FIX: Trial users need strict sync with generate API's 'completed' gate
       if (planType === 'trial') {
         const { count } = await supabase
           .from('articles')
-          .select('*', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true }) // BUG NB6 FIX: select 'id'
           .eq('org_id', (userRecord as any).org_id)
-          .in('status', ['queued', 'processing', 'completed', 'reviewing'])
+          .eq('status', 'completed') // BUG E FIX: count only completed
 
         articleUsage = count || 0
       }
 
-      const totalCompletedUsage = articleUsage // Simplified for now
+      const totalCompletedUsage = articleUsage
 
       // Resolve plan limit from centralized config
       const articleLimit = PLAN_LIMITS.article_generation[planKey];
