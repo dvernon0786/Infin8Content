@@ -142,7 +142,16 @@ export const generateArticle = inngest.createFunction(
 
     const plan = await step.run('run-planner', async () => {
       // Determinism: If plan already exists, skip
-      if (article.article_plan) return article.article_plan as ArticlePlannerOutput
+      if (article.article_plan) {
+        // 🔒 BACKFILL: Ensure title is always set even on retry paths
+        if (!article.title && (article.article_plan as ArticlePlannerOutput).article_title) {
+          await supabase
+            .from('articles')
+            .update({ title: (article.article_plan as ArticlePlannerOutput).article_title })
+            .eq('id', articleId)
+        }
+        return article.article_plan as ArticlePlannerOutput
+      }
 
       const icpText = [
         `Business Description:\n${organization.business_description || ''}`,
@@ -174,7 +183,10 @@ export const generateArticle = inngest.createFunction(
 
       await supabase
         .from('articles')
-        .update({ article_plan: topLevelPlan })
+        .update({
+          article_plan: topLevelPlan,
+          title: plannerOutput.article_title  // 🔒 FIX: Persist title so assembler finds it
+        })
         .eq('id', articleId)
 
       return plannerOutput
@@ -288,8 +300,8 @@ export const generateArticle = inngest.createFunction(
               position,
               generationConfig,
               priorContentMarkdown: completedSections
-                .map(s => s.content_markdown)
-                .filter(Boolean)
+                .filter(s => s.content_markdown?.trim())  // 🔒 Guard before map to prevent "null" strings
+                .map(s => `## ${s.section_header}\n\n${s.content_markdown}`)
                 .join('\n\n'),
               organizationContext: {
                 name: organization.name,

@@ -28,9 +28,9 @@ const ResearchOutputSchema = z.object({
     z.object({
       query: z.string(),
       answer: z.string(),
-      citations: z.array(z.string()),
-      source_urls: z.array(z.string()).default([]), // 🔗 NEW: Capture URLs per result (Phase 6)
-      source_types_found: z.array(z.string())
+      citations: z.array(z.string()).default([]),
+      source_urls: z.array(z.string()).default([]),
+      source_types_found: z.array(z.string()).default([])
     })
   ),
   total_searches: z.number()
@@ -314,14 +314,21 @@ export async function runResearchAgent(
   let response
 
   try {
-    console.log('[ResearchAgent] Attempting synthesis with z-ai/glm-4.7')
-    response = await generateContent(messages, {
-      model: 'z-ai/glm-4.7',
+    console.log('[ResearchAgent] Attempting synthesis with openai/gpt-4o-mini')
+    const primaryResponse = await generateContent(messages, {
+      model: 'openai/gpt-4o-mini',
       temperature: 0.0,
       maxTokens: 4000
     })
-  } catch (error) {
-    console.warn('[ResearchAgent] Primary model failed, using fallback gpt-4o-mini')
+    // Validate parseability and schema inside the try so inconsistencies also trigger fallback
+    const primaryJson = extractJson(primaryResponse.content)
+    ResearchOutputSchema.parse(primaryJson)
+    response = primaryResponse
+  } catch (primaryError) {
+    console.warn(
+      '[ResearchAgent] Primary model (glm-4.7) failed or returned unparseable JSON — falling back to gpt-4o-mini:',
+      primaryError instanceof Error ? primaryError.message : primaryError
+    )
     response = await generateContent(messages, {
       model: 'openai/gpt-4o-mini',
       temperature: 0.0,
@@ -330,8 +337,14 @@ export async function runResearchAgent(
   }
 
   // ── Step 4: Parse and validate ────────────────────────────────────────────
-  const rawJson = extractJson(response.content)
-  const validated = ResearchOutputSchema.parse(rawJson)
+  let validated
+  try {
+    const rawJson = extractJson(response.content)
+    validated = ResearchOutputSchema.parse(rawJson)
+  } catch (error) {
+    console.error('[ResearchAgent] Critical failure — synthesis output is unparseable:', error)
+    throw new Error('Research synthesis failed: AI output was not valid JSON')
+  }
 
   // 🔗 VALIDATION LOG: Check if LLM followed source_urls schema
   const totalUrls = validated.research_results.reduce((n, r) => n + (r.source_urls?.length ?? 0), 0)

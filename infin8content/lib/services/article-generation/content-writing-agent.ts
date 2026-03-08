@@ -42,6 +42,13 @@ const LISTICLE_SECTION_TEMPLATE = `SECTION FORMAT — listicle style (follow exa
 - Do NOT use flowing prose paragraphs as the primary structure
 - Minimum 3 numbered items per section, maximum 7`
 
+const FAQ_SECTION_TEMPLATE = `SECTION FORMAT — FAQ style (follow exactly):
+- Every question must be an H3 header: "### Question text here?"
+- Follow each question immediately with a concise, direct answer paragraph (2–4 sentences)
+- Use "we" and conversational tone in answers: "We recommend..." or "Our research shows..."
+- No intro or outro text — start immediately with the first H3 question
+- Minimum 3 questions, maximum 6`
+
 // ─── Writing System Prompt ────────────────────────────────────────────────────
 
 /**
@@ -90,7 +97,7 @@ Content Creation Workflow:
 3. Plan content flow ensuring logical progression and natural keyword integration throughout
 4. Write the introduction that hooks readers with relatable problems or compelling questions
 5. Develop each section following the SECTION FORMAT template provided in the request exactly
-6. Incorporate citations using inline plain-text citations e.g. (McKinsey Global Institute, 2024)
+6. When the Supporting research block contains a URL, embed it as a markdown hyperlink on a relevant phrase: [descriptive anchor text](URL). Do not write (Author, Year) parenthetical text. Links only — no citation text. Maximum 3–4 external links per section.
 7. Add tables or structured data where appropriate to enhance readability and value
 8. Include natural CTAs that guide readers toward relevant next steps or resources
 9. Review for SEO optimization ensuring target and semantic keywords appear naturally throughout
@@ -113,9 +120,9 @@ SEO Integration:
 • Use related terms and synonyms to build topical authority
 
 Citation and Source Management:
-• Reference provided research answers and statistics using inline plain-text citations e.g. (McKinsey Global Institute, 2024)
+• Link to sources inline using [anchor text](URL) — never write (Author, Year) parenthetical text
+• Only link when a URL is explicitly present in the Supporting research block
 • Ensure diversity of sources across different sections
-• Integrate quotes and statistics naturally within narrative flow using inline citations
 • Maintain factual accuracy while making information accessible
 
 Conclusions
@@ -153,9 +160,11 @@ export async function runContentWritingAgent(
   const startTime = Date.now();
 
   // ── Resolve style template once, used in all three position blocks ──────────
-  const styleTemplate = input.articlePlan.content_style === 'listicle'
-    ? LISTICLE_SECTION_TEMPLATE
-    : INFORMATIVE_SECTION_TEMPLATE
+  const styleTemplate = input.sectionType === 'faq'
+    ? FAQ_SECTION_TEMPLATE
+    : input.articlePlan.content_style === 'listicle'
+      ? LISTICLE_SECTION_TEMPLATE
+      : INFORMATIVE_SECTION_TEMPLATE
 
   try {
     let userMessage = '';
@@ -208,13 +217,20 @@ Generation config:
 
 STRICT LENGTH RULE: This conclusion must be 150–200 words. Close cleanly with one CTA.
 
-Article topic:
+⚠️ CRITICAL OUTPUT RULE: Output ONLY the conclusion body text.
+- Do NOT output any H1 title or article name
+- Do NOT output any section headers other than the one given below
+- Do NOT reproduce, repeat, or paraphrase the previous section content
+- Do NOT output the word "Conclusion" as a standalone line
+- Start immediately with substantive closing content
+
+Article topic (context only — do NOT output this as a title):
 ${input.articlePlan.article_title}
 
 Target keyword:
 ${input.articlePlan.target_keyword}
 
-Previous section (continue logically from this, then close the article):
+Previous section (for narrative continuity ONLY — do not reproduce):
 ${getContextSnippet(input.priorContentMarkdown)}
 
 Final section header:
@@ -229,10 +245,9 @@ ${input.plannerOutput.supporting_points.join('\n')}
 Supporting research:
 ${JSON.stringify(input.researchPayload, null, 2)}
 
-Reminder — close the article with:
-- A clear, actionable conclusion.
-- A natural CTA aligned with: ${input.generationConfig.add_cta}
-- No repetition of content already covered above.`;
+Close the article with:
+- A clear, actionable conclusion (2–3 sentences max)
+- One natural CTA aligned with: ${input.generationConfig.add_cta}`;
 
     } else {
       userMessage = `${styleTemplate}
@@ -333,6 +348,20 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
     // Extract result text, default empty for safety
     let sectionContent = result.content || '';
 
+    // 🔒 BUG FIX: Strip section header if LLM included it at the top of content.
+    // buildFinalMarkdown adds ## ${s.header} itself — if the LLM also outputs it,
+    // the header appears twice. Strip any leading markdown heading line.
+    sectionContent = sectionContent.replace(/^#+\s+[^\n]+\n+/, '').trim()
+
+    // 🔒 BUG FIX: Deterministic emoji strip — enforces add_emojis: false regardless of LLM output.
+    // The LLM treats add_emojis as informational; this is the hard enforcement layer.
+    if (!input.generationConfig.add_emojis) {
+      sectionContent = sectionContent.replace(
+        /[\u{1F300}-\u{1FAFF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F1FF}\u{1F200}-\u{1F2FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}]/gu,
+        ''
+      ).replace(/  +/g, ' ').trim()
+    }
+
     // 🔒 WHITELIST STRIP: Only allow links whose URLs exist in the research payload (Phase 6)
     const normalizeUrl = (url: string) =>
       url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '').toLowerCase()
@@ -348,7 +377,8 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
       (match, text, url) => approvedUrls.has(normalizeUrl(url)) ? match : text
     )
     sectionContent = sectionContent
-      .replace(/[\[(]?\bword[s]?\s*count[:\s]*\d+\s*\w*[\])]?\s*$/i, '')
+      .replace(/[\[(]?\bword[s]?\s*count[:\s]*\d+\s*\w*[\])]?\s*$/i, '')   // end-of-string
+      .replace(/\n+[\[(]?\bword[s]?\s*count[:\s]*\d+[^\n]*$/gim, '')        // mid-content line
       .trim() // Strip LLM metadata leaking into output
 
     // Word-based soft guard: only trim if massively over the limit
@@ -436,7 +466,7 @@ function convertMarkdownToHtml(markdown: string): string {
     code_inline: 'background: #f3f4f6; color: #1f2937; padding: 2px 6px; border-radius: 4px; font-family: "Fira Code", "Cascadia Code", monospace; font-size: 0.875em;',
     code_block: 'display: block; background: #111827; color: #f9fafb; padding: 1.25rem; border-radius: 8px; overflow-x: auto; font-family: "Fira Code", "Cascadia Code", monospace; font-size: 0.875rem; line-height: 1.6; margin: 1.5rem 0;',
     hr: 'border: none; border-top: 1px solid #e5e7eb; margin: 2.5rem 0;',
-    // Citations render as plain (Author, Year) — no <a> tags
+    // Citations render as <a> hyperlinks when URL is present in research payload
     citation: 'color: #374151;',
   }
 
