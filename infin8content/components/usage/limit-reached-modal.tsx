@@ -33,8 +33,8 @@ export function LimitReachedModal({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[425px] border-neutral-200">
                 <DialogHeader>
-                    <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center mb-4">
-                        <Zap className="w-6 h-6 text-orange-600" />
+                    <div className="w-12 h-12 rounded-full bg-[--color-warning]/10 flex items-center justify-center mb-4">
+                        <Zap className="w-6 h-6 text-[--color-warning]" />
                     </div>
                     <DialogTitle className="text-xl font-bold text-neutral-900">
                         You&apos;ve reached your monthly article limit
@@ -70,7 +70,7 @@ export function LimitReachedModal({
                         <ShoppingCart className="w-4 h-4" />
                         Buy extra
                     </Button>
-                    <Button asChild className="sm:flex-1 bg-gradient-to-r from-[#217CEB] to-[#4A42CC]">
+                    <Button asChild className="sm:flex-1 bg-[--gradient-brand] border-none">
                         <Link href="/dashboard/settings/billing">Upgrade Plan</Link>
                     </Button>
                 </DialogFooter>

@@ -55,79 +55,71 @@ export async function POST(request: Request) {
             }, { status: 400 })
         }
 
-        // 3. Quota Enforcement
-        const org = currentUser.organizations as any
-        const planType = (org?.plan || 'starter').toLowerCase()
+        // 3. Quota Enforcement (Atomic & Billing-Cycle Aware)
+        const orgData = currentUser.organizations as any
+        const planType = (orgData?.plan || 'trial').toLowerCase()
         const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
-        const articleLimit = PLAN_LIMITS.article_generation[planKey] ?? (() => {
-            console.error(`[Quota] Unknown plan key: ${planKey}, defaulting to trial limit`)
-            return PLAN_LIMITS.article_generation.trial
-        })();
+        const articleLimit = PLAN_LIMITS.article_generation[planKey];
 
         if (articleLimit !== null) {
-            let currentUsage = 0
+            const now = new Date()
+            const resetDate = orgData.usage_reset_at ? new Date(orgData.usage_reset_at) : null
+            let isNewCycle = resetDate && now > resetDate
 
-            if (planType === 'trial') {
-                // Trial users: Check if they have ever successfully completed an article
-                const { count, error: countError } = await supabase
-                    .from('articles')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('org_id', currentUser.org_id)
-                    .eq('status', 'completed')
-
-                if (countError) {
-                    console.error('[Quota Check] Trial count error:', countError)
-                    return NextResponse.json({ error: 'Failed to verify trial limits' }, { status: 500 })
-                }
-
-                currentUsage = count ?? 0
-            } else {
-                // Paid users: Check current month's usage
-                const startOfMonth = new Date()
-                startOfMonth.setDate(1)
-                startOfMonth.setHours(0, 0, 0, 0)
-
-                const { count: usageCount, error: usageError } = await supabase
-                    .from('articles')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('org_id', currentUser.org_id)
-                    .gte('created_at', startOfMonth.toISOString())
-                    .in('status', ['queued', 'processing', 'completed', 'reviewing'])
-
-                if (usageError) {
-                    console.error('[Quota Check] Monthly usage count failed:', usageError)
-                    return NextResponse.json({ error: 'Failed to verify monthly limits' }, { status: 500 })
-                }
-                currentUsage = usageCount ?? 0
+            const updateData: any = {
+                article_usage: isNewCycle ? 1 : orgData.article_usage + 1
+            }
+            if (isNewCycle && resetDate) {
+                const nextReset = new Date(resetDate)
+                nextReset.setMonth(nextReset.getMonth() + 1)
+                updateData.usage_reset_at = nextReset.toISOString()
             }
 
-            if (currentUsage >= articleLimit) {
-                // 📊 QUOTA TELEMETRY
-                await logActionAsync({
-                    orgId: currentUser.org_id,
-                    userId: currentUser.id,
-                    action: 'quota.article_generation.limit_hit' as any,
-                    details: {
-                        plan: planType,
-                        currentUsage,
+            const query = supabase
+                .from('organizations')
+                .update(updateData)
+                .eq('id', currentUser.org_id)
+
+            // CRITICAL: Condition for atomic enforcement
+            if (!isNewCycle) {
+                query.lt('article_usage', articleLimit)
+            }
+
+            const { data: orgUpdate, error: orgUpdateError } = await query.select('article_usage').single()
+
+            if (orgUpdateError || !orgUpdate) {
+                // If the update failed or returned nothing, it's either an error or the limit was hit
+                if (orgUpdateError?.code === 'PGRST116' || (!orgUpdate && !orgUpdateError)) {
+                    // 📊 QUOTA TELEMETRY
+                    await logActionAsync({
+                        orgId: currentUser.org_id,
+                        userId: currentUser.id,
+                        action: 'quota.article_generation.limit_hit' as any,
+                        details: {
+                            plan: planType,
+                            currentUsage: orgData.article_usage,
+                            limit: articleLimit,
+                            metric: 'article_generation',
+                        },
+                        ipAddress: extractIpAddress(request.headers),
+                        userAgent: extractUserAgent(request.headers),
+                    })
+
+                    const errorMsg = planType === 'trial'
+                        ? "Trial users can only generate one article. Please upgrade."
+                        : "Monthly article limit reached. Please upgrade your plan."
+
+                    return NextResponse.json({
+                        error: errorMsg,
                         limit: articleLimit,
+                        currentUsage: orgData.article_usage,
+                        plan: planType,
                         metric: 'article_generation',
-                    },
-                    ipAddress: extractIpAddress(request.headers),
-                    userAgent: extractUserAgent(request.headers),
-                })
+                    }, { status: 403 })
+                }
 
-                const errorMsg = planType === 'trial'
-                    ? "Trial users can only generate one article. Please upgrade."
-                    : "Monthly article limit reached. Please upgrade your plan."
-
-                return NextResponse.json({
-                    error: errorMsg,
-                    limit: articleLimit,
-                    currentUsage,
-                    plan: planType,
-                    metric: 'article_generation',
-                }, { status: 403 })
+                console.error('[Quota Check] Atomic update failed:', orgUpdateError)
+                return NextResponse.json({ error: 'Failed to verify usage limits' }, { status: 500 })
             }
         }
 

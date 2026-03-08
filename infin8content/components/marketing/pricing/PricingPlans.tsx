@@ -83,7 +83,7 @@ export default function PricingPlans({ billing }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 items-center">
         {plans.map((plan) => {
           const currentPrice = billing === "monthly" ? plan.monthly : plan.annual;
-          const articleLimit = plan.name === "Starter" ? PLAN_LIMITS.article_generation.starter : PLAN_LIMITS.article_generation.pro;
+          const articleLimit = PLAN_LIMITS.article_generation[plan.name.toLowerCase() as keyof typeof PLAN_LIMITS.article_generation];
 
           return (
             <div

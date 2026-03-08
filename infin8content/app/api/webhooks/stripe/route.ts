@@ -250,11 +250,18 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
 
   // Update organizations table with retry logic
   const updateData: any = {
-    plan: plan,
+    plan: plan || 'trial',
     stripe_customer_id: session.customer,
     stripe_subscription_id: session.subscription,
     payment_status: 'active',
     payment_confirmed_at: new Date().toISOString(),
+    article_usage: 0, // Reset usage on new subscription
+  }
+
+  // Set usage_reset_at from subscription current_period_end
+  if (session.subscription) {
+    const subscription = await stripe.subscriptions.retrieve(session.subscription) as any
+    updateData.usage_reset_at = new Date(subscription.current_period_end * 1000).toISOString()
   }
 
   // If reactivating, clear grace period and suspension fields
@@ -373,8 +380,9 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
       resolvedPlan = newPlan
 
       const updateData: any = {
-        plan: resolvedPlan,
+        plan: resolvedPlan || 'trial',
         payment_status: 'active',
+        usage_reset_at: new Date(subscription.current_period_end * 1000).toISOString(),
       }
 
       const { error: updateError } = await (supabase as any)
@@ -704,11 +712,18 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
     const updateData: any = {
       payment_status: 'active',
       payment_confirmed_at: new Date().toISOString(),
+      article_usage: 0, // Reset usage on new billing cycle
+    }
+
+    // Sync usage_reset_at from subscription
+    if (invoice.subscription) {
+      const subscription = await stripe.subscriptions.retrieve(invoice.subscription) as any
+      updateData.usage_reset_at = new Date(subscription.current_period_end * 1000).toISOString()
     }
 
     // Sync plan if resolved from invoice (ensures upgrades reflect immediately)
     if (currentInvoicedPlan) {
-      updateData.plan = currentInvoicedPlan
+      updateData.plan = currentInvoicedPlan || 'trial'
     }
 
     // If reactivating, clear grace period and suspension fields
