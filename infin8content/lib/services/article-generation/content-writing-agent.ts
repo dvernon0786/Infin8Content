@@ -208,13 +208,20 @@ Generation config:
 
 STRICT LENGTH RULE: This conclusion must be 150–200 words. Close cleanly with one CTA.
 
-Article topic:
+⚠️ CRITICAL OUTPUT RULE: Output ONLY the conclusion body text.
+- Do NOT output any H1 title or article name
+- Do NOT output any section headers other than the one given below
+- Do NOT reproduce, repeat, or paraphrase the previous section content
+- Do NOT output the word "Conclusion" as a standalone line
+- Start immediately with substantive closing content
+
+Article topic (context only — do NOT output this as a title):
 ${input.articlePlan.article_title}
 
 Target keyword:
 ${input.articlePlan.target_keyword}
 
-Previous section (continue logically from this, then close the article):
+Previous section (for narrative continuity ONLY — do not reproduce):
 ${getContextSnippet(input.priorContentMarkdown)}
 
 Final section header:
@@ -229,10 +236,9 @@ ${input.plannerOutput.supporting_points.join('\n')}
 Supporting research:
 ${JSON.stringify(input.researchPayload, null, 2)}
 
-Reminder — close the article with:
-- A clear, actionable conclusion.
-- A natural CTA aligned with: ${input.generationConfig.add_cta}
-- No repetition of content already covered above.`;
+Close the article with:
+- A clear, actionable conclusion (2–3 sentences max)
+- One natural CTA aligned with: ${input.generationConfig.add_cta}`;
 
     } else {
       userMessage = `${styleTemplate}
@@ -332,6 +338,20 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
 
     // Extract result text, default empty for safety
     let sectionContent = result.content || '';
+
+    // 🔒 BUG FIX: Strip section header if LLM included it at the top of content.
+    // buildFinalMarkdown adds ## ${s.header} itself — if the LLM also outputs it,
+    // the header appears twice. Strip any leading markdown heading line.
+    sectionContent = sectionContent.replace(/^#+\s+[^\n]+\n+/, '').trim()
+
+    // 🔒 BUG FIX: Deterministic emoji strip — enforces add_emojis: false regardless of LLM output.
+    // The LLM treats add_emojis as informational; this is the hard enforcement layer.
+    if (!input.generationConfig.add_emojis) {
+      sectionContent = sectionContent.replace(
+        /[\u{1F300}-\u{1FAFF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F1FF}\u{1F200}-\u{1F2FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}]/gu,
+        ''
+      ).replace(/  +/g, ' ').trim()
+    }
 
     // 🔒 WHITELIST STRIP: Only allow links whose URLs exist in the research payload (Phase 6)
     const normalizeUrl = (url: string) =>
