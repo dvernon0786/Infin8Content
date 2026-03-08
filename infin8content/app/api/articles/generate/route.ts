@@ -177,7 +177,7 @@ export async function POST(request: Request) {
             userAgent: extractUserAgent(request.headers),
         })
 
-        return NextResponse.json({ success: true, status: 'generating' })
+        return NextResponse.json({ success: true, status: 'processing' })
 
     } catch (error) {
         console.error('Unexpected error in POST /api/articles/generate:', error)
