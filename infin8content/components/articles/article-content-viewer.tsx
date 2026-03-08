@@ -144,9 +144,7 @@ export function ArticleContentViewer({ sections }: ArticleContentViewerProps) {
 }
 
 // ─── Markdown renderer ────────────────────────────────────────────────────────
-// Renders markdown with article-appropriate typography.
-// Links are rendered as plain text — citations use (Author, Year) format,
-// not hyperlinks. Any markdown link that slips through is stripped to text only.
+// Renders markdown with article-appropriate typography and supports external hyperlinks.
 
 function ArticleMarkdown({ content }: { content: string }) {
   if (typeof content !== 'string') return null
