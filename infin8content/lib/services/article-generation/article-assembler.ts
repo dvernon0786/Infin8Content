@@ -33,7 +33,9 @@ export class ArticleAssembler {
         .from('article_sections')
         .select('*', { count: 'exact', head: true })
         .eq('article_id', input.articleId)
-        .neq('status', 'failed') // 🔒 INTEGRITY: Exclude explicitly failed sections
+        .eq('status', 'completed')
+        .not('content_markdown', 'is', null) // 🔒 INTEGRITY: Ignore null content
+        .neq('content_markdown', '')         // 🔒 INTEGRITY: Ignore empty strings
 
       if (countError) throw countError
 
@@ -70,7 +72,15 @@ export class ArticleAssembler {
       }
 
       const finalMarkdown = this.buildFinalMarkdown(
-        { title: articleTitle, keyword: article.keyword, id: input.articleId, organization_id: input.organizationId },
+        {
+          title: articleTitle,
+          keyword: article.keyword,
+          id: input.articleId,
+          organization_id: input.organizationId,
+          cover_image_url: article.cover_image_url,
+          cta_text: article.cta_text,
+          cta_url: article.cta_url,
+        },
         sectionsJson
       )
 
@@ -103,7 +113,13 @@ export class ArticleAssembler {
   private async loadArticle({ articleId, organizationId }: AssemblyInput) {
     const { data, error } = await this.supabaseAdmin
       .from('articles')
-      .select('id, title, status, keyword')
+      .select(`
+        id, title, status, keyword, cover_image_url,
+        organizations!org_id (
+          cta_text,
+          cta_url
+        )
+      `)
       .eq('id', articleId)
       .eq('org_id', organizationId)
       .single()
@@ -112,7 +128,16 @@ export class ArticleAssembler {
       throw new Error('Article not found or access denied')
     }
 
-    return data
+    // Bug 2: Observability lock for org join
+    if (!(data as any).organizations) {
+      logger.log('article.assembly.org_join_missing', { articleId })
+    }
+
+    return {
+      ...data,
+      cta_text: (data as any).organizations?.cta_text ?? null,
+      cta_url: (data as any).organizations?.cta_url ?? null,
+    }
   }
 
   private async loadSections({ articleId }: AssemblyInput) {
@@ -127,7 +152,17 @@ export class ArticleAssembler {
       throw error
     }
 
-    return (data || []).filter((s: any) => s.content_markdown?.trim())
+    // Log empty sections for observability but don't silently drop them
+    const rawSections = data || []
+    const emptySections = rawSections.filter((s: any) => !s.content_markdown?.trim())
+    if (emptySections.length > 0) {
+      logger.log('article.assembly.empty_sections_detected', {
+        articleId,
+        emptySectionOrders: emptySections.map((s: any) => s.section_order)
+      })
+    }
+
+    return rawSections.filter((s: any) => s.content_markdown?.trim())
   }
 
   private countWords(markdown: string): number {
@@ -199,21 +234,39 @@ export class ArticleAssembler {
    *   ALTER TABLE articles ADD COLUMN IF NOT EXISTS final_markdown text;
    */
   private buildFinalMarkdown(
-    article: { title: string; keyword: string; id: string; organization_id: string },
+    article: {
+      title: string
+      keyword: string
+      id: string
+      organization_id: string
+      cover_image_url?: string | null
+      cta_text?: string | null
+      cta_url?: string | null
+    },
     sections: any[]
   ): string {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0]
 
-    const coverImage = `![${article.title}](https://cdn.outrank.so/${article.id}/cover.jpg)`;
-    const authorBlock = `*Published: ${today} · By Editorial Team*`;
-    const cta = `---\n*Want articles like this written automatically? [Try Outrank free →](https://outrank.so)*`;
-    const disclaimer = `---\n*Editorial note: This content was researched and generated on ${today}. Facts and pricing are verified at time of writing and subject to change.*`;
-    const socialShare = `**Share this article:** [Post on X](https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}) · Copy link`;
+    const coverImage = article.cover_image_url
+      ? `![${article.title}](${article.cover_image_url})`
+      : null
+
+    const authorBlock = `*Published: ${today} · By Editorial Team*`
+
+    const ctaText = article.cta_text || null
+    const ctaUrl = article.cta_url || null
+    const cta = ctaText && ctaUrl
+      ? `---\n*${ctaText} [→](${ctaUrl})*`
+      : null
+
+    const disclaimer = `---\n*Editorial note: This content was researched and generated on ${today}. Facts and pricing are verified at time of writing and subject to change.*`
+
+    const socialShare = `**Share this article:** [Post on X](https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}) · Copy link`
 
     const body = sections
       .sort((a, b) => a.order - b.order)
       .map(s => `## ${s.header}\n\n${s.markdown}`)
-      .join('\n\n');
+      .join('\n\n')
 
     return [
       coverImage,
@@ -223,6 +276,6 @@ export class ArticleAssembler {
       cta,
       disclaimer,
       socialShare,
-    ].join('\n\n');
+    ].filter(Boolean).join('\n\n')
   }
 }
