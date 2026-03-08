@@ -265,7 +265,32 @@ export class ArticleAssembler {
 
     const body = sections
       .sort((a, b) => a.order - b.order)
-      .map(s => `## ${s.header}\n\n${s.markdown}`)
+      .map(s => {
+        let md = (s.markdown || '').trim()
+
+        // 🔒 BUG FIX: Strip leading markdown heading from section content.
+        // The LLM sometimes outputs the section header inside content_markdown.
+        // buildFinalMarkdown adds ## ${s.header} itself — the duplicate must be removed.
+        md = md.replace(/^#+\s+[^\n]+\n+/, '').trim()
+
+        // 🔒 BUG FIX: Safety truncation if the LLM reproduced the article title
+        // or prior context verbatim (seen in conclusion sections when the model
+        // treats context as output). Detect article title appearing in section body
+        // and truncate at that point.
+        const titleIndex = md.indexOf(article.title)
+        if (titleIndex >= 50) {
+          // Title appears deep in the content — truncate before it
+          md = md.slice(0, titleIndex).trimEnd()
+          console.warn(`[ArticleAssembler] Truncated section "${s.header}" — article title found in body (likely context reproduction)`)
+        } else if (titleIndex >= 0 && titleIndex < 50) {
+          // Title appears at the very start — entire section is reproduced context
+          // Drop the content and log; don't crash the assembly
+          console.warn(`[ArticleAssembler] Section "${s.header}" body starts with article title — LLM reproduced context. Using empty body.`)
+          md = ''
+        }
+
+        return `## ${s.header}\n\n${md}`.trimEnd()
+      })
       .join('\n\n')
 
     return [
