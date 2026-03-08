@@ -7,6 +7,8 @@ export interface OrganizationRecord {
   plan?: string
   plan_type?: string
   payment_status?: string
+  created_at?: string
+  updated_at?: string
 }
 
 export interface UserRecord {
@@ -44,6 +46,8 @@ export const getCurrentUser = (async () => {
     article_usage?: number;
     article_limit?: number | null;
     total_completed_usage?: number;
+    created_at?: string;
+    updated_at?: string;
   }) | null = null
   if ((userRecord as any).org_id) {
     const { data: orgData } = await supabase
