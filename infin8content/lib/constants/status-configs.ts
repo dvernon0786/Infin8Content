@@ -109,6 +109,32 @@ export const statusConfigs: Record<ArticleStatus, StatusConfig> = {
     highContrastColor: 'text-gray-800',
     patternClass: 'bg-dashed-gray', // CSS pattern for colorblind accessibility
   },
+  generating: {
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-50',
+    borderColor: 'border-orange-200',
+    icon: React.createElement(Loader2, { className: "h-4 w-4 animate-spin" }),
+    label: 'Generating',
+    variant: 'default',
+    ariaLabel: 'Article status: generating',
+    // Accessibility enhancements
+    pattern: 'dotted', // Visual pattern for colorblind users
+    highContrastColor: 'text-orange-800',
+    patternClass: 'bg-dots-orange', // CSS pattern for colorblind accessibility
+  },
+  reviewing: {
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-50',
+    borderColor: 'border-amber-200',
+    icon: React.createElement(Loader2, { className: "h-4 w-4 animate-spin" }),
+    label: 'Reviewing',
+    variant: 'default',
+    ariaLabel: 'Article status: reviewing',
+    // Accessibility enhancements
+    pattern: 'dotted',
+    highContrastColor: 'text-amber-800',
+    patternClass: 'bg-dots-amber',
+  },
 };
 
 // Helper function to get status configuration

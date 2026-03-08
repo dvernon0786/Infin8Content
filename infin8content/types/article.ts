@@ -9,7 +9,9 @@ export type ArticleStatus =
   | 'processing'
   | 'completed'
   | 'failed'
-  | 'cancelled';
+  | 'cancelled'
+  | 'reviewing'
+  | 'generating';
 
 export const ARTICLE_STATUSES: ArticleStatus[] = [
   'draft',
@@ -17,7 +19,9 @@ export const ARTICLE_STATUSES: ArticleStatus[] = [
   'processing',
   'completed',
   'failed',
-  'cancelled'
+  'cancelled',
+  'reviewing',
+  'generating'
 ];
 
 /**

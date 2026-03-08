@@ -124,6 +124,12 @@ export async function POST(request: Request) {
             await handleInvoicePaymentSucceeded(event, supabase)
             break
 
+          case 'invoice.finalized':
+            // Logic for finalized invoices could be added here later if needed
+            // For now, we just store it to mark it as processed
+            await storeWebhookEvent(event, supabase, null)
+            break
+
           default:
             logWebhookEvent(event, 'Unhandled event type')
             // Still store the event for monitoring
@@ -135,8 +141,7 @@ export async function POST(request: Request) {
       // Always return 200 to Stripe (Stripe requires 2xx response)
       return new Response('Webhook processed', { status: 200 })
     } catch (error: any) {
-      // Retry logic failed - log error but return 200 to prevent Stripe retries
-      // Stripe will retry on 5xx errors, but we want to handle retries ourselves
+      // Retry logic failed - log error
       logWebhookError(event, 'Event processing failed after retries', error, {
         retriesExhausted: true,
         requiresManualIntervention: true,
@@ -146,35 +151,29 @@ export async function POST(request: Request) {
       // Store event even on failure for monitoring (with error flag)
       try {
         await storeWebhookEvent(event, supabase, null)
-        // Log additional alert for monitoring systems
-        console.error('[Webhook Alert] CRITICAL: Webhook processing failed after all retries', {
-          eventId: event.id,
-          eventType: event.type,
-          error: error.message,
-          timestamp: new Date().toISOString(),
-          alertLevel: 'CRITICAL',
-        })
       } catch (storeError) {
-        logWebhookError(event, 'Failed to store event after processing failure', storeError, {
-          originalError: error.message,
-        })
+        logWebhookError(event, 'Failed to store event after processing failure', storeError)
       }
 
-      // Return 200 to prevent Stripe from retrying (we handle retries internally)
-      // Log errors for manual investigation
-      return new Response('Webhook processing error', { status: 200 })
+      // ARCHITECTURE FIX: Return 500 for critical events so Stripe retries
+      const criticalEvents = ['checkout.session.completed', 'invoice.payment_succeeded', 'invoice.finalized', 'customer.subscription.updated', 'customer.subscription.deleted']
+      if (criticalEvents.includes(event.type)) {
+        return new Response('Webhook processing error', { status: 500 })
+      }
+
+      // Return 200 for non-critical failures to stop retries if they aren't essential
+      return new Response('Webhook processed with errors', { status: 200 })
     }
   } catch (error) {
-    // Top-level error handler for unexpected errors
     logWebhookError({ id: 'unknown', type: 'unknown' }, 'Unexpected webhook error', error)
-    return new Response('Webhook processing error', { status: 200 })
+    return new Response('Webhook processing error', { status: 500 })
   }
 }
 
 async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   const session = event.data.object
   const orgId = session.metadata?.org_id
-  const plan = session.metadata?.plan
+  let plan = session.metadata?.plan
   const billingFrequency = session.metadata?.billing_frequency
 
   logWebhookEvent(event, 'Processing checkout.session.completed', {
@@ -226,17 +225,43 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
     throw error
   }
 
+  // FIX 3: Store the subscription ID early to ensure later events find the org (subscription_id stored in atomic update below)
+  if (session.subscription) {
+    // FIX 1: Always verify using price mapping (Bug 1 Fix: avoid items.data[0])
+    const subscription = await stripe.subscriptions.retrieve(session.subscription)
+    const planItem = subscription.items.data.find(
+      (item: any) => getPlanFromPriceId(item.price?.id)
+    )
+    const priceId = planItem?.price?.id
+    const resolvedPlan = priceId ? getPlanFromPriceId(priceId) : null
+
+    if (resolvedPlan) {
+      plan = resolvedPlan
+    }
+  }
+
+  // Safety guard to prevent silent plan corruption
+  if (!plan) {
+    throw new Error(`Unable to determine plan for checkout session ${session.id}`)
+  }
+
   // Check if this is a reactivation (payment_status is 'suspended' or 'past_due')
   const isReactivation = organization.payment_status === 'suspended' || organization.payment_status === 'past_due'
 
   // Update organizations table with retry logic
   const updateData: any = {
-    plan: plan,
-    plan_type: plan, // Sync plan_type with plan
+    plan: plan || 'trial',
     stripe_customer_id: session.customer,
     stripe_subscription_id: session.subscription,
     payment_status: 'active',
     payment_confirmed_at: new Date().toISOString(),
+    article_usage: 0, // Reset usage on new subscription
+  }
+
+  // Set usage_reset_at from subscription current_period_end
+  if (session.subscription) {
+    const subscription = await stripe.subscriptions.retrieve(session.subscription) as any
+    updateData.usage_reset_at = new Date(subscription.current_period_end * 1000).toISOString()
   }
 
   // If reactivating, clear grace period and suspension fields
@@ -338,35 +363,26 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
   if (organization) {
     let resolvedPlan: string | undefined;
 
-    if (subscription.status === 'active') {
-      let newPlan = subscription.metadata?.plan
-
-      if (!newPlan && subscription.items?.data?.length > 0) {
-        // Try getting from price metadata, fallback to mapping if needed
-        const priceItem = subscription.items.data.find(
-          (item: any) => item.price.metadata?.plan || getPlanFromPriceId(item.price.id)
-        )
-        if (priceItem) {
-          newPlan = priceItem.price.metadata?.plan || getPlanFromPriceId(priceItem.price.id)
-        }
-      }
+    if ((subscription.status === 'active' || subscription.status === 'trialing') && subscription.items?.data?.length > 0) {
+      // FIX: Always resolve from price ID for production safety (Bug 1 Fix: avoid items.data[0])
+      const planItem = subscription.items.data.find(
+        (item: any) => getPlanFromPriceId(item.price?.id)
+      )
+      const priceId = planItem?.price?.id
+      const newPlan = priceId ? getPlanFromPriceId(priceId) : (subscription.metadata?.plan as string)
 
       if (!newPlan) {
-        logWebhookError(event, 'ALERT: Cannot determine plan from subscription update - manual review required', null, {
-          subscriptionId: subscription.id,
-          priceId: subscription.items?.data?.[0]?.price?.id,
-        })
-        const err = new Error('Unable to resolve plan from subscription metadata')
-          ; (err as any).retryable = false
-        throw err
+        // If it's a non-plan update (e.g. quantity change on a non-mapped price), just skip
+        logWebhookEvent(event, 'Subscription update without plan change - skipping')
+        return
       }
 
       resolvedPlan = newPlan
 
       const updateData: any = {
-        plan: newPlan,
-        plan_type: newPlan,
+        plan: resolvedPlan || 'trial',
         payment_status: 'active',
+        usage_reset_at: new Date(subscription.current_period_end * 1000).toISOString(),
       }
 
       const { error: updateError } = await (supabase as any)
@@ -438,7 +454,6 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
       payment_status: 'canceled',
       stripe_subscription_id: null, // Clear subscription ID
       plan: 'trial',
-      plan_type: 'trial',
       // Note: Trial limits are enforced dynamically via count(status='completed') in generate route.
     }
 
@@ -679,10 +694,36 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
     // Check if this is a reactivation (payment_status is 'suspended' or 'past_due')
     const isReactivation = organization.payment_status === 'suspended' || organization.payment_status === 'past_due'
 
+    // FIX: Also resolve plan from invoice lines to handle upgrades correctly
+    let currentInvoicedPlan: string | undefined
+
+    // Bug 3 Fix: Handle possible truncation in invoice line items
+    // If lines are missing or possibly more exist, fetch full list
+    const lines = await stripe.invoices.listLineItems(invoice.id, { limit: 100 })
+
+    if (lines.data?.length > 0) {
+      // CRITICAL FIX: Find the 'subscription' line item, not just the first line (which might be proration)
+      const subscriptionLine = lines.data.find((line: any) => line.type === 'subscription')
+      const priceId = (subscriptionLine as any)?.price?.id || (lines.data[0] as any)?.price?.id
+      currentInvoicedPlan = priceId ? getPlanFromPriceId(priceId) : undefined
+    }
+
     // Update payment status to active for successful recurring payments
     const updateData: any = {
       payment_status: 'active',
       payment_confirmed_at: new Date().toISOString(),
+      article_usage: 0, // Reset usage on new billing cycle
+    }
+
+    // Sync usage_reset_at from subscription
+    if (invoice.subscription) {
+      const subscription = await stripe.subscriptions.retrieve(invoice.subscription) as any
+      updateData.usage_reset_at = new Date(subscription.current_period_end * 1000).toISOString()
+    }
+
+    // Sync plan if resolved from invoice (ensures upgrades reflect immediately)
+    if (currentInvoicedPlan) {
+      updateData.plan = currentInvoicedPlan || 'trial'
     }
 
     // If reactivating, clear grace period and suspension fields

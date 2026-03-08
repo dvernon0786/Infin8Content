@@ -64,44 +64,15 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
     if (orgData) {
       const organizationData = orgData as any
       // Determine effective plan - use plan_type if available, fallback to plan
-      const planType = (organizationData.plan_type || organizationData.plan || 'starter').toLowerCase()
+      const planType = (organizationData.plan_type || organizationData.plan || 'trial').toLowerCase()
       const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
 
-      // Calculate usage
-      let articleUsage = 0
-      let totalCompletedUsage = 0
+      // Calculate usage - use atomic counter from DB for reliability
+      const articleUsage = organizationData.article_usage || 0
+      const totalCompletedUsage = articleUsage // Simplified for now as it's the primary metric
 
-      if (planType === 'trial') {
-        // Trial users: count TOTAL completed articles
-        const { count } = await supabase
-          .from('articles')
-          .select('id', { count: 'exact', head: true })
-          .eq('org_id', (userRecord as any).org_id)
-          .in('status', ['queued', 'processing', 'completed', 'reviewing']);
-
-        articleUsage = count || 0
-        totalCompletedUsage = count || 0
-      } else {
-        // Paid users: count current month's article usage
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
-
-        const { count } = await supabase
-          .from('articles')
-          .select('id', { count: 'exact', head: true })
-          .eq('org_id', (userRecord as any).org_id)
-          .gte('created_at', startOfMonth.toISOString())
-          .in('status', ['queued', 'processing', 'completed', 'reviewing']);
-
-        articleUsage = count || 0
-      }
-
-      // Get plan limit from centralized config
-      const articleLimit = PLAN_LIMITS.article_generation[planKey] ?? (() => {
-        console.error(`[Quota] Unknown plan key: ${planKey}, defaulting to trial limit`)
-        return PLAN_LIMITS.article_generation.trial
-      })();
+      // Resolve plan limit from centralized config
+      const articleLimit = PLAN_LIMITS.article_generation[planKey];
 
       organization = {
         ...organizationData,

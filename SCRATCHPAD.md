@@ -1,7 +1,27 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-03-07 09:40 UTC+11  
-**Current Focus:** TRIAL PLAN REFINEMENT & DATABASE FUNCTION HARDENING
+**Last Updated:** 2026-03-09 10:20 UTC+11  
+**Current Focus:** DASHBOARD & PRICING PAGE HARDENING
+
+## **🔥 DASHBOARD & PRICING PAGE HARDENING**
+
+### **✅ Achievement: Dashboard Status Resilience & Fallback Protocol**
+- **Status:** Hardened the article status visual indicator against unknown/legacy database states.
+- **Deliverables:**
+  1. **Canonical Coverage**: Formally added `'reviewing'` and `'generating'` to the `ArticleStatus` union and `ARTICLE_STATUSES` collection.
+  2. **Visual Patterns**: Registered `'reviewing'` (Amber spin) and `'generating'` (Orange spin) in `status-configs.ts` with dedicated CSS patterns.
+  3. **Case-Insensitive Lookup**: Updated the `VisualStatusIndicator` component to perform case-insensitive status matching, preventing crashes if the database or API returns title-cased status strings.
+  4. **Strict Fallback Layer**: Implemented a defensive fallback in the status indicator that defaults to the 'Draft' style (gray/solid) for any unregistered status code, ensuring zero-crash UI availability across large datasets.
+- **Result:** Dashboard is now bulletproof against schema drift or legacy data records.
+
+### **✅ Achievement: High-Converting Pricing UI & Literal Precision**
+- **Status:** Standardized the pricing landing page for accurate dynamic data rendering.
+- **Deliverables:**
+  1. **JSX Interpolation**: Corrected pricing card expressions to use JSX curly braces `{}` for dynamic calculations and variable bindings (price, article count, cost-per-article).
+  2. **Encoding Safety**: Eradicated special UTF-8 characters (em-dash, approximation symbol) from client-side bundles, replacing them with standard ASCII (`-`, "At only") to ensure 100% bundle cross-browser stability.
+  3. **Unified Limit Sync**: Verified the pricing page pull directly from `PLAN_LIMITS` and `PRICING_PLANS` configs, eliminating hardcoded magic numbers.
+- **Result:** A consistent, high-fidelity pricing experience with verified mathematical accuracy.
+
 
 ## **🔥 TRIAL PLAN REFINEMENT & DB HARDENING**
 

@@ -19,16 +19,18 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useResponsiveNavigation } from "@/hooks/use-responsive-navigation"
 
+import { PLAN_LIMITS } from "@/lib/config/plan-limits"
+
 interface TopNavigationProps {
     email: string
     name?: string
     avatarUrl?: string
-    plan?: string
+    plan?: keyof typeof PLAN_LIMITS.article_generation
     usage?: number
-    limit?: number | null
 }
 
-export function TopNavigation({ email, name, avatarUrl, plan, usage, limit }: TopNavigationProps) {
+export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNavigationProps) {
+    const limit = plan ? PLAN_LIMITS.article_generation[plan] : null
     const pathname = usePathname()
     const router = useRouter()
     const [isLoggingOut, setIsLoggingOut] = useState(false)
