@@ -28,9 +28,9 @@ const ResearchOutputSchema = z.object({
     z.object({
       query: z.string(),
       answer: z.string(),
-      citations: z.array(z.string()),
-      source_urls: z.array(z.string()).default([]), // 🔗 NEW: Capture URLs per result (Phase 6)
-      source_types_found: z.array(z.string())
+      citations: z.array(z.string()).default([]),
+      source_urls: z.array(z.string()).default([]),
+      source_types_found: z.array(z.string()).default([])
     })
   ),
   total_searches: z.number()
@@ -314,9 +314,9 @@ export async function runResearchAgent(
   let response
 
   try {
-    console.log('[ResearchAgent] Attempting synthesis with z-ai/glm-4.7')
+    console.log('[ResearchAgent] Attempting synthesis with openai/gpt-4o-mini')
     const primaryResponse = await generateContent(messages, {
-      model: 'z-ai/glm-4.7',
+      model: 'openai/gpt-4o-mini',
       temperature: 0.0,
       maxTokens: 4000
     })
