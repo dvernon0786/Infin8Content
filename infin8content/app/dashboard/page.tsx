@@ -68,13 +68,15 @@ export default async function DashboardPage() {
     hasWorkflow = (workflows?.length ?? 0) > 0
 
     // Only one extra query needed instead of two
-    const { count: artCount } = await supabase
+    // Optimized check: Exit as soon as we find 1 completed article instead of full count
+    const { data: completedArticles } = await supabase
       .from('articles')
-      .select('id', { count: 'exact', head: true })
+      .select('id')
       .eq('org_id', user.org_id)
       .eq('status', 'completed')
+      .limit(1)
 
-    hasCompletedArticle = (artCount ?? 0) > 0
+    hasCompletedArticle = (completedArticles?.length ?? 0) > 0
   }
 
   return (
