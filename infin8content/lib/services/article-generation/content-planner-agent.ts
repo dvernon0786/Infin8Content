@@ -229,10 +229,10 @@ Generation Config:
     // 🔄 RETRY ONCE (Per Phase 4 Spec)
     for (let attempt = 1; attempt <= 2; attempt++) {
         try {
-            console.log(`[PlannerAgent] Attempt ${attempt}/2 using z-ai/glm-5`)
+            console.log(`[PlannerAgent] Attempt ${attempt}/2 using perplexity/sonar`)
 
             const response = await generateContent(messages, {
-                model: 'z-ai/glm-5',
+                model: 'perplexity/sonar',
                 temperature: 0.3, // Lower temp for structural stability
                 maxTokens: 4000
             })
@@ -255,7 +255,7 @@ Generation Config:
     }
 
     // 🚀 FALLBACK (LOW item 7)
-    console.warn('[PlannerAgent] glm-5 failed after 2 attempts, seeking fallback gpt-4o-mini')
+    console.warn('[PlannerAgent] primary model failed after 2 attempts, seeking fallback gpt-4o-mini')
     try {
         const response = await generateContent(messages, {
             model: 'openai/gpt-4o-mini',
