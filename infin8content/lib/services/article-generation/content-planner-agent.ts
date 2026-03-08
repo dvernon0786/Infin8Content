@@ -16,15 +16,15 @@ export const PlannerSchema = z.object({
     article_title: z.string(),
     content_style: z.enum(['informative', 'listicle']),
     target_keyword: z.string(),
-    semantic_keywords: z.array(z.string()),
+    semantic_keywords: z.array(z.string()).min(5).max(12),
     article_structure: z.array(
         z.object({
-            section_type: z.string(),
+            section_type: z.enum(['introduction', 'h2', 'h3', 'conclusion', 'faq']),
             header: z.string(),
             supporting_points: z.array(z.string()),
             research_questions: z.array(z.string()),
             supporting_elements: z.string(),
-            estimated_words: z.number()
+            estimated_words: z.number().min(80).max(500)
         })
     ),
     total_estimated_words: z.number()
@@ -65,6 +65,8 @@ You are an expert blog article planner specializing in creating detailed, resear
 
 Constraints
  Always create outlines that match the specified content style (informative or listicle)
+ Every section in article_structure must cover a unique concept.
+ Never create two sections with semantically similar headers (e.g. "Benefits of X" and "Top Benefits of X"). If two planned sections overlap, merge them into one.
  Include 2–3 specific supporting points for each header that guide content creation
  Generate actionable research questions for each section to ensure thorough coverage
  Maintain semantic keyword integration throughout the structure without keyword stuffing
@@ -300,11 +302,7 @@ function extractJson(content: string): any {
             return JSON.parse(candidate);
         } catch { }
 
-        // 6️⃣ Last resort: try jsonrepair-style single→double quote fix
-        candidate = candidate.replace(/'/g, '"');
-        try {
-            return JSON.parse(candidate);
-        } catch { }
+        // Steps 1–5 exhausted — apostrophe replacement omitted (corrupts valid content like "McKinsey's")
     }
 
     throw new Error('LLM output contained unparseable JSON structure');

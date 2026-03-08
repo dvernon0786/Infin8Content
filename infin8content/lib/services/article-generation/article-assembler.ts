@@ -69,10 +69,16 @@ export class ArticleAssembler {
         logger.log('article.assembly.title_derived', { articleId: input.articleId, title: articleTitle })
       }
 
+      const finalMarkdown = this.buildFinalMarkdown(
+        { title: articleTitle, keyword: article.keyword, id: input.articleId, organization_id: input.organizationId },
+        sectionsJson
+      )
+
       // Persist ONLY the snapshot and metadata. No status mutation.
       await this.persistResult({
         articleId: input.articleId,
         sections: sectionsJson,
+        finalMarkdown,
         wordCount,
         readingTimeMinutes,
         title: articleTitle !== article.title ? articleTitle : undefined
@@ -147,6 +153,7 @@ export class ArticleAssembler {
   private async persistResult(args: {
     articleId: string
     sections: any[]
+    finalMarkdown: string
     wordCount: number
     readingTimeMinutes: number
     title?: string
@@ -155,6 +162,7 @@ export class ArticleAssembler {
     // Explicitly removed 'status: completed' to ensure Worker owns lifecycle.
     const updatePayload: any = {
       sections: args.sections,
+      final_markdown: args.finalMarkdown,
       word_count: args.wordCount,
       reading_time_minutes: args.readingTimeMinutes,
       updated_at: new Date().toISOString()
@@ -179,5 +187,42 @@ export class ArticleAssembler {
     if (!data || data.length === 0) {
       throw new Error(`Assembly persistence skipped: Article ${args.articleId} is no longer in 'generating' state.`)
     }
+  }
+  /**
+   * buildFinalMarkdown
+   *
+   * Applies universal article chrome around the assembled sections:
+   * cover image → H1 → author block → body → CTA → disclaimer → social share.
+   *
+   * NOTE: Requires a `final_markdown text` column on the `articles` table.
+   * Run the following migration if it doesn't exist:
+   *   ALTER TABLE articles ADD COLUMN IF NOT EXISTS final_markdown text;
+   */
+  private buildFinalMarkdown(
+    article: { title: string; keyword: string; id: string; organization_id: string },
+    sections: any[]
+  ): string {
+    const today = new Date().toISOString().split('T')[0];
+
+    const coverImage = `![${article.title}](https://cdn.outrank.so/${article.id}/cover.jpg)`;
+    const authorBlock = `*Published: ${today} · By Editorial Team*`;
+    const cta = `---\n*Want articles like this written automatically? [Try Outrank free →](https://outrank.so)*`;
+    const disclaimer = `---\n*Editorial note: This content was researched and generated on ${today}. Facts and pricing are verified at time of writing and subject to change.*`;
+    const socialShare = `**Share this article:** [Post on X](https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}) · Copy link`;
+
+    const body = sections
+      .sort((a, b) => a.order - b.order)
+      .map(s => `## ${s.header}\n\n${s.markdown}`)
+      .join('\n\n');
+
+    return [
+      coverImage,
+      `# ${article.title}`,
+      authorBlock,
+      body,
+      cta,
+      disclaimer,
+      socialShare,
+    ].join('\n\n');
   }
 }
