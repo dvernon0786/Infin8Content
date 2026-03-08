@@ -19,6 +19,9 @@ export default function PricingHero({ billing, setBilling }: Props) {
           <p className="text-neutral-600 mt-4 max-w-2xl font-lato">
             Choose a plan that fits today. Upgrade anytime as you scale.
           </p>
+          <div className="mt-6 inline-flex items-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-700">
+            ✨ Launch Offer - First 100 users lock lifetime pricing
+          </div>
         </div>
 
         {/* Billing toggle */}
@@ -27,11 +30,10 @@ export default function PricingHero({ billing, setBilling }: Props) {
             <button
               key={mode}
               onClick={() => setBilling(mode as any)}
-              className={`px-6 py-2 text-sm font-semibold rounded-lg transition ${
-                billing === mode
-                  ? "text-white shadow"
-                  : "text-neutral-600"
-              }`}
+              className={`px-6 py-2 text-sm font-semibold rounded-lg transition ${billing === mode
+                ? "text-white shadow"
+                : "text-neutral-600"
+                }`}
               style={{
                 background:
                   billing === mode

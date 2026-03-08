@@ -22,7 +22,18 @@ export function VisualStatusIndicator({
   status,
   compact = false,
 }: VisualStatusIndicatorProps) {
-  const statusConfig = statusConfigs[status];
+  const normalizedStatus = status?.toLowerCase() as ArticleStatus;
+
+  // Fallback map to prevent crashes on unknown statuses
+  const statusConfig = statusConfigs[normalizedStatus] || {
+    ...statusConfigs.draft,
+    label: status ? (status.charAt(0).toUpperCase() + status.slice(1)) : 'Unknown',
+    variant: 'secondary' as const
+  };
+
+  if (!statusConfigs[normalizedStatus]) {
+    console.warn(`[UI] Missing status configuration for: "${status}". Falling back to draft style.`);
+  }
 
   return (
     <div

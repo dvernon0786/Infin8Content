@@ -42,17 +42,15 @@ export default async function DashboardLayout({
                 <SidebarProvider>
                     <SidebarNavigation
                         orgName={currentUser.organizations?.name}
-                        plan={currentUser.organizations?.plan_type || currentUser.organizations?.plan}
+                        plan={currentUser.organizations?.plan}
                         usage={currentUser.organizations?.article_usage}
-                        limit={currentUser.organizations?.article_limit}
                     />
                     <SidebarInset>
                         <TopNavigation
                             email={currentUser.email}
                             name={currentUser.first_name || currentUser.email.split('@')[0]}
-                            plan={currentUser.organizations?.plan_type || currentUser.organizations?.plan}
+                            plan={currentUser.organizations?.plan}
                             usage={currentUser.organizations?.article_usage}
-                            limit={currentUser.organizations?.article_limit}
                         />
                         <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
                             {children}

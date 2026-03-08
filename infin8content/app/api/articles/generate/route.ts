@@ -57,7 +57,7 @@ export async function POST(request: Request) {
 
         // 3. Quota Enforcement
         const org = currentUser.organizations as any
-        const planType = (org?.plan_type || org?.plan || 'starter').toLowerCase()
+        const planType = (org?.plan || 'starter').toLowerCase()
         const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
         const articleLimit = PLAN_LIMITS.article_generation[planKey] ?? (() => {
             console.error(`[Quota] Unknown plan key: ${planKey}, defaulting to trial limit`)

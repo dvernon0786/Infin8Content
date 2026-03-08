@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
     BarChart,
@@ -75,19 +75,23 @@ const items = [
     },
 */
 
+import { PLAN_LIMITS } from "@/lib/config/plan-limits"
+
 interface SidebarNavigationProps {
     orgName?: string
-    plan?: string
+    plan?: keyof typeof PLAN_LIMITS.article_generation
     usage?: number
-    limit?: number | null
 }
 
-export function SidebarNavigation({ orgName = "Acme Agency", plan = "pro", usage = 18, limit = 50 }: SidebarNavigationProps) {
+export function SidebarNavigation({ orgName = "Acme Agency", plan, usage }: SidebarNavigationProps) {
     const pathname = usePathname()
     const { isMobile, setSidebarOpenMobile } = useResponsiveNavigation()
 
-    const progressPercentage = limit ? Math.min(100, Math.round((usage / limit) * 100)) : 0
-    const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1)
+    const currentPlan = plan || 'trial'
+    const currentUsage = usage || 0
+    const limit = PLAN_LIMITS.article_generation[currentPlan]
+    const progressPercentage = limit ? Math.min(100, Math.round((currentUsage / limit) * 100)) : 0
+    const planLabel = currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)
 
     return (
         <Sidebar className="border-right border-[#E5E5E7] bg-white">
@@ -146,9 +150,9 @@ export function SidebarNavigation({ orgName = "Acme Agency", plan = "pro", usage
                                                 )}>
                                                     {item.title}
                                                 </span>
-                                                {item.title === "Articles" && usage > 0 && (
+                                                {item.title === "Articles" && currentUsage > 0 && (
                                                     <Badge className="ml-auto bg-[#F59E0B]/10 text-[#F59E0B] text-[9px] font-black border-none px-1.5 py-0 h-4">
-                                                        {usage}
+                                                        {currentUsage}
                                                     </Badge>
                                                 )}
                                             </Link>
@@ -170,7 +174,7 @@ export function SidebarNavigation({ orgName = "Acme Agency", plan = "pro", usage
                                 {planLabel} Plan
                             </span>
                             <span className="font-lato text-[10px] font-bold text-[#71717A]">
-                                {usage} / {limit} articles
+                                {currentUsage} / {limit} articles
                             </span>
                         </div>
                         <div className="h-1.5 bg-[#E5E5E7] rounded-full overflow-hidden">

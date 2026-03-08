@@ -13,6 +13,7 @@ import FinalCTA from "@/components/marketing/FinalCTA";
 import StickyUpgradeBar from "@/components/marketing/pricing/StickyUpgradeBar";
 import MobileStickyUpgradeBar from "@/components/marketing/pricing/MobileStickyUpgradeBar";
 import Footer from "@/components/marketing/Footer";
+import FeatureValueSection from "@/components/marketing/pricing/FeatureValueSection";
 
 export default function PricingPage() {
   const [billing, setBilling] = useState<"monthly" | "annual">("annual");
@@ -22,6 +23,7 @@ export default function PricingPage() {
       <Navigation />
       <PricingHero billing={billing} setBilling={setBilling} />
       <PricingPlans billing={billing} />
+      <FeatureValueSection />
       <PricingComparisonRow />
       <BespokeAIContentService />
       <PricingComparison />

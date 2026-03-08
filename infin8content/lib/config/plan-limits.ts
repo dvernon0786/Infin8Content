@@ -6,19 +6,20 @@
  */
 
 export const PLAN_LIMITS = {
-    // Existing monthly quotas
     article_generation: {
         trial: 1,
-        starter: 30,
-        pro: 150,
-        agency: null,
+        starter: 10,
+        pro: 50,
+        agency: 150,
     },
+
     keyword_research: {
         trial: 5,
         starter: 50,
-        pro: 200, // Matching current hardcoded code limit
+        pro: 200,
         agency: null,
     },
+
     cms_connection: {
         trial: 0,
         starter: 1,
@@ -26,11 +27,26 @@ export const PLAN_LIMITS = {
         agency: null,
     },
 
-    // New concurrency caps
     workflow_active: {
         trial: null,
         starter: 1,
         pro: 5,
         agency: null,
+    },
+
+    image_storage_gb: {
+        trial: 1,
+        starter: 5,
+        pro: 25,
+        agency: 100,
+    },
+
+    api_calls: {
+        trial: 50,
+        starter: 100,
+        pro: 1000,
+        agency: null
     }
 } as const;
+
+export type PlanType = keyof typeof PLAN_LIMITS.article_generation;
