@@ -465,8 +465,10 @@ export const generateArticle = inngest.createFunction(
       // 🎨 TRIGGER IMAGE PIPELINE (BUG 4 Fix)
       // Fire-and-forget the image generation so the user sees the article text immediately
       // and the slow Riverflow steps don't risk timing out this main worker.
+      // BUG G FIX: Idempotency Key
       await inngest.send({
         name: 'article/images.generate',
+        id: `images-${articleId}`,
         data: { articleId }
       })
     })
@@ -571,7 +573,8 @@ export const generateArticleImages = inngest.createFunction(
     if (!article || !sections) return { error: 'Context not found' }
 
     const plan = article.article_plan as any
-    const generationConfig = article.generation_config as any
+    // BUG B FIX: Defensive fallback for null generation_config (legacy or race articles)
+    const generationConfig = (article.generation_config as any) ?? {}
 
     // 2. Generate Section Images
     for (const section of sections) {

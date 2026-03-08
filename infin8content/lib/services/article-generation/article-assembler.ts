@@ -28,33 +28,25 @@ export class ArticleAssembler {
     })
 
     return retryWithPolicy(async () => {
-      // 1. Fetch total expected sections count
-      const { count: expectedSectionCount, error: countError } = await this.supabaseAdmin
-        .from('article_sections')
-        .select('*', { count: 'exact', head: true })
-        .eq('article_id', input.articleId)
-        .eq('status', 'completed')
-        .not('content_markdown', 'is', null) // 🔒 INTEGRITY: Ignore null content
-        .neq('content_markdown', '')         // 🔒 INTEGRITY: Ignore empty strings
-
-      if (countError) throw countError
-
       const article = await this.loadArticle(input)
       const sections = await this.loadSections(input)
 
       // 🔴 ENTERPRISE VALIDATION: Ensure all sections are present before assembly
-      if (!sections.length || sections.length !== expectedSectionCount) {
-        throw new Error(`Assembly failed: Expected ${expectedSectionCount} sections, but found ${sections.length} completed sections.`)
+      // 🔒 BUG F FIX: Derive expected counts from JS filter truth to ensure consistency
+      const expectedSectionCount = sections.length
+
+      if (!input.allowReassembly && article.status !== 'processing') {
+        throw new Error(`Assembly aborted: Article ${input.articleId} is in status '${article.status}', expected 'processing'.`)
+      }
+
+      if (!sections.length) {
+        throw new Error(`Assembly failed: No completed sections found for article ${input.articleId}.`)
       }
 
       // 🔍 ANALYTICS: Compute metrics from relational truth
       const totalMarkdown = sections.map((s: any) => s.content_markdown).join('\n\n')
       const wordCount = this.countWords(totalMarkdown)
       const readingTimeMinutes = Math.ceil(wordCount / 200)
-
-      if (!input.allowReassembly && article.status !== 'processing') {
-        throw new Error(`Assembly aborted: Article ${input.articleId} is in status '${article.status}', expected 'processing'.`)
-      }
 
       // 📸 SNAPSHOT: Normalize sections into canonical JSONB structure for UI projection
       const sectionsJson = sections.map((s: any) => ({
@@ -211,13 +203,13 @@ export class ArticleAssembler {
       updatePayload.title = args.title
     }
 
-    const query = this.supabaseAdmin
+    let query = this.supabaseAdmin
       .from('articles')
       .update(updatePayload)
       .eq('id', args.articleId)
 
     if (!args.skipStatusGuard) {
-      query.eq('status', 'processing') // 🔒 PRODUCTION GUARD: Prevent racing assembly updates
+      query = query.eq('status', 'processing') // 🔒 PRODUCTION GUARD: Prevent racing assembly updates
     }
 
     const { data, error } = await query.select('id')

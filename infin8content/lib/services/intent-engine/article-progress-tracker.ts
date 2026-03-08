@@ -257,37 +257,21 @@ export async function getWorkflowArticleProgress(
         subtopic_id,
         status,
         created_at,
-        updated_at,
-        article_progress(
-          id,
-          article_id,
-          status,
-          progress_percentage,
-          current_section,
-          total_sections,
-          current_stage,
-          estimated_time_remaining,
-          actual_time_spent,
-          word_count,
-          error_message,
-          metadata,
-          created_at,
-          updated_at
-        )
+        updated_at
       `)
       .eq('intent_workflow_id', workflowId)
 
     // Apply status filter
     if (filters.status) {
-      query = query.in('article_progress.status', [filters.status])
+      query = query.eq('status', filters.status)
     }
 
     // Apply date filters
     if (filters.date_from) {
-      query = query.gte('articles.created_at', filters.date_from)
+      query = query.gte('created_at', filters.date_from)
     }
     if (filters.date_to) {
-      query = query.lte('articles.created_at', filters.date_to)
+      query = query.lte('created_at', filters.date_to)
     }
 
     // Apply ordering and pagination
@@ -295,7 +279,7 @@ export async function getWorkflowArticleProgress(
     const offset = filters.offset || 0
 
     query = query
-      .order('articles.created_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
     const { data, error } = await query
@@ -310,48 +294,30 @@ export async function getWorkflowArticleProgress(
 
     // Transform data to match ArticleProgress interface
     const articles: ArticleProgress[] = data.map((item: any) => {
-      const progress = item.article_progress
-      if (!progress) {
-        // Handle missing progress data
-        return {
-          article_id: item.id,
-          subtopic_id: item.subtopic_id,
-          status: 'queued',
-          progress_percent: 0,
-          sections_completed: 0,
-          sections_total: 0,
-          current_section: undefined,
-          estimated_completion_time: null,
-          created_at: item.created_at,
-          started_at: null,
-          completed_at: null,
-          error: null,
-          word_count: null,
-          quality_score: null
-        }
-      }
+      // Logic for deriving progress from article status exclusively
+      // until article_progress table is established
+      const isCompleted = item.status === 'completed'
+      const isProcessing = item.status === 'processing'
 
       return {
         article_id: item.id,
         subtopic_id: item.subtopic_id,
-        status: progress.status,
-        progress_percent: progress.progress_percentage || 0,
-        sections_completed: progress.current_section ? progress.current_section - 1 : 0,
-        sections_total: progress.total_sections || 0,
-        current_section: progress.current_stage,
-        estimated_completion_time: progress.estimated_time_remaining
-          ? new Date(Date.now() + progress.estimated_time_remaining * 1000).toISOString()
-          : null,
+        status: item.status as any,
+        progress_percent: isCompleted ? 100 : (isProcessing ? 50 : 0),
+        sections_completed: isCompleted ? 1 : 0,
+        sections_total: 1,
+        current_section: undefined,
+        estimated_completion_time: null,
         created_at: item.created_at,
-        started_at: progress.created_at,
-        completed_at: progress.status === 'completed' ? progress.updated_at : null,
-        error: progress.error_message ? {
+        started_at: isProcessing ? item.updated_at : null,
+        completed_at: isCompleted ? item.updated_at : null,
+        error: item.status === 'failed' ? {
           code: 'GENERATION_ERROR',
-          message: progress.error_message,
-          details: progress.metadata || {}
+          message: 'Article generation failed',
+          details: {}
         } : null,
-        word_count: progress.word_count,
-        quality_score: null // Not tracked in current schema
+        word_count: null,
+        quality_score: null
       }
     })
 
