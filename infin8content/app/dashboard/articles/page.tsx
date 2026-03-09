@@ -29,7 +29,10 @@ export default async function ArticlesPage() {
         </div>
 
         {/* Search and Filters - Client Component */}
-        <ArticlesClient orgId={currentUser.org_id} />
+        <ArticlesClient
+          orgId={currentUser.org_id}
+          plan={currentUser.organizations?.plan || 'trial'}
+        />
 
       </div>
     </>

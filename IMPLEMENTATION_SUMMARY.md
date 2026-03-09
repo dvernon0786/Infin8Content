@@ -1,3 +1,32 @@
+## Article Scheduling & Automated Notifications - COMPLETE ✅
+
+**Date:** 2026-03-09  
+**Status:** ✅ **SCHEDULING PIPELINE & NOTIFICATIONS - PRODUCTION READY**
+
+### 🎯 Objective Achieved
+Complete implementation of the Article Scheduling system, allowing users to queue future generations and set publish reminders via an interactive calendar UI. Integrated with Brevo for automated "Draft Ready" and "Publish Reminder" email alerts.
+
+### 🔍 Root Cause & Resolution
+
+#### 🚨 Features Implemented
+1. **Schema Expansion**: Added `scheduled_at`, `publish_at`, and `cms_status` to the `articles` table with targeted partial indexes.
+2. **Interactive Calendar**: Modular `ScheduleCalendar` with `ScheduleGuard` for plan-based feature gating (Trial vs. Paid).
+3. **Automated Workers**: 
+   - `article-cms-draft-notifier`: Hourly worker ensuring users know when their scheduled generation lands in the CMS.
+   - `publish-reminder-scheduler`: Daily worker (09:00 UTC) sending proactive reminders on the user's chosen publish date.
+4. **API Security**: `POST /api/articles/[id]/schedule` with strict quota enforcement and future-date verification.
+
+#### ✅ Fixes and Alignment
+- **Zero Drift Protocol**: Ensured 100% decoupling from the core generation engine; workers observe state rather than modifying the generation FSM.
+- **Quota Reliability**: Standardized monthly scheduling counts against `PLAN_LIMITS`.
+
+### 🚀 Production Certification Complete
+- **Notification Integrity**: ✅ VERIFIED Brevo service with individual template logic.
+- **Worker Reliability**: ✅ VERIFIED Inngest cron registration and atomic status stamps.
+- **UI Fidelity**: ✅ VERIFIED Interactive calendar with real-time article data and quota badges.
+
+---
+
 ## Step 9 Article Queuing & Generation Concurrency Hardening - COMPLETE ✅
 
 **Date:** 2026-02-23  

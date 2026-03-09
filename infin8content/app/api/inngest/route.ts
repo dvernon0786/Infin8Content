@@ -13,6 +13,8 @@ import {
   workflowCompleted
 } from '@/lib/inngest/functions/intent-pipeline'
 import { articleScheduler } from '@/lib/inngest/functions/scheduler'
+import { articleCmsDraftNotifier } from '@/lib/inngest/functions/article-cms-draft-notifier'
+import { publishReminderScheduler } from '@/lib/inngest/functions/publish-reminder-scheduler'
 
 // Validate environment variables at runtime
 const eventKey = process.env.INNGEST_EVENT_KEY
@@ -37,7 +39,9 @@ export const { GET, POST, PUT } = serve({
     step8Subtopics,
     step9Articles,
     workflowCompleted,
-    articleScheduler
+    articleScheduler,
+    articleCmsDraftNotifier,
+    publishReminderScheduler,
   ],
 })
 
