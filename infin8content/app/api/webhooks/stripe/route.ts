@@ -509,14 +509,9 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
       // Note: Trial limits are enforced dynamically via count(status='completed') in generate route.
     }
 
-    // If payment_status was 'active', start grace period
-    if (organization.payment_status === 'active') {
-      updateData.grace_period_started_at = new Date().toISOString()
-    } else {
-      // 🔒 NB_STRIPE_GRACE FIX: Clear grace period on explicit cancellation if not active
-      // prevents unexpected access from old past_due grace windows.
-      updateData.grace_period_started_at = null
-    }
+    // 🔒 NB_STRIPE_GRACE FIX: Clear grace period on explicit cancellation regardless of status
+    // prevents unauthorized access from stale grace windows.
+    updateData.grace_period_started_at = null
 
     // TODO: Remove type assertion after regenerating types from Supabase Dashboard
     const { error: updateError } = await (supabase as any)

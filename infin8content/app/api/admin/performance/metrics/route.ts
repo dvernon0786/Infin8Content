@@ -212,8 +212,18 @@ async function fetchSystemHealth(supabase: any, orgId: string) {
   if (queueLength > 50 || activeGenerationsCount > 10) systemStatus = 'critical'
   else if (queueLength > 20 || activeGenerationsCount > 5) systemStatus = 'warning'
 
-  // NB_SH_AVG Fix: Calculate real average from current processing/completed snapshots
-  const avgGenTime = (queueData?.length || 0) > 0 ? 420 : 0
+  // NB_SH_AVG Fix: Use actual average from the generation metrics section for consistency
+  const { data: avgData } = await supabase
+    .from('articles')
+    .select('created_at, updated_at')
+    .eq('org_id', orgId)
+    .eq('status', 'completed')
+    .order('updated_at', { ascending: false })
+    .limit(10)
+
+  const avgGenTime = avgData && avgData.length > 0
+    ? avgData.reduce((sum: number, a: any) => sum + (new Date(a.updated_at).getTime() - new Date(a.created_at).getTime()) / 1000, 0) / avgData.length
+    : 0
 
   return {
     cpuUsage: Math.round(cpuUsage),
