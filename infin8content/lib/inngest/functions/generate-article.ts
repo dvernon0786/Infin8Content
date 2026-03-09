@@ -510,12 +510,12 @@ async function checkAndCompleteWorkflow(
       workflow.state !== 'step_9_articles_queued'
     ) return
 
-    // Check if all articles are completed
+    // Check if all articles are completed — only in-flight articles block completion
     const { data: incompleteArticles } = await supabase
       .from('articles')
       .select('id')
       .eq('intent_workflow_id', workflowId)
-      .neq('status', 'completed')
+      .in('status', ['queued', 'processing'])
 
     // PRODUCTION HARDENING: Verify at least one article exists before completing
     const { data: allArticles } = await supabase

@@ -33,15 +33,6 @@ export async function GET(request: Request) {
       )
     }
 
-    const hasAdminAccess = currentUser.org_id ? true : false
-
-    if (!hasAdminAccess) {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      )
-    }
-
     const supabase = await createClient()
 
     const timeRangeMs = getTimeRangeMs(timeRange)
@@ -271,10 +262,9 @@ async function fetchHistoricalTrends(supabase: any, orgId: string, timeRange: st
     value: data.generationTimes.reduce((sum: number, time: number) => sum + time, 0) / data.generationTimes.length
   }))
 
-  const apiCalls = Object.entries(aggregatedData).map(([hourKey, data]: [string, any]) => ({
-    timestamp: new Date(hourKey + ':00:00.000Z').toISOString(),
-    value: 12.5 // Estimated optimized average
-  }))
+  // NB1b_v2 Fix: apiCalls trend has no real per-article source in articles table.
+  // Return empty array (accurate) instead of a hardcoded flat constant (misleading).
+  const apiCalls: { timestamp: string; value: number }[] = []
 
   const throughput = Object.entries(aggregatedData).map(([hourKey, data]: [string, any]) => ({
     timestamp: new Date(hourKey + ':00:00.000Z').toISOString(),
@@ -314,16 +304,4 @@ function getTimeRangeMs(timeRange: string): number {
     case '30d': return 30 * 24 * 60 * 60 * 1000
     default: return 24 * 60 * 60 * 1000
   }
-}
-
-function getTrendPoints(timeRange: string): { timestamp: string }[] {
-  const intervals = { '1h': 12, '24h': 24, '7d': 28, '30d': 30 }
-  const count = intervals[timeRange as keyof typeof intervals] || 24
-  const points = []
-  const now = Date.now()
-  const intervalMs = (24 * 60 * 60 * 1000) / count
-  for (let i = count - 1; i >= 0; i--) {
-    points.push({ timestamp: new Date(now - (i * intervalMs)).toISOString() })
-  }
-  return points
 }

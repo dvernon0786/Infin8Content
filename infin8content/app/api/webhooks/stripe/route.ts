@@ -230,15 +230,16 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
 
   // FIX 3: Store the subscription ID early to ensure later events find the org (subscription_id stored in atomic update below)
   // Resolve the subscription to check status
+  let subscriptionForCheckout: any = null
   if (session.subscription) {
-    const subscription = await retryWithBackoff(() => stripe.subscriptions.retrieve(session.subscription))
+    subscriptionForCheckout = await retryWithBackoff(() => stripe.subscriptions.retrieve(session.subscription))
 
     // BUG 1 FIX: If status is trialing, force plan to 'trial' regardless of price ID
     // until the trial period ends and it becomes 'active'.
-    if (subscription.status === 'trialing') {
+    if (subscriptionForCheckout.status === 'trialing') {
       plan = 'trial'
     } else {
-      const planItem = subscription.items.data.find(
+      const planItem = subscriptionForCheckout.items.data.find(
         (item: any) => getPlanFromPriceId(item.price?.id)
       )
       const priceId = planItem?.price?.id
@@ -274,10 +275,9 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
     article_usage: 0, // Reset usage on new subscription
   }
 
-  // Set usage_reset_at from subscription current_period_end
-  if (session.subscription) {
-    const subscription = await retryWithBackoff(() => stripe.subscriptions.retrieve(session.subscription)) as any
-    updateData.usage_reset_at = new Date(subscription.current_period_end * 1000).toISOString()
+  // NB_STRIPE_DOUBLE FIX: Reuse the already-retrieved subscription for current_period_end
+  if (subscriptionForCheckout) {
+    updateData.usage_reset_at = new Date((subscriptionForCheckout as any).current_period_end * 1000).toISOString()
   }
 
   // If reactivating, clear grace period and suspension fields
@@ -611,12 +611,6 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
         grace_period_started_at: new Date().toISOString(),
       }
 
-      // If account was suspended, clear suspension when new payment failure occurs
-      // This allows users to retry payment even after suspension
-      if (organization.payment_status === 'suspended') {
-        updateData.suspended_at = null
-      }
-
       const { error: updateError } = await supabase
         .from('organizations')
         .update(updateData)
@@ -771,10 +765,14 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
       if (subscription.status === 'trialing') {
         updateData.plan = 'trial'
       } else if (currentInvoicedPlan) {
-        updateData.plan = currentInvoicedPlan
+        // 🔒 BUG 5 FIX: Validate plan before writing to prevent org lockout from bad price IDs
+        const validPlans = ['starter', 'pro', 'agency', 'trial']
+        updateData.plan = validPlans.includes(currentInvoicedPlan) ? currentInvoicedPlan : 'trial'
       }
     } else if (currentInvoicedPlan) {
-      updateData.plan = currentInvoicedPlan
+      // 🔒 BUG 5 FIX: Validate plan before writing
+      const validPlans = ['starter', 'pro', 'agency', 'trial']
+      updateData.plan = validPlans.includes(currentInvoicedPlan) ? currentInvoicedPlan : 'trial'
     }
 
     // If reactivating, clear grace period and suspension fields
