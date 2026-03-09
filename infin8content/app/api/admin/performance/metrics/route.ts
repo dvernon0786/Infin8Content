@@ -212,6 +212,19 @@ async function fetchSystemHealth(supabase: any, orgId: string) {
   if (queueLength > 50 || activeGenerationsCount > 10) systemStatus = 'critical'
   else if (queueLength > 20 || activeGenerationsCount > 5) systemStatus = 'warning'
 
+  // NB_SH_AVG Fix: Use actual average from the generation metrics section for consistency
+  const { data: avgData } = await supabase
+    .from('articles')
+    .select('created_at, updated_at')
+    .eq('org_id', orgId)
+    .eq('status', 'completed')
+    .order('updated_at', { ascending: false })
+    .limit(10)
+
+  const avgGenTime = avgData && avgData.length > 0
+    ? avgData.reduce((sum: number, a: any) => sum + (new Date(a.updated_at).getTime() - new Date(a.created_at).getTime()) / 1000, 0) / avgData.length
+    : 0
+
   return {
     cpuUsage: Math.round(cpuUsage),
     memoryUsage: Math.round(memoryUsage),
@@ -220,7 +233,7 @@ async function fetchSystemHealth(supabase: any, orgId: string) {
     systemStatus,
     lastUpdated: new Date().toISOString(),
     recentActivity: recentActivityCount,
-    avgGenerationTime: 420,
+    avgGenerationTime: Math.round(avgGenTime),
     systemLoad: Math.round(systemLoad)
   }
 }

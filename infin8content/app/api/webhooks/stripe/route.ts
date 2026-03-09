@@ -249,12 +249,13 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
         plan = resolvedPlan
       }
     }
+  }
 
-    // 🔒 WEBHOOK PLAN VALIDATION: Ensure only canonical plans are written to DB
-    if (plan && !['starter', 'pro', 'agency', 'trial'].includes(plan.toLowerCase())) {
-      console.warn(`[Webhook] Invalid plan detected in checkout: ${plan}. Falling back to trial.`)
-      plan = 'trial'
-    }
+  // 🔒 WEBHOOK PLAN VALIDATION: Ensure only canonical plans are written to DB
+  // Moved outside subscription check to handle one-time/no-sub plans securely
+  if (plan && !['starter', 'pro', 'agency', 'trial'].includes(plan.toLowerCase())) {
+    console.warn(`[Webhook] Invalid plan detected in checkout: ${plan}. Falling back to trial.`)
+    plan = 'trial'
   }
 
   // Safety guard to prevent silent plan corruption
@@ -418,9 +419,21 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
       resolvedPlan = 'trial'
     }
 
+    // NB_STRIPE_SUBUPD FIX: Map Stripe subscription status to internal payment_status
+    // ensures past_due and unpaid are reflected correctly in the org model.
+    const statusMap: Record<string, string> = {
+      active: 'active',
+      trialing: 'active',
+      past_due: 'past_due',
+      unpaid: 'suspended',
+      canceled: 'canceled',
+      incomplete: 'past_due',
+      paused: 'suspended'
+    }
+
     const updateData: any = {
       plan: resolvedPlan || 'trial',
-      payment_status: 'active',
+      payment_status: statusMap[subscription.status] || 'active',
       usage_reset_at: new Date(subscription.current_period_end * 1000).toISOString(),
     }
 
@@ -496,10 +509,9 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
       // Note: Trial limits are enforced dynamically via count(status='completed') in generate route.
     }
 
-    // If payment_status was 'active', start grace period
-    if (organization.payment_status === 'active') {
-      updateData.grace_period_started_at = new Date().toISOString()
-    }
+    // 🔒 NB_STRIPE_GRACE FIX: Clear grace period on explicit cancellation regardless of status
+    // prevents unauthorized access from stale grace windows.
+    updateData.grace_period_started_at = null
 
     // TODO: Remove type assertion after regenerating types from Supabase Dashboard
     const { error: updateError } = await (supabase as any)

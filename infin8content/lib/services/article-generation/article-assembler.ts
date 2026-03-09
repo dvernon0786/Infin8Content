@@ -175,12 +175,6 @@ export class ArticleAssembler {
       .filter(Boolean).length
   }
 
-  private slugify(input: string): string {
-    return input
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '')
-  }
 
   private async persistResult(args: {
     articleId: string
@@ -265,11 +259,14 @@ export class ArticleAssembler {
           md = md.replace(/^#+\s+[^\n]+\n+/, '').trim()
         }
 
-        const titleIndex = md.indexOf(article.title)
+        // 🔒 NB_TITLE_EMPTY FIX: Only perform context cleanup if title is populated
+        const titleToSearch = article.title?.trim()
+        const titleIndex = titleToSearch ? md.indexOf(titleToSearch) : -1
+
         if (titleIndex >= 50) {
           md = md.slice(0, titleIndex).trimEnd()
           console.warn(`[ArticleAssembler] Truncated section "${s.header}" — article title found in body (likely context reproduction)`)
-        } else if (titleIndex >= 0 && titleIndex < 50) {
+        } else if (titleToSearch && titleIndex >= 0 && titleIndex < 50) {
           console.warn(`[ArticleAssembler] Section "${s.header}" body starts with article title — LLM reproduced context. Using empty body.`)
           md = ''
         }
