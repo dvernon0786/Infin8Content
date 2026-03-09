@@ -55,12 +55,12 @@ export async function POST(request: Request) {
             }, { status: 400 })
         }
 
-        // 3. Quota Enforcement (Standard Query - No RPC Dependency)
-        // Reverted to Quota-First ordering to eliminate stuck-state windows.
+        // 3. Quota Enforcement
+        // Read plan strictly from org.plan (no plan_type fallback - plan is the canonical field written by webhooks)
         const orgData = currentUser.organizations as any
-        const planType = (orgData?.plan_type || orgData?.plan || 'starter').toLowerCase()
+        const planType = (orgData?.plan || 'starter').toLowerCase()
 
-        // 🔒 PLAN VALIDATION FIX: Prevent quota bypass via undefined/legacy plan strings
+        // 🔒 PLAN VALIDATION: Prevent quota bypass via undefined/legacy plan strings
         if (!(planType in PLAN_LIMITS.article_generation)) {
             console.error(`[Quota Check] Invalid plan detected: ${planType}`)
             return NextResponse.json({ error: 'Invalid organization plan configuration' }, { status: 403 })
@@ -69,49 +69,65 @@ export async function POST(request: Request) {
         const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
         const articleLimit = PLAN_LIMITS.article_generation[planKey];
 
-        // Trial users: count 'completed' articles
-        // Others: count 'completed' + 'processing'
-        const targetStatuses = planType === 'trial' ? ['completed'] : ['completed', 'processing']
+        // 🔒 BUG 2 FIX: null means unlimited — skip quota check entirely for unlimited plans
+        if (articleLimit !== null) {
+            // 🔒 BUG 1 FIX (Race Condition): Use atomic RPC increment to prevent two concurrent
+            // requests both passing a non-atomic count-based check.
+            const { data: quotaRows, error: quotaError } = await supabase
+                .rpc('increment_article_usage', {
+                    target_org_id: currentUser.org_id,
+                    max_limit: articleLimit
+                })
 
-        const { count, error: countError } = await supabase
-            .from('articles')
-            .select('id', { count: 'exact', head: true })
-            .eq('org_id', currentUser.org_id)
-            .in('status', targetStatuses)
+            if (quotaError) {
+                // RPC not available — fall back to non-atomic count with warning
+                console.warn('[Quota Check] RPC unavailable, falling back to count:', quotaError.message)
+                const targetStatuses = planType === 'trial' ? ['completed'] : ['completed', 'processing']
+                const { count, error: countError } = await supabase
+                    .from('articles')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('org_id', currentUser.org_id)
+                    .in('status', targetStatuses)
 
-        if (countError) {
-            console.error('[Quota Check] Count failed:', countError)
-            return NextResponse.json({ error: 'Failed to verify usage limits' }, { status: 500 })
-        }
+                if (countError) {
+                    console.error('[Quota Check] Count failed:', countError)
+                    return NextResponse.json({ error: 'Failed to verify usage limits' }, { status: 500 })
+                }
 
-        const currentUsage = count || 0
-        if (currentUsage >= articleLimit) {
-            // 📊 QUOTA TELEMETRY
-            await logActionAsync({
-                orgId: currentUser.org_id,
-                userId: currentUser.id,
-                action: 'quota.article_generation.limit_hit' as any,
-                details: {
-                    plan: planType,
-                    currentUsage,
-                    limit: articleLimit,
-                    metric: 'article_generation',
-                },
-                ipAddress: extractIpAddress(request.headers),
-                userAgent: extractUserAgent(request.headers),
-            })
-
-            const errorMsg = planType === 'trial'
-                ? "Trial users can only generate one article. Please upgrade."
-                : "Monthly article limit reached. Please upgrade your plan."
-
-            return NextResponse.json({
-                error: errorMsg,
-                limit: articleLimit,
-                currentUsage,
-                plan: planType,
-                metric: 'article_generation',
-            }, { status: 403 })
+                const currentUsage = count || 0
+                if (currentUsage >= articleLimit) {
+                    const errorMsg = planType === 'trial'
+                        ? "Trial users can only generate one article. Please upgrade."
+                        : "Monthly article limit reached. Please upgrade your plan."
+                    return NextResponse.json({ error: errorMsg, limit: articleLimit, currentUsage, plan: planType }, { status: 403 })
+                }
+            } else {
+                const quotaResult = quotaRows?.[0] as { success: boolean; new_usage: number } | undefined
+                if (!quotaResult || !quotaResult.success) {
+                    await logActionAsync({
+                        orgId: currentUser.org_id,
+                        userId: currentUser.id,
+                        action: 'quota.article_generation.limit_hit' as any,
+                        details: {
+                            plan: planType,
+                            currentUsage: quotaResult?.new_usage,
+                            limit: articleLimit,
+                            metric: 'article_generation',
+                        },
+                        ipAddress: extractIpAddress(request.headers),
+                        userAgent: extractUserAgent(request.headers),
+                    })
+                    const errorMsg = planType === 'trial'
+                        ? "Trial users can only generate one article. Please upgrade."
+                        : "Monthly article limit reached. Please upgrade your plan."
+                    return NextResponse.json({
+                        error: errorMsg,
+                        limit: articleLimit,
+                        plan: planType,
+                        metric: 'article_generation',
+                    }, { status: 403 })
+                }
+            }
         }
 
         // 4. Set status to processing (Atomic Lock)

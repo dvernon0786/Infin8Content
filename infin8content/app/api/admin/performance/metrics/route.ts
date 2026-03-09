@@ -315,15 +315,3 @@ function getTimeRangeMs(timeRange: string): number {
     default: return 24 * 60 * 60 * 1000
   }
 }
-
-function getTrendPoints(timeRange: string): { timestamp: string }[] {
-  const intervals = { '1h': 12, '24h': 24, '7d': 28, '30d': 30 }
-  const count = intervals[timeRange as keyof typeof intervals] || 24
-  const points = []
-  const now = Date.now()
-  const intervalMs = (24 * 60 * 60 * 1000) / count
-  for (let i = count - 1; i >= 0; i--) {
-    points.push({ timestamp: new Date(now - (i * intervalMs)).toISOString() })
-  }
-  return points
-}

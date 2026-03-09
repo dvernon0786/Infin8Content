@@ -771,10 +771,14 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
       if (subscription.status === 'trialing') {
         updateData.plan = 'trial'
       } else if (currentInvoicedPlan) {
-        updateData.plan = currentInvoicedPlan
+        // 🔒 BUG 5 FIX: Validate plan before writing to prevent org lockout from bad price IDs
+        const validPlans = ['starter', 'pro', 'agency', 'trial']
+        updateData.plan = validPlans.includes(currentInvoicedPlan) ? currentInvoicedPlan : 'trial'
       }
     } else if (currentInvoicedPlan) {
-      updateData.plan = currentInvoicedPlan
+      // 🔒 BUG 5 FIX: Validate plan before writing
+      const validPlans = ['starter', 'pro', 'agency', 'trial']
+      updateData.plan = validPlans.includes(currentInvoicedPlan) ? currentInvoicedPlan : 'trial'
     }
 
     // If reactivating, clear grace period and suspension fields
