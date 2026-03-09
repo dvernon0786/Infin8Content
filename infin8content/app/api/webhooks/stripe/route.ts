@@ -7,6 +7,7 @@ import { sendPaymentFailureEmail, sendPaymentReactivationEmail } from '@/lib/ser
 import { logActionAsync } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import { getPlanFromPriceId } from '@/lib/stripe/prices'
+import { applyGracePeriod } from '@/lib/stripe/sync-grace-period'
 
 // Required for webhooks - must use Node.js runtime for raw body access
 export const runtime = 'nodejs'
@@ -281,11 +282,8 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
     updateData.usage_reset_at = new Date((subscriptionForCheckout as any).current_period_end * 1000).toISOString()
   }
 
-  // If reactivating, clear grace period and suspension fields
-  if (isReactivation) {
-    updateData.grace_period_started_at = null
-    updateData.suspended_at = null
-  }
+  // Clear grace period and suspension fields upon successful checkout
+  applyGracePeriod(updateData, organization.payment_status, 'active')
 
   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
   const { error: updateError } = await (supabase as any)
@@ -375,7 +373,7 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
   const { data: orgRows, error: orgError } = await (supabase as any)
     .from('organizations')
-    .select('id, name')
+    .select('id, name, payment_status, grace_period_started_at')
     .eq('stripe_subscription_id', subscription.id)
     .limit(1)
 
@@ -431,16 +429,14 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
       paused: 'suspended'
     }
 
+    const newPaymentStatus = statusMap[subscription.status] || 'active'
     const updateData: any = {
       plan: resolvedPlan || 'trial',
-      payment_status: statusMap[subscription.status] || 'active',
+      payment_status: newPaymentStatus,
       usage_reset_at: new Date(subscription.current_period_end * 1000).toISOString(),
     }
 
-    // 🔒 NB_SUBUPD_GRACE FIX: Ensure grace period is recorded on past_due/suspended updates
-    if (updateData.payment_status === 'past_due' || updateData.payment_status === 'suspended') {
-      updateData.grace_period_started_at = new Date().toISOString()
-    }
+    applyGracePeriod(updateData, organization.payment_status, newPaymentStatus)
 
     const { error: updateError } = await (supabase as any)
       .from('organizations')
@@ -514,10 +510,7 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
       // Note: Trial limits are enforced dynamically via count(status='completed') in generate route.
     }
 
-    // 🔒 NB_GRACE_OVERCORRECT FIX: Restore earned grace for active cancellations
-    updateData.grace_period_started_at = organization.payment_status === 'active'
-      ? new Date().toISOString()
-      : null
+    applyGracePeriod(updateData, organization.payment_status, 'canceled')
 
     // TODO: Remove type assertion after regenerating types from Supabase Dashboard
     const { error: updateError } = await (supabase as any)
@@ -626,8 +619,8 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
       // This ensures repeated payment failures reset the grace period clock
       const updateData: any = {
         payment_status: 'past_due',
-        grace_period_started_at: new Date().toISOString(),
       }
+      applyGracePeriod(updateData, organization.payment_status, 'past_due')
 
       const { error: updateError } = await supabase
         .from('organizations')
@@ -794,10 +787,8 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
     }
 
     // If reactivating, clear grace period and suspension fields
-    if (isReactivation) {
-      updateData.grace_period_started_at = null
-      updateData.suspended_at = null
-    }
+    // Clear grace period and suspension fields upon successful invoice payment
+    applyGracePeriod(updateData, organization.payment_status, 'active')
 
     // TODO: Remove type assertion after regenerating types from Supabase Dashboard
     const { error: updateError } = await (supabase as any)
