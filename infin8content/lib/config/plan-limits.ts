@@ -13,6 +13,22 @@ export const PLAN_LIMITS = {
         agency: 150,
     },
 
+    /**
+     * schedule_per_month
+     *
+     * How many articles a plan can queue for scheduled generation per
+     * calendar month.  Trial plans cannot schedule at all (0).
+     * Paid plan limits intentionally match article_generation so a user
+     * can schedule their full monthly allowance up front.
+     * null = unlimited (agency).
+     */
+    schedule_per_month: {
+        trial: 0,       // scheduling is a paid feature — blocked in UI + API
+        starter: 10,
+        pro: 50,
+        agency: null,   // unlimited
+    },
+
     keyword_research: {
         trial: 5,
         starter: 50,
@@ -45,8 +61,8 @@ export const PLAN_LIMITS = {
         trial: 50,
         starter: 100,
         pro: 1000,
-        agency: null
-    }
+        agency: null,
+    },
 } as const;
 
 export type PlanType = keyof typeof PLAN_LIMITS.article_generation;

@@ -161,6 +161,10 @@ export const AuditAction = {
     // Blocking conditions actions (Story 39.7)
     WORKFLOW_BLOCKING_CONDITIONS_QUERIED: 'workflow.blocking_conditions.queried',
     WORKFLOW_BLOCKING_CONDITION_RESOLVED: 'workflow.blocking_condition.resolved',
+    // Article scheduling actions
+    ARTICLE_DRAFT_NOTIFIED: 'article.draft.notified',
+    ARTICLE_PUBLISH_REMINDED: 'article.publish.reminded',
+    ARTICLE_SCHEDULED: 'article.scheduled',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];

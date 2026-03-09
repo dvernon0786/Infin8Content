@@ -25,6 +25,11 @@ export const ARTICLE_STATUSES: ArticleStatus[] = [
 ];
 
 /**
+ * CMS status enum aligned with the cms_status_type DB enum
+ */
+export type CmsStatus = 'none' | 'draft' | 'published';
+
+/**
  * Domain-aligned Article interface matching Supabase schema v2.2
  */
 export interface Article {
@@ -52,6 +57,43 @@ export interface Article {
   generation_config: ContentDefaults | null;
   intent_workflow_id?: string;
   subtopic_data?: Array<{ title: string; type: string; keywords: string[] }> | null;
+
+  // 📅 SCHEDULING FIELDS (added 2026-03-09)
+  scheduled_at?: string;          // ISO — date/time to trigger generation
+  publish_at?: string;            // ISO — date/time to remind user to publish
+  cms_status?: CmsStatus;         // CMS publication state
+  draft_notified_at?: string;     // ISO — draft-ready notification sent at
+  publish_reminded_at?: string;   // ISO — publish-reminder notification sent at
+}
+
+// 3. API request / response shapes for the schedule endpoint
+
+export interface ScheduleArticleRequest {
+  /** ISO datetime — when the scheduler should trigger generation */
+  scheduled_at: string;
+  /** Optional ISO datetime — when to send the publish-reminder email */
+  publish_at?: string;
+}
+
+export interface ScheduleArticleResponse {
+  success: true;
+  articleId: string;
+  scheduled_at: string;
+  publish_at?: string;
+}
+
+export interface ScheduleArticleErrorResponse {
+  success: false;
+  error: string;
+  code:
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'PLAN_GATE'       // trial plan — scheduling not available
+  | 'QUOTA_EXCEEDED'  // monthly schedule quota hit
+  | 'INVALID_STATUS'  // article not in schedulable state
+  | 'INVALID_DATE'    // scheduled_at in the past
+  | 'DATABASE_ERROR';
 }
 
 export interface GenerationStatistics {

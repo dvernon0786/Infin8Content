@@ -15,6 +15,8 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import { ARTICLE_STATUSES, type DashboardArticle } from '@/lib/types/dashboard.types'
+import { ScheduleGuard } from '@/components/guards/schedule-guard'
+import { ScheduleCalendar } from '@/components/dashboard/schedule-calendar'
 
 // ─── Metrics ──────────────────────────────────────────────────────────────────
 function MetricCard({ label, value, alert, icon }: { label: string; value: string | number; alert?: boolean; icon?: string }) {
@@ -54,7 +56,8 @@ function ArticlesKPI({ articles }: { articles: DashboardArticle[] }) {
     </div>
   )
 }
-function ArticlesClient({ orgId }: { orgId: string }) {
+
+function ArticlesClient({ orgId, plan }: { orgId: string; plan: string }) {
   const router = useRouter();
 
   const [recentlyUpdatedId, setRecentlyUpdatedId] = useState<string | null>(null);
@@ -143,6 +146,18 @@ function ArticlesClient({ orgId }: { orgId: string }) {
           >Review Failures →</button>
         </div>
       )}
+
+      {/* Article Schedule */}
+      <div className="mb-6">
+        <ScheduleGuard plan={plan}>
+          <ScheduleCalendar
+            orgId={orgId}
+            plan={plan}
+            articles={articles}
+            onScheduled={refresh}
+          />
+        </ScheduleGuard>
+      </div>
 
       {/* Control Bar */}
       <div className="flex items-center gap-4 px-4 py-2 border border-neutral-200 bg-white rounded-md shadow-sm mb-4">

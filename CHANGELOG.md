@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] - 2026-03-09
+
+### ✅ ADDED
+- **Article Scheduling System** - Complete end-to-end pipeline for future-dated article generation
+- **CMS Draft Syncing** - Automated "Draft Ready" notifications when generation completes
+- **Publish Reminders** - Daily cron alerts for human-action publishing on scheduled dates
+- **Interactive Schedule Calendar** - High-fidelity dashboard component for visual content planning
+- **Scheduling Quotas** - Plan-based monthly scheduling limits (10/50/Unlimited)
+- **Trial Plan Gating** - Locked scheduling features for trial users with premium upgrade paths
+
+### 🔧 CHANGED
+- **Article Schema** - Added `scheduled_at`, `publish_at`, and `cms_status` columns with partial indexes
+- **Inngest Workflow** - Registered new `article-cms-draft-notifier` and `publish-reminder-scheduler` workers
+- **Articles Dashboard** - Integrated `ScheduleGuard` and `ScheduleCalendar` into the client-side experience
+
+---
+
 ## [2.1.0] - 2026-02-24
 
 ### ✅ ADDED
