@@ -102,6 +102,7 @@ export const articleCmsDraftNotifier = inngest.createFunction(
 
                 // c) Send draft-ready email (non-blocking on email failure)
                 let notified = false
+                let emailFailed = false
                 try {
                     await sendArticleDraftReadyEmail({
                         to: owner.email,
@@ -112,27 +113,35 @@ export const articleCmsDraftNotifier = inngest.createFunction(
                     })
                     notified = true
                 } catch (emailError) {
+                    emailFailed = true
                     logger?.error('[DraftNotifier] Email failed (non-blocking)', {
                         articleId: article.id,
                         error: emailError,
                     })
                 }
 
-                // d) Audit log
-                const { logActionAsync } = await import('@/lib/services/audit-logger')
-                const { AuditAction } = await import('@/types/audit')
-                await logActionAsync({
-                    orgId: article.org_id,
-                    userId: SYSTEM_USER_ID,
-                    action: AuditAction.ARTICLE_DRAFT_NOTIFIED,
-                    details: {
-                        article_id: article.id,
-                        title: article.title,
-                        publish_at: article.publish_at,
-                    },
-                })
+                // d) Audit log (non-blocking for lifecycle integrity)
+                try {
+                    const { logActionAsync } = await import('@/lib/services/audit-logger')
+                    const { AuditAction } = await import('@/types/audit')
+                    await logActionAsync({
+                        orgId: article.org_id,
+                        userId: SYSTEM_USER_ID,
+                        action: AuditAction.ARTICLE_DRAFT_NOTIFIED,
+                        details: {
+                            article_id: article.id,
+                            title: article.title,
+                            publish_at: article.publish_at,
+                        },
+                    })
+                } catch (auditError) {
+                    logger?.error('[DraftNotifier] Audit log failed (non-blocking)', {
+                        articleId: article.id,
+                        error: auditError,
+                    })
+                }
 
-                return { success: true, notified }
+                return { success: true, notified, emailFailed }
             })
             if (res) processingResults.push(res)
         }
@@ -140,11 +149,12 @@ export const articleCmsDraftNotifier = inngest.createFunction(
         const stats = (processingResults as any[]).reduce(
             (acc, r) => {
                 if (r.notified) acc.notified++
-                if (r.success && !r.notified && !r.skipped) acc.failed++
+                if (r.emailFailed) acc.emailFailed++
+                if (r.success && !r.notified && !r.skipped && !r.emailFailed) acc.failed++
                 if (r.error === 'owner_not_found') acc.failed++
                 return acc
             },
-            { notified: 0, failed: 0 }
+            { notified: 0, failed: 0, emailFailed: 0 }
         )
 
         return {
@@ -152,6 +162,7 @@ export const articleCmsDraftNotifier = inngest.createFunction(
             processed: pendingArticles.length,
             notified: stats.notified,
             failed: stats.failed,
+            emailFailed: stats.emailFailed,
         }
     }
 )
