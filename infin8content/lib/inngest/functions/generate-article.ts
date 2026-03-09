@@ -408,6 +408,10 @@ export const generateArticle = inngest.createFunction(
       // 📂 INVARIANT: The Assembler MUST persist the snapshot projection BEFORE the 
       // terminal status update to ensure the UI reads from a completed projection.
       await step.run('assemble-article', async () => {
+        // 🔒 NB_RETRY_REGRESSION FIX: Skip assembly if already completed
+        const { data: latest } = await supabase.from('articles').select('status').eq('id', articleId).single()
+        if ((latest as any)?.status === 'completed') return
+
         const assembler = new ArticleAssembler()
 
         // 1. Collate sections and write JSONB snapshot projection
@@ -471,6 +475,7 @@ export const generateArticle = inngest.createFunction(
             },
           })
           .eq('id', articleId)
+          .in('status', ['processing', 'queued']) // 🔒 NB_FAIL_GUARD FIX: Prevent overwriting 'completed'
       })
 
       throw pipelineError

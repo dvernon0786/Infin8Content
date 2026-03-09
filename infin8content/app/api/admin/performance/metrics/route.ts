@@ -49,7 +49,7 @@ export async function GET(request: Request) {
       fetchGenerationMetrics(supabase, currentUser.org_id, timeRangeStart),
       fetchResearchMetrics(supabase, currentUser.org_id, timeRangeStart),
       fetchContextMetrics(supabase, currentUser.org_id, timeRangeStart),
-      fetchSystemHealth(supabase, currentUser.org_id),
+      fetchSystemHealth(supabase, currentUser.org_id, timeRangeStart),
       fetchHistoricalTrends(supabase, currentUser.org_id, timeRange),
       includeAlerts ? fetchPerformanceAlerts(supabase, currentUser.org_id) : Promise.resolve([])
     ])
@@ -185,7 +185,7 @@ async function fetchContextMetrics(supabase: any, orgId: string, timeRangeStart:
   }
 }
 
-async function fetchSystemHealth(supabase: any, orgId: string) {
+async function fetchSystemHealth(supabase: any, orgId: string, timeRangeStart: Date) {
   const [{ data: queueData }, { data: recentActivity }] = await Promise.all([
     supabase
       .from('articles')
@@ -218,6 +218,7 @@ async function fetchSystemHealth(supabase: any, orgId: string) {
     .select('created_at, updated_at')
     .eq('org_id', orgId)
     .eq('status', 'completed')
+    .gte('updated_at', timeRangeStart.toISOString()) // 🔒 NB_SH_AVG_SCOPE FIX: Scoped to selected timeRange
     .order('updated_at', { ascending: false })
     .limit(10)
 
