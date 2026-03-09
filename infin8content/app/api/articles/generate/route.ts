@@ -59,6 +59,13 @@ export async function POST(request: Request) {
         // Reverted to Quota-First ordering to eliminate stuck-state windows.
         const orgData = currentUser.organizations as any
         const planType = (orgData?.plan_type || orgData?.plan || 'starter').toLowerCase()
+
+        // 🔒 PLAN VALIDATION FIX: Prevent quota bypass via undefined/legacy plan strings
+        if (!(planType in PLAN_LIMITS.article_generation)) {
+            console.error(`[Quota Check] Invalid plan detected: ${planType}`)
+            return NextResponse.json({ error: 'Invalid organization plan configuration' }, { status: 403 })
+        }
+
         const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
         const articleLimit = PLAN_LIMITS.article_generation[planKey];
 
@@ -127,16 +134,28 @@ export async function POST(request: Request) {
             }, { status: updateError ? 500 : 409 })
         }
 
-        // 5. Emit Inngest Event (Idempotent Job Submission)
-        await inngest.send({
-            name: 'article/generate',
-            id: `article-gen-${articleId}`,
-            data: {
-                articleId,
-                workflowId: article.intent_workflow_id,
-                organizationId: article.org_id
-            }
-        })
+        // 5. Emit Inngest Event (Idempotent Job Submission with Failure Revert)
+        // 🚨 QUEUE FAILURE FIX: Revert status to original if Inngest fails to prevent stuck states
+        try {
+            await inngest.send({
+                name: 'article/generate',
+                id: `article-gen-${articleId}`,
+                data: {
+                    articleId,
+                    workflowId: article.intent_workflow_id,
+                    organizationId: article.org_id
+                }
+            })
+        } catch (queueError) {
+            console.error('[Queue Failure] Reverting status:', queueError)
+            await supabase
+                .from('articles')
+                .update({ status: article.status })
+                .eq('id', articleId)
+                .eq('org_id', currentUser.org_id)
+
+            return NextResponse.json({ error: 'Failed to queue generation job' }, { status: 500 })
+        }
 
         // 6. Log Audit
         await logActionAsync({
