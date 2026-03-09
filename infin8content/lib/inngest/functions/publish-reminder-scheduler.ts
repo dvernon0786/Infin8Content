@@ -99,6 +99,7 @@ export const publishReminderScheduler = inngest.createFunction(
 
                 // c) Send reminder (non-blocking on failure)
                 let sent = false
+                let emailFailed = false
                 try {
                     await sendPublishReminderEmail({
                         to: owner.email,
@@ -109,27 +110,35 @@ export const publishReminderScheduler = inngest.createFunction(
                     })
                     sent = true
                 } catch (emailError) {
+                    emailFailed = true
                     logger?.error('[PublishReminder] Email failed (non-blocking)', {
                         articleId: article.id,
                         error: emailError,
                     })
                 }
 
-                // d) Audit log
-                const { logActionAsync } = await import('@/lib/services/audit-logger')
-                const { AuditAction } = await import('@/types/audit')
-                await logActionAsync({
-                    orgId: article.org_id,
-                    userId: SYSTEM_USER_ID,
-                    action: AuditAction.ARTICLE_PUBLISH_REMINDED,
-                    details: {
-                        article_id: article.id,
-                        title: article.title,
-                        publish_at: article.publish_at,
-                    },
-                })
+                // d) Audit log (non-blocking for lifecycle integrity)
+                try {
+                    const { logActionAsync } = await import('@/lib/services/audit-logger')
+                    const { AuditAction } = await import('@/types/audit')
+                    await logActionAsync({
+                        orgId: article.org_id,
+                        userId: SYSTEM_USER_ID,
+                        action: AuditAction.ARTICLE_PUBLISH_REMINDED,
+                        details: {
+                            article_id: article.id,
+                            title: article.title,
+                            publish_at: article.publish_at,
+                        },
+                    })
+                } catch (auditError) {
+                    logger?.error('[PublishReminder] Audit log failed (non-blocking)', {
+                        articleId: article.id,
+                        error: auditError,
+                    })
+                }
 
-                return { success: true, sent }
+                return { success: true, sent, emailFailed }
             })
             if (res) processingResults.push(res)
         }
@@ -137,11 +146,12 @@ export const publishReminderScheduler = inngest.createFunction(
         const stats = (processingResults as any[]).reduce(
             (acc, r) => {
                 if (r.sent) acc.sent++
-                if (r.success && !r.sent && !r.skipped) acc.failed++
+                if (r.emailFailed) acc.emailFailed++
+                if (r.success && !r.sent && !r.skipped && !r.emailFailed) acc.failed++
                 if (r.error === 'owner_not_found') acc.failed++
                 return acc
             },
-            { sent: 0, failed: 0 }
+            { sent: 0, failed: 0, emailFailed: 0 }
         )
 
         return {
@@ -149,6 +159,7 @@ export const publishReminderScheduler = inngest.createFunction(
             processed: dueArticles.length,
             sent: stats.sent,
             failed: stats.failed,
+            emailFailed: stats.emailFailed,
         }
     }
 )

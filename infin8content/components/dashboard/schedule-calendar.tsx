@@ -260,7 +260,7 @@ function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: Sche
 // ── Main Component ───────────────────────────────────────────────────────────
 
 export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled }: ScheduleCalendarProps) {
-    const today = new Date()
+    const today = useMemo(() => new Date(), [])
     const [viewYear, setViewYear] = useState(today.getFullYear())
     const [viewMonth, setViewMonth] = useState(today.getMonth())
     const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -271,9 +271,9 @@ export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled }:
         [articles]
     )
 
-    // Calculate monthly scheduled count for quota badge
+    // Calculate monthly scheduled count for quota badge (matches API UTC window)
     const monthlyScheduledCount = useMemo(() => {
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+        const startOfMonth = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1))
         return articles.filter(a => {
             const sa = (a as any).scheduled_at
             if (!sa) return false
@@ -321,7 +321,7 @@ export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled }:
             date,
             isCurrentMonth: date.getMonth() === viewMonth,
             isToday: toDateKey(date) === todayKey,
-            isPast: date < new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+            isPast: date <= new Date(today.getFullYear(), today.getMonth(), today.getDate()),
             scheduledArticles: scheduledByDay.get(toDateKey(date)) ?? [],
             publishReminderArticles: publishByDay.get(toDateKey(date)) ?? [],
         }))
