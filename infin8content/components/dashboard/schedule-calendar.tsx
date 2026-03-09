@@ -292,7 +292,7 @@ export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled }:
         for (const a of articles) {
             const sa = (a as any).scheduled_at
             if (sa) {
-                const key = toDateKey(new Date(sa))
+                const key = (sa as string).slice(0, 10)
                 if (!map.has(key)) map.set(key, [])
                 map.get(key)!.push(a)
             }
@@ -305,7 +305,7 @@ export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled }:
         for (const a of articles) {
             const pa = (a as any).publish_at
             if (pa) {
-                const key = toDateKey(new Date(pa))
+                const key = (pa as string).slice(0, 10)
                 if (!map.has(key)) map.set(key, [])
                 map.get(key)!.push(a)
             }

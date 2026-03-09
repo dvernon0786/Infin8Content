@@ -62,11 +62,10 @@ export const articleCmsDraftNotifier = inngest.createFunction(
 
         logger?.info(`[DraftNotifier] Processing ${pendingArticles.length} articles`)
 
-        const results = { notified: 0, failed: 0 }
-
         // ── 2. Process each article ──────────────────────────────────────────────
+        const processingResults = []
         for (const article of pendingArticles) {
-            await step.run(`notify-draft-${article.id}`, async () => {
+            const res = await step.run(`notify-draft-${article.id}`, async () => {
                 // a) Atomic update — only proceed if still in the expected state
                 const { data: updated, error: updateError } = await (supabase as any)
                     .from('articles')
@@ -83,7 +82,7 @@ export const articleCmsDraftNotifier = inngest.createFunction(
 
                 if (updateError || !updated || (updated as any[]).length === 0) {
                     // Another process already handled this article — skip silently
-                    return
+                    return { success: false, skipped: true }
                 }
 
                 // b) Get org owner email
@@ -98,11 +97,11 @@ export const articleCmsDraftNotifier = inngest.createFunction(
 
                 if (!owner?.email) {
                     logger?.warn('[DraftNotifier] Owner email not found', { orgId: article.org_id })
-                    results.failed++
-                    return
+                    return { success: false, error: 'owner_not_found' }
                 }
 
                 // c) Send draft-ready email (non-blocking on email failure)
+                let notified = false
                 try {
                     await sendArticleDraftReadyEmail({
                         to: owner.email,
@@ -111,13 +110,12 @@ export const articleCmsDraftNotifier = inngest.createFunction(
                         articleId: article.id,
                         publishAt: article.publish_at ?? undefined,
                     })
-                    results.notified++
+                    notified = true
                 } catch (emailError) {
                     logger?.error('[DraftNotifier] Email failed (non-blocking)', {
                         articleId: article.id,
                         error: emailError,
                     })
-                    results.failed++
                 }
 
                 // d) Audit log
@@ -133,14 +131,27 @@ export const articleCmsDraftNotifier = inngest.createFunction(
                         publish_at: article.publish_at,
                     },
                 })
+
+                return { success: true, notified }
             })
+            if (res) processingResults.push(res)
         }
+
+        const stats = (processingResults as any[]).reduce(
+            (acc, r) => {
+                if (r.notified) acc.notified++
+                if (r.success && !r.notified && !r.skipped) acc.failed++
+                if (r.error === 'owner_not_found') acc.failed++
+                return acc
+            },
+            { notified: 0, failed: 0 }
+        )
 
         return {
             success: true,
             processed: pendingArticles.length,
-            notified: results.notified,
-            failed: results.failed,
+            notified: stats.notified,
+            failed: stats.failed,
         }
     }
 )

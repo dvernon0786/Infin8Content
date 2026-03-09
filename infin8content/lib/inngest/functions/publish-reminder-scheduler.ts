@@ -61,11 +61,10 @@ export const publishReminderScheduler = inngest.createFunction(
 
         logger?.info(`[PublishReminder] Sending ${dueArticles.length} reminders`)
 
-        const results = { sent: 0, failed: 0 }
-
         // ── 2. Process each article ──────────────────────────────────────────────
+        const processingResults = []
         for (const article of dueArticles) {
-            await step.run(`remind-publish-${article.id}`, async () => {
+            const res = await step.run(`remind-publish-${article.id}`, async () => {
                 // a) Atomic stamp — prevent double-send on retry
                 const { data: stamped, error: stampError } = await (supabase as any)
                     .from('articles')
@@ -80,7 +79,7 @@ export const publishReminderScheduler = inngest.createFunction(
 
                 if (stampError || !stamped || (stamped as any[]).length === 0) {
                     // Already reminded — skip
-                    return
+                    return { success: false, skipped: true }
                 }
 
                 // b) Get org owner email
@@ -95,11 +94,11 @@ export const publishReminderScheduler = inngest.createFunction(
 
                 if (!owner?.email) {
                     logger?.warn('[PublishReminder] Owner not found', { orgId: article.org_id })
-                    results.failed++
-                    return
+                    return { success: false, error: 'owner_not_found' }
                 }
 
                 // c) Send reminder (non-blocking on failure)
+                let sent = false
                 try {
                     await sendPublishReminderEmail({
                         to: owner.email,
@@ -108,13 +107,12 @@ export const publishReminderScheduler = inngest.createFunction(
                         articleId: article.id,
                         publishAt: article.publish_at,
                     })
-                    results.sent++
+                    sent = true
                 } catch (emailError) {
                     logger?.error('[PublishReminder] Email failed (non-blocking)', {
                         articleId: article.id,
                         error: emailError,
                     })
-                    results.failed++
                 }
 
                 // d) Audit log
@@ -130,14 +128,27 @@ export const publishReminderScheduler = inngest.createFunction(
                         publish_at: article.publish_at,
                     },
                 })
+
+                return { success: true, sent }
             })
+            if (res) processingResults.push(res)
         }
+
+        const stats = (processingResults as any[]).reduce(
+            (acc, r) => {
+                if (r.sent) acc.sent++
+                if (r.success && !r.sent && !r.skipped) acc.failed++
+                if (r.error === 'owner_not_found') acc.failed++
+                return acc
+            },
+            { sent: 0, failed: 0 }
+        )
 
         return {
             success: true,
             processed: dueArticles.length,
-            sent: results.sent,
-            failed: results.failed,
+            sent: stats.sent,
+            failed: stats.failed,
         }
     }
 )
