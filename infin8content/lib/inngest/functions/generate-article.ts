@@ -61,6 +61,7 @@ export const generateArticle = inngest.createFunction(
           status,
           intent_workflow_id,
           keyword,
+          title,
           subtopic_data,
           article_plan,
           generation_config
@@ -76,7 +77,10 @@ export const generateArticle = inngest.createFunction(
       if (!artData) throw new Error(`Article ${articleId} not found`)
       const article = artData as unknown as Article
 
-      if (article.status === 'completed' || article.status === 'failed') {
+      // NB_COMPLETE_RETRY FIX: Allow 'completed' articles to flow through steps
+      // so post-completion logic (images, workflow terminal) can be retried if it fails.
+      // Inngest handles idempotency of successful steps automatically.
+      if (article.status === 'failed') {
         return { skipped: true } as any
       }
 
@@ -433,6 +437,27 @@ export const generateArticle = inngest.createFunction(
 
         console.log(`[Worker] Article ${articleId} generation lifecycle COMPLETED successfully.`)
       })
+
+      /* -------------------------------------------------- */
+      /* Article Post-Completion (Workflow & Images)       */
+      /* -------------------------------------------------- */
+      // 🔒 NB_COMPLETE_RETRY FIX: Move inside try block. If Inngest retries here, 
+      // the status guard at top allows it, and Inngest handles step idempotency.
+      await step.run('complete-article', async () => {
+        // CANONICAL COMPLETION: Check if all articles are done and mark workflow terminal
+        const workflowId = (event.data as any).workflowId
+        if (workflowId) {
+          await checkAndCompleteWorkflow(supabase, workflowId)
+        }
+
+        // 🎨 TRIGGER IMAGE PIPELINE (BUG 4 Fix)
+        // BUG G FIX: Idempotency Key
+        await inngest.send({
+          name: 'article/images.generate',
+          id: `images-${articleId}`,
+          data: { articleId }
+        })
+      })
     } catch (pipelineError) {
       // Mark article as failed
       await step.run('mark-article-failed', async () => {
@@ -455,23 +480,6 @@ export const generateArticle = inngest.createFunction(
     /* Mark article complete                             */
     /* -------------------------------------------------- */
 
-    await step.run('complete-article', async () => {
-      // CANONICAL COMPLETION: Check if all articles are done and mark workflow terminal
-      const workflowId = (event.data as any).workflowId
-      if (workflowId) {
-        await checkAndCompleteWorkflow(supabase, workflowId)
-      }
-
-      // 🎨 TRIGGER IMAGE PIPELINE (BUG 4 Fix)
-      // Fire-and-forget the image generation so the user sees the article text immediately
-      // and the slow Riverflow steps don't risk timing out this main worker.
-      // BUG G FIX: Idempotency Key
-      await inngest.send({
-        name: 'article/images.generate',
-        id: `images-${articleId}`,
-        data: { articleId }
-      })
-    })
 
     return { success: true, articleId }
   }
@@ -557,7 +565,7 @@ export const generateArticleImages = inngest.createFunction(
     const { article, sections } = await step.run('load-image-context', async () => {
       const { data: artData } = await supabase
         .from('articles')
-        .select('id, keyword, article_plan, generation_config, org_id')
+        .select('id, title, keyword, article_plan, generation_config, org_id')
         .eq('id', articleId)
         .single()
 

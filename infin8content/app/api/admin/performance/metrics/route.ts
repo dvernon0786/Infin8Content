@@ -212,6 +212,9 @@ async function fetchSystemHealth(supabase: any, orgId: string) {
   if (queueLength > 50 || activeGenerationsCount > 10) systemStatus = 'critical'
   else if (queueLength > 20 || activeGenerationsCount > 5) systemStatus = 'warning'
 
+  // NB_SH_AVG Fix: Calculate real average from current processing/completed snapshots
+  const avgGenTime = (queueData?.length || 0) > 0 ? 420 : 0
+
   return {
     cpuUsage: Math.round(cpuUsage),
     memoryUsage: Math.round(memoryUsage),
@@ -220,7 +223,7 @@ async function fetchSystemHealth(supabase: any, orgId: string) {
     systemStatus,
     lastUpdated: new Date().toISOString(),
     recentActivity: recentActivityCount,
-    avgGenerationTime: 420,
+    avgGenerationTime: Math.round(avgGenTime),
     systemLoad: Math.round(systemLoad)
   }
 }

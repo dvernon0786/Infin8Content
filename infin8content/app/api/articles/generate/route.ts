@@ -69,67 +69,6 @@ export async function POST(request: Request) {
         const planKey = planType as keyof typeof PLAN_LIMITS.article_generation;
         const articleLimit = PLAN_LIMITS.article_generation[planKey];
 
-        // 🔒 BUG 2 FIX: null means unlimited — skip quota check entirely for unlimited plans
-        if (articleLimit !== null) {
-            // 🔒 BUG 1 FIX (Race Condition): Use atomic RPC increment to prevent two concurrent
-            // requests both passing a non-atomic count-based check.
-            const { data: quotaRows, error: quotaError } = await supabase
-                .rpc('increment_article_usage', {
-                    target_org_id: currentUser.org_id,
-                    max_limit: articleLimit
-                })
-
-            if (quotaError) {
-                // RPC not available — fall back to non-atomic count with warning
-                console.warn('[Quota Check] RPC unavailable, falling back to count:', quotaError.message)
-                const targetStatuses = planType === 'trial' ? ['completed'] : ['completed', 'processing']
-                const { count, error: countError } = await supabase
-                    .from('articles')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('org_id', currentUser.org_id)
-                    .in('status', targetStatuses)
-
-                if (countError) {
-                    console.error('[Quota Check] Count failed:', countError)
-                    return NextResponse.json({ error: 'Failed to verify usage limits' }, { status: 500 })
-                }
-
-                const currentUsage = count || 0
-                if (currentUsage >= articleLimit) {
-                    const errorMsg = planType === 'trial'
-                        ? "Trial users can only generate one article. Please upgrade."
-                        : "Monthly article limit reached. Please upgrade your plan."
-                    return NextResponse.json({ error: errorMsg, limit: articleLimit, currentUsage, plan: planType }, { status: 403 })
-                }
-            } else {
-                const quotaResult = quotaRows?.[0] as { success: boolean; new_usage: number } | undefined
-                if (!quotaResult || !quotaResult.success) {
-                    await logActionAsync({
-                        orgId: currentUser.org_id,
-                        userId: currentUser.id,
-                        action: 'quota.article_generation.limit_hit' as any,
-                        details: {
-                            plan: planType,
-                            currentUsage: quotaResult?.new_usage,
-                            limit: articleLimit,
-                            metric: 'article_generation',
-                        },
-                        ipAddress: extractIpAddress(request.headers),
-                        userAgent: extractUserAgent(request.headers),
-                    })
-                    const errorMsg = planType === 'trial'
-                        ? "Trial users can only generate one article. Please upgrade."
-                        : "Monthly article limit reached. Please upgrade your plan."
-                    return NextResponse.json({
-                        error: errorMsg,
-                        limit: articleLimit,
-                        plan: planType,
-                        metric: 'article_generation',
-                    }, { status: 403 })
-                }
-            }
-        }
-
         // 4. Set status to processing (Atomic Lock)
         // This update will only succeed if the article is still in a triggerable state.
         const { data: updatedRows, error: updateError } = await supabase
@@ -150,7 +89,30 @@ export async function POST(request: Request) {
             }, { status: updateError ? 500 : 409 })
         }
 
-        // 5. Emit Inngest Event (Idempotent Job Submission with Failure Revert)
+        // 5. Quota Enforcement (Atomic)
+        // 🔒 NB_QUOTA_LEAK FIX: Only increment quota AFTER status lock succeeds to prevent phantom leakage on 409 collisions.
+        if (articleLimit !== null) {
+            const { data: quotaRows, error: quotaError } = await supabase
+                .rpc('increment_article_usage', {
+                    target_org_id: currentUser.org_id,
+                    max_limit: articleLimit
+                })
+
+            const quotaResult = quotaRows?.[0] as { success: boolean; new_usage: number } | undefined
+            if (quotaError || !quotaResult?.success) {
+                // REVERT status lock if quota check fails
+                await supabase.from('articles')
+                    .update({ status: article.status })
+                    .eq('id', articleId)
+
+                const errorMsg = planType === 'trial'
+                    ? "Trial users can only generate one article. Please upgrade."
+                    : "Monthly article limit reached. Please upgrade your plan."
+                return NextResponse.json({ error: errorMsg }, { status: 403 })
+            }
+        }
+
+        // 6. Emit Inngest Event (Idempotent Job Submission with Failure Revert)
         // 🚨 QUEUE FAILURE FIX: Revert status to original if Inngest fails to prevent stuck states
         try {
             await inngest.send({
@@ -164,6 +126,15 @@ export async function POST(request: Request) {
             })
         } catch (queueError) {
             console.error('[Queue Failure] Reverting status:', queueError)
+
+            // 🔒 NB_QUOTA_LEAK FIX: Best-effort usage decrement on queue failure
+            const orgData = currentUser.organizations as any
+            if (articleLimit !== null && orgData?.article_usage > 0) {
+                await supabase.from('organizations')
+                    .update({ article_usage: orgData.article_usage - 1 })
+                    .eq('id', currentUser.org_id)
+            }
+
             const { error: revertError } = await supabase
                 .from('articles')
                 .update({ status: article.status })
