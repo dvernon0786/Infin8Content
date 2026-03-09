@@ -437,6 +437,11 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
       usage_reset_at: new Date(subscription.current_period_end * 1000).toISOString(),
     }
 
+    // 🔒 NB_SUBUPD_GRACE FIX: Ensure grace period is recorded on past_due/suspended updates
+    if (updateData.payment_status === 'past_due' || updateData.payment_status === 'suspended') {
+      updateData.grace_period_started_at = new Date().toISOString()
+    }
+
     const { error: updateError } = await (supabase as any)
       .from('organizations')
       .update(updateData)

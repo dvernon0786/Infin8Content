@@ -422,6 +422,10 @@ export const generateArticle = inngest.createFunction(
       })
 
       await step.run('mark-completed', async () => {
+        // 🔒 NB_MARK_COMPLETED_THROW FIX: skip if already completed
+        const { data: latest } = await supabase.from('articles').select('status').eq('id', articleId).single()
+        if ((latest as any)?.status === 'completed') return
+
         // 2. 🔒 TERMINAL STATE LOCK: Explicitly mark article as completed
         const { error: completionError, data } = await supabase
           .from('articles')
