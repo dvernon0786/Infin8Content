@@ -85,6 +85,16 @@ export async function POST(
     }
 
     const plan = ((orgData as any).plan || 'trial').toLowerCase() as PlanType
+    const paymentStatus = (orgData as any).payment_status
+
+    // ── Gating: Payment Status ──────────────────────────────────────────────────
+    if (paymentStatus === 'suspended' || paymentStatus === 'past_due') {
+        return err(
+            'FORBIDDEN',
+            'Account access is restricted. Please update your billing to schedule articles.',
+            403
+        )
+    }
 
     // ── Plan gate: trial cannot schedule ────────────────────────────────────────
     const scheduleLimit = PLAN_LIMITS.schedule_per_month[plan]
@@ -100,8 +110,8 @@ export async function POST(
     // ── Quota check ─────────────────────────────────────────────────────────────
     if (scheduleLimit !== null) {
         const startOfMonth = new Date()
-        startOfMonth.setDate(1)
-        startOfMonth.setHours(0, 0, 0, 0)
+        startOfMonth.setUTCDate(1)
+        startOfMonth.setUTCHours(0, 0, 0, 0)
 
         const { count, error: countError } = await (supabase as any)
             .from('articles')

@@ -56,7 +56,10 @@ interface DayInfo {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function toDateKey(d: Date): string {
-    return d.toISOString().slice(0, 10) // YYYY-MM-DD
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
 }
 
 function buildCalendarGrid(year: number, month: number): Date[] {
@@ -159,14 +162,15 @@ function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: Sche
 
             if (!json.success) {
                 setError(json.error || 'Failed to schedule article.')
+                setLoading(false) // Must call before possible unmount
                 return
             }
 
+            // Success: Call callbacks which might unmount this panel
             onSuccess()
             onClose()
         } catch {
             setError('Network error. Please try again.')
-        } finally {
             setLoading(false)
         }
     }
