@@ -79,11 +79,13 @@ export async function POST(request: Request) {
 
     // Check idempotency: Query stripe_webhook_events table for stripe_event_id
     // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-    const { data: existingEvent, error: idempotencyError } = await (supabase as any)
+    const { data: idempotencyRows, error: idempotencyError } = await (supabase as any)
       .from('stripe_webhook_events')
       .select('id, stripe_event_id, processed_at')
       .eq('stripe_event_id', event.id)
-      .single()
+      .limit(1)
+
+    const existingEvent = idempotencyRows?.[0]
 
     // If event already processed, return 200 immediately (prevent duplicate processing)
     if (existingEvent) {
@@ -100,43 +102,41 @@ export async function POST(request: Request) {
       // Continue processing - idempotency is best effort
     }
 
-    // Process event with retry logic
+    // Process event
     try {
-      await retryWithBackoff(async () => {
-        // Handle different event types
-        switch (event.type) {
-          case 'checkout.session.completed':
-            await handleCheckoutSessionCompleted(event, supabase)
-            break
+      // Handle different event types
+      switch (event.type) {
+        case 'checkout.session.completed':
+          await handleCheckoutSessionCompleted(event, supabase)
+          break
 
-          case 'customer.subscription.updated':
-            await handleSubscriptionUpdated(event, supabase)
-            break
+        case 'customer.subscription.updated':
+          await handleSubscriptionUpdated(event, supabase)
+          break
 
-          case 'customer.subscription.deleted':
-            await handleSubscriptionDeleted(event, supabase)
-            break
+        case 'customer.subscription.deleted':
+          await handleSubscriptionDeleted(event, supabase)
+          break
 
-          case 'invoice.payment_failed':
-            await handleInvoicePaymentFailed(event, supabase)
-            break
+        case 'invoice.payment_failed':
+          await handleInvoicePaymentFailed(event, supabase)
+          break
 
-          case 'invoice.payment_succeeded':
-            await handleInvoicePaymentSucceeded(event, supabase)
-            break
+        case 'invoice.payment_succeeded':
+          await handleInvoicePaymentSucceeded(event, supabase)
+          break
 
-          case 'invoice.finalized':
-            // Logic for finalized invoices could be added here later if needed
-            // For now, we just store it to mark it as processed
-            await storeWebhookEvent(event, supabase, null)
-            break
+        case 'invoice.finalized':
+          // Logic for finalized invoices could be added here later if needed
+          // For now, we just store it to mark it as processed
+          await storeWebhookEvent(event, supabase, null)
+          break
 
-          default:
-            logWebhookEvent(event, 'Unhandled event type')
-            // Still store the event for monitoring
-            await storeWebhookEvent(event, supabase, null)
-        }
-      })
+        default:
+          logWebhookEvent(event, 'Unhandled event type')
+          // Still store the event for monitoring
+          await storeWebhookEvent(event, supabase, null)
+      }
 
       logWebhookEvent(event, 'Event processed successfully')
       // Always return 200 to Stripe (Stripe requires 2xx response)
@@ -196,11 +196,13 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
 
   // Check if organization exists before processing
   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-  const { data: organization, error: orgCheckError } = await (supabase as any)
+  const { data: orgRows, error: orgCheckError } = await (supabase as any)
     .from('organizations')
     .select('id, name, payment_status, grace_period_started_at, suspended_at')
     .eq('id', orgId)
-    .single()
+    .limit(1)
+
+  const organization = orgRows?.[0]
 
   if (orgCheckError || !organization) {
     const error = new Error(`Organization not found: ${orgId}`)
@@ -229,7 +231,7 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   // FIX 3: Store the subscription ID early to ensure later events find the org (subscription_id stored in atomic update below)
   // Resolve the subscription to check status
   if (session.subscription) {
-    const subscription = await stripe.subscriptions.retrieve(session.subscription)
+    const subscription = await retryWithBackoff(() => stripe.subscriptions.retrieve(session.subscription))
 
     // BUG 1 FIX: If status is trialing, force plan to 'trial' regardless of price ID
     // until the trial period ends and it becomes 'active'.
@@ -245,6 +247,12 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
       if (resolvedPlan) {
         plan = resolvedPlan
       }
+    }
+
+    // 🔒 WEBHOOK PLAN VALIDATION: Ensure only canonical plans are written to DB
+    if (plan && !['starter', 'pro', 'agency', 'trial'].includes(plan.toLowerCase())) {
+      console.warn(`[Webhook] Invalid plan detected in checkout: ${plan}. Falling back to trial.`)
+      plan = 'trial'
     }
   }
 
@@ -268,7 +276,7 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
 
   // Set usage_reset_at from subscription current_period_end
   if (session.subscription) {
-    const subscription = await stripe.subscriptions.retrieve(session.subscription) as any
+    const subscription = await retryWithBackoff(() => stripe.subscriptions.retrieve(session.subscription)) as any
     updateData.usage_reset_at = new Date(subscription.current_period_end * 1000).toISOString()
   }
 
@@ -298,12 +306,14 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   if (isReactivation) {
     try {
       // Get user email from users table for this organization
-      const { data: ownerUser } = await supabase
+      const { data: userRows } = await supabase
         .from('users')
         .select('email')
         .eq('org_id', orgId)
         .eq('role', 'owner')
-        .single()
+        .limit(1)
+
+      const ownerUser = userRows?.[0]
 
       if (ownerUser?.email) {
         await sendPaymentReactivationEmail({
@@ -362,11 +372,13 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
 
   // Find organization by stripe_subscription_id
   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-  const { data: organization, error: orgError } = await (supabase as any)
+  const { data: orgRows, error: orgError } = await (supabase as any)
     .from('organizations')
     .select('id, name')
     .eq('stripe_subscription_id', subscription.id)
-    .single()
+    .limit(1)
+
+  const organization = orgRows?.[0]
 
   if (organization) {
     // BUG 6 FIX: Respect remaining time for canceled subscriptions
@@ -398,6 +410,12 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
       }
 
       resolvedPlan = newPlan
+    }
+
+    // 🔒 WEBHOOK PLAN VALIDATION: Ensure only canonical plans are written to DB
+    if (resolvedPlan && !['starter', 'pro', 'agency', 'trial'].includes(resolvedPlan.toLowerCase())) {
+      console.warn(`[Webhook] Invalid plan detected in update: ${resolvedPlan}. Falling back to trial.`)
+      resolvedPlan = 'trial'
     }
 
     const updateData: any = {
@@ -460,11 +478,13 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
 
   // Find organization by stripe_subscription_id
   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-  const { data: organization, error: orgError } = await (supabase as any)
+  const { data: orgRows, error: orgError } = await (supabase as any)
     .from('organizations')
     .select('id, name, payment_status')
     .eq('stripe_subscription_id', subscription.id)
-    .single()
+    .limit(1)
+
+  const organization = orgRows?.[0]
 
   if (organization) {
     // Update organization payment status to 'canceled'
@@ -501,12 +521,14 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
     if (organization.payment_status === 'active') {
       try {
         // Get user email from users table for this organization
-        const { data: ownerUser } = await supabase
+        const { data: userRows } = await supabase
           .from('users')
           .select('email')
           .eq('org_id', organization.id)
           .eq('role', 'owner')
-          .single()
+          .limit(1)
+
+        const ownerUser = userRows?.[0]
 
         if (ownerUser?.email) {
           await sendPaymentFailureEmail({
@@ -569,11 +591,13 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
 
   // Find organization by customer ID
   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-  const { data: organization, error: orgError } = await (supabase as any)
+  const { data: orgRows, error: orgError } = await (supabase as any)
     .from('organizations')
     .select('id, name, payment_status, grace_period_started_at')
     .eq('stripe_customer_id', invoice.customer)
-    .single()
+    .limit(1)
+
+  const organization = orgRows?.[0]
 
   if (organization) {
     // Process payment failure: reset grace period if already past_due, or start grace period if active
@@ -614,12 +638,14 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
       if (isNewFailure) {
         try {
           // Get user email from users table for this organization
-          const { data: ownerUser } = await supabase
+          const { data: userRows } = await supabase
             .from('users')
             .select('email')
             .eq('org_id', organization.id)
             .eq('role', 'owner')
-            .single()
+            .limit(1)
+
+          const ownerUser = userRows?.[0]
 
           if (ownerUser?.email) {
             await sendPaymentFailureEmail({
@@ -703,11 +729,13 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
 
   // Find organization by customer ID
   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-  const { data: organization, error: orgError } = await (supabase as any)
+  const { data: orgRows, error: orgError } = await (supabase as any)
     .from('organizations')
     .select('id, name, payment_status, grace_period_started_at, suspended_at')
     .eq('stripe_customer_id', invoice.customer)
-    .single()
+    .limit(1)
+
+  const organization = orgRows?.[0]
 
   if (organization) {
     // Check if this is a reactivation (payment_status is 'suspended' or 'past_due')
@@ -718,7 +746,7 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
 
     // Bug 3 Fix: Handle possible truncation in invoice line items
     // If lines are missing or possibly more exist, fetch full list
-    const lines = await stripe.invoices.listLineItems(invoice.id, { limit: 100 })
+    const lines = await retryWithBackoff(() => stripe.invoices.listLineItems(invoice.id, { limit: 100 }))
 
     if (lines.data?.length > 0) {
       // CRITICAL FIX: Find the 'subscription' line item, not just the first line (which might be proration)
@@ -736,7 +764,7 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
 
     // Sync usage_reset_at from subscription
     if (invoice.subscription) {
-      const subscription = await stripe.subscriptions.retrieve(invoice.subscription) as any
+      const subscription = await retryWithBackoff(() => stripe.subscriptions.retrieve(invoice.subscription)) as any
       updateData.usage_reset_at = new Date(subscription.current_period_end * 1000).toISOString()
 
       // BUG 1 FIX: If subscription is currently trialing, force plan to trial
@@ -775,12 +803,14 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
     if (isReactivation) {
       try {
         // Get user email from users table for this organization
-        const { data: ownerUser } = await supabase
+        const { data: userRows } = await supabase
           .from('users')
           .select('email')
           .eq('org_id', organization.id)
           .eq('role', 'owner')
-          .single()
+          .limit(1)
+
+        const ownerUser = userRows?.[0]
 
         if (ownerUser?.email) {
           await sendPaymentReactivationEmail({

@@ -27,21 +27,23 @@ export class ArticleAssembler {
       organizationId: input.organizationId
     })
 
+    const article = await this.loadArticle(input)
+    const sections = await this.loadSections(input)
+
+    // H: allowReassembly check before sections check
+    if (!input.allowReassembly && article.status !== 'processing') {
+      throw new Error(`Assembly aborted: Article ${input.articleId} is in status '${article.status}', expected 'processing'.`)
+    }
+
+    // I: sections.length check moved outside retryWithPolicy
+    if (!sections.length) {
+      throw new Error(`Assembly failed: No completed sections found for article ${input.articleId}.`)
+    }
+
     return retryWithPolicy(async () => {
-      const article = await this.loadArticle(input)
-      const sections = await this.loadSections(input)
-
-      if (!sections.length) {
-        throw new Error(`Assembly failed: No completed sections found for article ${input.articleId}.`)
-      }
-
       // 🔴 ENTERPRISE VALIDATION: Ensure all sections are present before assembly
       // 🔒 BUG F FIX: Derive expected counts from JS filter truth to ensure consistency
       const expectedSectionCount = sections.length
-
-      if (!input.allowReassembly && article.status !== 'processing') {
-        throw new Error(`Assembly aborted: Article ${input.articleId} is in status '${article.status}', expected 'processing'.`)
-      }
 
       // 🔍 ANALYTICS: Compute metrics from relational truth
       const totalMarkdown = sections.map((s: any) => s.content_markdown).join('\n\n')
@@ -223,16 +225,7 @@ export class ArticleAssembler {
       throw new Error(`Assembly persistence skipped: Article ${args.articleId} not found or update matched 0 rows.`)
     }
   }
-  /**
-   * buildFinalMarkdown
-   *
-   * Applies universal article chrome around the assembled sections:
-   * cover image → H1 → author block → body → CTA → disclaimer → social share.
-   *
-   * NOTE: Requires a `final_markdown text` column on the `articles` table.
-   * Run the following migration if it doesn't exist:
-   *   ALTER TABLE articles ADD COLUMN IF NOT EXISTS final_markdown text;
-   */
+
   private buildFinalMarkdown(
     article: {
       title: string
@@ -268,32 +261,19 @@ export class ArticleAssembler {
       .map(s => {
         let md = (s.markdown || '').trim()
 
-        // 🔒 BUG FIX: Strip leading markdown heading from section content.
-        // The LLM sometimes outputs the section header inside content_markdown.
-        // buildFinalMarkdown adds ## ${s.header} itself — the duplicate must be removed.
-        // 🛡️ PROTECTION (BUG 5): Do not strip if it's an FAQ section, as questions
-        // often start with # headers and would be erroneously removed.
         if (s.type !== 'faq') {
           md = md.replace(/^#+\s+[^\n]+\n+/, '').trim()
         }
 
-        // 🔒 BUG FIX: Safety truncation if the LLM reproduced the article title
-        // or prior context verbatim (seen in conclusion sections when the model
-        // treats context as output). Detect article title appearing in section body
-        // and truncate at that point.
         const titleIndex = md.indexOf(article.title)
         if (titleIndex >= 50) {
-          // Title appears deep in the content — truncate before it
           md = md.slice(0, titleIndex).trimEnd()
           console.warn(`[ArticleAssembler] Truncated section "${s.header}" — article title found in body (likely context reproduction)`)
         } else if (titleIndex >= 0 && titleIndex < 50) {
-          // Title appears at the very start — entire section is reproduced context
-          // Drop the content and log; don't crash the assembly
           console.warn(`[ArticleAssembler] Section "${s.header}" body starts with article title — LLM reproduced context. Using empty body.`)
           md = ''
         }
 
-        // Inject section image below content if one was generated
         const sectionImg = s.section_image_url
           ? `\n\n![Illustration for section ${s.order}](${s.section_image_url})`
           : ''
