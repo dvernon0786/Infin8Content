@@ -437,6 +437,11 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
       usage_reset_at: new Date(subscription.current_period_end * 1000).toISOString(),
     }
 
+    // 🔒 NB_SUBUPD_GRACE FIX: Ensure grace period is recorded on past_due/suspended updates
+    if (updateData.payment_status === 'past_due' || updateData.payment_status === 'suspended') {
+      updateData.grace_period_started_at = new Date().toISOString()
+    }
+
     const { error: updateError } = await (supabase as any)
       .from('organizations')
       .update(updateData)
@@ -509,9 +514,10 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
       // Note: Trial limits are enforced dynamically via count(status='completed') in generate route.
     }
 
-    // 🔒 NB_STRIPE_GRACE FIX: Clear grace period on explicit cancellation regardless of status
-    // prevents unauthorized access from stale grace windows.
-    updateData.grace_period_started_at = null
+    // 🔒 NB_GRACE_OVERCORRECT FIX: Restore earned grace for active cancellations
+    updateData.grace_period_started_at = organization.payment_status === 'active'
+      ? new Date().toISOString()
+      : null
 
     // TODO: Remove type assertion after regenerating types from Supabase Dashboard
     const { error: updateError } = await (supabase as any)

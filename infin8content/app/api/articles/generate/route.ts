@@ -104,6 +104,7 @@ export async function POST(request: Request) {
                 await supabase.from('articles')
                     .update({ status: article.status })
                     .eq('id', articleId)
+                    .eq('org_id', currentUser.org_id) // 🔒 NB_REVERT_ORGID FIX: Consistent org guard
 
                 const errorMsg = planType === 'trial'
                     ? "Trial users can only generate one article. Please upgrade."

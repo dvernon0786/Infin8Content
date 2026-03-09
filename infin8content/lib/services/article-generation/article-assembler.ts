@@ -41,10 +41,6 @@ export class ArticleAssembler {
     }
 
     return retryWithPolicy(async () => {
-      // 🔴 ENTERPRISE VALIDATION: Ensure all sections are present before assembly
-      // 🔒 BUG F FIX: Derive expected counts from JS filter truth to ensure consistency
-      const expectedSectionCount = sections.length
-
       // 🔍 ANALYTICS: Compute metrics from relational truth
       const totalMarkdown = sections.map((s: any) => s.content_markdown).join('\n\n')
       const wordCount = this.countWords(totalMarkdown)
