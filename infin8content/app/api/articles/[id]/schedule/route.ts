@@ -30,7 +30,7 @@ function err(code: ScheduleArticleErrorResponse['code'], message: string, status
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     // ── Auth ────────────────────────────────────────────────────────────────────
     const currentUser = await getCurrentUser()
@@ -38,7 +38,7 @@ export async function POST(
         return err('UNAUTHORIZED', 'Authentication required.', 401)
     }
 
-    const articleId = params.id
+    const { id: articleId } = await params
     if (!articleId) {
         return err('NOT_FOUND', 'Article ID is required.', 400)
     }
