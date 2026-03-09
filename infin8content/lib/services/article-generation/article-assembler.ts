@@ -284,6 +284,7 @@ export class ArticleAssembler {
 
     return [
       coverImage,
+      `# ${article.title}`,
       authorBlock,
       body,
       cta,

@@ -33,15 +33,6 @@ export async function GET(request: Request) {
       )
     }
 
-    const hasAdminAccess = currentUser.org_id ? true : false
-
-    if (!hasAdminAccess) {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      )
-    }
-
     const supabase = await createClient()
 
     const timeRangeMs = getTimeRangeMs(timeRange)
@@ -271,10 +262,9 @@ async function fetchHistoricalTrends(supabase: any, orgId: string, timeRange: st
     value: data.generationTimes.reduce((sum: number, time: number) => sum + time, 0) / data.generationTimes.length
   }))
 
-  const apiCalls = Object.entries(aggregatedData).map(([hourKey, data]: [string, any]) => ({
-    timestamp: new Date(hourKey + ':00:00.000Z').toISOString(),
-    value: 12.5 // Estimated optimized average
-  }))
+  // NB1b_v2 Fix: apiCalls trend has no real per-article source in articles table.
+  // Return empty array (accurate) instead of a hardcoded flat constant (misleading).
+  const apiCalls: { timestamp: string; value: number }[] = []
 
   const throughput = Object.entries(aggregatedData).map(([hourKey, data]: [string, any]) => ({
     timestamp: new Date(hourKey + ':00:00.000Z').toISOString(),

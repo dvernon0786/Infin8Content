@@ -164,11 +164,15 @@ export async function POST(request: Request) {
             })
         } catch (queueError) {
             console.error('[Queue Failure] Reverting status:', queueError)
-            await supabase
+            const { error: revertError } = await supabase
                 .from('articles')
                 .update({ status: article.status })
                 .eq('id', articleId)
                 .eq('org_id', currentUser.org_id)
+
+            if (revertError) {
+                console.error('[Queue Failure] Revert FAILED — article may be stuck in processing:', { articleId, revertError })
+            }
 
             return NextResponse.json({ error: 'Failed to queue generation job' }, { status: 500 })
         }
