@@ -1,7 +1,16 @@
 ## Article Scheduling & Automated Notifications - COMPLETE ✅
 
 **Date:** 2026-03-10 (Audit Closure)
-**Status:** ✅ **SCHEDULING PIPELINE & NOTIFICATIONS - PRODUCTION READY (POST-AUDIT)**
+**Status:** ✅ **SCHEDULING PIPELINE & NOTIFICATIONS - PRODUCTION READY (POST-HARDENING)**
+
+### 🎯 Hardening Results (Audit Phase 2)
+Following the initial audit closure, a secondary hardening round (CAL/POST series) was completed to address edge cases in Inngest replays, timezone boundary quota calculations, and UI visual polishing.
+
+#### ✅ Hardening Items addressed:
+- **Resilience (CAL-02, CAL-03)**: Wrapped audit logging in protective try/catch and distinct `emailFailed` tracking to ensure deterministic Inngest replays and accurate telemetry.
+- **Logic Sync (CAL-01)**: Aligned calendar quota badge with API's UTC window (`Date.UTC`).
+- **UI Hardening (CAL-04, CAL-05)**: Memoized `today` to kill redundant render cycles and properly gated "Today" selection to prevent API-Client drift errors.
+- **Micro-Polish (POST-01, POST-02)**: Muted unclickable "Today" visual highlights and added developer notes for Kiribati/Samoa timezone edge cases.
 
 ### 🎯 Objective Achieved
 Complete implementation of the Article Scheduling system, allowing users to queue future generations and set publish reminders via an interactive calendar UI. Integrated with Brevo for automated "Draft Ready" and "Publish Reminder" email alerts.
