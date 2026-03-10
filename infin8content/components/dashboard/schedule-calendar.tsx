@@ -145,6 +145,7 @@ function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: Sche
         setLoading(true)
 
         // Set scheduled_at to midnight UTC on the selected day
+        // NOTE: normalization to UTC 00:00 can shift display day for extreme UTC+ zones (Samoa/Tonga).
         const scheduledAt = new Date(selectedDate)
         scheduledAt.setUTCHours(0, 0, 0, 0)
 
@@ -260,7 +261,7 @@ function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: Sche
 // ── Main Component ───────────────────────────────────────────────────────────
 
 export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled }: ScheduleCalendarProps) {
-    const today = useMemo(() => new Date(), [])
+    const today = useMemo(() => new Date(), []) // NOTE: frozen at mount — remount to reflect a new calendar day
     const [viewYear, setViewYear] = useState(today.getFullYear())
     const [viewMonth, setViewMonth] = useState(today.getMonth())
     const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -416,6 +417,7 @@ export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled }:
                                 day.isPast ? 'cursor-default' : '',
                                 isSelected ? 'bg-blue-50' : isClickable ? 'hover:bg-neutral-50 cursor-pointer' : 'cursor-default',
                                 day.isToday ? 'font-bold' : '',
+                                day.isToday && day.isPast ? 'opacity-40' : '',
                             ].join(' ')}
                             aria-label={`${day.date.toDateString()}${day.scheduledArticles.length ? ` — ${day.scheduledArticles.length} scheduled` : ''}`}
                         >
