@@ -16,6 +16,11 @@ const JWT_SECRET = process.env.NEXT_PUBLIC_SUPABASE_JWT_SECRET || 'test-secret'
 
 export async function POST(request: NextRequest) {
   try {
+    // 🔒 SECURITY: This endpoint must never be reachable in production
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const supabase = createServiceRoleClient()
     let organizationId: string
     let userId: string

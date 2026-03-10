@@ -118,8 +118,8 @@ export async function queueArticlesForWorkflow(
           keyword: keyword.keyword,
           subtopic_data: keyword.subtopics, // Mapped 'subtopics' to 'subtopic_data'
           target_word_count: 2000,
-          status: 'queued', // 🚀 EXECUTION SEPARATION: Only queue, don't start generating
-          scheduled_at: new Date().toISOString(), // Default to immediate scheduling
+          status: 'draft', // 🚀 LAND IN DRAFT: User schedules explicitly via calendar
+          scheduled_at: null, // Set only by schedule API
           created_by: SYSTEM_USER_ID, // Worker context - system actor
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -173,7 +173,7 @@ export async function queueArticlesForWorkflow(
         const { error: updateError } = await supabase
           .from('keywords')
           .update({
-            article_status: 'ready', // 'ready' means planning is complete, eligible for execution
+            article_status: 'draft', // User needs to schedule this via the calendar
             updated_at: new Date().toISOString()
           })
           .eq('id', keyword.id)

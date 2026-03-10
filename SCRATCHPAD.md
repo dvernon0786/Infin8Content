@@ -1,9 +1,26 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-03-09 17:35 UTC+11  
-**Current Focus:** ARTICLE SCHEDULING & NOTIFICATIONS
+**Last Updated:** 2026-03-11 11:00 UTC+11  
+**Current Focus:** CMS PUBLISHING & GENERATION HARDENING
 
-## **🔥 ARTICLE SCHEDULING & NOTIFICATIONS**
+## **🔥 CMS PUBLISHING & GENERATION HARDENING**
+
+### **✅ Achievement: 11-Bug Content Engine Hardening**
+- **Status:** Complete implementation of consolidated fixes for security, quota enforcement, and prompt engineering.
+- **Deliverables:**
+  1. **Security Lockdown**: Protected `test-create-workflow` endpoint behind a production environment gate (403 Forbidden).
+  2. **Quota Precision**: Fixed scheduler quota tracking to query `audit_logs` (reverted from `activities` after verifying `logActionAsync` telemetry mapping).
+  3. **Hourly Scheduling**: Updated Inngest cron to `'0 * * * *'` (hourly) and standardized start-of-month calculations to UTC midnight.
+  4. **Onboarding UX**: Redirected Step 8 article queuing to land in `draft` status with `scheduled_at: null`, forcing explicit user scheduling via the calendar.
+  5. **Prompt Engineering**:
+     - Hardened **Keyword Density Caps** (Target keyword: max 1 per section; Semantic: max 1-2 per section).
+     - Added **Link Fallback Logic**: Explicitly instructs LLM not to fabricate citations when no verified research URLs are available.
+     - Brand Voice: Injected `content_style`, `semantic_keywords`, and `generationConfig` into all article sections.
+  6. **SEO Integration**: Wired `calculateSEOScore` into the `ArticleAssembler`, persisting `seo_score` based on core section content (excluding boilerplate).
+  7. **Keyword Flow**: Aligned keyword `article_status` to `'draft'` in the queuing processor to match the visual lifecycle.
+- **Result:** Content engine is now deterministic, secure, and SEO-optimized with a transparent scheduling workflow.
+- **Zero Drift Protocol:** 100% compliant; all changes were line-specific and verified against the audit log contracts.
+
 
 ### **✅ Achievement: End-to-End Scheduling & Notification Pipeline**
 - **Status:** Complete implementation of article scheduling, CMS draft syncing, and automated email notifications.
