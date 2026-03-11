@@ -213,7 +213,11 @@ Generation config:
 - Language: ${input.generationConfig.language ?? 'en'}
 - Add emojis: ${input.generationConfig.add_emojis ?? false}
 - Brand color: ${input.generationConfig.brand_color ?? 'none specified'}
-- Image style: ${input.generationConfig.image_style ?? 'none specified'}`;
+- Image style: ${input.generationConfig.image_style ?? 'none specified'}
+
+${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter(Boolean).length === 0
+          ? 'No verified URLs are available for this section. Do NOT write any markdown links or parenthetical citations. Write prose only.'
+          : 'Only link to URLs explicitly present in the Supporting research block above.'}`;
 
     } else if (input.position === 'final') {
       userMessage = `${styleTemplate}
@@ -266,7 +270,11 @@ Description: ${input.organizationContext.description}
 
 Close the article with:
 - A clear, actionable conclusion (2–3 sentences max)
-- One natural CTA aligned with: ${input.generationConfig.add_cta}`;
+- One natural CTA aligned with: ${input.generationConfig.add_cta}
+
+${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter(Boolean).length === 0
+          ? 'No verified URLs are available for this section. Do NOT write any markdown links or parenthetical citations. Write prose only.'
+          : 'Only link to URLs explicitly present in the Supporting research block above.'}`;
 
     } else {
       userMessage = `${styleTemplate}

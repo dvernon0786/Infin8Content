@@ -21,12 +21,14 @@ Complete implementation of consolidated fixes for 11 critical, high, and medium-
 10. **B2-04 (Low)**: Standardized scheduler's `startOfMonth` calculation to UTC midnight.
 11. **INFO-02 (Info)**: Synced keyword metadata labels (`'ready'` → `'draft'`) to match the new article lifecycle behavior.
 12. **B1-01 (Final)**: Completed the brand context injection by adding style, tone, and semantic keywords to the **final conclusion block**.
+13. **NEW-R4-01**: Hardened URL fallback instructions across **all article sections** (first, middle, final), ensuring the LLM skips parenthetical citations as well as links when no verified sources are present.
 
 ### 🚀 Production Certification Complete
 - **Security Check**: ✅ VERIFIED `test-create-workflow` blocked in production environment.
 - **Prompt Fidelity**: ✅ VERIFIED consistent keyword density constraints ("at most once per keyword") across all article section prompts.
 - **Workflow Integrity**: ✅ VERIFIED Step 8 articles land in Draft state for user-driven scheduling.
 - **Analytics Health**: ✅ VERIFIED SEO scoring and quota tracking sync with the `audit_logs` schema.
+- **Audit Contract Verified**: ✅ VERIFIED `AuditAction.ARTICLE_GENERATION_STARTED` exactly matches `'article.generation.started'` string literal requirement in `types/audit.ts`.
 
 ---
 
