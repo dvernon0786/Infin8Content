@@ -186,7 +186,7 @@ Keyword density rule: Use the target keyword AT MOST ONCE in this section.
 Content style:
 ${input.articlePlan.content_style}
 
-Semantic keywords:
+Semantic keywords (use naturally — at most once per keyword in this section):
 ${input.articlePlan.semantic_keywords.join(', ')}
 
 Section type:
@@ -246,8 +246,23 @@ ${input.sectionType}
 Key points to cover:
 ${input.plannerOutput.supporting_points.join('\n')}
 
+Content style:
+${input.articlePlan.content_style}
+
+Semantic keywords (use naturally — at most once per keyword in this section):
+${input.articlePlan.semantic_keywords.join(', ')}
+
 Supporting research:
 ${JSON.stringify(input.researchPayload, null, 2)}
+
+Generation config:
+- Tone: ${input.generationConfig.tone ?? 'professional'}
+- Language: ${input.generationConfig.language ?? 'en'}
+- Add emojis: ${input.generationConfig.add_emojis ?? false}
+
+Product / ICP context:
+Company: ${input.organizationContext.name}
+Description: ${input.organizationContext.description}
 
 Close the article with:
 - A clear, actionable conclusion (2–3 sentences max)
@@ -277,7 +292,7 @@ ${input.sectionType}
 Content style:
 ${input.articlePlan.content_style}
 
-Semantic keywords (use naturally — max 1–2 times total in this section):
+Semantic keywords (use naturally — at most once per keyword in this section):
 ${input.articlePlan.semantic_keywords.join(', ')}
 
 Estimated word count:
