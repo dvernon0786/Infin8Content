@@ -62,6 +62,8 @@ Constraints
 • Avoid technical jargon, em dashes, and overly complex sentence structures
 • Focus on providing factual information and value rather than aggressive selling
 • Naturally incorporate target keywords and semantic variations without keyword stuffing
+• Use the target keyword at most once per section — do not repeat it if the previous section already used it
+• Semantic keywords should appear no more than once per section each
 • Include diverse, properly cited sources from provided research materials
 • Maintain the specified word count for each article section (±20% tolerance)
 • Use markdown formatting with tables, bullet points, and proper headers
@@ -179,6 +181,7 @@ ${input.articlePlan.article_title}
 
 Target keyword:
 ${input.articlePlan.target_keyword}
+Keyword density rule: Use the target keyword AT MOST ONCE in this section.
 
 Content style:
 ${input.articlePlan.content_style}
@@ -206,11 +209,11 @@ Company: ${input.organizationContext.name}
 Description: ${input.organizationContext.description}
 
 Generation config:
-- Tone: ${input.generationConfig.tone}
-- Language: ${input.generationConfig.language}
-- Add emojis: ${input.generationConfig.add_emojis}
-- Brand color: ${input.generationConfig.brand_color}
-- Image style: ${input.generationConfig.image_style}`;
+- Tone: ${input.generationConfig.tone ?? 'professional'}
+- Language: ${input.generationConfig.language ?? 'en'}
+- Add emojis: ${input.generationConfig.add_emojis ?? false}
+- Brand color: ${input.generationConfig.brand_color ?? 'none specified'}
+- Image style: ${input.generationConfig.image_style ?? 'none specified'}`;
 
     } else if (input.position === 'final') {
       userMessage = `${styleTemplate}
@@ -229,6 +232,7 @@ ${input.articlePlan.article_title}
 
 Target keyword:
 ${input.articlePlan.target_keyword}
+Keyword density rule: Use the target keyword AT MOST ONCE in this section.
 
 Previous section (for narrative continuity ONLY — do not reproduce):
 ${getContextSnippet(input.priorContentMarkdown)}
@@ -259,6 +263,7 @@ ${input.articlePlan.article_title}
 
 Target keyword:
 ${input.articlePlan.target_keyword}
+Keyword density rule: Use the target keyword AT MOST ONCE in this section.
 
 Previous section (continue logically from this):
 ${getContextSnippet(input.priorContentMarkdown)}
@@ -269,6 +274,12 @@ ${input.sectionHeader}
 Section type:
 ${input.sectionType}
 
+Content style:
+${input.articlePlan.content_style}
+
+Semantic keywords (use naturally — max 1–2 times total in this section):
+${input.articlePlan.semantic_keywords.join(', ')}
+
 Estimated word count:
 ${input.plannerOutput.estimated_words}
 
@@ -276,7 +287,20 @@ Key points to cover:
 ${input.plannerOutput.supporting_points.join('\n')}
 
 Supporting research:
-${JSON.stringify(input.researchPayload, null, 2)}`;
+${JSON.stringify(input.researchPayload, null, 2)}
+
+Generation config:
+- Tone: ${input.generationConfig.tone ?? 'professional'}
+- Language: ${input.generationConfig.language ?? 'en'}
+- Add emojis: ${input.generationConfig.add_emojis ?? false}
+
+Product / ICP context:
+Company: ${input.organizationContext.name}
+Description: ${input.organizationContext.description}
+
+${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter(Boolean).length === 0
+          ? 'No verified URLs are available for this section. Do NOT write any markdown links or parenthetical citations. Write prose only.'
+          : 'Only link to URLs explicitly present in the Supporting research block above.'}`;
     }
 
     const messages: OpenRouterMessage[] = [
@@ -372,6 +396,12 @@ ${JSON.stringify(input.researchPayload, null, 2)}`;
         .filter(Boolean)
         .map(normalizeUrl)
     )
+
+    if (approvedUrls.size === 0) {
+      // No verified URLs available — instruct LLM not to fabricate links
+      // The whitelist strip below will catch any that slip through
+      console.warn(`[WritingAgent] No approved URLs for section "${input.sectionHeader}" — links will be stripped`)
+    }
     sectionContent = sectionContent.replace(
       /\[([^\]]+)\]\(([^)]+)\)/g,
       (match, text, url) => approvedUrls.has(normalizeUrl(url)) ? match : text

@@ -5,7 +5,7 @@ import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 
 /**
  * Article Scheduler Worker
- * Runs every 30 minutes to pick up ONE scheduled article.
+ * Runs every hour to pick up ONE scheduled article.
  * Enforces organizational quotas and avoids duplicate triggering.
  */
 export const articleScheduler = inngest.createFunction(
@@ -13,7 +13,7 @@ export const articleScheduler = inngest.createFunction(
         id: 'article-scheduler',
         concurrency: { limit: 1 }
     },
-    { cron: '0 0 * * *' },
+    { cron: '0 * * * *' },
     async ({ step }) => {
         const supabase = createServiceRoleClient()
 
@@ -63,9 +63,8 @@ export const articleScheduler = inngest.createFunction(
             if (limit === null) return { allowed: true, usage: 0, limit: 0, plan }
 
             // Count articles generated this month
-            const startOfMonth = new Date()
-            startOfMonth.setDate(1)
-            startOfMonth.setHours(0, 0, 0, 0)
+            const now = new Date()
+            const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
 
             const { count } = await supabase
                 .from('audit_logs' as any)
