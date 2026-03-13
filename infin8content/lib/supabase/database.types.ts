@@ -136,6 +136,7 @@ export type Database = {
           has_used_trial?: boolean | null
           plan_type?: string | null
           trial_ends_at?: string | null
+          usage_reset_at?: string | null
           [key: string]: any;
         }
         Insert: {
@@ -158,6 +159,7 @@ export type Database = {
           has_used_trial?: boolean | null
           plan_type?: string | null
           trial_ends_at?: string | null
+          usage_reset_at?: string | null
           [key: string]: any;
         }
         Update: {
@@ -180,6 +182,7 @@ export type Database = {
           has_used_trial?: boolean | null
           plan_type?: string | null
           trial_ends_at?: string | null
+          usage_reset_at?: string | null
           [key: string]: any;
         }
         Relationships: []
