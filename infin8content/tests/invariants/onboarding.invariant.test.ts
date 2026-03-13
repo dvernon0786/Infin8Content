@@ -38,8 +38,8 @@ describe('Onboarding System Law Invariants', () => {
 
   afterAll(async () => {
     // Cleanup test organization
-    await (supabase as any).from('organizations').delete().eq('id', testOrgId)
-    await (supabase as any).from('organization_competitors').delete().eq('organization_id', testOrgId)
+    await supabase.from('organizations').delete().eq('id', testOrgId)
+    await supabase.from('organization_competitors').delete().eq('organization_id', testOrgId)
   })
 
   describe('Invariant 1: Flags have zero authority', () => {
@@ -80,7 +80,7 @@ describe('Onboarding System Law Invariants', () => {
     test('onboarding fails with missing website_url', async () => {
       await seedOnboardingMissing(testOrgId, 'website_url')
       const result = await validateOnboarding(testOrgId)
-      
+
       expect(result.valid).toBe(false)
       expect(result.missing).toContain('website_url')
     })
@@ -88,7 +88,7 @@ describe('Onboarding System Law Invariants', () => {
     test('onboarding fails with missing business_description', async () => {
       await seedOnboardingMissing(testOrgId, 'business_description')
       const result = await validateOnboarding(testOrgId)
-      
+
       expect(result.valid).toBe(false)
       expect(result.missing).toContain('business_description')
     })
@@ -96,7 +96,7 @@ describe('Onboarding System Law Invariants', () => {
     test('onboarding fails with missing target_audiences', async () => {
       await seedOnboardingMissing(testOrgId, 'target_audiences')
       const result = await validateOnboarding(testOrgId)
-      
+
       expect(result.valid).toBe(false)
       expect(result.missing).toContain('target_audiences')
     })
@@ -104,7 +104,7 @@ describe('Onboarding System Law Invariants', () => {
     test('onboarding fails with missing keyword_settings', async () => {
       await seedOnboardingMissing(testOrgId, 'keyword_settings')
       const result = await validateOnboarding(testOrgId)
-      
+
       expect(result.valid).toBe(false)
       expect(result.missing).toContain('keyword_settings')
     })
@@ -112,17 +112,17 @@ describe('Onboarding System Law Invariants', () => {
     test('onboarding fails with missing content_defaults', async () => {
       await seedOnboardingMissing(testOrgId, 'content_defaults')
       const result = await validateOnboarding(testOrgId)
-      
+
       expect(result.valid).toBe(false)
       expect(result.missing).toContain('content_defaults')
     })
 
     test('onboarding fails with missing competitors', async () => {
       await seedCompleteOnboardingData(testOrgId)
-      await (supabase as any).from('organization_competitors').delete().eq('organization_id', testOrgId)
-      
+      await supabase.from('organization_competitors').delete().eq('organization_id', testOrgId)
+
       const result = await validateOnboarding(testOrgId)
-      
+
       expect(result.valid).toBe(false)
       expect(result.missing).toContain('competitors')
     })
@@ -193,12 +193,12 @@ describe('Onboarding System Law Invariants', () => {
     })
 
     afterEach(async () => {
-      await (supabase as any).from('intent_workflows').delete().eq('id', workflowId)
+      await supabase.from('intent_workflows').delete().eq('id', workflowId)
     })
 
     test('competitor analysis fails without competitors', async () => {
       // Arrange: Valid onboarding but no competitors
-      await (supabase as any).from('organization_competitors').delete().eq('organization_id', testOrgId)
+      await supabase.from('organization_competitors').delete().eq('organization_id', testOrgId)
 
       // Act: Try competitor analysis
       const response = await fetch(
@@ -257,7 +257,7 @@ describe('Onboarding System Law Invariants', () => {
     test('competitors are never read from blog_config or workflow_data', async () => {
       // Arrange: Add competitors to canonical table
       await seedCompetitors(testOrgId, 2)
-      
+
       // Add fake competitors to blog_config (should be ignored)
       await supabase
         .from('organizations')
@@ -321,7 +321,7 @@ async function seedOnboardingMissing(orgId: string, missingField: string) {
   const dataWithMissing = { ...baseData }
   dataWithMissing[missingField] = missingField.includes('audiences') ? [] : null
 
-  await (supabase as any).from('organizations').update(dataWithMissing).eq('id', orgId)
+  await supabase.from('organizations').update(dataWithMissing).eq('id', orgId)
 }
 
 async function seedCompetitors(orgId: string, count: number) {
@@ -344,6 +344,6 @@ async function seedCompetitors(orgId: string, count: number) {
       created_by: validUserId
     }))
 
-    await (supabase as any).from('organization_competitors').insert(competitors)
+    await supabase.from('organization_competitors').insert(competitors)
   }
 }

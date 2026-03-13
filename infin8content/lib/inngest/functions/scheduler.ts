@@ -117,6 +117,17 @@ export const articleScheduler = inngest.createFunction(
                     workflowId: article.intent_workflow_id,
                     organizationId: article.org_id
                 }
+            }).catch(async (sendError) => {
+                console.error('[Scheduler] Inngest send failed, reverting:', sendError)
+                // Best-effort quota decrement
+                await supabase.from('organizations' as any)
+                    .update({ article_usage: Math.max(0, (orgQuotaResult.usage)) })
+                    .eq('id', article.org_id)
+                // Revert status
+                await supabase.from('articles' as any)
+                    .update({ status: 'queued' })
+                    .eq('id', article.id)
+                throw sendError
             })
 
             // 📊 QUOTA TELEMETRY: Log audit event for tracking monthly usage

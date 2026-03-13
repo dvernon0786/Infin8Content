@@ -175,7 +175,7 @@ export async function POST(req: Request) {
           .from('organization_competitors')
           .insert(
             body.competitors.map(c => ({
-              organization_id: user.org_id,
+              organization_id: user.org_id as string,
               name: c.name,
               url: c.url,
               domain: new URL(c.url).hostname,
