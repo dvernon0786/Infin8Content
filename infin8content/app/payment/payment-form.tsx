@@ -349,18 +349,11 @@ export default function PaymentForm({
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Feature
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  $1 Trial
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Starter
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Pro
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Agency
-                </th>
+                {availablePlans.map((plan) => (
+                  <th key={plan} className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {plan === 'trial' ? '$1 Trial' : plan.charAt(0).toUpperCase() + plan.slice(1)}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">

@@ -29,8 +29,12 @@ export default async function PaymentPage({
 
   // Check if organization already has active payment (redirect to dashboard if payment confirmed)
   if (currentUser?.organizations) {
+    const org = currentUser.organizations as any
     const accessStatus = getPaymentAccessStatus(currentUser.organizations)
-    if (accessStatus === 'active') {
+    const isMidTrial = org.payment_status === 'trialing'
+
+    // Only redirect away if truly active (paid subscription) — not mid-trial
+    if (accessStatus === 'active' && !isMidTrial) {
       // Check for redirect parameter for post-reactivation redirect
       const redirectTo = validateRedirect(params?.redirect, '/dashboard')
       redirect(redirectTo)

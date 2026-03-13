@@ -52,31 +52,19 @@ export const articleScheduler = inngest.createFunction(
             // Get organization plan
             const { data: orgData } = await supabase
                 .from('organizations' as any)
-                .select('plan')
+                .select('plan, article_usage')
                 .eq('id', article.org_id)
                 .single()
 
-            const org = orgData as unknown as { plan: string } | null
+            const org = orgData as unknown as { plan: string; article_usage: number } | null
             const plan = (org?.plan || 'starter').toLowerCase() as keyof typeof PLAN_LIMITS.article_generation
             const limit = PLAN_LIMITS.article_generation[plan]
 
-            if (limit === null) return { allowed: true, usage: 0, limit: 0, plan }
+            if (limit === null) return { allowed: true, usage: org?.article_usage ?? 0, limit: 0, plan }
 
-            // Count articles generated this month
-            const now = new Date()
-            const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
-
-            const { count } = await supabase
-                .from('audit_logs' as any)
-                .select('id', { count: 'exact', head: true })
-                .eq('org_id', article.org_id)
-                .eq('action', 'article.generation.started')
-                .gte('created_at', startOfMonth.toISOString())
-
-            const usage = count ?? 0
             return {
-                allowed: usage < limit,
-                usage,
+                allowed: (org?.article_usage ?? 0) < limit,
+                usage: org?.article_usage ?? 0,
                 limit,
                 plan
             }
