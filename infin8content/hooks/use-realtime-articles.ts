@@ -64,13 +64,13 @@ export function useRealtimeArticles({
         .order('created_at', { ascending: false })
 
       const articlesData: DashboardArticle[] = (data ?? []).map(
-        (row: ArticlesRow) => ({
+        (row: any) => ({
           id: row.id,
           keyword: row.keyword,
-          title: row.title,
+          title: row.title ?? '',
           status: row.status,
-          created_at: row.created_at,
-          updated_at: row.updated_at,
+          created_at: row.created_at ?? '',
+          updated_at: row.updated_at ?? '',
         })
       )
 
