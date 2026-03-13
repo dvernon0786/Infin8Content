@@ -925,6 +925,19 @@ async function handlePaymentIntentSucceeded(event: any, supabase: any) {
     logWebhookEvent(event, 'Trial started via payment intent', {
       organizationId,
     })
+
+    // Log audit event for compliance
+    logActionAsync({
+      orgId: organizationId,
+      userId: null,
+      action: AuditAction.BILLING_PAYMENT_SUCCEEDED,
+      details: {
+        paymentIntentId: intent.id,
+        plan: 'trial',
+        trial_ends_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+    })
+
     await storeWebhookEvent(event, supabase, organizationId)
   } else {
     // Other payment intents or missing metadata
