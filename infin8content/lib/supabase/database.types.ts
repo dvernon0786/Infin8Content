@@ -118,8 +118,8 @@ export type Database = {
       organizations: {
         Row: {
           id: string
-          name: string
-          plan: string
+          name?: string
+          plan?: string
           white_label_settings?: Json | null
           created_at?: string | null
           updated_at?: string | null
