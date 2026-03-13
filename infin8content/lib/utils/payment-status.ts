@@ -42,6 +42,10 @@ export function getPaymentAccessStatus(org: Organization): 'active' | 'grace_per
     return 'active'
   }
 
+  if (paymentStatus === 'trialing') {
+    return 'active'  // trialing = full access within trial window
+  }
+
   // Past due - check if grace period expired
   if ((paymentStatus as any) === 'past_due') {
     // If grace period not started (null), account should be suspended

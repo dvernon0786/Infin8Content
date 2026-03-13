@@ -266,6 +266,22 @@ export default async function PaymentSuccessPage({
 
   const paymentStatus = (organization as any).payment_status
 
+  // Trial payment success — webhook sets trialing not active
+  if (paymentStatus === 'trialing') {
+    const redirectTo = (organization as any).onboarding_completed
+      ? '/dashboard'
+      : '/onboarding'
+
+    return (
+      <PaymentSuccessClient
+        status="active"
+        plan="trial"
+        redirectTo={redirectTo}
+        isReactivation={false}
+      />
+    )
+  }
+
   // If payment is active, show success and redirect
   if (paymentStatus === 'active') {
     const isReactivation = session.metadata?.suspended === 'true'

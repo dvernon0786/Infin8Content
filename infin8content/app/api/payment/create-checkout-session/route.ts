@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     // TODO: Remove type assertion after regenerating types from Supabase Dashboard
     const { data: organization, error: orgError } = await (supabase as any)
       .from('organizations')
-      .select('id, name, plan, stripe_customer_id, payment_status, suspended_at')
+      .select('id, name, plan, stripe_customer_id, payment_status, suspended_at, has_used_trial')
       .eq('id', userRecord.org_id)
       .single()
 
@@ -80,6 +80,13 @@ export async function POST(request: Request) {
     if (paymentStatus === 'active') {
       return NextResponse.json(
         { error: 'You already have an active subscription' },
+        { status: 400 }
+      )
+    }
+
+    if (plan === 'trial' && organization.has_used_trial) {
+      return NextResponse.json(
+        { error: 'Trial has already been used for this account.' },
         { status: 400 }
       )
     }
