@@ -38,8 +38,8 @@ describe('Onboarding System Law Invariants', () => {
 
   afterAll(async () => {
     // Cleanup test organization
-    await supabase.from('organizations').delete().eq('id', testOrgId)
-    await supabase.from('organization_competitors').delete().eq('organization_id', testOrgId)
+    await (supabase as any).from('organizations').delete().eq('id', testOrgId)
+    await (supabase as any).from('organization_competitors').delete().eq('organization_id', testOrgId)
   })
 
   describe('Invariant 1: Flags have zero authority', () => {
@@ -119,7 +119,7 @@ describe('Onboarding System Law Invariants', () => {
 
     test('onboarding fails with missing competitors', async () => {
       await seedCompleteOnboardingData(testOrgId)
-      await supabase.from('organization_competitors').delete().eq('organization_id', testOrgId)
+      await (supabase as any).from('organization_competitors').delete().eq('organization_id', testOrgId)
       
       const result = await validateOnboarding(testOrgId)
       
@@ -193,12 +193,12 @@ describe('Onboarding System Law Invariants', () => {
     })
 
     afterEach(async () => {
-      await supabase.from('intent_workflows').delete().eq('id', workflowId)
+      await (supabase as any).from('intent_workflows').delete().eq('id', workflowId)
     })
 
     test('competitor analysis fails without competitors', async () => {
       // Arrange: Valid onboarding but no competitors
-      await supabase.from('organization_competitors').delete().eq('organization_id', testOrgId)
+      await (supabase as any).from('organization_competitors').delete().eq('organization_id', testOrgId)
 
       // Act: Try competitor analysis
       const response = await fetch(
@@ -321,7 +321,7 @@ async function seedOnboardingMissing(orgId: string, missingField: string) {
   const dataWithMissing = { ...baseData }
   dataWithMissing[missingField] = missingField.includes('audiences') ? [] : null
 
-  await supabase.from('organizations').update(dataWithMissing).eq('id', orgId)
+  await (supabase as any).from('organizations').update(dataWithMissing).eq('id', orgId)
 }
 
 async function seedCompetitors(orgId: string, count: number) {
@@ -344,6 +344,6 @@ async function seedCompetitors(orgId: string, count: number) {
       created_by: validUserId
     }))
 
-    await supabase.from('organization_competitors').insert(competitors)
+    await (supabase as any).from('organization_competitors').insert(competitors)
   }
 }
