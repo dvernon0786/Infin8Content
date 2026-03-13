@@ -248,6 +248,7 @@ export type Database = {
           url: string | null
           domain: string | null
           is_active: boolean
+          description: string | null
           created_at: string | null
           created_by: string | null
           [key: string]: any;
@@ -259,6 +260,7 @@ export type Database = {
           url?: string | null
           domain?: string | null
           is_active?: boolean
+          description?: string | null
           created_at?: string | null
           created_by?: string | null
           [key: string]: any;
@@ -270,6 +272,7 @@ export type Database = {
           url?: string | null
           domain?: string | null
           is_active?: boolean
+          description?: string | null
           created_at?: string | null
           created_by?: string | null
           [key: string]: any;

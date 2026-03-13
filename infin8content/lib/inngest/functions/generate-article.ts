@@ -97,7 +97,7 @@ export const generateArticle = inngest.createFunction(
       const { data: wfData } = await supabase
         .from('intent_workflows')
         .select('icp_analysis')
-        .eq('id', article.intent_workflow_id)
+        .eq('id', (article.intent_workflow_id as string))
         .single()
 
       return { article, organization: orgData, workflow: wfData }

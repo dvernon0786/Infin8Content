@@ -64,7 +64,7 @@ export async function PUT(
   try {
     // Await params since Next.js 16.1.1 wraps them in Promise
     const { orgId, competitorId } = await params
-    
+
     // Get current authenticated user
     const currentUser = await getCurrentUser()
     if (!currentUser || !currentUser.org_id) {
@@ -94,10 +94,10 @@ export async function PUT(
     // Parse and validate request body
     const body = await request.json()
     const validationResult = updateCompetitorSchema.safeParse(body)
-    
+
     if (!validationResult.success) {
       return NextResponse.json(
-        { 
+        {
           error: 'Validation failed',
           details: validationResult.error.issues
         },
@@ -145,7 +145,7 @@ export async function PUT(
         .from('organization_competitors')
         .select('id')
         .eq('organization_id', targetOrgId)
-        .eq('domain', domain)
+        .eq('domain', domain as string)
         .neq('id', competitorId) // Exclude current competitor
         .single()
 
@@ -253,7 +253,7 @@ export async function DELETE(
   try {
     // Await params since Next.js 16.1.1 wraps them in Promise
     const { orgId, competitorId } = await params
-    
+
     // Get current authenticated user
     const currentUser = await getCurrentUser()
     if (!currentUser || !currentUser.org_id) {
