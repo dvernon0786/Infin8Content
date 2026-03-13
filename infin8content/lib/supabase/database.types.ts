@@ -133,6 +133,9 @@ export type Database = {
           onboarding_completed?: boolean
           website_url?: string | null
           blog_config?: Json | null
+          has_used_trial?: boolean | null
+          plan_type?: string | null
+          trial_ends_at?: string | null
           [key: string]: any;
         }
         Insert: {
@@ -152,6 +155,9 @@ export type Database = {
           onboarding_completed?: boolean
           website_url?: string | null
           blog_config?: Json | null
+          has_used_trial?: boolean | null
+          plan_type?: string | null
+          trial_ends_at?: string | null
           [key: string]: any;
         }
         Update: {
@@ -171,6 +177,9 @@ export type Database = {
           onboarding_completed?: boolean
           website_url?: string | null
           blog_config?: Json | null
+          has_used_trial?: boolean | null
+          plan_type?: string | null
+          trial_ends_at?: string | null
           [key: string]: any;
         }
         Relationships: []
@@ -203,6 +212,66 @@ export type Database = {
           platform_post_id?: string
           platform_url?: string
           published_at?: string
+          [key: string]: any;
+        }
+        Relationships: []
+      }
+      intent_workflows: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          status: string
+          [key: string]: any;
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          status?: string
+          [key: string]: any;
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          status?: string
+          [key: string]: any;
+        }
+        Relationships: []
+      }
+      organization_competitors: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          url: string | null
+          domain: string | null
+          is_active: boolean
+          created_at: string | null
+          created_by: string | null
+          [key: string]: any;
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          url?: string | null
+          domain?: string | null
+          is_active?: boolean
+          created_at?: string | null
+          created_by?: string | null
+          [key: string]: any;
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          url?: string | null
+          domain?: string | null
+          is_active?: boolean
+          created_at?: string | null
+          created_by?: string | null
           [key: string]: any;
         }
         Relationships: []
