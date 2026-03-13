@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 
 type PlanType = 'trial' | 'starter' | 'pro' | 'agency'
 type BillingFrequency = 'monthly' | 'annual'
@@ -117,6 +117,7 @@ export default function PaymentForm({
 }: PaymentFormProps = {}) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const availablePlans = hasUsedTrial
     ? (['starter', 'pro', 'agency'] as PlanType[])
     : (['trial', 'starter', 'pro', 'agency'] as PlanType[])
@@ -129,7 +130,7 @@ export default function PaymentForm({
     setSelectedPlan(plan)
     // Clear URL error params when user starts fresh
     if (searchParams.toString()) {
-      router.replace('/payment')
+      router.replace(pathname)
     }
   }
 

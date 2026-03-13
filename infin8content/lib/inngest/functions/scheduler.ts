@@ -92,6 +92,23 @@ export const articleScheduler = inngest.createFunction(
                 return { success: false, reason: 'Already generating or status changed' }
             }
 
+            if (orgQuotaResult.limit !== null) {
+                const { data: quotaRows, error: quotaError } = await supabase
+                    .rpc('increment_article_usage', {
+                        target_org_id: article.org_id,
+                        max_limit: orgQuotaResult.limit
+                    })
+
+                const quotaResult = quotaRows?.[0] as { success: boolean; new_usage: number } | undefined
+                if (quotaError || !quotaResult?.success) {
+                    // Revert status lock
+                    await supabase.from('articles' as any)
+                        .update({ status: 'queued' })
+                        .eq('id', article.id)
+                    return { success: false, reason: 'Quota exhausted at trigger time' }
+                }
+            }
+
             // Emit Generation Event
             await inngest.send({
                 name: 'article/generate',
