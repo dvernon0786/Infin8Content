@@ -133,6 +133,10 @@ export async function POST(request: Request) {
           await storeWebhookEvent(event, supabase, null)
           break
 
+        case 'payment_intent.succeeded':
+          await handlePaymentIntentSucceeded(event, supabase)
+          break
+
         default:
           logWebhookEvent(event, 'Unhandled event type')
           // Still store the event for monitoring
@@ -158,7 +162,14 @@ export async function POST(request: Request) {
       }
 
       // ARCHITECTURE FIX: Return 500 for critical events so Stripe retries
-      const criticalEvents = ['checkout.session.completed', 'invoice.payment_succeeded', 'invoice.finalized', 'customer.subscription.updated', 'customer.subscription.deleted']
+      const criticalEvents = [
+        'checkout.session.completed',
+        'invoice.payment_succeeded',
+        'invoice.finalized',
+        'customer.subscription.updated',
+        'customer.subscription.deleted',
+        'payment_intent.succeeded'
+      ]
       if (criticalEvents.includes(event.type)) {
         return new Response('Webhook processing error', { status: 500 })
       }
@@ -177,6 +188,15 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   const orgId = session.metadata?.org_id
   let plan = session.metadata?.plan
   const billingFrequency = session.metadata?.billing_frequency
+
+  // Trial one-time payments are fully handled by handlePaymentIntentSucceeded.
+  // checkout.session.completed still fires for payment mode but must not
+  // overwrite payment_status: 'trialing' with 'active'.
+  if (plan === 'trial' && session.mode === 'payment') {
+    logWebhookEvent(event, 'Trial checkout — deferring state to payment_intent.succeeded')
+    await storeWebhookEvent(event, supabase, orgId ?? null)
+    return
+  }
 
   logWebhookEvent(event, 'Processing checkout.session.completed', {
     orgId,
@@ -867,6 +887,51 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
     logWebhookError(event, 'Organization not found for payment success', orgError, {
       invoiceId: invoice.id,
       customerId: invoice.customer,
+    })
+    await storeWebhookEvent(event, supabase, null)
+  }
+}
+
+async function handlePaymentIntentSucceeded(event: any, supabase: any) {
+  const intent = event.data.object
+  const { org_id: organizationId, plan } = intent.metadata
+
+  logWebhookEvent(event, 'Processing payment_intent.succeeded', {
+    organizationId,
+    plan,
+    paymentIntentId: intent.id,
+  })
+
+  if (plan === 'trial' && organizationId) {
+    // Set org to trial status with expiry
+    const { error: updateError } = await (supabase as any)
+      .from('organizations')
+      .update({
+        payment_status: 'trialing',
+        plan_type: 'trial',
+        has_used_trial: true,
+        trial_ends_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
+      })
+      .eq('id', organizationId)
+
+    if (updateError) {
+      logWebhookError(event, 'Failed to update organization after trial payment', updateError, {
+        organizationId,
+      })
+        ; (updateError as any).retryable = true
+      throw updateError
+    }
+
+    logWebhookEvent(event, 'Trial started via payment intent', {
+      organizationId,
+    })
+    await storeWebhookEvent(event, supabase, organizationId)
+  } else {
+    // Other payment intents or missing metadata
+    logWebhookEvent(event, 'Ignored payment_intent.succeeded', {
+      organizationId,
+      plan,
+      reason: !plan ? 'Missing plan metadata' : 'Not a trial plan'
     })
     await storeWebhookEvent(event, supabase, null)
   }

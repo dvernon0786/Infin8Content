@@ -178,22 +178,42 @@ export async function POST(request: Request) {
 
     // Create Stripe Checkout session
     try {
+      const isTrial = plan === 'trial'
+
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
-        mode: 'subscription',
+        mode: isTrial ? 'payment' : 'subscription',
         line_items: [
           {
             price: priceId,
             quantity: 1,
           },
         ],
-        ...(plan === 'trial' && {
+        ...(isTrial ? {
+          payment_intent_data: {
+            metadata: {
+              org_id: organization.id,
+              user_id: userRecord.id,
+              plan: plan,
+              billing_frequency: billingFrequency,
+              ...(redirect && { redirect: redirect }),
+            }
+          },
+          success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&plan=trial`,
+          cancel_url: `${appUrl}/payment?canceled=true`,
+        } : {
           subscription_data: {
-            trial_period_days: 3
-          }
+            metadata: {
+              org_id: organization.id,
+              user_id: userRecord.id,
+              plan: plan,
+              billing_frequency: billingFrequency,
+              ...(redirect && { redirect: redirect }),
+            }
+          },
+          success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${appUrl}/payment?canceled=true`,
         }),
-        success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${appUrl}/payment?canceled=true`,
         metadata: {
           org_id: organization.id,
           user_id: userRecord.id,
