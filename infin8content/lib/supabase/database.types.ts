@@ -9,6 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      [key: string]: any;
       activities: {
         Row: {
           id: string
@@ -18,6 +19,7 @@ export type Database = {
           activity_type: string
           activity_data: Json | null
           created_at: string | null
+          [key: string]: any;
         }
         Insert: {
           id?: string
@@ -27,6 +29,7 @@ export type Database = {
           activity_type?: string
           activity_data?: Json | null
           created_at?: string | null
+          [key: string]: any;
         }
         Update: {
           id?: string
@@ -36,117 +39,7 @@ export type Database = {
           activity_type?: string
           activity_data?: Json | null
           created_at?: string | null
-        }
-        Relationships: []
-      }
-      api_costs: {
-        Row: {
-          id: string
-          organization_id: string
-          service: string
-          operation: string
-          cost: number
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          organization_id?: string
-          service?: string
-          operation?: string
-          cost?: number
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          organization_id?: string
-          service?: string
-          operation?: string
-          cost?: number
-          created_at?: string | null
-        }
-        Relationships: []
-      }
-      article_progress: {
-        Row: {
-          id: string
-          article_id: string | null
-          org_id: string | null
-          status: string
-          current_section: number | null
-          total_sections: number
-          progress_percentage: number | null
-          current_stage: string
-          estimated_time_remaining: number | null
-          actual_time_spent: number | null
-          word_count: number | null
-          citations_count: number | null
-          api_cost: number | null
-          error_message: string | null
-          metadata: Json | null
-          created_at: string | null
-          updated_at: string | null
-          parallel_sections: Json | null
-          research_api_calls: number | null
-          cache_hit_rate: number | null
-          retry_attempts: number | null
-          estimated_completion: string | null
-          performance_metrics: Json | null
-          research_phase: Json | null
-          context_management: Json | null
-        }
-        Insert: {
-          id?: string
-          article_id?: string | null
-          org_id?: string | null
-          status?: string
-          current_section?: number | null
-          total_sections?: number
-          progress_percentage?: number | null
-          current_stage?: string
-          estimated_time_remaining?: number | null
-          actual_time_spent?: number | null
-          word_count?: number | null
-          citations_count?: number | null
-          api_cost?: number | null
-          error_message?: string | null
-          metadata?: Json | null
-          created_at?: string | null
-          updated_at?: string | null
-          parallel_sections?: Json | null
-          research_api_calls?: number | null
-          cache_hit_rate?: number | null
-          retry_attempts?: number | null
-          estimated_completion?: string | null
-          performance_metrics?: Json | null
-          research_phase?: Json | null
-          context_management?: Json | null
-        }
-        Update: {
-          id?: string
-          article_id?: string | null
-          org_id?: string | null
-          status?: string
-          current_section?: number | null
-          total_sections?: number
-          progress_percentage?: number | null
-          current_stage?: string
-          estimated_time_remaining?: number | null
-          actual_time_spent?: number | null
-          word_count?: number | null
-          citations_count?: number | null
-          api_cost?: number | null
-          error_message?: string | null
-          metadata?: Json | null
-          created_at?: string | null
-          updated_at?: string | null
-          parallel_sections?: Json | null
-          research_api_calls?: number | null
-          cache_hit_rate?: number | null
-          retry_attempts?: number | null
-          estimated_completion?: string | null
-          performance_metrics?: Json | null
-          research_phase?: Json | null
-          context_management?: Json | null
+          [key: string]: any;
         }
         Relationships: []
       }
@@ -172,6 +65,7 @@ export type Database = {
           generation_completed_at: string | null
           error_details: Json | null
           outline_generation_duration_ms: number | null
+          [key: string]: any;
         }
         Insert: {
           id?: string
@@ -194,6 +88,7 @@ export type Database = {
           generation_completed_at?: string | null
           error_details?: Json | null
           outline_generation_duration_ms?: number | null
+          [key: string]: any;
         }
         Update: {
           id?: string
@@ -216,75 +111,7 @@ export type Database = {
           generation_completed_at?: string | null
           error_details?: Json | null
           outline_generation_duration_ms?: number | null
-        }
-        Relationships: []
-      }
-      audit_logs: {
-        Row: {
-          id: string
-          created_at: string | null
-          org_id: string
-          user_id: string | null
-          action: string
-          details: Json | null
-          ip_address: string | null
-          user_agent: string | null
-        }
-        Insert: {
-          id?: string
-          created_at?: string | null
-          org_id?: string
-          user_id?: string | null
-          action?: string
-          details?: Json | null
-          ip_address?: string | null
-          user_agent?: string | null
-        }
-        Update: {
-          id?: string
-          created_at?: string | null
-          org_id?: string
-          user_id?: string | null
-          action?: string
-          details?: Json | null
-          ip_address?: string | null
-          user_agent?: string | null
-        }
-        Relationships: []
-      }
-      keyword_researches: {
-        Row: {
-          id: string
-          organization_id: string
-          user_id: string
-          keyword: string
-          results: Json
-          api_cost: number
-          cached_until: string
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          organization_id?: string
-          user_id?: string
-          keyword?: string
-          results?: Json
-          api_cost?: number
-          cached_until?: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          organization_id?: string
-          user_id?: string
-          keyword?: string
-          results?: Json
-          api_cost?: number
-          cached_until?: string
-          created_at?: string | null
-          updated_at?: string | null
+          [key: string]: any;
         }
         Relationships: []
       }
@@ -293,15 +120,20 @@ export type Database = {
           id: string
           name: string
           plan: string
-          white_label_settings: Json | null
-          created_at: string | null
-          updated_at: string | null
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
-          payment_status: string | null
-          payment_confirmed_at: string | null
-          grace_period_started_at: string | null
-          suspended_at: string | null
+          white_label_settings?: Json | null
+          created_at?: string | null
+          updated_at?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          payment_status?: string | null
+          payment_confirmed_at?: string | null
+          grace_period_started_at?: string | null
+          suspended_at?: string | null
+          article_usage?: number | null
+          onboarding_completed?: boolean
+          website_url?: string | null
+          blog_config?: Json | null
+          [key: string]: any;
         }
         Insert: {
           id?: string
@@ -316,6 +148,11 @@ export type Database = {
           payment_confirmed_at?: string | null
           grace_period_started_at?: string | null
           suspended_at?: string | null
+          article_usage?: number | null
+          onboarding_completed?: boolean
+          website_url?: string | null
+          blog_config?: Json | null
+          [key: string]: any;
         }
         Update: {
           id?: string
@@ -330,469 +167,62 @@ export type Database = {
           payment_confirmed_at?: string | null
           grace_period_started_at?: string | null
           suspended_at?: string | null
+          article_usage?: number | null
+          onboarding_completed?: boolean
+          website_url?: string | null
+          blog_config?: Json | null
+          [key: string]: any;
         }
         Relationships: []
       }
-      otp_codes: {
+      publish_references: {
         Row: {
           id: string
-          user_id: string
-          email: string
-          code: string
-          expires_at: string
-          verified_at: string | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          user_id?: string
-          email?: string
-          code?: string
-          expires_at?: string
-          verified_at?: string | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          email?: string
-          code?: string
-          expires_at?: string
-          verified_at?: string | null
-          created_at?: string | null
-        }
-        Relationships: []
-      }
-      users: {
-        Row: {
-          id: string
-          auth_user_id: string
-          email: string
-          first_name: string | null
-          role: string
-          org_id: string | null
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          auth_user_id?: string
-          email?: string
-          first_name?: string | null
-          role?: string
-          org_id?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          auth_user_id?: string
-          email?: string
-          first_name?: string | null
-          role?: string
-          org_id?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      performance_metrics: {
-        Row: {
-          id: string
-          metric_type: string
-          metric_value: number
-          target_value: number | null
-          user_id: string | null
-          article_id: string | null
-          session_id: string | null
-          metadata: Json | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          metric_type?: string
-          metric_value?: number
-          target_value?: number | null
-          user_id?: string | null
-          article_id?: string | null
-          session_id?: string | null
-          metadata?: Json | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          metric_type?: string
-          metric_value?: number
-          target_value?: number | null
-          user_id?: string | null
-          article_id?: string | null
-          session_id?: string | null
-          metadata?: Json | null
-          created_at?: string | null
-        }
-        Relationships: []
-      }
-      serp_analyses: {
-        Row: {
-          id: string
-          organization_id: string
-          keyword: string
-          analysis_data: Json
-          cached_until: string
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          organization_id?: string
-          keyword?: string
-          analysis_data?: Json
-          cached_until?: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          organization_id?: string
-          keyword?: string
-          analysis_data?: Json
-          cached_until?: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      stripe_webhook_events: {
-        Row: {
-          id: string
-          stripe_event_id: string
-          event_type: string
-          organization_id: string | null
-          processed_at: string
+          article_id: string
+          platform: string
+          platform_post_id: string
+          platform_url: string
+          published_at: string
           created_at: string
+          [key: string]: any;
         }
         Insert: {
           id?: string
-          stripe_event_id?: string
-          event_type?: string
-          organization_id?: string | null
-          processed_at?: string
+          article_id: string
+          platform: string
+          platform_post_id: string
+          platform_url: string
+          published_at: string
           created_at?: string
+          [key: string]: any;
         }
         Update: {
           id?: string
-          stripe_event_id?: string
-          event_type?: string
-          organization_id?: string | null
-          processed_at?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
-      sync_log: {
-        Row: {
-          id: string
-          source_table: string
-          source_id: string
-          target_table: string
-          target_id: string
-          old_status: string | null
-          new_status: string | null
-          sync_type: string
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          source_table?: string
-          source_id?: string
-          target_table?: string
-          target_id?: string
-          old_status?: string | null
-          new_status?: string | null
-          sync_type?: string
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          source_table?: string
-          source_id?: string
-          target_table?: string
-          target_id?: string
-          old_status?: string | null
-          new_status?: string | null
-          sync_type?: string
-          created_at?: string | null
-        }
-        Relationships: []
-      }
-      tavily_research_cache: {
-        Row: {
-          id: string
-          organization_id: string
-          research_query: string
-          research_results: Json
-          cached_until: string
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          organization_id?: string
-          research_query?: string
-          research_results?: Json
-          cached_until?: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          organization_id?: string
-          research_query?: string
-          research_results?: Json
-          cached_until?: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      team_invitations: {
-        Row: {
-          id: string
-          email: string
-          org_id: string
-          role: string
-          token: string
-          status: string
-          expires_at: string
-          accepted_at: string | null
-          created_by: string
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          email?: string
-          org_id?: string
-          role?: string
-          token?: string
-          status?: string
-          expires_at?: string
-          accepted_at?: string | null
-          created_by?: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          email?: string
-          org_id?: string
-          role?: string
-          token?: string
-          status?: string
-          expires_at?: string
-          accepted_at?: string | null
-          created_by?: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      usage_tracking: {
-        Row: {
-          id: string
-          organization_id: string
-          metric_type: string
-          usage_count: number
-          billing_period: string
-          last_updated: string | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          organization_id?: string
-          metric_type?: string
-          usage_count?: number
-          billing_period?: string
-          last_updated?: string | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          organization_id?: string
-          metric_type?: string
-          usage_count?: number
-          billing_period?: string
-          last_updated?: string | null
-          created_at?: string | null
-        }
-        Relationships: []
-      }
-      ux_metrics_events: {
-        Row: {
-          id: string
-          org_id: string
-          user_id: string | null
-          event_name: string
-          flow_instance_id: string | null
-          article_id: string | null
-          payload: Json | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          org_id?: string
-          user_id?: string | null
-          event_name?: string
-          flow_instance_id?: string | null
-          article_id?: string | null
-          payload?: Json | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          org_id?: string
-          user_id?: string | null
-          event_name?: string
-          flow_instance_id?: string | null
-          article_id?: string | null
-          payload?: Json | null
-          created_at?: string | null
-        }
-        Relationships: []
-      }
-      ux_metrics_weekly_rollups: {
-        Row: {
-          id: string
-          org_id: string
-          week_start: string
-          metrics: Json | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          org_id?: string
-          week_start?: string
-          metrics?: Json | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          org_id?: string
-          week_start?: string
-          metrics?: Json | null
-          created_at?: string | null
+          article_id?: string
+          platform?: string
+          platform_post_id?: string
+          platform_url?: string
+          published_at?: string
+          [key: string]: any;
         }
         Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      [key: string]: any;
     }
     Functions: {
-      cleanup_article_progress_sync: {
-        Args: {
-          [key: string]: never
-        }
-        Returns: unknown
-      }
-      cleanup_expired_invitations: {
-        Args: {
-          [key: string]: never
-        }
-        Returns: number
-      }
-      cleanup_expired_otp_codes: {
-        Args: {
-          [key: string]: never
-        }
-        Returns: unknown
-      }
-      cleanup_old_activities: {
-        Args: {
-          [key: string]: never
-        }
-        Returns: unknown
-      }
-      get_auth_user_org_id: {
-        Args: {
-          [key: string]: never
-        }
-        Returns: string
-      }
+      [key: string]: any;
       get_invitation_by_token: {
-        Args: {
-          token_input?: string
-        }
-        Returns: Database['public']['Tables']['team_invitations']['Row'][]
-      }
-      get_parallel_section_progress: {
-        Args: {
-          article_uuid?: string
-        }
-        Returns: number
-      }
-      log_article_activity_trigger: {
-        Args: {
-          [key: string]: never
-        }
-        Returns: unknown
-      }
-      log_user_joined_trigger: {
-        Args: {
-          [key: string]: never
-        }
-        Returns: unknown
-      }
-      sync_article_status_to_progress: {
-        Args: {
-          [key: string]: never
-        }
-        Returns: unknown
-      }
-      sync_article_status_to_progress_logged: {
-        Args: {
-          [key: string]: never
-        }
-        Returns: unknown
-      }
-      sync_progress_status_to_article: {
-        Args: {
-          [key: string]: never
-        }
-        Returns: unknown
-      }
-      sync_progress_status_to_article_logged: {
-        Args: {
-          [key: string]: never
-        }
-        Returns: unknown
-      }
-      update_parallel_section_status: {
-        Args: {
-          article_uuid?: string
-          section_id?: string
-          new_status?: string
-        }
-        Returns: boolean
-      }
-      update_performance_metrics: {
-        Args: {
-          [key: string]: never
-        }
-        Returns: unknown
-      }
-      update_updated_at_column: {
-        Args: {
-          [key: string]: never
-        }
-        Returns: unknown
+        Args: { token_input?: string }
+        Returns: any[]
       }
     }
     Enums: {
-      [_ in never]: never
+      [key: string]: any;
     }
     CompositeTypes: {
-      [_ in never]: never
+      [key: string]: any;
     }
   }
 }
