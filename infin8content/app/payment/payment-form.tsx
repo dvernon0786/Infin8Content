@@ -106,16 +106,21 @@ interface PaymentFormProps {
   isSuspended?: boolean
   suspendedAt?: string | null
   redirectTo?: string
+  hasUsedTrial?: boolean
 }
 
 export default function PaymentForm({
   isSuspended: isSuspendedProp,
   suspendedAt,
-  redirectTo = '/dashboard'
+  redirectTo = '/dashboard',
+  hasUsedTrial = false
 }: PaymentFormProps = {}) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [selectedPlan, setSelectedPlan] = useState<PlanType>('trial')
+  const availablePlans = hasUsedTrial
+    ? (['starter', 'pro', 'agency'] as PlanType[])
+    : (['trial', 'starter', 'pro', 'agency'] as PlanType[])
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>(hasUsedTrial ? 'starter' : 'trial')
   const [billingFrequency, setBillingFrequency] = useState<BillingFrequency>('annual')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -267,7 +272,7 @@ export default function PaymentForm({
 
         {/* Plan Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto mb-12">
-          {(['trial', 'starter', 'pro', 'agency'] as PlanType[]).map((plan) => {
+          {availablePlans.map((plan) => {
             const price = planPrices[plan][billingFrequency]
             const isSelected = selectedPlan === plan
             const features = planFeatures[plan]
@@ -379,7 +384,7 @@ export default function PaymentForm({
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {row.label}
                   </td>
-                  {(['trial', 'starter', 'pro', 'agency'] as PlanType[]).map((plan) => {
+                  {availablePlans.map((plan) => {
                     const value = planFeatures[plan][row.key as keyof PlanFeatures]
                     return (
                       <td key={plan} className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">

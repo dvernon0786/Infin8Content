@@ -908,6 +908,7 @@ async function handlePaymentIntentSucceeded(event: any, supabase: any) {
       .from('organizations')
       .update({
         payment_status: 'trialing',
+        plan: 'trial',
         plan_type: 'trial',
         has_used_trial: true,
         trial_ends_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
