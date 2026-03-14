@@ -109,7 +109,13 @@ export async function POST(request: Request) {
                 const errorMsg = planType === 'trial'
                     ? "Trial users can only generate one article. Please upgrade."
                     : "Monthly article limit reached. Please upgrade your plan."
-                return NextResponse.json({ error: errorMsg }, { status: 403 })
+                return NextResponse.json({
+                    error: errorMsg,
+                    metric: 'article_generation',
+                    currentUsage: orgData?.article_usage ?? articleLimit,
+                    limit: articleLimit,
+                    plan: planType
+                }, { status: 403 })
             }
         }
 
