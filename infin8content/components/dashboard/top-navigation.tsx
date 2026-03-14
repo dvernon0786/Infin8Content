@@ -117,24 +117,26 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
 
             {/* Right side Actions */}
             <div className="flex items-center gap-4">
-                {/* Trial Plan Indicator */}
-                {plan === 'trial' && (
+                {/* Plan Indicator */}
+                {plan && (
                     <div className="hidden lg:flex items-center gap-3 px-4 py-1.5 bg-[#F59E0B]/5 border border-[#F59E0B]/15 rounded-lg mr-2">
                         <div className="flex flex-col">
                             <span className="font-lato text-[9px] font-black text-[#F59E0B] uppercase tracking-wider leading-none mb-1">
-                                Trial Usage
+                                {plan === 'trial' ? 'Trial Usage' : `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`}
                             </span>
-                            <div className="flex items-center gap-2">
-                                <div className="h-1.5 w-24 bg-[#E5E5E7] rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-gradient-to-r from-[#F59E0B] to-[#D97706] rounded-full transition-all duration-500 ease-out"
-                                        style={{ width: `${limit ? Math.min(100, Math.round(((usage || 0) / limit) * 100)) : 0}%` }}
-                                    />
+                            {limit !== null && (
+                                <div className="flex items-center gap-2">
+                                    <div className="h-1.5 w-24 bg-[#E5E5E7] rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-[#F59E0B] to-[#D97706] rounded-full transition-all duration-500 ease-out"
+                                            style={{ width: `${Math.min(100, Math.round(((usage || 0) / limit) * 100))}%` }}
+                                        />
+                                    </div>
+                                    <span className="font-lato text-[11px] font-bold text-[#F59E0B]">
+                                        {usage || 0} / {limit}
+                                    </span>
                                 </div>
-                                <span className="font-lato text-[11px] font-bold text-[#F59E0B]">
-                                    {usage || 0} / {limit || 1}
-                                </span>
-                            </div>
+                            )}
                         </div>
                         <Button
                             variant="secondary"
@@ -142,7 +144,7 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
                             className="bg-[#217CEB] hover:bg-[#217CEB]/90 text-white border-none font-bold text-[11px] h-8 shadow-sm"
                             onClick={() => router.push('/dashboard/settings/billing')}
                         >
-                            Upgrade
+                            {plan === 'trial' ? 'Upgrade' : 'Manage'}
                         </Button>
                     </div>
                 )}
