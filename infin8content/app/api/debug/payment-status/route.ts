@@ -61,6 +61,7 @@ export async function GET() {
         plan_type: org.plan_type,
         trial_ends_at: org.trial_ends_at,
         has_used_trial: org.has_used_trial,
+        stripe_customer_id: org.stripe_customer_id,
         grace_period_started_at: org.grace_period_started_at,
         suspended_at: org.suspended_at,
         created_at: org.created_at
