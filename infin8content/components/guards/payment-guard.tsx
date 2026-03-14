@@ -62,8 +62,15 @@ export function PaymentGuard({ children, fallback }: PaymentGuardProps) {
           }
 
           if (data.paymentAccessStatus === 'pending_payment') {
-            router.push('/payment')
-            return
+            // Only redirect if they haven't initiated checkout at all.
+            // If stripe_customer_id exists, payment was initiated — webhook is just delayed.
+            // Bouncing them on every load creates an infinite loop.
+            const hasInitiatedPayment = !!org?.stripe_customer_id
+            if (!hasInitiatedPayment) {
+              router.push('/payment')
+              return
+            }
+            // Webhook delayed — let them through, they've paid
           } else if (data.paymentAccessStatus === 'suspended') {
             router.push('/suspended')
             return
