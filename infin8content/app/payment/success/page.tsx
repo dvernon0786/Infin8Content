@@ -306,6 +306,24 @@ export default async function PaymentSuccessPage({
   // If payment is pending, show processing message
   // This handles race condition where webhook hasn't processed yet
   if ((paymentStatus as any) === 'pending_payment') {
+    // Stripe already confirmed this session as paid (verified above via stripe.checkout.sessions.retrieve).
+    // The webhook is simply delayed. Redirect optimistically — webhook will sync the DB in the background.
+    if (session.payment_status === 'paid' && session.status === 'complete') {
+      const redirectTo = (organization as any).onboarding_completed
+        ? '/dashboard'
+        : '/onboarding'
+
+      return (
+        <PaymentSuccessClient
+          status="active"
+          plan={session.metadata?.plan || (organization as any).plan || 'starter'}
+          redirectTo={redirectTo}
+          isReactivation={session.metadata?.suspended === 'true'}
+        />
+      )
+    }
+
+    // Session not confirmed paid yet — genuine pending state, keep polling
     return <PaymentSuccessClient status="pending" />
   }
 
