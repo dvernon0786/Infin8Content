@@ -135,6 +135,7 @@ export interface ScrollableArticleListProps {
   onTouchStart: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
   onTouchMove: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
   onTouchEnd: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
+  plan?: string;
 }
 
 // Dashboard filters hook return type

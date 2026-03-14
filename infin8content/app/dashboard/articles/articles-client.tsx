@@ -220,6 +220,7 @@ function ArticlesClient({ orgId, plan }: { orgId: string; plan: string }) {
           <ScrollableArticleList
             articles={filteredArticles}
             className="h-full"
+            plan={plan}
             highlightArticleId={recentlyUpdatedId}
             onArticleNavigation={(id, e) => {
               if (e) e.preventDefault()
