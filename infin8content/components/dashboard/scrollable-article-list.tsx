@@ -16,7 +16,7 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import type { ScrollableArticleListProps } from '@/lib/types/dashboard.types';
 
-function ArticleAction({ article }: { article: DashboardArticle }) {
+function ArticleAction({ article, plan }: { article: DashboardArticle; plan?: string }) {
   const [pending, setPending] = useState(false)
 
   // Clear pending state if article status actually changes (e.g. from realtime update)
@@ -62,6 +62,14 @@ function ArticleAction({ article }: { article: DashboardArticle }) {
     )
   }
 
+  if (article.status === 'draft' && plan === 'trial') {
+    return (
+      <div onClick={(e) => e.stopPropagation()}>
+        <GenerateArticleButton articleId={article.id} />
+      </div>
+    )
+  }
+
   if (article.status === 'queued') {
     return (
       <div onClick={(e) => e.stopPropagation()}>
@@ -79,6 +87,7 @@ function ArticleAction({ article }: { article: DashboardArticle }) {
 
 export function ScrollableArticleList({
   articles,
+  plan,
   className,
   onArticleNavigation,
   onKeyDown,
@@ -177,7 +186,7 @@ export function ScrollableArticleList({
                       <span>Updated {formatTimeAgo(article.updated_at)}</span>
                     </div>
 
-                    <ArticleAction article={article} />
+                    <ArticleAction article={article} plan={plan} />
                   </div>
                 </CardContent>
               </Card>

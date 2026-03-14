@@ -48,18 +48,23 @@ export async function POST(request: Request) {
             intent_workflow_id: string;
         }
 
-        // 2. Validate current status
-        if (article.status !== 'queued' && article.status !== 'failed') {
+        // 2. Plan and Quota Context
+        // Read plan strictly from org.plan (no plan_type fallback - plan is the canonical field written by webhooks)
+        const orgData = currentUser.organizations as any
+        const planType = (orgData?.plan || 'starter').toLowerCase()
+
+        // 3. Validate current status
+        const allowedStatuses = planType === 'trial'
+            ? ['draft', 'queued', 'failed']
+            : ['queued', 'failed']
+
+        if (!allowedStatuses.includes(article.status)) {
             return NextResponse.json({
                 error: `Article is currently in ${article.status} state. Only queued or failed articles can be generated.`
             }, { status: 400 })
         }
 
-        // 3. Quota Enforcement
-        // Read plan strictly from org.plan (no plan_type fallback - plan is the canonical field written by webhooks)
-        const orgData = currentUser.organizations as any
-        const planType = (orgData?.plan || 'starter').toLowerCase()
-
+        // 4. Quota Enforcement
         // 🔒 PLAN VALIDATION: Prevent quota bypass via undefined/legacy plan strings
         if (!(planType in PLAN_LIMITS.article_generation)) {
             console.error(`[Quota Check] Invalid plan detected: ${planType}`)
@@ -71,6 +76,10 @@ export async function POST(request: Request) {
 
         // 4. Set status to processing (Atomic Lock)
         // This update will only succeed if the article is still in a triggerable state.
+        const allowedForLock = planType === 'trial'
+            ? ['draft', 'queued', 'failed']
+            : ['queued', 'failed']
+
         const { data: updatedRows, error: updateError } = await supabase
             .from('articles')
             .update({
@@ -79,7 +88,7 @@ export async function POST(request: Request) {
             })
             .eq('id', articleId)
             .eq('org_id', currentUser.org_id)
-            .in('status', ['queued', 'failed'])
+            .in('status', allowedForLock)
             .select('id')
 
         if (updateError || !updatedRows || (updatedRows as any[]).length === 0) {
