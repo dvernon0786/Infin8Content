@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
-import { LayoutDiagnostic } from '@/components/layout-diagnostic'
 
 interface PaymentSuccessClientProps {
   status: 'active' | 'pending' | 'processing'
@@ -64,9 +63,9 @@ export default function PaymentSuccessClient({
               </>
             ) : (
               <>
-            Your account is now active. You can start using all features of your{' '}
-            <span className="font-semibold capitalize">{plan || 'selected'}</span>{' '}
-            plan.
+                Your account is now active. You can start using all features of your{' '}
+                <span className="font-semibold capitalize">{plan || 'selected'}</span>{' '}
+                plan.
               </>
             )}
           </p>
@@ -82,7 +81,7 @@ export default function PaymentSuccessClient({
             </p>
           </div>
         </div>
-        <LayoutDiagnostic />
+
       </div>
     )
   }
@@ -133,7 +132,7 @@ export default function PaymentSuccessClient({
             </p>
           </div>
         </div>
-        <LayoutDiagnostic />
+
       </div>
     )
   }
@@ -173,7 +172,6 @@ export default function PaymentSuccessClient({
           Refresh Page
         </button>
       </div>
-      <LayoutDiagnostic />
     </div>
   )
 }
