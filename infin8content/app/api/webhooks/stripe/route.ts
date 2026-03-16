@@ -289,7 +289,9 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
           plan_type: 'trial',
           has_used_trial: true,
           stripe_customer_id: session.customer,
-          trial_ends_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
+          trial_ends_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+          usage_reset_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+          article_usage: 0,
         })
         .eq('id', orgId)
 
@@ -480,6 +482,7 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
       plan: resolvedPlan || 'trial',
       payment_status: newPaymentStatus,
       usage_reset_at: new Date(subscription.current_period_end * 1000).toISOString(),
+       article_usage: 0,
     }
 
     applyGracePeriod(updateData, organization.payment_status, newPaymentStatus)
@@ -553,6 +556,8 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
       payment_status: 'canceled',
       stripe_subscription_id: null, // Clear subscription ID
       plan: 'trial',
+       article_usage: 0,
+       usage_reset_at: null,
       // Note: Trial limits are enforced dynamically via count(status='completed') in generate route.
     }
 
@@ -937,7 +942,9 @@ async function handlePaymentIntentSucceeded(event: any, supabase: any) {
         plan: 'trial',
         plan_type: 'trial',
         has_used_trial: true,
-        trial_ends_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
+        trial_ends_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        usage_reset_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        article_usage: 0,
       })
       .eq('id', organizationId)
 
