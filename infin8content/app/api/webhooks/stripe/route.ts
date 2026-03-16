@@ -188,6 +188,9 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   const orgId = session.metadata?.org_id
   let plan = session.metadata?.plan
   const billingFrequency = session.metadata?.billing_frequency
+  // Resolve the subscription to check status and store the subscription ID early
+  // Declared here so it's available both when org is missing and later when updating the org
+  let subscriptionForCheckout: any = null
 
   // Trial one-time payments are fully handled by handlePaymentIntentSucceeded.
   // checkout.session.completed still fires for payment mode but must not
@@ -241,47 +244,70 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
       sessionId: session.id,
       customerId: session.customer,
       timestamp: new Date().toISOString(),
-      alertLevel: 'WARNING',
-      recommendation: 'Check if organization creation is delayed or if org_id in metadata is incorrect',
     })
-      // Mark as retryable - organization may be created later
-      ; (error as any).retryable = true
-    throw error
-  }
 
-  // FIX 3: Store the subscription ID early to ensure later events find the org (subscription_id stored in atomic update below)
-  // Resolve the subscription to check status
-  let subscriptionForCheckout: any = null
-  if (session.subscription) {
-    subscriptionForCheckout = await retryWithBackoff(() => stripe.subscriptions.retrieve(session.subscription))
+    // Resolve the subscription to check status and store the subscription ID early
+    // This helps later events (subscription.updated) find the org reliably.
+    if (session.subscription) {
+      try {
+        subscriptionForCheckout = await retryWithBackoff(() => stripe.subscriptions.retrieve(session.subscription))
+      } catch (err) {
+        // Log and continue; subscription resolution is best-effort
+        logWebhookError(event, 'Failed to resolve subscription for checkout', err, { subscriptionId: session.subscription })
+      }
 
-    // BUG 1 FIX: If status is trialing, force plan to 'trial' regardless of price ID
-    // until the trial period ends and it becomes 'active'.
-    if (subscriptionForCheckout.status === 'trialing') {
-      plan = 'trial'
-    } else {
-      const planItem = subscriptionForCheckout.items.data.find(
-        (item: any) => getPlanFromPriceId(item.price?.id)
-      )
-      const priceId = planItem?.price?.id
-      const resolvedPlan = priceId ? getPlanFromPriceId(priceId) : null
-
-      if (resolvedPlan) {
-        plan = resolvedPlan
+      // If subscription status is 'trialing', ensure plan stays as 'trial'
+      if (subscriptionForCheckout && subscriptionForCheckout.status === 'trialing') {
+        plan = 'trial'
+      } else if (subscriptionForCheckout) {
+        const planItem = subscriptionForCheckout.items.data.find((item: any) => getPlanFromPriceId(item.price?.id))
+        const priceId = planItem?.price?.id
+        const resolvedPlan = priceId ? getPlanFromPriceId(priceId) : null
+        if (resolvedPlan) plan = resolvedPlan
       }
     }
-  }
 
-  // 🔒 WEBHOOK PLAN VALIDATION: Ensure only canonical plans are written to DB
-  // Moved outside subscription check to handle one-time/no-sub plans securely
-  if (plan && !['starter', 'pro', 'agency', 'trial'].includes(plan.toLowerCase())) {
-    console.warn(`[Webhook] Invalid plan detected in checkout: ${plan}. Falling back to trial.`)
-    plan = 'trial'
-  }
+    // WEBHOOK PLAN VALIDATION: Ensure only canonical plans are written to DB
+    if (plan && !['starter', 'pro', 'agency', 'trial'].includes(plan.toLowerCase())) {
+      console.warn(`[Webhook] Invalid plan detected in checkout: ${plan}. Falling back to trial.`)
+      plan = 'trial'
+    }
 
-  // Safety guard to prevent silent plan corruption
-  if (!plan) {
-    throw new Error(`Unable to determine plan for checkout session ${session.id}`)
+    // Safety guard to prevent silent plan corruption
+    if (!plan) {
+      throw new Error(`Unable to determine plan for checkout session ${session.id}`)
+    }
+
+    // Special handling for trial purchases: only activate trialing state when payment is confirmed
+    if (plan === 'trial' && session.mode === 'payment' && session.payment_status === 'paid') {
+      const { error: trialUpdateError } = await (supabase as any)
+        .from('organizations')
+        .update({
+          payment_status: 'trialing',
+          plan: 'trial',
+          plan_type: 'trial',
+          has_used_trial: true,
+          stripe_customer_id: session.customer,
+          trial_ends_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
+        })
+        .eq('id', orgId)
+
+      if (trialUpdateError) {
+        logWebhookError(event, 'Failed to update trial org', trialUpdateError, { orgId })
+        ;(trialUpdateError as any).retryable = true
+        throw trialUpdateError
+      }
+
+      logActionAsync({
+        orgId,
+        userId: null,
+        action: AuditAction.BILLING_PAYMENT_SUCCEEDED,
+        details: { paymentIntentId: session.payment_intent, plan: 'trial' },
+      })
+
+      await storeWebhookEvent(event, supabase, orgId)
+      return
+    }
   }
 
   // Check if this is a reactivation (payment_status is 'suspended' or 'past_due')

@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "workflow_version": "1.2.0",
   "timestamps": {
     "started": "2026-02-26T07:54:00+11:00",
@@ -8,135 +9,128 @@
   "scan_level": "deep",
   "project_root": "/home/dghost/Infin8Content",
   "output_folder": "/home/dghost/Infin8Content/docs",
-  "completed_steps": [
-    {
-      "step": "step_1",
-      "status": "completed",
-      "timestamp": "2026-02-26T07:55:00+11:00",
-      "summary": "Classified as monorepo with 3 parts: infin8content (web), tools (library), _bmad (framework)"
+    "generated_at": "2026-03-15T21:34:51Z",
+    "project_name": "Infin8Content",
+    "file_count": 7581,
+    "top_level_directories": [
+      "infin8content",
+      "implementation-artifacts",
+      ".claude",
+      "tools",
+      ".husky",
+      "__tests__",
+      "public",
+      "tests",
+      "types",
+      ".agent",
+      "lib",
+      "planning-artifacts",
+      "components",
+      ".windsurf",
+      "_bmad",
+      "infin8Content",
+      ".github",
+      "docs",
+      "scripts",
+      "supabase",
+      "accessible-artifacts"
+    ],
+    "detected_types": [
+      "node"
+    ],
+    "package_manager": null,
+    "key_files": {
+      "README.md": "./docs/source-analysis/README.md",
+      "tsconfig.json": "./infin8content/tsconfig.json",
+      "package.json": "./tools/eslint-plugin-design-system/package.json",
+      "package-lock.json": "./infin8content/package-lock.json"
     },
-    {
-      "step": "step_2",
-      "status": "completed",
-      "timestamp": "2026-02-26T07:57:00+11:00",
-      "summary": "Found 467+ documentation files, including master index and specialized guides in docs/"
+    "language_counts": {
+      ".md": 627,
+      ".sql": 261,
+      ".js": 1271,
+      ".ts": 500,
+      ".local": 2,
+      ".http": 1,
+      ".json": 961,
+      ".sh": 6,
+      ".test": 1,
+      "(noext)": 15,
+      ".gz": 1,
+      ".mjs": 2,
+      ".txt": 2,
+      ".example": 1,
+      ".css": 23,
+      ".tsx": 287,
+      ".svg": 26,
     },
-    {
-      "step": "step_3",
-      "status": "completed",
-      "timestamp": "2026-02-26T07:58:00+11:00",
-      "summary": "Tech stack analyzed: Next.js 16, React 19, Supabase, Inngest, Stripe, OpenRouter"
-    },
-    {
-      "step": "step_4",
-      "status": "completed",
-      "timestamp": "2026-02-26T08:02:00+11:00",
-      "summary": "Conditional analysis complete: 80+ API routes, 75 migrations (complex schema), 120+ components, and 16+ hooks documented"
-    },
-    {
-      "step": "step_5",
-      "status": "completed",
-      "timestamp": "2026-02-26T08:04:00+11:00",
-      "summary": "Source tree documented: Monorepo structure with 3 parts (infin8content, tools, _bmad)"
-    },
-    {
-      "step": "step_6",
-      "status": "completed",
-      "timestamp": "2026-02-26T08:06:00+11:00",
-      "summary": "Dev/operational info extracted: CI/CD workflows, utility scripts, and deployment configurations documented"
-    },
-    {
-      "step": "step_7",
-      "status": "completed",
-      "timestamp": "2026-02-26T08:08:00+11:00",
-      "summary": "Integration architecture analyzed: infin8content usage of _bmad and tools documented"
-    },
-    {
-      "step": "step_8",
-      "status": "completed",
-      "timestamp": "2026-02-26T08:10:00+11:00",
-      "summary": "Architecture documentation generated for infin8content"
-    },
-    {
-      "step": "step_9",
-      "status": "completed",
-      "timestamp": "2026-02-26T08:12:00+11:00",
-      "summary": "Supporting guides (Overview, Dev, Deployment) generated"
-    },
-    {
-      "step": "step_10",
-      "status": "completed",
-      "timestamp": "2026-02-26T08:14:00+11:00",
-      "summary": "Master index generated and links validated"
-    },
-    {
-      "step": "step_11",
-      "status": "completed",
-      "timestamp": "2026-02-26T08:16:00+11:00",
-      "summary": "Validation complete: all documentation artifacts verified and consistent"
-    }
+    "notes": "Merged scan metadata updated to latest run",
+    "summary": "Project scan metadata updated",
+    "schema_version": "2.0"
+    "tests",
+    "types",
+    ".agent",
+    "lib",
+    "planning-artifacts",
+    "components",
+    ".windsurf",
+    "_bmad",
+    "infin8Content",
+    ".github",
+    "docs",
+    "scripts",
+    "supabase",
+    "accessible-artifacts"
   ],
-  "current_step": "completed",
-  "findings": {
-    "project_classification": {
-      "repository_type": "monorepo",
-      "parts_count": 3,
-      "primary_tech": "Next.js"
-    },
-    "existing_docs_count": 467,
-    "technology_stack": {
-      "infin8content": {
-        "framework": "Next.js 16.1.1",
-        "ui": "React 19.2.3",
-        "language": "TypeScript 5",
-        "styling": "Tailwind CSS 4",
-        "database": "Supabase (PostgreSQL)",
-        "jobs": "Inngest",
-        "payments": "Stripe",
-        "testing": "Vitest + Playwright + Storybook"
-      },
-      "tools": {
-        "type": "ESLint Plugin",
-        "language": "JavaScript",
-        "purpose": "Design system compliance"
-      },
-      "_bmad": {
-        "type": "Workflow Framework",
-        "format": "YAML/Markdown"
-      }
-    },
-    "api_count": 80,
-    "table_count": 10,
-    "component_count": 120
+  "detected_types": [
+    "node"
+  ],
+  "package_manager": null,
+  "key_files": {
+    "README.md": "./docs/source-analysis/README.md",
+    "tsconfig.json": "./infin8content/tsconfig.json",
+    "package.json": "./tools/eslint-plugin-design-system/package.json",
+    "package-lock.json": "./infin8content/package-lock.json"
   },
-  "outputs_generated": [
-    "project-scan-report.json",
-    "api-contracts-infin8content.md",
-    "data-models-infin8content.md",
-    "component-inventory-infin8content.md",
-    "source-tree-analysis.md",
-    "architecture-infin8content.md",
-    "project-overview.md",
-    "development-guide-infin8content.md",
-    "deployment-guide.md",
-    "index.md"
-  ],
-  "resume_instructions": "Documentation complete. Use deep-dive for specific module analysis.",
-  "project_types": [
-    {
-      "part_id": "infin8content",
-      "project_type_id": "web",
-      "display_name": "Web Application"
-    },
-    {
-      "part_id": "tools",
-      "project_type_id": "library",
-      "display_name": "Development Utilities (ESLint Plugin)"
-    },
-    {
-      "part_id": "_bmad",
-      "project_type_id": "framework",
-      "display_name": "BMad Framework"
-    }
-  ]
+  "language_counts": {
+    ".md": 627,
+    ".sql": 261,
+    ".js": 1271,
+    ".ts": 500,
+    ".local": 2,
+    ".http": 1,
+    ".json": 961,
+    ".sh": 6,
+    ".test": 1,
+    "(noext)": 15,
+    ".gz": 1,
+    ".mjs": 2,
+    ".txt": 2,
+    ".html": 31,
+    ".tsbuildinfo": 2,
+    ".log": 3,
+    ".example": 1,
+    ".css": 23,
+    ".tsx": 287,
+    ".svg": 26,
+    ".ico": 1,
+    ".png": 13,
+    ".webp": 2,
+    ".jpg": 6,
+    ".bak": 1,
+    ".map": 955,
+    ".meta": 1161,
+    ".sst": 1137,
+    ".woff2": 26,
+    ".rsc": 203,
+    ".backup": 1,
+    ".mdx": 1,
+    ".avif": 1,
+    ".toml": 1,
+    ".yaml": 30,
+    ".csv": 12,
+    ".yml": 6,
+    ".backup-20260122-003937": 1
+  }
+>>>>>>> 6eb3c53 (stripe(webhooks): activate trial on paid checkout.session, update org trial fields)
 }
