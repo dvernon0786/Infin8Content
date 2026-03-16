@@ -192,9 +192,21 @@ The Article Generation Pipeline is a sophisticated multi-stage system that trans
 - Scores overall quality
 
 #### Stage 8: Citation Validation
+- Validates all citations
+- Checks URL accessibility
+- Verifies source credibility
+- Removes broken citations
 
 #### Stage 9: Format Validation
+- Validates HTML structure
+- Checks heading hierarchy
+- Ensures proper formatting
+- Validates links and images
 
+#### Stage 10: Final Output
+- Assembles final article
+- Generates metadata
+- Creates SEO data
 - Stores in database
 
 ## OpenRouter Integration

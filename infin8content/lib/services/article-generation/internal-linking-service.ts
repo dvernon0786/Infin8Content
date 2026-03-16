@@ -19,6 +19,37 @@ const MAX_POLL_ATTEMPTS = 12
 const POLL_INTERVAL_MS = 5000
 const WORDS_PER_LINK = 300 // SEO best practice: 1 internal link per 300 words
 
+/**
+ * Allow only relative paths or http/https absolute URLs.
+ * Returns null for any unsafe scheme (e.g. javascript:, data:).
+ */
+function sanitizeUrl(rawUrl: string): string | null {
+  if (!rawUrl) return null
+  const trimmed = rawUrl.trim()
+  if (trimmed.startsWith('/') || trimmed.startsWith('./') || trimmed.startsWith('../')) {
+    return trimmed
+  }
+  try {
+    const parsed = new URL(trimmed)
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return parsed.toString()
+    }
+  } catch {
+    // invalid URL
+  }
+  return null
+}
+
+/** Escape a string for safe use inside HTML attribute values. */
+function escapeHtmlAttr(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 export interface LinkEntry {
   url: string
   anchor_text: string
@@ -87,7 +118,7 @@ export async function runInternalLinking(params: {
     })
 
     if (injected > 0) {
-      await supabase
+      const { error: updateError } = await supabase
         .from('article_sections')
         .update({
           content_markdown: markdown,
@@ -95,6 +126,14 @@ export async function runInternalLinking(params: {
           updated_at: new Date().toISOString(),
         })
         .eq('id', section.id)
+
+      if (updateError) {
+        console.error(
+          `[InternalLinking] ❌ Failed to persist links for section ${section.id}:`,
+          updateError
+        )
+        continue
+      }
 
       totalInjected += injected
       sectionsUpdated++
@@ -140,7 +179,7 @@ async function getDBArticleLinks(
 ): Promise<LinkEntry[]> {
   const { data } = await supabase
     .from('articles')
-    .select('slug, title, keyword')
+    .select('slug, title, keyword, publish_references')
     .eq('org_id', orgId)
     .eq('status', 'completed')
     .neq('id', currentArticleId)
@@ -151,12 +190,18 @@ async function getDBArticleLinks(
 
   if (!data) return []
 
-  return data.map((a: any) => ({
-    url: `/blog/${a.slug}`,
-    anchor_text: a.keyword,
-    title: a.title,
-    source: 'db' as const,
-  }))
+  return data.map((a: any) => {
+    const canonicalUrl =
+      a?.publish_references && typeof a.publish_references === 'object'
+        ? (a.publish_references as any).platform_url
+        : undefined
+    return {
+      url: canonicalUrl || `/blog/${a.slug}`,
+      anchor_text: a.keyword,
+      title: a.title,
+      source: 'db' as const,
+    }
+  })
 }
 
 // ─── Link Injection Engine ─────────────────────────────────────────────────────
@@ -225,6 +270,17 @@ export async function crawlAndCacheWebsiteLinks(params: {
   if (!auth) {
     console.warn('[InternalLinking] DATAFORSEO_LOGIN/PASSWORD not set, skipping crawl.')
     return { success: false, pagesFound: 0 }
+  }
+
+  // Short-circuit: skip a new crawl when the cache is still fresh for this URL
+  const existingSettings = await getOrgSettings(orgId, supabase)
+  if (existingSettings?.crawled_at && existingSettings?.website_url === websiteUrl) {
+    const ageInDays = (Date.now() - new Date(existingSettings.crawled_at).getTime()) / 86_400_000
+    if (ageInDays < CRAWL_CACHE_TTL_DAYS) {
+      const pagesFound = (existingSettings.crawled_link_map as LinkEntry[] | undefined)?.length ?? 0
+      console.log(`[InternalLinking] Cache still fresh (${ageInDays.toFixed(1)}d), skipping crawl.`)
+      return { success: true, pagesFound }
+    }
   }
 
   try {
@@ -339,6 +395,31 @@ async function getOrgSettings(orgId: string, supabase: SupabaseClient): Promise<
     .eq('id', orgId)
     .single()
   return data?.settings || {}
+}
+
+// ─── Testable Export ────────────────────────────────────────────────────────────
+/**
+ * Thin wrapper that exposes `injectLinksIntoSection` to unit tests without
+ * changing any runtime behavior.
+ */
+export function __testInjectLinks(params: {
+  markdown: string
+  html: string
+  linkMap: LinkEntry[]
+  usedAnchors?: Set<string>
+  budget: number
+  currentKeyword: string
+}): { markdown: string; html: string; injected: number; usedAnchors: Set<string> } {
+  const usedAnchors = params.usedAnchors ?? new Set<string>()
+  const result = injectLinksIntoSection({
+    markdown: params.markdown,
+    html: params.html,
+    linkMap: params.linkMap,
+    usedAnchors,
+    budget: params.budget,
+    currentKeyword: params.currentKeyword,
+  })
+  return { ...result, usedAnchors }
 }
 
 function deduplicateByAnchor(links: LinkEntry[]): LinkEntry[] {
