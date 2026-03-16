@@ -80,6 +80,12 @@ This document summarizes the comprehensive documentation update performed on the
   - Generation metadata
   - Status management
 
+### 2026-03-17: Internal Linking & Crawl Worker
+- **Files added:** `lib/services/article-generation/internal-linking-service.ts`, `lib/inngest/functions/crawl-website-links.ts`
+- **Pipeline change:** `lib/inngest/functions/generate-article.ts` now injects internal links before assembly when enabled by `generationConfig.internal_links`.
+- **Onboarding trigger:** `app/api/onboarding/business/route.ts` emits `organization/website.url.saved` to start site crawls.
+- **Notes:** Crawl results are cached in `organizations.settings.crawled_link_map` (30-day TTL); crawl is non-blocking for generation.
+
 ## Documentation Quality Improvements
 
 ### Consistency Updates

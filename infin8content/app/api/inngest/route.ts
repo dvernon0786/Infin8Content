@@ -1,5 +1,6 @@
 import { serve } from 'inngest/next'
 import { generateArticle, generateArticleImages } from '@/lib/inngest/functions/generate-article'
+import { crawlWebsiteLinks } from '@/lib/inngest/functions/crawl-website-links'
 import { cleanupStuckArticles } from '@/lib/inngest/functions/cleanup-stuck-articles'
 import { uxMetricsRollup } from '@/lib/inngest/functions/ux-metrics-rollup'
 import { inngest } from '@/lib/inngest/client'
@@ -30,6 +31,7 @@ export const { GET, POST, PUT } = serve({
   functions: [
     generateArticle,
     generateArticleImages,
+    crawlWebsiteLinks,
     cleanupStuckArticles,
     uxMetricsRollup,
     step4Longtails,

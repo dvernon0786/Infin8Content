@@ -1,6 +1,6 @@
 # Data Models - Schema Deep Scan
 
-Generated: 2026-02-28
+Generated: 2026-03-17
 Database: **Supabase / PostgreSQL**
 
 ## Core Entities

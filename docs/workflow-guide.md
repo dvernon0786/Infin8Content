@@ -1,6 +1,6 @@
 # Workflow Guide: Deterministic Generation Engine
 
-Generated: 2026-02-28
+Generated: 2026-03-17
 Domain: **Lifecycle & Generation**
 Protocol: **Zero Drift Protocol**
 

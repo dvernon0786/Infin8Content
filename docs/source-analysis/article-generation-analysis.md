@@ -192,21 +192,9 @@ The Article Generation Pipeline is a sophisticated multi-stage system that trans
 - Scores overall quality
 
 #### Stage 8: Citation Validation
-- Validates all citations
-- Checks URL accessibility
-- Verifies source credibility
-- Removes broken citations
 
 #### Stage 9: Format Validation
-- Validates HTML structure
-- Checks heading hierarchy
-- Ensures proper formatting
-- Validates links and images
 
-#### Stage 10: Final Output
-- Assembles final article
-- Generates metadata
-- Creates SEO data
 - Stores in database
 
 ## OpenRouter Integration
@@ -409,6 +397,13 @@ const results = await Promise.allSettled([
 - Error rates
 - Success rates
 - Resource utilization
+
+## 2026-03-17: Internal Linking Injection
+
+- The generation pipeline now includes a guarded `inject-internal-links` step that runs immediately before assembly when `generationConfig.internal_links` is enabled.
+- New service file: `lib/services/article-generation/internal-linking-service.ts` — responsible for merging manual, crawled, and DB-sourced links and injecting them into completed sections within a configurable budget (`num_internal_links`).
+- Crawl worker: `lib/inngest/functions/crawl-website-links.ts` listens for `organization/website.url.saved` and writes `organizations.settings.crawled_link_map` (cached for 30 days).
+- Onboarding flow emits the `organization/website.url.saved` event when a website URL is saved so crawls run asynchronously and do not block article generation.
 
 ### Logging
 - Stage completion logging

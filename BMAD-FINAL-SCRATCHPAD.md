@@ -198,6 +198,42 @@ All BMAD deliverables in:
 1. Merge to test-main-all
 2. Create PR to main
 3. Engineering begins Week 1
+
+## 2026-03-17: Recent Engineering Updates
+
+- **Internal linking implemented:** Added an idempotent internal-link injection step to the article generation pipeline. Files added: `lib/services/article-generation/internal-linking-service.ts`, `lib/inngest/functions/crawl-website-links.ts`.
+- **Pipeline patched:** `lib/inngest/functions/generate-article.ts` now runs `inject-internal-links` immediately before `assemble-article` when `generationConfig.internal_links` is enabled.
+- **Onboarding trigger:** `app/api/onboarding/business/route.ts` emits `organization/website.url.saved` to kick off crawls.
+- **Inngest registration:** `app/api/inngest/route.ts` registered the crawl worker.
+- **Branch & deploy steps:** Preparing changes on branch `test-main-all`; will commit, push, and open a PR to `main` for CI validation and integration testing.
+
+Next actions: run integration smoke tests for the injection step and add unit tests for injection edge cases.
+
+---
+
+## Pricing Alignment Update (2026-03-16)
+
+**Status:** ✅ COMPLETE - Stripe prices matched across codebase
+
+### Changes Made
+- Updated `lib/config/pricing-plans.ts` annual prices to match Stripe
+- Updated `app/payment/payment-form.tsx` planPrices to match Stripe  
+- Updated `STRIPE_PRODUCTS_SETUP.md` with current Stripe prices
+- Updated `docs/pricing-system-implementation.md` pricing table
+
+### Stripe Prices (Live)
+- **Starter:** $49/month, $498/year
+- **Pro:** $220/month, $2,100/year  
+- **Agency:** $399/month, $3,588/year
+- **Trial:** $1 one-time
+
+### Files Updated
+- lib/config/pricing-plans.ts
+- app/payment/payment-form.tsx
+- STRIPE_PRODUCTS_SETUP.md
+- docs/pricing-system-implementation.md
+
+**Git:** Ready for commit to test-main-all branch
 4. PM monitors execution
 
 ---
