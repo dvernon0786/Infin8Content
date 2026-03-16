@@ -76,23 +76,7 @@ export class ArticleAssembler {
         sectionsJson
       )
 
-      // ADD after finalMarkdown is built, before persistResult():
-      let seoScore: number | undefined
-      try {
-        const { calculateSEOScore } = await import('@/lib/seo/seo-scoring')
-        const scoreResult = calculateSEOScore({
-          content: totalMarkdown,
-          primaryKeyword: article.keyword,
-          secondaryKeywords: [],
-          targetWordCount: wordCount,
-          contentType: 'general'
-        })
-        seoScore = scoreResult.overallScore
-        logger.log('article.assembly.seo_scored', { articleId: input.articleId, seoScore })
-      } catch (seoError) {
-        // Non-fatal — article completes without SEO score
-        logger.log('article.assembly.seo_score_failed', { articleId: input.articleId, error: seoError })
-      }
+      // SEO scoring removed: column no longer exists in DB
 
       // Persist ONLY the snapshot and metadata. No status mutation.
       await this.persistResult({
@@ -103,7 +87,7 @@ export class ArticleAssembler {
         readingTimeMinutes,
         title: articleTitle !== article.title ? articleTitle : undefined,
         skipStatusGuard: input.allowReassembly,
-        seoScore   // ← add this
+        // seoScore removed
       })
 
       // Exact contract analytics events only
@@ -199,7 +183,6 @@ export class ArticleAssembler {
     readingTimeMinutes: number
     title?: string
     skipStatusGuard?: boolean
-    seoScore?: number
   }) {
     // 🔒 SINGLE SOURCE OF TRUTH: Update ONLY the snapshot and audit metadata.
     // Explicitly removed 'status: completed' to ensure Worker owns lifecycle.
@@ -208,7 +191,6 @@ export class ArticleAssembler {
       final_markdown: args.finalMarkdown,
       word_count: args.wordCount,
       reading_time_minutes: args.readingTimeMinutes,
-      seo_score: args.seoScore,
       updated_at: new Date().toISOString()
     }
 
@@ -233,7 +215,8 @@ export class ArticleAssembler {
 
     // 🔴 OBSERVABILITY: If 0 rows affected, it means the article wasn't found or update matched 0 rows (Race condition)
     if (!data || data.length === 0) {
-      throw new Error(`Assembly persistence skipped: Article ${args.articleId} not found or update matched 0 rows.`)
+      logger.log('article.assembly.persistence_noop', { articleId: args.articleId })
+      return
     }
   }
 
