@@ -421,7 +421,7 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
   const { data: orgRows, error: orgError } = await (supabase as any)
     .from('organizations')
-    .select('id, name, payment_status, grace_period_started_at')
+    .select('id, name, plan, payment_status, grace_period_started_at')
     .eq('stripe_subscription_id', subscription.id)
     .limit(1)
 
@@ -478,14 +478,20 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
     }
 
     const newPaymentStatus = statusMap[subscription.status] || 'active'
+    const newPlan = resolvedPlan || 'trial'
     const updateData: any = {
-      plan: resolvedPlan || 'trial',
+      plan: newPlan,
       payment_status: newPaymentStatus,
       usage_reset_at: new Date(subscription.current_period_end * 1000).toISOString(),
-       article_usage: 0,
     }
 
     applyGracePeriod(updateData, organization.payment_status, newPaymentStatus)
+
+    // Only reset usage when the plan actually changes (upgrade/downgrade).
+    const previousPlan = organization.plan
+    if (newPlan && newPlan !== previousPlan) {
+      updateData.article_usage = 0
+    }
 
     const { error: updateError } = await (supabase as any)
       .from('organizations')
