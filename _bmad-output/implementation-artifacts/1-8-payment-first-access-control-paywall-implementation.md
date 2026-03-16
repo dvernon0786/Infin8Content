@@ -253,6 +253,13 @@ So that only paying customers can use the platform features.
 - Handle reactivation in `checkout.session.completed` and `invoice.payment_succeeded`
 - Idempotency: Check `stripe_webhook_events` table before processing
 
+### Recent patch
+
+- The `checkout.session.completed` handler was updated to treat `trial` purchases specially: trial activation now only occurs when the Stripe session indicates `session.mode === 'payment'` AND `session.payment_status === 'paid'`. The handler updates the `organizations` record to set `payment_status = 'trialing'`, `plan = 'trial'`, `plan_type = 'trial'`, `has_used_trial = true`, records `stripe_customer_id`, and sets `trial_ends_at` to 3 days from now. The webhook event is stored in `stripe_webhook_events`.
+- Previously the handler deferred trial state changes to `payment_intent.succeeded` with an early return; that early-return was replaced so the trial state is applied immediately when `session.payment_status === 'paid'`. The `payment_intent.succeeded` handler remains a fallback.
+
+Reason: reduce race conditions and ensure organization state is correctly set immediately after checkout when Stripe reports the session as paid.
+
 **Grace Period Expiration:**
 - Option A: Cron job (Vercel Cron) - daily check
 - Option B: On-demand in middleware - check on each request
