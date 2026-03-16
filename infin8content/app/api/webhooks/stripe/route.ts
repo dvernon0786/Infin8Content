@@ -188,6 +188,9 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   const orgId = session.metadata?.org_id
   let plan = session.metadata?.plan
   const billingFrequency = session.metadata?.billing_frequency
+  // Resolve the subscription to check status and store the subscription ID early
+  // Declared here so it's available both when org is missing and later when updating the org
+  let subscriptionForCheckout: any = null
 
   // Trial one-time payments are fully handled by handlePaymentIntentSucceeded.
   // checkout.session.completed still fires for payment mode but must not
@@ -241,9 +244,10 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
       sessionId: session.id,
       customerId: session.customer,
       timestamp: new Date().toISOString(),
+    })
+
     // Resolve the subscription to check status and store the subscription ID early
     // This helps later events (subscription.updated) find the org reliably.
-    let subscriptionForCheckout: any = null
     if (session.subscription) {
       try {
         subscriptionForCheckout = await retryWithBackoff(() => stripe.subscriptions.retrieve(session.subscription))
@@ -304,12 +308,6 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
       await storeWebhookEvent(event, supabase, orgId)
       return
     }
-      details: { paymentIntentId: session.payment_intent, plan: 'trial' },
-    })
-
-    await storeWebhookEvent(event, supabase, orgId)
-    return
->>>>>>> 6eb3c53 (stripe(webhooks): activate trial on paid checkout.session, update org trial fields)
   }
 
   // Check if this is a reactivation (payment_status is 'suspended' or 'past_due')
