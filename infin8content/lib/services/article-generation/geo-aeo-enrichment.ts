@@ -13,6 +13,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { convertMarkdownToHtml } from '@/lib/services/article-generation/content-writing-agent'
 
 const FAQ_MAX_WORDS = 60
 
@@ -51,18 +52,18 @@ export async function runGeoAeoEnrichment(params: {
   let sectionsEnriched = 0
   let faqAnswersTrimmed = 0
   let headersRewritten = 0
+  const updatePromises: PromiseLike<any>[] = []
 
   for (const section of sections) {
     let markdown = section.content_markdown || ''
-    let html = section.content_html || ''
     let changed = false
+    let headerUpdate: string | null = null
 
     // ── AEO: Trim FAQ answers to ≤60 words ──────────────────────────────────
     if (section.section_type === 'faq') {
-      const { markdown: trimmedMd, html: trimmedHtml, trimmed } = trimFaqAnswers(markdown, html)
+      const { markdown: trimmedMd, trimmed } = trimFaqAnswers(markdown)
       if (trimmed > 0) {
         markdown = trimmedMd
-        html = trimmedHtml
         faqAnswersTrimmed += trimmed
         changed = true
       }
@@ -72,14 +73,8 @@ export async function runGeoAeoEnrichment(params: {
     if (section.section_type === 'h2' || section.section_type === 'h3') {
       const { header: newHeader, rewritten } = questionifyHeader(section.section_header || '')
       if (rewritten) {
-        markdown = replaceHeader(markdown, section.section_header || '', newHeader)
-        html = replaceHeader(html, section.section_header || '', newHeader)
-
-        await supabase
-          .from('article_sections')
-          .update({ section_header: newHeader })
-          .eq('id', section.id)
-
+        markdown = replaceMarkdownHeader(markdown, section.section_header || '', newHeader)
+        headerUpdate = newHeader
         headersRewritten++
         changed = true
       }
@@ -87,30 +82,33 @@ export async function runGeoAeoEnrichment(params: {
 
     // ── GEO: Add definition block for introduction ───────────────────────────
     if (section.section_type === 'introduction') {
-      const { markdown: defMd, html: defHtml, added } = addDefinitionBlock(
-        markdown,
-        html,
-        targetKeyword,
-      )
+      const { markdown: defMd, added } = addDefinitionBlock(markdown, targetKeyword)
       if (added) {
         markdown = defMd
-        html = defHtml
         changed = true
       }
     }
 
     if (changed) {
-      await supabase
-        .from('article_sections')
-        .update({
-          content_markdown: markdown,
-          content_html: html,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', section.id)
+      const updatePayload: {
+        content_markdown: string
+        content_html: string
+        updated_at: string
+        section_header?: string
+      } = {
+        content_markdown: markdown,
+        content_html: convertMarkdownToHtml(markdown),
+        updated_at: new Date().toISOString(),
+      }
+      if (headerUpdate !== null) updatePayload.section_header = headerUpdate
+      updatePromises.push(
+        supabase.from('article_sections').update(updatePayload).eq('id', section.id),
+      )
       sectionsEnriched++
     }
   }
+
+  if (updatePromises.length > 0) await Promise.all(updatePromises)
 
   console.log(
     `[GeoAeo] ✅ enriched:${sectionsEnriched} faqTrimmed:${faqAnswersTrimmed} headers:${headersRewritten}`,
@@ -122,8 +120,7 @@ export async function runGeoAeoEnrichment(params: {
 
 function trimFaqAnswers(
   markdown: string,
-  html: string,
-): { markdown: string; html: string; trimmed: number } {
+): { markdown: string; trimmed: number } {
   let trimmed = 0
 
   const mdResult = markdown.replace(
@@ -142,7 +139,7 @@ function trimFaqAnswers(
     },
   )
 
-  return { markdown: mdResult, html, trimmed }
+  return { markdown: mdResult, trimmed }
 }
 
 // ─── AEO: Header Questionifier ────────────────────────────────────────────────
@@ -183,35 +180,35 @@ function questionifyHeader(header: string): { header: string; rewritten: boolean
 
 function addDefinitionBlock(
   markdown: string,
-  html: string,
   keyword: string,
-): { markdown: string; html: string; added: boolean } {
+): { markdown: string; added: boolean } {
   if (
     markdown.toLowerCase().includes('refers to') ||
     markdown.toLowerCase().includes('is defined as') ||
     markdown.toLowerCase().includes('is a process')
   ) {
-    return { markdown, html, added: false }
+    return { markdown, added: false }
   }
 
   if (!markdown.toLowerCase().includes(keyword.toLowerCase())) {
-    return { markdown, html, added: false }
+    return { markdown, added: false }
   }
 
   const firstParaEnd = markdown.indexOf('\n\n')
-  if (firstParaEnd === -1) return { markdown, html, added: false }
+  if (firstParaEnd === -1) return { markdown, added: false }
 
   const definitionBlock = `\n\n> **${capitalize(keyword)}** refers to the practice of optimizing for this topic — covering key concepts, best practices, and actionable strategies relevant to your audience.\n`
 
   const newMarkdown =
     markdown.slice(0, firstParaEnd) + definitionBlock + markdown.slice(firstParaEnd)
 
-  return { markdown: newMarkdown, html, added: true }
+  return { markdown: newMarkdown, added: true }
 }
 
 // ─── Shared Utils ─────────────────────────────────────────────────────────────
 
-function replaceHeader(content: string, oldHeader: string, newHeader: string): string {
+// Replaces markdown heading text only (used for content_markdown)
+function replaceMarkdownHeader(content: string, oldHeader: string, newHeader: string): string {
   if (!oldHeader) return content
   return content.replace(
     new RegExp(`(#{1,3}\\s*)${escapeRegex(oldHeader)}`, 'g'),

@@ -485,7 +485,7 @@ ${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter
  * - Citation links stripped to plain text (no fabricated URLs)
  * - Tables wrapped in scrollable container for mobile
  */
-function convertMarkdownToHtml(markdown: string): string {
+export function convertMarkdownToHtml(markdown: string): string {
   const escapeHtml = (text: string): string => {
     const map: Record<string, string> = {
       '&': '&amp;',

@@ -28,10 +28,13 @@ export async function scoreSEO(params: {
 }): Promise<{ skipped: boolean; score?: SEOScoreResult }> {
   const { articleId, supabase } = params
 
-  const [{ data: article }, { data: sections }] = await Promise.all([
+  const [
+    { data: article, error: articleError },
+    { data: sections, error: sectionsError },
+  ] = await Promise.all([
     supabase
       .from('articles')
-      .select('id, title, keyword, content, html_content, word_count, generation_metadata, article_plan')
+      .select('id, title, keyword, content, html_content, word_count, generation_metadata, article_plan, final_markdown')
       .eq('id', articleId)
       .single(),
     supabase
@@ -42,10 +45,26 @@ export async function scoreSEO(params: {
       .order('section_order'),
   ])
 
+  if (articleError || sectionsError) {
+    const reason = [
+      articleError && `article: ${articleError.message}`,
+      sectionsError && `sections: ${sectionsError.message}`,
+    ].filter(Boolean).join(' | ')
+    console.error('[SEOScore] Skipped due to Supabase error', { articleId, reason })
+    return { skipped: true }
+  }
   if (!article) return { skipped: true }
 
-  const content = (article.content as string) || ''
   const metadata = (article.generation_metadata as Record<string, any>) || {}
+  const sectionsMarkdown = Array.isArray(sections) && sections.length
+    ? sections.map((s: any) => (s.content_markdown as string) || '').join('\n\n')
+    : ''
+  const content =
+    ((article as any).final_markdown as string) ||
+    (metadata.final_markdown as string) ||
+    sectionsMarkdown ||
+    (article.content as string) ||
+    ''
   const plan = article.article_plan as any
 
   const recommendations: string[] = []
@@ -152,10 +171,11 @@ export async function scoreSEO(params: {
   else if (internalLinksCount >= 1) technical += 8
   else recommendations.push('Add at least 3 internal links to related content')
 
-  const keyword = (article.keyword as string) || ''
+  const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const keyword = ((article.keyword as string) || '').toLowerCase()
   if (keyword) {
     const keywordCount = (
-      content.toLowerCase().match(new RegExp(keyword.toLowerCase(), 'g')) || []
+      content.toLowerCase().match(new RegExp(escapeRegExp(keyword), 'g')) || []
     ).length
     const density = wordCount > 0 ? (keywordCount / wordCount) * 100 : 0
     if (density >= 0.5 && density <= 2.5) technical += 10

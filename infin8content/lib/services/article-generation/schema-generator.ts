@@ -37,6 +37,7 @@ export async function generateSchemaMarkup(params: {
       .from('article_sections')
       .select('section_type, section_header, content_markdown')
       .eq('article_id', articleId)
+      .eq('status', 'completed')
       .order('section_order'),
   ])
 
@@ -115,10 +116,14 @@ export async function generateSchemaMarkup(params: {
   }
 
   // ── Render as <script> tags ──────────────────────────────────────────────────
+  // Escape </script sequences to prevent XSS when embedding JSON-LD in HTML pages.
+  const serializeJsonLd = (schema: unknown): string =>
+    JSON.stringify(schema, null, 2).replace(/<\/script/gi, '<\/script')
+
   const schemaMarkup = jsonLdBlocks
     .map(
       (schema) =>
-        `<script type="application/ld+json">\n${JSON.stringify(schema, null, 2)}\n</script>`,
+        `<script type="application/ld+json">\n${serializeJsonLd(schema)}\n</script>`,
     )
     .join('\n\n')
 
