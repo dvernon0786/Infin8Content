@@ -6,7 +6,7 @@ This guide explains how to create products and prices in Stripe Dashboard for th
 
 The application requires three subscription plans, each with monthly and annual pricing options:
 
-- **Starter Plan**: $89/month or $708/year ($59/month × 12)
+- **Starter Plan**: $49/month or $498/year ($41.50/month × 12)
 - **Pro Plan**: $220/month or $2,100/year ($175/month × 12)
 - **Agency Plan**: $399/month or $3,588/year ($299/month × 12)
 
@@ -62,7 +62,7 @@ For each product, you need to create **two prices**: one for monthly billing and
 2. **Add Monthly Price**:
    - Click "Add price" button
    - **Pricing model**: "Standard pricing"
-   - **Price**: `$89.00` (USD)
+   - **Price**: `$49.00` (USD)
    - **Billing period**: "Monthly"
    - **Recurring**: Enabled (this is a subscription)
    - Click "Add price"
@@ -71,7 +71,7 @@ For each product, you need to create **two prices**: one for monthly billing and
 3. **Add Annual Price**:
    - Click "Add price" again
    - **Pricing model**: "Standard pricing"
-   - **Price**: `$708.00` (USD) - This is $59/month × 12 months
+   - **Price**: `$498.00` (USD) - This is $41.50/month × 12 months
    - **Billing period**: "Yearly"
    - **Recurring**: Enabled
    - Click "Add price"
