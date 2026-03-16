@@ -195,11 +195,7 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   // Trial one-time payments are fully handled by handlePaymentIntentSucceeded.
   // checkout.session.completed still fires for payment mode but must not
   // overwrite payment_status: 'trialing' with 'active'.
-  if (plan === 'trial' && session.mode === 'payment') {
-    logWebhookEvent(event, 'Trial checkout — deferring state to payment_intent.succeeded')
-    await storeWebhookEvent(event, supabase, orgId ?? null)
-    return
-  }
+  // (early return removed — trial processing handled below after org lookup)
 
   logWebhookEvent(event, 'Processing checkout.session.completed', {
     orgId,
@@ -278,6 +274,11 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
       throw new Error(`Unable to determine plan for checkout session ${session.id}`)
     }
 
+    // (trial activation block moved below, after org exists)
+    // Ensure we don't continue processing when the org is missing
+    throw error
+  }
+
     // Special handling for trial purchases: only activate trialing state when payment is confirmed
     if (plan === 'trial' && session.mode === 'payment' && session.payment_status === 'paid') {
       const { error: trialUpdateError } = await (supabase as any)
@@ -308,7 +309,6 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
       await storeWebhookEvent(event, supabase, orgId)
       return
     }
-  }
 
   // Check if this is a reactivation (payment_status is 'suspended' or 'past_due')
   const isReactivation = organization.payment_status === 'suspended' || organization.payment_status === 'past_due'
