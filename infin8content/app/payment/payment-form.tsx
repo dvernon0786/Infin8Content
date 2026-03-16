@@ -97,7 +97,7 @@ const planFeatures: Record<PlanType, PlanFeatures> = {
 
 const planPrices: Record<PlanType, { monthly: number; annual: number }> = {
   trial: { monthly: 1, annual: 1 },
-  starter: { monthly: 89, annual: 59 },
+  starter: { monthly: 49, annual: 41.5 },
   pro: { monthly: 220, annual: 175 },
   agency: { monthly: 399, annual: 299 },
 }
