@@ -6,6 +6,7 @@ import { runContentWritingAgent } from '@/lib/services/article-generation/conten
 import { ArticleAssembler } from '@/lib/services/article-generation/article-assembler'
 import { generateArticleImage, getSectionImagePurpose } from '@/lib/services/image-generation/image-generation-agent'
 import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
+import { runInternalLinking } from '@/lib/services/article-generation/internal-linking-service'
 import type {
   Article,
   ArticleSection,
@@ -402,6 +403,26 @@ export const generateArticle = inngest.createFunction(
       /* -------------------------------------------------- */
       /* Article Assembly (LIFECYCLE HARDENING)            */
       /* -------------------------------------------------- */
+
+      // ─── Internal Link Injection ───────────────────────────────────────────
+      await step.run('inject-internal-links', async () => {
+        if (!generationConfig.internal_links) {
+          console.log('[InternalLinking] Disabled in generation config, skipping.')
+          return { skipped: true }
+        }
+
+        const result = await runInternalLinking({
+          articleId,
+          orgId: article.organization_id,
+          currentKeyword: (article as any).keyword || '',
+          maxLinks: generationConfig.num_internal_links ?? 5,
+          supabase,
+        })
+
+        console.log('[InternalLinking] Result:', result)
+        return result
+      })
+      // ─── End Internal Link Injection ──────────────────────────────────────
 
       // 🏗️ ARTICLE ASSEMBLY & SNAPSHOT PROJECTION
       // 🔒 AUTHORITY: The worker now explicitly manages the 'processing' -> 'completed' transition.

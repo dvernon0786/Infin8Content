@@ -1,6 +1,6 @@
 # Component Inventory - UI Catalog
 
-Generated: 2026-02-28
+Generated: 2026-03-17
 Library: **React 19 / Tailwind 4**
 
 ## Dashboard Components (`components/dashboard/`)

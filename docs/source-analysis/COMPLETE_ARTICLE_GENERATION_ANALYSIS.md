@@ -175,6 +175,13 @@ interface AssemblyResult {
 - **SEO Optimization:** Meta tags and descriptions
 - **Idempotency:** Re-runs produce consistent results
 
+## 2026-03-17: Internal Linking Injection
+
+- An `inject-internal-links` step was added to the generation pipeline and runs immediately before `assembleArticle` when `generationConfig.internal_links` is true.
+- New service: `lib/services/article-generation/internal-linking-service.ts` — builds a link map (manual, crawled, DB) and injects links into completed sections within the allowed budget (`num_internal_links`).
+- Crawl worker: `lib/inngest/functions/crawl-website-links.ts` listens for `organization/website.url.saved` and populates `organizations.settings.crawled_link_map` (cached 30 days).
+- Onboarding emits `organization/website.url.saved` when a website URL is saved so crawling can occur asynchronously.
+
 ---
 
 ### 4. `research-agent.ts` - Real-time Research Service

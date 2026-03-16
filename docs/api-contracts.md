@@ -1,6 +1,6 @@
 # API Contracts - Exhaustive Catalog
 
-Generated: 2026-02-28
+Generated: 2026-03-17
 Registry: **infin8content**
 
 ## Core Generation APIs

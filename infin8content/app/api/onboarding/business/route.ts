@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { onboardingProfileSchema, normalizeUrl, deduplicateAudiences } from '@/lib/validation/onboarding-profile-schema'
 import { z, ZodError } from 'zod'
 import { NextResponse } from 'next/server'
+import { inngest } from '@/lib/inngest/client'
 
 /**
  * POST /api/onboarding/business
@@ -111,7 +112,15 @@ export async function POST(request: Request) {
     }
     
     console.log('[Onboarding Business] Business information saved successfully')
-    
+
+    // Fire crawl event so DataForSEO indexes the org's website pages for internal linking
+    if (validated.website_url) {
+      await inngest.send({
+        name: 'organization/website.url.saved',
+        data: { orgId: organizationId, websiteUrl: validated.website_url },
+      })
+    }
+
     return NextResponse.json({
       success: true,
       organization,

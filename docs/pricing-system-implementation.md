@@ -47,7 +47,7 @@ app/pricing/page.tsx
 ### Plans
 | Plan | Monthly | Annual | Savings | Features |
 |------|---------|--------|----------|----------|
-| **Starter** | $89/mo | $708/yr | 34% | 10 articles, 1 team member, basic limits |
+| **Starter** | $49/mo | $498/yr | 15% | 10 articles, 1 team member, basic limits |
 | **Pro** ⭐ | $220/mo | $2,100/yr | 20% | 50 articles, 3 team members, advanced features |
 | **Agency** | $399/mo | $3,588/yr | 25% | 150 articles, unlimited team, enterprise features |
 
