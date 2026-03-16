@@ -113,12 +113,22 @@ export async function POST(request: Request) {
     
     console.log('[Onboarding Business] Business information saved successfully')
 
-    // Fire crawl event so DataForSEO indexes the org's website pages for internal linking
+    // Fire crawl event so DataForSEO indexes the org's website pages for internal linking.
+    // Non-blocking: failure must not abort the onboarding response.
     if (validated.website_url) {
-      await inngest.send({
-        name: 'organization/website.url.saved',
-        data: { orgId: organizationId, websiteUrl: validated.website_url },
-      })
+      try {
+        await inngest.send({
+          name: 'organization/website.url.saved',
+          id: `crawl-${organizationId}-${Buffer.from(validated.website_url).toString('base64').slice(0, 16)}`,
+          data: { orgId: organizationId, websiteUrl: validated.website_url },
+        })
+      } catch (err: any) {
+        console.error('[Onboarding Business] Failed to send Inngest crawl event', {
+          orgId: organizationId,
+          websiteUrl: validated.website_url,
+          error: err?.message ?? err,
+        })
+      }
     }
 
     return NextResponse.json({

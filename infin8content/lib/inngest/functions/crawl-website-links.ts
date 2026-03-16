@@ -23,6 +23,6 @@ export const crawlWebsiteLinks = inngest.createFunction(
       return await crawlAndCacheWebsiteLinks({ websiteUrl, orgId, supabase })
     })
 
-    return { success: true, orgId, ...result }
+    return { orgId, ...result, success: result.success }
   }
 )

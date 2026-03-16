@@ -20,7 +20,7 @@ project: "Infin8content"
 project_type: "method"
 selected_track: "bmad-method"
 field_type: "greenfield"
-workflow_path: "/home/dghost/Desktop/Infin8Content/_bmad/bmm/workflows/workflow-status/paths/method-greenfield.yaml"
+workflow_path: "_bmad/bmm/workflows/workflow-status/paths/method-greenfield.yaml"
 workflow_status:
   brainstorm-project: optional
   research: optional
