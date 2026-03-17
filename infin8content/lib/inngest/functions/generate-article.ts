@@ -6,7 +6,6 @@ import { runContentWritingAgent } from '@/lib/services/article-generation/conten
 import { ArticleAssembler } from '@/lib/services/article-generation/article-assembler'
 import { generateArticleImage, getSectionImagePurpose } from '@/lib/services/image-generation/image-generation-agent'
 import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
-import { runInternalLinking } from '@/lib/services/article-generation/internal-linking-service'
 import type {
   Article,
   ArticleSection,
@@ -410,19 +409,41 @@ export const generateArticle = inngest.createFunction(
           console.log('[InternalLinking] Disabled in generation config, skipping.')
           return { skipped: true }
         }
-
-        const result = await runInternalLinking({
-          articleId,
-          orgId: article.organization_id,
-          currentKeyword: (article as any).keyword || '',
-          maxLinks: generationConfig.num_internal_links ?? 5,
-          supabase,
-        })
-
-        console.log('[InternalLinking] Result:', result)
-        return result
+        try {
+          const { runInternalLinking } = await import('@/lib/services/article-generation/internal-linking-service')
+          const result = await runInternalLinking({
+            articleId,
+            orgId: article.organization_id,
+            currentKeyword: (article as any).keyword || '',
+            maxLinks: generationConfig.num_internal_links ?? 5,
+            supabase,
+          })
+          console.log('[InternalLinking] Result:', result)
+          return result
+        } catch (err) {
+          console.error('[InternalLinking] Non-fatal error, continuing:', err)
+          return { skipped: true }
+        }
       })
       // ─── End Internal Link Injection ──────────────────────────────────────
+
+      // ─── GEO / AEO Enrichment ─────────────────────────────────────────────
+      await step.run('enrich-geo-aeo', async () => {
+        try {
+          const { runGeoAeoEnrichment } = await import('@/lib/services/article-generation/geo-aeo-enrichment')
+          const result = await runGeoAeoEnrichment({
+            articleId,
+            targetKeyword: (article as any).keyword || '',
+            supabase,
+          })
+          console.log('[GeoAeoEnrichment] Result:', result)
+          return result
+        } catch (err) {
+          console.error('[GeoAeoEnrichment] Non-fatal error, continuing:', err)
+          return { skipped: true }
+        }
+      })
+      // ─── End GEO / AEO Enrichment ─────────────────────────────────────────
 
       // 🏗️ ARTICLE ASSEMBLY & SNAPSHOT PROJECTION
       // 🔒 AUTHORITY: The worker now explicitly manages the 'processing' -> 'completed' transition.
@@ -441,6 +462,38 @@ export const generateArticle = inngest.createFunction(
           organizationId: article.organization_id
         })
       })
+
+      // ─── Schema Markup Generation ─────────────────────────────────────────
+      await step.run('generate-schema-markup', async () => {
+        try {
+          const { generateSchemaMarkup } = await import('@/lib/services/article-generation/schema-generator')
+          const result = await generateSchemaMarkup({
+            articleId,
+            orgId: article.organization_id,
+            supabase,
+          })
+          console.log('[SchemaMarkup] Result:', result)
+          return result
+        } catch (err) {
+          console.error('[SchemaMarkup] Non-fatal error, continuing:', err)
+          return { skipped: true }
+        }
+      })
+      // ─── End Schema Markup Generation ────────────────────────────────────
+
+      // ─── SEO Scoring ──────────────────────────────────────────────────────
+      await step.run('score-seo-final', async () => {
+        try {
+          const { scoreSEO } = await import('@/lib/services/article-generation/seo-scoring-service')
+          const result = await scoreSEO({ articleId, supabase })
+          console.log('[SEOScore] Result:', result)
+          return result
+        } catch (err) {
+          console.error('[SEOScore] Non-fatal error, continuing:', err)
+          return { skipped: true }
+        }
+      })
+      // ─── End SEO Scoring ─────────────────────────────────────────────────
 
       await step.run('mark-completed', async () => {
         // 🔒 NB_MARK_COMPLETED_THROW FIX: skip if already completed
