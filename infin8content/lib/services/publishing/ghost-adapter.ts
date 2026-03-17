@@ -13,6 +13,10 @@ import type { CMSAdapter, PublishInput, PublishResult, ConnectionTestResult } fr
 
 const TIMEOUT_MS = 30_000
 
+function normalizeBaseUrl(url?: string): string {
+  return (url || '').toString().trim().replace(/\/+$|\/$/, '').replace(/\/+$/, '')
+}
+
 function buildGhostJwt(adminApiKey: string): string {
   const [keyId, hexSecret] = adminApiKey.split(':')
   if (!keyId || !hexSecret) {
@@ -34,13 +38,15 @@ export class GhostAdapter implements CMSAdapter {
 
   async publishPost(input: PublishInput): Promise<PublishResult> {
     const { url, admin_api_key } = this.credentials
+    const baseUrl = normalizeBaseUrl(url)
+    if (!baseUrl) return { success: false, error: 'Invalid Ghost site URL' }
 
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
     try {
       const jwt = buildGhostJwt(admin_api_key)
-      const res = await fetch(`${url}/ghost/api/admin/posts/`, {
+      const res = await fetch(`${baseUrl}/ghost/api/admin/posts/`, {
         method: 'POST',
         headers: {
           Authorization: `Ghost ${jwt}`,
@@ -85,16 +91,25 @@ export class GhostAdapter implements CMSAdapter {
 
   // ✅ Fix 5: returns { success, message }
   async testConnection(): Promise<ConnectionTestResult> {
+    const { url, admin_api_key } = this.credentials
+    const baseUrl = normalizeBaseUrl(url)
+    if (!baseUrl) return { success: false, message: 'Invalid Ghost site URL' }
+
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 10_000)
     try {
-      const { url, admin_api_key } = this.credentials
       const token = buildGhostJwt(admin_api_key)
-      const res = await fetch(`${url}/ghost/api/admin/site/`, {
+      const res = await fetch(`${baseUrl}/ghost/api/admin/site/`, {
         headers: { Authorization: `Ghost ${token}` },
+        signal: controller.signal,
       })
+      clearTimeout(timer)
       if (!res.ok) return { success: false, message: `HTTP ${res.status}` }
       const json = await res.json()
       return { success: true, message: `Connected to ${json.site?.title ?? 'Ghost'}` }
     } catch (err: any) {
+      clearTimeout(timer)
+      if (err && err.name === 'AbortError') return { success: false, message: 'Request timeout (10s)' }
       return { success: false, message: err.message ?? 'Connection failed' }
     }
   }

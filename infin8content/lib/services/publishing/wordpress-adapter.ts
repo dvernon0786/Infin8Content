@@ -13,11 +13,11 @@ export class WordPressAdapter implements CMSAdapter {
    * Supports both `site_url` (new) and `url` (existing connections).
    */
   private get siteUrl(): string | null {
-    const raw = (this.creds.site_url ?? this.creds.url) as string | undefined
+    const raw = (this.creds.url ?? this.creds.site_url) as string | undefined
     if (!raw) return null
     try {
       const parsed = new URL(raw)
-      return parsed.href.replace(/\/+$|\/$/, '')
+      return parsed.href.replace(/\/+$/, '')
     } catch {
       return null
     }
