@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
         // 1. Trial Plan Restriction
         const org = currentUser.organizations as any
-        const planType = (org?.plan_type || org?.plan || 'starter').toLowerCase()
+        const planType = (org?.plan || org?.plan_type || 'starter').toLowerCase()
 
         if (planType === 'trial') {
             return NextResponse.json({

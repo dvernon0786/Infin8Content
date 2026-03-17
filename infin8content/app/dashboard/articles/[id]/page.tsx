@@ -145,7 +145,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
   }
 
   // Trial Upgrade info
-  const planType = (currentUser.organizations as any)?.plan_type || (currentUser.organizations as any)?.plan || 'starter'
+  const planType = (currentUser.organizations as any)?.plan || (currentUser.organizations as any)?.plan_type || 'starter'
   const isTrial = planType.toLowerCase() === 'trial'
 
   let lockedArticlesCount = 0

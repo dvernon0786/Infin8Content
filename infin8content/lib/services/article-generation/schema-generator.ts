@@ -22,10 +22,14 @@ export async function generateSchemaMarkup(params: {
   const { articleId, orgId, supabase } = params
 
   // Load article + org for context
-  const [{ data: article }, { data: org }, { data: sections }] = await Promise.all([
+  const [
+    { data: article, error: articleError },
+    { data: org, error: orgError },
+    { data: sections, error: sectionsError },
+  ] = await Promise.all([
     supabase
       .from('articles')
-      .select('id, title, keyword, article_plan, created_at, generation_completed_at')
+      .select('id, title, keyword, article_plan, created_at, generation_completed_at, updated_at')
       .eq('id', articleId)
       .single(),
     supabase
@@ -41,6 +45,15 @@ export async function generateSchemaMarkup(params: {
       .order('section_order'),
   ])
 
+  if (articleError || orgError || sectionsError) {
+    console.warn('[SchemaGenerator] Skipped due to query error', {
+      articleId,
+      articleError: articleError?.message,
+      orgError: orgError?.message,
+      sectionsError: sectionsError?.message,
+    })
+    return { skipped: true, reason: 'query_error', schemasGenerated: [] }
+  }
   if (!article || !org) {
     return { skipped: true, reason: 'missing_context', schemasGenerated: [] }
   }
@@ -66,7 +79,7 @@ export async function generateSchemaMarkup(params: {
     headline: article.title,
     keywords: plan?.semantic_keywords?.join(', ') || (article as any).keyword || '',
     datePublished: (article as any).generation_completed_at || article.created_at,
-    dateModified: new Date().toISOString(),
+    dateModified: (article as any).updated_at || new Date().toISOString(),
     publisher: {
       '@type': 'Organization',
       name: org.name,

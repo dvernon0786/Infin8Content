@@ -9,7 +9,7 @@ export default async function NewWorkflowPage() {
         redirect('/login')
     }
 
-    const isTrial = (user.organizations?.plan_type || user.organizations?.plan)?.toLowerCase() === 'trial'
+    const isTrial = (user.organizations?.plan || user.organizations?.plan_type)?.toLowerCase() === 'trial'
 
     return (
         <div className="mx-auto max-w-xl py-20">
