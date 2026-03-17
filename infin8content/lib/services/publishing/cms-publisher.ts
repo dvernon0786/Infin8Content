@@ -35,22 +35,10 @@ export async function publishArticle(
   }
 
   const platform     = (connection as any).platform as CMSPlatform
-  const rawCreds     = (connection as any).credentials as Record<string, string>
+  const rawCreds = (connection as any).credentials as Record<string, string>
   const secretFields = CMS_SECRET_FIELDS[platform] ?? []
 
-  // 2. Decrypt secret fields
-  const credentials: Record<string, string> = { ...rawCreds }
-  for (const field of secretFields) {
-    if (credentials[field]) {
-      try {
-        credentials[field] = decrypt(credentials[field])
-      } catch {
-        throw new Error(`Failed to decrypt credentials for ${platform} connection`)
-      }
-    }
-  }
-
-  // 3. Idempotency check
+  // 3. Idempotency check (connection-specific first, then legacy rows without connection_id)
   const { data: existingRef, error: refError } = await (supabase
     .from('publish_references')
     .select('platform_url, platform_post_id')
@@ -66,6 +54,50 @@ export async function publishArticle(
       url:              existingRef.platform_url  ?? undefined,
       postId:           existingRef.platform_post_id ?? undefined,
       alreadyPublished: true,
+    }
+  }
+
+  // Verify article belongs to this organization before any legacy early-returns (tenant isolation)
+  const { data: ownedArticle, error: ownershipError } = await (supabase
+    .from('articles')
+    .select('id')
+    .eq('id', articleId)
+    .eq('org_id', organizationId)
+    .single() as any)
+
+  if (ownershipError || !ownedArticle) {
+    throw new Error('Article not found or does not belong to this organization')
+  }
+
+  // Legacy idempotency check for pre-multi-CMS rows (connection_id IS NULL)
+  const { data: legacyRef, error: legacyRefError } = await (supabase
+    .from('publish_references')
+    .select('platform_url, platform_post_id')
+    .eq('article_id', articleId)
+    .is('connection_id', null)
+    .eq('platform', platform)
+    .maybeSingle() as any)
+
+  if (legacyRefError) {
+    throw new Error(`Database error checking legacy publish reference: ${legacyRefError.message}`)
+  }
+  if (legacyRef) {
+    return {
+      url:              legacyRef.platform_url  ?? undefined,
+      postId:           legacyRef.platform_post_id ?? undefined,
+      alreadyPublished: true,
+    }
+  }
+
+  // 4. Decrypt secret fields
+  const credentials: Record<string, string> = { ...rawCreds }
+  for (const field of secretFields) {
+    if (credentials[field]) {
+      try {
+        credentials[field] = decrypt(credentials[field])
+      } catch {
+        throw new Error(`Failed to decrypt credentials for ${platform} connection`)
+      }
     }
   }
 
@@ -108,12 +140,11 @@ export async function publishArticle(
     throw new Error(`Publishing failed: ${result.error ?? 'unknown error'}`)
   }
 
-  // 6. Persist publish reference — ✅ Fix 2: org_id included
+  // 6. Persist publish reference
   const { error: insertError } = await (supabase
     .from('publish_references')
     .insert({
       article_id:       articleId,
-      org_id:           organizationId,      // ✅ Fix 2
       platform,
       platform_post_id: result.postId ? String(result.postId) : null,
       platform_url:     result.url ?? null,
