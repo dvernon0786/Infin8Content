@@ -270,7 +270,10 @@ Description: ${input.organizationContext.description}
 
 Close the article with:
 - A clear, actionable conclusion (2–3 sentences max)
-- One natural CTA aligned with: ${input.generationConfig.add_cta}
+${input.generationConfig.add_cta
+          ? `- One natural CTA pointing readers toward ${input.organizationContext.name}'s services or next steps.`
+          : `- Do NOT include any CTA, promotional mention, or call-to-action. End with a factual summary sentence only.`
+        }
 
 ${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter(Boolean).length === 0
           ? 'No verified URLs are available for this section. Do NOT write any markdown links or parenthetical citations. Write prose only.'
