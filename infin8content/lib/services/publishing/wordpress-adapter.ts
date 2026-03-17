@@ -11,7 +11,8 @@ export class WordPressAdapter implements CMSAdapter {
 
   /**
    * Resolve and validate the base site URL from credentials.
-   * Supports both `url` (new unified flow) and `site_url` (legacy connections).
+   * Uses `url` for current connections (set by CmsConnectionForm and migrations).
+   * Falls back to legacy `site_url` for connections created before the multi-CMS migration.
    */
   private get siteUrl(): string | null {
     const raw = (this.creds.url ?? this.creds.site_url) as string | undefined
@@ -44,9 +45,15 @@ export class WordPressAdapter implements CMSAdapter {
         }),
         signal: controller.signal,
       })
-      const json = await res.json()
-      if (!res.ok) return { success: false, error: json.message ?? `HTTP ${res.status}` }
-      return { success: true, postId: String(json.id), url: json.link }
+      const text = await res.text()
+      let data: any = null
+      try { data = text ? JSON.parse(text) : null } catch { /* non-JSON body */ }
+      if (!res.ok) {
+        const message = data?.message ?? `HTTP ${res.status}${res.statusText ? ' ' + res.statusText : ''}`
+        return { success: false, error: message }
+      }
+      if (!data || typeof data !== 'object') return { success: false, error: 'Unexpected response from WordPress' }
+      return { success: true, postId: String(data.id), url: data.link }
     } catch (err: any) {
       if (err && err.name === 'AbortError') return { success: false, error: 'Request to WordPress timed out' }
       return { success: false, error: err?.message ?? 'Failed to publish post' }
