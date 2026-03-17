@@ -25,7 +25,7 @@ export async function generateSchemaMarkup(params: {
   const [
     { data: article, error: articleError },
     { data: org, error: orgError },
-    { data: sections },
+    { data: sections, error: sectionsError },
   ] = await Promise.all([
     supabase
       .from('articles')
@@ -45,11 +45,12 @@ export async function generateSchemaMarkup(params: {
       .order('section_order'),
   ])
 
-  if (articleError || orgError) {
+  if (articleError || orgError || sectionsError) {
     console.warn('[SchemaGenerator] Skipped due to query error', {
       articleId,
       articleError: articleError?.message,
       orgError: orgError?.message,
+      sectionsError: sectionsError?.message,
     })
     return { skipped: true, reason: 'query_error', schemasGenerated: [] }
   }
