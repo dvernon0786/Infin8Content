@@ -165,6 +165,9 @@ export const AuditAction = {
     ARTICLE_DRAFT_NOTIFIED: 'article.draft.notified',
     ARTICLE_PUBLISH_REMINDED: 'article.publish.reminded',
     ARTICLE_SCHEDULED: 'article.scheduled',
+    // CMS integration actions
+    INTEGRATION_CONNECTED: 'integration.connected',
+    INTEGRATION_DISCONNECTED: 'integration.disconnected',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];
