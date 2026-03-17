@@ -207,11 +207,13 @@ function addDefinitionBlock(
 
 // ─── Shared Utils ─────────────────────────────────────────────────────────────
 
-// Replaces markdown heading text only (used for content_markdown)
+// Replaces markdown heading text only (used for content_markdown).
+// Anchored to start of line (^) with multiline flag to avoid matching
+// prose mentions of the same text in the body content.
 function replaceMarkdownHeader(content: string, oldHeader: string, newHeader: string): string {
   if (!oldHeader) return content
   return content.replace(
-    new RegExp(`(#{1,3}\\s*)${escapeRegex(oldHeader)}`, 'g'),
+    new RegExp(`^(#{1,3}\\s*)${escapeRegex(oldHeader)}$`, 'gm'),
     `$1${newHeader}`,
   )
 }

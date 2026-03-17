@@ -141,10 +141,10 @@ export async function scoreSEO(params: {
   if (questionRatio < 0.4)
     recommendations.push('Rewrite at least 40% of H2/H3 headers as questions for PAA targeting')
 
-  const longFaqAnswers = faqSections.filter((s: any) => {
-    const words = (s.content_markdown || '').split(/\s+/).filter(Boolean).length
-    return words > 80
-  }).length
+  // Count sections where any individual answer exceeds 80 words (not the whole section).
+  const longFaqAnswers = faqSections.filter((s: any) =>
+    hasFaqAnswerOver80Words((s.content_markdown as string) || ''),
+  ).length
 
   if (longFaqAnswers === 0 && faqCount > 0) aeo += 20
   else if (longFaqAnswers > 0)
@@ -215,4 +215,23 @@ export async function scoreSEO(params: {
     `[SEOScore] ✅ overall:${overall} eeat:${eeat} geo:${geo} aeo:${aeo} tech:${technical}`,
   )
   return { skipped: false, score }
+}
+
+// Returns true when at least one individual Q&A answer inside a FAQ section
+// exceeds maxWords. Splits on question headers so the whole-section word count
+// isn't used (which would always be large for multi-entry sections).
+function hasFaqAnswerOver80Words(markdown: string, maxWords = 80): boolean {
+  const answers: string[] = []
+  markdown.replace(
+    /(#{1,3}\s+[^\n]+\?[^\n]*\n+)([\s\S]*?)(?=\n#{1,3}|\n*$)/g,
+    (_match, _header, answer) => {
+      answers.push(answer.trim())
+      return ''
+    },
+  )
+  if (answers.length === 0) {
+    // No question-headers found — treat whole section as a single answer
+    return markdown.split(/\s+/).filter(Boolean).length > maxWords
+  }
+  return answers.some((a) => a.split(/\s+/).filter(Boolean).length > maxWords)
 }
