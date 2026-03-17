@@ -87,7 +87,11 @@ function htmlToNotionBlocks(html: string): NotionBlock[] {
 }
 
 function richText(content: string) {
-  return { rich_text: [{ type: 'text', text: { content } }] }
+  const chunks: { type: string; text: { content: string } }[] = []
+  for (let i = 0; i < content.length; i += 2000) {
+    chunks.push({ type: 'text', text: { content: content.slice(i, i + 2000) } })
+  }
+  return { rich_text: chunks }
 }
 
 // ---------------------------------------------------------------------------
