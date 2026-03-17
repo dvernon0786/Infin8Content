@@ -34,13 +34,14 @@ export class GhostAdapter implements CMSAdapter {
 
   async publishPost(input: PublishInput): Promise<PublishResult> {
     const { url, admin_api_key } = this.credentials
+    const baseUrl = (url || '').replace(/\/$/, '')
 
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
     try {
       const jwt = buildGhostJwt(admin_api_key)
-      const res = await fetch(`${url}/ghost/api/admin/posts/`, {
+      const res = await fetch(`${baseUrl}/ghost/api/admin/posts/`, {
         method: 'POST',
         headers: {
           Authorization: `Ghost ${jwt}`,
@@ -87,8 +88,9 @@ export class GhostAdapter implements CMSAdapter {
   async testConnection(): Promise<ConnectionTestResult> {
     try {
       const { url, admin_api_key } = this.credentials
+      const baseUrl = (url || '').replace(/\/$/, '')
       const token = buildGhostJwt(admin_api_key)
-      const res = await fetch(`${url}/ghost/api/admin/site/`, {
+      const res = await fetch(`${baseUrl}/ghost/api/admin/site/`, {
         headers: { Authorization: `Ghost ${token}` },
       })
       if (!res.ok) return { success: false, message: `HTTP ${res.status}` }
