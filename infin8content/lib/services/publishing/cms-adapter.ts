@@ -4,11 +4,11 @@
  */
 
 export interface PublishInput {
-  title: string
-  html: string
-  slug?: string
-  excerpt?: string
-  coverImage?: string
+  title:       string
+  html:        string
+  slug?:       string
+  excerpt?:    string
+  tags?:       string[]
 }
 
 export interface PublishResult {
@@ -19,13 +19,8 @@ export interface PublishResult {
 }
 
 export interface ConnectionTestResult {
-  success: boolean
+  success:  boolean
   message?: string
-  site?: {
-    name?: string
-    url?: string
-    description?: string
-  }
 }
 
 export interface CMSAdapter {

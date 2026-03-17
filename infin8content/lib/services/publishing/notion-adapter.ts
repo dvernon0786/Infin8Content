@@ -145,34 +145,22 @@ export class NotionAdapter implements CMSAdapter {
     }
   }
 
+  // ✅ Fix 5: returns { success, message }
   async testConnection(): Promise<ConnectionTestResult> {
-    const { token, database_id } = this.credentials
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 10_000)
-
     try {
+      const { token, database_id } = this.credentials
       const res = await fetch(`https://api.notion.com/v1/databases/${database_id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Notion-Version': NOTION_VERSION,
         },
-        signal: controller.signal,
       })
-      clearTimeout(timer)
-
-      if (!res.ok) {
-        return { success: false, message: `Authentication failed (${res.status})` }
-      }
-
+      if (!res.ok) return { success: false, message: `HTTP ${res.status}` }
       const json = await res.json()
-      return {
-        success: true,
-        message: 'Connected to Notion',
-        site: { name: json.title?.[0]?.text?.content || 'Notion Database' },
-      }
+      const title = json.title?.[0]?.plain_text ?? 'Notion database'
+      return { success: true, message: `Connected to: ${title}` }
     } catch (err: any) {
-      clearTimeout(timer)
-      return { success: false, message: err.message || 'Connection failed' }
+      return { success: false, message: err.message ?? 'Connection failed' }
     }
   }
 

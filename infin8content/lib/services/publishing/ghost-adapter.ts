@@ -83,32 +83,19 @@ export class GhostAdapter implements CMSAdapter {
     }
   }
 
+  // ✅ Fix 5: returns { success, message }
   async testConnection(): Promise<ConnectionTestResult> {
-    const { url, admin_api_key } = this.credentials
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 10_000)
-
     try {
-      const jwt = buildGhostJwt(admin_api_key)
+      const { url, admin_api_key } = this.credentials
+      const token = buildGhostJwt(admin_api_key)
       const res = await fetch(`${url}/ghost/api/admin/site/`, {
-        headers: { Authorization: `Ghost ${jwt}` },
-        signal: controller.signal,
+        headers: { Authorization: `Ghost ${token}` },
       })
-      clearTimeout(timer)
-
-      if (!res.ok) {
-        return { success: false, message: `Authentication failed (${res.status})` }
-      }
-
+      if (!res.ok) return { success: false, message: `HTTP ${res.status}` }
       const json = await res.json()
-      return {
-        success: true,
-        message: 'Connected to Ghost',
-        site: { name: json.site?.title, url: json.site?.url },
-      }
+      return { success: true, message: `Connected to ${json.site?.title ?? 'Ghost'}` }
     } catch (err: any) {
-      clearTimeout(timer)
-      return { success: false, message: err.message || 'Connection failed' }
+      return { success: false, message: err.message ?? 'Connection failed' }
     }
   }
 
