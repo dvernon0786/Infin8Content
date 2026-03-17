@@ -57,18 +57,6 @@ export async function publishArticle(
     }
   }
 
-  // Verify article belongs to this organization before any legacy early-returns (tenant isolation)
-  const { data: ownedArticle, error: ownershipError } = await (supabase
-    .from('articles')
-    .select('id')
-    .eq('id', articleId)
-    .eq('org_id', organizationId)
-    .single() as any)
-
-  if (ownershipError || !ownedArticle) {
-    throw new Error('Article not found or does not belong to this organization')
-  }
-
   // Legacy idempotency check for pre-multi-CMS rows (connection_id IS NULL)
   const { data: legacyRef, error: legacyRefError } = await (supabase
     .from('publish_references')

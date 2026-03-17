@@ -430,9 +430,10 @@ ${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter
       (match, text, url) => approvedUrls.has(normalizeUrl(url)) ? match : text
     )
     sectionContent = sectionContent
-      .replace(/[\[(]?\bword[s]?\s*count[:\s]*\d+\s*\w*[\])]?\s*$/i, '')   // end-of-string
-      .replace(/\n+[\[(]?\bword[s]?\s*count[:\s]*\d+[^\n]*$/gim, '')        // mid-content line
-      .trim() // Strip LLM metadata leaking into output
+      .replace(/[\[(]?\bword[s]?\s*count[:\s]*\d+\s*\w*[\])]??\s*$/im, '')   // end-of-string match
+      .replace(/\n*[\[(]?\bword[s]?\s*count[:\s]*\d+[^\n]*\n?/gim, '')      // standalone line anywhere in content
+      .replace(/\(\s*word\s*count[:\s]*\d+\s*\)/gi, '')                     // (Word count: 278) inline form
+      .trim()
 
     // Word-based soft guard: only trim if massively over the limit
     const WORD_LIMITS: Record<typeof input.position, number> = {
@@ -549,8 +550,20 @@ export function convertMarkdownToHtml(markdown: string): string {
     html = html.replace(`__CODE_BLOCK_${idx}__`, block)
   })
 
+  // ✅ FIX: Convert links to HTML directly here instead of restoring raw markdown.
+  // This eliminates the step 8 double-pass entirely for these pre-protected links.
+  const linkStyle = 'color: #2563eb; text-decoration: underline;'
   linkPlaceholders.forEach((link, idx) => {
-    html = html.replace(`__LINK_PLACEHOLDER_${idx}__`, link)
+    const m = link.match(/\[([^\]]+)\]\(([^)]+)\)/)
+    if (m) {
+      html = html.replace(
+        `__LINK_PLACEHOLDER_${idx}__`,
+        `<a href="${m[2]}" style="${linkStyle}" target="_blank" rel="noopener noreferrer">${escapeHtml(m[1])}</a>`
+      )
+    } else {
+      // Malformed placeholder — restore as plain text
+      html = html.replace(`__LINK_PLACEHOLDER_${idx}__`, link)
+    }
   })
 
   // ── 4. Headings ───────────────────────────────────────────────────────────
@@ -559,20 +572,22 @@ export function convertMarkdownToHtml(markdown: string): string {
     .replace(/^## (.+)$/gm, `<h2 style="${styles.h2}">$1</h2>`)
     .replace(/^# (.+)$/gm, `<h1 style="${styles.h1}">$1</h1>`)
 
-  // ── 5. Blockquotes ────────────────────────────────────────────────────────
-  html = html.replace(/^&gt; (.+)$/gm, `<blockquote style="${styles.blockquote}">$1</blockquote>`)
-
-  // ── 6. Bold / italic ─────────────────────────────────────────────────────
+  // ── 5. Bold / italic (MOVED BEFORE blockquote — inline before block) ────
   html = html
     .replace(/\*\*\*(.+?)\*\*\*/g, `<strong style="${styles.strong}"><em style="${styles.em}">$1</em></strong>`)
     .replace(/\*\*(.+?)\*\*/g, `<strong style="${styles.strong}">$1</strong>`)
     .replace(/(?<!\w)\*(?!\s)(.+?)(?<!\s)\*(?!\w)/g, `<em style="${styles.em}">$1</em>`)
 
+  // ── 6. Blockquotes (AFTER bold/italic — block after inline) ─────────────
+  // Note: escapeHtml() converted '>' to '&gt;' in step 2, so we match &gt;
+  html = html.replace(/^&gt; (.+)$/gm, `<blockquote style="${styles.blockquote}">$1</blockquote>`)
+
   // ── 7. Inline code ────────────────────────────────────────────────────────
   html = html.replace(/`([^`]+)`/g, `<code style="${styles.code_inline}">$1</code>`)
 
-  // ── 8. Markdown links → <a> tags ─────────────────────────────────────────
-  const linkStyle = 'color: #2563eb; text-decoration: underline;'
+  // ── 8. Markdown links → <a> tags (straggler pass only) ───────────────────
+  // Pre-protected links were already converted in step 3.
+  // This catches any [text](url) patterns introduced by other processing steps.
   html = html.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
     `<a href="$2" style="${linkStyle}" target="_blank" rel="noopener noreferrer">$1</a>`
@@ -588,18 +603,6 @@ export function convertMarkdownToHtml(markdown: string): string {
       .trim()
       .split('\n')
       .map(line => line.replace(/^\* /, '').trim())
-      .filter(Boolean)
-      .map(item => `<li style="${styles.li}">${item}</li>`)
-      .join('\n')
-    return `<ul style="${styles.ul}">\n${items}\n</ul>\n`
-  })
-
-  // Process - bullet lists (LLM frequently uses dash style, especially in listicle mode)
-  html = html.replace(/((?:^- .+$\n?)+)/gm, (block) => {
-    const items = block
-      .trim()
-      .split('\n')
-      .map(line => line.replace(/^- /, '').trim())
       .filter(Boolean)
       .map(item => `<li style="${styles.li}">${item}</li>`)
       .join('\n')

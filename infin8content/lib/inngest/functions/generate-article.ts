@@ -403,29 +403,7 @@ export const generateArticle = inngest.createFunction(
       /* Article Assembly (LIFECYCLE HARDENING)            */
       /* -------------------------------------------------- */
 
-      // ─── Internal Link Injection ───────────────────────────────────────────
-      await step.run('inject-internal-links', async () => {
-        if (!generationConfig.internal_links) {
-          console.log('[InternalLinking] Disabled in generation config, skipping.')
-          return { skipped: true }
-        }
-        try {
-          const { runInternalLinking } = await import('@/lib/services/article-generation/internal-linking-service')
-          const result = await runInternalLinking({
-            articleId,
-            orgId: article.organization_id,
-            currentKeyword: (article as any).keyword || '',
-            maxLinks: generationConfig.num_internal_links ?? 5,
-            supabase,
-          })
-          console.log('[InternalLinking] Result:', result)
-          return result
-        } catch (err) {
-          console.error('[InternalLinking] Non-fatal error, continuing:', err)
-          return { skipped: true }
-        }
-      })
-      // ─── End Internal Link Injection ──────────────────────────────────────
+      
 
       // ─── GEO / AEO Enrichment ─────────────────────────────────────────────
       await step.run('enrich-geo-aeo', async () => {
@@ -445,6 +423,34 @@ export const generateArticle = inngest.createFunction(
       })
       // ─── End GEO / AEO Enrichment ─────────────────────────────────────────
 
+      // ─── Internal Linking Injection ───────────────────────────────────────
+      await step.run('internal-linking', async () => {
+        // Respect the generation config flag — skip if disabled for this org
+        if (!generationConfig.internal_links) {
+          console.log('[Worker] Internal linking disabled in generation config — skipping')
+          return { skipped: true, reason: 'disabled_in_config' }
+        }
+
+        const { runInternalLinking } = await import(
+          '@/lib/services/article-generation/internal-linking-service'
+        )
+
+        const result = await runInternalLinking({
+          articleId,
+          orgId: (article as any).organization_id ?? event.data.organizationId,
+          currentKeyword: plan.target_keyword,
+          maxLinks: generationConfig.num_internal_links ?? 5,
+          supabase,
+        })
+
+        console.log(
+          `[Worker] Internal linking: injected=${result.linksInjected} sections=${result.sectionsUpdated} skipped=${result.skipped}${result.reason ? ` reason=${result.reason}` : ''}`
+        )
+
+        return result
+      })
+      // ─── End Internal Linking Injection ─────────────────────────────────
+
       // 🏗️ ARTICLE ASSEMBLY & SNAPSHOT PROJECTION
       // 🔒 AUTHORITY: The worker now explicitly manages the 'processing' -> 'completed' transition.
       // 📂 INVARIANT: The Assembler MUST persist the snapshot projection BEFORE the 
@@ -459,7 +465,7 @@ export const generateArticle = inngest.createFunction(
         // 1. Collate sections and write JSONB snapshot projection
         await assembler.assemble({
           articleId,
-          organizationId: article.organization_id
+          organizationId: (article as any).organization_id ?? event.data.organizationId
         })
       })
 
@@ -469,9 +475,9 @@ export const generateArticle = inngest.createFunction(
           const { generateSchemaMarkup } = await import('@/lib/services/article-generation/schema-generator')
           const result = await generateSchemaMarkup({
             articleId,
-            orgId: article.organization_id,
+            orgId: (article as any).organization_id ?? event.data.organizationId,
             supabase,
-          })
+          } as any)
           console.log('[SchemaMarkup] Result:', result)
           return result
         } catch (err) {
@@ -485,7 +491,11 @@ export const generateArticle = inngest.createFunction(
       await step.run('score-seo-final', async () => {
         try {
           const { scoreSEO } = await import('@/lib/services/article-generation/seo-scoring-service')
-          const result = await scoreSEO({ articleId, supabase })
+          const result = await scoreSEO({
+            articleId,
+            orgId: (article as any).organization_id ?? event.data.organizationId,
+            supabase,
+          } as any)
           console.log('[SEOScore] Result:', result)
           return result
         } catch (err) {
@@ -497,10 +507,13 @@ export const generateArticle = inngest.createFunction(
 
       await step.run('mark-completed', async () => {
         // 🔒 NB_MARK_COMPLETED_THROW FIX: skip if already completed
-        const { data: latest } = await supabase.from('articles').select('status').eq('id', articleId).single()
+        const { data: latest } = await supabase
+          .from('articles')
+          .select('status')
+          .eq('id', articleId)
+          .single()
         if ((latest as any)?.status === 'completed') return
 
-        // 2. 🔒 TERMINAL STATE LOCK: Explicitly mark article as completed
         const { error: completionError, data } = await supabase
           .from('articles')
           .update({
@@ -509,12 +522,27 @@ export const generateArticle = inngest.createFunction(
             updated_at: new Date().toISOString()
           })
           .eq('id', articleId)
-          .eq('status', 'processing') // 🔒 ATOMIC GUARD: Only complete if still in 'processing'
+          .eq('status', 'processing') // 🔒 ATOMIC GUARD
           .select('id')
 
         if (completionError) throw completionError
+
         if (!data || data.length === 0) {
-          throw new Error(`Terminal update failed: Article ${articleId} status was not 'processing' during completion.`)
+          // Re-read to distinguish race condition from genuine failure
+          const { data: latestStatus } = await supabase
+            .from('articles')
+            .select('status')
+            .eq('id', articleId)
+            .single()
+
+          if ((latestStatus as any)?.status === 'completed') {
+            console.log(`[Worker] Article ${articleId} already completed by concurrent process — idempotent skip.`)
+            return  // ✅ FIX: explicit return — prevents fall-through to success log below
+          }
+
+          throw new Error(
+            `Terminal update failed: Article ${articleId} is in status '${(latestStatus as any)?.status ?? 'unknown'}', expected 'processing'.`
+          )
         }
 
         console.log(`[Worker] Article ${articleId} generation lifecycle COMPLETED successfully.`)

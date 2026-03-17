@@ -72,6 +72,8 @@ export class ArticleAssembler {
           cover_image_url: article.cover_image_url,
           cta_text: article.cta_text,
           cta_url: article.cta_url,
+          slug: (article as any).slug ?? null,
+          org_website_url: article.org_website_url ?? null,
         },
         sectionsJson
       )
@@ -110,10 +112,11 @@ export class ArticleAssembler {
     const { data, error } = await this.supabaseAdmin
       .from('articles')
       .select(`
-        id, title, status, keyword, cover_image_url,
+        id, title, slug, status, keyword, cover_image_url,
         organizations!org_id (
           cta_text,
-          cta_url
+          cta_url,
+          website_url
         )
       `)
       .eq('id', articleId)
@@ -133,6 +136,7 @@ export class ArticleAssembler {
       ...data,
       cta_text: (data as any).organizations?.cta_text ?? null,
       cta_url: (data as any).organizations?.cta_url ?? null,
+      org_website_url: (data as any).organizations?.website_url ?? null,
     }
   }
 
@@ -184,8 +188,7 @@ export class ArticleAssembler {
     title?: string
     skipStatusGuard?: boolean
   }) {
-    // 🔒 SINGLE SOURCE OF TRUTH: Update ONLY the snapshot and audit metadata.
-    // Explicitly removed 'status: completed' to ensure Worker owns lifecycle.
+
     const updatePayload: any = {
       sections: args.sections,
       final_markdown: args.finalMarkdown,
@@ -229,6 +232,8 @@ export class ArticleAssembler {
       cover_image_url?: string | null
       cta_text?: string | null
       cta_url?: string | null
+      org_website_url?: string | null
+      slug?: string | null
     },
     sections: any[]
   ): string {
@@ -240,7 +245,22 @@ export class ArticleAssembler {
 
     const authorBlock = `*Published: ${today} · By Editorial Team*`
 
-    const ctaText = article.cta_text || null
+    const CTA_TEMPLATE_BLOCKLIST = [
+      'flowtic',
+      'your company',
+      'company name',
+      'your brand',
+      'your business',
+      '[company]',
+      '{{', // any unfilled template variable
+    ]
+
+    const rawCtaText = article.cta_text || null
+    const ctaText = rawCtaText &&
+      !CTA_TEMPLATE_BLOCKLIST.some(t => rawCtaText.toLowerCase().includes(t))
+      ? rawCtaText
+      : null
+
     const ctaUrl = article.cta_url || null
     const cta = ctaText && ctaUrl
       ? `---\n*${ctaText} [→](${ctaUrl})*`
@@ -248,7 +268,18 @@ export class ArticleAssembler {
 
     const disclaimer = `---\n*Editorial note: This content was researched and generated on ${today}. Facts and pricing are verified at time of writing and subject to change.*`
 
-    const socialShare = `**Share this article:** [Post on X](https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}) · Copy link`
+    const articleCanonicalUrl = (() => {
+      const base = ((article as any).org_website_url || '').replace(/\/$/, '')
+      const slug = (article as any).slug || ''
+      if (!base || !slug) return null
+      return `${base}/blog/${slug}`
+    })()
+
+    const socialShare = [
+      `**Share this article:**`,
+      `[Post on X](https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}${articleCanonicalUrl ? `&url=${encodeURIComponent(articleCanonicalUrl)}` : ''})`,
+      articleCanonicalUrl ? `[Copy link](${articleCanonicalUrl})` : null
+    ].filter(Boolean).join(' · ')
 
     const body = sections
       .sort((a, b) => a.order - b.order)
@@ -271,8 +302,9 @@ export class ArticleAssembler {
           md = ''
         }
 
-        const sectionImg = s.section_image_url
-          ? `\n\n![Illustration for section ${s.order}](${s.section_image_url})`
+        const rawImgUrl = s.section_image_url
+        const sectionImg = (rawImgUrl && rawImgUrl !== 'null' && rawImgUrl.startsWith('http'))
+          ? `\n\n![Illustration for section ${s.order}](${rawImgUrl})`
           : ''
 
         return `## ${s.header}\n\n${md}${sectionImg}`.trimEnd()

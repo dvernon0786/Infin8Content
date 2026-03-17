@@ -2,7 +2,6 @@ import type { CMSAdapter, PublishInput, PublishResult, ConnectionTestResult } fr
 
 export class WordPressAdapter implements CMSAdapter {
   constructor(private creds: Record<string, string>) {}
-
   private get authHeader(): string {
     return 'Basic ' + Buffer.from(
       `${this.creds.username}:${this.creds.application_password}`
@@ -11,8 +10,7 @@ export class WordPressAdapter implements CMSAdapter {
 
   /**
    * Resolve and validate the base site URL from credentials.
-   * Uses `url` for current connections (set by CmsConnectionForm and migrations).
-   * Falls back to legacy `site_url` for connections created before the multi-CMS migration.
+   * Supports both `site_url` (new) and `url` (existing connections).
    */
   private get siteUrl(): string | null {
     const raw = (this.creds.url ?? this.creds.site_url) as string | undefined
@@ -45,15 +43,9 @@ export class WordPressAdapter implements CMSAdapter {
         }),
         signal: controller.signal,
       })
-      const text = await res.text()
-      let data: any = null
-      try { data = text ? JSON.parse(text) : null } catch { /* non-JSON body */ }
-      if (!res.ok) {
-        const message = data?.message ?? `HTTP ${res.status}${res.statusText ? ' ' + res.statusText : ''}`
-        return { success: false, error: message }
-      }
-      if (!data || typeof data !== 'object') return { success: false, error: 'Unexpected response from WordPress' }
-      return { success: true, postId: String(data.id), url: data.link }
+      const json = await res.json()
+      if (!res.ok) return { success: false, error: json.message ?? `HTTP ${res.status}` }
+      return { success: true, postId: String(json.id), url: json.link }
     } catch (err: any) {
       if (err && err.name === 'AbortError') return { success: false, error: 'Request to WordPress timed out' }
       return { success: false, error: err?.message ?? 'Failed to publish post' }
