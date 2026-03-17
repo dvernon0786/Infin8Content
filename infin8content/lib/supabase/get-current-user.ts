@@ -80,7 +80,7 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
     if (orgData) {
       const organizationData = orgData as any
       // Determine effective plan - use plan_type if available, fallback to plan
-      const planType = (organizationData.plan_type || organizationData.plan || 'starter').toLowerCase() as PlanType
+      const planType = (organizationData.plan || organizationData.plan_type || 'starter').toLowerCase() as PlanType
       const planKey = (['trial', 'starter', 'pro', 'agency'].includes(planType) ? planType : 'starter') as PlanType;
 
       // Calculate usage

@@ -20,7 +20,7 @@ export default async function DashboardPage() {
     .eq("organization_id", user.org_id)
 
   if (!workflows || workflows.length === 0) {
-    const isTrial = (user.organizations?.plan_type || user.organizations?.plan)?.toLowerCase() === 'trial'
+    const isTrial = (user.organizations?.plan || user.organizations?.plan_type)?.toLowerCase() === 'trial'
 
     if (isTrial) {
       return (
@@ -58,7 +58,7 @@ export default async function DashboardPage() {
     )
   }
 
-  const isTrial = (user.organizations?.plan_type || user.organizations?.plan)?.toLowerCase() === 'trial'
+  const isTrial = (user.organizations?.plan || user.organizations?.plan_type)?.toLowerCase() === 'trial'
 
   let hasWorkflow = false
   let hasCompletedArticle = false

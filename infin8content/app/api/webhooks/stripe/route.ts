@@ -318,7 +318,7 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   // Update organizations table with retry logic
   const updateData: any = {
     plan: plan || 'trial',
-    plan_type: plan || 'trial', // Keep plan_type in sync — plan_type takes precedence in get-current-user
+    plan_type: plan || 'trial', // Keep plan_type in sync — plan is authoritative; plan_type kept as legacy fallback
     stripe_customer_id: session.customer,
     stripe_subscription_id: session.subscription,
     payment_status: 'active',
