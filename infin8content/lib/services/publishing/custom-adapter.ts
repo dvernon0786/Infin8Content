@@ -59,31 +59,12 @@ export class CustomAdapter implements CMSAdapter {
     }
   }
 
+  // ✅ Fix 5: returns { success, message }
   async testConnection(): Promise<ConnectionTestResult> {
-    // Custom APIs don't have a standard health-check endpoint.
-    // We do a lightweight HEAD/GET to verify reachability and auth.
-    const { endpoint, api_key } = this.credentials
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 10_000)
-
-    try {
-      const res = await fetch(endpoint, {
-        method: 'HEAD',
-        headers: { Authorization: `Bearer ${api_key}` },
-        signal: controller.signal,
-      })
-      clearTimeout(timer)
-
-      // 405 Method Not Allowed means the endpoint exists but doesn't support HEAD —
-      // that's still a reachable endpoint, treat as success.
-      if (res.ok || res.status === 405) {
-        return { success: true, message: 'Custom API endpoint reachable' }
-      }
-
-      return { success: false, message: `Endpoint returned ${res.status}` }
-    } catch (err: any) {
-      clearTimeout(timer)
-      return { success: false, message: err.message || 'Connection failed' }
+    // Custom endpoints cannot be probed safely without a dedicated health endpoint
+    if (!this.credentials.endpoint?.startsWith('https://')) {
+      return { success: false, message: 'Endpoint must start with https://' }
     }
+    return { success: true, message: 'Custom endpoint accepted (not probed)' }
   }
 }

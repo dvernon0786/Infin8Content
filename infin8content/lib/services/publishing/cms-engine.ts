@@ -3,7 +3,7 @@
  * Import createCMSAdapter to get the right adapter for a given platform.
  */
 
-import { WordPressPublishingAdapter } from './wordpress-adapter'
+import { WordPressAdapter } from './wordpress-adapter'
 import { WebflowAdapter } from './webflow-adapter'
 import { ShopifyAdapter } from './shopify-adapter'
 import { GhostAdapter } from './ghost-adapter'
@@ -53,7 +53,7 @@ export function createCMSAdapter(
 ): CMSAdapter {
   switch (platform) {
     case 'wordpress':
-      return new WordPressPublishingAdapter(credentials)
+      return new WordPressAdapter(credentials)
     case 'webflow':
       return new WebflowAdapter(credentials)
     case 'shopify':

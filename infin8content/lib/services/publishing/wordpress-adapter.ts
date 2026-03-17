@@ -1,44 +1,42 @@
-/**
- * WordPress publishing adapter.
- * Wraps the existing WordPressAdapter to conform to the CMSAdapter interface.
- *
- * Credentials: { url, username, application_password (decrypted) }
- */
-
-import { WordPressAdapter } from '../wordpress-adapter'
 import type { CMSAdapter, PublishInput, PublishResult, ConnectionTestResult } from './cms-adapter'
 
-export class WordPressPublishingAdapter implements CMSAdapter {
-  private inner: WordPressAdapter
+export class WordPressAdapter implements CMSAdapter {
+  constructor(private creds: Record<string, string>) {}
 
-  constructor(private credentials: Record<string, string>) {
-    this.inner = new WordPressAdapter({
-      site_url: credentials.url,
-      username: credentials.username,
-      application_password: credentials.application_password,
-    })
+  private get authHeader(): string {
+    return 'Basic ' + Buffer.from(
+      `${this.creds.username}:${this.creds.application_password}`
+    ).toString('base64')
   }
 
   async publishPost(input: PublishInput): Promise<PublishResult> {
-    const result = await this.inner.publishPost({
-      title: input.title,
-      content: input.html,
-      status: 'publish',
+    const res = await fetch(`${this.creds.site_url}/wp-json/wp/v2/posts`, {
+      method: 'POST',
+      headers: { Authorization: this.authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title:   input.title,
+        content: input.html,
+        slug:    input.slug,
+        excerpt: input.excerpt ?? '',
+        status:  'publish',
+      }),
     })
-
-    return {
-      success: result.success,
-      postId: result.postId !== undefined ? String(result.postId) : undefined,
-      url: result.url,
-      error: result.error,
-    }
+    const json = await res.json()
+    if (!res.ok) return { success: false, error: json.message ?? `HTTP ${res.status}` }
+    return { success: true, postId: String(json.id), url: json.link }
   }
 
+  // ✅ Fix 5: returns { success, message } — matches ConnectionTestResult
   async testConnection(): Promise<ConnectionTestResult> {
-    const result = await this.inner.testConnection()
-    if (result.success) {
-      return { success: true, message: 'Connected to WordPress' }
+    try {
+      const res = await fetch(`${this.creds.site_url}/wp-json/wp/v2/users/me`, {
+        headers: { Authorization: this.authHeader },
+      })
+      if (!res.ok) return { success: false, message: `Auth failed: HTTP ${res.status}` }
+      const json = await res.json()
+      return { success: true, message: `Connected as ${json.name ?? 'WordPress user'}` }
+    } catch (err: any) {
+      return { success: false, message: err.message ?? 'Connection failed' }
     }
-    return { success: false, message: result.error || 'Connection failed' }
   }
 }

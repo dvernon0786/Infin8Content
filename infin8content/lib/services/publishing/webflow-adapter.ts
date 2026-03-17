@@ -89,8 +89,7 @@ export class WebflowAdapter implements CMSAdapter {
       const json = await res.json()
       return {
         success: true,
-        message: 'Connected to Webflow',
-        site: { name: json.displayName || 'Webflow' },
+        message: `Connected to ${json.displayName || 'Webflow'}`,
       }
     } catch (err: any) {
       clearTimeout(timer)

@@ -63,34 +63,19 @@ export class ShopifyAdapter implements CMSAdapter {
     }
   }
 
+  // ✅ Fix 5: returns { success, message }
   async testConnection(): Promise<ConnectionTestResult> {
-    const { shop, access_token } = this.credentials
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 10_000)
-
     try {
+      const { shop, access_token, blog_id } = this.credentials
       const res = await fetch(
-        `https://${shop}.myshopify.com/admin/api/${API_VERSION}/shop.json`,
-        {
-          headers: { 'X-Shopify-Access-Token': access_token },
-          signal: controller.signal,
-        }
+        `https://${shop}.myshopify.com/admin/api/${API_VERSION}/blogs/${blog_id}.json`,
+        { headers: { 'X-Shopify-Access-Token': access_token } }
       )
-      clearTimeout(timer)
-
-      if (!res.ok) {
-        return { success: false, message: `Authentication failed (${res.status})` }
-      }
-
+      if (!res.ok) return { success: false, message: `HTTP ${res.status}` }
       const json = await res.json()
-      return {
-        success: true,
-        message: 'Connected to Shopify',
-        site: { name: json.shop?.name, url: json.shop?.domain },
-      }
+      return { success: true, message: `Connected to blog: ${json.blog?.title ?? 'Shopify'}` }
     } catch (err: any) {
-      clearTimeout(timer)
-      return { success: false, message: err.message || 'Connection failed' }
+      return { success: false, message: err.message ?? 'Connection failed' }
     }
   }
 

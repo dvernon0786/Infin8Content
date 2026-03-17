@@ -1,25 +1,17 @@
-/**
- * cms-publisher.ts
- *
- * Central orchestrator for publishing articles to any connected CMS platform.
- * Handles idempotency, credential decryption, adapter routing, and
- * publish_references persistence.
- */
-
-import { createClient } from '@supabase/supabase-js'
+import { createServiceRoleClient } from '@/lib/supabase/server'  // ✅ Fix 1
 import { createCMSAdapter, CMS_SECRET_FIELDS } from './cms-engine'
 import { decrypt } from '@/lib/security/encryption'
 import type { CMSPlatform } from './cms-engine'
 
 export interface PublishArticleParams {
-  articleId: string
+  articleId:      string
   organizationId: string
-  connectionId: string
+  connectionId:   string
 }
 
 export interface PublishArticleResult {
-  url: string
-  postId: string
+  url?:             string
+  postId?:          string
   alreadyPublished: boolean
 }
 
@@ -27,11 +19,7 @@ export async function publishArticle(
   params: PublishArticleParams
 ): Promise<PublishArticleResult> {
   const { articleId, organizationId, connectionId } = params
-
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  const supabase = createServiceRoleClient()  // ✅ Fix 1: correct server client
 
   // 1. Load connection
   const { data: connection, error: connError } = await (supabase
@@ -46,11 +34,11 @@ export async function publishArticle(
     throw new Error('CMS connection not found or inactive')
   }
 
-  const platform = connection.platform as CMSPlatform
-  const rawCreds = connection.credentials as Record<string, string>
+  const platform     = (connection as any).platform as CMSPlatform
+  const rawCreds     = (connection as any).credentials as Record<string, string>
+  const secretFields = CMS_SECRET_FIELDS[platform] ?? []
 
   // 2. Decrypt secret fields
-  const secretFields = CMS_SECRET_FIELDS[platform] || []
   const credentials: Record<string, string> = { ...rawCreds }
   for (const field of secretFields) {
     if (credentials[field]) {
@@ -65,61 +53,76 @@ export async function publishArticle(
   // 3. Idempotency check
   const { data: existingRef, error: refError } = await (supabase
     .from('publish_references')
-    .select('*')
+    .select('platform_url, platform_post_id')
     .eq('article_id', articleId)
-    .eq('platform', platform)
     .eq('connection_id', connectionId)
-    .single() as any)
+    .maybeSingle() as any)
 
-  if (refError && refError.code !== 'PGRST116') {
+  if (refError) {
     throw new Error(`Database error checking publish reference: ${refError.message}`)
   }
   if (existingRef) {
     return {
-      url: existingRef.platform_url,
-      postId: existingRef.platform_post_id,
+      url:              existingRef.platform_url  ?? undefined,
+      postId:           existingRef.platform_post_id ?? undefined,
       alreadyPublished: true,
     }
   }
 
-  // 4. Load article
+  // 4. Load article — ✅ Fix 3: use html_content + generation_metadata, not sections
   const { data: article, error: articleError } = await (supabase
     .from('articles')
-    .select('title, sections, status')
+    .select('title, slug, html_content, generation_metadata')
     .eq('id', articleId)
     .eq('org_id', organizationId)
     .single() as any)
 
   if (articleError || !article) {
-    throw new Error(`Article not found: ${articleError?.message || 'Unknown error'}`)
+    throw new Error(`Article not found: ${articleError?.message ?? 'unknown error'}`)
   }
 
-  const fullHtml = Array.isArray(article.sections)
-    ? article.sections.map((s: any) => s.html).join('\n')
-    : ''
+  if (!(article as any).html_content?.trim()) {
+    throw new Error('Article has no HTML content — run assembly first')
+  }
+
+  // ✅ Fix 3: Inject schema markup produced by the Schema Markup Generator
+  const schemaMarkup = ((article as any).generation_metadata?.schema_markup as string) ?? ''
+  const fullHtml     = schemaMarkup
+    ? `${schemaMarkup}\n${(article as any).html_content}`
+    : (article as any).html_content
 
   // 5. Publish via adapter
   const adapter = createCMSAdapter(platform, credentials)
-  const result = await adapter.publishPost({ title: article.title, html: fullHtml })
-
-  if (!result.success || !result.url || !result.postId) {
-    throw new Error(`Publishing failed: ${result.error || 'Unknown error'}`)
+  let result
+  try {
+    result = await adapter.publishPost({
+      title: (article as any).title,
+      html:  fullHtml,
+      slug:  (article as any).slug ?? undefined,
+    })
+  } catch (err: any) {
+    throw new Error(`Adapter error: ${err?.message ?? 'unknown'}`)
   }
 
-  // 6. Persist publish reference
+  if (!result.success) {
+    throw new Error(`Publishing failed: ${result.error ?? 'unknown error'}`)
+  }
+
+  // 6. Persist publish reference — ✅ Fix 2: org_id included
   const { error: insertError } = await (supabase
     .from('publish_references')
     .insert({
-      article_id: articleId,
+      article_id:       articleId,
+      org_id:           organizationId,      // ✅ Fix 2
       platform,
-      platform_post_id: String(result.postId),
-      platform_url: result.url,
-      published_at: new Date().toISOString(),
-      connection_id: connectionId,
-    }) as any)
+      platform_post_id: result.postId ? String(result.postId) : null,
+      platform_url:     result.url ?? null,
+      published_at:     new Date().toISOString(),
+      connection_id:    connectionId,
+    } as any) as any)
 
   if (insertError) {
-    throw new Error(`Failed to create publish reference: ${insertError.message}`)
+    throw new Error(`Failed to record publish reference: ${insertError.message}`)
   }
 
   return { url: result.url, postId: result.postId, alreadyPublished: false }
