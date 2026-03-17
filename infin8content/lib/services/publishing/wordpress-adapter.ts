@@ -9,8 +9,12 @@ export class WordPressAdapter implements CMSAdapter {
     ).toString('base64')
   }
 
+  private get baseUrl(): string {
+    return (this.creds.site_url || '').replace(/\/$/, '')
+  }
+
   async publishPost(input: PublishInput): Promise<PublishResult> {
-    const res = await fetch(`${this.creds.site_url}/wp-json/wp/v2/posts`, {
+    const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/posts`, {
       method: 'POST',
       headers: { Authorization: this.authHeader, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -29,7 +33,7 @@ export class WordPressAdapter implements CMSAdapter {
   // ✅ Fix 5: returns { success, message } — matches ConnectionTestResult
   async testConnection(): Promise<ConnectionTestResult> {
     try {
-      const res = await fetch(`${this.creds.site_url}/wp-json/wp/v2/users/me`, {
+      const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/users/me`, {
         headers: { Authorization: this.authHeader },
       })
       if (!res.ok) return { success: false, message: `Auth failed: HTTP ${res.status}` }
