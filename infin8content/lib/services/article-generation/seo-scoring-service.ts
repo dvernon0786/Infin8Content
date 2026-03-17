@@ -2,7 +2,7 @@
  * SEO Scoring Service
  * Algorithmic scoring — no LLM needed.
  * Scores the final assembled article across 4 dimensions.
- * Stores result in articles.generation_metadata.seo_score
+ * Stores result in articles.article_plan.seo_score
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -55,15 +55,15 @@ export async function scoreSEO(params: {
   }
   if (!article) return { skipped: true }
 
-  const metadata = (article.article_plan as Record<string, any>) || {}
+  const articlePlan = (article.article_plan as Record<string, any>) || {}
   const sectionsMarkdown = Array.isArray(sections) && sections.length
     ? sections.map((s: any) => (s.content_markdown as string) || '').join('\n\n')
     : ''
+  const articleFinalMarkdown = ((article as any).final_markdown as string) || ''
   const content =
-    ((article as any).final_markdown as string) ||
-    (metadata.final_markdown as string) ||
+    articleFinalMarkdown ||
+    (articlePlan.final_markdown as string) ||
     sectionsMarkdown ||
-    (article.final_markdown as string) ||
     ''
   const plan = article.article_plan as any
 
@@ -156,7 +156,7 @@ export async function scoreSEO(params: {
 
   // ── Technical Score ────────────────────────────────────────────────────────
   let technical = 30
-  const schemaTypes: string[] = metadata.schema_types || []
+  const schemaTypes: string[] = articlePlan.schema_types || []
   const internalLinksCount =
     (content.match(/\[.*?\]\(\/[^)]+\)/g) || []).length +
     (content.match(/<a href="\/[^"]+"/g) || []).length
@@ -208,7 +208,7 @@ export async function scoreSEO(params: {
 
   await supabase
     .from('articles')
-    .update({ article_plan: { ...metadata, seo_score: score } })
+    .update({ article_plan: { ...articlePlan, seo_score: score } })
     .eq('id', articleId)
 
   console.log(

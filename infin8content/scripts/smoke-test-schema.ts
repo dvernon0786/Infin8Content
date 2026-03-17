@@ -30,8 +30,7 @@ async function run() {
   console.log('⏱  schema_generated_at:', plan?.schema_generated_at)
   console.log('\n📄 schema_markup (first 800 chars):\n', markup.slice(0, 800))
 
-  const inner = markup.replace(/<script\b[^>]*>/gi, '').replace(/<\/script>/gi, '')
-  const xssRisk = /<\/script/i.test(inner)
+  const xssRisk = /<\/script/i.test(markup)
   console.log(`\n🔐 XSS check: ${xssRisk ? '❌ FAIL' : '✅ PASS'}`)
 }
 

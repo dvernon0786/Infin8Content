@@ -1,7 +1,7 @@
 /**
  * Schema Markup Generator
  * Generates JSON-LD structured data for Article, FAQPage, and BreadcrumbList.
- * Stores output in articles.generation_metadata.schema_markup
+ * Stores output in articles.article_plan.schema_markup
  * No LLM needed — built algorithmically from existing article data.
  */
 
@@ -25,7 +25,7 @@ export async function generateSchemaMarkup(params: {
   const [{ data: article }, { data: org }, { data: sections }] = await Promise.all([
     supabase
       .from('articles')
-      .select('id, title, keyword, article_plan, created_at, generation_completed_at, final_markdown')
+      .select('id, title, keyword, article_plan, created_at, generation_completed_at')
       .eq('id', articleId)
       .single(),
     supabase
@@ -130,8 +130,7 @@ export async function generateSchemaMarkup(params: {
     )
     .join('\n\n')
 
-  // ── Persist to generation_metadata ──────────────────────────────────────────
-  // Merge schema data into article_plan (generation_metadata doesn't exist as a column)
+  // ── Persist to article_plan ──────────────────────────────────────────────────
   const existingPlan = (article.article_plan as Record<string, any>) || {}
   const updatedPlan = {
     ...existingPlan,
