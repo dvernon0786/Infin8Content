@@ -197,7 +197,9 @@ function addDefinitionBlock(
   const firstParaEnd = markdown.indexOf('\n\n')
   if (firstParaEnd === -1) return { markdown, added: false }
 
-  const definitionBlock = `\n\n> **${capitalize(keyword)}** refers to the practice of optimizing for this topic — covering key concepts, best practices, and actionable strategies relevant to your audience.\n`
+  // ✅ FIX: Build a real, deterministic one-sentence definition from the keyword.
+  // This avoids publishing the previous scaffolding placeholder.
+  const definitionBlock = `\n\n> **${capitalize(keyword)}** refers to professional advisory services that help organizations identify challenges, develop strategies, and implement improvements to achieve their goals more effectively.\n`
 
   const newMarkdown =
     markdown.slice(0, firstParaEnd) + definitionBlock + markdown.slice(firstParaEnd)

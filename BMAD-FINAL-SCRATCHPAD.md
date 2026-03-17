@@ -217,6 +217,20 @@ All BMAD deliverables in:
 
 Next actions: run integration smoke tests for the injection step and add unit tests for injection edge cases.
 
+### Recent Engineering Updates (2026-03-18)
+
+- `content-writing-agent.ts`: Replaced boolean interpolation for `add_cta` with a conditional natural-language CTA instruction. This enforces whether to include a single-sentence CTA or not based on `generationConfig.add_cta`.
+- `convertMarkdownToHtml()`: Fixed link placeholder restoration to directly emit safe `<a>` tags and moved bold/italic processing before blockquote handling to correctly render inline emphasis inside blockquotes.
+- `content-writing-agent.ts`: Restored list-handling logic after accidental corruption and removed stray prompt injection that appeared inside the markdown-to-HTML pipeline.
+- `generate-article.ts`: Added defensive casts for schema/SEO step payloads to avoid a TypeScript object-shape error; `mark-completed` logic was hardened to re-check status and return idempotently when another worker completed the article.
+- Article assembler: `slug` and `org_website_url` are now forwarded into final markdown builder so canonical article URLs and copy-link behavior are available.
+- Inngest pipeline: `internal-linking` step inserted after geo/aero enrichment and before assembly (idempotent call).
+- Validation: `tsc --noEmit` now passes after these edits. Vitest: unit tests for the article services folder were not present; full test-suite still reports environment-dependent failures (integration server not running). See CI run for details.
+
+Next immediate steps:
+- Push these edits to `test-main-all` and open a PR to `main` so CI can run the full integration suite.
+- Add focused unit tests for `content-writing-agent` and the internal-linking step (optional fast follow-up).
+
 ---
 
 ## Pricing Alignment Update (2026-03-16)
