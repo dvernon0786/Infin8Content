@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
-import { publishArticle } from '@/lib/services/publishing/wordpress-publisher'
+import { publishArticle } from '@/lib/services/publishing/cms-publisher'
 import { NextResponse } from 'next/server'
 
 /**

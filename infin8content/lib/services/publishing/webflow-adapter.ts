@@ -27,7 +27,7 @@ export class WebflowAdapter implements CMSAdapter {
           .replace(/^-|-$/g, '')
 
       const res = await fetch(
-        `https://api.webflow.com/v2/collections/${collection_id}/items`,
+        `https://api.webflow.com/v2/collections/${collection_id}/items/live`,
         {
           method: 'POST',
           headers: {

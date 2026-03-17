@@ -20,7 +20,7 @@ interface CmsConnection {
 }
 
 interface CmsConnectionsManagerProps {
-  orgId: string
+  orgId?: string
 }
 
 export function CmsConnectionsManager({ orgId }: CmsConnectionsManagerProps) {

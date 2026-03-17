@@ -46,16 +46,19 @@ export async function POST(_req: Request, { params }: RouteParams) {
         } catch {
           return NextResponse.json(
             { success: false, message: 'Failed to decrypt credentials — please re-save the connection.' },
-            { status: 400 }
+            { status: 200 }
           )
         }
       }
     }
 
     const adapter = createCMSAdapter(platform, credentials)
-    const result = await adapter.testConnection()
+    const testResult = await adapter.testConnection()
 
-    return NextResponse.json(result)
+    return NextResponse.json({
+      success: testResult.success,
+      message: testResult.success ? 'Connection verified' : (testResult.message ?? 'Connection test failed'),
+    })
   } catch (err) {
     console.error('[cms-connections/:id/test POST]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
