@@ -7,7 +7,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
-import { encrypt } from '@/lib/security/encryption'
+import { encrypt, decrypt } from '@/lib/security/encryption'
 import { createCMSAdapter, CMS_SECRET_FIELDS } from '@/lib/services/publishing/cms-engine'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
@@ -95,8 +95,31 @@ export async function PUT(request: Request, { params }: RouteParams) {
       const secretFields = CMS_SECRET_FIELDS[platform]
       const newCreds = validated.credentials
 
-      // Test with new credentials before saving
-      const adapter = createCMSAdapter(platform, newCreds)
+      // Decrypt existing stored credentials so we can test a complete set
+      const decryptedExisting: Record<string, string> = { ...existing.credentials }
+      for (const field of secretFields) {
+        if (decryptedExisting[field]) {
+          try {
+            decryptedExisting[field] = decrypt(decryptedExisting[field])
+          } catch {
+            return NextResponse.json(
+              { error: 'Failed to decrypt existing credentials' },
+              { status: 500 }
+            )
+          }
+        }
+      }
+
+      // Merge new values over decrypted existing (skip masked placeholders)
+      const mergedForTest: Record<string, string> = { ...decryptedExisting }
+      for (const [k, v] of Object.entries(newCreds)) {
+        if (v !== '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022') {
+          mergedForTest[k] = v
+        }
+      }
+
+      // Test with merged decrypted credentials before saving
+      const adapter = createCMSAdapter(platform, mergedForTest)
       const testResult = await adapter.testConnection()
       if (!testResult.success) {
         return NextResponse.json(
@@ -105,16 +128,17 @@ export async function PUT(request: Request, { params }: RouteParams) {
         )
       }
 
-      // Build merged+encrypted credentials
-      const merged: Record<string, string> = { ...existing.credentials }
+      // Build encrypted credentials for storage
+      const encrypted: Record<string, string> = { ...existing.credentials }
       for (const [k, v] of Object.entries(newCreds)) {
+        if (v === '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022') continue
         if (secretFields.includes(k)) {
-          merged[k] = encrypt(v)
+          encrypted[k] = encrypt(v)
         } else {
-          merged[k] = v
+          encrypted[k] = v
         }
       }
-      updates.credentials = merged
+      updates.credentials = encrypted
     }
 
     if (Object.keys(updates).length === 0) {
