@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Breadcrumb, generateArticleBreadcrumbs } from '@/components/ui/breadcrumb'
 import { ArticleContentViewer, ArticleMarkdownViewer } from '@/components/articles/article-content-viewer'
 import { ArticleStatusMonitor } from '@/components/articles/article-status-monitor'
-import { PublishToWordPressButton } from '@/components/articles/publish-to-wordpress-button'
+import { PublishToCmsButton } from '@/components/articles/PublishToCmsButton'
 import { GenerateArticleButton } from '@/components/articles/generate-article-button'
 import { TrialUpgradeCard } from '@/components/articles/trial-upgrade-card'
 import ArticleErrorBoundary from './article-error-boundary'
@@ -274,9 +274,9 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
               </CardContent>
             </Card>
 
-            {/* WordPress Publish Button - Only show if enabled and article completed */}
+            {/* CMS Publish Button - multi-platform, only shown when article is complete */}
             {canPublish && (
-              <PublishToWordPressButton
+              <PublishToCmsButton
                 articleId={article.id}
                 articleStatus={article.status}
               />

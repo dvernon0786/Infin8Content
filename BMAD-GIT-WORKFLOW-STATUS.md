@@ -1,7 +1,7 @@
 # BMAD Git Workflow Status
 
-**Date:** 2026-01-30  
-**Status:** ✅ READY FOR PR
+**Date:** 2026-03-17  
+**Status:** 🔄 PENDING PUSH — multi-CMS engine ready to commit
 
 ---
 
@@ -15,16 +15,55 @@
 - PR: #38 (merged)
 - Files: 27 new files
 
-**feature/bmad-final-deliverables** (Current)
-- Status: ✅ PUSHED to remote
+**feature/bmad-final-deliverables** (Previous)
+- Status: ✅ PUSHED to remote (merged)
 - Commits: 1 commit (BMAD-FINAL-SCRATCHPAD.md)
-- PR: Ready to create
-- URL: https://github.com/dvernon0786/Infin8Content/pull/new/feature/bmad-final-deliverables
 
-**test-main-all** (Protected Branch)
-- Status: ✅ UPDATED with BMAD deliverables
-- Latest commit: 869f000 (BMAD scratchpad)
-- Protected: Yes (requires status checks)
+**test-main-all** (Current Working Branch)
+- Status: 🔄 Being updated — multi-CMS publishing engine
+- Scope: feat(cms): multi-platform CMS publishing engine
+- Protected: Yes (requires status checks + PR to main)
+
+---
+
+## 2026-03-17 Implementation: Multi-CMS Publishing Engine
+
+### DB Migrations (supabase/migrations/)
+- `20260317000001_create_cms_connections.sql` — new table, RLS, trigger
+- `20260317000002_update_publish_references_multi_cms.sql` — FK, constraints, 4 RLS policies
+- `20260317000003_migrate_wp_to_cms_connections.sql` — safe idempotent data migration
+- `verify-cms-migrations.sql` — 32-check verification query (all PASS ✅)
+
+### Adapter Layer (lib/services/publishing/)
+- `cms-adapter.ts` — base interfaces
+- `cms-engine.ts` — adapter factory + platform types
+- `wordpress-adapter.ts` — wraps existing WP adapter
+- `webflow-adapter.ts` — Webflow v2 API
+- `shopify-adapter.ts` — Shopify Admin REST 2024-01
+- `ghost-adapter.ts` — Ghost Admin API (manual JWT, no external dep)
+- `notion-adapter.ts` — Notion API + HTML→blocks converter
+- `custom-adapter.ts` — generic REST adapter
+- `wordpress-publisher.ts` — refactored: generic `publishArticle()` + deprecated WP shim
+
+### API Routes
+- `app/api/cms-connections/route.ts` — GET (list) + POST (create, test-before-save, quota check)
+- `app/api/cms-connections/[id]/route.ts` — GET + PUT + DELETE
+- `app/api/cms-connections/[id]/test/route.ts` — POST connection test
+- `app/api/articles/publish/route.ts` — updated: multi-CMS + WP backward compat fallback
+- `app/api/onboarding/integration/route.ts` — updated: dual-write to blog_config + cms_connections
+
+### UI Components
+- `app/settings/integrations/page.tsx` — new Settings → Integrations page
+- `components/settings/CmsConnectionsManager.tsx` — list, test, edit, delete connections
+- `components/settings/CmsConnectionForm.tsx` — platform picker + dynamic credential fields
+- `components/articles/PublishToCmsButton.tsx` — replaces WP-only button (3 states)
+- `components/onboarding/StepIntegration.tsx` — updated: multi-platform onboarding
+
+### Type Updates
+- `types/audit.ts` — added `INTEGRATION_CONNECTED`, `INTEGRATION_DISCONNECTED`
+
+### Article Page
+- `app/dashboard/articles/[id]/page.tsx` — swapped to `PublishToCmsButton`
 
 ---
 

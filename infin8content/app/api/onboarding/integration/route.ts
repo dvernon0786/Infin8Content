@@ -177,6 +177,46 @@ export async function POST(request: Request) {
       )
     }
 
+    // Upsert into cms_connections (new architecture) — idempotent on org+platform
+    const serviceSupabase = await createServiceRoleClient()
+    const { data: existingConn } = await (serviceSupabase
+      .from('cms_connections')
+      .select('id')
+      .eq('org_id', currentUser.org_id)
+      .eq('platform', 'wordpress')
+      .eq('status', 'active')
+      .single() as any) as { data: { id: string } | null }
+
+    if (existingConn) {
+      await serviceSupabase
+        .from('cms_connections')
+        .update({
+          credentials: {
+            url: validated.wordpress.url,
+            username: validated.wordpress.username,
+            application_password: encryptedPassword,
+          },
+          name: connectionResult.site?.name || 'WordPress',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existingConn.id)
+    } else {
+      await serviceSupabase
+        .from('cms_connections')
+        .insert({
+          org_id: currentUser.org_id,
+          platform: 'wordpress',
+          name: connectionResult.site?.name || 'WordPress',
+          credentials: {
+            url: validated.wordpress.url,
+            username: validated.wordpress.username,
+            application_password: encryptedPassword,
+          },
+          status: 'active',
+          created_by: currentUser.id,
+        })
+    }
+
     console.log('[WordPress Integration] Integration saved successfully')
 
     // ✅ System Law: Onboarding completion is derived from data, not set here

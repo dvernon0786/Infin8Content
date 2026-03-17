@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { WordPressIntegrationForm } from "@/components/settings/WordPressIntegrationForm"
+import { CmsConnectionForm } from "@/components/settings/CmsConnectionForm"
 
 interface StepIntegrationProps {
   className?: string
@@ -22,17 +22,18 @@ function StepIntegration({ className, onNext, onSkip }: StepIntegrationProps) {
     <main className={cn("mx-auto w-full max-w-2xl", className)}>
       <Card>
         <CardHeader>
-          <CardTitle>Connect WordPress</CardTitle>
+          <CardTitle>Connect a publishing platform</CardTitle>
         </CardHeader>
 
         <CardContent>
           <p className="text-sm text-muted-foreground mb-5">
-            Connect your WordPress site so we can publish content directly.
-            You can also skip this step and connect later from your dashboard.
+            Connect your CMS so you can publish content directly from Infin8Content.
+            You can add more connections anytime from Settings → Integrations.
           </p>
 
-          <WordPressIntegrationForm
-            onSuccess={onNext}
+          <CmsConnectionForm
+            onSuccess={() => onNext(null)}
+            onCancel={undefined}
           />
 
           {onSkip && (
