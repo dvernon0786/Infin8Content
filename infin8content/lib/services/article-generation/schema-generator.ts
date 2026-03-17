@@ -1,7 +1,7 @@
 /**
  * Schema Markup Generator
  * Generates JSON-LD structured data for Article, FAQPage, and BreadcrumbList.
- * Stores output in articles.generation_metadata.schema_markup
+ * Stores output in articles.article_plan.schema_markup
  * No LLM needed — built algorithmically from existing article data.
  */
 
@@ -25,12 +25,12 @@ export async function generateSchemaMarkup(params: {
   const [{ data: article }, { data: org }, { data: sections }] = await Promise.all([
     supabase
       .from('articles')
-      .select('id, title, slug, keyword, article_plan, published_at, created_at, generation_metadata')
+      .select('id, title, keyword, article_plan, created_at, generation_completed_at')
       .eq('id', articleId)
       .single(),
     supabase
       .from('organizations')
-      .select('name, settings')
+      .select('name, website_url')
       .eq('id', orgId)
       .single(),
     supabase
@@ -46,13 +46,16 @@ export async function generateSchemaMarkup(params: {
   }
 
   // Idempotency: skip if already generated
-  if ((article.generation_metadata as any)?.schema_markup) {
+  if ((article.article_plan as any)?.schema_markup) {
     return { skipped: true, reason: 'already_generated', schemasGenerated: [] }
   }
 
   const plan = article.article_plan as ArticlePlannerOutput | null
-  const baseUrl = ((org.settings as any)?.website_url || '').replace(/\/$/, '')
-  const articleUrl = baseUrl && article.slug ? `${baseUrl}/blog/${article.slug}` : null
+  const baseUrl = ((org as any).website_url || '').replace(/\/$/, '')
+  const articleSlug = plan?.target_keyword
+    ? plan.target_keyword.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    : null
+  const articleUrl = baseUrl && articleSlug ? `${baseUrl}/blog/${articleSlug}` : null
   const schemasGenerated: string[] = []
   const jsonLdBlocks: object[] = []
 
@@ -61,8 +64,8 @@ export async function generateSchemaMarkup(params: {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: article.title,
-    keywords: plan?.semantic_keywords?.join(', ') || article.keyword || '',
-    datePublished: article.published_at || article.created_at,
+    keywords: plan?.semantic_keywords?.join(', ') || (article as any).keyword || '',
+    datePublished: (article as any).generation_completed_at || article.created_at,
     dateModified: new Date().toISOString(),
     publisher: {
       '@type': 'Organization',
@@ -97,7 +100,7 @@ export async function generateSchemaMarkup(params: {
   }
 
   // ── 3. BreadcrumbList Schema ─────────────────────────────────────────────────
-  if (baseUrl && article.slug) {
+  if (baseUrl && articleSlug) {
     jsonLdBlocks.push({
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
@@ -108,7 +111,7 @@ export async function generateSchemaMarkup(params: {
           '@type': 'ListItem',
           position: 3,
           name: article.title,
-          item: `${baseUrl}/blog/${article.slug}`,
+          item: `${baseUrl}/blog/${articleSlug}`,
         },
       ],
     })
@@ -127,9 +130,10 @@ export async function generateSchemaMarkup(params: {
     )
     .join('\n\n')
 
-  // ── Persist to generation_metadata ──────────────────────────────────────────
-  const updatedMetadata = {
-    ...((article.generation_metadata as object) || {}),
+  // ── Persist to article_plan ──────────────────────────────────────────────────
+  const existingPlan = (article.article_plan as Record<string, any>) || {}
+  const updatedPlan = {
+    ...existingPlan,
     schema_markup: schemaMarkup,
     schema_types: schemasGenerated,
     schema_generated_at: new Date().toISOString(),
@@ -137,7 +141,7 @@ export async function generateSchemaMarkup(params: {
 
   await supabase
     .from('articles')
-    .update({ generation_metadata: updatedMetadata })
+    .update({ article_plan: updatedPlan })
     .eq('id', articleId)
 
   console.log(
