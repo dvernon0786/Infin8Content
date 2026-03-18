@@ -26,9 +26,13 @@ ALTER TABLE keywords
 -- constraint ('in_progress', 'completed', 'failed') to valid states.
 -- Without this the ADD CONSTRAINT below will fail on any existing rows.
 -- -----------------------------------------------------------------------
-UPDATE keywords SET article_status = 'draft'       WHERE article_status = 'in_progress';
-UPDATE keywords SET article_status = 'draft'       WHERE article_status = 'completed';
-UPDATE keywords SET article_status = 'not_started' WHERE article_status = 'failed';
+UPDATE keywords
+SET article_status = CASE
+  WHEN article_status = 'in_progress' THEN 'draft'
+  WHEN article_status = 'completed'   THEN 'draft'
+  WHEN article_status = 'failed'      THEN 'not_started'
+END
+WHERE article_status IN ('in_progress', 'completed', 'failed');
 
 -- Re-add the constraint with 'rejected' included
 ALTER TABLE keywords
