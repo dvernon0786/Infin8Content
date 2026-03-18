@@ -54,9 +54,7 @@ export async function POST(request: Request) {
         const planType = (orgData?.plan || 'starter').toLowerCase()
 
         // 3. Validate current status
-        const allowedStatuses = planType === 'trial'
-            ? ['draft', 'queued', 'failed']
-            : ['queued', 'failed']
+        const allowedStatuses = ['draft', 'queued', 'failed']
 
         if (!allowedStatuses.includes(article.status)) {
             return NextResponse.json({
@@ -76,9 +74,7 @@ export async function POST(request: Request) {
 
         // 4. Set status to processing (Atomic Lock)
         // This update will only succeed if the article is still in a triggerable state.
-        const allowedForLock = planType === 'trial'
-            ? ['draft', 'queued', 'failed']
-            : ['queued', 'failed']
+        const allowedForLock = ['draft', 'queued', 'failed']
 
         const { data: updatedRows, error: updateError } = await supabase
             .from('articles')
