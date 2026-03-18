@@ -10,6 +10,8 @@ export interface DashboardArticle {
   status: ArticleStatus;
   created_at: string;
   updated_at: string;
+  scheduled_at?: string | null;
+  publish_at?: string | null;
 }
 
 export interface DashboardUpdateEvent {

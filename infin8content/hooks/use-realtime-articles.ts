@@ -58,7 +58,9 @@ export function useRealtimeArticles({
           title,
           status,
           created_at,
-          updated_at
+          updated_at,
+          scheduled_at,
+          publish_at
         `)
         .eq('org_id', orgId)
         .order('created_at', { ascending: false })
@@ -67,10 +69,12 @@ export function useRealtimeArticles({
         (row: any) => ({
           id: row.id,
           keyword: row.keyword,
-          title: row.title ?? '',
+          title: row.title || row.keyword || '',
           status: row.status,
           created_at: row.created_at ?? '',
           updated_at: row.updated_at ?? '',
+          scheduled_at: row.scheduled_at ?? null,
+          publish_at: row.publish_at ?? null,
         })
       )
 

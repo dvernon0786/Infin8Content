@@ -10,7 +10,7 @@
  *   - Plan gate: trial → 403 PLAN_GATE
  *   - Quota gate: scheduled count this month vs plan limit
  *   - Article must be in 'draft' status
- *   - scheduled_at must be >= now (future dates only)
+ *   - scheduled_at must not be more than 1 hour in the past (allows small clock skew)
  *
  * File: app/api/articles/[id]/schedule/route.ts
  */
@@ -57,10 +57,11 @@ export async function POST(
         return err('INVALID_DATE', 'scheduled_at is required.', 400)
     }
 
-    // scheduled_at must be in the future
+    // scheduled_at must not be more than 1 hour in the past (1-hour skew buffer for clock drift / timezone edge cases)
     const scheduledDate = new Date(scheduled_at)
-    if (isNaN(scheduledDate.getTime()) || scheduledDate <= new Date()) {
-        return err('INVALID_DATE', 'scheduled_at must be a valid future date.', 400)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+    if (isNaN(scheduledDate.getTime()) || scheduledDate <= oneHourAgo) {
+        return err('INVALID_DATE', 'scheduled_at must be a valid date that is not more than 1 hour in the past.', 400)
     }
 
     // publish_at (if provided) must be >= scheduled_at
