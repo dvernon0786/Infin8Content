@@ -62,15 +62,7 @@ function ArticleAction({ article, plan }: { article: DashboardArticle; plan?: st
     )
   }
 
-  if (article.status === 'draft' && plan === 'trial') {
-    return (
-      <div onClick={(e) => e.stopPropagation()}>
-        <GenerateArticleButton articleId={article.id} />
-      </div>
-    )
-  }
-
-  if (article.status === 'queued') {
+  if (article.status === 'draft' || article.status === 'queued') {
     return (
       <div onClick={(e) => e.stopPropagation()}>
         <GenerateArticleButton articleId={article.id} />
