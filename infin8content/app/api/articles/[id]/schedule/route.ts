@@ -57,9 +57,10 @@ export async function POST(
         return err('INVALID_DATE', 'scheduled_at is required.', 400)
     }
 
-    // scheduled_at must be in the future
+    // scheduled_at must be in the future (allow 1-hour skew buffer for clock drift / timezone edge cases)
     const scheduledDate = new Date(scheduled_at)
-    if (isNaN(scheduledDate.getTime()) || scheduledDate <= new Date()) {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+    if (isNaN(scheduledDate.getTime()) || scheduledDate <= oneHourAgo) {
         return err('INVALID_DATE', 'scheduled_at must be a valid future date.', 400)
     }
 

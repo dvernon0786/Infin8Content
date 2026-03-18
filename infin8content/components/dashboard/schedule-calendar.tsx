@@ -144,10 +144,9 @@ function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: Sche
         setError(null)
         setLoading(true)
 
-        // Set scheduled_at to midnight UTC on the selected day
-        // NOTE: normalization to UTC 00:00 can shift display day for extreme UTC+ zones (Samoa/Tonga).
+        // Set scheduled_at to noon UTC — safely in the future for all UTC+ timezones.
         const scheduledAt = new Date(selectedDate)
-        scheduledAt.setUTCHours(0, 0, 0, 0)
+        scheduledAt.setUTCHours(12, 0, 0, 0)
 
         try {
             const res = await fetch(`/api/articles/${selectedArticleId}/schedule`, {
@@ -184,7 +183,7 @@ function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: Sche
                         Schedule for {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                     </h3>
                     <p className="font-lato text-neutral-500 text-xs mt-0.5">
-                        Generation will trigger at midnight UTC on this date.
+                        Generation will trigger during this day (noon UTC).
                     </p>
                 </div>
                 <button
@@ -214,7 +213,7 @@ function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: Sche
                             <option value="">— Select an article —</option>
                             {draftArticles.map(a => (
                                 <option key={a.id} value={a.id}>
-                                    {a.title}
+                                    {a.title || a.keyword || a.id}
                                 </option>
                             ))}
                         </select>
@@ -276,7 +275,7 @@ export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled }:
     const monthlyScheduledCount = useMemo(() => {
         const startOfMonth = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1))
         return articles.filter(a => {
-            const sa = (a as any).scheduled_at
+            const sa = a.scheduled_at
             if (!sa) return false
             return (
                 new Date(sa) >= startOfMonth &&
@@ -291,9 +290,9 @@ export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled }:
     const scheduledByDay = useMemo(() => {
         const map = new Map<string, DashboardArticle[]>()
         for (const a of articles) {
-            const sa = (a as any).scheduled_at
+            const sa = a.scheduled_at
             if (sa) {
-                const key = (sa as string).slice(0, 10)
+                const key = sa.slice(0, 10)
                 if (!map.has(key)) map.set(key, [])
                 map.get(key)!.push(a)
             }
@@ -304,9 +303,9 @@ export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled }:
     const publishByDay = useMemo(() => {
         const map = new Map<string, DashboardArticle[]>()
         for (const a of articles) {
-            const pa = (a as any).publish_at
+            const pa = a.publish_at
             if (pa) {
-                const key = (pa as string).slice(0, 10)
+                const key = pa.slice(0, 10)
                 if (!map.has(key)) map.set(key, [])
                 map.get(key)!.push(a)
             }
