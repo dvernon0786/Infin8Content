@@ -40,7 +40,7 @@ interface Step8SubtopicsFormProps {
 
 export function Step8SubtopicsForm({ workflowId, workflowState }: Step8SubtopicsFormProps) {
   const [keywords, setKeywords] = useState<KeywordWithSubtopics[]>([])
-  const [selectedIds, setSelectedIds] = useState<string[]>([])
+
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<Record<string, string>>({})
@@ -63,34 +63,6 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
   }, [currentState, workflowId])
 
   // Helper functions
-  function canComplete(): boolean {
-    if (keywords.length === 0) return false
-    return keywords.every(k => k.approvalStatus === 'approved')
-  }
-
-  async function completeStep8() {
-    try {
-      setProcessing('complete')
-
-      const res = await fetch(
-        `/api/workflows/${workflowId}/complete-step-8`,
-        { method: 'POST' }
-      )
-
-      const body = await res.json()
-
-      if (!res.ok) throw new Error(body.error)
-
-      // Redirect to Articles Dashboard (Architecture B)
-      window.location.href = `/dashboard/articles`
-
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setProcessing(null)
-    }
-  }
-
   async function fetchSubtopicsForReview() {
     try {
       setLoading(true)
@@ -247,26 +219,15 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
 
       <div className="flex gap-2 border-b pb-4">
         <Button
-          variant="outline"
-          onClick={() => {
-            const selectable = keywords
-              .filter(k => getApprovalStatus(k) === 'pending')
-              .map(k => k.id)
-            setSelectedIds(selectable)
-          }}
-        >
-          Select All
-        </Button>
-        <Button
           onClick={async () => {
-            if (selectedIds.length === 0) return
             setProcessing('bulk')
             try {
               setError(null)
               const res = await fetch(`/api/workflows/${workflowId}/approve-subtopics-bulk`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ approvedKeywordIds: selectedIds })
+                headers: { 'Content-Type': 'application/json' }
+                // Note: body intentionally omitted — endpoint approves all remaining
+                // 'not_started' keywords for the workflow, not just a selected subset.
               })
 
               if (!res.ok) {
@@ -274,8 +235,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
                 throw new Error(body.error || 'Bulk approval failed')
               }
 
-              setSuccess(`Bulk approval successful for ${selectedIds.length} items`)
-              setSelectedIds([])
+              setSuccess('Bulk approval successful — all remaining pending keywords approved')
 
               // Frontend routing fix: redirect to Articles Dashboard (Architecture B)
               window.location.href = `/dashboard/articles`
@@ -285,12 +245,12 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
               setProcessing(null)
             }
           }}
-          disabled={processing === 'bulk' || selectedIds.length === 0}
+          disabled={processing === 'bulk' || keywords.filter(k => getApprovalStatus(k) === 'pending').length === 0}
         >
           {processing === 'bulk' ? (
             <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Approving...</>
           ) : (
-            `Approve Selected (${selectedIds.length})`
+            'Approve All Remaining'
           )}
         </Button>
       </div>
@@ -424,36 +384,6 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
           )
         })}
       </div>
-
-      {/* Complete Step 8 Button */}
-      {canComplete() && (
-        <div className="pt-6 border-t">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-medium">Ready to Complete Step 8</h3>
-              <p className="text-sm text-muted-foreground">
-                All subtopics have been approved. Click to proceed to the Articles Dashboard to monitor generation.
-              </p>
-            </div>
-            <Button
-              onClick={completeStep8}
-              disabled={processing === 'complete'}
-              size="lg"
-            >
-              {processing === 'complete' ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Completing…
-                </>
-              ) : (
-                <>
-                  Complete Step 8 →
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* Error Display */}
       {error && (
