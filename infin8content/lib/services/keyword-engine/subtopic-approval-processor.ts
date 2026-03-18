@@ -386,7 +386,9 @@ async function checkAndTriggerWorkflowCompletion(
     .from('keywords')
     .select('id, subtopics_status')
     .eq('workflow_id', workflowId)
-    .eq('organization_id', organizationId)
+    // FIX: organization_id removed — workflow_id is already org-scoped.
+    // Filtering on organization_id returns 0 rows when the column is absent/unpopulated,
+    // causing silent early-return before approved_items is ever checked.
     .eq('subtopics_status', 'completed') // Only keywords with completed subtopics
 
   if (keywordsError) {
