@@ -137,7 +137,7 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
       console.log('[StepBusiness] Attempting to persist:', formData)
       
       // 🎯 PERSIST TO DATABASE FIRST
-      const res = await fetch('/api/onboarding/persist', {
+      const res = await fetch('/api/onboarding/business', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
