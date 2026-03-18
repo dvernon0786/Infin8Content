@@ -268,6 +268,9 @@ export async function crawlAndCacheWebsiteLinks(params: {
   const auth = getDataForSEOAuth()
 
   if (!auth) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('[InternalLinking] DATAFORSEO_LOGIN/PASSWORD are not set — crawl cannot run. Set the env vars and retry.')
+    }
     console.warn('[InternalLinking] DATAFORSEO_LOGIN/PASSWORD not set, skipping crawl.')
     return { success: false, pagesFound: 0 }
   }
