@@ -7,15 +7,10 @@ export async function POST(
 ) {
     try {
         const { id: workflowId } = await params
-        const body = await request.json()
-
-        if (!Array.isArray(body.approvedKeywordIds)) {
-            return NextResponse.json({ error: 'Invalid payload: approvedKeywordIds must be an array' }, { status: 400 })
-        }
-
+        // Bulk approve: endpoint no longer requires an array of IDs.
+        // The service will approve all remaining 'not_started' keywords for the workflow.
         const result = await processBulkSubtopicApproval(
             workflowId,
-            body.approvedKeywordIds,
             request.headers
         )
 
@@ -27,9 +22,10 @@ export async function POST(
             )
         }
 
-        return NextResponse.redirect(
-            new URL('/dashboard/articles', request.url)
-        )
+        return NextResponse.json({
+            success: true,
+            message: result.message
+        })
     } catch (err: any) {
         console.error('Bulk subtopic approval error:', err)
 

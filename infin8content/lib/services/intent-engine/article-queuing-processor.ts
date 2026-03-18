@@ -87,7 +87,7 @@ export async function queueArticlesForWorkflow(
     .from('keywords')
     .select('id, keyword, subtopics')
     .eq('workflow_id', workflowId)
-    .eq('article_status', 'not_started')
+    .eq('article_status', 'ready')
 
   if (keywordsResult.error) {
     throw new Error(`Failed to fetch approved keywords: ${keywordsResult.error.message}`)
@@ -100,7 +100,14 @@ export async function queueArticlesForWorkflow(
   }>
 
   if (!keywords || keywords.length === 0) {
-    throw new Error('No approved keywords available for article generation')
+    // No approved keywords to process — return gracefully
+    return {
+      workflow_id: workflowId,
+      articles_created: 0,
+      articles: [],
+      workflow_state: workflow.state as WorkflowState,
+      message: 'No approved keywords available for article generation'
+    }
   }
 
   let queuedCount = 0
@@ -169,7 +176,7 @@ export async function queueArticlesForWorkflow(
           continue
         }
 
-        // Update keyword article_status to 'in_progress'
+        // Update keyword article_status to 'draft'
         const { error: updateError } = await supabase
           .from('keywords')
           .update({
@@ -177,7 +184,7 @@ export async function queueArticlesForWorkflow(
             updated_at: new Date().toISOString()
           })
           .eq('id', keyword.id)
-          .eq('article_status', 'not_started')
+          .eq('article_status', 'ready')
 
         if (updateError) {
           console.error(`Failed to update keyword status for "${keyword.keyword}":`, updateError)
