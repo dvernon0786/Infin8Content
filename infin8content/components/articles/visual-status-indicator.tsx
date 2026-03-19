@@ -16,7 +16,7 @@ import './visual-status-indicator.css';
 interface VisualStatusIndicatorProps {
   status: ArticleStatus;
   compact?: boolean;
-  hideStatuses?: string[];
+  hideStatuses?: ArticleStatus[];
 }
 
 export function VisualStatusIndicator({
