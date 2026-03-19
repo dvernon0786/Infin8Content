@@ -11,11 +11,11 @@ import { generateContent, type OpenRouterMessage } from '../openrouter/openroute
 
 // Forbidden header prefixes are applied deterministically during schema parsing
 // so the sanitization runs for both primary and fallback model outputs.
-const FORBIDDEN_HEADER_PREFIXES = [
+const FORBIDDEN_HEADER_PREFIXES: RegExp[] = [
     /^how do\s+/i,
     /^how to use\s+/i,
     /^how to\s+/i,
-    /^what (is|are)\s+/i,
+    /^what(?: is| are)?\s+/i,
     /^why\s+/i,
     /^choose\s+/i,
     /^find\s+/i,
@@ -25,31 +25,32 @@ const FORBIDDEN_HEADER_PREFIXES = [
 /**
  * STRICT PLANNER SCHEMA (Per Phase 4 Spec)
  */
+const SectionSchema = z.object({
+    section_type: z.enum(['introduction', 'h2', 'h3', 'conclusion', 'faq']),
+    header: z.string(),
+    supporting_points: z.array(z.string()),
+    research_questions: z.array(z.string()),
+    supporting_elements: z.string(),
+    estimated_words: z.number().min(80).max(500)
+})
+
 export const PlannerSchema = z.object({
     article_title: z.string(),
     content_style: z.enum(['informative', 'listicle']),
     target_keyword: z.string(),
     semantic_keywords: z.array(z.string()).min(5).max(12),
-    article_structure: z.array(
-        z.object({
-            section_type: z.enum(['introduction', 'h2', 'h3', 'conclusion', 'faq']),
-            header: z.string(),
-            supporting_points: z.array(z.string()),
-            research_questions: z.array(z.string()),
-            supporting_elements: z.string(),
-            estimated_words: z.number().min(80).max(1500)
-        })
-    ),
+    article_structure: z.array(SectionSchema),
     total_estimated_words: z.number()
 }).transform(plan => ({
     ...plan,
-    article_structure: plan.article_structure.map((section: any) => {
+    article_structure: plan.article_structure.map(section => {
         const sanitizedHeader = FORBIDDEN_HEADER_PREFIXES.reduce(
             (h: string, pattern: RegExp) => h.replace(pattern, ''),
             (section.header || '')
         ).trim()
 
-        const finalHeader = sanitizedHeader || section.header || 'Section'
+        // If sanitization removes the entire header, fall back to a safe placeholder
+        const finalHeader = sanitizedHeader || 'Section'
 
         return {
             ...section,
