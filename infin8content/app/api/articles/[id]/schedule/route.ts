@@ -87,6 +87,14 @@ export async function POST(
 
     const plan = ((orgData as any).plan || 'trial').toLowerCase() as PlanType
     const paymentStatus = (orgData as any).payment_status
+    // ── Gating: Payment Status ──────────────────────────────────────────────────
+    if (paymentStatus === 'suspended' || paymentStatus === 'past_due') {
+        return err(
+            'FORBIDDEN',
+            'Account access is restricted. Please update your billing to schedule articles.',
+            403
+        )
+    }
 
     // ── Server-side hard quota: article_generation / article_usage
     const generationLimit = PLAN_LIMITS.article_generation[plan]
@@ -95,15 +103,6 @@ export async function POST(
         return err(
             'QUOTA_EXCEEDED',
             `You have reached your monthly generation limit of ${generationLimit} articles.`,
-            403
-        )
-    }
-
-    // ── Gating: Payment Status ──────────────────────────────────────────────────
-    if (paymentStatus === 'suspended' || paymentStatus === 'past_due') {
-        return err(
-            'FORBIDDEN',
-            'Account access is restricted. Please update your billing to schedule articles.',
             403
         )
     }

@@ -207,7 +207,8 @@ function SchedulePanel({ selectedDate, isToday, draftArticles, onClose, onSucces
         let publishAtISO: string | undefined
         if (publishAt) {
             const [pubH, pubM] = publishTime.split(':').map(Number)
-            const publishDate = new Date(publishAt)
+            // Parse date-only string as local midnight to avoid timezone shifts
+            const publishDate = new Date(publishAt + 'T00:00:00')
             publishDate.setHours(pubH, pubM, 0, 0)
             publishAtISO = publishDate.toISOString()
         }
