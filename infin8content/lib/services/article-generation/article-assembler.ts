@@ -111,14 +111,7 @@ export class ArticleAssembler {
   private async loadArticle({ articleId, organizationId }: AssemblyInput) {
     const { data, error } = await this.supabaseAdmin
       .from('articles')
-      .select(`
-        id, title, slug, status, keyword, cover_image_url,
-        organizations!org_id (
-          cta_text,
-          cta_url,
-          website_url
-        )
-      `)
+      .select('id, title, slug, status, keyword, cover_image_url, org_id')
       .eq('id', articleId)
       .eq('org_id', organizationId)
       .single()
@@ -127,16 +120,18 @@ export class ArticleAssembler {
       throw new Error('Article not found or access denied')
     }
 
-    // Bug 2: Observability lock for org join
-    if (!(data as any).organizations) {
-      logger.log('article.assembly.org_join_missing', { articleId })
-    }
+    // Fetch org separately — don't let a join failure block assembly
+    const { data: orgData } = await this.supabaseAdmin
+      .from('organizations')
+      .select('cta_text, cta_url, website_url')
+      .eq('id', (data as any).org_id)
+      .single()
 
     return {
       ...data,
-      cta_text: (data as any).organizations?.cta_text ?? null,
-      cta_url: (data as any).organizations?.cta_url ?? null,
-      org_website_url: (data as any).organizations?.website_url ?? null,
+      cta_text: (orgData as any)?.cta_text ?? null,
+      cta_url: (orgData as any)?.cta_url ?? null,
+      org_website_url: (orgData as any)?.website_url ?? null,
     }
   }
 
@@ -219,7 +214,7 @@ export class ArticleAssembler {
     // 🔴 OBSERVABILITY: If 0 rows affected, it means the article wasn't found or update matched 0 rows (Race condition)
     if (!data || data.length === 0) {
       logger.log('article.assembly.persistence_noop', { articleId: args.articleId })
-      return
+      throw new Error('Article persistence noop: no rows updated')
     }
   }
 
