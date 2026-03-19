@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, CheckCircle, AlertCircle, Lock } from 'lucide-react'
+import { Loader2, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 
 interface KeywordSubtopic {
   title: string
@@ -338,7 +338,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
                       }
                       rows={3}
                     />
-
+                    
                     
                   </div>
                 )}
