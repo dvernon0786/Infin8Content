@@ -178,15 +178,23 @@ function SchedulePanel({ selectedDate, isToday, draftArticles, onClose, onSucces
 
     const minPublishDate = toDateKey(selectedDate)
 
-    // BUG 2 FIX: filter out past slots when scheduling for today
-    const availableTimeSlots = isToday
-        ? TIME_SLOTS.filter(slot => slot >= defaultGenerationTime())
-        : TIME_SLOTS
+    // BUG 2 FIX: filter out past slots when scheduling for today using actual datetimes
+    const availableTimeSlots = useMemo(() => {
+        if (!isToday) return TIME_SLOTS
+        const now = new Date()
+        return TIME_SLOTS.filter(slot => {
+            const [h, m] = slot.split(':').map(Number)
+            const slotDate = new Date(selectedDate)
+            slotDate.setHours(h, m, 0, 0)
+            return slotDate > now
+        })
+    }, [isToday, selectedDate])
 
-    // Ensure selected scheduledTime is available (e.g., defaultGenerationTime may be filtered out)
+    // Ensure selected scheduledTime is available (memoized availableTimeSlots prevents unnecessary effects)
     useEffect(() => {
         if (!availableTimeSlots.includes(scheduledTime)) {
             if (availableTimeSlots.length > 0) setScheduledTime(availableTimeSlots[0])
+            else setScheduledTime(defaultGenerationTime())
         }
     }, [availableTimeSlots, scheduledTime])
 
@@ -289,18 +297,26 @@ function SchedulePanel({ selectedDate, isToday, draftArticles, onClose, onSucces
                     <label className="block text-xs font-bold font-lato text-neutral-700 uppercase tracking-wider mb-1.5">
                         Generation Time
                     </label>
-                    <select
-                        value={scheduledTime}
-                        onChange={e => setScheduledTime(e.target.value)}
-                        className="w-full border border-neutral-200 rounded-md px-3 py-2 text-sm font-lato text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                        {availableTimeSlots.map(slot => (
-                            <option key={slot} value={slot}>{slot}</option>
-                        ))}
-                    </select>
-                    <p className="text-[11px] text-neutral-400 font-lato mt-1">
-                        Picked up within 30 minutes of this time by the scheduler.
-                    </p>
+                    {availableTimeSlots.length === 0 ? (
+                        <p className="text-sm font-lato text-neutral-500 italic">
+                            No available time slots for this date. Please choose another day.
+                        </p>
+                    ) : (
+                        <>
+                            <select
+                                value={scheduledTime}
+                                onChange={e => setScheduledTime(e.target.value)}
+                                className="w-full border border-neutral-200 rounded-md px-3 py-2 text-sm font-lato text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                {availableTimeSlots.map(slot => (
+                                    <option key={slot} value={slot}>{slot}</option>
+                                ))}
+                            </select>
+                            <p className="text-[11px] text-neutral-400 font-lato mt-1">
+                                Picked up within 30 minutes of this time by the scheduler.
+                            </p>
+                        </>
+                    )}
                 </div>
 
                 {/* Publish reminder date + time */}
@@ -446,6 +462,9 @@ export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled, a
         ? (generationLimit !== undefined ? generationLimit : scheduleLimit)
         : scheduleLimit
     const quotaExhausted = effectiveLimit !== null && effectiveLimit !== undefined && effectiveUsed >= effectiveLimit
+    const quotaMessage = (articleUsage !== undefined && generationLimit !== undefined && generationLimit !== null)
+        ? `⚠ Monthly generation limit of ${generationLimit} articles reached.`
+        : `⚠ Monthly scheduling quota reached. New articles can be scheduled from the 1st of next month.`
 
     return (
         <div className="relative bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
