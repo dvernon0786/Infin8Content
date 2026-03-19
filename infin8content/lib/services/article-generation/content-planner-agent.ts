@@ -24,7 +24,7 @@ export const PlannerSchema = z.object({
             supporting_points: z.array(z.string()),
             research_questions: z.array(z.string()),
             supporting_elements: z.string(),
-            estimated_words: z.number().min(80).max(500)
+            estimated_words: z.number().min(80).max(1500)
         })
     ),
     total_estimated_words: z.number()
@@ -254,11 +254,11 @@ Generation Config:
         }
     }
 
-    // 🚀 FALLBACK (LOW item 7)
-    console.warn('[PlannerAgent] primary model failed after 2 attempts, seeking fallback gpt-4o-mini')
+    // 🚀 FALLBACK (use an alternate model for recovery)
+    console.warn('[PlannerAgent] primary model failed after 2 attempts, seeking fallback claude')
     try {
         const response = await generateContent(messages, {
-            model: 'openai/gpt-4o-mini',
+            model: 'anthropic/claude-3.5-haiku',
             temperature: 0.3,
             maxTokens: 4000
         })
@@ -266,7 +266,7 @@ Generation Config:
         const rawJson = extractJson(response.content)
         const validated = PlannerSchema.parse(rawJson)
 
-        console.log('[PlannerAgent] Plan generated via fallback (gpt-4o-mini)')
+        console.log('[PlannerAgent] Plan generated via fallback (claude)')
         return validated
     } catch (fallbackError) {
         throw new Error(`Planner failed on all models. Last: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`)
