@@ -9,6 +9,19 @@
 import { z } from 'zod'
 import { generateContent, type OpenRouterMessage } from '../openrouter/openrouter-client'
 
+// Forbidden header prefixes are applied deterministically during schema parsing
+// so the sanitization runs for both primary and fallback model outputs.
+const FORBIDDEN_HEADER_PREFIXES = [
+    /^how do\s+/i,
+    /^how to use\s+/i,
+    /^how to\s+/i,
+    /^what (is|are)\s+/i,
+    /^why\s+/i,
+    /^choose\s+/i,
+    /^find\s+/i,
+    /^use\s+/i,
+]
+
 /**
  * STRICT PLANNER SCHEMA (Per Phase 4 Spec)
  */
@@ -28,7 +41,22 @@ export const PlannerSchema = z.object({
         })
     ),
     total_estimated_words: z.number()
-})
+}).transform(plan => ({
+    ...plan,
+    article_structure: plan.article_structure.map((section: any) => {
+        const sanitizedHeader = FORBIDDEN_HEADER_PREFIXES.reduce(
+            (h: string, pattern: RegExp) => h.replace(pattern, ''),
+            (section.header || '')
+        ).trim()
+
+        const finalHeader = sanitizedHeader || section.header || 'Section'
+
+        return {
+            ...section,
+            header: finalHeader
+        }
+    })
+}))
 
 export type PlannerAgentOutput = z.infer<typeof PlannerSchema>
 
@@ -241,35 +269,8 @@ Generation Config:
             const rawJson = extractJson(response.content)
             const validated = PlannerSchema.parse(rawJson)
 
-            // Post-parse sanitization: strip disallowed header prefixes that
-            // the LLM may occasionally ignore. This enforces header format
-            // deterministically and avoids relying solely on prompt compliance.
-            const FORBIDDEN_HEADER_PREFIXES = [
-                /^how to use\s+/i,
-                /^how to\s+/i,
-                /^what (is|are)\s+/i,
-                /^why\s+/i,
-                /^choose\s+/i,
-                /^find\s+/i,
-                /^use\s+/i,
-            ]
-
-            const sanitized = {
-                ...validated,
-                article_structure: validated.article_structure.map(section => ({
-                    ...section,
-                    header: FORBIDDEN_HEADER_PREFIXES.reduce(
-                        (h, pattern) => h.replace(pattern, ''),
-                        section.header
-                    ).trim()
-                }))
-            }
-
-            // Re-validate to ensure sanitization didn't break the schema
-            const revalidated = PlannerSchema.parse(sanitized)
-
-            console.log('[PlannerAgent] Plan generated, sanitized, and validated successfully')
-            return revalidated
+            console.log('[PlannerAgent] Plan generated and validated successfully')
+            return validated
 
         } catch (error) {
             lastError = error
