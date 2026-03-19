@@ -39,7 +39,7 @@ export const generateArticle = inngest.createFunction(
     id: 'article/generate',
     concurrency: {
       limit: 1,
-      key: 'event.data.organizationId'
+      key: 'event.data.articleId'
     }
   },
   { event: 'article/generate' },
@@ -51,7 +51,7 @@ export const generateArticle = inngest.createFunction(
     /* 1. Load Article & Organization context            */
     /* -------------------------------------------------- */
 
-    const { article, organization, workflow } = await step.run('load-context', async () => {
+    const { article, organization, workflow, orgId } = await step.run('load-context', async () => {
       // Load Article
       const { data: artData, error: artError } = await supabase
         .from('articles')
@@ -100,7 +100,7 @@ export const generateArticle = inngest.createFunction(
         .eq('id', (article.intent_workflow_id as string))
         .single()
 
-      return { article, organization: orgData, workflow: wfData }
+      return { article, organization: orgData, workflow: wfData, orgId: (artData as any).org_id }
     })
 
     if ((article as any).skipped) return { success: true, skipped: true }
@@ -437,7 +437,7 @@ export const generateArticle = inngest.createFunction(
 
         const result = await runInternalLinking({
           articleId,
-          orgId: (article as any).organization_id ?? event.data.organizationId,
+          orgId: orgId ?? event.data.organizationId,
           currentKeyword: plan.target_keyword,
           maxLinks: generationConfig.num_internal_links ?? 5,
           supabase,
@@ -465,7 +465,7 @@ export const generateArticle = inngest.createFunction(
         // 1. Collate sections and write JSONB snapshot projection
         await assembler.assemble({
           articleId,
-          organizationId: (article as any).organization_id ?? event.data.organizationId
+          organizationId: orgId ?? event.data.organizationId
         })
       })
 
@@ -475,7 +475,7 @@ export const generateArticle = inngest.createFunction(
           const { generateSchemaMarkup } = await import('@/lib/services/article-generation/schema-generator')
           const result = await generateSchemaMarkup({
             articleId,
-            orgId: (article as any).organization_id ?? event.data.organizationId,
+            orgId: orgId ?? event.data.organizationId,
             supabase,
           } as any)
           console.log('[SchemaMarkup] Result:', result)
@@ -493,7 +493,7 @@ export const generateArticle = inngest.createFunction(
           const { scoreSEO } = await import('@/lib/services/article-generation/seo-scoring-service')
           const result = await scoreSEO({
             articleId,
-            orgId: (article as any).organization_id ?? event.data.organizationId,
+            orgId: orgId ?? event.data.organizationId,
             supabase,
           } as any)
           console.log('[SEOScore] Result:', result)
@@ -572,16 +572,16 @@ export const generateArticle = inngest.createFunction(
       // Mark article as failed
       await step.run('mark-article-failed', async () => {
         await supabase
-          .from('articles')
-          .update({
-            status: 'failed',
-            error_details: {
-              message: pipelineError instanceof Error ? pipelineError.message : String(pipelineError),
-              failed_at: new Date().toISOString(),
-            },
-          })
-          .eq('id', articleId)
-          .in('status', ['processing', 'queued']) // 🔒 NB_FAIL_GUARD FIX: Prevent overwriting 'completed'
+            .from('articles')
+            .update({
+              status: 'failed',
+              error_details: {
+                message: pipelineError instanceof Error ? pipelineError.message : String(pipelineError),
+                failed_at: new Date().toISOString(),
+              },
+            })
+            .eq('id', articleId)
+              .in('status', ['processing', 'queued', 'draft']) // 🔒 NB_FAIL_GUARD FIX: Prevent overwriting 'completed'
       })
 
       throw pipelineError
@@ -739,7 +739,7 @@ export const generateArticleImages = inngest.createFunction(
       const assembler = new ArticleAssembler()
       await assembler.assemble({
         articleId,
-        organizationId: article.org_id,
+        organizationId: (article as any).org_id,
         allowReassembly: true   // ← bypass status guard for post-completion injection
       })
     })

@@ -119,7 +119,7 @@ export class ArticleAssembler {
   private async loadArticle({ articleId, organizationId }: AssemblyInput) {
     const { data, error } = await this.supabaseAdmin
       .from('articles')
-      .select('id, title, slug, status, keyword, cover_image_url, org_id')
+      .select('id, title, status, keyword, cover_image_url, org_id')
       .eq('id', articleId)
       .eq('org_id', organizationId)
       .single()
@@ -282,7 +282,15 @@ export class ArticleAssembler {
 
     const articleCanonicalUrl = (() => {
       const base = ((article as any).org_website_url || '').replace(/\/$/, '')
-      const slug = (article as any).slug || ''
+      const derive = (input: any) => (input || '')
+        .toString()
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .slice(0, 120)
+
+      const slug = (article as any).slug || derive((article as any).keyword) || derive((article as any).title)
       if (!base || !slug) return null
       return `${base}/blog/${slug}`
     })()
