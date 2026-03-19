@@ -136,10 +136,11 @@ export class ArticleAssembler {
       .maybeSingle()
 
     if (orgError) {
-      logger.log('article.assembly.org_load_error', {
+      logger.error('article.assembly.org_load_error', {
         articleId,
         orgId: (data as any).org_id,
-        error: (orgError as any)?.message ?? String(orgError),
+        error: orgError,
+        errorMessage: (orgError as any)?.message ?? String(orgError),
       })
     }
 
@@ -229,7 +230,7 @@ export class ArticleAssembler {
 
     // 🔴 OBSERVABILITY: If 0 rows affected, it means the article wasn't found or update matched 0 rows (Race condition)
     if (!data || data.length === 0) {
-      logger.log('article.assembly.persistence_noop', { articleId: args.articleId })
+      logger.error('article.assembly.persistence_noop', { articleId: args.articleId })
       throw new ArticlePersistenceNoopError(args.articleId)
     }
   }

@@ -33,6 +33,10 @@ export const DEFAULT_RETRY_POLICY: RetryPolicy = {
  * - Validation/schema errors
  */
 export function isRetryableError(error: unknown): boolean {
+  // Honor explicit retryable flag on error objects when present
+  if (error && typeof (error as any).retryable === 'boolean') {
+    return !!(error as any).retryable
+  }
   // Network timeout
   if (error instanceof Error) {
     const message = error.message.toLowerCase()
