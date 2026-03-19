@@ -26,7 +26,7 @@ export function VisualStatusIndicator({
 }: VisualStatusIndicatorProps) {
   const normalizedStatus = status?.toLowerCase() as ArticleStatus;
 
-  if (hideStatuses?.includes(normalizedStatus)) return null
+  if (hideStatuses?.includes(normalizedStatus)) return null;
 
   // Fallback map to prevent crashes on unknown statuses
   const statusConfig = statusConfigs[normalizedStatus] || {
