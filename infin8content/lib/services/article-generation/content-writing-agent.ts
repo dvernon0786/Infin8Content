@@ -335,16 +335,35 @@ export async function runContentWritingAgent(
 
     // Remove common leading indentation from the assembled template so the
     // raw prompt sent to the LLM has no unexpected leading spaces.
+    // Use the indent of the first non-empty line as the base indent and
+    // strip that only from lines that begin with that prefix. This preserves
+    // embedded pretty-printed content (e.g., JSON) that intentionally starts
+    // at column 0.
     const dedent = (s: string) => {
       const lines = s.split('\n');
       // trim leading/trailing blank lines
       while (lines.length && lines[0].trim() === '') lines.shift();
       while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
-      const indents = lines
-        .filter(l => l.trim().length > 0)
-        .map(l => l.match(/^\s*/)?.[0].length ?? 0);
-      const minIndent = indents.length ? Math.min(...indents) : 0;
-      return lines.map(l => l.slice(minIndent)).join('\n');
+
+      // Determine the base indent from the first non-empty line.
+      let baseIndent: number | undefined;
+      for (const line of lines) {
+        if (line.trim().length === 0) continue;
+        const match = line.match(/^\s*/);
+        baseIndent = match ? match[0].length : 0;
+        break;
+      }
+
+      if (!baseIndent) {
+        return lines.join('\n');
+      }
+
+      const prefix = ' '.repeat(baseIndent);
+      // Strip the base indent only from lines that start with that prefix,
+      // so embedded content (e.g., pretty-printed JSON) keeps its own indent.
+      return lines
+        .map(line => (line.startsWith(prefix) ? line.slice(baseIndent) : line))
+        .join('\n');
     }
 
     userMessage = dedent(userMessage).trim();
