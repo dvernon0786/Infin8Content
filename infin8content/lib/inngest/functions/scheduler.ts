@@ -5,7 +5,7 @@ import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 
 /**
  * Article Scheduler Worker
- * Runs every hour to pick up ONE scheduled article.
+ * Runs every 30 minutes to pick up ONE scheduled article per run.
  * Enforces organizational quotas and avoids duplicate triggering.
  */
 export const articleScheduler = inngest.createFunction(
@@ -13,7 +13,7 @@ export const articleScheduler = inngest.createFunction(
         id: 'article-scheduler',
         concurrency: { limit: 1 }
     },
-    { cron: '0 * * * *' },
+    { cron: '*/30 * * * *' },
     async ({ step }) => {
         const supabase = createServiceRoleClient()
 

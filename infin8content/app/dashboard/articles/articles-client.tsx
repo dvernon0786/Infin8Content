@@ -57,7 +57,12 @@ function ArticlesKPI({ articles }: { articles: DashboardArticle[] }) {
   )
 }
 
-function ArticlesClient({ orgId, plan }: { orgId: string; plan: string }) {
+function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
+  orgId: string
+  plan: string
+  articleUsage?: number
+  generationLimit?: number | null
+}) {
   const router = useRouter();
 
   const [recentlyUpdatedId, setRecentlyUpdatedId] = useState<string | null>(null);
@@ -150,12 +155,14 @@ function ArticlesClient({ orgId, plan }: { orgId: string; plan: string }) {
       {/* Article Schedule */}
       <div className="mb-6">
         <ScheduleGuard plan={plan}>
-          <ScheduleCalendar
-            orgId={orgId}
-            plan={plan}
-            articles={articles}
-            onScheduled={refresh}
-          />
+            <ScheduleCalendar
+              orgId={orgId}
+              plan={plan}
+              articles={articles}
+              onScheduled={refresh}
+              articleUsage={articleUsage}
+              generationLimit={generationLimit}
+            />
         </ScheduleGuard>
       </div>
 
