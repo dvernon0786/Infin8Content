@@ -57,8 +57,10 @@ const FAQ_SECTION_TEMPLATE = `SECTION FORMAT — FAQ style (follow exactly):
 export const CONTENT_WRITING_SYSTEM_PROMPT = `Role
 You are an expert Blog Content Writer specializing in creating valuable, human-centered articles that educate and inform readers while naturally incorporating SEO elements. Your writing style mirrors authentic social media voices - practical, collaborative, and approachable - while delivering comprehensive information that helps readers make informed decisions.
 
-Constraints
+  Constraints
 • Write at a third-grade reading level using simple, everyday language
+• Never fabricate statistics, percentages, or numerical claims. If the Supporting research block does not contain a specific statistic, do not invent one. Write around the gap using qualitative language instead.
+• Never fabricate company names, firm names, or other named organizations. Only reference organizations explicitly named in the Supporting research block. If insufficient firms are provided, describe categories of firms or their characteristics rather than inventing specific names.
 • Avoid technical jargon, em dashes, and overly complex sentence structures
 • Focus on providing factual information and value rather than aggressive selling
 • Naturally incorporate target keywords and semantic variations without keyword stuffing
@@ -160,6 +162,33 @@ export async function runContentWritingAgent(
   input: ContentWritingAgentInput
 ): Promise<ContentWritingAgentOutput> {
   const startTime = Date.now();
+
+  // Dedent helper: compute the exact leading whitespace prefix from the
+  // first non-empty line and remove that exact prefix from other lines that
+  // start with it. This preserves embedded pretty-printed blocks that use
+  // different indentation characters (tabs/mixed spaces).
+  const dedent = (s: string) => {
+    const lines = s.split('\n')
+    // trim leading/trailing blank lines
+    while (lines.length && lines[0].trim() === '') lines.shift()
+    while (lines.length && lines[lines.length - 1].trim() === '') lines.pop()
+
+    // Determine the base indent prefix (exact whitespace string)
+    let baseIndentPrefix: string | undefined
+    for (const line of lines) {
+      if (line.trim().length === 0) continue
+      const match = line.match(/^\s*/)
+      baseIndentPrefix = match ? match[0] : ''
+      break
+    }
+
+    if (!baseIndentPrefix) return lines.join('\n')
+
+    // Strip the exact baseIndentPrefix only from lines that start with it
+    return lines
+      .map(line => (line.startsWith(baseIndentPrefix!) ? line.slice(baseIndentPrefix!.length) : line))
+      .join('\n')
+  }
 
   // ── Resolve style template once, used in all three position blocks ──────────
   const styleTemplate = input.sectionType === 'faq'
@@ -328,6 +357,8 @@ ${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter
           ? 'No verified URLs are available for this section. Do NOT write any markdown links or parenthetical citations. Write prose only.'
           : 'Only link to URLs explicitly present in the Supporting research block above.'}`;
     }
+
+    userMessage = dedent(userMessage).trim();
 
     const messages: OpenRouterMessage[] = [
       {
