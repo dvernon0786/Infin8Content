@@ -28,7 +28,7 @@
  *   </ScheduleGuard>
  */
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, X, CalendarClock, Loader2 } from 'lucide-react'
 import { PLAN_LIMITS, type PlanType } from '@/lib/config/plan-limits'
 import type { DashboardArticle } from '@/lib/types/dashboard.types'
@@ -42,6 +42,10 @@ interface ScheduleCalendarProps {
     articles: DashboardArticle[]
     /** Called after a successful schedule so the parent can refresh */
     onScheduled?: () => void
+    /** org.article_usage — manual + scheduled generations */
+    articleUsage?: number
+    /** PLAN_LIMITS.article_generation[plan] */
+    generationLimit?: number | null
 }
 
 interface DayInfo {
@@ -94,15 +98,26 @@ const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 // ── Quota Badge ──────────────────────────────────────────────────────────────
 
-function QuotaBadge({ used, limit }: { used: number; limit: number | null }) {
-    if (limit === null) {
+function QuotaBadge({ scheduleUsed, scheduleLimit, articleUsage, generationLimit }: {
+    scheduleUsed: number
+    scheduleLimit: number | null
+    articleUsage?: number
+    generationLimit?: number | null
+}) {
+    // Prefer article_usage / article_generation when available — that's the binding limit.
+    const used  = articleUsage !== undefined ? articleUsage : scheduleUsed
+    const limit = articleUsage !== undefined
+        ? (generationLimit !== undefined ? generationLimit : scheduleLimit)
+        : scheduleLimit
+
+    if (limit === null || limit === undefined) {
         return (
             <span className="text-[11px] font-lato font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
                 Unlimited
             </span>
         )
     }
-    const pct = Math.min(100, Math.round((used / limit) * 100))
+    const pct    = Math.min(100, Math.round((used / limit) * 100))
     const danger = pct >= 90
     return (
         <div className="flex items-center gap-2">
@@ -113,7 +128,7 @@ function QuotaBadge({ used, limit }: { used: number; limit: number | null }) {
                 />
             </div>
             <span className={`text-[11px] font-lato font-bold ${danger ? 'text-amber-600' : 'text-neutral-500'}`}>
-                {used} / {limit} this month
+                {used} / {limit} articles this month
             </span>
         </div>
     )
@@ -147,12 +162,13 @@ function defaultGenerationTime(): string {
 
 interface SchedulePanelProps {
     selectedDate: Date
+    isToday: boolean
     draftArticles: DashboardArticle[]
     onClose: () => void
     onSuccess: () => void
 }
 
-function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: SchedulePanelProps) {
+function SchedulePanel({ selectedDate, isToday, draftArticles, onClose, onSuccess }: SchedulePanelProps) {
     const [selectedArticleId, setSelectedArticleId] = useState('')
     const [scheduledTime, setScheduledTime] = useState(defaultGenerationTime)
     const [publishAt, setPublishAt] = useState('')
@@ -161,6 +177,18 @@ function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: Sche
     const [error, setError] = useState<string | null>(null)
 
     const minPublishDate = toDateKey(selectedDate)
+
+    // BUG 2 FIX: filter out past slots when scheduling for today
+    const availableTimeSlots = isToday
+        ? TIME_SLOTS.filter(slot => slot >= defaultGenerationTime())
+        : TIME_SLOTS
+
+    // Ensure selected scheduledTime is available (e.g., defaultGenerationTime may be filtered out)
+    useEffect(() => {
+        if (!availableTimeSlots.includes(scheduledTime)) {
+            if (availableTimeSlots.length > 0) setScheduledTime(availableTimeSlots[0])
+        }
+    }, [availableTimeSlots, scheduledTime])
 
     async function handleSchedule() {
         if (!selectedArticleId) {
@@ -265,12 +293,12 @@ function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: Sche
                         onChange={e => setScheduledTime(e.target.value)}
                         className="w-full border border-neutral-200 rounded-md px-3 py-2 text-sm font-lato text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                        {TIME_SLOTS.map(slot => (
+                        {availableTimeSlots.map(slot => (
                             <option key={slot} value={slot}>{slot}</option>
                         ))}
                     </select>
                     <p className="text-[11px] text-neutral-400 font-lato mt-1">
-                        Article generation will start at this time. Picked up within 1 hour by the scheduler.
+                        Picked up within 30 minutes of this time by the scheduler.
                     </p>
                 </div>
 
@@ -325,7 +353,7 @@ function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: Sche
 
 // ── Main Component ───────────────────────────────────────────────────────────
 
-export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled }: ScheduleCalendarProps) {
+export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled, articleUsage, generationLimit }: ScheduleCalendarProps) {
     const today = useMemo(() => new Date(), []) // NOTE: frozen at mount — remount to reflect a new calendar day
     const [viewYear, setViewYear] = useState(today.getFullYear())
     const [viewMonth, setViewMonth] = useState(today.getMonth())
@@ -387,7 +415,7 @@ export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled }:
             date,
             isCurrentMonth: date.getMonth() === viewMonth,
             isToday: toDateKey(date) === todayKey,
-            isPast: date <= new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+            isPast: date < new Date(today.getFullYear(), today.getMonth(), today.getDate()),
             scheduledArticles: scheduledByDay.get(toDateKey(date)) ?? [],
             publishReminderArticles: publishByDay.get(toDateKey(date)) ?? [],
         }))
@@ -412,7 +440,11 @@ export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled }:
         )
     }
 
-    const quotaExhausted = scheduleLimit !== null && monthlyScheduledCount >= scheduleLimit
+    const effectiveUsed  = articleUsage !== undefined ? articleUsage : monthlyScheduledCount
+    const effectiveLimit = articleUsage !== undefined
+        ? (generationLimit !== undefined ? generationLimit : scheduleLimit)
+        : scheduleLimit
+    const quotaExhausted = effectiveLimit !== null && effectiveLimit !== undefined && effectiveUsed >= effectiveLimit
 
     return (
         <div className="relative bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
@@ -423,7 +455,12 @@ export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled }:
                         Article Schedule
                     </h2>
                     <div className="mt-1">
-                        <QuotaBadge used={monthlyScheduledCount} limit={scheduleLimit} />
+                        <QuotaBadge
+                            scheduleUsed={monthlyScheduledCount}
+                            scheduleLimit={scheduleLimit}
+                            articleUsage={articleUsage}
+                            generationLimit={generationLimit}
+                        />
                     </div>
                 </div>
 
@@ -538,6 +575,7 @@ export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled }:
             {selectedDate && (
                 <SchedulePanel
                     selectedDate={selectedDate}
+                    isToday={toDateKey(selectedDate) === toDateKey(today)}
                     draftArticles={draftArticles}
                     onClose={() => setSelectedDate(null)}
                     onSuccess={() => {

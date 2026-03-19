@@ -1,6 +1,7 @@
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { redirect } from 'next/navigation'
 import ArticlesClient from './articles-client'
+import { PLAN_LIMITS, type PlanType } from '@/lib/config/plan-limits'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -12,6 +13,10 @@ export default async function ArticlesPage() {
   if (!currentUser || !currentUser.org_id) {
     redirect('/login')
   }
+
+  const plan = ((currentUser.organizations as any)?.plan || 'trial').toLowerCase() as PlanType
+  const generationLimit = PLAN_LIMITS.article_generation[plan] ?? null
+  const articleUsage = (currentUser.organizations as any)?.article_usage ?? 0
 
   return (
     <>
@@ -31,7 +36,9 @@ export default async function ArticlesPage() {
         {/* Search and Filters - Client Component */}
         <ArticlesClient
           orgId={currentUser.org_id}
-          plan={currentUser.organizations?.plan || 'trial'}
+          plan={plan}
+          articleUsage={articleUsage}
+          generationLimit={generationLimit}
         />
 
       </div>

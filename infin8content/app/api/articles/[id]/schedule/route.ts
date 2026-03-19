@@ -77,7 +77,7 @@ export async function POST(
     // ── Fetch org plan ──────────────────────────────────────────────────────────
     const { data: orgData, error: orgError } = await (supabase as any)
         .from('organizations')
-        .select('id, plan, payment_status')
+        .select('id, plan, payment_status, article_usage')
         .eq('id', currentUser.org_id)
         .single()
 
@@ -87,6 +87,17 @@ export async function POST(
 
     const plan = ((orgData as any).plan || 'trial').toLowerCase() as PlanType
     const paymentStatus = (orgData as any).payment_status
+
+    // ── Server-side hard quota: article_generation / article_usage
+    const generationLimit = PLAN_LIMITS.article_generation[plan]
+    const orgArticleUsage = (orgData as any).article_usage ?? 0
+    if (generationLimit !== null && orgArticleUsage >= generationLimit) {
+        return err(
+            'QUOTA_EXCEEDED',
+            `You have reached your monthly generation limit of ${generationLimit} articles.`,
+            403
+        )
+    }
 
     // ── Gating: Payment Status ──────────────────────────────────────────────────
     if (paymentStatus === 'suspended' || paymentStatus === 'past_due') {
