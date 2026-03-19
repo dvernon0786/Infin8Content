@@ -66,6 +66,7 @@ You are an expert blog article planner specializing in creating detailed, resear
 Constraints
  Always create outlines that match the specified content style (informative or listicle)
  Every section in article_structure must cover a unique concept.
+ Section headers must be declarative noun phrases or short title-case statements (e.g. "Key Services for Growing Businesses"). Never start a header with "How to", "How do", "What is", "Why", or any question word. Never start a header with an instruction verb like "Use", "Choose", "Find".
  Never create two sections with semantically similar headers (e.g. "Benefits of X" and "Top Benefits of X"). If two planned sections overlap, merge them into one.
  Include 2–3 specific supporting points for each header that guide content creation
  Generate actionable research questions for each section to ensure thorough coverage
@@ -240,8 +241,35 @@ Generation Config:
             const rawJson = extractJson(response.content)
             const validated = PlannerSchema.parse(rawJson)
 
-            console.log('[PlannerAgent] Plan generated and validated successfully')
-            return validated
+            // Post-parse sanitization: strip disallowed header prefixes that
+            // the LLM may occasionally ignore. This enforces header format
+            // deterministically and avoids relying solely on prompt compliance.
+            const FORBIDDEN_HEADER_PREFIXES = [
+                /^how to use\s+/i,
+                /^how to\s+/i,
+                /^what (is|are)\s+/i,
+                /^why\s+/i,
+                /^choose\s+/i,
+                /^find\s+/i,
+                /^use\s+/i,
+            ]
+
+            const sanitized = {
+                ...validated,
+                article_structure: validated.article_structure.map(section => ({
+                    ...section,
+                    header: FORBIDDEN_HEADER_PREFIXES.reduce(
+                        (h, pattern) => h.replace(pattern, ''),
+                        section.header
+                    ).trim()
+                }))
+            }
+
+            // Re-validate to ensure sanitization didn't break the schema
+            const revalidated = PlannerSchema.parse(sanitized)
+
+            console.log('[PlannerAgent] Plan generated, sanitized, and validated successfully')
+            return revalidated
 
         } catch (error) {
             lastError = error
