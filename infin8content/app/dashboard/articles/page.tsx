@@ -14,7 +14,9 @@ export default async function ArticlesPage() {
     redirect('/login')
   }
 
-  const plan = ((currentUser.organizations as any)?.plan || 'trial').toLowerCase() as PlanType
+  const rawPlan = ((currentUser.organizations as any)?.plan || 'trial').toLowerCase()
+  const defaultPlan: PlanType = 'trial'
+  const plan: PlanType = rawPlan in PLAN_LIMITS.article_generation ? (rawPlan as PlanType) : defaultPlan
   const generationLimit = PLAN_LIMITS.article_generation[plan] ?? null
   const articleUsage = (currentUser.organizations as any)?.article_usage ?? 0
 
