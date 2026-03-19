@@ -5,6 +5,14 @@ import { AssemblyInput, AssemblyOutput } from '@/types/article'
 
 const logger = createLogger('ArticleAssembly')
 
+class ArticlePersistenceNoopError extends Error {
+  public readonly retryable = false
+  constructor(articleId: string) {
+    super(`Article persistence noop: no rows updated for articleId=${articleId}`)
+    this.name = 'ArticlePersistenceNoopError'
+  }
+}
+
 /**
  * ArticleAssembler
  * 
@@ -121,11 +129,20 @@ export class ArticleAssembler {
     }
 
     // Fetch org separately — don't let a join failure block assembly
-    const { data: orgData } = await this.supabaseAdmin
+    const { data: orgData, error: orgError } = await this.supabaseAdmin
       .from('organizations')
       .select('cta_text, cta_url, website_url')
       .eq('id', (data as any).org_id)
-      .single()
+      .maybeSingle()
+
+    if (orgError) {
+      logger.error('article.assembly.org_load_error', {
+        articleId,
+        orgId: (data as any).org_id,
+        error: orgError,
+        errorMessage: (orgError as any)?.message ?? String(orgError),
+      })
+    }
 
     return {
       ...data,
@@ -213,8 +230,8 @@ export class ArticleAssembler {
 
     // 🔴 OBSERVABILITY: If 0 rows affected, it means the article wasn't found or update matched 0 rows (Race condition)
     if (!data || data.length === 0) {
-      logger.log('article.assembly.persistence_noop', { articleId: args.articleId })
-      throw new Error('Article persistence noop: no rows updated')
+      logger.error('article.assembly.persistence_noop', { articleId: args.articleId })
+      throw new ArticlePersistenceNoopError(args.articleId)
     }
   }
 
