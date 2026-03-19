@@ -121,6 +121,30 @@ function QuotaBadge({ used, limit }: { used: number; limit: number | null }) {
 
 // ── Schedule Panel (inline modal) ────────────────────────────────────────────
 
+// 30-minute time slot array ["00:00", "00:30", ... "23:30"] — generated once at module level
+function getTimeSlots(): string[] {
+    const slots: string[] = []
+    for (let h = 0; h < 24; h++) {
+        for (const m of [0, 30]) {
+            slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
+        }
+    }
+    return slots
+}
+const TIME_SLOTS = getTimeSlots()
+
+// Detected local IANA timezone — e.g. "Australia/Sydney"
+const LOCAL_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+// Default generation time: the next rounded 30-min slot from now
+function defaultGenerationTime(): string {
+    const now = new Date()
+    const mins = now.getMinutes()
+    const roundedMins = mins < 30 ? 30 : 0
+    const roundedHours = mins < 30 ? now.getHours() : (now.getHours() + 1) % 24
+    return `${String(roundedHours).padStart(2, '0')}:${String(roundedMins).padStart(2, '0')}`
+}
+
 interface SchedulePanelProps {
     selectedDate: Date
     draftArticles: DashboardArticle[]
@@ -130,7 +154,9 @@ interface SchedulePanelProps {
 
 function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: SchedulePanelProps) {
     const [selectedArticleId, setSelectedArticleId] = useState('')
+    const [scheduledTime, setScheduledTime] = useState(defaultGenerationTime)
     const [publishAt, setPublishAt] = useState('')
+    const [publishTime, setPublishTime] = useState('09:00')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -144,9 +170,19 @@ function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: Sche
         setError(null)
         setLoading(true)
 
-        // Set scheduled_at to noon UTC — safely in the future for all UTC+ timezones.
+        // Build scheduled_at in LOCAL time — browser converts to UTC via toISOString()
+        const [schH, schM] = scheduledTime.split(':').map(Number)
         const scheduledAt = new Date(selectedDate)
-        scheduledAt.setUTCHours(12, 0, 0, 0)
+        scheduledAt.setHours(schH, schM, 0, 0)
+
+        // Build publish_at in LOCAL time if provided
+        let publishAtISO: string | undefined
+        if (publishAt) {
+            const [pubH, pubM] = publishTime.split(':').map(Number)
+            const publishDate = new Date(publishAt)
+            publishDate.setHours(pubH, pubM, 0, 0)
+            publishAtISO = publishDate.toISOString()
+        }
 
         try {
             const res = await fetch(`/api/articles/${selectedArticleId}/schedule`, {
@@ -154,7 +190,7 @@ function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: Sche
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     scheduled_at: scheduledAt.toISOString(),
-                    ...(publishAt ? { publish_at: new Date(publishAt + 'T09:00:00Z').toISOString() } : {}),
+                    ...(publishAtISO ? { publish_at: publishAtISO } : {}),
                 }),
             })
 
@@ -162,11 +198,10 @@ function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: Sche
 
             if (!json.success) {
                 setError(json.error || 'Failed to schedule article.')
-                setLoading(false) // Must call before possible unmount
+                setLoading(false)
                 return
             }
 
-            // Success: Call callbacks which might unmount this panel
             onSuccess()
             onClose()
         } catch {
@@ -183,7 +218,7 @@ function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: Sche
                         Schedule for {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                     </h3>
                     <p className="font-lato text-neutral-500 text-xs mt-0.5">
-                        Generation will trigger during this day (noon UTC).
+                        Times are in your local timezone ({LOCAL_TZ}).
                     </p>
                 </div>
                 <button
@@ -220,21 +255,52 @@ function SchedulePanel({ selectedDate, draftArticles, onClose, onSuccess }: Sche
                     )}
                 </div>
 
-                {/* Optional publish reminder */}
+                {/* Generation time */}
                 <div>
                     <label className="block text-xs font-bold font-lato text-neutral-700 uppercase tracking-wider mb-1.5">
-                        Publish Reminder Date
+                        Generation Time
+                    </label>
+                    <select
+                        value={scheduledTime}
+                        onChange={e => setScheduledTime(e.target.value)}
+                        className="w-full border border-neutral-200 rounded-md px-3 py-2 text-sm font-lato text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        {TIME_SLOTS.map(slot => (
+                            <option key={slot} value={slot}>{slot}</option>
+                        ))}
+                    </select>
+                    <p className="text-[11px] text-neutral-400 font-lato mt-1">
+                        Article generation will start at this time. Picked up within 1 hour by the scheduler.
+                    </p>
+                </div>
+
+                {/* Publish reminder date + time */}
+                <div>
+                    <label className="block text-xs font-bold font-lato text-neutral-700 uppercase tracking-wider mb-1.5">
+                        Publish Reminder
                         <span className="ml-1.5 text-neutral-400 font-normal normal-case tracking-normal">(optional)</span>
                     </label>
-                    <input
-                        type="date"
-                        value={publishAt}
-                        min={minPublishDate}
-                        onChange={e => setPublishAt(e.target.value)}
-                        className="w-full border border-neutral-200 rounded-md px-3 py-2 text-sm font-lato text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <div className="flex gap-2">
+                        <input
+                            type="date"
+                            value={publishAt}
+                            min={minPublishDate}
+                            onChange={e => setPublishAt(e.target.value)}
+                            className="flex-1 border border-neutral-200 rounded-md px-3 py-2 text-sm font-lato text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <select
+                            value={publishTime}
+                            onChange={e => setPublishTime(e.target.value)}
+                            disabled={!publishAt}
+                            className="w-28 border border-neutral-200 rounded-md px-2 py-2 text-sm font-lato text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-40"
+                        >
+                            {TIME_SLOTS.map(slot => (
+                                <option key={slot} value={slot}>{slot}</option>
+                            ))}
+                        </select>
+                    </div>
                     <p className="text-[11px] text-neutral-400 font-lato mt-1">
-                        We'll email you on this date to remind you to publish the draft.
+                        We'll email you at this time to remind you to publish.
                     </p>
                 </div>
 

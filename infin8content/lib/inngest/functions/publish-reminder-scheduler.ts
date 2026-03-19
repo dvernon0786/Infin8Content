@@ -24,7 +24,7 @@ export const publishReminderScheduler = inngest.createFunction(
         id: 'publish-reminder-scheduler',
         concurrency: { limit: 1 },
     },
-    { cron: '0 9 * * *' },  // 09:00 UTC daily
+    { cron: '0 * * * *' },  // every hour — matches generation scheduler
     async ({ step, logger }) => {
         const supabase = createServiceRoleClient()
 

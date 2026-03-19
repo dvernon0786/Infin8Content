@@ -113,7 +113,7 @@ export const generateArticle = inngest.createFunction(
         .from('articles')
         .update({ status: 'processing', updated_at: new Date().toISOString() })
         .eq('id', articleId)
-        .in('status', ['queued', 'failed'])
+        .in('status', ['queued', 'draft', 'failed'])
 
       if (error) throw new Error(`Status transition failed: ${error.message}`)
     })
