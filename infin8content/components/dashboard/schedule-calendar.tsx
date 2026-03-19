@@ -357,7 +357,7 @@ function SchedulePanel({ selectedDate, isToday, draftArticles, onClose, onSucces
 
                 <button
                     onClick={handleSchedule}
-                    disabled={loading || draftArticles.length === 0}
+                    disabled={loading || draftArticles.length === 0 || availableTimeSlots.length === 0}
                     className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-200 text-white disabled:text-neutral-400 font-bold font-lato text-sm py-2.5 rounded-lg transition-colors"
                 >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CalendarClock className="w-4 h-4" />}
@@ -508,7 +508,7 @@ export function ScheduleCalendar({ orgId: _orgId, plan, articles, onScheduled, a
             {/* ── Quota exhausted banner ─────────────────────────────────────────── */}
             {quotaExhausted && (
                 <div className="px-5 py-2 bg-amber-50 border-b border-amber-200 text-[12px] font-lato text-amber-700 font-semibold">
-                    ⚠ Monthly scheduling quota reached. New articles can be scheduled from the 1st of next month.
+                    {quotaMessage}
                 </div>
             )}
 

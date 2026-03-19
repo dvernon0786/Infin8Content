@@ -87,6 +87,11 @@ export async function POST(
 
     const plan = ((orgData as any).plan || 'trial').toLowerCase() as PlanType
     const paymentStatus = (orgData as any).payment_status
+
+    // Normalize/validate plan before indexing PLAN_LIMITS to avoid unexpected keys
+    const normalizedPlan: PlanType = (Object.keys(PLAN_LIMITS.article_generation) as unknown as PlanType[]).includes(plan)
+        ? plan
+        : 'trial'
     // ── Gating: Payment Status ──────────────────────────────────────────────────
     if (paymentStatus === 'suspended' || paymentStatus === 'past_due') {
         return err(
@@ -97,7 +102,7 @@ export async function POST(
     }
 
     // ── Server-side hard quota: article_generation / article_usage
-    const generationLimit = PLAN_LIMITS.article_generation[plan]
+    const generationLimit = PLAN_LIMITS.article_generation[normalizedPlan]
     const orgArticleUsage = (orgData as any).article_usage ?? 0
     if (generationLimit !== null && orgArticleUsage >= generationLimit) {
         return err(
@@ -108,7 +113,7 @@ export async function POST(
     }
 
     // ── Plan gate: trial cannot schedule ────────────────────────────────────────
-    const scheduleLimit = PLAN_LIMITS.schedule_per_month[plan]
+    const scheduleLimit = PLAN_LIMITS.schedule_per_month[normalizedPlan]
 
     if (scheduleLimit === 0) {
         return err(
