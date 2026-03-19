@@ -168,6 +168,7 @@ export function ScrollableArticleList({
                       <VisualStatusIndicator
                         status={article.status}
                         compact={true}
+                        hideStatuses={["draft"]}
                       />
                     </div>
                   </div>

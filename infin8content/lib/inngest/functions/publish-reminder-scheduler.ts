@@ -1,7 +1,7 @@
 /**
  * Publish Reminder Scheduler
  *
- * Runs daily at 09:00 UTC. Finds articles where:
+ * Runs every 30 minutes. Finds articles where:
  *   - cms_status = 'draft'
  *   - publish_at <= now()
  *   - publish_reminded_at IS NULL  (one reminder per article, ever)
@@ -24,7 +24,7 @@ export const publishReminderScheduler = inngest.createFunction(
         id: 'publish-reminder-scheduler',
         concurrency: { limit: 1 },
     },
-    { cron: '0 * * * *' },  // every hour — matches generation scheduler
+    { cron: '*/30 * * * *' },  // every 30 minutes — aligns with generation scheduler
     async ({ step, logger }) => {
         const supabase = createServiceRoleClient()
 

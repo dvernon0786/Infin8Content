@@ -45,6 +45,8 @@ const LISTICLE_SECTION_TEMPLATE = `SECTION FORMAT — listicle style (follow exa
 const FAQ_SECTION_TEMPLATE = `SECTION FORMAT — FAQ style (follow exactly):
 - Every question must be an H3 header: "### Question text here?"
 - Follow each question immediately with a concise, direct answer paragraph (2–4 sentences)
+- Each answer must be 2–4 full sentences minimum — single sentence answers are invalid
+- EVERY question must have an answer body — a question with no answer body is invalid output
 - Use "we" and conversational tone in answers: "We recommend..." or "Our research shows..."
 - No intro or outro text — start immediately with the first H3 question
 - Minimum 3 questions, maximum 6`
@@ -67,6 +69,8 @@ You are an expert Blog Content Writer specializing in creating valuable, human-c
 • Use the target keyword at most once per section — do not repeat it if the previous section already used it
 • Semantic keywords should appear no more than once per section each
 • Include diverse, properly cited sources from provided research materials
+• Do NOT open any section with a blockquote or callout box defining the target keyword. Start with substantive content immediately.
+• Never fabricate statistics, percentages, or numerical claims. If the Supporting research block does not contain a specific statistic, do not invent one. Write around the gap using qualitative language instead.
 • Maintain the specified word count for each article section (±20% tolerance)
 • Use markdown formatting with tables, bullet points, and proper headers
 • Keep tone conversational and engaging, not overly serious or corporate
@@ -203,157 +207,157 @@ export async function runContentWritingAgent(
     if (input.position === 'first') {
       userMessage = `${styleTemplate}
 
-STRICT LENGTH RULE: This section must be 150–200 words.
+    STRICT LENGTH RULE: This section must be 150–200 words.
 
-Article title:
-${input.articlePlan.article_title}
+    Article title:
+    ${input.articlePlan.article_title}
 
-Target keyword:
-${input.articlePlan.target_keyword}
-Keyword density rule: Use the target keyword AT MOST ONCE in this section.
+    Target keyword:
+    ${input.articlePlan.target_keyword}
+    Keyword density rule: Use the target keyword AT MOST ONCE in this section. Each semantic keyword may also appear AT MOST ONCE. Do not repeat any keyword phrase more than once regardless of variation.
 
-Content style:
-${input.articlePlan.content_style}
+    Content style:
+    ${input.articlePlan.content_style}
 
-Semantic keywords (use naturally — at most once per keyword in this section):
-${input.articlePlan.semantic_keywords.join(', ')}
+    Semantic keywords (use naturally — at most once per keyword in this section):
+    ${input.articlePlan.semantic_keywords.join(', ')}
 
-Section type:
-${input.sectionType}
+    Section type:
+    ${input.sectionType}
 
-Section header:
-${input.sectionHeader}
+    Section header:
+    ${input.sectionHeader}
 
-Estimated word count:
-${input.plannerOutput.estimated_words}
+    Estimated word count:
+    ${input.plannerOutput.estimated_words}
 
-Key points to cover:
-${input.plannerOutput.supporting_points.join('\n')}
+    Key points to cover:
+    ${input.plannerOutput.supporting_points.join('\n')}
 
-Supporting research:
-${JSON.stringify(input.researchPayload, null, 2)}
+    Supporting research:
+    ${JSON.stringify(input.researchPayload, null, 2)}
 
-Product / ICP context:
-Company: ${input.organizationContext.name}
-Description: ${input.organizationContext.description}
+    Product / ICP context:
+    Company: ${input.organizationContext.name}
+    Description: ${input.organizationContext.description}
 
-Generation config:
-- Tone: ${input.generationConfig.tone ?? 'professional'}
-- Language: ${input.generationConfig.language ?? 'en'}
-- Add emojis: ${input.generationConfig.add_emojis ?? false}
-- Brand color: ${input.generationConfig.brand_color ?? 'none specified'}
-- Image style: ${input.generationConfig.image_style ?? 'none specified'}
+    Generation config:
+    - Tone: ${input.generationConfig.tone ?? 'professional'}
+    - Language: ${input.generationConfig.language ?? 'en'}
+    - Add emojis: ${input.generationConfig.add_emojis ?? false}
+    - Brand color: ${input.generationConfig.brand_color ?? 'none specified'}
+    - Image style: ${input.generationConfig.image_style ?? 'none specified'}
 
-${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter(Boolean).length === 0
+    ${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter(Boolean).length === 0
           ? 'No verified URLs are available for this section. Do NOT write any markdown links or parenthetical citations. Write prose only.'
           : 'Only link to URLs explicitly present in the Supporting research block above.'}`;
 
     } else if (input.position === 'final') {
       userMessage = `${styleTemplate}
 
-STRICT LENGTH RULE: This conclusion must be 150–200 words. Close cleanly with one CTA.
+    STRICT LENGTH RULE: This conclusion must be 150–200 words. Close cleanly with one CTA.
 
-⚠️ CRITICAL OUTPUT RULE: Output ONLY the conclusion body text.
-- Do NOT output any H1 title or article name
-- Do NOT output any section headers other than the one given below
-- Do NOT reproduce, repeat, or paraphrase the previous section content
-- Do NOT output the word "Conclusion" as a standalone line
-- Start immediately with substantive closing content
+    ⚠️ CRITICAL OUTPUT RULE: Output ONLY the conclusion body text.
+    - Do NOT output any H1 title or article name
+    - Do NOT output any section headers other than the one given below
+    - Do NOT reproduce, repeat, or paraphrase the previous section content
+    - Do NOT output the word "Conclusion" as a standalone line
+    - Start immediately with substantive closing content
 
-Article topic (context only — do NOT output this as a title):
-${input.articlePlan.article_title}
+    Article topic (context only — do NOT output this as a title):
+    ${input.articlePlan.article_title}
 
-Target keyword:
-${input.articlePlan.target_keyword}
-Keyword density rule: Use the target keyword AT MOST ONCE in this section.
+    Target keyword:
+    ${input.articlePlan.target_keyword}
+    Keyword density rule: Use the target keyword AT MOST ONCE in this section. Each semantic keyword may also appear AT MOST ONCE. Do not repeat any keyword phrase more than once regardless of variation.
 
-Previous section (for narrative continuity ONLY — do not reproduce):
-${getContextSnippet(input.priorContentMarkdown)}
+    Previous section (for narrative continuity ONLY — do not reproduce):
+    ${getContextSnippet(input.priorContentMarkdown)}
 
-Final section header:
-${input.sectionHeader}
+    Final section header:
+    ${input.sectionHeader}
 
-Section type:
-${input.sectionType}
+    Section type:
+    ${input.sectionType}
 
-Key points to cover:
-${input.plannerOutput.supporting_points.join('\n')}
+    Key points to cover:
+    ${input.plannerOutput.supporting_points.join('\n')}
 
-Content style:
-${input.articlePlan.content_style}
+    Content style:
+    ${input.articlePlan.content_style}
 
-Semantic keywords (use naturally — at most once per keyword in this section):
-${input.articlePlan.semantic_keywords.join(', ')}
+    Semantic keywords (use naturally — at most once per keyword in this section):
+    ${input.articlePlan.semantic_keywords.join(', ')}
 
-Supporting research:
-${JSON.stringify(input.researchPayload, null, 2)}
+    Supporting research:
+    ${JSON.stringify(input.researchPayload, null, 2)}
 
-Generation config:
-- Tone: ${input.generationConfig.tone ?? 'professional'}
-- Language: ${input.generationConfig.language ?? 'en'}
-- Add emojis: ${input.generationConfig.add_emojis ?? false}
+    Generation config:
+    - Tone: ${input.generationConfig.tone ?? 'professional'}
+    - Language: ${input.generationConfig.language ?? 'en'}
+    - Add emojis: ${input.generationConfig.add_emojis ?? false}
 
-Product / ICP context:
-Company: ${input.organizationContext.name}
-Description: ${input.organizationContext.description}
+    Product / ICP context:
+    Company: ${input.organizationContext.name}
+    Description: ${input.organizationContext.description}
 
-Close the article with:
-- A clear, actionable conclusion (2–3 sentences max)
-${input.generationConfig.add_cta
+    Close the article with:
+    - A clear, actionable conclusion (2–3 sentences max)
+    ${input.generationConfig.add_cta
           ? `- One natural CTA pointing readers toward ${input.organizationContext.name}'s services or next steps.`
           : `- Do NOT include any CTA, promotional mention, or call-to-action. End with a factual summary sentence only.`
         }
 
-${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter(Boolean).length === 0
+    ${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter(Boolean).length === 0
           ? 'No verified URLs are available for this section. Do NOT write any markdown links or parenthetical citations. Write prose only.'
           : 'Only link to URLs explicitly present in the Supporting research block above.'}`;
 
     } else {
       userMessage = `${styleTemplate}
 
-STRICT LENGTH RULE: This section must be 200–300 words.
+    STRICT LENGTH RULE: This section must be 200–300 words.
 
-Article topic:
-${input.articlePlan.article_title}
+    Article topic:
+    ${input.articlePlan.article_title}
 
-Target keyword:
-${input.articlePlan.target_keyword}
-Keyword density rule: Use the target keyword AT MOST ONCE in this section.
+    Target keyword:
+    ${input.articlePlan.target_keyword}
+    Keyword density rule: Use the target keyword AT MOST ONCE in this section. Each semantic keyword may also appear AT MOST ONCE. Do not repeat any keyword phrase more than once regardless of variation.
 
-Previous section (continue logically from this):
-${getContextSnippet(input.priorContentMarkdown)}
+    Previous section (continue logically from this):
+    ${getContextSnippet(input.priorContentMarkdown)}
 
-Current section header:
-${input.sectionHeader}
+    Current section header:
+    ${input.sectionHeader}
 
-Section type:
-${input.sectionType}
+    Section type:
+    ${input.sectionType}
 
-Content style:
-${input.articlePlan.content_style}
+    Content style:
+    ${input.articlePlan.content_style}
 
-Semantic keywords (use naturally — at most once per keyword in this section):
-${input.articlePlan.semantic_keywords.join(', ')}
+    Semantic keywords (use naturally — at most once per keyword in this section):
+    ${input.articlePlan.semantic_keywords.join(', ')}
 
-Estimated word count:
-${input.plannerOutput.estimated_words}
+    Estimated word count:
+    ${input.plannerOutput.estimated_words}
 
-Key points to cover:
-${input.plannerOutput.supporting_points.join('\n')}
+    Key points to cover:
+    ${input.plannerOutput.supporting_points.join('\n')}
 
-Supporting research:
-${JSON.stringify(input.researchPayload, null, 2)}
+    Supporting research:
+    ${JSON.stringify(input.researchPayload, null, 2)}
 
-Generation config:
-- Tone: ${input.generationConfig.tone ?? 'professional'}
-- Language: ${input.generationConfig.language ?? 'en'}
-- Add emojis: ${input.generationConfig.add_emojis ?? false}
+    Generation config:
+    - Tone: ${input.generationConfig.tone ?? 'professional'}
+    - Language: ${input.generationConfig.language ?? 'en'}
+    - Add emojis: ${input.generationConfig.add_emojis ?? false}
 
-Product / ICP context:
-Company: ${input.organizationContext.name}
-Description: ${input.organizationContext.description}
+    Product / ICP context:
+    Company: ${input.organizationContext.name}
+    Description: ${input.organizationContext.description}
 
-${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter(Boolean).length === 0
+    ${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter(Boolean).length === 0
           ? 'No verified URLs are available for this section. Do NOT write any markdown links or parenthetical citations. Write prose only.'
           : 'Only link to URLs explicitly present in the Supporting research block above.'}`;
     }

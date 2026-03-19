@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, CheckCircle, XCircle, AlertCircle, Lock } from 'lucide-react'
+import { Loader2, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 
 interface KeywordSubtopic {
   title: string
@@ -250,7 +250,7 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
           {processing === 'bulk' ? (
             <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Approving...</>
           ) : (
-            'Approve All Remaining'
+            'Continue'
           )}
         </Button>
       </div>
@@ -338,45 +338,8 @@ export function Step8SubtopicsForm({ workflowId, workflowState }: Step8Subtopics
                       }
                       rows={3}
                     />
-
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleApproval(keyword.id, 'approved')}
-                        disabled={processing === keyword.id}
-                        className="min-w-[120px]"
-                      >
-                        {processing === keyword.id ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Approve
-                          </>
-                        )}
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        onClick={() => handleApproval(keyword.id, 'rejected')}
-                        disabled={processing === keyword.id}
-                        className="min-w-[120px]"
-                      >
-                        {processing === keyword.id ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="mr-2 h-4 w-4" />
-                            Reject
-                          </>
-                        )}
-                      </Button>
-                    </div>
+                    
+                    
                   </div>
                 )}
               </CardContent>

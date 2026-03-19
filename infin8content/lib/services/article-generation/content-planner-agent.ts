@@ -9,16 +9,17 @@
 import { z } from 'zod'
 import { generateContent, type OpenRouterMessage } from '../openrouter/openrouter-client'
 
-// Forbidden leading header prefixes that should be stripped from planner output.
+// Forbidden header prefixes are applied deterministically during schema parsing
+// so the sanitization runs for both primary and fallback model outputs.
 const FORBIDDEN_HEADER_PREFIXES: RegExp[] = [
     /^how do\s+/i,
     /^how to use\s+/i,
     /^how to\s+/i,
-    /^what (?:is|are)\s+/i,
+    /^what(?: is| are)?\s+/i,
     /^why\s+/i,
     /^choose\s+/i,
     /^find\s+/i,
-    /^use\s+/i
+    /^use\s+/i,
 ]
 
 /**
@@ -94,6 +95,7 @@ You are an expert blog article planner specializing in creating detailed, resear
 Constraints
  Always create outlines that match the specified content style (informative or listicle)
  Every section in article_structure must cover a unique concept.
+ Section headers must be declarative noun phrases or short title-case statements (e.g. "Key Services for Growing Businesses"). Never start a header with "How to", "How do", "What is", "Why", or any question word. Never start a header with an instruction verb like "Use", "Choose", "Find".
  Never create two sections with semantically similar headers (e.g. "Benefits of X" and "Top Benefits of X"). If two planned sections overlap, merge them into one.
  Include 2–3 specific supporting points for each header that guide content creation
  Generate actionable research questions for each section to ensure thorough coverage
@@ -282,11 +284,11 @@ Generation Config:
         }
     }
 
-    // 🚀 FALLBACK (LOW item 7)
-    console.warn('[PlannerAgent] primary model failed after 2 attempts, seeking fallback gpt-4o-mini')
+    // 🚀 FALLBACK (use an alternate model for recovery)
+    console.warn('[PlannerAgent] primary model failed after 2 attempts, seeking fallback claude')
     try {
         const response = await generateContent(messages, {
-            model: 'openai/gpt-4o-mini',
+            model: 'anthropic/claude-3.5-haiku',
             temperature: 0.3,
             maxTokens: 4000
         })
@@ -294,7 +296,7 @@ Generation Config:
         const rawJson = extractJson(response.content)
         const validated = PlannerSchema.parse(rawJson)
 
-        console.log('[PlannerAgent] Plan generated via fallback (gpt-4o-mini)')
+        console.log('[PlannerAgent] Plan generated via fallback (claude)')
         return validated
     } catch (fallbackError) {
         throw new Error(`Planner failed on all models. Last: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`)

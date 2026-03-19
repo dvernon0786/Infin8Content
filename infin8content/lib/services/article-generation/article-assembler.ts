@@ -5,6 +5,14 @@ import { AssemblyInput, AssemblyOutput } from '@/types/article'
 
 const logger = createLogger('ArticleAssembly')
 
+class ArticlePersistenceNoopError extends Error {
+  public readonly retryable = false
+  constructor(articleId: string) {
+    super(`Article persistence noop: no rows updated for articleId=${articleId}`)
+    this.name = 'ArticlePersistenceNoopError'
+  }
+}
+
 /**
  * ArticleAssembler
  * 
@@ -111,14 +119,7 @@ export class ArticleAssembler {
   private async loadArticle({ articleId, organizationId }: AssemblyInput) {
     const { data, error } = await this.supabaseAdmin
       .from('articles')
-      .select(`
-        id, title, slug, status, keyword, cover_image_url,
-        organizations!org_id (
-          cta_text,
-          cta_url,
-          website_url
-        )
-      `)
+      .select('id, title, status, keyword, cover_image_url, org_id')
       .eq('id', articleId)
       .eq('org_id', organizationId)
       .single()
@@ -127,16 +128,27 @@ export class ArticleAssembler {
       throw new Error('Article not found or access denied')
     }
 
-    // Bug 2: Observability lock for org join
-    if (!(data as any).organizations) {
-      logger.log('article.assembly.org_join_missing', { articleId })
+    // Fetch org separately — don't let a join failure block assembly
+    const { data: orgData, error: orgError } = await this.supabaseAdmin
+      .from('organizations')
+      .select('cta_text, cta_url, website_url')
+      .eq('id', (data as any).org_id)
+      .maybeSingle()
+
+    if (orgError) {
+      logger.error('article.assembly.org_load_error', {
+        articleId,
+        orgId: (data as any).org_id,
+        error: orgError,
+        errorMessage: (orgError as any)?.message ?? String(orgError),
+      })
     }
 
     return {
       ...data,
-      cta_text: (data as any).organizations?.cta_text ?? null,
-      cta_url: (data as any).organizations?.cta_url ?? null,
-      org_website_url: (data as any).organizations?.website_url ?? null,
+      cta_text: (orgData as any)?.cta_text ?? null,
+      cta_url: (orgData as any)?.cta_url ?? null,
+      org_website_url: (orgData as any)?.website_url ?? null,
     }
   }
 
@@ -218,8 +230,8 @@ export class ArticleAssembler {
 
     // 🔴 OBSERVABILITY: If 0 rows affected, it means the article wasn't found or update matched 0 rows (Race condition)
     if (!data || data.length === 0) {
-      logger.log('article.assembly.persistence_noop', { articleId: args.articleId })
-      return
+      logger.error('article.assembly.persistence_noop', { articleId: args.articleId })
+      throw new ArticlePersistenceNoopError(args.articleId)
     }
   }
 
@@ -270,7 +282,15 @@ export class ArticleAssembler {
 
     const articleCanonicalUrl = (() => {
       const base = ((article as any).org_website_url || '').replace(/\/$/, '')
-      const slug = (article as any).slug || ''
+      const derive = (input: any) => (input || '')
+        .toString()
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .slice(0, 120)
+
+      const slug = (article as any).slug || derive((article as any).keyword) || derive((article as any).title)
       if (!base || !slug) return null
       return `${base}/blog/${slug}`
     })()
