@@ -14,7 +14,7 @@ interface ArticleStatusMonitorProps {
 
 const statusColors: Record<string, 'default' | 'secondary' | 'destructive'> = {
   queued: 'secondary',
-  generating: 'default',
+  processing: 'default',
   completed: 'default',
   failed: 'destructive',
   cancelled: 'secondary',
@@ -22,16 +22,16 @@ const statusColors: Record<string, 'default' | 'secondary' | 'destructive'> = {
 
 const statusIcons: Record<string, React.ReactNode> = {
   queued: <Clock className="h-4 w-4 text-neutral-500" />,
-  generating: <Loader2 className="h-4 w-4 animate-spin text-neutral-600" />,
+  processing: <Loader2 className="h-4 w-4 animate-spin text-neutral-600" />,
   completed: <CheckCircle className="h-4 w-4 text-neutral-600" />,
   failed: <XCircle className="h-4 w-4 text-neutral-600" />,
   cancelled: <XCircle className="h-4 w-4 text-neutral-600" />,
 }
 
-export function ArticleStatusMonitor({ 
-  articleId, 
-  initialStatus, 
-  onStatusChange 
+export function ArticleStatusMonitor({
+  articleId,
+  initialStatus,
+  onStatusChange
 }: ArticleStatusMonitorProps) {
   const [status, setStatus] = useState(initialStatus)
   const [isSubscribed, setIsSubscribed] = useState(false)
@@ -57,7 +57,7 @@ export function ArticleStatusMonitor({
     let subscription: any = null
     let retryCount = 0
     const maxRetries = 3
-    
+
     // Subscribe to article status changes with improved error handling
     const subscribeToStatus = () => {
       try {
@@ -79,10 +79,10 @@ export function ArticleStatusMonitor({
             (payload) => {
               const newStatus = payload.new.status as string
               console.log(`Article ${articleId} status changed: ${status} -> ${newStatus}`)
-              
+
               setStatus(newStatus)
               onStatusChange?.(newStatus)
-              
+
               // If article is completed, refresh the page to show content
               if (newStatus === 'completed') {
                 console.log('Article completed, refreshing page...')
@@ -101,7 +101,7 @@ export function ArticleStatusMonitor({
             } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
               console.error(`Subscription failed with status: ${status}`)
               setIsSubscribed(false)
-              
+
               // Retry logic with exponential backoff
               if (retryCount < maxRetries) {
                 retryCount++
@@ -125,20 +125,20 @@ export function ArticleStatusMonitor({
     // Fallback: Check status periodically if WebSocket fails
     let intervalId: NodeJS.Timeout | null = null
     const checkStatusFallback = async () => {
-      if (!isSubscribed && (status === 'queued' || status === 'generating')) {
+      if (!isSubscribed && (status === 'queued' || status === 'processing')) {
         try {
           const { data, error } = await supabase
             .from('articles' as any)
             .select('status')
             .eq('id', articleId)
             .single()
-          
+
           if (!error && data && (data as any).status !== status) {
             const newStatus = (data as any).status
             console.log(`Status fallback check found change: ${status} -> ${newStatus}`)
             setStatus(newStatus)
             onStatusChange?.(newStatus)
-            
+
             if (newStatus === 'completed') {
               setTimeout(() => {
                 window.location.reload()
@@ -177,13 +177,13 @@ export function ArticleStatusMonitor({
           {status}
         </span>
       </Badge>
-      {isSubscribed && (status === 'queued' || status === 'generating') && (
+      {isSubscribed && (status === 'queued' || status === 'processing') && (
         <span className="font-lato text-small text-neutral-500 flex items-center gap-1">
           <Loader2 className="h-3 w-3 animate-spin text-neutral-500" />
           Live updates active
         </span>
       )}
-      {!isSubscribed && (status === 'queued' || status === 'generating') && (
+      {!isSubscribed && (status === 'queued' || status === 'processing') && (
         <span className="font-lato text-small text-neutral-500 flex items-center gap-1">
           <Loader2 className="h-3 w-3 animate-spin text-neutral-500" />
           Polling for updates

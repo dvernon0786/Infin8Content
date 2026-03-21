@@ -120,10 +120,11 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         promptTokens: 800,
-        completionTokens: 700
+        completionTokens: 700,
+        cost: 0.0022
       })
 
-      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId)
+      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
 
       expect(result.icp_data.industries).toEqual(mockICPData.industries)
       expect(result.retryCount).toBeUndefined()
@@ -144,10 +145,11 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         promptTokens: 800,
-        completionTokens: 700
+        completionTokens: 700,
+        cost: 0.0022
       })
 
-      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId)
+      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
 
       expect(result.icp_data.industries).toEqual(mockICPData.industries)
       expect(result.retryCount).toBe(1)
@@ -161,7 +163,7 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
       )
 
       try {
-        await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId)
+        await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
         expect.fail('Should have thrown')
       } catch (error) {
         expect(error).toBeInstanceOf(Error)
@@ -186,7 +188,7 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
       )
 
       try {
-        await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId)
+        await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
         expect.fail('Should have thrown')
       } catch (error) {
         expect(error).toBeInstanceOf(Error)
@@ -214,10 +216,13 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         generatedAt: new Date().toISOString(),
         retryCount: 1,
-        lastError: 'Timeout on first attempt'
+        lastError: 'Timeout on first attempt',
+        promptTokens: 800,
+        completionTokens: 700,
+        cost: 0.0022
       }
 
-      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult)
+      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult, `${mockWorkflowId}:step_1_icp`)
 
       expect(mockSupabase.from).toHaveBeenCalledWith('intent_workflows')
       expect(mockSupabase.update).toHaveBeenCalled()
@@ -242,10 +247,13 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
         icp_data: mockICPData,
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
+        promptTokens: 800,
+        completionTokens: 700,
+        cost: 0.0022
       }
 
-      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, result1)
+      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, result1, `${mockWorkflowId}:step_1_icp`)
       const updateCall1 = mockSupabase.update.mock.calls[0][0]
       expect(updateCall1.step_1_icp_completed_at).toBeDefined()
 
@@ -258,10 +266,13 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         generatedAt: new Date().toISOString(),
-        retryCount: 1
+        retryCount: 1,
+        promptTokens: 800,
+        completionTokens: 700,
+        cost: 0.0022
       }
 
-      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, result2)
+      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, result2, `${mockWorkflowId}:step_1_icp`)
       const updateCall2 = mockSupabase.update.mock.calls[0][0]
       expect(updateCall2.step_1_icp_completed_at).toBeUndefined()
     })
@@ -280,18 +291,12 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
       await handleICPGenerationFailure(
         mockWorkflowId,
         mockOrganizationId,
-        error,
-        3,
-        'Timeout on all attempts'
+        error
       )
 
-      expect(mockSupabase.from).toHaveBeenCalledWith('intent_workflows')
-      expect(mockSupabase.update).toHaveBeenCalled()
-
-      const updateCall = mockSupabase.update.mock.calls[0][0]
-      expect(updateCall.retry_count).toBe(3)
-      expect(updateCall.step_1_icp_last_error_message).toBe('Timeout on all attempts')
-      expect(updateCall.status).toBe('failed')
+      // Zero-legacy FSM: No DB mutations, only logging
+      expect(mockSupabase.from).not.toHaveBeenCalled()
+      expect(mockSupabase.update).not.toHaveBeenCalled()
     })
   })
 
@@ -310,7 +315,8 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
         tokensUsed: 1500,
         modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
         promptTokens: 800,
-        completionTokens: 700
+        completionTokens: 700,
+        cost: 0.0022
       })
 
       const result = await generateICPDocument(
@@ -318,7 +324,8 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
         mockOrganizationId,
         300000,
         undefined,
-        mockWorkflowId
+        mockWorkflowId,
+        `${mockWorkflowId}:step_1_icp`
       )
 
       expect(result.retryCount).toBe(1)
@@ -345,7 +352,8 @@ describe('ICP Generation Endpoint - Integration Tests', () => {
           mockOrganizationId,
           300000,
           undefined,
-          mockWorkflowId
+          mockWorkflowId,
+          `${mockWorkflowId}:step_1_icp`
         )
       } catch (error) {
         // Expected to fail

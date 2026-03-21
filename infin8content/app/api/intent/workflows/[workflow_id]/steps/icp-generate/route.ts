@@ -8,9 +8,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { AuditAction } from '@/types/audit'
 import { checkRateLimit, type RateLimitConfig } from '@/lib/services/rate-limiting/persistent-rate-limiter'
+import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
 import {
   generateICPDocument,
   storeICPGenerationResult,
@@ -25,21 +29,12 @@ const RATE_LIMIT_CONFIG: RateLimitConfig = {
   keyPrefix: 'icp_generation'
 }
 
-// Concurrent retry prevention: Track in-progress ICP generations per workflow
-// Key: workflow_id, Value: true if generation is in progress
-const inProgressMap = new Map<string, boolean>()
-
-function isGenerationInProgress(workflowId: string): boolean {
-  return inProgressMap.has(workflowId) && inProgressMap.get(workflowId) === true
-}
-
-function markGenerationInProgress(workflowId: string): void {
-  inProgressMap.set(workflowId, true)
-}
-
-function clearGenerationInProgress(workflowId: string): void {
-  inProgressMap.delete(workflowId)
-}
+// Schema for ICP generation request
+const icpGenerationSchema = z.object({
+  organization_name: z.string().min(1, 'Organization name is required'),
+  organization_url: z.string().url('Invalid website URL format'),
+  organization_linkedin_url: z.string().url('Invalid LinkedIn URL format'),
+})
 
 export async function POST(
   request: NextRequest,
@@ -61,18 +56,7 @@ export async function POST(
 
     organizationId = currentUser.org_id
 
-    // Check for concurrent retry prevention
-    if (isGenerationInProgress(workflowId)) {
-      return NextResponse.json(
-        {
-          error: 'Generation in progress',
-          message: 'ICP generation is already in progress for this workflow'
-        },
-        { status: 409 }
-      )
-    }
-
-    // Check persistent rate limit
+    // Rate limiting check persistent rate limit
     const rateLimit = await checkRateLimit(organizationId, RATE_LIMIT_CONFIG)
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -85,33 +69,37 @@ export async function POST(
       )
     }
 
-    // Parse request body
+    // Parse and validate request body
     const body = await request.json()
-    const icpRequest: ICPGenerationRequest = {
-      organizationName: body.organization_name,
-      organizationUrl: body.organization_url,
-      organizationLinkedInUrl: body.organization_linkedin_url
-    }
+    const validationResult = icpGenerationSchema.safeParse(body)
 
-    // Validate request
-    if (!icpRequest.organizationName || !icpRequest.organizationUrl || !icpRequest.organizationLinkedInUrl) {
+    if (!validationResult.success) {
       return NextResponse.json(
         {
-          error: 'Invalid request',
-          message: 'organization_name, organization_url, and organization_linkedin_url are required'
+          error: 'INVALID_ICP_INPUT',
+          details: validationResult.error.flatten().fieldErrors,
         },
         { status: 400 }
       )
+    }
+
+    const icpRequest = validationResult.data
+
+    // Map to expected interface format
+    const mappedRequest: ICPGenerationRequest = {
+      organizationName: icpRequest.organization_name,
+      organizationUrl: icpRequest.organization_url,
+      organizationLinkedInUrl: icpRequest.organization_linkedin_url,
     }
 
     // Verify workflow exists and belongs to user's organization
     const supabase = createServiceRoleClient()
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id')
+      .select('id, state, organization_id')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single()
+      .single() as { data: { id: string; state: string; organization_id: string } | null; error: any }
 
     if (workflowError || !workflow) {
       return NextResponse.json(
@@ -120,53 +108,55 @@ export async function POST(
       )
     }
 
-    // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string }
+    // 3-state idempotency logic
+    const currentState = workflow.state
 
-    // Check if workflow is in correct state for ICP generation
-    if (typedWorkflow.status !== 'step_0_auth' && typedWorkflow.status !== 'step_1_icp') {
-      return NextResponse.json(
-        {
-          error: 'Invalid workflow state',
-          message: `Workflow must be in step_0_auth or step_1_icp state, currently in ${typedWorkflow.status}`
-        },
-        { status: 400 }
-      )
-    }
+    // CASE 1 — Already completed (idempotent)
+    if (currentState === 'step_2_competitors') {
+      const { data: existing } = await supabase
+        .from('intent_workflows')
+        .select('icp_data, updated_at')
+        .eq('id', workflowId)
+        .single() as { data: { icp_data: any; updated_at: string } | null; error: any }
 
-    // Check for idempotency - if ICP already generated, return existing result
-    const { data: existingWorkflow, error: fetchError } = await supabase
-      .from('intent_workflows')
-      .select('icp_data, step_1_icp_completed_at')
-      .eq('id', workflowId)
-      .eq('organization_id', organizationId)
-      .single()
-
-    if (!fetchError && existingWorkflow && (existingWorkflow as any).icp_data) {
-      console.log(`[ICP-Generate] ICP already exists for workflow ${workflowId}, returning cached result`)
       return NextResponse.json({
         success: true,
         workflow_id: workflowId,
-        status: 'step_1_icp',
-        icp_data: (existingWorkflow as any).icp_data,
+        workflow_state: currentState,
+        icp_data: existing?.icp_data,
         cached: true,
         metadata: {
-          generated_at: (existingWorkflow as any).step_1_icp_completed_at
+          generated_at: existing?.updated_at
         }
       })
     }
 
-    // Mark generation as in-progress
-    markGenerationInProgress(workflowId)
+    // CASE 2 — Wrong state
+    if (currentState !== 'step_1_icp') {
+      return NextResponse.json({
+        error: 'INVALID_STATE',
+        message: `Cannot generate ICP from state: ${currentState}`
+      }, { status: 409 })
+    }
+
+    // Generate UUID idempotency key at request boundary
+    const idempotencyKey = crypto.randomUUID()
 
     // Generate ICP document with automatic retry
-    const icpResult = await generateICPDocument(icpRequest, organizationId, 300000, undefined, workflowId)
+    const icpResult = await generateICPDocument(mappedRequest, organizationId, 300000, undefined, workflowId, idempotencyKey)
 
     // Store result in workflow with retry metadata (consolidated in single update)
-    await storeICPGenerationResult(workflowId, organizationId, icpResult)
+    // This function also handles the FSM transition internally
+    await storeICPGenerationResult(workflowId, organizationId, icpResult, idempotencyKey)
 
-    // Clear in-progress flag on success
-    clearGenerationInProgress(workflowId)
+    // Get the new state after storage (should be step_2_competitors)
+    const { data: updatedWorkflow } = await supabase
+      .from('intent_workflows')
+      .select('state')
+      .eq('id', workflowId)
+      .single() as { data: { state: string } | null; error: any }
+
+    const nextState = updatedWorkflow?.state || currentState
 
     // Emit analytics event for workflow step completion
     try {
@@ -179,12 +169,14 @@ export async function POST(
         metadata: {
           tokens_used: icpResult.tokensUsed,
           model_used: icpResult.modelUsed,
+          ai_cost: icpResult.cost,
           generated_at: icpResult.generatedAt,
           retry_count: icpResult.retryCount || 0
         },
         timestamp: new Date().toISOString()
       }
-      console.log(`[ICP-Generate] Analytics event: ${JSON.stringify(analyticsEvent)}`)
+      await emitAnalyticsEvent(analyticsEvent as any)
+      console.log(`[ICP-Generate] Analytics event emitted: ${JSON.stringify(analyticsEvent)}`)
     } catch (analyticsError) {
       console.error(`[ICP-Generate] Failed to emit analytics event:`, analyticsError)
     }
@@ -199,7 +191,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       workflow_id: workflowId,
-      status: 'step_1_icp',
+      workflow_state: nextState,
       icp_data: icpResult.icp_data,
       metadata: {
         tokens_used: icpResult.tokensUsed,
@@ -209,11 +201,21 @@ export async function POST(
       }
     })
   } catch (error) {
-    // Clear in-progress flag on error
-    clearGenerationInProgress(workflowId)
-
     // Log error
     console.error(`[ICP-Generate] Error generating ICP:`, error)
+
+    // Handle FSM transition errors (race conditions)
+    if (error instanceof Error && error.message.includes('Invalid transition:')) {
+      return NextResponse.json(
+        {
+          error: 'RACE_CONDITION',
+          message: 'Workflow state changed during ICP generation. The workflow may have already advanced.',
+          workflow_id: workflowId,
+          details: error.message
+        },
+        { status: 409 } // Conflict - appropriate for race conditions
+      )
+    }
 
     // Update workflow with error status if we have the necessary IDs
     if (workflowId && organizationId) {

@@ -1,0 +1,90 @@
+import { NextResponse } from 'next/server'
+import { createServiceRoleClient } from '@/lib/supabase/server'
+import { validateOnboarding } from '@/lib/onboarding/onboarding-validator'
+import { getCurrentUser } from '@/lib/supabase/get-current-user'
+
+/**
+ * Derive current step from canonical state
+ * UI does not derive steps - backend does
+ */
+function deriveStepFromCanonicalState(state: {
+  website_url: boolean
+  business_description: boolean
+  target_audiences_count: number
+  keyword_settings_present: boolean
+  content_defaults_present: boolean
+  competitors: number
+}) {
+  if (!state.website_url) return 1
+  if (!state.business_description) return 1
+  if (state.target_audiences_count === 0) return 1
+  if (state.competitors === 0) return 2
+  if (!state.keyword_settings_present) return 3
+  if (!state.content_defaults_present) return 4
+  return 5
+}
+
+/**
+ * READ-ONLY onboarding observer
+ * 
+ * This endpoint ONLY observes and reports onboarding state
+ * It NEVER mutates data - that's what /api/onboarding/persist is for
+ * 
+ * System Law: Tests observe. Endpoints persist. Validators decide. Flags are derived.
+ */
+export async function GET(request: Request) {
+  // 🔒 Get org from auth, not query parameter
+  const currentUser = await getCurrentUser()
+  
+  if (!currentUser || !currentUser.org_id) {
+    return NextResponse.json(
+      { error: 'User not authenticated or missing organization' },
+      { status: 401 }
+    )
+  }
+  
+  const orgId = currentUser.org_id
+
+  const supabase = createServiceRoleClient()
+
+  const { data: org, error } = await supabase
+    .from('organizations')
+    .select(
+      'id, website_url, business_description, target_audiences, keyword_settings, content_defaults'
+    )
+    .eq('id', orgId)
+    .single()
+
+  if (error || !org) {
+    return NextResponse.json(
+      { error: 'Organization not found' },
+      { status: 404 }
+    )
+  }
+
+  const { count: competitorCount } = await supabase
+    .from('organization_competitors')
+    .select('*', { count: 'exact', head: true })
+    .eq('organization_id', orgId)
+    .eq('is_active', true)
+
+  const validation = await validateOnboarding(orgId)
+
+  const canonical_state = {
+    website_url: !!(org as any).website_url,
+    business_description: !!(org as any).business_description,
+    target_audiences_count: (org as any).target_audiences?.length ?? 0,
+    keyword_settings_present: !!(org as any).keyword_settings && Object.keys((org as any).keyword_settings).length > 0,
+    content_defaults_present: !!(org as any).content_defaults && Object.keys((org as any).content_defaults).length > 0,
+    competitors: competitorCount ?? 0
+  }
+
+  const current_step = deriveStepFromCanonicalState(canonical_state)
+
+  return NextResponse.json({
+    orgId,
+    canonical_state,
+    validation,
+    current_step
+  })
+}

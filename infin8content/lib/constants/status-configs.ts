@@ -4,12 +4,13 @@
  */
 
 import React from 'react';
-import { 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  Loader2, 
-  XCircle
+import {
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  XCircle,
+  FileText
 } from 'lucide-react';
 
 export interface StatusConfig {
@@ -27,7 +28,22 @@ export interface StatusConfig {
   patternClass: string;
 }
 
-export const statusConfigs: Record<string, StatusConfig> = {
+import { ArticleStatus } from '@/types/article';
+
+export const statusConfigs: Record<ArticleStatus, StatusConfig> = {
+  draft: {
+    color: 'text-gray-600',
+    bgColor: 'bg-gray-100',
+    borderColor: 'border-gray-200',
+    icon: React.createElement(FileText, { className: "h-4 w-4" }),
+    label: 'Draft',
+    variant: 'secondary',
+    ariaLabel: 'Article status: draft',
+    // Accessibility enhancements
+    pattern: 'solid',
+    highContrastColor: 'text-gray-800',
+    patternClass: 'bg-solid-gray',
+  },
   queued: {
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
@@ -41,14 +57,14 @@ export const statusConfigs: Record<string, StatusConfig> = {
     highContrastColor: 'text-blue-800',
     patternClass: 'bg-stripes-blue', // CSS pattern for colorblind accessibility
   },
-  generating: {
+  processing: {
     color: 'text-orange-600',
     bgColor: 'bg-orange-50',
     borderColor: 'border-orange-200',
     icon: React.createElement(Loader2, { className: "h-4 w-4 animate-spin" }),
-    label: 'Generating',
+    label: 'Processing',
     variant: 'default',
-    ariaLabel: 'Article status: generating',
+    ariaLabel: 'Article status: processing',
     // Accessibility enhancements
     pattern: 'dotted', // Visual pattern for colorblind users
     highContrastColor: 'text-orange-800',
@@ -93,9 +109,35 @@ export const statusConfigs: Record<string, StatusConfig> = {
     highContrastColor: 'text-gray-800',
     patternClass: 'bg-dashed-gray', // CSS pattern for colorblind accessibility
   },
+  generating: {
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-50',
+    borderColor: 'border-orange-200',
+    icon: React.createElement(Loader2, { className: "h-4 w-4 animate-spin" }),
+    label: 'Generating',
+    variant: 'default',
+    ariaLabel: 'Article status: generating',
+    // Accessibility enhancements
+    pattern: 'dotted', // Visual pattern for colorblind users
+    highContrastColor: 'text-orange-800',
+    patternClass: 'bg-dots-orange', // CSS pattern for colorblind accessibility
+  },
+  reviewing: {
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-50',
+    borderColor: 'border-amber-200',
+    icon: React.createElement(Loader2, { className: "h-4 w-4 animate-spin" }),
+    label: 'Reviewing',
+    variant: 'default',
+    ariaLabel: 'Article status: reviewing',
+    // Accessibility enhancements
+    pattern: 'dotted',
+    highContrastColor: 'text-amber-800',
+    patternClass: 'bg-dots-amber',
+  },
 };
 
 // Helper function to get status configuration
-export function getStatusConfig(status: string): StatusConfig {
-  return statusConfigs[status] || statusConfigs.queued;
+export function getStatusConfig(status: ArticleStatus): StatusConfig {
+  return statusConfigs[status];
 }

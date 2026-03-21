@@ -32,6 +32,13 @@ jobs:
         SUPABASE_ANON_KEY: placeholder-key
         SUPABASE_SERVICE_ROLE_KEY: placeholder-key
         SUPABASE_KEY: placeholder-key
+        STRIPE_PRICE_TRIAL_MONTHLY: price_placeholder
+        STRIPE_PRICE_STARTER_MONTHLY: price_placeholder
+        STRIPE_PRICE_STARTER_ANNUAL: price_placeholder
+        STRIPE_PRICE_PRO_MONTHLY: price_placeholder
+        STRIPE_PRICE_PRO_ANNUAL: price_placeholder
+        STRIPE_PRICE_AGENCY_MONTHLY: price_placeholder
+        STRIPE_PRICE_AGENCY_ANNUAL: price_placeholder
       run: npm run build
       
     - name: Run Lighthouse CI

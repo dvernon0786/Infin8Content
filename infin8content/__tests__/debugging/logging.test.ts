@@ -27,7 +27,7 @@ describe('Logger', () => {
 
   describe('Basic Logging', () => {
     it('should create logger with default configuration', () => {
-      const testLogger = createLogger();
+      const testLogger = createLogger({});
       expect(testLogger).toBeInstanceOf(Logger);
     });
 

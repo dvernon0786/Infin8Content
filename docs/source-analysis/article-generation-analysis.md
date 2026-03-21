@@ -410,6 +410,13 @@ const results = await Promise.allSettled([
 - Success rates
 - Resource utilization
 
+## 2026-03-17: Internal Linking Injection
+
+- The generation pipeline now includes a guarded `inject-internal-links` step that runs immediately before assembly when `generationConfig.internal_links` is enabled.
+- New service file: `lib/services/article-generation/internal-linking-service.ts` — responsible for merging manual, crawled, and DB-sourced links and injecting them into completed sections within a configurable budget (`num_internal_links`).
+- Crawl worker: `lib/inngest/functions/crawl-website-links.ts` listens for `organization/website.url.saved` and writes `organizations.settings.crawled_link_map` (cached for 30 days).
+- Onboarding flow emits the `organization/website.url.saved` event when a website URL is saved so crawls run asynchronously and do not block article generation.
+
 ### Logging
 - Stage completion logging
 - Error logging with context

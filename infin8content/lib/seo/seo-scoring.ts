@@ -2,7 +2,7 @@
 // Story 14.6: SEO Testing and Validation
 // Task 1: SEO Scoring Engine Implementation
 
-import { calculateReadabilityScore, validateContentStructure } from '@/lib/services/article-generation/section-processor'
+import { calculateReadabilityScore, validateContentStructure } from '@/lib/utils/seo-utils'
 
 export interface SEOScoreInput {
   content: string
@@ -59,13 +59,13 @@ export interface SEOIssue {
  */
 export function calculateSEOScore(input: SEOScoreInput): SEOScoreResult {
   const startTime = performance.now()
-  
+
   try {
     // Validate input
     if (!input.content || typeof input.content !== 'string') {
       throw new Error('Content is required and must be a string')
     }
-    
+
     if (!input.primaryKeyword || typeof input.primaryKeyword !== 'string') {
       throw new Error('Primary keyword is required and must be a string')
     }
@@ -152,7 +152,7 @@ export function calculateSEOScore(input: SEOScoreInput): SEOScoreResult {
       issues
     }
   } catch (error) {
-    
+
     // Return fallback result
     return {
       overallScore: 0,
@@ -209,9 +209,9 @@ function calculateKeywordDensityScore(input: SEOScoreInput): {
     // Optimal range: 1-2%
     const optimalMin = 1.0
     const optimalMax = 2.0
-    
+
     let score = 100
-    
+
     if (density < optimalMin) {
       score = Math.max(0, (density / optimalMin) * 100)
       recommendations.push({
@@ -221,7 +221,7 @@ function calculateKeywordDensityScore(input: SEOScoreInput): {
         action: `Add ${Math.ceil((optimalMin * wordCount / 100) - keywordCount)} more occurrences of "${input.primaryKeyword}"`,
         impact: 25
       })
-      
+
       if (density === 0) {
         issues.push({
           type: 'error',
@@ -246,7 +246,7 @@ function calculateKeywordDensityScore(input: SEOScoreInput): {
         action: `Remove ${Math.ceil(keywordCount - (optimalMax * wordCount / 100))} occurrences of "${input.primaryKeyword}"`,
         impact: 15
       })
-      
+
       issues.push({
         type: 'warning',
         category: 'keyword',
@@ -257,8 +257,8 @@ function calculateKeywordDensityScore(input: SEOScoreInput): {
 
     return { score: Math.round(score), recommendations, issues }
   } catch (error) {
-    return { 
-      score: 0, 
+    return {
+      score: 0,
       recommendations: [{
         type: 'keyword',
         priority: 'high',
@@ -289,13 +289,13 @@ function calculateReadabilityScoreComponent(input: SEOScoreInput): {
 
   try {
     const readabilityScore = calculateReadabilityScore(input.content)
-    
+
     // Optimal range: Grade 10-12
     const optimalMin = 10
     const optimalMax = 12
-    
+
     let score = 100
-    
+
     if (readabilityScore < optimalMin) {
       score = Math.max(0, (readabilityScore / optimalMin) * 100)
       recommendations.push({
@@ -305,7 +305,7 @@ function calculateReadabilityScoreComponent(input: SEOScoreInput): {
         action: 'Use more complex sentences and advanced vocabulary',
         impact: 15
       })
-      
+
       issues.push({
         type: 'info',
         category: 'readability',
@@ -321,7 +321,7 @@ function calculateReadabilityScoreComponent(input: SEOScoreInput): {
         action: 'Simplify sentences and use more common vocabulary',
         impact: 20
       })
-      
+
       issues.push({
         type: 'warning',
         category: 'readability',
@@ -332,8 +332,8 @@ function calculateReadabilityScoreComponent(input: SEOScoreInput): {
 
     return { score: Math.round(score), recommendations, issues }
   } catch (error) {
-    return { 
-      score: 0, 
+    return {
+      score: 0,
       recommendations: [{
         type: 'readability',
         priority: 'high',
@@ -364,13 +364,13 @@ function calculateStructureScore(input: SEOScoreInput): {
 
   try {
     const structureValidation = validateContentStructure(input.content)
-    
+
     if (structureValidation.isValid) {
       return { score: 100, recommendations, issues }
     }
 
     let score = Math.max(0, 100 - (structureValidation.issues.length * 15))
-    
+
     structureValidation.issues.forEach(issue => {
       recommendations.push({
         type: 'structure',
@@ -379,7 +379,7 @@ function calculateStructureScore(input: SEOScoreInput): {
         action: 'Fix heading structure and hierarchy',
         impact: 20
       })
-      
+
       issues.push({
         type: 'warning',
         category: 'structure',
@@ -390,8 +390,8 @@ function calculateStructureScore(input: SEOScoreInput): {
 
     return { score: Math.round(score), recommendations, issues }
   } catch (error) {
-    return { 
-      score: 0, 
+    return {
+      score: 0,
       recommendations: [{
         type: 'structure',
         priority: 'high',
@@ -423,10 +423,10 @@ function calculateSemanticCoverageScore(input: SEOScoreInput): {
   try {
     const semanticKeywords = input.secondaryKeywords || []
     const contentLower = input.content.toLowerCase()
-    
+
     let foundSemanticCount = 0
     const foundKeywords: string[] = []
-    
+
     if (semanticKeywords && Array.isArray(semanticKeywords)) {
       semanticKeywords.forEach(keyword => {
         if (keyword && contentLower.includes(keyword.toLowerCase())) {
@@ -435,10 +435,10 @@ function calculateSemanticCoverageScore(input: SEOScoreInput): {
         }
       })
     }
-    
+
     const coveragePercentage = semanticKeywords.length > 0 ? (foundSemanticCount / semanticKeywords.length) * 100 : 0
     let score = coveragePercentage
-    
+
     if (coveragePercentage < 50) {
       recommendations.push({
         type: 'semantic',
@@ -447,7 +447,7 @@ function calculateSemanticCoverageScore(input: SEOScoreInput): {
         action: `Include more semantic keywords: ${semanticKeywords.filter(k => !foundKeywords.includes(k)).slice(0, 3).join(', ')}`,
         impact: 15
       })
-      
+
       issues.push({
         type: 'info',
         category: 'semantic',
@@ -458,8 +458,8 @@ function calculateSemanticCoverageScore(input: SEOScoreInput): {
 
     return { score: Math.round(score), recommendations, issues }
   } catch (error) {
-    return { 
-      score: 0, 
+    return {
+      score: 0,
       recommendations: [{
         type: 'semantic',
         priority: 'medium',
@@ -491,9 +491,9 @@ function calculateContentLengthScore(input: SEOScoreInput): {
   try {
     const wordCount = input.content.split(/\s+/).filter(w => w.length > 0).length
     const targetCount = input.targetWordCount || 300
-    
+
     let score = 100
-    
+
     if (wordCount < targetCount * 0.8) {
       score = Math.max(0, (wordCount / (targetCount * 0.8)) * 100)
       recommendations.push({
@@ -503,7 +503,7 @@ function calculateContentLengthScore(input: SEOScoreInput): {
         action: `Add ${targetCount - wordCount} more words to reach optimal length`,
         impact: 10
       })
-      
+
       issues.push({
         type: 'info',
         category: 'length',
@@ -523,8 +523,8 @@ function calculateContentLengthScore(input: SEOScoreInput): {
 
     return { score: Math.round(score), recommendations, issues }
   } catch (error) {
-    return { 
-      score: 0, 
+    return {
+      score: 0,
       recommendations: [{
         type: 'length',
         priority: 'low',
@@ -555,7 +555,7 @@ function calculateMetaOptimizationScore(input: SEOScoreInput): {
 
   try {
     let score = 100
-    
+
     // Check for title tag optimization (simulated)
     const hasTitle = input.content.includes('#') || input.content.split('\n')[0].length > 0
     if (!hasTitle) {
@@ -567,7 +567,7 @@ function calculateMetaOptimizationScore(input: SEOScoreInput): {
         action: 'Add a clear title or H1 heading',
         impact: 25
       })
-      
+
       issues.push({
         type: 'error',
         category: 'meta',
@@ -579,7 +579,7 @@ function calculateMetaOptimizationScore(input: SEOScoreInput): {
     // Check for meta description simulation (first paragraph)
     const firstParagraph = input.content.split('\n\n')[0]
     const firstParagraphLength = firstParagraph.length
-    
+
     if (firstParagraphLength < 100 || firstParagraphLength > 160) {
       score -= 20
       recommendations.push({
@@ -589,7 +589,7 @@ function calculateMetaOptimizationScore(input: SEOScoreInput): {
         action: 'Adjust first paragraph to be between 100-160 characters',
         impact: 15
       })
-      
+
       issues.push({
         type: 'info',
         category: 'meta',
@@ -600,8 +600,8 @@ function calculateMetaOptimizationScore(input: SEOScoreInput): {
 
     return { score: Math.max(0, Math.round(score)), recommendations, issues }
   } catch (error) {
-    return { 
-      score: 0, 
+    return {
+      score: 0,
       recommendations: [{
         type: 'meta',
         priority: 'medium',
@@ -628,11 +628,11 @@ function extractSEOMetrics(input: SEOScoreInput): SEOMetrics {
     const keywordCount = (input.content.toLowerCase().match(new RegExp(input.primaryKeyword.toLowerCase(), 'g')) || []).length
     const keywordDensity = wordCount > 0 ? (keywordCount / wordCount) * 100 : 0
     const readabilityScore = calculateReadabilityScore(input.content)
-    
-    const semanticKeywordCount = input.secondaryKeywords?.filter(keyword => 
+
+    const semanticKeywordCount = input.secondaryKeywords?.filter(keyword =>
       keyword && input.content.toLowerCase().includes(keyword.toLowerCase())
     ).length || 0
-    
+
     const headingCount = (input.content.match(/^#{1,6}\s+/gm) || []).length
     const linkCount = (input.content.match(/\[([^\]]+)\]\([^)]+\)/g) || []).length
     const imageCount = (input.content.match(/!\[([^\]]*)\]\([^)]+\)/g) || []).length

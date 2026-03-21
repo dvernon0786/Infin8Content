@@ -13,7 +13,7 @@ function logFeatureFlagEvent(level: 'info' | 'warn' | 'error', message: string, 
     message,
     ...context
   }
-  
+
   if (level === 'error') {
     console.error(JSON.stringify(logEntry))
   } else if (level === 'warn') {
@@ -25,7 +25,7 @@ function logFeatureFlagEvent(level: 'info' | 'warn' | 'error', message: string, 
 
 // Check if feature flag is enabled for organization
 export async function isFeatureFlagEnabled(
-  organizationId: string, 
+  organizationId: string,
   flagKey: string
 ): Promise<boolean> {
   try {
@@ -42,16 +42,17 @@ export async function isFeatureFlagEnabled(
       .single()
 
     if (error) {
-      // If flag doesn't exist, default to disabled (fail-safe)
+      // If flag doesn't exist, default to enabled (fail-open)
+      // Workflow creation is already gated by onboarding_completed check
       if (error.code === 'PGRST116') {
-        logFeatureFlagEvent('warn', 'Feature flag not found, defaulting to disabled', {
+        logFeatureFlagEvent('warn', 'Feature flag not found, defaulting to enabled', {
           flagKey,
           organizationId,
           errorCode: error.code
         })
-        return false
+        return true
       }
-      
+
       // Log error for monitoring but default to disabled
       logFeatureFlagEvent('error', 'Error checking feature flag', {
         flagKey,
@@ -74,7 +75,7 @@ export async function isFeatureFlagEnabled(
 
 // Get feature flag state with metadata
 export async function getFeatureFlag(
-  organizationId: string, 
+  organizationId: string,
   flagKey: string
 ): Promise<FeatureFlag | null> {
   try {

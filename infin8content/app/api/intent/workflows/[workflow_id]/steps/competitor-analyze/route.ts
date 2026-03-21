@@ -4,21 +4,45 @@
  * 
  * POST /api/intent/workflows/{workflow_id}/steps/competitor-analyze
  * Triggers seed keyword extraction for competitor URLs in a workflow
+ * 
+ * Uses the new workflow state engine with legal transition enforcement
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
-import {
+import { 
   extractSeedKeywords,
-  updateWorkflowStatus,
-  type ExtractSeedKeywordsRequest
+  type ExtractSeedKeywordsRequest,
+  type CompetitorData
 } from '@/lib/services/intent-engine/competitor-seed-extractor'
-import { getWorkflowCompetitors } from '@/lib/services/competitor-workflow-integration'
+import type { SeedExtractor } from '@/lib/services/intent-engine/seed-extractor.interface'
+import { DeterministicFakeExtractor } from '@/lib/services/intent-engine/deterministic-fake-extractor'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
+import { getOrganizationGeoOrThrow } from '@/lib/config/dataforseo-geo'
+
+// Pure dependency injection factory - no global state
+function createExtractor(): SeedExtractor {
+  // In test mode, inject fake extractor
+  // In production, use real extractor wrapper
+  if (process.env.NODE_ENV === 'test') {
+    return new DeterministicFakeExtractor()
+  }
+  
+  // Real extractor wrapper for production
+  return {
+    async extract(request: ExtractSeedKeywordsRequest) {
+      return extractSeedKeywords(request)
+    },
+    getExtractorType() {
+      return 'dataforseo-real'
+    }
+  }
+}
 
 export async function POST(
   request: NextRequest,
@@ -48,15 +72,37 @@ export async function POST(
       return gateResponse
     }
 
-    // Verify workflow exists and belongs to user's organization
+    // Create service client for database operations
     const supabase = createServiceRoleClient()
+
+    // 🔒 ENFORCE COMPETITOR GATE - Check if competitors exist
+    const { count: competitorCount } = await supabase
+      .from('organization_competitors')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', organizationId)
+      .eq('is_active', true)
+
+    if (!competitorCount || competitorCount < 1) {
+      return NextResponse.json(
+        {
+          error: 'NO_COMPETITORS_PRESENT',
+          message: 'Cannot run competitor analysis without competitors. Please complete onboarding first.',
+          competitor_count: competitorCount
+        },
+        { status: 400 }
+      )
+    }
+
+    console.log(`[CompetitorAnalyze] Found ${competitorCount} competitors for analysis`)
+
+    // Get current workflow state
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id')
+      .select('id, state')
       .eq('id', workflowId)
       .eq('organization_id', organizationId)
-      .single()
-
+      .single() as { data: { id: string; state: string } | null; error: any }
+    
     if (workflowError || !workflow) {
       return NextResponse.json(
         { error: 'Workflow not found' },
@@ -64,17 +110,19 @@ export async function POST(
       )
     }
 
-    // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string }
-
-    // Check if workflow is in correct state for competitor analysis
-    if (typedWorkflow.status !== 'step_1_icp' && typedWorkflow.status !== 'step_2_competitors') {
+    // UNIFIED ENGINE: Must be in step_2_competitors to proceed
+    if (workflow.state !== 'step_2_competitors') {
+      const errorMessage = workflow.state === 'step_3_seeds'
+        ? 'Cannot re-run competitor analysis after completion. Please create a new workflow.'
+        : `Workflow must be in step_2_competitors state, currently in ${workflow.state}`
+      
       return NextResponse.json(
         {
-          error: 'Invalid workflow state',
-          message: `Workflow must be in step_1_icp or step_2_competitors state, currently in ${typedWorkflow.status}`
+          error: 'ILLEGAL_TRANSITION',
+          message: errorMessage,
+          current_state: workflow.state
         },
-        { status: 400 }
+        { status: 409 }
       )
     }
 
@@ -86,7 +134,7 @@ export async function POST(
         action: AuditAction.WORKFLOW_COMPETITOR_SEED_KEYWORDS_STARTED,
         details: {
           workflow_id: workflowId,
-          workflow_status: typedWorkflow.status
+          current_state: workflow.state
         },
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
@@ -96,43 +144,111 @@ export async function POST(
       // Continue anyway - logging is non-blocking
     }
 
-    // Load competitors for the workflow
-    console.log(`[CompetitorAnalyze] Loading competitors for workflow ${workflowId}`)
-    const competitors = await getWorkflowCompetitors(workflowId)
+    // Get competitors from request body only (stateless)
+    console.log(`[CompetitorAnalyze] Processing competitors for workflow ${workflowId}`)
+    const body = await request.json().catch(() => ({}))
+    const additionalCompetitors: string[] = body?.additionalCompetitors || []
 
-    if (competitors.length === 0) {
-      await updateWorkflowStatus(
-        workflowId,
-        organizationId,
-        'failed',
-        'No active competitors configured for this organization'
+    // Enforce mandatory 1–3 competitors
+    if (additionalCompetitors.length < 1) {
+      return NextResponse.json(
+        { error: 'MIN_1_COMPETITOR_REQUIRED' },
+        { status: 400 }
       )
+    }
 
+    if (additionalCompetitors.length > 3) {
+      return NextResponse.json(
+        { error: 'MAX_3_COMPETITORS_ALLOWED' },
+        { status: 400 }
+      )
+    }
+
+    // Normalize and create runtime competitor objects
+    const competitors = additionalCompetitors.map(url => {
+      const normalizedUrl = url.startsWith('http') ? url : `https://${url}` 
+      return {
+        id: crypto.randomUUID(), // runtime only
+        url: normalizedUrl,
+        domain: new URL(normalizedUrl).hostname.replace(/^www\./, ''),
+        is_active: true
+      }
+    })
+
+    console.log(`[CompetitorAnalyze] Processing ${competitors.length} competitors from request body only`)
+
+    // Read user's onboarding keyword settings
+    const { data: orgData } = await supabase
+      .from('organizations')
+      .select('keyword_settings')
+      .eq('id', organizationId)
+      .single()
+
+    if (!orgData) {
+      return NextResponse.json(
+        { error: 'Organization keyword settings not configured' },
+        { status: 400 }
+      )
+    }
+
+    // Use STRICT geo resolution - no fallbacks
+    const { locationCode, languageCode } = await getOrganizationGeoOrThrow(supabase, organizationId)
+
+    console.log(`[CompetitorAnalyze] Using location ${locationCode} and language ${languageCode}`)
+
+    // UNIFIED ENGINE: No processing state needed
+    // Work happens synchronously, then advance to next step
+    console.log(`[CompetitorAnalyze] Processing competitors for workflow ${workflowId}`)
+
+    // Extract seed keywords from competitors using dependency injection
+    const extractionRequest: ExtractSeedKeywordsRequest = {
+      competitors: competitors,
+      organizationId,
+      workflowId, // Critical: Pass workflowId for proper persistence and retry tracking
+      maxSeedsPerCompetitor: 25, // Increased from 3 for richer data collection
+      locationCode,
+      languageCode,
+      timeoutMs: 600000 // 10 minutes
+    }
+
+    const extractor = createExtractor()
+    console.log(`[CompetitorAnalyze] Using extractor: ${extractor.getExtractorType()}`)
+    
+    const result = await extractor.extract(extractionRequest)
+
+    // API LAYER: Always succeed if extraction API worked (pure data collection)
+    // We no longer fail on 0 keywords - human curation happens in Step 3
+    console.log(`[CompetitorAnalyze] Extraction completed: ${result.total_keywords_created} keywords from ${competitors.length} competitors`)
+
+    if (result.total_keywords_created === 0) {
+      // Stay in step_2_competitors for retry - no FAILED state needed
       return NextResponse.json(
         {
-          error: 'No competitors found',
-          message: 'Organization must have at least one active competitor configured'
+          success: false,
+          error: 'NO_KEYWORDS_FOUND',
+          message: 'No keywords found from provided competitors. Try adding competitors with stronger SEO presence.'
         },
         { status: 400 }
       )
     }
 
-    console.log(`[CompetitorAnalyze] Found ${competitors.length} competitors for workflow ${workflowId}`)
-
-    // Extract seed keywords from competitors
-    const extractionRequest: ExtractSeedKeywordsRequest = {
-      competitors,
-      organizationId,
-      maxSeedsPerCompetitor: 3,
-      locationCode: 2840, // US default
-      languageCode: 'en',
-      timeoutMs: 600000 // 10 minutes
+    // FSM TRANSITION: Advance to next step after successful completion
+    try {
+      const result = await transitionWithAutomation(workflowId, 'COMPETITORS_COMPLETED', currentUser.id)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to transition workflow')
+      }
+      
+      console.log(`[CompetitorAnalyze] Successfully advanced to step_3_seeds`)
+    } catch (error) {
+      return NextResponse.json(
+        { 
+          error: 'Failed to advance workflow',
+          message: error instanceof Error ? error.message : 'Unknown error'
+        },
+        { status: 500 }
+      )
     }
-
-    const result = await extractSeedKeywords(extractionRequest)
-
-    // Update workflow status to step_2_competitors
-    await updateWorkflowStatus(workflowId, organizationId, 'step_2_competitors')
 
     // Log action completion
     try {
@@ -158,38 +274,31 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      warning: result.competitors_failed > 0 ? `${result.competitors_failed} competitor(s) failed during analysis` : undefined,
-      data: {
-        seed_keywords_created: result.total_keywords_created,
-        step_2_competitor_completed_at: new Date().toISOString(),
-        competitors_processed: result.competitors_processed,
-        competitors_failed: result.competitors_failed,
-        results: result.results
-      }
+      seed_keywords_created: result.total_keywords_created,
+      total_keywords_created: result.total_keywords_created,
+      competitors_processed: result.competitors_processed,
+      competitors_failed: result.competitors_failed,
+      warning: result.competitors_failed > 0 ? `${result.competitors_failed} competitor(s) failed during analysis` : undefined
     })
   } catch (error) {
     // Log error
     console.error(`[CompetitorAnalyze] Error during competitor analysis:`, error)
 
-    // Update workflow with error status if we have the necessary IDs
-    if (workflowId && organizationId) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      try {
-        await updateWorkflowStatus(workflowId, organizationId, 'failed', errorMessage)
-        
-        // Emit terminal failure analytics event (AC 8)
-        emitAnalyticsEvent({
-          event_type: 'workflow_step_failed',
-          organization_id: organizationId,
-          workflow_id: workflowId,
-          step: 'step_2_competitors',
-          total_attempts: 1,
-          final_error_message: errorMessage,
-          timestamp: new Date().toISOString()
-        })
-      } catch (updateError) {
-        console.error('Failed to update workflow error status:', updateError)
-      }
+    // UNIFIED ENGINE: No error state transitions needed
+    // Stay in step_2_competitors for retry capability
+    console.error(`[CompetitorAnalyze] Error during competitor analysis:`, error)
+
+    // Emit failure analytics event for monitoring
+    if (organizationId) {
+      emitAnalyticsEvent({
+        event_type: 'workflow_step_failed',
+        organization_id: organizationId,
+        workflow_id: workflowId,
+        step: 'step_2_competitors',
+        total_attempts: 1,
+        final_error_message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      })
     }
 
     // Return error response

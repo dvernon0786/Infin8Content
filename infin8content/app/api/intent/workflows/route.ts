@@ -1,19 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
-import { logIntentActionAsync } from '@/lib/services/intent-engine/intent-audit-logger'
 import { AuditAction } from '@/types/audit'
 import { isFeatureFlagEnabled } from '@/lib/utils/feature-flags'
 import { FEATURE_FLAG_KEYS } from '@/lib/types/feature-flag'
-import { validateOnboardingComplete } from '@/lib/validators/onboarding-validator'
+import { PLAN_LIMITS } from '@/lib/config/plan-limits'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
-import type { 
-  CreateIntentWorkflowRequest, 
+import type {
+  CreateIntentWorkflowRequest,
   CreateIntentWorkflowResponse,
-  IntentWorkflowStatus,
   IntentWorkflow
 } from '@/lib/types/intent-workflow'
+import type { WorkflowState } from '@/lib/fsm/workflow-events'
 
 /**
  * Zod schema for intent workflow creation request validation
@@ -43,7 +42,7 @@ const createWorkflowSchema = z.object({
  * - id: string (UUID)
  * - name: string
  * - organization_id: string (UUID)
- * - status: string (IntentWorkflowStatus)
+ * - state: string (WorkflowState)
  * - created_at: string (ISO timestamp)
  * 
  * Response (Error):
@@ -75,10 +74,10 @@ export async function POST(request: Request) {
     // Parse and validate request body
     const body = await request.json()
     const validationResult = createWorkflowSchema.safeParse(body)
-    
+
     if (!validationResult.success) {
       return NextResponse.json(
-        { 
+        {
           error: 'Validation failed',
           details: validationResult.error.issues
         },
@@ -101,10 +100,10 @@ export async function POST(request: Request) {
 
     // Check if intent engine feature flag is enabled for this organization
     const isIntentEngineEnabled = await isFeatureFlagEnabled(
-      targetOrgId, 
+      targetOrgId,
       FEATURE_FLAG_KEYS.ENABLE_INTENT_ENGINE
     )
-    
+
     if (!isIntentEngineEnabled) {
       console.warn(`Intent engine not enabled for organization ${targetOrgId}`)
       return NextResponse.json(
@@ -113,22 +112,76 @@ export async function POST(request: Request) {
       )
     }
 
-    // --- Onboarding validation gate (A-6)
-    const validation = await validateOnboardingComplete(targetOrgId)
+    const supabase = await createClient()
 
-    if (!validation.isValid) {
+    // --- MVP Onboarding Check (simplified for workflow creation)
+    // Only check if onboarding is marked complete, not all detailed fields
+    const { data: org, error: orgError } = await supabase
+      .from('organizations')
+      .select('onboarding_completed')
+      .eq('id', targetOrgId)
+      .single()
+
+    if (orgError || !org || !(org as any).onboarding_completed) {
       return NextResponse.json(
         {
           error: 'ONBOARDING_INCOMPLETE',
-          details: validation.errors,
-          missingSteps: validation.missingSteps,
+          details: ['Onboarding must be completed before creating workflows'],
           suggestedAction: 'Complete onboarding at /onboarding'
         },
         { status: 403 }
       )
     }
 
-    const supabase = await createClient()
+    // --- Workflow Concurrency Guard (Phase 9 Refactor)
+    const plan = (currentUser.organizations?.plan || 'starter').toLowerCase() as keyof typeof PLAN_LIMITS.workflow_active
+    const workflowLimit = PLAN_LIMITS.workflow_active[plan]
+
+    if (workflowLimit !== null) {
+      const { count, error: countError } = await supabase
+        .from('intent_workflows')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', targetOrgId)
+        .not('state', 'in', '(completed,cancelled)')
+
+      if (countError) {
+        console.error('[Workflow Concurrency] Count failed:', countError)
+        return NextResponse.json(
+          { error: 'Failed to verify workflow limits' },
+          { status: 500 }
+        )
+      }
+
+      const activeCount = count ?? 0
+
+      if (activeCount >= workflowLimit) {
+        // 📊 QUOTA TELEMETRY
+        await logActionAsync({
+          orgId: targetOrgId,
+          userId: currentUser.id,
+          action: 'quota.workflow_active.limit_hit' as any,
+          details: {
+            plan,
+            currentActive: activeCount,
+            limit: workflowLimit,
+            metric: 'workflow_active',
+          },
+          ipAddress: extractIpAddress(request.headers),
+          userAgent: extractUserAgent(request.headers),
+        })
+
+        return NextResponse.json(
+          {
+            error: 'Active workflow limit reached for your plan',
+            limit: workflowLimit,
+            currentActive: activeCount,
+            plan,
+            metric: 'workflow_active',
+          },
+          { status: 403 }
+        )
+      }
+    }
 
     // Check for duplicate workflow name within the organization
     const { data: existingWorkflow, error: checkError } = await supabase
@@ -148,7 +201,7 @@ export async function POST(request: Request) {
     if (existingWorkflow) {
       const existing = existingWorkflow as unknown as { id: string; name: string }
       return NextResponse.json(
-        { 
+        {
           error: 'Workflow with this name already exists in your organization',
           existing_workflow: {
             id: existing.id,
@@ -164,8 +217,7 @@ export async function POST(request: Request) {
       name: name.trim(),
       organization_id: targetOrgId,
       created_by: currentUser.id,
-      status: 'step_0_auth' as IntentWorkflowStatus,
-      workflow_data: {}
+      state: 'step_1_icp'
     }
 
     const { data: workflowData, error: insertError } = await supabase
@@ -175,7 +227,7 @@ export async function POST(request: Request) {
         id,
         name,
         organization_id,
-        status,
+        state,
         created_at,
         updated_at
       `)
@@ -189,7 +241,14 @@ export async function POST(request: Request) {
       )
     }
 
-    const workflow = workflowData as unknown as CreateIntentWorkflowResponse & { updated_at: string }
+    const workflow = workflowData as unknown as {
+      id: string
+      name: string
+      organization_id: string
+      state: WorkflowState
+      created_at: string
+      updated_at: string
+    }
 
     // Log the workflow creation action
     try {
@@ -200,7 +259,7 @@ export async function POST(request: Request) {
         details: {
           workflow_id: workflow.id,
           workflow_name: workflow.name,
-          workflow_status: workflow.status
+          workflow_state: workflow.state
         },
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
@@ -212,16 +271,14 @@ export async function POST(request: Request) {
 
     // Log the Intent audit trail entry (Story 37.4)
     try {
-      logIntentActionAsync({
-        organizationId: targetOrgId,
-        workflowId: workflow.id,
-        entityType: 'workflow',
-        entityId: workflow.id,
-        actorId: currentUser.id,
+      await logActionAsync({
+        orgId: targetOrgId,
+        userId: currentUser.id,
         action: AuditAction.WORKFLOW_CREATED,
         details: {
+          workflow_id: workflow.id,
           workflow_name: workflow.name,
-          workflow_status: workflow.status,
+          workflow_state: workflow.state,
         },
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
@@ -236,7 +293,7 @@ export async function POST(request: Request) {
       id: workflow.id,
       name: workflow.name,
       organization_id: workflow.organization_id,
-      status: workflow.status,
+      state: workflow.state as WorkflowState,
       created_at: workflow.created_at
     }
 
@@ -280,7 +337,7 @@ export async function GET(request: Request) {
 
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
-    
+
     // Parse pagination parameters
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '50')
@@ -292,7 +349,7 @@ export async function GET(request: Request) {
       .select(`
         id,
         name,
-        status,
+        state,
         created_at,
         updated_at,
         created_by (id, email)

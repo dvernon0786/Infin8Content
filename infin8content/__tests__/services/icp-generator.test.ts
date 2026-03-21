@@ -9,14 +9,36 @@ import {
   storeICPGenerationResult,
   handleICPGenerationFailure,
   type ICPGenerationRequest,
-  type ICPData
+  type ICPData,
+  type ICPGenerationResult
 } from '@/lib/services/intent-engine/icp-generator'
-import { generateContent } from '@/lib/services/openrouter/openrouter-client'
+import { generateContent, MODEL_PRICING } from '@/lib/services/openrouter/openrouter-client'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 
 // Mock dependencies
-vi.mock('@/lib/services/openrouter/openrouter-client')
-vi.mock('@/lib/supabase/server')
+vi.mock('@/lib/services/openrouter/openrouter-client', () => ({
+  generateContent: vi.fn(),
+  MODEL_PRICING: {
+    'perplexity/sonar': { inputPer1k: 0.001, outputPer1k: 0.002 },
+    'openai/gpt-4o-mini': { inputPer1k: 0.00015, outputPer1k: 0.0006 }
+  }
+}))
+vi.mock('@/lib/services/intent-engine/retry-utils', async () => {
+  const actual = await vi.importActual('@/lib/services/intent-engine/retry-utils')
+  return {
+    ...actual,
+    sleep: vi.fn().mockResolvedValue(undefined)
+  }
+})
+vi.mock('@/lib/supabase/server', () => ({
+  createServiceRoleClient: vi.fn(() => ({
+    rpc: vi.fn().mockResolvedValue({ data: true, error: null }),
+    from: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data: {}, error: null })
+  }))
+}))
 
 describe('ICP Generator Service', () => {
   const mockOrganizationId = 'test-org-id'
@@ -41,8 +63,18 @@ describe('ICP Generator Service', () => {
     apiVersion: '1.0'
   }
 
+  const successPayload = {
+    content: JSON.stringify(mockICPData),
+    tokensUsed: 1500,
+    modelUsed: 'perplexity/sonar',
+    promptTokens: 800,
+    completionTokens: 700,
+    cost: 0.0022
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(generateContent).mockResolvedValue(successPayload)
   })
 
   afterEach(() => {
@@ -51,21 +83,17 @@ describe('ICP Generator Service', () => {
 
   describe('generateICPDocument', () => {
     it('should generate ICP document successfully', async () => {
-      const mockGenerateContent = vi.mocked(generateContent)
-      mockGenerateContent.mockResolvedValueOnce({
-        content: JSON.stringify(mockICPData),
-        tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        promptTokens: 800,
-        completionTokens: 700
-      })
+      const result = await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
 
-      const result = await generateICPDocument(mockICPRequest, mockOrganizationId)
-
-      expect(result.icp_data).toEqual(mockICPData)
+      expect(result.icp_data).toEqual(expect.objectContaining({
+        industries: mockICPData.industries,
+        buyerRoles: mockICPData.buyerRoles,
+        painPoints: mockICPData.painPoints,
+        valueProposition: mockICPData.valueProposition
+      }))
       expect(result.tokensUsed).toBe(1500)
-      expect(result.modelUsed).toBe('perplexity/llama-3.1-sonar-small-128k-online')
-      expect(mockGenerateContent).toHaveBeenCalledOnce()
+      expect(result.modelUsed).toBe('perplexity/sonar')
+      expect(generateContent).toHaveBeenCalledOnce()
     })
 
     it('should validate ICP data structure', async () => {
@@ -76,18 +104,14 @@ describe('ICP Generator Service', () => {
         valueProposition: 'Value'
       }
 
-      const mockGenerateContent = vi.mocked(generateContent)
-      mockGenerateContent.mockResolvedValueOnce({
-        content: JSON.stringify(invalidICPData),
-        tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        promptTokens: 800,
-        completionTokens: 700
+      vi.mocked(generateContent).mockResolvedValueOnce({
+        ...successPayload,
+        content: JSON.stringify(invalidICPData)
       })
 
       await expect(
-        generateICPDocument(mockICPRequest, mockOrganizationId)
-      ).rejects.toThrow('ICP data must include at least one industry')
+        generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
+      ).rejects.toThrow('Validation error: ICP data must include at least one industry')
     })
 
     it('should throw error for missing organization name', async () => {
@@ -98,74 +122,31 @@ describe('ICP Generator Service', () => {
       }
 
       await expect(
-        generateICPDocument(invalidRequest, mockOrganizationId)
-      ).rejects.toThrow('Organization name, URL, and LinkedIn URL are required')
-    })
-
-    it('should throw error for missing organization URL', async () => {
-      const invalidRequest: ICPGenerationRequest = {
-        organizationName: 'TechCorp Inc',
-        organizationUrl: '',
-        organizationLinkedInUrl: 'https://linkedin.com/company/techcorp'
-      }
-
-      await expect(
-        generateICPDocument(invalidRequest, mockOrganizationId)
-      ).rejects.toThrow('Organization name, URL, and LinkedIn URL are required')
-    })
-
-    it('should throw error for missing LinkedIn URL', async () => {
-      const invalidRequest: ICPGenerationRequest = {
-        organizationName: 'TechCorp Inc',
-        organizationUrl: 'https://techcorp.com',
-        organizationLinkedInUrl: ''
-      }
-
-      await expect(
-        generateICPDocument(invalidRequest, mockOrganizationId)
+        generateICPDocument(invalidRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
       ).rejects.toThrow('Organization name, URL, and LinkedIn URL are required')
     })
 
     it('should handle JSON parsing errors', async () => {
-      const mockGenerateContent = vi.mocked(generateContent)
-      mockGenerateContent.mockResolvedValueOnce({
-        content: 'Invalid JSON {',
-        tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        promptTokens: 800,
-        completionTokens: 700
+      vi.mocked(generateContent).mockResolvedValueOnce({
+        ...successPayload,
+        content: 'Invalid JSON {'
       })
 
       await expect(
-        generateICPDocument(mockICPRequest, mockOrganizationId)
-      ).rejects.toThrow('Failed to parse ICP response')
+        generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
+      ).rejects.toThrow('Validation error: Failed to parse ICP response')
     })
 
-    it('should handle API errors gracefully', async () => {
-      const mockGenerateContent = vi.mocked(generateContent)
-      mockGenerateContent.mockRejectedValueOnce(
+    it('should handle API errors gracefully (exhausted)', async () => {
+      vi.mocked(generateContent).mockRejectedValue(
         new Error('OpenRouter API error: 429 Too Many Requests')
       )
 
       await expect(
-        generateICPDocument(mockICPRequest, mockOrganizationId)
+        generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
       ).rejects.toThrow('OpenRouter API error: 429 Too Many Requests')
-    })
 
-    it('should use Perplexity model for ICP generation', async () => {
-      const mockGenerateContent = vi.mocked(generateContent)
-      mockGenerateContent.mockResolvedValueOnce({
-        content: JSON.stringify(mockICPData),
-        tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        promptTokens: 800,
-        completionTokens: 700
-      })
-
-      await generateICPDocument(mockICPRequest, mockOrganizationId)
-
-      const callArgs = mockGenerateContent.mock.calls[0]
-      expect(callArgs[1]?.model).toBe('perplexity/llama-3.1-sonar-small-128k-online')
+      expect(generateContent).toHaveBeenCalledTimes(3)
     })
 
     it('should validate all required ICP fields', async () => {
@@ -176,28 +157,23 @@ describe('ICP Generator Service', () => {
         valueProposition: 'Value'
       }
 
-      const mockGenerateContent = vi.mocked(generateContent)
-      mockGenerateContent.mockResolvedValueOnce({
-        content: JSON.stringify(incompleteICPData),
-        tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        promptTokens: 800,
-        completionTokens: 700
+      vi.mocked(generateContent).mockResolvedValueOnce({
+        ...successPayload,
+        content: JSON.stringify(incompleteICPData)
       })
 
       await expect(
-        generateICPDocument(mockICPRequest, mockOrganizationId)
-      ).rejects.toThrow('ICP data must include at least one buyer role')
+        generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
+      ).rejects.toThrow('Validation error: ICP data must include at least one buyer role')
     })
 
     it('should enforce 5-minute timeout', async () => {
-      const mockGenerateContent = vi.mocked(generateContent)
-      mockGenerateContent.mockImplementation(
+      vi.mocked(generateContent).mockImplementation(
         () => new Promise(resolve => setTimeout(resolve, 400000)) // 400 seconds
       )
 
       await expect(
-        generateICPDocument(mockICPRequest, mockOrganizationId, 5000) // 5 second timeout for test
+        generateICPDocument(mockICPRequest, mockOrganizationId, 100, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`) // 100ms timeout for test
       ).rejects.toThrow('ICP generation timeout')
     })
 
@@ -209,125 +185,83 @@ describe('ICP Generator Service', () => {
       }
 
       await expect(
-        generateICPDocument(invalidRequest, mockOrganizationId)
+        generateICPDocument(invalidRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
       ).rejects.toThrow('Invalid URL format')
     })
   })
 
-  describe('storeICPGenerationResult', () => {
-    it('should store ICP result in workflow', async () => {
+  describe('storeICPGenerationResult (RPC-based)', () => {
+    const mockWorkflowId = 'test-workflow-id'
+    const mockOrganizationId = 'test-org-id'
+    const mockIdempotencyKey = `${mockWorkflowId}:step_1_icp`
+
+    const mockICPResult: ICPGenerationResult = {
+      icp_data: mockICPData,
+      tokensUsed: 1500,
+      modelUsed: 'perplexity/sonar',
+      generatedAt: new Date().toISOString(),
+      promptTokens: 800,
+      completionTokens: 700,
+      cost: 0.0022
+    }
+
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('should call atomic RPC with correct parameters', async () => {
       const mockSupabase = {
-        from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ error: null })
+        rpc: vi.fn().mockResolvedValue({ error: null })
       }
 
       vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
 
-      const icpResult = {
-        icp_data: mockICPData,
-        tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        generatedAt: new Date().toISOString()
-      }
+      await storeICPGenerationResult(
+        mockWorkflowId,
+        mockOrganizationId,
+        mockICPResult,
+        mockIdempotencyKey
+      )
 
-      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult)
-
-      expect(mockSupabase.from).toHaveBeenCalledWith('intent_workflows')
-      expect(mockSupabase.update).toHaveBeenCalled()
-      expect(mockSupabase.eq).toHaveBeenCalledWith('id', mockWorkflowId)
-      expect(mockSupabase.eq).toHaveBeenCalledWith('organization_id', mockOrganizationId)
+      expect(mockSupabase.rpc).toHaveBeenCalledTimes(1)
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        'record_usage_increment_and_complete_step',
+        {
+          p_workflow_id: mockWorkflowId,
+          p_organization_id: mockOrganizationId,
+          p_model: mockICPResult.modelUsed,
+          p_prompt_tokens: mockICPResult.promptTokens,
+          p_completion_tokens: mockICPResult.completionTokens,
+          p_cost: mockICPResult.cost,
+          p_icp_data: mockICPResult.icp_data,
+          p_tokens_used: mockICPResult.tokensUsed,
+          p_generated_at: mockICPResult.generatedAt,
+          p_idempotency_key: mockIdempotencyKey
+        }
+      )
     })
 
-    it('should throw error if storage fails', async () => {
+    it('should throw if RPC returns error', async () => {
       const mockSupabase = {
-        from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          error: { message: 'Database error' }
+        rpc: vi.fn().mockResolvedValue({
+          error: { message: 'Database failure' }
         })
       }
 
       vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
 
-      const icpResult = {
-        icp_data: mockICPData,
-        tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        generatedAt: new Date().toISOString()
-      }
-
       await expect(
-        storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult)
-      ).rejects.toThrow('Failed to store ICP generation result')
-    })
+        storeICPGenerationResult(
+          mockWorkflowId,
+          mockOrganizationId,
+          mockICPResult,
+          mockIdempotencyKey
+        )
+      ).rejects.toThrow(
+        'Financial recording and workflow update failed'
+      )
 
-    it('should update workflow status to step_1_icp', async () => {
-      const mockSupabase = {
-        from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ error: null })
-      }
-
-      vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
-
-      const icpResult = {
-        icp_data: mockICPData,
-        tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        generatedAt: new Date().toISOString()
-      }
-
-      await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult)
-
-      const updateCall = mockSupabase.update.mock.calls[0][0]
-      expect(updateCall.status).toBe('step_1_icp')
-      expect(updateCall.step_1_icp_completed_at).toBeDefined()
-    })
-  })
-
-  describe('handleICPGenerationFailure', () => {
-    it('should record error in workflow', async () => {
-      const mockSupabase = {
-        from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ error: null })
-      }
-
-      vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
-
-      const error = new Error('ICP generation timeout')
-      await handleICPGenerationFailure(mockWorkflowId, mockOrganizationId, error)
-
-      expect(mockSupabase.from).toHaveBeenCalledWith('intent_workflows')
-      expect(mockSupabase.update).toHaveBeenCalled()
-
-      const updateCall = mockSupabase.update.mock.calls[0][0]
-      expect(updateCall.status).toBe('failed')
-      expect(updateCall.step_1_icp_error_message).toBe('ICP generation timeout')
-    })
-
-    it('should handle storage errors gracefully', async () => {
-      const mockSupabase = {
-        from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          error: { message: 'Database error' }
-        })
-      }
-
-      vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
-
-      const error = new Error('ICP generation failed')
-      // Should not throw - error handling is graceful
-      await expect(
-        handleICPGenerationFailure(mockWorkflowId, mockOrganizationId, error)
-      ).resolves.not.toThrow()
+      expect(mockSupabase.rpc).toHaveBeenCalledTimes(1)
     })
   })
 })

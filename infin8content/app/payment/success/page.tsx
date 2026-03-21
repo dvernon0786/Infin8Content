@@ -5,7 +5,6 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import PaymentSuccessClient from './payment-success-client'
 import { validateRedirect } from '@/lib/utils/validate-redirect'
-import { LayoutDiagnostic } from '@/components/layout-diagnostic'
 
 interface PaymentSuccessPageProps {
   searchParams: Promise<{ session_id?: string }>
@@ -59,7 +58,6 @@ export default async function PaymentSuccessPage({
             Go to Payment Page
           </Link>
         </div>
-        <LayoutDiagnostic />
       </div>
     )
   }
@@ -104,7 +102,6 @@ export default async function PaymentSuccessPage({
             Go to Payment Page
           </Link>
         </div>
-        <LayoutDiagnostic />
       </div>
     )
   }
@@ -223,7 +220,7 @@ export default async function PaymentSuccessPage({
   const supabase = await createClient()
   const { data: organization, error: orgError } = await supabase
     .from('organizations')
-    .select('id, payment_status, plan')
+    .select('id, payment_status, plan, onboarding_completed')
     .eq('id', sessionOrgId)
     .single()
 
@@ -263,19 +260,39 @@ export default async function PaymentSuccessPage({
             Refresh Page
           </button>
         </div>
-        <LayoutDiagnostic />
       </div>
     )
   }
 
   const paymentStatus = (organization as any).payment_status
 
+  // Trial payment success — webhook sets trialing not active
+  if (paymentStatus === 'trialing') {
+    const redirectTo = (organization as any).onboarding_completed
+      ? '/dashboard'
+      : '/onboarding'
+
+    return (
+      <PaymentSuccessClient
+        status="active"
+        plan="trial"
+        redirectTo={redirectTo}
+        isReactivation={false}
+      />
+    )
+  }
+
   // If payment is active, show success and redirect
   if (paymentStatus === 'active') {
-    // Get redirect destination from session metadata (for post-reactivation redirect)
-    const redirectTo = validateRedirect(session.metadata?.redirect, '/dashboard')
-    // Check if this was a reactivation (account was suspended before payment)
     const isReactivation = session.metadata?.suspended === 'true'
+
+    // HARD RULE:
+    // - First activation → onboarding (mandatory)
+    // - Reactivation → dashboard (user already completed onboarding)
+    const redirectTo = (organization as any).onboarding_completed
+      ? '/dashboard'
+      : '/onboarding'
+
     return (
       <PaymentSuccessClient
         status="active"
@@ -289,6 +306,24 @@ export default async function PaymentSuccessPage({
   // If payment is pending, show processing message
   // This handles race condition where webhook hasn't processed yet
   if ((paymentStatus as any) === 'pending_payment') {
+    // Stripe already confirmed this session as paid (verified above via stripe.checkout.sessions.retrieve).
+    // The webhook is simply delayed. Redirect optimistically — webhook will sync the DB in the background.
+    if (session.payment_status === 'paid' && session.status === 'complete') {
+      const redirectTo = (organization as any).onboarding_completed
+        ? '/dashboard'
+        : '/onboarding'
+
+      return (
+        <PaymentSuccessClient
+          status="active"
+          plan={session.metadata?.plan || (organization as any).plan || 'starter'}
+          redirectTo={redirectTo}
+          isReactivation={session.metadata?.suspended === 'true'}
+        />
+      )
+    }
+
+    // Session not confirmed paid yet — genuine pending state, keep polling
     return <PaymentSuccessClient status="pending" />
   }
 

@@ -3,7 +3,7 @@
  * Story 15.4: Dashboard Search and Filtering
  */
 
-import type { DashboardArticle } from '@/lib/supabase/realtime';
+import type { DashboardArticle } from '@/lib/types/dashboard.types';
 import type { FilterState, FilterFunction } from '@/lib/types/dashboard.types';
 
 /**
@@ -11,13 +11,13 @@ import type { FilterState, FilterFunction } from '@/lib/types/dashboard.types';
  */
 export const applyFilters: FilterFunction = (articles, filters) => {
   const startTime = performance.now();
-  
+
   // Defensive check for filters
   if (!filters || typeof filters !== 'object') {
     console.warn('applyFilters: Invalid filters object', filters);
     return articles;
   }
-  
+
   // If no active filters, return articles as-is
   if (!hasActiveFilters(filters)) {
     return articles;
@@ -28,7 +28,7 @@ export const applyFilters: FilterFunction = (articles, filters) => {
   // Apply status filter
   if (filters.status.length > 0) {
     filteredArticles = filteredArticles.filter(article =>
-      filters.status.includes(article.status as any)
+      filters.status.includes(article.status)
     );
   }
 
@@ -49,12 +49,6 @@ export const applyFilters: FilterFunction = (articles, filters) => {
     );
   }
 
-  // Apply word count range filter
-  if (filters.wordCountRange.min !== undefined || filters.wordCountRange.max !== undefined) {
-    filteredArticles = filteredArticles.filter(article =>
-      isInRange(article.progress?.word_count || 0, filters.wordCountRange)
-    );
-  }
 
   const endTime = performance.now();
   // Performance tracking would be implemented here for development
@@ -71,14 +65,12 @@ export function hasActiveFilters(filters: FilterState): boolean {
     console.warn('hasActiveFilters: Invalid filters object', filters);
     return false;
   }
-  
+
   return (
     filters.status.length > 0 ||
     filters.keywords.length > 0 ||
     filters.dateRange.start !== undefined ||
     filters.dateRange.end !== undefined ||
-    filters.wordCountRange.min !== undefined ||
-    filters.wordCountRange.max !== undefined ||
     filters.sortBy !== undefined
   );
 }
@@ -92,7 +84,7 @@ export function isFilterActive(filters: FilterState, filterType: keyof FilterSta
     console.warn('isFilterActive: Invalid filters object', filters);
     return false;
   }
-  
+
   switch (filterType) {
     case 'status':
       return filters.status?.length > 0 || false;
@@ -100,8 +92,6 @@ export function isFilterActive(filters: FilterState, filterType: keyof FilterSta
       return filters.keywords?.length > 0 || false;
     case 'dateRange':
       return filters.dateRange?.start !== undefined || filters.dateRange?.end !== undefined || false;
-    case 'wordCountRange':
-      return filters.wordCountRange?.min !== undefined || filters.wordCountRange?.max !== undefined || false;
     case 'sortBy':
       return filters.sortBy !== undefined;
     default:
@@ -114,32 +104,18 @@ export function isFilterActive(filters: FilterState, filterType: keyof FilterSta
  */
 function isDateInRange(dateString: string, dateRange: { start?: Date; end?: Date }): boolean {
   const date = new Date(dateString);
-  
+
   if (dateRange.start && date < dateRange.start) {
     return false;
   }
-  
+
   if (dateRange.end && date > dateRange.end) {
     return false;
   }
-  
+
   return true;
 }
 
-/**
- * Check if a number is within the specified range
- */
-function isInRange(value: number, range: { min?: number; max?: number }): boolean {
-  if (range.min !== undefined && value < range.min) {
-    return false;
-  }
-  
-  if (range.max !== undefined && value > range.max) {
-    return false;
-  }
-  
-  return true;
-}
 
 /**
  * Get available statuses from articles
@@ -237,23 +213,6 @@ export const DATE_RANGE_PRESETS = {
   },
 };
 
-/**
- * Get word count range presets
- */
-export const WORD_COUNT_PRESETS = {
-  short: {
-    label: 'Short (< 500 words)',
-    range: { min: 0, max: 500 },
-  },
-  medium: {
-    label: 'Medium (500-1500 words)',
-    range: { min: 500, max: 1500 },
-  },
-  long: {
-    label: 'Long (1500+ words)',
-    range: { min: 1500 },
-  },
-};
 
 /**
  * Validate filter state
@@ -271,12 +230,6 @@ export function validateFilterState(filters: FilterState): {
     }
   }
 
-  // Validate word count range
-  if (filters.wordCountRange.min !== undefined && filters.wordCountRange.max !== undefined) {
-    if (filters.wordCountRange.min > filters.wordCountRange.max) {
-      errors.push('Minimum word count must be less than maximum word count');
-    }
-  }
 
   // Validate keywords
   if (filters.keywords.some(keyword => keyword.trim().length === 0)) {
@@ -302,10 +255,6 @@ export function normalizeFilterState(filters: FilterState): FilterState {
     keywords: filters.keywords
       .filter(keyword => keyword && keyword.trim().length > 0)
       .map(keyword => keyword.trim()),
-    wordCountRange: {
-      min: filters.wordCountRange.min !== undefined ? Math.max(0, filters.wordCountRange.min) : undefined,
-      max: filters.wordCountRange.max !== undefined ? Math.max(0, filters.wordCountRange.max) : undefined,
-    },
     sortBy: filters.sortBy,
   };
 }
@@ -332,13 +281,6 @@ export function filtersToQueryParams(filters: FilterState): Record<string, strin
     params.dateEnd = filters.dateRange.end.toISOString();
   }
 
-  if (filters.wordCountRange.min !== undefined) {
-    params.wordCountMin = filters.wordCountRange.min.toString();
-  }
-
-  if (filters.wordCountRange.max !== undefined) {
-    params.wordCountMax = filters.wordCountRange.max.toString();
-  }
 
   if (filters.sortBy) {
     params.sortBy = filters.sortBy;
@@ -369,19 +311,6 @@ export function queryParamsToFilters(params: Record<string, string>): Partial<Fi
     filters.dateRange = { ...filters.dateRange, end: new Date(params.dateEnd) };
   }
 
-  if (params.wordCountMin) {
-    const min = parseInt(params.wordCountMin, 10);
-    if (!isNaN(min)) {
-      filters.wordCountRange = { ...filters.wordCountRange, min };
-    }
-  }
-
-  if (params.wordCountMax) {
-    const max = parseInt(params.wordCountMax, 10);
-    if (!isNaN(max)) {
-      filters.wordCountRange = { ...filters.wordCountRange, max };
-    }
-  }
 
   if (params.sortBy) {
     filters.sortBy = params.sortBy as any;
@@ -415,9 +344,6 @@ export function getFilterStats(articles: DashboardArticle[], filters: FilterStat
     filterBreakdown.dateRange = applyFilters(articles, { ...filters, dateRange: {} }).length - filtered;
   }
 
-  if (filters.wordCountRange.min !== undefined || filters.wordCountRange.max !== undefined) {
-    filterBreakdown.wordCountRange = applyFilters(articles, { ...filters, wordCountRange: {} }).length - filtered;
-  }
 
   return { total, filtered, filterBreakdown };
 }
@@ -433,12 +359,12 @@ export class FilterPerformanceMonitor {
     maxTime: number;
     minTime: number;
   } = {
-    filterCount: 0,
-    totalTime: 0,
-    averageTime: 0,
-    maxTime: 0,
-    minTime: Infinity,
-  };
+      filterCount: 0,
+      totalTime: 0,
+      averageTime: 0,
+      maxTime: 0,
+      minTime: Infinity,
+    };
 
   static measureFilter<T>(filterFn: () => T, articleCount: number): T {
     const startTime = performance.now();
@@ -447,7 +373,7 @@ export class FilterPerformanceMonitor {
     const duration = endTime - startTime;
 
     this.updateMetrics(duration);
-    
+
     // Performance warning would be shown in development
 
     return result;

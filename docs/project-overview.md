@@ -1,335 +1,56 @@
-# Project Overview
+# Project Overview - Infin8Content
 
-Generated: 2026-01-13 (Updated)  
-Project: Infin8Content  
-Type: Multi-Tenant SaaS Platform  
-Status: Active Development
+Generated: 2026-03-17
+Project State: **Production Hardened**
+Authority Model: **Zero Drift Protocol** (Deterministic State Management)
 
----
+## Purpose
 
-## Executive Summary
+Infin8Content is a high-performance, enterprise-grade AI content generation platform. It handles the entire lifecycle of content creation—from research and SEO analysis to section-by-section generation and automated CMS publishing—managed through a deterministic Finite State Machine (FSM) with 25 states and 30+ events.
 
-**Infin8Content** is an AI-powered content generation platform designed as a multi-tenant SaaS application. The platform enables organizations to create high-quality content through advanced AI integration, featuring team collaboration, subscription-based pricing, comprehensive audit logging, and intelligent research capabilities.
+## Core Architectural Directives
 
-### Key Value Propositions
-- **AI-Powered Content**: Advanced OpenRouter integration with multiple AI models
-- **Multi-Tenant Architecture**: Complete data isolation between organizations
-- **Team Collaboration**: Role-based access control and team management
-- **Research Integration**: Built-in keyword research and SEO analysis
-- **Payment Processing**: Stripe integration with flexible subscription plans
-- **Real-Time Progress**: Live content generation tracking and updates
+The platform adheres to the **Zero Drift Protocol**, ensuring absolute data integrity and state consistency:
 
----
+1.  **Single Authority**: The Article Lifecycle is managed exclusively by the **Trigger API** (Transitions) and **Inngest Workers** (Execution). No other component may mutate article state.
+2.  **Deterministic Pipeline**: Generation follows a strict, sequential FSM. State transitions are atomic and irreversible without explicit system intervention.
+3.  **Real-time Stability**: A "Real-time First, Polling Fallback" model ensures the dashboard always reflects the ground truth of the database without UI-side calculation of state.
+4.  **Audit Hardening**: Every state transition and system action is logged with high-fidelity metadata for compliance and debugging.
 
-## Technology Stack
+## Key Capabilities
 
-### Core Technologies
-- **Frontend**: Next.js 16.1.1 with React 19.2.3 and TypeScript 5
-- **Backend**: Supabase (PostgreSQL) with Row Level Security
-- **Styling**: Tailwind CSS 4 with Radix UI components
-- **Authentication**: Supabase Auth with JWT tokens
-- **Payments**: Stripe integration with webhook processing
+-   **Deep Research**: Multi-source research integration (Tavily, DataForSEO) for real-time data ingestion with 24-hour caching.
+-   **Parallel Generation**: Optimized LLM orchestration (OpenRouter) with parallel section processing and smart quality retries.
+-   **Lifecycle Sealing**: Pure generation engine mode eliminates editorial drift by locking content once generation begins.
+-   **Multi-tenant SaaS**: Built-in organization management, RBAC, and Stripe-integrated billing with monthly usage limits ($25 default).
+-   **Mobile-First**: 15+ mobile-optimized components for on-the-go content management.
 
-### External Integrations
-- **AI Content**: OpenRouter API for content generation
-- **Research**: Tavily API for web research and data gathering
-- **SEO Analysis**: DataForSEO for keyword research and competitive analysis
-- **Email**: Brevo for transactional emails and notifications
-- **Workflows**: Inngest for background job processing
+## Technology Stack (Verified from package.json)
 
-### Development Tools
-- **Testing**: Vitest (unit) + Playwright (E2E)
-- **Code Quality**: ESLint with TypeScript strict mode
-- **Database**: Supabase migrations with automatic type generation
-- **Deployment**: Docker containerization ready
+-   **Frontend**: Next.js 16.1.1 (App Router), React 19.2.3, Tailwind CSS 4.0
+-   **Backend**: Supabase (Auth, PostgreSQL/RLS, Real-time), Inngest 3.48.1 (Workflow Engine)
+-   **AI**: OpenRouter 2.1.1 (Gemini 2.0, Claude 3.5 Sonnet, Llama 3), Tavily API
+-   **Payments**: Stripe 20.1.0 with usage tracking and cost functions
+-   **Email**: Brevo 3.0.1 for transactional emails
+-   **Testing**: Vitest 4.0.16, Playwright 1.57.0, Storybook 10.1.11
+-   **Monitoring**: Sentry 10.34.0 for error tracking
 
----
+## Current Scale Metrics
 
-## Architecture Overview
+- **Codebase Size**: 7,581+ files across monorepo
+- **Components**: 183 React components with design system compliance
+- **API Routes**: 50+ endpoints with Zod validation
+- **Database**: 15+ tables with comprehensive RLS policies
+- **Migrations**: 75+ applied, latest fixing article status constraints
+- **FSM Coverage**: 25 workflow states with structural coupling to automation
 
-### Multi-Tenant Structure
-```
-Infin8Content Architecture
-├── Frontend Layer (Next.js App Router)
-│   ├── Authentication Routes
-│   ├── Dashboard Interface
-│   ├── API Routes (44 endpoints)
-│   └── Component Library
-├── Backend Layer (Supabase)
-│   ├── PostgreSQL Database (12 tables)
-│   ├── Row Level Security (RLS)
-│   ├── Real-time Subscriptions
-│   └── Authentication Service
-└── External Services
-    ├── AI Content Generation
-    ├── Payment Processing
-    ├── Research APIs
-    └── Email Services
-```
+## Production Readiness
 
-### Key Architectural Patterns
-- **Event-Driven Design**: Inngest workflows for async processing
-- **Service Layer**: Clean separation for external API integrations
-- **Component Architecture**: Reusable UI components with Radix UI
-- **Security-First**: Multi-layer security with RLS and audit logging
+- **State Management**: Unified workflow engine prevents race conditions
+- **Error Handling**: Comprehensive retry logic and failure states
+- **Security**: Row-level security on all tables with service role bypass
+- **Performance**: Real-time subscriptions, query optimization, and caching
+- **Compliance**: Audit trails, GDPR considerations, and data isolation
 
 ---
-
-## Core Features
-
-### 1. AI Content Generation
-- **Multiple AI Models**: Support for various OpenRouter models
-- **Research Integration**: Automatic research integration for better content
-- **Progress Tracking**: Real-time generation progress with WebSocket updates
-- **Content Management**: Save, edit, and manage generated articles
-- **Quality Optimization**: Performance monitoring and optimization
-
-### 2. Multi-Tenant Team Management
-- **Organization Isolation**: Complete data separation between tenants
-- **Role-Based Access**: Admin, Member, and Viewer roles
-- **Team Invitations**: Email-based team member invitations
-- **Audit Logging**: Comprehensive activity tracking
-- **Suspension System**: Automated account suspension for payment issues
-
-### 3. Payment & Subscription Management
-- **Flexible Plans**: Starter ($29/mo), Pro ($99/mo), Agency ($299/mo)
-- **Grace Period**: 7-day payment resolution window
-- **Automated Notifications**: Payment status updates via email
-- **Webhook Processing**: Real-time Stripe event handling
-- **Usage Tracking**: Per-organization usage statistics
-
-### 4. Research & SEO Tools
-- **Keyword Research**: Tavily API integration for research
-- **SEO Analysis**: DataForSEO for competitive analysis
-- **Content Optimization**: SEO-focused content generation
-- **Research Caching**: Cost optimization through intelligent caching
-- **Analytics Dashboard**: Usage and performance metrics
-
----
-
-## Database Schema
-
-### Core Tables
-- **organizations**: Multi-tenant organization management
-- **users**: User accounts with role assignments
-- **articles**: AI-generated content with progress tracking
-- **team_invitations**: Team member invitation system
-- **audit_logs**: Comprehensive activity tracking
-- **subscriptions**: Stripe subscription management
-- **payment_grace_periods**: 7-day grace period management
-
-### Security Features
-- **Row Level Security**: All tables have RLS enabled
-- **Organization Isolation**: Data access limited to user's organization
-- **Audit Trails**: Complete activity logging with timestamps
-- **Input Validation**: Zod schema validation for all inputs
-
----
-
-## API Architecture
-
-### RESTful API Design
-- **44 Endpoints**: Comprehensive API covering all features
-- **Authentication**: JWT-based authentication with automatic refresh
-- **Rate Limiting**: Per-user request throttling
-- **Error Handling**: Consistent error response format
-- **Validation**: Request validation with detailed error messages
-
-### API Categories
-- **Authentication**: Login, register, OTP verification
-- **Articles**: Generation, progress tracking, management
-- **Organizations**: Creation, updates, billing management
-- **Team Management**: Invitations, role updates, member management
-- **Payment**: Checkout sessions, webhook processing
-- **Research**: Keyword research and analysis
-- **User Management**: Profile updates, data export
-
----
-
-## Development Workflow
-
-### Environment Setup
-1. **Prerequisites**: Node.js 18+, Docker, Supabase CLI
-2. **Installation**: `npm install` with all dependencies
-3. **Configuration**: Environment variables for all services
-4. **Database**: Local Supabase instance with migrations
-5. **Development**: `npm run dev` for hot reload development
-
-### Testing Strategy
-- **Unit Tests**: Vitest with jsdom environment
-- **Integration Tests**: API and database testing
-- **E2E Tests**: Playwright for critical user workflows
-- **Coverage**: Comprehensive test coverage for all features
-
-### Code Quality
-- **TypeScript**: Strict mode with comprehensive type checking
-- **ESLint**: Code quality and style enforcement
-- **Pre-commit**: Automated checks before commits
-- **CI/CD**: Automated testing and deployment
-
----
-
-## Performance & Scalability
-
-### Performance Optimizations
-- **Database Indexing**: Optimized queries with proper indexes
-- **Caching Strategy**: Multi-level caching (browser, app, database)
-- **Real-Time Updates**: Efficient WebSocket usage
-- **Bundle Optimization**: Next.js automatic optimization
-- **API Efficiency**: Intelligent research result caching
-
-### Scalability Considerations
-- **Horizontal Scaling**: Application layer ready for load balancing
-- **Database Scaling**: Read replica support for analytics queries
-- **Microservice Ready**: Service boundaries defined for future extraction
-- **CDN Integration**: Static asset optimization ready
-- **Monitoring**: Performance tracking and alerting
-
----
-
-## Security Architecture
-
-### Multi-Layer Security
-1. **Network Security**: HTTPS/TLS, CSP headers, CORS configuration
-2. **Authentication**: Supabase JWT with automatic refresh
-3. **Authorization**: Role-based access control with organization isolation
-4. **Data Security**: Row Level Security, input validation, audit logging
-
-### Compliance Features
-- **Data Retention**: Configurable log retention policies
-- **Export Capabilities**: User data export functionality
-- **Audit Trails**: Complete activity logging with detailed context
-- **Access Controls**: Granular permissions with role management
-
----
-
-## Deployment Architecture
-
-### Production Ready
-- **Containerization**: Docker multi-stage builds
-- **Environment Management**: Separate configs for dev/staging/prod
-- **Database Migrations**: Automated schema management
-- **Health Checks**: Application and database health monitoring
-- **Error Tracking**: Comprehensive error logging and alerting
-
-### Infrastructure Requirements
-- **Application**: Node.js runtime with 1GB+ RAM
-- **Database**: PostgreSQL with connection pooling
-- **External Services**: API keys for all integrated services
-- **Monitoring**: Application performance monitoring
-- **Backup Strategy**: Automated database backups
-
----
-
-## Business Model
-
-### Subscription Tiers
-- **Starter Plan**: $29/month - Basic features, limited usage
-- **Pro Plan**: $99/month - Advanced features, increased limits
-- **Agency Plan**: $299/month - Full features, highest limits
-
-### Revenue Drivers
-- **Monthly Recurring Revenue**: Subscription-based pricing
-- **Usage-Based**: Additional charges for excessive usage
-- **Team Expansion**: Per-seat pricing for larger teams
-- **Premium Features**: Advanced AI models and analytics
-
----
-
-## Roadmap & Future Development
-
-### Near Term (1-3 months)
-- **UX Optimization**: Enhanced user interface and experience
-- **Mobile Responsiveness**: Improved mobile device support
-- **Analytics Dashboard**: Advanced usage analytics
-- **Performance Monitoring**: Real-time performance metrics
-
-### Medium Term (3-6 months)
-- **Advanced Templates**: Content template system
-- **Collaboration Features**: Real-time collaborative editing
-- **API Rate Limiting**: Enhanced quota management
-- **Content Export**: Multiple export formats (PDF, Word, HTML)
-
-### Long Term (6+ months)
-- **Mobile Applications**: React Native mobile clients
-- **White-Label Solutions**: Custom branding options
-- **Advanced Analytics**: Machine learning insights
-- **Global Expansion**: Multi-language support
-
----
-
-## Team & Development
-
-### Development Team Structure
-- **Frontend Developers**: React/Next.js expertise
-- **Backend Developers**: Node.js/PostgreSQL expertise
-- **DevOps Engineers**: Deployment and infrastructure
-- **QA Engineers**: Testing and quality assurance
-- **Product Managers**: Feature planning and prioritization
-
-### Development Methodology
-- **Agile Development**: 2-week sprints with regular releases
-- **Code Reviews**: Peer review process for all changes
-- **Continuous Integration**: Automated testing and deployment
-- **Documentation**: Comprehensive technical documentation
-- **Knowledge Sharing**: Regular team knowledge sharing sessions
-
----
-
-## Success Metrics
-
-### Technical Metrics
-- **Performance**: Page load times < 2 seconds
-- **Availability**: 99.9% uptime target
-- **Error Rate**: < 0.1% API error rate
-- **Test Coverage**: > 80% code coverage
-
-### Business Metrics
-- **User Engagement**: Daily active users and session duration
-- **Content Generation**: Articles generated per user
-- **Conversion Rates**: Free trial to paid conversion
-- **Customer Retention**: Monthly churn rate < 5%
-
-### Quality Metrics
-- **Customer Satisfaction**: NPS score > 50
-- **Support Tickets**: Reduced support ticket volume
-- **Feature Adoption**: Usage of new features
-- **User Feedback**: Regular user satisfaction surveys
-
----
-
-## Getting Started
-
-### For Developers
-1. **Clone Repository**: `git clone <repository-url>`
-2. **Install Dependencies**: `npm install`
-3. **Setup Environment**: Copy `.env.example` to `.env.local`
-4. **Start Development**: `npm run dev`
-5. **Run Tests**: `npm run test`
-
-### For Users
-1. **Sign Up**: Create organization account
-2. **Choose Plan**: Select appropriate subscription tier
-3. **Invite Team**: Add team members with roles
-4. **Generate Content**: Start creating AI-powered content
-5. **Monitor Usage**: Track generation and team activity
-
----
-
-## Support & Resources
-
-### Documentation
-- **API Reference**: Complete API documentation
-- **Architecture Guide**: Detailed system architecture
-- **Development Guide**: Setup and development instructions
-- **Component Library**: UI component documentation
-
-### Support Channels
-- **Email Support**: support@infin8content.com
-- **Documentation**: Comprehensive online documentation
-- **Community**: Developer community and forums
-- **Status Page**: Real-time system status updates
-
----
-
-*This documentation was generated as part of the BMad Method document-project workflow on 2026-01-11.*
+*For technical implementation details, see [Architecture Overview](./architecture-infin8content.md) and [Workflow Guide](./workflow-guide.md).*

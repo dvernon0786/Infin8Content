@@ -7,10 +7,23 @@ import { useRouter } from "next/navigation"
 export default function BusinessStepPage() {
   const router = useRouter()
 
-  const handleNext = (data: any) => {
-    // Store data (in real implementation, this would save to backend/localStorage)
-    localStorage.setItem('onboarding-business', JSON.stringify(data))
-    router.push('/onboarding/competitors')
+  const handleNext = async (data: any) => {
+    try {
+      const response = await fetch('/api/onboarding/business', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error?.error || 'Business info failed')
+      }
+
+      router.push('/onboarding/competitors')
+    } catch (error) {
+      throw error
+    }
   }
 
   const handleSkip = () => {

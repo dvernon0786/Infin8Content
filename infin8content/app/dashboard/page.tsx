@@ -1,186 +1,93 @@
+import { createServiceRoleClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/supabase/get-current-user"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { SidebarNavigation } from "@/components/dashboard/sidebar-navigation"
-import { TopNavigation } from "@/components/dashboard/top-navigation"
-import { ResponsiveLayoutProvider } from "@/components/dashboard/responsive-layout-provider"
+import Link from "next/link"
 import { redirect } from "next/navigation"
-import { PaymentGuard } from "@/components/guards/payment-guard"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { MobileCard } from "@/components/mobile/mobile-card"
-import { useMobileLayout } from "@/hooks/use-mobile-layout"
-import { ContentPerformanceDashboard } from "@/components/dashboard/content-performance-dashboard"
-import { QuickActions } from "@/components/dashboard/quick-actions"
+import { WorkflowDashboard } from "@/components/dashboard/workflow-dashboard/WorkflowDashboard"
+import { TrialChecklist } from "@/components/dashboard/trial-checklist"
 
 export default async function DashboardPage() {
-  const currentUser = await getCurrentUser()
+  const user = await getCurrentUser()
 
-  if (!currentUser) {
-    // Should be handled by middleware, but safe fallback
-    return (
-      <>
-        <div className="flex flex-col gap-6">
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Unable to load user data. Please try refreshing the page.</p>
+  if (!user || !user.org_id) {
+    redirect('/login')
+  }
+
+  const supabase = createServiceRoleClient()
+
+  const { data: workflows } = await supabase
+    .from("intent_workflows")
+    .select("id")
+    .eq("organization_id", user.org_id)
+
+  if (!workflows || workflows.length === 0) {
+    const isTrial = (user.organizations?.plan || user.organizations?.plan_type)?.toLowerCase() === 'trial'
+
+    if (isTrial) {
+      return (
+        <div className="space-y-6 mx-auto max-w-xl py-20">
+          <TrialChecklist hasWorkflow={false} hasCompletedArticle={false} />
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold">Your $1 trial is active ✨</h1>
+            <p className="mt-2 text-muted-foreground">
+              Experience the power of Infin8Content. You can generate one complete, full-length article during your trial to see the quality of our AI engine.
+            </p>
+            <Link
+              href="/dashboard/workflows/new"
+              className="inline-block mt-6 rounded-md bg-primary px-6 py-3 text-white"
+            >
+              Generate your first article
+            </Link>
           </div>
         </div>
-      </>
+      )
+    }
+
+    return (
+      <div className="mx-auto max-w-xl py-20 text-center">
+        <h1 className="text-2xl font-semibold">You're all set 🎉</h1>
+        <p className="mt-2 text-muted-foreground">
+          Your workspace is ready. Create your first workflow to start generating content automatically.
+        </p>
+        <Link
+          href="/dashboard/workflows/new"
+          className="inline-block mt-6 rounded-md bg-primary px-6 py-3 text-white"
+        >
+          Create your first workflow
+        </Link>
+      </div>
     )
   }
 
-  // AC requires "Welcome back, {First Name}" - use first_name if available, fallback to email prefix
-  const firstName = currentUser.first_name || currentUser.email.split('@')[0]
-  const orgName = currentUser.organizations?.name
-  const plan = currentUser.organizations?.plan || "starter"
-  const status = currentUser.organizations?.payment_status?.replace('_', ' ') || "active"
+  const isTrial = (user.organizations?.plan || user.organizations?.plan_type)?.toLowerCase() === 'trial'
 
-  // Primary CTA logic
-  const articles = currentUser.organizations?.articles || []
+  let hasWorkflow = false
+  let hasCompletedArticle = false
 
-  interface Article {
-    status: string
-    updated_at: string
-    id: string
-  }
+  if (isTrial) {
+    // workflows is already fetched above — no extra query needed
+    hasWorkflow = (workflows?.length ?? 0) > 0
 
-  const latestActiveArticle = articles
-    .filter((a: Article) => a.status !== "published")
-    .sort(
-      (a: Article, b: Article) =>
-        new Date(b.updated_at).getTime() -
-        new Date(a.updated_at).getTime()
-    )[0]
+    // Only one extra query needed instead of two
+    // Optimized check: Exit as soon as we find 1 completed article instead of full count
+    const { data: completedArticles } = await supabase
+      .from('articles')
+      .select('id')
+      .eq('org_id', user.org_id)
+      .eq('status', 'completed')
+      .limit(1)
 
-  const primaryCTA = latestActiveArticle
-    ? {
-        label: "Continue Article",
-        href: `/dashboard/articles/${latestActiveArticle.id}/edit`,
-      }
-    : {
-        label: "Create New Article",
-        href: "/dashboard/articles/generate",
-      }
-
-  // If no organization, user shouldn't be here (middleware should redirect)
-  // But handle gracefully for edge cases
-  if (!orgName) {
-    return (
-      <>
-        <div className="flex flex-col gap-6">
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Organization not found. Please contact support.</p>
-          </div>
-        </div>
-      </>
-    )
+    hasCompletedArticle = (completedArticles?.length ?? 0) > 0
   }
 
   return (
-    <>
-      {/* Main Content */}
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="font-poppins text-h3-sm md:text-h3 text-neutral-900">
-            Let's keep your content moving
-          </h1>
-          <p className="font-lato text-body text-neutral-600">
-            Pick up where you left off or start a new article
-          </p>
-        </div>
-
-        {/* Primary CTA */}
-        <div className="flex items-center gap-3">
-          <a
-            href={primaryCTA.href}
-            className="
-              inline-flex items-center justify-center
-              rounded-md px-6 py-3
-              text-sm font-medium
-              bg-primary-blue text-white
-              hover:bg-primary-blue/90
-              transition-colors
-            "
-          >
-            {primaryCTA.label}
-          </a>
-
-          {latestActiveArticle && (
-            <span className="font-lato text-small text-neutral-500">
-              Last updated{" "}
-              {new Date(latestActiveArticle.updated_at).toLocaleDateString()}
-            </span>
-          )}
-        </div>
-
-        {/* Mobile-Optimized Dashboard Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {/* Desktop Card */}
-          <Card className="hidden md:block bg-white border-neutral-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-lato text-small font-medium text-neutral-900">
-                Current Plan
-              </CardTitle>
-              <Badge variant={plan === 'pro' ? 'default' : 'secondary'}>
-                {plan.toUpperCase()}
-              </Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="font-poppins text-h3 text-neutral-900">{orgName}</div>
-              <p className="font-lato text-small text-neutral-500 capitalize">
-                Status: {status}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Mobile Card */}
-          <MobileCard
-            title="Current Plan"
-            subtitle={orgName}
-            description={`Status: ${status}`}
-            badge={plan.toUpperCase()}
-            className="md:hidden"
-            testId="mobile-plan-card"
-          >
-            <div className="font-poppins text-h3 text-neutral-900">{orgName}</div>
-          </MobileCard>
-        </div>
-
-        {/* Content Performance Dashboard */}
-        <div className="flex flex-col gap-2">
-          <h2 className="font-poppins text-h4 text-neutral-900">
-            Content momentum
-          </h2>
-          <p className="font-lato text-body text-neutral-600">
-            How your content production is trending
-          </p>
-
-          <ContentPerformanceDashboard />
-        </div>
-
-        {/* Additional Mobile-Optimized Content */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {/* Quick Actions Card */}
-          <Card className="hidden md:block bg-white border-neutral-200">
-            <CardHeader>
-              <CardTitle className="font-lato text-small font-medium text-neutral-900">
-                Quick Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <QuickActions />
-            </CardContent>
-          </Card>
-
-          <MobileCard
-            title="Quick Actions"
-            badge="3"
-            className="md:hidden"
-            testId="mobile-quick-actions-card"
-          >
-            <QuickActions />
-          </MobileCard>
-        </div>
-      </div>
-    </>
+    <div className="space-y-6">
+      {isTrial && (
+        <TrialChecklist
+          hasWorkflow={hasWorkflow}
+          hasCompletedArticle={hasCompletedArticle}
+        />
+      )}
+      <WorkflowDashboard orgId={user.org_id} />
+    </div>
   )
 }

@@ -1,23 +1,34 @@
 "use client"
-
 import { StepIntegration } from "@/components/onboarding/StepIntegration"
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard"
-
 import { useRouter } from "next/navigation"
 
 export default function IntegrationStepPage() {
   const router = useRouter()
 
-  const handleComplete = (data: any) => {
-    localStorage.setItem('onboarding-integration', JSON.stringify(data))
-    // Mark onboarding complete and redirect to dashboard
-    localStorage.setItem('onboarding-completed', 'true')
-    router.push('/dashboard')
+  const handleNext = async (data: any) => {
+    await handleComplete(data)
   }
 
+  const handleComplete = async (data: any) => {
+    const res = await fetch("/api/onboarding/integration", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+
+    if (!res.ok) {
+      const error = await res.json()
+      throw new Error(error?.error || "WordPress integration failed")
+    }
+
+    // Redirect ONLY after backend success
+    router.push("/dashboard")
+  }
+
+  // Skip is allowed — CMS integration is optional
   const handleSkip = () => {
-    localStorage.setItem('onboarding-completed', 'true')
-    router.push('/dashboard')
+    router.push("/dashboard")
   }
 
   return (
@@ -26,7 +37,7 @@ export default function IntegrationStepPage() {
         <div className="mb-8">
           <OnboardingWizard currentStep={6} />
         </div>
-        <StepIntegration onComplete={handleComplete} onSkip={handleSkip} />
+        <StepIntegration onNext={handleNext} onSkip={handleSkip} />
       </div>
     </div>
   )

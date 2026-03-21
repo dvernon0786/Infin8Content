@@ -6,7 +6,7 @@
  * Logs are written asynchronously to avoid performance impact on the main request flow.
  */
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import type { CreateAuditLogParams } from '@/types/audit';
 
 /**
@@ -36,7 +36,8 @@ export async function logAction(params: CreateAuditLogParams): Promise<void> {
     const { orgId, userId, action, details = {}, ipAddress, userAgent } = params;
 
     try {
-        const supabase = await createClient();
+        // Use service role client for audit logging to bypass RLS policies
+        const supabase = createServiceRoleClient();
 
         const { error } = await supabase
             .from('audit_logs' as any)

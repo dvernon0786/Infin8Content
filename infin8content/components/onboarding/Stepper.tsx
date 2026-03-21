@@ -13,8 +13,7 @@ const steps = [
   { id: 2, name: "Competitors" },
   { id: 3, name: "Blog" },
   { id: 4, name: "Content Defaults" },
-  { id: 5, name: "Keyword Settings" },
-  { id: 6, name: "Integration" },
+  { id: 5, name: "Integration" },
 ]
 
 export function Stepper({ currentStep, className }: StepperProps) {
@@ -40,7 +39,7 @@ export function Stepper({ currentStep, className }: StepperProps) {
   return (
     <nav
       role="navigation"
-      aria-label={`Onboarding Progress: Step ${currentStep} of 6`}
+      aria-label={`Onboarding Progress: Step ${currentStep} of 5`}
       className={cn(
         "w-full overflow-x-auto pb-2",
         className

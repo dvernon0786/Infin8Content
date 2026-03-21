@@ -7,7 +7,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import {
   extractSeedKeywords,
-  updateWorkflowStatus,
   type CompetitorData,
   type ExtractSeedKeywordsRequest,
   type SeedKeywordData
@@ -107,7 +106,9 @@ describe('Competitor Seed Extractor Service', () => {
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
         organizationId: mockOrganizationId,
-        maxSeedsPerCompetitor: 3
+        maxSeedsPerCompetitor: 3,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       const result = await extractSeedKeywords(request)
@@ -179,7 +180,9 @@ describe('Competitor Seed Extractor Service', () => {
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
         organizationId: mockOrganizationId,
-        maxSeedsPerCompetitor: 3
+        maxSeedsPerCompetitor: 3,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       const result = await extractSeedKeywords(request)
@@ -249,7 +252,9 @@ describe('Competitor Seed Extractor Service', () => {
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
         organizationId: mockOrganizationId,
-        maxSeedsPerCompetitor: 3
+        maxSeedsPerCompetitor: 3,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       await extractSeedKeywords(request)
@@ -315,7 +320,9 @@ describe('Competitor Seed Extractor Service', () => {
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
         organizationId: mockOrganizationId,
-        maxSeedsPerCompetitor: 3
+        maxSeedsPerCompetitor: 3,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       await extractSeedKeywords(request)
@@ -324,23 +331,27 @@ describe('Competitor Seed Extractor Service', () => {
     it('should handle empty competitors list', async () => {
       const request: ExtractSeedKeywordsRequest = {
         competitors: [],
-        organizationId: mockOrganizationId
+        organizationId: mockOrganizationId,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       await expect(extractSeedKeywords(request)).rejects.toThrow(
         'No competitors provided for seed keyword extraction'
       )
-    })
 
-    it('should handle missing organization ID', async () => {
-      const request: ExtractSeedKeywordsRequest = {
-        competitors: mockCompetitors,
-        organizationId: ''
-      }
+it('should handle missing organization ID', async () => {
+const request: ExtractSeedKeywordsRequest = {
+competitors: mockCompetitors,
+organizationId: '',
+locationCode: 2840, // US for testing
+languageCode: 'en' // English for testing
+}
 
-      await expect(extractSeedKeywords(request)).rejects.toThrow(
-        'Organization ID is required'
-      )
+await expect(extractSeedKeywords(request)).rejects.toThrow(
+'Organization ID is required'
+)
+})
     })
 
     it('should continue processing when one competitor fails', async () => {
@@ -412,7 +423,9 @@ describe('Competitor Seed Extractor Service', () => {
 
       const request: ExtractSeedKeywordsRequest = {
         competitors,
-        organizationId: mockOrganizationId
+        organizationId: mockOrganizationId,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       const result = await extractSeedKeywords(request)
@@ -435,12 +448,18 @@ describe('Competitor Seed Extractor Service', () => {
 
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
-        organizationId: mockOrganizationId
+        organizationId: mockOrganizationId,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
-      await expect(extractSeedKeywords(request)).rejects.toThrow(
-        'All competitors failed during seed keyword extraction'
-      )
+      const result = await extractSeedKeywords(request)
+
+      expect(result.total_keywords_created).toBe(0)
+      expect(result.competitors_processed).toBe(0)
+      expect(result.competitors_failed).toBe(1)
+      expect(result.error).toBe('NO_KEYWORDS_FOUND')
+      expect(result.results[0].error).toBe('DataForSEO API error: Invalid request')
     })
 
     it('should handle missing DataForSEO credentials', async () => {
@@ -453,13 +472,19 @@ describe('Competitor Seed Extractor Service', () => {
       try {
         const request: ExtractSeedKeywordsRequest = {
           competitors: mockCompetitors,
-          organizationId: mockOrganizationId
+          organizationId: mockOrganizationId,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
         }
 
-        // When credentials are missing, all competitors fail, resulting in this error
-        await expect(extractSeedKeywords(request)).rejects.toThrow(
-          'All competitors failed during seed keyword extraction'
-        )
+        // When credentials are missing, all competitors fail, resulting in structured error
+        const result = await extractSeedKeywords(request)
+
+        expect(result.total_keywords_created).toBe(0)
+        expect(result.competitors_processed).toBe(0)
+        expect(result.competitors_failed).toBe(1)
+        expect(result.error).toBe('NO_KEYWORDS_FOUND')
+        expect(result.results[0].error).toBe('DataForSEO credentials not configured')
       } finally {
         // Restore environment variables
         if (originalLogin) process.env.DATAFORSEO_LOGIN = originalLogin
@@ -516,7 +541,9 @@ describe('Competitor Seed Extractor Service', () => {
 
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
-        organizationId: mockOrganizationId
+        organizationId: mockOrganizationId,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       await extractSeedKeywords(request)
@@ -577,7 +604,9 @@ describe('Competitor Seed Extractor Service', () => {
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
         organizationId: mockOrganizationId,
-        maxSeedsPerCompetitor: 3
+        maxSeedsPerCompetitor: 3,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       await extractSeedKeywords(request)
@@ -632,74 +661,82 @@ describe('Competitor Seed Extractor Service', () => {
 
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
-        organizationId: mockOrganizationId
+        organizationId: mockOrganizationId,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
-      // Should throw error when deletion fails (caught as competitor failure)
-      await expect(extractSeedKeywords(request)).rejects.toThrow(
-        'All competitors failed during seed keyword extraction'
-      )
+      // Should return structured error when deletion fails (caught as competitor failure)
+      const result = await extractSeedKeywords(request)
+
+      expect(result.total_keywords_created).toBe(0)
+      expect(result.competitors_processed).toBe(0)
+      expect(result.competitors_failed).toBe(1)
+      expect(result.error).toBe('NO_KEYWORDS_FOUND')
+      expect(result.results[0].error).toBe('Failed to delete existing keywords for competitor comp-123: Database error')
     })
   })
 
-  describe('updateWorkflowStatus', () => {
-    it('should update workflow status to step_2_competitors', async () => {
-      const mockSupabase = {
-        from: vi.fn().mockReturnValue({
-          update: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null })
-            })
-          })
-        })
-      }
+  // NOTE: updateWorkflowStatus tests disabled - function moved to API layer
+// describe('updateWorkflowStatus', () => {
+//   it('should update workflow status to step_2_competitors', async () => {
+//     const mockSupabase = {
+//       from: vi.fn().mockReturnValue({
+//         update: vi.fn().mockReturnValue({
+//           eq: vi.fn().mockReturnValue({
+//             eq: vi.fn().mockResolvedValue({ error: null })
+//           })
+//         })
+//       })
+//     }
+//
+//     ;(createServiceRoleClient as any).mockReturnValue(mockSupabase)
+//
+//     await updateWorkflowStatus(mockWorkflowId, mockOrganizationId, 'step_2_competitors')
+//
+//     const updateCall = mockSupabase.from().update.mock.calls[0][0]
+//     expect(updateCall.status).toBe('step_2_competitors')
+//     expect(updateCall.step_2_competitor_completed_at).toBeDefined()
+//   })
+//
+//   it('should update workflow status to failed with error message', async () => {
+//     const errorMessage = 'Test error message'
+//     const mockSupabase = {
+//       from: vi.fn().mockReturnValue({
+//         update: vi.fn().mockReturnValue({
+//           eq: vi.fn().mockReturnValue({
+//             eq: vi.fn().mockResolvedValue({ error: null })
+//           })
+//         })
+//       })
+//     }
+//
+//     ;(createServiceRoleClient as any).mockReturnValue(mockSupabase)
+//
+//     await updateWorkflowStatus(mockWorkflowId, mockOrganizationId, 'failed', errorMessage)
+//
+//     const updateCall = mockSupabase.from().update.mock.calls[0][0]
+//     expect(updateCall.status).toBe('failed')
+//     expect(updateCall.step_2_competitor_error_message).toBe(errorMessage)
+//   })
+//
+//   it('should throw error if update fails', async () => {
+//     const mockSupabase = {
+//       from: vi.fn().mockReturnValue({
+//         update: vi.fn().mockReturnValue({
+//           eq: vi.fn().mockReturnValue({
+//             eq: vi.fn().mockResolvedValue({ error: { message: 'Database error' } })
+//           })
+//         })
+//       })
+//     }
+//
+//     ;(createServiceRoleClient as any).mockReturnValue(mockSupabase)
+//
+//     await expect(
+//       updateWorkflowStatus(mockWorkflowId, mockOrganizationId, 'step_2_competitors')
+//     ).rejects.toThrow('Failed to update workflow status')
+//   })
+// })
 
-      ;(createServiceRoleClient as any).mockReturnValue(mockSupabase)
-
-      await updateWorkflowStatus(mockWorkflowId, mockOrganizationId, 'step_2_competitors')
-
-      const updateCall = mockSupabase.from().update.mock.calls[0][0]
-      expect(updateCall.status).toBe('step_2_competitors')
-      expect(updateCall.step_2_competitor_completed_at).toBeDefined()
-    })
-
-    it('should update workflow status to failed with error message', async () => {
-      const errorMessage = 'Test error message'
-      const mockSupabase = {
-        from: vi.fn().mockReturnValue({
-          update: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null })
-            })
-          })
-        })
-      }
-
-      ;(createServiceRoleClient as any).mockReturnValue(mockSupabase)
-
-      await updateWorkflowStatus(mockWorkflowId, mockOrganizationId, 'failed', errorMessage)
-
-      const updateCall = mockSupabase.from().update.mock.calls[0][0]
-      expect(updateCall.status).toBe('failed')
-      expect(updateCall.step_2_competitor_error_message).toBe(errorMessage)
-    })
-
-    it('should throw error if update fails', async () => {
-      const mockSupabase = {
-        from: vi.fn().mockReturnValue({
-          update: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: { message: 'Database error' } })
-            })
-          })
-        })
-      }
-
-      ;(createServiceRoleClient as any).mockReturnValue(mockSupabase)
-
-      await expect(
-        updateWorkflowStatus(mockWorkflowId, mockOrganizationId, 'step_2_competitors')
-      ).rejects.toThrow('Failed to update workflow status')
-    })
-  })
 })

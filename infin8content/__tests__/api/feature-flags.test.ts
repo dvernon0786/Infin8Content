@@ -49,7 +49,8 @@ describe('/api/feature-flags', () => {
         email: 'test@example.com',
         first_name: 'Test',
         role: 'admin',
-        org_id: 'org-123'
+        org_id: 'org-123',
+        organizations: null
       };
 
       vi.mocked(getCurrentUser).mockResolvedValue(mockSession);
@@ -147,7 +148,8 @@ describe('/api/feature-flags', () => {
         email: 'test@example.com',
         first_name: 'Test',
         role: 'member',
-        org_id: 'org-123'
+        org_id: 'org-123',
+        organizations: null
       };
 
       vi.mocked(getCurrentUser).mockResolvedValue(mockSession);
@@ -184,7 +186,8 @@ describe('/api/feature-flags', () => {
         email: 'test@example.com',
         first_name: 'Test',
         role: 'admin',
-        org_id: 'org-123'
+        org_id: 'org-123',
+        organizations: null
       };
 
       vi.mocked(getCurrentUser).mockResolvedValue(mockSession);
@@ -218,7 +221,8 @@ describe('/api/feature-flags', () => {
         email: 'test@example.com',
         first_name: 'Test',
         role: 'admin',
-        org_id: 'org-123'
+        org_id: 'org-123',
+        organizations: null
       };
 
       vi.mocked(getCurrentUser).mockResolvedValue(mockSession);

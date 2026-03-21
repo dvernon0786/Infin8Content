@@ -7,6 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
+import { mockCurrentUser } from '@/tests/factories/current-user'
 import CreateOrganizationPage from './page'
 
 // Mock Next.js navigation
@@ -30,11 +31,7 @@ describe('CreateOrganizationPage', () => {
   })
 
   it('should redirect to dashboard if user already has organization', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValueOnce({
-      user: { id: 'auth-1', email: 'test@example.com' },
-      id: 'user-1',
-      email: 'test@example.com',
-      role: 'owner',
+    vi.mocked(getCurrentUser).mockResolvedValueOnce(mockCurrentUser({
       org_id: 'org-1',
       organizations: {
         id: 'org-1',
@@ -44,7 +41,7 @@ describe('CreateOrganizationPage', () => {
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z',
       },
-    })
+    }))
 
     await CreateOrganizationPage()
 
@@ -52,14 +49,10 @@ describe('CreateOrganizationPage', () => {
   })
 
   it('should render form if user has no organization', async () => {
-    vi.mocked(getCurrentUser).mockResolvedValueOnce({
-      user: { id: 'auth-1', email: 'test@example.com' },
-      id: 'user-1',
-      email: 'test@example.com',
-      role: 'owner',
+    vi.mocked(getCurrentUser).mockResolvedValueOnce(mockCurrentUser({
       org_id: null,
       organizations: null,
-    })
+    }))
 
     const result = await CreateOrganizationPage()
     const { container } = await import('@testing-library/react').then((m) =>

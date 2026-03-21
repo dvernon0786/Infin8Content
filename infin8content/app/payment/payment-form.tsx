@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 
-type PlanType = 'starter' | 'pro' | 'agency'
+type PlanType = 'trial' | 'starter' | 'pro' | 'agency'
 type BillingFrequency = 'monthly' | 'annual'
 
 interface PlanFeatures {
@@ -25,6 +25,23 @@ interface PlanFeatures {
 }
 
 const planFeatures: Record<PlanType, PlanFeatures> = {
+  trial: {
+    articles: '1 (One-Time)',
+    keywordResearches: '5 (One-Time)',
+    cmsConnections: '0',
+    projects: '1',
+    stores: '0',
+    productsTracked: '0',
+    teamMembers: '1',
+    imageStorage: 'None',
+    apiCalls: 'None',
+    revenueAttribution: false,
+    whiteLabel: false,
+    customDomain: false,
+    clientPortal: false,
+    supportSLA: 'Community',
+    uptimeSLA: 'Standard',
+  },
   starter: {
     articles: '10/month',
     keywordResearches: '50/month',
@@ -79,7 +96,8 @@ const planFeatures: Record<PlanType, PlanFeatures> = {
 }
 
 const planPrices: Record<PlanType, { monthly: number; annual: number }> = {
-  starter: { monthly: 89, annual: 59 },
+  trial: { monthly: 1, annual: 1 },
+  starter: { monthly: 49, annual: 41.5 },
   pro: { monthly: 220, annual: 175 },
   agency: { monthly: 399, annual: 299 },
 }
@@ -88,34 +106,48 @@ interface PaymentFormProps {
   isSuspended?: boolean
   suspendedAt?: string | null
   redirectTo?: string
+  hasUsedTrial?: boolean
 }
 
-export default function PaymentForm({ 
-  isSuspended: isSuspendedProp, 
+export default function PaymentForm({
+  isSuspended: isSuspendedProp,
   suspendedAt,
-  redirectTo = '/dashboard'
+  redirectTo = '/dashboard',
+  hasUsedTrial = false
 }: PaymentFormProps = {}) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [selectedPlan, setSelectedPlan] = useState<PlanType>('starter')
+  const pathname = usePathname()
+  const availablePlans = hasUsedTrial
+    ? (['starter', 'pro', 'agency'] as PlanType[])
+    : (['trial', 'starter', 'pro', 'agency'] as PlanType[])
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>(hasUsedTrial ? 'starter' : 'trial')
   const [billingFrequency, setBillingFrequency] = useState<BillingFrequency>('annual')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
+  const handlePlanSelect = (plan: PlanType) => {
+    setSelectedPlan(plan)
+    // Clear URL error params when user starts fresh
+    if (searchParams.toString()) {
+      router.replace(pathname)
+    }
+  }
+
   // Check for error from canceled payment or payment failure
   const canceled = searchParams.get('canceled') === 'true'
   const paymentError = searchParams.get('error')
   const suspended = isSuspendedProp || searchParams.get('suspended') === 'true'
-  
+
   // Format suspension date if available
-  const formattedSuspensionDate = suspendedAt 
+  const formattedSuspensionDate = suspendedAt
     ? new Date(suspendedAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
     : null
-  
+
   // Get error message based on error type
   const getErrorMessage = () => {
     if (suspended) {
@@ -165,31 +197,33 @@ export default function PaymentForm({
     }
     return null
   }
-  
+
   const errorInfo = getErrorMessage()
-  
+
   const handleSubscribe = async () => {
     setIsSubmitting(true)
     setError(null)
-    
+
+    const effectiveBillingFrequency = selectedPlan === 'trial' ? 'monthly' : billingFrequency
+
     try {
       const response = await fetch('/api/payment/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan: selectedPlan,
-          billingFrequency,
+          billingFrequency: effectiveBillingFrequency,
           redirect: redirectTo,
         }),
       })
-      
+
       const data = await response.json()
-      
+
       if (!response.ok) {
         setError(data.error || 'Failed to create checkout session')
         return
       }
-      
+
       // Redirect to Stripe Checkout
       if (data.url) {
         window.location.href = data.url
@@ -202,12 +236,7 @@ export default function PaymentForm({
       setIsSubmitting(false)
     }
   }
-  
-  const currentPrice = planPrices[selectedPlan][billingFrequency]
-  const monthlyPrice = planPrices[selectedPlan].monthly
-  const annualPrice = planPrices[selectedPlan].annual
-  const annualSavings = monthlyPrice - annualPrice
-  
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -215,57 +244,55 @@ export default function PaymentForm({
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Choose Your Plan</h1>
           <p className="text-lg text-gray-600">Select a subscription plan to get started</p>
         </div>
-        
+
         {/* Billing Frequency Toggle */}
         <div className="max-w-3xl mx-auto mb-8 flex justify-center">
           <div className="inline-flex rounded-md shadow-sm" role="group">
             <button
               type="button"
               onClick={() => setBillingFrequency('monthly')}
-              className={`px-6 py-3 text-sm font-medium rounded-l-lg border ${
-                billingFrequency === 'monthly'
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              }`}
+              className={`px-6 py-3 text-sm font-medium rounded-l-lg border ${billingFrequency === 'monthly'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
             >
               Monthly
             </button>
             <button
               type="button"
               onClick={() => setBillingFrequency('annual')}
-              className={`px-6 py-3 text-sm font-medium rounded-r-lg border ${
-                billingFrequency === 'annual'
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              }`}
+              className={`px-6 py-3 text-sm font-medium rounded-r-lg border ${billingFrequency === 'annual'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
             >
               Annual
             </button>
           </div>
         </div>
-        
+
         {/* Plan Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
-          {(['starter', 'pro', 'agency'] as PlanType[]).map((plan) => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto mb-12">
+          {availablePlans.map((plan) => {
             const price = planPrices[plan][billingFrequency]
             const isSelected = selectedPlan === plan
             const features = planFeatures[plan]
-            
+            const cardSavings = planPrices[plan].monthly - planPrices[plan].annual
+
             return (
               <div
                 key={plan}
-                className={`relative rounded-lg border-2 p-6 ${
-                  isSelected
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
-                } cursor-pointer transition-colors`}
-                onClick={() => setSelectedPlan(plan)}
+                className={`relative rounded-lg border-2 p-6 ${isSelected
+                  ? 'border-blue-600 bg-blue-50'
+                  : 'border-gray-200 bg-white hover:border-gray-300'
+                  } cursor-pointer transition-colors`}
+                onClick={() => handlePlanSelect(plan)}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
-                    setSelectedPlan(plan)
+                    handlePlanSelect(plan)
                   }
                 }}
                 aria-pressed={isSelected}
@@ -277,18 +304,22 @@ export default function PaymentForm({
                     </span>
                   </div>
                 )}
-                
+
                 <h3 className="text-xl font-bold text-gray-900 mb-2 capitalize">{plan}</h3>
                 <div className="mb-4">
                   <span className="text-3xl font-bold text-gray-900">${price}</span>
-                  <span className="text-gray-600">/month</span>
-                  {billingFrequency === 'annual' && (
+                  {plan === 'trial' ? (
+                    <span className="text-gray-600">/one-time</span>
+                  ) : (
+                    <span className="text-gray-600">/month</span>
+                  )}
+                  {billingFrequency === 'annual' && plan !== 'trial' && (
                     <p className="text-sm text-gray-500 mt-1">
-                      Billed annually (save ${annualSavings}/month)
+                      Billed annually (save ${cardSavings}/month)
                     </p>
                   )}
                 </div>
-                
+
                 <ul className="space-y-2 mb-6 text-sm text-gray-600">
                   <li>{features.articles} articles</li>
                   <li>{features.keywordResearches} keyword researches</li>
@@ -309,7 +340,7 @@ export default function PaymentForm({
             )
           })}
         </div>
-        
+
         {/* Feature Comparison Table */}
         <div className="max-w-6xl mx-auto mb-12 overflow-x-auto">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Feature Comparison</h2>
@@ -319,15 +350,11 @@ export default function PaymentForm({
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Feature
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Starter
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Pro
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Agency
-                </th>
+                {availablePlans.map((plan) => (
+                  <th key={plan} className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {plan === 'trial' ? '$1 Trial' : plan.charAt(0).toUpperCase() + plan.slice(1)}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -351,7 +378,7 @@ export default function PaymentForm({
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {row.label}
                   </td>
-                  {(['starter', 'pro', 'agency'] as PlanType[]).map((plan) => {
+                  {availablePlans.map((plan) => {
                     const value = planFeatures[plan][row.key as keyof PlanFeatures]
                     return (
                       <td key={plan} className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">
@@ -364,15 +391,14 @@ export default function PaymentForm({
             </tbody>
           </table>
         </div>
-        
+
         {/* Error Display */}
         {(errorInfo || error) && (
           <div className="max-w-3xl mx-auto mb-6">
-            <div className={`rounded-lg p-4 ${
-              errorInfo?.type === 'warning' 
-                ? 'bg-yellow-50 border border-yellow-200' 
-                : 'bg-red-50 border border-red-200'
-            }`}>
+            <div className={`rounded-lg p-4 ${errorInfo?.type === 'warning'
+              ? 'bg-yellow-50 border border-yellow-200'
+              : 'bg-red-50 border border-red-200'
+              }`}>
               <div className="flex">
                 <div className="flex-shrink-0">
                   {errorInfo?.type === 'warning' ? (
@@ -386,30 +412,26 @@ export default function PaymentForm({
                   )}
                 </div>
                 <div className="ml-3 flex-1">
-                  <h3 className={`text-sm font-medium ${
-                    errorInfo?.type === 'warning' ? 'text-yellow-800' : 'text-red-800'
-                  }`}>
+                  <h3 className={`text-sm font-medium ${errorInfo?.type === 'warning' ? 'text-yellow-800' : 'text-red-800'
+                    }`}>
                     {errorInfo?.title || 'Error'}
                   </h3>
-                  <div className={`mt-2 text-sm ${
-                    errorInfo?.type === 'warning' ? 'text-yellow-700' : 'text-red-700'
-                  }`}>
+                  <div className={`mt-2 text-sm ${errorInfo?.type === 'warning' ? 'text-yellow-700' : 'text-red-700'
+                    }`}>
                     <p>{errorInfo?.message || error}</p>
                   </div>
-                  {errorInfo && (
+                  {(errorInfo || error) && (
                     <div className="mt-4">
                       <button
                         onClick={handleSubscribe}
                         disabled={isSubmitting}
-                        className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md ${
-                          errorInfo.type === 'warning'
-                            ? 'text-yellow-800 bg-yellow-100 hover:bg-yellow-200'
-                            : 'text-red-800 bg-red-100 hover:bg-red-200'
-                        } focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                          errorInfo.type === 'warning'
+                        className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md ${errorInfo?.type === 'warning'
+                          ? 'text-yellow-800 bg-yellow-100 hover:bg-yellow-200'
+                          : 'text-red-800 bg-red-100 hover:bg-red-200'
+                          } focus:outline-none focus:ring-2 focus:ring-offset-2 ${errorInfo?.type === 'warning'
                             ? 'focus:ring-yellow-500'
                             : 'focus:ring-red-500'
-                        } disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
+                          } disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
                       >
                         {isSubmitting ? 'Processing...' : 'Retry Payment'}
                       </button>
@@ -422,15 +444,17 @@ export default function PaymentForm({
         )}
 
         {/* Subscribe Button */}
-        <div className="max-w-3xl mx-auto text-center">
-          <button
-            onClick={handleSubscribe}
-            disabled={isSubmitting}
-            className="w-full sm:w-auto px-8 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isSubmitting ? 'Processing...' : `Subscribe to ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan`}
-          </button>
-        </div>
+        {!(errorInfo || error) && (
+          <div className="max-w-3xl mx-auto text-center">
+            <button
+              onClick={handleSubscribe}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto px-8 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isSubmitting ? 'Processing...' : `Subscribe to ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan`}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

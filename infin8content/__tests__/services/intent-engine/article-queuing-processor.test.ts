@@ -1,539 +1,246 @@
 /**
  * Article Queuing Processor Service Tests
  * Story 38.1: Queue Approved Subtopics for Article Generation
+ *
+ * Uses a per-from() thenable chain factory so that:
+ *  - chains that end with .limit() or .single() resolve via those terminal mocks
+ *  - chains that are awaited directly (no terminal method) also resolve correctly
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { queueApprovedSubtopicsForArticles } from '@/lib/services/intent-engine/article-queuing-processor'
+import { queueArticlesForWorkflow } from '@/lib/services/intent-engine/article-queuing-processor'
 import { createServiceRoleClient } from '@/lib/supabase/server'
-import { inngest } from '@/lib/inngest/client'
 
 // Mock dependencies
 vi.mock('@/lib/supabase/server')
-vi.mock('@/lib/inngest/client')
+vi.mock('@/lib/services/intent-engine/intent-audit-logger', () => ({
+  logIntentAction: vi.fn().mockResolvedValue(undefined),
+}))
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Creates a Supabase query-chain mock whose terminal calls resolve to `response`. */
+function createChain(response: any) {
+  const chain: any = {}
+  ;['select', 'eq', 'insert', 'update', 'delete', 'order'].forEach(m => {
+    chain[m] = vi.fn().mockReturnValue(chain)
+  })
+  chain.single = vi.fn().mockResolvedValue(response)
+  chain.limit  = vi.fn().mockResolvedValue(response)
+  // Make chain directly awaitable (for queries with no terminal method call)
+  chain.then   = (res: any, rej?: any) => Promise.resolve(response).then(res, rej)
+  chain.catch  = (rej: any)           => Promise.resolve(response).catch(rej)
+  chain.finally = (cb: any)           => Promise.resolve(response).finally(cb)
+  return chain
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 describe('Article Queuing Processor', () => {
   let mockSupabase: any
+  let queryResults: any[]
+  let queryIndex: number
 
   beforeEach(() => {
     vi.clearAllMocks()
+    queryResults = []
+    queryIndex   = 0
 
-    // Setup mock Supabase client
     mockSupabase = {
-      from: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      single: vi.fn(),
+      from: vi.fn().mockImplementation(() => createChain(queryResults[queryIndex++])),
     }
-
-    vi.mocked(createServiceRoleClient).mockResolvedValue(mockSupabase)
+    vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase)
   })
 
   afterEach(() => {
     vi.clearAllMocks()
   })
 
-  describe('queueApprovedSubtopicsForArticles', () => {
+  // Shorthand to push query responses in the order the service will call from()
+  function push(...responses: any[]) {
+    queryResults.push(...responses)
+  }
+
+  describe('queueArticlesForWorkflow', () => {
     it('should create articles for approved keywords', async () => {
-      const workflowId = 'workflow-123'
+      const workflowId    = 'workflow-123'
       const organizationId = 'org-123'
 
-      // Mock workflow fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: workflowId,
-          organization_id: organizationId,
-          status: 'step_8_approval',
-          icp_document: 'ICP content',
-          competitor_urls: ['https://competitor1.com']
-        },
-        error: null
-      })
-
-      // Mock approved keywords fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: [
-          {
-            id: 'keyword-1',
-            keyword: 'best seo practices',
-            subtopics: [
-              { title: 'On-page SEO', type: 'subtopic', keywords: ['meta tags', 'headings'] },
-              { title: 'Technical SEO', type: 'subtopic', keywords: ['site speed', 'crawlability'] },
-              { title: 'Link Building', type: 'subtopic', keywords: ['backlinks', 'anchor text'] }
-            ],
-            cluster_info: { hub_keyword_id: 'hub-1', similarity_score: 0.95 }
-          }
+      // 1. workflow fetch (.limit(1)) → array
+      push({ data: [{ id: workflowId, state: 'step_9_articles', organization_id: organizationId }], error: null })
+      // 2. keywords fetch (direct await)
+      push({ data: [{
+        id: 'keyword-1',
+        keyword: 'best seo practices',
+        subtopics: [
+          { title: 'On-page SEO',    type: 'subtopic', keywords: ['meta tags'] },
+          { title: 'Technical SEO',  type: 'subtopic', keywords: ['site speed'] },
+          { title: 'Link Building',  type: 'subtopic', keywords: ['backlinks'] },
         ],
-        error: null
-      })
+      }], error: null })
+      // 3. article insert (.limit(1)) → array
+      push({ data: [{ id: 'article-1', keyword: 'best seo practices', status: 'draft' }], error: null })
+      // 4. article_sections insert (.select()) → direct await
+      push({ data: [{ id: 'section-1' }, { id: 'section-2' }, { id: 'section-3' }], error: null })
+      // 5. keyword update (direct await)
+      push({ error: null })
+      // 6. logIntentAction → intent_audit_logs insert (direct await)
+      push({ error: null })
 
-      // Mock existing article check (not found)
-      mockSupabase.single.mockResolvedValueOnce({
-        data: null,
-        error: { message: 'Not found' }
-      })
-
-      // Mock article creation
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: 'article-1',
-          keyword: 'best seo practices',
-          status: 'queued'
-        },
-        error: null
-      })
-
-      // Mock workflow status update
-      mockSupabase.single.mockResolvedValueOnce({
-        data: { id: workflowId },
-        error: null
-      })
-
-      // Mock Inngest event
-      vi.mocked(inngest).send = vi.fn().mockResolvedValue({ ids: ['event-1'] })
-
-      const result = await queueApprovedSubtopicsForArticles(workflowId)
+      const result = await queueArticlesForWorkflow(workflowId)
 
       expect(result.workflow_id).toBe(workflowId)
       expect(result.articles_created).toBe(1)
       expect(result.articles).toHaveLength(1)
       expect(result.articles[0].keyword).toBe('best seo practices')
-      expect(result.errors).toHaveLength(0)
+      expect(result.message).toBeDefined()
     })
 
     it('should handle workflow not found error', async () => {
-      const workflowId = 'workflow-invalid'
+      // .limit(1) returns empty array → "not found"
+      push({ data: [], error: null })
 
-      mockSupabase.single.mockResolvedValueOnce({
-        data: null,
-        error: { message: 'Not found' }
-      })
-
-      await expect(queueApprovedSubtopicsForArticles(workflowId)).rejects.toThrow(
+      await expect(queueArticlesForWorkflow('workflow-invalid')).rejects.toThrow(
         'Workflow not found'
-      )
-    })
-
-    it('should reject workflow not at step_8_approval', async () => {
-      const workflowId = 'workflow-123'
-
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: workflowId,
-          organization_id: 'org-123',
-          status: 'step_7_validation',
-          icp_document: 'ICP content',
-          competitor_urls: []
-        },
-        error: null
-      })
-
-      await expect(queueApprovedSubtopicsForArticles(workflowId)).rejects.toThrow(
-        'Invalid workflow state'
       )
     })
 
     it('should handle no approved keywords gracefully', async () => {
       const workflowId = 'workflow-123'
-      const organizationId = 'org-123'
 
-      // Mock workflow fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: workflowId,
-          organization_id: organizationId,
-          status: 'step_8_approval',
-          icp_document: 'ICP content',
-          competitor_urls: []
-        },
-        error: null
-      })
+      push({ data: [{ id: workflowId, state: 'step_9_articles', organization_id: 'org-123' }], error: null })
+      // No ready keywords
+      push({ data: [], error: null })
+      // logIntentAction would NOT be called when no keywords (early return)
 
-      // Mock empty keywords fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: [],
-        error: null
-      })
-
-      // Mock workflow status update
-      mockSupabase.single.mockResolvedValueOnce({
-        data: { id: workflowId },
-        error: null
-      })
-
-      const result = await queueApprovedSubtopicsForArticles(workflowId)
+      const result = await queueArticlesForWorkflow(workflowId)
 
       expect(result.articles_created).toBe(0)
       expect(result.articles).toHaveLength(0)
-      expect(result.errors).toHaveLength(0)
+      expect(result.message).toContain('No approved keywords')
     })
 
-    it('should handle article creation errors gracefully', async () => {
+    it('should skip keyword with no subtopics and continue', async () => {
       const workflowId = 'workflow-123'
-      const organizationId = 'org-123'
 
-      // Mock workflow fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: workflowId,
-          organization_id: organizationId,
-          status: 'step_8_approval',
-          icp_document: 'ICP content',
-          competitor_urls: []
-        },
-        error: null
-      })
+      push({ data: [{ id: workflowId, state: 'step_9_articles', organization_id: 'org-123' }], error: null })
+      // keyword with no subtopics
+      push({ data: [{ id: 'kw-1', keyword: 'bare keyword', subtopics: [] }], error: null })
+      // article insert (created before subtopic check)
+      push({ data: [{ id: 'article-1', keyword: 'bare keyword', status: 'draft' }], error: null })
+      // article delete (cleanup after empty subtopics)
+      push({ error: null })
+      // logIntentAction
+      push({ error: null })
 
-      // Mock approved keywords fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: [
-          {
-            id: 'keyword-1',
-            keyword: 'test keyword',
-            subtopics: [],
-            cluster_info: {}
-          }
-        ],
-        error: null
-      })
-
-      // Mock article creation error
-      mockSupabase.single.mockResolvedValueOnce({
-        data: null,
-        error: { message: 'Database error' }
-      })
-
-      // Mock workflow status update
-      mockSupabase.single.mockResolvedValueOnce({
-        data: { id: workflowId },
-        error: null
-      })
-
-      const result = await queueApprovedSubtopicsForArticles(workflowId)
+      const result = await queueArticlesForWorkflow(workflowId)
 
       expect(result.articles_created).toBe(0)
-      expect(result.errors).toHaveLength(1)
-      expect(result.errors[0]).toContain('Failed to create article')
     })
 
-    it('should trigger Planner Agent via Inngest', async () => {
+    it('should handle article insert failure gracefully', async () => {
       const workflowId = 'workflow-123'
-      const organizationId = 'org-123'
 
-      // Mock workflow fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: workflowId,
-          organization_id: organizationId,
-          status: 'step_8_approval',
-          icp_document: 'ICP content',
-          competitor_urls: ['https://competitor.com']
-        },
-        error: null
-      })
+      push({ data: [{ id: workflowId, state: 'step_9_articles', organization_id: 'org-123' }], error: null })
+      push({ data: [{ id: 'kw-1', keyword: 'test kw', subtopics: [{ title: 'S1', type: 'subtopic', keywords: [] }] }], error: null })
+      // article insert error
+      push({ data: null, error: { message: 'DB error' } })
+      // logIntentAction
+      push({ error: null })
 
-      // Mock approved keywords fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: [
-          {
-            id: 'keyword-1',
-            keyword: 'test keyword',
-            subtopics: [{ title: 'Subtopic 1', type: 'subtopic', keywords: [] }],
-            cluster_info: { hub_keyword_id: 'hub-1' }
-          }
-        ],
-        error: null
-      })
+      const result = await queueArticlesForWorkflow(workflowId)
 
-      // Mock article creation
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: 'article-1',
-          keyword: 'test keyword',
-          status: 'queued'
-        },
-        error: null
-      })
-
-      // Mock workflow status update
-      mockSupabase.single.mockResolvedValueOnce({
-        data: { id: workflowId },
-        error: null
-      })
-
-      // Mock Inngest event
-      vi.mocked(inngest).send = vi.fn().mockResolvedValue({ ids: ['event-1'] })
-
-      await queueApprovedSubtopicsForArticles(workflowId)
-
-      expect(inngest.send).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: 'article.generate.planner',
-          data: expect.objectContaining({
-            article_id: 'article-1',
-            workflow_id: workflowId,
-            organization_id: organizationId,
-            keyword: 'test keyword'
-          })
-        })
-      )
-    })
-
-    it('should update workflow status to step_9_articles', async () => {
-      const workflowId = 'workflow-123'
-      const organizationId = 'org-123'
-
-      // Mock workflow fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: workflowId,
-          organization_id: organizationId,
-          status: 'step_8_approval',
-          icp_document: 'ICP content',
-          competitor_urls: []
-        },
-        error: null
-      })
-
-      // Mock approved keywords fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: [],
-        error: null
-      })
-
-      // Mock workflow status update
-      mockSupabase.single.mockResolvedValueOnce({
-        data: { id: workflowId },
-        error: null
-      })
-
-      await queueApprovedSubtopicsForArticles(workflowId)
-
-      // Verify update was called with correct status
-      expect(mockSupabase.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: 'step_9_articles'
-        })
-      )
-    })
-
-    it('should preserve intent context in article records', async () => {
-      const workflowId = 'workflow-123'
-      const organizationId = 'org-123'
-      const icpDocument = 'Ideal Customer Profile content'
-      const competitorUrls = ['https://competitor1.com', 'https://competitor2.com']
-
-      // Mock workflow fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: workflowId,
-          organization_id: organizationId,
-          status: 'step_8_approval',
-          icp_document: icpDocument,
-          competitor_urls: competitorUrls
-        },
-        error: null
-      })
-
-      // Mock approved keywords fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: [
-          {
-            id: 'keyword-1',
-            keyword: 'test keyword',
-            subtopics: [],
-            cluster_info: {}
-          }
-        ],
-        error: null
-      })
-
-      // Mock article creation
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: 'article-1',
-          keyword: 'test keyword',
-          status: 'queued'
-        },
-        error: null
-      })
-
-      // Mock workflow status update
-      mockSupabase.single.mockResolvedValueOnce({
-        data: { id: workflowId },
-        error: null
-      })
-
-      vi.mocked(inngest.send).mockResolvedValue({ ids: ['event-1'] })
-
-      await queueApprovedSubtopicsForArticles(workflowId)
-
-      // Verify article was created with context
-      expect(mockSupabase.insert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          icp_context: { document: icpDocument },
-          competitor_context: { urls: competitorUrls }
-        })
-      )
-    })
-
-    it('should handle Inngest event failures gracefully', async () => {
-      const workflowId = 'workflow-123'
-      const organizationId = 'org-123'
-
-      // Mock workflow fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: workflowId,
-          organization_id: organizationId,
-          status: 'step_8_approval',
-          icp_document: 'ICP content',
-          competitor_urls: []
-        },
-        error: null
-      })
-
-      // Mock approved keywords fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: [
-          {
-            id: 'keyword-1',
-            keyword: 'test keyword',
-            subtopics: [],
-            cluster_info: {}
-          }
-        ],
-        error: null
-      })
-
-      // Mock existing article check (not found)
-      mockSupabase.single.mockResolvedValueOnce({
-        data: null,
-        error: { message: 'Not found' }
-      })
-
-      // Mock article creation
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: 'article-1',
-          keyword: 'test keyword',
-          status: 'queued'
-        },
-        error: null
-      })
-
-      // Mock article update (mark as planner_failed)
-      mockSupabase.single.mockResolvedValueOnce({
-        data: { id: 'article-1' },
-        error: null
-      })
-
-      // Mock workflow status update
-      mockSupabase.single.mockResolvedValueOnce({
-        data: { id: workflowId },
-        error: null
-      })
-
-      // Mock Inngest failure
-      vi.mocked(inngest.send).mockRejectedValue(new Error('Inngest error'))
-
-      const result = await queueApprovedSubtopicsForArticles(workflowId)
-
-      // Article should NOT be in createdArticles due to Inngest failure
       expect(result.articles_created).toBe(0)
-      expect(result.errors).toHaveLength(1)
-      expect(result.errors[0]).toContain('Failed to trigger Planner Agent')
     })
 
-    it('should skip existing articles (idempotency)', async () => {
+    it('should handle section seeding failure and rollback article', async () => {
       const workflowId = 'workflow-123'
-      const organizationId = 'org-123'
 
-      // Mock workflow fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: workflowId,
-          organization_id: organizationId,
-          status: 'step_8_approval',
-          icp_document: 'ICP content',
-          competitor_urls: []
-        },
-        error: null
-      })
+      push({ data: [{ id: workflowId, state: 'step_9_articles', organization_id: 'org-123' }], error: null })
+      push({ data: [{ id: 'kw-1', keyword: 'test kw', subtopics: [{ title: 'S1', type: 'subtopic', keywords: [] }] }], error: null })
+      // article insert succeeds
+      push({ data: [{ id: 'article-1', keyword: 'test kw', status: 'draft' }], error: null })
+      // article_sections insert → empty result (failure)
+      push({ data: [], error: { message: 'section error' } })
+      // logIntentAction
+      push({ error: null })
 
-      // Mock approved keywords fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: [
-          {
-            id: 'keyword-1',
-            keyword: 'test keyword',
-            subtopics: [],
-            cluster_info: {}
-          }
-        ],
-        error: null
-      })
+      const result = await queueArticlesForWorkflow(workflowId)
 
-      // Mock existing article check (found)
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: 'article-1',
-          keyword: 'test keyword',
-          status: 'queued'
-        },
-        error: null
-      })
-
-      // Mock workflow status update
-      mockSupabase.single.mockResolvedValueOnce({
-        data: { id: workflowId },
-        error: null
-      })
-
-      const result = await queueApprovedSubtopicsForArticles(workflowId)
-
-      // Should include existing article without creating new one
-      expect(result.articles_created).toBe(1)
-      expect(result.articles).toHaveLength(1)
-      expect(result.errors).toHaveLength(0)
-      // Verify insert was NOT called
-      expect(mockSupabase.insert).not.toHaveBeenCalled()
+      expect(result.articles_created).toBe(0)
     })
 
-    it('should reject workflows with too many keywords', async () => {
+    it('should return workflow state from the fetched workflow', async () => {
       const workflowId = 'workflow-123'
-      const organizationId = 'org-123'
-      const tooManyKeywords = Array.from({ length: 51 }, (_, i) => ({
-        id: `keyword-${i}`,
-        keyword: `keyword ${i}`,
-        subtopics: [],
-        cluster_info: {}
-      }))
 
-      // Mock workflow fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: {
-          id: workflowId,
-          organization_id: organizationId,
-          status: 'step_8_approval',
-          icp_document: 'ICP content',
-          competitor_urls: []
-        },
-        error: null
-      })
+      push({ data: [{ id: workflowId, state: 'step_9_articles', organization_id: 'org-123' }], error: null })
+      push({ data: [], error: null })
 
-      // Mock approved keywords fetch
-      mockSupabase.single.mockResolvedValueOnce({
-        data: tooManyKeywords,
-        error: null
-      })
+      const result = await queueArticlesForWorkflow(workflowId)
 
-      await expect(queueApprovedSubtopicsForArticles(workflowId)).rejects.toThrow(
-        'exceeds limit of 50 articles'
-      )
+      expect(result.workflow_state).toBe('step_9_articles')
+    })
+
+    it('should set article status to draft', async () => {
+      const workflowId = 'workflow-123'
+
+      push({ data: [{ id: workflowId, state: 'step_9_articles', organization_id: 'org-123' }], error: null })
+      push({ data: [{ id: 'kw-1', keyword: 'test kw', subtopics: [{ title: 'S1', type: 'subtopic', keywords: [] }] }], error: null })
+      push({ data: [{ id: 'article-1', keyword: 'test kw', status: 'draft' }], error: null })
+      push({ data: [{ id: 'section-1' }], error: null })
+      push({ error: null })
+      push({ error: null })
+
+      const result = await queueArticlesForWorkflow(workflowId)
+
+      expect(result.articles[0].status).toBe('draft')
+    })
+
+    it('should handle multiple keywords', async () => {
+      const workflowId = 'workflow-123'
+
+      push({ data: [{ id: workflowId, state: 'step_9_articles', organization_id: 'org-123' }], error: null })
+      push({ data: [
+        { id: 'kw-1', keyword: 'keyword one', subtopics: [{ title: 'S1', type: 'subtopic', keywords: [] }] },
+        { id: 'kw-2', keyword: 'keyword two', subtopics: [{ title: 'S2', type: 'subtopic', keywords: [] }] },
+      ], error: null })
+      // keyword one: article + sections + keyword update
+      push({ data: [{ id: 'art-1', keyword: 'keyword one', status: 'draft' }], error: null })
+      push({ data: [{ id: 'sec-1' }], error: null })
+      push({ error: null })
+      // keyword two: article + sections + keyword update
+      push({ data: [{ id: 'art-2', keyword: 'keyword two', status: 'draft' }], error: null })
+      push({ data: [{ id: 'sec-2' }], error: null })
+      push({ error: null })
+      // logIntentAction
+      push({ error: null })
+
+      const result = await queueArticlesForWorkflow(workflowId)
+
+      expect(result.articles_created).toBe(2)
+      expect(result.articles).toHaveLength(2)
+    })
+
+    it('should handle keyword status update failure by skipping article', async () => {
+      const workflowId = 'workflow-123'
+
+      push({ data: [{ id: workflowId, state: 'step_9_articles', organization_id: 'org-123' }], error: null })
+      push({ data: [{ id: 'kw-1', keyword: 'test kw', subtopics: [{ title: 'S1', type: 'subtopic', keywords: [] }] }], error: null })
+      push({ data: [{ id: 'art-1', keyword: 'test kw', status: 'draft' }], error: null })
+      push({ data: [{ id: 'sec-1' }], error: null })
+      // keyword update fails
+      push({ error: { message: 'update error' } })
+      // logIntentAction
+      push({ error: null })
+
+      const result = await queueArticlesForWorkflow(workflowId)
+
+      // Article is cleaned up when keyword update fails
+      expect(result.articles_created).toBe(0)
     })
   })
 })

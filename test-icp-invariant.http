@@ -1,0 +1,92 @@
+### ICP INVARIANT TEST - Postman/VSCode REST Client
+### 
+### CRITICAL: This test must pass before ANY production deployment
+### 
+### Invariant: "POST /steps/icp-generate with missing fields → must 400 in <50ms"
+### 
+### Setup: Replace {{workflow_id}} with a valid workflow ID in step_0_auth status
+
+@baseUrl = http://localhost:3000
+@workflowId = {{workflow_id}}
+
+### Test 1: Empty payload (should 400)
+POST {{baseUrl}}/api/intent/workflows/{{workflowId}}/steps/icp-generate
+Content-Type: application/json
+
+{}
+
+###
+
+### Test 2: Missing organization_name (should 400)
+POST {{baseUrl}}/api/intent/workflows/{{workflowId}}/steps/icp-generate
+Content-Type: application/json
+
+{
+  "organization_url": "https://example.com",
+  "organization_linkedin_url": "https://linkedin.com/company/example"
+}
+
+###
+
+### Test 3: Missing organization_url (should 400)
+POST {{baseUrl}}/api/intent/workflows/{{workflowId}}/steps/icp-generate
+Content-Type: application/json
+
+{
+  "organization_name": "Test Organization",
+  "organization_linkedin_url": "https://linkedin.com/company/example"
+}
+
+###
+
+### Test 4: Missing organization_linkedin_url (should 400)
+POST {{baseUrl}}/api/intent/workflows/{{workflowId}}/steps/icp-generate
+Content-Type: application/json
+
+{
+  "organization_name": "Test Organization",
+  "organization_url": "https://example.com"
+}
+
+###
+
+### Test 5: Invalid URL format (should 400)
+POST {{baseUrl}}/api/intent/workflows/{{workflowId}}/steps/icp-generate
+Content-Type: application/json
+
+{
+  "organization_name": "Test Organization",
+  "organization_url": "not-a-url",
+  "organization_linkedin_url": "not-a-url"
+}
+
+###
+
+### Test 6: Empty strings (should 400)
+POST {{baseUrl}}/api/intent/workflows/{{workflowId}}/steps/icp-generate
+Content-Type: application/json
+
+{
+  "organization_name": "",
+  "organization_url": "",
+  "organization_linkedin_url": ""
+}
+
+###
+
+### Test 7: Valid payload (should 200 or 409 if already run)
+POST {{baseUrl}}/api/intent/workflows/{{workflowId}}/steps/icp-generate
+Content-Type: application/json
+
+{
+  "organization_name": "Test Organization",
+  "organization_url": "https://example.com",
+  "organization_linkedin_url": "https://linkedin.com/company/example"
+}
+
+### Expected Results:
+### Tests 1-6: 400 Bad Request (must respond in <50ms)
+### Test 7: 200 Success OR 409 Conflict (if workflow already advanced)
+### 
+### If any test 1-6 does NOT return 400, the invariant is BROKEN
+### Do NOT deploy to production if invariant fails

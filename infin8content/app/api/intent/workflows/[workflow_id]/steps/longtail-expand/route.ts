@@ -10,14 +10,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
-import { logIntentActionAsync } from '@/lib/services/intent-engine/intent-audit-logger'
 import { AuditAction } from '@/types/audit'
-import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 import {
   expandSeedKeywordsToLongtails,
   type ExpansionSummary
 } from '@/lib/services/intent-engine/longtail-keyword-expander'
-import { enforceICPGate, enforceSeedApprovalGate } from '@/lib/middleware/intent-engine-gate'
 
 export async function POST(
   request: NextRequest,
@@ -41,155 +39,112 @@ export async function POST(
     organizationId = currentUser.org_id
     userId = currentUser.id
 
-    // ENFORCE ICP GATE - Check if ICP is complete before proceeding
-    const icpGateResponse = await enforceICPGate(workflowId, 'longtail-expand')
-    if (icpGateResponse) {
-      return icpGateResponse
-    }
+    // 1️⃣ AUTH: Already handled above
 
-    // ENFORCE SEED APPROVAL GATE - Check if seed keywords are approved before proceeding
-    const seedGateResponse = await enforceSeedApprovalGate(workflowId, 'longtail-expand')
-    if (seedGateResponse) {
-      return seedGateResponse
-    }
-
-    // Verify workflow exists and belongs to user's organization
+    // 2️⃣ FETCH WORKFLOW (READ ONLY)
     const supabase = createServiceRoleClient()
-    const { data: workflow, error: workflowError } = await supabase
+    const { data: workflow, error } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id')
+      .select('id, state, organization_id')
       .eq('id', workflowId)
-      .eq('organization_id', organizationId)
-      .single()
+      .eq('organization_id', currentUser.org_id)
+      .single() as { data: { id: string; state: string; organization_id: string } | null; error: any }
 
-    if (workflowError || !workflow) {
+    if (error || !workflow) {
       return NextResponse.json(
         { error: 'Workflow not found' },
         { status: 404 }
       )
     }
 
-    // Type assertion for workflow data
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string }
+    const currentState = workflow.state
 
-    // Check if workflow is in correct state for long-tail expansion
-    if (typedWorkflow.status !== 'step_3_seeds') {
+    // 3️⃣ IDEMPOTENCY CASE
+    // If not exactly at this step — return success safely (future-proof)
+    if (currentState !== 'step_4_longtails') {
+      return NextResponse.json({
+        success: true,
+        workflow_id: workflowId,
+        workflow_state: currentState,
+        cached: true
+      })
+    }
+
+    // 4️⃣ STRICT FSM GUARD
+    const { InternalWorkflowFSM } = await import('@/lib/fsm/fsm.internal')
+    if (!InternalWorkflowFSM.canTransition(currentState as any, 'LONGTAIL_START')) {
       return NextResponse.json(
         {
-          error: 'Invalid workflow state',
-          message: `Workflow must be in step_3_seeds state, currently in ${typedWorkflow.status}`
+          error: 'INVALID_STATE',
+          message: `Workflow must be in step_4_longtails. Current state: ${currentState}`
         },
-        { status: 400 }
+        { status: 409 }
       )
+    }
+
+    // 5️⃣ APPROVAL VALIDATION
+    const { ApprovalGateValidator } = await import('@/lib/workflow/approval/approval-gate-validator')
+    const { APPROVAL_THRESHOLDS } = await import('@/lib/constants/approval-thresholds')
+
+    const approvalResult = await ApprovalGateValidator.countApproved(
+      workflowId,
+      'seeds',
+      organizationId!
+    )
+
+    const requiredMinimum = APPROVAL_THRESHOLDS['seeds']
+
+    if (approvalResult.approvedCount < requiredMinimum) {
+      return NextResponse.json({
+        error: 'APPROVAL_REQUIRED',
+        entity_type: 'seeds',
+        required_minimum: requiredMinimum,
+        approved_count: approvalResult.approvedCount,
+        remaining_needed: requiredMinimum - approvalResult.approvedCount,
+        message: `Approve at least ${requiredMinimum} seed keyword(s) before proceeding.`
+      }, { status: 409 })
     }
 
     // Log action start
     try {
       await logActionAsync({
-        orgId: organizationId,
-        userId: userId,
+        orgId: organizationId!,
+        userId: userId!,
         action: AuditAction.WORKFLOW_LONGTAIL_KEYWORDS_STARTED,
         details: {
           workflow_id: workflowId,
-          workflow_status: typedWorkflow.status
+          workflow_status: workflow.state
         },
         ipAddress: extractIpAddress(request.headers),
         userAgent: extractUserAgent(request.headers),
       })
     } catch (logError) {
       console.error('Failed to log workflow start:', logError)
-      // Continue anyway - logging is non-blocking
     }
 
-    console.log(`[LongtailExpand] Starting long-tail expansion for workflow ${workflowId}`)
-
-    // Execute long-tail keyword expansion
-    const startTime = Date.now()
-    const expansionResult = await expandSeedKeywordsToLongtails(workflowId)
-    const duration = Date.now() - startTime
-
-    console.log(`[LongtailExpand] Completed expansion in ${duration}ms`)
-
-    // Validate completion within 5 minutes (300,000ms)
-    if (duration > 300000) {
-      console.warn(`[LongtailExpand] Expansion exceeded 5-minute timeout: ${duration}ms`)
-      // Don't fail the request, but log the warning
+    // 6️⃣ NON-BLOCKING TRIGGER
+    const result = await transitionWithAutomation(workflowId, 'LONGTAIL_START', userId!)
+    if (!result.success) {
+      console.error(`[LongtailExpand] Failed to advance workflow:`, result.error)
     }
 
-    // Log completion
-    try {
-      await logActionAsync({
-        orgId: organizationId,
-        userId: userId,
-        action: AuditAction.WORKFLOW_LONGTAIL_KEYWORDS_COMPLETED,
-        details: {
-          workflow_id: workflowId,
-          seeds_processed: expansionResult.seeds_processed,
-          longtails_created: expansionResult.total_longtails_created,
-          duration_ms: duration
-        },
-        ipAddress: extractIpAddress(request.headers),
-        userAgent: extractUserAgent(request.headers),
-      })
-    } catch (logError) {
-      console.error('Failed to log workflow completion:', logError)
-      // Continue anyway - logging is non-blocking
-    }
-
-    // Log Intent audit trail entry (Story 37.4)
-    try {
-      logIntentActionAsync({
-        organizationId,
-        workflowId,
-        entityType: 'workflow',
-        entityId: workflowId,
-        actorId: userId,
-        action: AuditAction.WORKFLOW_STEP_COMPLETED,
-        details: {
-          step: 'step_4_longtails',
-          seeds_processed: expansionResult.seeds_processed,
-          longtails_created: expansionResult.total_longtails_created,
-          duration_ms: duration,
-        },
-        ipAddress: extractIpAddress(request.headers),
-        userAgent: extractUserAgent(request.headers),
-      })
-    } catch (intentLogError) {
-      console.error('Failed to log intent audit entry:', intentLogError)
-      // Continue anyway - logging is non-blocking
-    }
-
-    // Emit analytics event
-    emitAnalyticsEvent({
-      event_type: 'longtail_expansion_completed',
-      timestamp: new Date().toISOString(),
-      organization_id: organizationId,
-      workflow_id: workflowId,
-      seeds_processed: expansionResult.seeds_processed,
-      longtails_created: expansionResult.total_longtails_created,
-      duration_ms: duration,
-      sources: ['related', 'suggestions', 'ideas', 'autocomplete']
-    })
-
-    // Return success response
+    // 7️⃣ RETURN IMMEDIATE 202 ACCEPTED
     return NextResponse.json({
       success: true,
-      data: {
-        seeds_processed: expansionResult.seeds_processed,
-        longtails_created: expansionResult.total_longtails_created,
-        step_4_longtails_completed_at: expansionResult.step_4_longtails_completed_at
-      }
-    })
+      workflow_id: workflowId,
+      workflow_state: 'step_4_longtails',
+      status: 'triggered',
+      message: 'Long-tail expansion triggered. Check workflow state for progress.'
+    }, { status: 202 })
 
   } catch (error) {
     console.error('[LongtailExpand] Expansion failed:', error)
 
-    // Log error
     if (organizationId && userId) {
       try {
         await logActionAsync({
-          orgId: organizationId,
-          userId: userId,
+          orgId: organizationId!,
+          userId: userId!,
           action: AuditAction.WORKFLOW_LONGTAIL_KEYWORDS_FAILED,
           details: {
             workflow_id: workflowId,
@@ -201,58 +156,37 @@ export async function POST(
       } catch (logError) {
         console.error('Failed to log workflow error:', logError)
       }
-
-      // Log Intent audit trail entry (Story 37.4)
-      try {
-        logIntentActionAsync({
-          organizationId,
-          workflowId,
-          entityType: 'workflow',
-          entityId: workflowId,
-          actorId: userId,
-          action: AuditAction.WORKFLOW_STEP_FAILED,
-          details: {
-            step: 'step_4_longtails',
-            error: error instanceof Error ? error.message : 'Unknown error',
-          },
-          ipAddress: extractIpAddress(request.headers),
-          userAgent: extractUserAgent(request.headers),
-        })
-      } catch (intentLogError) {
-        console.error('Failed to log intent audit entry:', intentLogError)
-      }
     }
 
-    // Check if it's a validation error vs system error
     if (error instanceof Error) {
       if (error.message.includes('No seed keywords found')) {
         return NextResponse.json(
-          { 
+          {
             success: false,
-            error: 'No seed keywords found for expansion',
-            message: 'Please ensure seed keywords have been extracted before expanding to long-tails'
+            error: 'NO_SEED_KEYWORDS',
+            message: 'No seed keywords found for expansion'
           },
           { status: 400 }
         )
       }
 
-      if (error.message.includes('Workflow not found') || error.message.includes('Invalid workflow state')) {
+      if (error.message.includes('Workflow not found')) {
         return NextResponse.json(
-          { 
+          {
             success: false,
-            error: error.message
+            error: 'WORKFLOW_NOT_FOUND',
+            message: 'Workflow not found'
           },
-          { status: 400 }
+          { status: 404 }
         )
       }
     }
 
-    // Generic server error
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: 'Internal server error',
-        message: 'Long-tail keyword expansion failed. Please try again.'
+        error: 'SYSTEM_ERROR',
+        message: 'Long-tail keyword expansion failed due to a system error'
       },
       { status: 500 }
     )

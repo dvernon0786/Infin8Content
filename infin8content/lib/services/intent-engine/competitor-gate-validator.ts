@@ -1,5 +1,8 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
+import { WorkflowState } from '@/lib/fsm/workflow-events'
+import { getStepFromState } from '@/lib/services/workflow-engine/workflow-progression'
 
 export interface GateResult {
   allowed: boolean
@@ -11,9 +14,8 @@ export interface GateResult {
 
 export interface WorkflowData {
   id: string
-  status: string
+  state: WorkflowState
   organization_id: string
-  competitor_completed_at: string | null
 }
 
 export class CompetitorGateValidator {
@@ -26,12 +28,12 @@ export class CompetitorGateValidator {
     try {
       const supabase = createServiceRoleClient()
       
-      // Query workflow status and competitor completion
+      // Query workflow state and competitor completion
       const { data: workflow, error } = await supabase
         .from('intent_workflows')
-        .select('id, status, organization_id, competitor_completed_at')
+        .select('id, state, organization_id')
         .eq('id', workflowId)
-        .single() as { data: WorkflowData | null, error: any }
+        .single<WorkflowData>()
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -72,32 +74,25 @@ export class CompetitorGateValidator {
         }
       }
 
-      // Check if competitor analysis is complete (status must be step_3_competitors or later)
-      const competitorCompleteStatuses = [
-        'step_3_competitors',
-        'step_4_longtails',
-        'step_5_filtering',
-        'step_6_clustering',
-        'step_7_validation',
-        'step_8_subtopics',
-        'step_9_articles',
-        'completed'
-      ]
+      // Check if competitor analysis is complete using FSM step derivation
+      // Any state at or after step 2 (competitors) is valid for seed access
 
-      const isCompetitorComplete = competitorCompleteStatuses.includes(workflow.status)
+      // Use FSM step derivation instead of manual ordering
+      const currentStep = getStepFromState(workflow.state)
+      const isCompetitorComplete = currentStep >= 2 // Step 2 = competitors
 
       if (!isCompetitorComplete) {
         return {
           allowed: false,
-          competitorStatus: workflow.status,
-          workflowStatus: workflow.status,
+          competitorStatus: workflow.state,
+          workflowStatus: workflow.state,
           error: 'Competitor analysis required before seed keywords',
           errorResponse: {
             error: 'Competitor analysis required before seed keywords',
-            workflowStatus: workflow.status,
+            workflowStatus: workflow.state,
             competitorStatus: 'not_complete',
             requiredAction: 'Complete competitor analysis (step 2) before proceeding',
-            currentStep: workflow.status,
+            currentStep: workflow.state,
             blockedAt: new Date().toISOString()
           }
         }
@@ -106,8 +101,8 @@ export class CompetitorGateValidator {
       // Competitor analysis is complete - allow access
       return {
         allowed: true,
-        competitorStatus: workflow.status,
-        workflowStatus: workflow.status
+        competitorStatus: workflow.state,
+        workflowStatus: workflow.state
       }
 
     } catch (error) {
@@ -152,7 +147,7 @@ export class CompetitorGateValidator {
         workflowId,
         entityType: 'workflow',
         entityId: workflowId,
-        actorId: 'system', // Will be overridden by middleware
+        actorId: SYSTEM_USER_ID, // System actor UUID
         action: result.allowed ? 'workflow.gate.competitors_allowed' : 'workflow.gate.competitors_blocked',
         details: {
           attempted_step: stepName,

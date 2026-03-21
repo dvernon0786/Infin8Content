@@ -8,20 +8,20 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  
+
   /* === UX DESIGN SYSTEM TYPOGRAPHY === */
   --font-poppins: var(--font-poppins), 'Poppins', sans-serif;
   --font-lato: var(--font-lato), 'Lato', sans-serif;
-  
+
   /* === UX DESIGN SYSTEM COLORS === */
-  
+
   /* Core Brand Colors */
   --brand-electric-blue: #217CEB;
   --brand-infinite-purple: #4A42CC;
   --brand-deep-charcoal: #2C2C2E;
   --brand-soft-light-gray: #F4F4F6;
   --brand-white: #FFFFFF;
-  
+
   /* Blue Spectrum */
   --blue-50: #EFF6FF;
   --blue-100: #DBEAFE;
@@ -29,7 +29,7 @@
   --blue-600: #1D6FD1;
   --blue-700: #1956A6;
   --blue-900: #0F2E5C;
-  
+
   /* Purple Spectrum */
   --purple-50: #FAF5FF;
   --purple-100: #F3E8FF;
@@ -37,7 +37,7 @@
   --purple-600: #3E38A8;
   --purple-700: #332D85;
   --purple-900: #1E1A4F;
-  
+
   /* Neutral Spectrum */
   --neutral-50: #FAFAFA;
   --neutral-100: #F4F4F6;
@@ -46,21 +46,21 @@
   --neutral-600: #52525B;
   --neutral-800: #2C2C2E;
   --neutral-900: #1C1C1E;
-  
+
   /* Gradients */
   --gradient-brand: linear-gradient(to right, #217CEB, #4A42CC);
   --gradient-light: linear-gradient(to right, #EFF6FF, #FAF5FF);
   --gradient-vibrant: linear-gradient(135deg, #217CEB 0%, #4A42CC 50%, #332D85 100%);
-  --gradient-mesh: 
+  --gradient-mesh:
     radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 0.12) 0px, transparent 50%),
     radial-gradient(at 97% 21%, hsla(265, 87%, 54%, 0.12) 0px, transparent 50%);
-  
+
   /* Semantic Colors */
   --color-success: #22C55E;
   --color-warning: #F59E0B;
   --color-error: #EF4444;
   --color-info: #06B6D4;
-  
+
   /* Shadow System */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
@@ -68,25 +68,33 @@
   --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.12);
   --shadow-brand: 0 10px 25px rgba(33, 124, 235, 0.15);
   --shadow-purple: 0 10px 25px rgba(74, 66, 204, 0.15);
-  
+
   /* Glow Effects */
   --glow-blue: 0 0 20px rgba(33, 124, 235, 0.3);
   --glow-purple: 0 0 20px rgba(74, 66, 204, 0.3);
-  
+
   /* Spacing System */
-  --space-xs: 0.5rem;   /* 8px */
-  --space-sm: 0.75rem;  /* 12px */
-  --space-md: 1rem;     /* 16px */
-  --space-lg: 1.5rem;   /* 24px */
-  --space-xl: 2rem;     /* 32px */
-  --space-2xl: 3rem;    /* 48px */
-  --space-3xl: 4rem;    /* 64px */
-  --space-4xl: 5rem;    /* 80px */
-  
+  --space-xs: 0.5rem;
+  /* 8px */
+  --space-sm: 0.75rem;
+  /* 12px */
+  --space-md: 1rem;
+  /* 16px */
+  --space-lg: 1.5rem;
+  /* 24px */
+  --space-xl: 2rem;
+  /* 32px */
+  --space-2xl: 3rem;
+  /* 48px */
+  --space-3xl: 4rem;
+  /* 64px */
+  --space-4xl: 5rem;
+  /* 80px */
+
   /* Section Spacing */
   --section-padding: 5rem 0;
   --section-padding-mobile: 3rem 0;
-  
+
   /* Border Radius */
   --radius-sm: 4px;
   --radius-md: 8px;
@@ -94,7 +102,7 @@
   --radius-xl: 16px;
   --radius-2xl: 24px;
   --radius-full: 9999px;
-  
+
   /* Typography Scale */
   --text-h1-desktop: clamp(3rem, 5vw, 4rem);
   --text-h1-mobile: clamp(2rem, 5vw, 2.5rem);
@@ -146,7 +154,7 @@
   --radius-full: 9999px;
   /* Brand Design System Tokens */
   --gradient-brand: linear-gradient(90deg, #217CEB 0%, #4A42CC 100%);
-  
+
   /* === BRAND COLORS === */
   --brand-electric-blue: #217CEB;
   --brand-infinite-purple: #4A42CC;
@@ -161,15 +169,13 @@
   --text-muted: rgba(44, 44, 46, 0.7);
 
   /* === GRADIENT (CANONICAL) === */
-  --brand-gradient: linear-gradient(
-    to right,
-    #217CEB,
-    #4A42CC
-  );
+  --brand-gradient: linear-gradient(to right,
+      #217CEB,
+      #4A42CC);
 
   /* === RADIUS === */
   --radius-md: 0.5rem;
-  
+
   /* UX Spec Required Colors */
   --color-text-primary: #2C2C2E;
   --color-text-secondary: #6B7280;
@@ -183,12 +189,12 @@
   --color-warning: #F59E0B;
   --color-error: #EF4444;
   --color-info: #3B82F6;
-  
+
   /* Background Colors for Marketing Components */
   --color-bg-primary: #FFFFFF;
   --color-bg-secondary: #F4F4F6;
   --color-bg-surface: #F9FAFB;
-  
+
   /* Spacing - renamed to avoid Tailwind semantic scale collision */
   --space-xs: 4px;
   --space-sm: 8px;
@@ -198,7 +204,7 @@
   --space-2xl: 48px;
   --space-3xl: 64px;
   --space-4xl: 96px;
-  
+
   /* Typography - UX Spec Fixed Sizes */
   --font-h1: 48px;
   --font-h2: 36px;
@@ -209,14 +215,14 @@
   --font-small: 14px;
   --font-caption: 12px;
   --font-label: 13px;
-  
+
   /* Font Weights */
   --font-weight-light: 300;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  
+
   /* Shadow System */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -261,10 +267,96 @@
   --sidebar-width: 16rem;
   --sidebar-width-icon: 3rem;
   --sidebar-width-mobile: 18rem;
-  
+
   /* Canonical Button System Variables */
   --color-primary-blue: #217CEB;
   --color-primary-purple: #4A42CC;
+}
+
+/* === DYNAMIC CONFIDENCE BARS === */
+/* Design system approved: Dynamic widths for data visualization */
+.confidence-0 {
+  width: 0%;
+}
+
+.confidence-5 {
+  width: 5%;
+}
+
+.confidence-10 {
+  width: 10%;
+}
+
+.confidence-15 {
+  width: 15%;
+}
+
+.confidence-20 {
+  width: 20%;
+}
+
+.confidence-25 {
+  width: 25%;
+}
+
+.confidence-30 {
+  width: 30%;
+}
+
+.confidence-35 {
+  width: 35%;
+}
+
+.confidence-40 {
+  width: 40%;
+}
+
+.confidence-45 {
+  width: 45%;
+}
+
+.confidence-50 {
+  width: 50%;
+}
+
+.confidence-55 {
+  width: 55%;
+}
+
+.confidence-60 {
+  width: 60%;
+}
+
+.confidence-65 {
+  width: 65%;
+}
+
+.confidence-70 {
+  width: 70%;
+}
+
+.confidence-75 {
+  width: 75%;
+}
+
+.confidence-80 {
+  width: 80%;
+}
+
+.confidence-85 {
+  width: 85%;
+}
+
+.confidence-90 {
+  width: 90%;
+}
+
+.confidence-95 {
+  width: 95%;
+}
+
+.confidence-100 {
+  width: 100%;
 }
 
 .dark {
@@ -303,152 +395,177 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--border);
+    outline-color: var(--ring);
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
   }
 }
 
 /* === UX DESIGN SYSTEM UTILITY CLASSES === */
 @layer utilities {
+
   /* Typography Utilities */
   .font-poppins {
     font-family: var(--font-poppins);
   }
-  
+
   .font-lato {
     font-family: var(--font-lato);
   }
-  
+
   .text-h1-desktop {
     font-size: var(--text-h1-desktop);
     font-family: var(--font-poppins);
     font-weight: 700;
     line-height: 1.2;
   }
-  
+
   .text-h1-mobile {
     font-size: var(--text-h1-mobile);
     font-family: var(--font-poppins);
     font-weight: 700;
     line-height: 1.2;
   }
-  
+
   .text-h2-desktop {
     font-size: var(--text-h2-desktop);
     font-family: var(--font-poppins);
     font-weight: 700;
     line-height: 1.3;
   }
-  
+
   .text-h2-mobile {
     font-size: var(--text-h2-mobile);
     font-family: var(--font-poppins);
     font-weight: 700;
     line-height: 1.3;
   }
-  
+
   .text-h3-desktop {
     font-size: var(--text-h3-desktop);
     font-family: var(--font-poppins);
     font-weight: 700;
     line-height: 1.4;
   }
-  
+
   .text-h3-mobile {
     font-size: var(--text-h3-mobile);
     font-family: var(--font-poppins);
     font-weight: 700;
     line-height: 1.4;
   }
-  
+
   .text-body {
     font-size: var(--text-body);
     font-family: var(--font-lato);
     font-weight: 400;
     line-height: 1.6;
   }
-  
+
   .text-large {
     font-size: var(--text-large);
     font-family: var(--font-lato);
     font-weight: 400;
     line-height: 1.5;
   }
-  
+
   .text-small {
     font-size: var(--text-small);
     font-family: var(--font-lato);
     font-weight: 400;
     line-height: 1.5;
   }
-  
+
   /* Color Utilities */
-  .text-neutral-900 { color: var(--neutral-900); }
-  .text-neutral-800 { color: var(--neutral-800); }
-  .text-neutral-600 { color: var(--neutral-600); }
-  .text-neutral-500 { color: var(--neutral-500); }
-  
-  .bg-neutral-50 { background-color: var(--neutral-50); }
-  .bg-neutral-100 { background-color: var(--neutral-100); }
-  .bg-neutral-900 { background-color: var(--neutral-900); }
-  .bg-white { background-color: var(--brand-white); }
-  
+  .text-neutral-900 {
+    color: var(--neutral-900);
+  }
+
+  .text-neutral-800 {
+    color: var(--neutral-800);
+  }
+
+  .text-neutral-600 {
+    color: var(--neutral-600);
+  }
+
+  .text-neutral-500 {
+    color: var(--neutral-500);
+  }
+
+  .bg-neutral-50 {
+    background-color: var(--neutral-50);
+  }
+
+  .bg-neutral-100 {
+    background-color: var(--neutral-100);
+  }
+
+  .bg-neutral-900 {
+    background-color: var(--neutral-900);
+  }
+
+  .bg-white {
+    background-color: var(--brand-white);
+  }
+
   /* Gradient Utilities */
   .bg-gradient-brand {
     background: var(--gradient-brand);
   }
-  
+
   .bg-gradient-light {
     background: var(--gradient-light);
   }
-  
+
   .bg-gradient-vibrant {
     background: var(--gradient-vibrant);
   }
-  
+
   .bg-gradient-mesh {
     background: var(--gradient-mesh);
   }
-  
+
   /* Shadow Utilities */
   .shadow-brand {
     box-shadow: var(--shadow-brand);
   }
-  
+
   .shadow-purple {
     box-shadow: var(--shadow-purple);
   }
-  
+
   /* Spacing Utilities */
   .section-padding {
     padding: var(--section-padding);
   }
-  
+
   .section-padding-mobile {
     padding: var(--section-padding-mobile);
   }
-  
+
   /* Hover Animation Utilities */
   .hover-lift {
     transition: all 0.3s ease;
   }
-  
+
   .hover-lift:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-lg);
   }
-  
+
   .hover-scale {
     transition: all 0.3s ease;
   }
-  
+
   .hover-scale:hover {
     transform: scale(1.02);
   }
-  
+
   .btn-primary {
     background: var(--gradient-brand);
     color: var(--brand-white);
@@ -458,12 +575,12 @@
     transition: all 0.3s ease;
     box-shadow: var(--shadow-brand);
   }
-  
+
   .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 15px 30px rgba(33, 124, 235, 0.25);
   }
-  
+
   .btn-secondary {
     background: transparent;
     color: var(--blue-500);
@@ -473,12 +590,12 @@
     font-weight: 600;
     transition: all 0.3s ease;
   }
-  
+
   .btn-secondary:hover {
     background: var(--blue-500);
     color: var(--brand-white);
   }
-  
+
   /* Card Utilities */
   .card {
     background: var(--brand-white);
@@ -488,44 +605,44 @@
     border: 1px solid var(--neutral-200);
     transition: all 0.3s ease;
   }
-  
+
   .card:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-lg);
     border-color: var(--blue-100);
   }
-  
+
   /* Focus States for Accessibility */
   .focus-ring {
     outline: 2px solid var(--blue-500);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
-  
+
   /* Responsive Typography */
   @media (max-width: 768px) {
     .text-h1-responsive {
       font-size: var(--text-h1-mobile);
     }
-    
+
     .text-h2-responsive {
       font-size: var(--text-h2-mobile);
     }
-    
+
     .text-h3-responsive {
       font-size: var(--text-h3-mobile);
     }
   }
-  
+
   @media (min-width: 769px) {
     .text-h1-responsive {
       font-size: var(--text-h1-desktop);
     }
-    
+
     .text-h2-responsive {
       font-size: var(--text-h2-desktop);
     }
-    
+
     .text-h3-responsive {
       font-size: var(--text-h3-desktop);
     }
@@ -537,16 +654,51 @@
   .bg-primary-blue {
     background-color: var(--color-primary-blue);
   }
-  
+
   .bg-primary-purple {
     background-color: var(--color-primary-purple);
   }
-  
+
   .hover\:bg-primary-blue\/90:hover {
     background-color: rgb(33 124 235 / 0.9);
   }
-  
+
   .hover\:bg-primary-purple\/90:hover {
     background-color: rgb(74 66 204 / 0.9);
+  }
+}
+
+/* Workflow Dashboard Keyframes (Zero Drift Protocol) */
+@keyframes i8c-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 0 7px rgba(245, 158, 11, 0);
+  }
+}
+
+@keyframes i8c-slide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes i8c-shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+
+  100% {
+    background-position: 400px 0;
   }
 }

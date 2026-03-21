@@ -8,24 +8,37 @@
 
 import { SupabaseClient } from '@supabase/supabase-js'
 import type { IntentWorkflow } from '@/lib/types/intent-workflow'
+import { STATE_ORDER, type WorkflowState } from '@/lib/fsm/workflow-events'
+
+// Type hardening for Supabase joins (Zero Drift)
+type WorkflowWithCounts = IntentWorkflow & {
+  keywords?: { count: number }[]
+  articles?: { count: number }[]
+}
 
 export interface WorkflowDashboardItem {
   id: string
   name: string
-  status: string
+  state: WorkflowState
   progress_percentage: number
-  current_step: string
   created_at: string
   updated_at: string
   created_by: string
   estimated_completion?: string
+  keywords?: number
+  articles?: number
+  display_updated_at: string
+  display_created_at: string
 }
 
 export interface DashboardSummary {
   total_workflows: number
   completed_workflows: number
   in_progress_workflows: number
-  failed_workflows: number
+  total_keywords: number
+  total_articles: number
+  pending_approvals: number
+  avg_completion_percentage: number
 }
 
 export interface DashboardResponse {
@@ -38,71 +51,47 @@ export interface DashboardResponse {
 }
 
 /**
- * Calculate progress percentage based on workflow status
- * Maps workflow steps to percentage completion
- * Covers all 11 workflow steps in the intent engine pipeline
+ * Progress calculation and step descriptions
+ * Uses canonical functions from constants
  */
-export function calculateProgress(status: string): number {
-  const progressMap: Record<string, number> = {
-    'step_0_auth': 5,
-    'step_1_icp': 15,
-    'step_2_competitors': 25,
-    'step_3_keywords': 35,
-    'step_4_longtails': 45,
-    'step_5_filtering': 55,
-    'step_6_clustering': 65,
-    'step_7_validation': 75,
-    'step_8_subtopics': 85,
-    'step_9_articles': 95,
-    'completed': 100,
-    'failed': 0,
-  }
-  return progressMap[status] || 0
-}
 
 /**
- * Get human-readable step description
+ * Calculate summary statistics from formatted workflows
+ * Single Authority: Summary now derives from already computed progress
  */
-export function getStepDescription(status: string): string {
-  const descriptionMap: Record<string, string> = {
-    'step_0_auth': 'Authentication',
-    'step_1_icp': 'ICP Generation',
-    'step_2_competitors': 'Competitor Analysis',
-    'step_3_keywords': 'Seed Keyword Extraction',
-    'step_4_longtails': 'Long-tail Expansion',
-    'step_5_filtering': 'Keyword Filtering',
-    'step_6_clustering': 'Topic Clustering',
-    'step_7_validation': 'Cluster Validation',
-    'step_8_subtopics': 'Subtopic Generation',
-    'step_9_articles': 'Article Generation',
-    'completed': 'Completed',
-    'failed': 'Failed',
-  }
-  return descriptionMap[status] || 'Unknown'
-}
+export function calculateSummary(workflows: WorkflowDashboardItem[]): DashboardSummary {
+  const activeCount = workflows.filter(w => {
+    const base = w.state.replace(/_(running|failed|queued)$/, '')
+    return base !== 'completed' && base !== 'cancelled'
+  }).length
 
-/**
- * Calculate summary statistics from workflows
- */
-export function calculateSummary(workflows: IntentWorkflow[]): DashboardSummary {
-  const summary: DashboardSummary = {
+  // BUG FIX #2: Summary now properly detects completed workflows even in transition states
+  const completedCount = workflows.filter(w => {
+    const base = w.state.replace(/_(running|failed|queued)$/, '')
+    return base === 'completed'
+  }).length
+
+  const totalKeywords = workflows.reduce((acc, w) => acc + (w.keywords || 0), 0)
+  const totalArticles = workflows.reduce((acc, w) => acc + (w.articles || 0), 0)
+
+  const pendingApprovals = workflows.filter(w => {
+    const base = w.state.replace(/_(running|failed|queued)$/, '')
+    return base === 'step_3_seeds' || base === 'step_8_subtopics'
+  }).length
+
+  // BUG FIX #1: Deriving average from formatted progress (Single Authority)
+  const totalProgress = workflows.reduce((acc, w) => acc + w.progress_percentage, 0)
+  const avgCompletion = workflows.length > 0 ? Math.round(totalProgress / workflows.length) : 0
+
+  return {
     total_workflows: workflows.length,
-    completed_workflows: 0,
-    in_progress_workflows: 0,
-    failed_workflows: 0,
+    completed_workflows: completedCount,
+    in_progress_workflows: activeCount,
+    total_keywords: totalKeywords,
+    total_articles: totalArticles,
+    pending_approvals: pendingApprovals,
+    avg_completion_percentage: avgCompletion
   }
-
-  workflows.forEach(workflow => {
-    if (workflow.status === 'completed') {
-      summary.completed_workflows++
-    } else if (workflow.status === 'failed') {
-      summary.failed_workflows++
-    } else {
-      summary.in_progress_workflows++
-    }
-  })
-
-  return summary
 }
 
 /**
@@ -112,59 +101,104 @@ export function calculateSummary(workflows: IntentWorkflow[]): DashboardSummary 
 export function calculateEstimatedCompletion(
   createdAt: string,
   updatedAt: string,
-  progressPercentage: number
+  progressPercentage: number,
+  baseState: string
 ): string | undefined {
   if (progressPercentage >= 100) return undefined
   if (progressPercentage === 0) return undefined
+
+  // UX Hardening: Do not calculate if at an approval gate
+  // These steps require human interaction, so linear extrapolation is misleading
+  const gateStates = ['step_3_seeds', 'step_8_subtopics']
+  if (gateStates.includes(baseState)) return undefined
 
   const created = new Date(createdAt).getTime()
   const updated = new Date(updatedAt).getTime()
   const elapsed = updated - created
 
-  if (elapsed === 0) return undefined
+  // GUARD #4: No division by zero or negative elapsed time (Zero Drift)
+  if (elapsed <= 0 || progressPercentage <= 0) return undefined
 
   const remainingProgress = 100 - progressPercentage
   const estimatedRemainingTime = (elapsed / progressPercentage) * remainingProgress
-  const estimatedCompletion = new Date(updated + estimatedRemainingTime)
+
+  // CAP: Limit estimates to 1 year out to avoid extreme future dates from logic bugs
+  const MAX_ESTIMATE = 365 * 24 * 60 * 60 * 1000
+  const finalEstimateTime = Math.min(estimatedRemainingTime, MAX_ESTIMATE)
+
+  const estimatedCompletion = new Date(updated + finalEstimateTime)
 
   return estimatedCompletion.toISOString()
 }
 
 /**
  * Format workflows for dashboard display
+ * Uses pure FSM state for progress calculation
  */
 export function formatWorkflows(workflows: IntentWorkflow[]): WorkflowDashboardItem[] {
+  const dateFormatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+
   return workflows.map(workflow => {
-    const progress = calculateProgress(workflow.status)
+    // Pure FSM: Derive progress from state order only
+    // BUG FIX #3: Normalize state before lookup to handle _running/_failed/_queued
+    const baseState = workflow.state.replace(/_(running|failed|queued)$/, '')
+    const stateIndex = STATE_ORDER.indexOf(baseState as WorkflowState)
+    const progress = stateIndex >= 0 ? (stateIndex / (STATE_ORDER.length - 1)) * 100 : 0
+
     return {
       id: workflow.id,
       name: workflow.name,
-      status: workflow.status,
+      state: workflow.state,
       progress_percentage: progress,
-      current_step: getStepDescription(workflow.status),
       created_at: workflow.created_at,
       updated_at: workflow.updated_at,
       created_by: workflow.created_by,
+      display_created_at: dateFormatter.format(new Date(workflow.created_at)),
+      display_updated_at: dateFormatter.format(new Date(workflow.updated_at)),
       estimated_completion: calculateEstimatedCompletion(
         workflow.created_at,
         workflow.updated_at,
-        progress
+        progress,
+        baseState
       ),
+      keywords: (workflow as WorkflowWithCounts).keywords?.[0]?.count || 0,
+      articles: (workflow as WorkflowWithCounts).articles?.[0]?.count || 0
     }
   })
 }
 
 /**
- * Fetch all workflows for an organization
+ * Fetch all workflows for an organization with optional date range filtering
  */
 export async function getWorkflowDashboard(
   supabase: SupabaseClient,
-  organizationId: string
+  organizationId: string,
+  range: '7d' | '30d' | '90d' | 'all' = 'all'
 ): Promise<DashboardResponse> {
-  const { data: workflows, error } = await supabase
+  let query = supabase
     .from('intent_workflows')
-    .select('*')
+    .select(`
+      id,
+      name,
+      state,
+      organization_id,
+      created_at,
+      updated_at,
+      created_by,
+      keywords:keywords(count),
+      articles:articles(count)
+    `)
     .eq('organization_id', organizationId)
+
+  // Apply date range filter if not 'all'
+  if (range !== 'all') {
+    const days = parseInt(range.replace('d', ''), 10)
+    const dateLimit = new Date()
+    dateLimit.setDate(dateLimit.getDate() - days)
+    query = query.gte('updated_at', dateLimit.toISOString())
+  }
+
+  const { data: workflows, error } = await query
     .order('updated_at', { ascending: false })
 
   if (error) {
@@ -172,13 +206,13 @@ export async function getWorkflowDashboard(
   }
 
   const formattedWorkflows = formatWorkflows(workflows || [])
-  const summary = calculateSummary(workflows || [])
+  const summary = calculateSummary(formattedWorkflows)
 
   return {
     workflows: formattedWorkflows,
     filters: {
-      statuses: ['step_0_auth', 'step_1_icp', 'step_2_competitors', 'step_3_keywords', 'step_4_longtails', 'step_5_filtering', 'step_6_clustering', 'step_7_validation', 'step_8_subtopics', 'step_9_articles', 'completed', 'failed'],
-      date_ranges: ['today', 'this_week', 'this_month', 'all_time'],
+      statuses: [...STATE_ORDER],
+      date_ranges: ['7d', '30d', '90d', 'all'],
     },
     summary,
   }

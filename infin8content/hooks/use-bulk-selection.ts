@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback, useRef } from 'react';
-import type { DashboardArticle } from '@/lib/supabase/realtime';
+import type { DashboardArticle } from '@/lib/types/dashboard.types';
 
 export interface Article {
   id: string;
@@ -109,16 +109,16 @@ export function useBulkSelection(options: UseBulkSelectionOptions): BulkSelectio
   const handleTouchEnd = useCallback((e: React.TouchEvent, articleId: string) => {
     const touch = e.changedTouches[0];
     const startPos = touchStartPos.current;
-    
+
     if (startPos) {
       const deltaX = Math.abs(touch.clientX - startPos.x);
       const deltaY = Math.abs(touch.clientY - startPos.y);
-      
+
       // Only toggle selection if it's a tap (not a swipe)
       if (deltaX < 10 && deltaY < 10) {
         toggleSelection(articleId);
       }
-      
+
       touchStartPos.current = null;
     }
   }, [toggleSelection]);
@@ -144,7 +144,7 @@ export function useBulkSelection(options: UseBulkSelectionOptions): BulkSelectio
  */
 export function useMobileBulkSelection(options: UseBulkSelectionOptions): BulkSelectionHook {
   const bulkSelection = useBulkSelection(options);
-  
+
   // For mobile, we might want to add additional mobile-specific logic
   // For now, it's the same as the standard hook
   return bulkSelection;

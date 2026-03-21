@@ -1,6 +1,7 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Dialog,
   DialogContent,
@@ -11,7 +12,13 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { AlertTriangle, X } from 'lucide-react'
 import type { WorkflowDashboardItem } from '@/lib/services/intent-engine/workflow-dashboard-service'
+import { WORKFLOW_STEP_DESCRIPTIONS } from '@/lib/constants/intent-workflow-steps'
+import type { WorkflowState } from '@/lib/fsm/workflow-events'
+import { WORKFLOW_STEP_CONFIG } from '@/lib/intent-workflow/step-config'
 
 interface WorkflowDetailModalProps {
   workflow: WorkflowDashboardItem | null
@@ -28,18 +35,69 @@ export function WorkflowDetailModal({
   open,
   onOpenChange,
 }: WorkflowDetailModalProps) {
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [isCancelling, setIsCancelling] = useState(false)
+  const [isRunningStep, setIsRunningStep] = useState(false)
+  const [stepError, setStepError] = useState<{
+    message: string;
+    limit?: number;
+    currentActive?: number;
+    plan?: string;
+    metric?: string;
+  } | null>(null)
+  const router = useRouter()
+
+
+  // ICP form state
+  const [icpFormData, setIcpFormData] = useState({
+    organizationName: '',
+    organizationUrl: '',
+    organizationLinkedInUrl: '',
+  })
+
   if (!workflow) return null
 
-  const steps = [
-    { key: 'step_0_auth', label: 'Authentication', order: 0 },
-    { key: 'step_1_icp', label: 'ICP Generation', order: 1 },
-    { key: 'step_2_competitors', label: 'Competitor Analysis', order: 2 },
-    { key: 'step_3_keywords', label: 'Keyword Research', order: 3 },
-    { key: 'step_4_topics', label: 'Topic Generation', order: 4 },
-    { key: 'step_5_generation', label: 'Article Generation', order: 5 },
-  ]
+  // Check if workflow can be cancelled (not already terminal)
+  const canCancel = workflow.state !== 'completed'
 
-  const currentStepOrder = steps.find(s => s.key === workflow.status)?.order ?? -1
+  // Detect the active step for execution
+  const activeStep = WORKFLOW_STEP_CONFIG.find(
+    (s) => s.step === workflow.state
+  )
+
+  const handleCancelWorkflow = async () => {
+    setIsCancelling(true)
+    try {
+      const response = await fetch(`/api/intent/workflows/${workflow.id}/cancel`, {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to cancel workflow')
+      }
+
+      // Close modal and refresh parent
+      onOpenChange(false)
+      // Parent will handle refresh via real-time subscription
+    } catch (error) {
+      console.error('Failed to cancel workflow:', error)
+      // TODO: Show error toast
+    } finally {
+      setIsCancelling(false)
+      setShowCancelConfirm(false)
+    }
+  }
+
+  const steps = WORKFLOW_STEP_CONFIG
+    .filter(step => !step.hidden) // Hide internal steps from UI
+    .map((step, index) => ({
+      key: step.step,
+      label: step.label,
+      order: index,
+    }))
+
+  const currentStepOrder = steps.find(s => s.key === workflow.state)?.order ?? -1
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -53,7 +111,7 @@ export function WorkflowDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl w-full mx-4 sm:mx-auto sm:w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{workflow.name}</DialogTitle>
           <DialogDescription>
@@ -93,13 +151,12 @@ export function WorkflowDetailModal({
                   return (
                     <div key={step.key} className="flex items-center gap-3">
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                          isCompleted
-                            ? 'bg-green-100 text-green-800'
-                            : isCurrent
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${isCompleted
+                          ? 'bg-green-100 text-green-800'
+                          : isCurrent
                             ? 'bg-blue-100 text-blue-800'
                             : 'bg-gray-100 text-gray-600'
-                        }`}
+                          }`}
                       >
                         {index + 1}
                       </div>
@@ -140,7 +197,7 @@ export function WorkflowDetailModal({
                     Status
                   </p>
                   <p className="text-sm font-medium mt-1">
-                    {workflow.status.replace('step_', 'Step ').replace(/_/g, ' ')}
+                    {WORKFLOW_STEP_DESCRIPTIONS[workflow.state as WorkflowState] || 'Unknown'}
                   </p>
                 </div>
                 <div>
@@ -166,10 +223,142 @@ export function WorkflowDetailModal({
                   </p>
                 </div>
               </div>
+
+              {/* Action Button / ICP Form */}
+              {activeStep && canCancel && (
+                <div className="pt-4 border-t space-y-2">
+                  {stepError && (
+                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-md sm:p-3">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 shrink-0" />
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-orange-900 leading-tight">
+                            {stepError.metric === 'workflow_active'
+                              ? 'Workflow limit reached'
+                              : 'Step failed'}
+                          </p>
+                          <p className="text-sm text-orange-800 leading-normal">
+                            {stepError.metric === 'workflow_active' && stepError.limit
+                              ? `You currently have ${stepError.currentActive} active workflow(s). Your ${stepError.plan} plan allows ${stepError.limit} active workflow(s).`
+                              : stepError.message}
+                          </p>
+                          {stepError.metric === 'workflow_active' && (
+                            <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-xs h-8 border-orange-200 hover:bg-orange-100 text-orange-900"
+                                onClick={() => onOpenChange(false)}
+                              >
+                                Deactivate a workflow
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="text-xs h-8 bg-orange-600 hover:bg-orange-700 text-white"
+                                onClick={() => window.location.href = '/dashboard/settings/billing'}
+                              >
+                                Upgrade plan
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Regular action button for all steps */}
+                  <Button
+                    className="w-full min-h-[44px] text-base sm:min-h-[40px] sm:text-sm"
+                    disabled={isRunningStep}
+                    onClick={async () => {
+                      try {
+                        setIsRunningStep(true)
+                        setStepError(null)
+
+                        const res = await fetch(
+                          `/api/intent/workflows/${workflow.id}/${activeStep.endpoint}`,
+                          { method: 'POST' }
+                        )
+
+                        if (!res.ok) {
+                          const body = await res.json()
+                          setStepError({
+                            message: body.error || 'Step failed',
+                            limit: body.limit,
+                            currentActive: body.currentActive,
+                            plan: body.plan,
+                            metric: body.metric
+                          })
+                          return
+                        }
+
+                        // realtime subscription will refresh workflow
+                      } catch (err) {
+                        setStepError({
+                          message: err instanceof Error ? err.message : 'Something went wrong'
+                        })
+                      } finally {
+                        setIsRunningStep(false)
+                      }
+                    }}
+                  >
+                    {isRunningStep ? 'Running…' : activeStep.label}
+                  </Button>
+                </div>
+              )}
+
+              {/* Cancel Button */}
+              {canCancel && (
+                <div className="pt-4 border-t">
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    onClick={() => setShowCancelConfirm(true)}
+                    disabled={isCancelling}
+                  >
+                    <AlertTriangle className="w-4 h-4 mr-2" />
+                    Cancel workflow
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
       </DialogContent>
+
+      {/* Cancel Confirmation Dialog */}
+      <Dialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Cancel workflow?
+            </DialogTitle>
+            <DialogDescription>
+              This will permanently stop the workflow.
+              You cannot resume it. You can start a new workflow anytime.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelConfirm(false)}
+              disabled={isCancelling}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelWorkflow}
+              disabled={isCancelling}
+              className="flex-1"
+            >
+              {isCancelling ? 'Cancelling...' : 'Yes, cancel workflow'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }

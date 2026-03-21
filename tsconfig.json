@@ -1,1 +1,8 @@
-{"extends": "./infin8content/tsconfig.json", "compilerOptions": {"baseUrl": "./infin8content"}}
+{
+  "extends": "./infin8content/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "./infin8content",
+    "skipLibCheck": true
+  },
+  "exclude": ["node_modules"]
+}

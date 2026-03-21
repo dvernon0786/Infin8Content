@@ -25,7 +25,7 @@ export class DataForSEOClient {
     this.baseUrl = 'https://api.dataforseo.com/v3';
   }
 
-  async researchKeyword(keyword: string): Promise<DataForSEOResult> {
+  async researchKeyword(keyword: string, locationCode: number, languageCode: string): Promise<DataForSEOResult> {
     if (!this.apiKey) {
       throw new Error('DataForSEO API key not configured');
     }
@@ -36,8 +36,8 @@ export class DataForSEOClient {
     const requestBody = [
       {
         keyword,
-        location_code: 2840, // United States
-        language_code: 'en'
+        location_code: locationCode,
+        language_code: languageCode
       }
     ];
 
@@ -91,7 +91,7 @@ export class DataForSEOClient {
     }
   }
 
-  async researchMultipleKeywords(keywords: string[]): Promise<Record<string, DataForSEOResult>> {
+  async researchMultipleKeywords(keywords: string[], locationCode: number, languageCode: string): Promise<Record<string, DataForSEOResult>> {
     const results: Record<string, DataForSEOResult> = {};
     
     // Process in batches to respect rate limits
@@ -101,7 +101,7 @@ export class DataForSEOClient {
       
       const batchPromises = batch.map(async (keyword) => {
         try {
-          const result = await this.researchKeyword(keyword);
+          const result = await this.researchKeyword(keyword, locationCode, languageCode);
           return { keyword, result };
         } catch (error) {
           console.error(`Failed to research keyword ${keyword}:`, error);
@@ -141,7 +141,7 @@ export class DataForSEOClient {
     }, {} as Record<string, any>);
   }
 
-  async getKeywordDifficulty(keyword: string): Promise<number> {
+  async getKeywordDifficulty(keyword: string, locationCode: number, languageCode: string): Promise<number> {
     if (!this.apiKey) {
       throw new Error('DataForSEO API key not configured');
     }
@@ -152,8 +152,8 @@ export class DataForSEOClient {
     const requestBody = [
       {
         keyword,
-        location_code: 2840, // United States
-        language_code: 'en'
+        location_code: locationCode,
+        language_code: languageCode
       }
     ];
 
@@ -195,7 +195,7 @@ export class DataForSEOClient {
     }
   }
 
-  async getSearchVolume(keyword: string): Promise<number> {
+  async getSearchVolume(keyword: string, locationCode: number, languageCode: string): Promise<number> {
     if (!this.apiKey) {
       throw new Error('DataForSEO API key not configured');
     }
@@ -206,8 +206,8 @@ export class DataForSEOClient {
     const requestBody = [
       {
         keyword,
-        location_code: 2840, // United States
-        language_code: 'en'
+        location_code: locationCode,
+        language_code: languageCode
       }
     ];
 

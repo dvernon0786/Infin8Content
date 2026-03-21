@@ -11,13 +11,7 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
-import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
-import {
-  filterKeywords,
-  getOrganizationFilterSettings,
-  type FilterResult
-} from '@/lib/services/intent-engine/keyword-filter'
-import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 
 export async function POST(
   request: NextRequest,
@@ -41,35 +35,46 @@ export async function POST(
     organizationId = currentUser.org_id
     userId = currentUser.id
 
-    // ENFORCE ICP GATE - Check if ICP is complete before proceeding
-    const gateResponse = await enforceICPGate(workflowId, 'filter-keywords')
-    if (gateResponse) {
-      return gateResponse
-    }
-
-    // Verify workflow exists and belongs to user's organization
+    // 1️⃣ AUTH: Already handled above
+    
+    // 2️⃣ FETCH WORKFLOW (READ ONLY)
     const supabase = createServiceRoleClient()
-    const { data: workflow, error: workflowError } = await supabase
+    const { data: workflow, error } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id')
+      .select('id, state, organization_id')
       .eq('id', workflowId)
-      .eq('organization_id', organizationId)
-      .single()
+      .eq('organization_id', currentUser.org_id)
+      .single() as { data: { id: string; state: string; organization_id: string } | null; error: any }
 
-    if (workflowError || !workflow) {
+    if (error || !workflow) {
       return NextResponse.json(
         { error: 'Workflow not found' },
         { status: 404 }
       )
     }
 
-    // Validate workflow state - must be at step_4_longtails
-    if ((workflow as any).status !== 'step_4_longtails') {
+    const currentState = workflow.state
+
+    // 3️⃣ IDEMPOTENCY CASE
+    // If not exactly at this step — return success safely (future-proof)
+    if (currentState !== 'step_5_filtering') {
+      return NextResponse.json({
+        success: true,
+        workflow_id: workflowId,
+        workflow_state: currentState,
+        cached: true
+      })
+    }
+
+    // 4️⃣ STRICT FSM GUARD
+    // For validation, we need to check if transition is allowed
+    // Use internal FSM for validation since unified engine doesn't export canTransition
+    const { InternalWorkflowFSM } = await import('@/lib/fsm/fsm.internal')
+    if (!InternalWorkflowFSM.canTransition(currentState as any, 'FILTERING_START')) {
       return NextResponse.json(
-        { 
-          error: 'Invalid workflow state',
-          message: 'Expected workflow status: step_4_longtails',
-          current_status: (workflow as any).status
+        {
+          error: 'INVALID_STATE',
+          message: `Workflow must be in step_5_filtering. Current state: ${currentState}` 
         },
         { status: 409 }
       )
@@ -87,67 +92,27 @@ export async function POST(
       userAgent: extractUserAgent(request.headers),
     })
 
-    // Get organization filter settings
-    const filterOptions = await getOrganizationFilterSettings(organizationId)
-
-    // Set timeout for 1 minute as per requirements
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Keyword filtering timeout')), 60000)
-    })
-
-    // Perform keyword filtering
-    const filterPromise = filterKeywords(workflowId, organizationId, filterOptions)
-
-    // Race between filtering and timeout
-    const filterResult = await Promise.race([filterPromise, timeoutPromise]) as FilterResult
-
-    // Update workflow status to step_5_filtering
-    const { error: updateError } = await supabase
-      .from('intent_workflows')
-      .update({
-        status: 'step_5_filtering',
-        step_5_filtering_completed_at: new Date().toISOString(),
-        filtered_keywords_count: filterResult.filtered_keywords_count
-      })
-      .eq('id', workflowId)
-
-    if (updateError) {
-      throw new Error(`Failed to update workflow status: ${updateError.message}`)
+    // 5️⃣ UNIFIED TRANSITION (async trigger)
+    // This automatically emits the required event
+    const result = await transitionWithAutomation(workflowId, 'FILTERING_START', userId)
+    if (!result.success) {
+      return NextResponse.json(
+        { 
+          error: 'Failed to advance workflow',
+          message: result.error || 'Unknown error'
+        },
+        { status: 500 }
+      )
     }
 
-    // Log completion of keyword filtering
-    await logActionAsync({
-      orgId: organizationId,
-      userId: userId,
-      action: AuditAction.WORKFLOW_KEYWORD_FILTERING_COMPLETED,
-      details: {
-        workflow_id: workflowId,
-        total_keywords: filterResult.total_keywords,
-        filtered_keywords_count: filterResult.filtered_keywords_count,
-        removal_breakdown: filterResult.removal_breakdown
-      },
-      ipAddress: extractIpAddress(request.headers),
-      userAgent: extractUserAgent(request.headers),
-    })
-
-    // Emit analytics event
-    emitAnalyticsEvent({
-      event_type: 'workflow.keyword_filtering.completed',
-      timestamp: new Date().toISOString(),
-      organization_id: organizationId,
-      workflow_id: workflowId,
-      total_keywords: filterResult.total_keywords,
-      filtered_keywords_count: filterResult.filtered_keywords_count
-    })
-
+    // 6️⃣ RETURN IMMEDIATE 202 ACCEPTED
     return NextResponse.json({
       success: true,
-      data: {
-        workflow_id: workflowId,
-        status: 'step_5_filtering',
-        filter_result: filterResult
-      }
-    })
+      workflow_id: workflowId,
+      workflow_state: 'step_5_filtering', // Still in idle until worker processes
+      status: 'triggered',
+      message: 'Keyword filtering triggered. Check workflow state for progress.'
+    }, { status: 202 })
 
   } catch (error) {
     console.error('Keyword filtering failed:', error)
@@ -169,13 +134,6 @@ export async function POST(
 
     // Return appropriate error response
     if (error instanceof Error) {
-      if (error.message === 'Keyword filtering timeout') {
-        return NextResponse.json(
-          { error: 'Keyword filtering timeout - operation took longer than 1 minute' },
-          { status: 408 }
-        )
-      }
-      
       if (error.message.includes('Invalid workflow state')) {
         return NextResponse.json(
           { error: error.message },

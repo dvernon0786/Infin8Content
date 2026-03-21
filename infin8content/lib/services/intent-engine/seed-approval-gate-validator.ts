@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
+import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 
 export interface GateResult {
   allowed: boolean
@@ -11,7 +12,7 @@ export interface GateResult {
 
 export interface WorkflowData {
   id: string
-  status: string
+  state: string
   organization_id: string
 }
 
@@ -29,40 +30,14 @@ export class SeedApprovalGateValidator {
   async validateSeedApproval(workflowId: string): Promise<GateResult> {
     try {
       const supabase = createServiceRoleClient()
-      
-      // Query workflow status
-      const { data: workflow, error: workflowError } = await supabase
+
+      const { data: workflow, error } = await supabase
         .from('intent_workflows')
-        .select('id, status, organization_id')
+        .select('id, state, organization_id')
         .eq('id', workflowId)
         .single() as { data: WorkflowData | null, error: any }
 
-      if (workflowError) {
-        if (workflowError.code === 'PGRST116') {
-          return {
-            allowed: false,
-            seedApprovalStatus: 'not_found',
-            workflowStatus: 'not_found',
-            error: 'Workflow not found',
-            errorResponse: {
-              error: 'Workflow not found',
-              workflowId,
-              requiredAction: 'Provide valid workflow ID'
-            }
-          }
-        }
-        
-        // Database errors - fail open for availability
-        console.error('Database error in seed approval gate validation:', workflowError)
-        return {
-          allowed: true,
-          seedApprovalStatus: 'error',
-          workflowStatus: 'error',
-          error: 'Database error - failing open for availability'
-        }
-      }
-
-      if (!workflow) {
+      if (error || !workflow) {
         return {
           allowed: false,
           seedApprovalStatus: 'not_found',
@@ -76,111 +51,83 @@ export class SeedApprovalGateValidator {
         }
       }
 
-      // Workflow must be at step_3_seeds to require seed approval
-      if (workflow.status !== 'step_3_seeds') {
-        // If workflow is beyond step_3_seeds, allow (already approved)
-        // If workflow is before step_3_seeds, block (seeds not ready yet)
-        const stepOrder = ['step_1_icp', 'step_2_competitors', 'step_3_seeds', 'step_4_longtails']
-        const currentIndex = stepOrder.indexOf(workflow.status)
-        const seedIndex = stepOrder.indexOf('step_3_seeds')
-        
-        if (currentIndex < seedIndex) {
-          // Workflow hasn't reached seed step yet
+      // FSM rule: longtail expand allowed only from step_3_seeds
+      if (workflow.state !== 'step_3_seeds') {
+
+        // If workflow already progressed beyond seeds,
+        // approval already happened → allow
+        if (
+          workflow.state === 'step_4_longtails' ||
+          workflow.state === 'step_5_filtering' ||
+          workflow.state === 'step_6_clustering' ||
+          workflow.state === 'step_7_validation' ||
+          workflow.state === 'step_8_subtopics' ||
+          workflow.state === 'step_9_articles' ||
+          workflow.state === 'completed' ||
+          workflow.state === 'failed'
+        ) {
           return {
-            allowed: false,
-            seedApprovalStatus: 'not_ready',
-            workflowStatus: workflow.status,
-            error: 'Seed keywords not yet extracted',
-            errorResponse: {
-              error: 'Seed keywords not yet extracted',
-              workflowStatus: workflow.status,
-              seedApprovalStatus: 'not_ready',
-              requiredAction: 'Complete seed keyword extraction (step 3) before approval',
-              currentStep: 'longtail-expand',
-              blockedAt: new Date().toISOString()
-            }
+            allowed: true,
+            seedApprovalStatus: 'already_completed',
+            workflowStatus: workflow.state
           }
         }
-        
-        // Workflow is beyond step_3_seeds, so approval already happened
-        return {
-          allowed: true,
-          seedApprovalStatus: 'not_required',
-          workflowStatus: workflow.status,
-          error: 'Seed approval gate not required at this step'
-        }
-      }
 
-      // Check if seed keywords have been approved
-      const { data: approval, error: approvalError } = await supabase
-        .from('intent_approvals')
-        .select('decision, approved_items')
-        .eq('workflow_id', workflowId)
-        .eq('approval_type', 'seed_keywords')
-        .eq('decision', 'approved')
-        .single() as { data: ApprovalData | null, error: any }
-
-      if (approvalError) {
-        if (approvalError.code === 'PGRST116') {
-          // No approval record found
-          return {
-            allowed: false,
-            seedApprovalStatus: 'not_approved',
-            workflowStatus: workflow.status,
-            error: 'Seed keywords must be approved before longtail expansion',
-            errorResponse: {
-              error: 'Seed keywords must be approved before longtail expansion',
-              workflowStatus: workflow.status,
-              seedApprovalStatus: 'not_approved',
-              requiredAction: 'Approve seed keywords via POST /api/intent/workflows/{workflow_id}/steps/approve-seeds',
-              currentStep: 'longtail-expand',
-              blockedAt: new Date().toISOString()
-            }
-          }
-        }
-        
-        // Database errors - fail open for availability
-        console.error('Database error checking seed approval:', approvalError)
-        return {
-          allowed: true,
-          seedApprovalStatus: 'error',
-          workflowStatus: workflow.status,
-          error: 'Database error - failing open for availability'
-        }
-      }
-
-      if (!approval) {
+        // Otherwise block - not ready for approval yet
         return {
           allowed: false,
-          seedApprovalStatus: 'not_approved',
-          workflowStatus: workflow.status,
-          error: 'Seed keywords must be approved before longtail expansion',
+          seedApprovalStatus: 'invalid_state',
+          workflowStatus: workflow.state,
+          error: 'Seed approval required before longtail expansion',
           errorResponse: {
-            error: 'Seed keywords must be approved before longtail expansion',
-            workflowStatus: workflow.status,
-            seedApprovalStatus: 'not_approved',
-            requiredAction: 'Approve seed keywords via POST /api/intent/workflows/{workflow_id}/steps/approve-seeds',
+            error: 'Seed approval required before longtail expansion',
+            workflowStatus: workflow.state,
+            requiredAction: 'Complete seed extraction first',
             currentStep: 'longtail-expand',
             blockedAt: new Date().toISOString()
           }
         }
       }
 
-      // Seed approval is confirmed - allow access
+      // We are at step_3_seeds
+      // Check approval record
+      const { data: approval } = await supabase
+        .from('intent_approvals')
+        .select('decision')
+        .eq('workflow_id', workflowId)
+        .eq('approval_type', 'seed_keywords')
+        .eq('decision', 'approved')
+        .single()
+
+      if (!approval) {
+        return {
+          allowed: false,
+          seedApprovalStatus: 'not_approved',
+          workflowStatus: workflow.state,
+          error: 'Seed keywords must be approved before longtail expansion',
+          errorResponse: {
+            error: 'Seed keywords must be approved before longtail expansion',
+            workflowStatus: workflow.state,
+            requiredAction: 'Approve seed keywords first',
+            currentStep: 'longtail-expand',
+            blockedAt: new Date().toISOString()
+          }
+        }
+      }
+
       return {
         allowed: true,
         seedApprovalStatus: 'approved',
-        workflowStatus: workflow.status
+        workflowStatus: workflow.state
       }
 
     } catch (error) {
-      console.error('Unexpected error in seed approval gate validation:', error)
-      // Fail open for availability
+      console.error('Seed gate unexpected error:', error)
+
       return {
         allowed: true,
         seedApprovalStatus: 'error',
-        workflowStatus: 'error',
-        error: 'Unexpected error - failing open for availability'
+        workflowStatus: 'error'
       }
     }
   }
@@ -225,7 +172,7 @@ export class SeedApprovalGateValidator {
         workflowId,
         entityType: 'workflow',
         entityId: workflowId,
-        actorId: 'system',
+        actorId: SYSTEM_USER_ID, // System actor UUID
         action,
         details: {
           attempted_step: stepName,

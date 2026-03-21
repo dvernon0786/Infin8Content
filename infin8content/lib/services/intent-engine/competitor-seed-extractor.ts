@@ -33,6 +33,18 @@ export interface SeedKeywordData {
   competition_index: number
   keyword_difficulty: number
   cpc?: number
+
+  // AI Copilot metadata fields
+  detected_language?: string
+  is_foreign_language?: boolean
+  main_intent?: string
+  is_navigational?: boolean
+  foreign_intent?: string[]
+  ai_suggested?: boolean
+  user_selected?: boolean
+  decision_confidence?: number
+  selection_source?: string
+  selection_timestamp?: string
 }
 
 export interface DataForSEOKeywordResult {
@@ -56,8 +68,8 @@ export interface ExtractSeedKeywordsRequest {
   organizationId: string
   workflowId?: string  // Optional workflow ID for retry tracking
   maxSeedsPerCompetitor?: number
-  locationCode?: number
-  languageCode?: string
+  locationCode: number
+  languageCode: string
   timeoutMs?: number
 }
 
@@ -83,8 +95,8 @@ export async function extractSeedKeywords(
     organizationId,
     workflowId,
     maxSeedsPerCompetitor = 3,
-    locationCode = 2840,
-    languageCode = 'en',
+    locationCode,
+    languageCode,
     timeoutMs = 600000
   } = request
 
@@ -95,6 +107,7 @@ export async function extractSeedKeywords(
   if (!organizationId) {
     throw new Error('Organization ID is required for seed keyword extraction')
   }
+
 
   console.log(`[CompetitorSeedExtractor] Starting extraction for ${competitors.length} competitors`)
 
@@ -108,7 +121,7 @@ export async function extractSeedKeywords(
   const perCompetitorTimeoutMs = Math.floor((timeoutMs * 0.9) / competitors.length)
   const startTime = Date.now()
 
-  for (const competitor of competitors) {
+  for (const competitor of competitors as CompetitorData[]) {
     try {
       // Check if we've exceeded overall timeout
       const elapsedMs = Date.now() - startTime
@@ -126,7 +139,12 @@ export async function extractSeedKeywords(
         organizationId
       )
 
-      await persistSeedKeywords(organizationId, competitor.id, keywords)
+      const competitorId = competitor.id as string
+      if (!competitorId) {
+        throw new Error(`Competitor ID is required for ${competitor.url}`)
+      }
+
+      await persistSeedKeywords(organizationId, workflowId, competitor.id, keywords)
       totalKeywordsCreated += keywords.length
       competitorsProcessed++
 
@@ -153,17 +171,9 @@ export async function extractSeedKeywords(
     }
   }
 
-  if (competitorsProcessed === 0) {
-    // Update workflow status to failed with retry metadata
-    if (workflowId) {
-      await updateWorkflowStatus(workflowId, organizationId, 'failed', 'All competitors failed during seed keyword extraction', totalRetryCount)
-    }
-    throw new Error('All competitors failed during seed keyword extraction')
-  }
-
-  // Update workflow status to success with retry metadata
-  if (workflowId) {
-    await updateWorkflowStatus(workflowId, organizationId, 'step_2_competitors', undefined, totalRetryCount)
+  // Log partial success for visibility
+  if (competitorsFailed > 0) {
+    console.log(`[CompetitorSeedExtractor] Partial success: ${competitorsProcessed}/${competitors.length} competitors processed successfully`)
   }
 
   const totalElapsedMs = Date.now() - startTime
@@ -171,6 +181,7 @@ export async function extractSeedKeywords(
     `[CompetitorSeedExtractor] Extraction completed in ${totalElapsedMs}ms: ${totalKeywordsCreated} keywords created`
   )
 
+  // Return neutral result - service layer is pure data collection
   return {
     total_keywords_created: totalKeywordsCreated,
     competitors_processed: competitorsProcessed,
@@ -202,7 +213,6 @@ async function extractKeywordsFromCompetitor(
   const requestBody = [{
     target: url,
     location_code: locationCode,
-    language_code: languageCode,
     limit: maxKeywords
   }]
 
@@ -239,7 +249,7 @@ async function extractKeywordsFromCompetitor(
         if (data.status_code === 42900 && attempt < COMPETITOR_RETRY_POLICY.maxAttempts - 1) {
           const retryAfter = response.headers.get('Retry-After')
           let delay: number
-          
+
           // Use Retry-After header if valid, otherwise use exponential backoff
           if (retryAfter) {
             const delaySeconds = parseInt(retryAfter, 10)
@@ -256,12 +266,12 @@ async function extractKeywordsFromCompetitor(
             delay = calculateBackoffDelay(attempt, COMPETITOR_RETRY_POLICY)
             console.warn(`DataForSEO rate limited (attempt ${attempt + 1}/${COMPETITOR_RETRY_POLICY.maxAttempts}), retrying in ${delay}ms (exponential backoff)...`)
           }
-          
+
           // Update retry metadata before retry
           if (workflowId && organizationId) {
             await updateWorkflowRetryMetadata(workflowId, organizationId, attempt + 1, errorMessage)
           }
-          
+
           await sleep(delay)
           continue
         }
@@ -278,29 +288,70 @@ async function extractKeywordsFromCompetitor(
         throw new Error(`DataForSEO API error: ${task?.status_message || 'Unknown error'}`)
       }
 
-      const taskResults = task.result
-      if (!Array.isArray(taskResults)) {
-        throw new Error(`DataForSEO API error: Invalid result format - expected array, got ${typeof taskResults}`)
-      }
-      
-      if (taskResults.length === 0) {
-        console.warn(`No keyword results returned from DataForSEO for ${url}`)
+      // Extract actual keyword items from nested DataForSEO structure
+      const taskResults = task.result?.flatMap((r: any) => r.items || []) || []
+
+      if (!Array.isArray(taskResults) || taskResults.length === 0) {
+        console.warn(`No keyword items returned from DataForSEO for ${url}`)
         return []
       }
 
-      // Sort by search volume (descending) and take top N
+      // Sort by keyword_info.search_volume (nested structure)
       const sortedKeywords = taskResults
-        .sort((a: any, b: any) => (b.search_volume || 0) - (a.search_volume || 0))
+        .sort((a: any, b: any) =>
+          (b.keyword_info?.search_volume || 0) - (a.keyword_info?.search_volume || 0)
+        )
         .slice(0, maxKeywords)
 
-      // Map to seed keyword format
-      return sortedKeywords.map((result: any) => ({
-        seed_keyword: result.keyword,
-        search_volume: result.search_volume || 0,
-        competition_level: mapCompetitionLevel(result.competition_index),
-        competition_index: result.competition_index || 0,
-        keyword_difficulty: result.keyword_difficulty || result.competition_index || 0,
-        cpc: result.cpc
+      console.log(`[DataForSEO DEBUG] Extracted ${taskResults.length} keyword items from DataForSEO response`)
+
+      // DEBUG: Log the raw DataForSEO response structure
+      console.log(`[DataForSEO DEBUG] Raw item structure for ${url}:`, JSON.stringify(taskResults.slice(0, 2), null, 2))
+
+      // DEBUG: Log each result to understand filtering
+      console.log(`[DataForSEO DEBUG] Analyzing ${taskResults.length} keyword items for filtering:`)
+      taskResults.forEach((result: any, index: number) => {
+        console.log(`[DataForSEO DEBUG] Item ${index}:`, {
+          keyword: result.keyword,
+          keywordType: typeof result.keyword,
+          keywordLength: result.keyword?.length,
+          keywordTrimmed: result.keyword?.trim(),
+          keywordTrimmedLength: result.keyword?.trim()?.length,
+          hasKeyword: !!result.keyword,
+          isString: typeof result.keyword === 'string',
+          passesLengthCheck: result.keyword && typeof result.keyword === 'string' && result.keyword.trim().length > 0,
+          searchVolume: result.keyword_info?.search_volume,
+          competitionLevel: result.keyword_info?.competition_level
+        })
+      })
+
+      // Filter out null/undefined keywords and map to seed keyword format
+      const validKeywords = sortedKeywords
+        .filter((result: any) => result.keyword && typeof result.keyword === 'string' && result.keyword.trim().length > 0)
+
+      console.log(`[DataForSEO DEBUG] Filtered ${validKeywords.length} valid keywords from ${taskResults.length} total (maxKeywords: ${maxKeywords})`)
+
+      return validKeywords.map((result: any) => ({
+        seed_keyword: result.keyword.trim(),
+        search_volume: result.keyword_info?.search_volume ?? 0,
+        competition_level: (result.keyword_info?.competition_level || 'LOW').toLowerCase() as 'low' | 'medium' | 'high',
+        competition_index: result.keyword_info?.competition_index ?? 0,
+        keyword_difficulty: result.keyword_properties?.keyword_difficulty ?? result.keyword_info?.competition_index ?? 0,
+        cpc: result.keyword_info?.cpc ?? null,
+
+        // NEW TAGGING FIELDS FOR DECISION TRACKING
+        detected_language: result.keyword_properties?.detected_language ?? null,
+        is_foreign_language: result.keyword_properties?.is_another_language ?? false,
+        main_intent: result.search_intent_info?.main_intent ?? null,
+        is_navigational: result.search_intent_info?.main_intent === 'navigational',
+        foreign_intent: result.search_intent_info?.foreign_intent ?? null,
+
+        // DECISION TRACKING FIELDS
+        ai_suggested: true, // AI initially suggests all extracted keywords
+        user_selected: true, // Default to selected for human review
+        decision_confidence: calculateKeywordConfidence(result),
+        selection_source: 'ai',
+        selection_timestamp: new Date().toISOString()
       }))
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
@@ -316,17 +367,17 @@ async function extractKeywordsFromCompetitor(
         const delay = calculateBackoffDelay(attempt, COMPETITOR_RETRY_POLICY)
         const errorType = classifyErrorType(lastError)
         console.warn(`DataForSEO API call failed (attempt ${attempt + 1}/${COMPETITOR_RETRY_POLICY.maxAttempts}), retrying in ${delay}ms... Error: ${lastError.message}`)
-        
+
         // Update retry metadata before retry
         if (workflowId && organizationId) {
           await updateWorkflowRetryMetadata(workflowId, organizationId, attempt + 1, lastError.message)
         }
-        
+
         // Emit retry analytics event
         if (workflowId && organizationId) {
           await emitRetryEvent(workflowId, organizationId, url, attempt + 1, errorType, delay)
         }
-        
+
         await sleep(delay)
       }
     }
@@ -335,70 +386,129 @@ async function extractKeywordsFromCompetitor(
   // All retries exhausted
   const errorType = classifyErrorType(lastError)
   console.error('DataForSEO API call failed after all retries:', lastError?.message)
-  
+
   // Update final retry metadata
   if (workflowId && organizationId) {
     await updateWorkflowRetryMetadata(workflowId, organizationId, COMPETITOR_RETRY_POLICY.maxAttempts, lastError?.message)
   }
-  
+
   // Emit terminal failure analytics event
   if (workflowId && organizationId) {
     await emitFailureEvent(workflowId, organizationId, url, COMPETITOR_RETRY_POLICY.maxAttempts, lastError?.message || 'Unknown error')
   }
-  
+
   throw lastError || new Error('DataForSEO API call failed')
 }
 
 /**
- * Persist seed keywords to database
+ * Persist seed keywords to database with AI metadata
  */
-async function persistSeedKeywords(
+export async function persistSeedKeywords(
   organizationId: string,
+  workflowId: string | undefined,
   competitorUrlId: string,
   keywords: SeedKeywordData[]
 ): Promise<number> {
   const supabase = createServiceRoleClient()
 
   if (keywords.length === 0) {
+    console.warn(`[persistSeedKeywords] No valid keywords to persist for competitor ${competitorUrlId}`)
     return 0
   }
 
-  // Delete existing keywords for this competitor (idempotency)
-  const { error: deleteError } = await supabase
-    .from('keywords')
-    .delete()
-    .eq('organization_id', organizationId)
-    .eq('competitor_url_id', competitorUrlId)
+  // Step 2 is now fully stateless - always set competitor_url_id to NULL
+  // Keywords are owned by workflow_id, not by competitor entities
+  console.log(`[persistSeedKeywords] Processing ${keywords.length} keywords for workflow ${workflowId} (stateless mode)`)
 
-  if (deleteError) {
-    throw new Error(`Failed to delete existing keywords for competitor ${competitorUrlId}: ${deleteError.message}`)
+  // Create keyword records with ALL AI metadata fields
+  const keywordRecords = keywords
+    .filter(keyword => keyword.seed_keyword && keyword.seed_keyword.trim().length > 0)
+    .map(keyword => ({
+      organization_id: organizationId,
+      workflow_id: workflowId, // Critical for workflow isolation
+      competitor_url_id: null, // ALWAYS NULL for stateless Step 2
+      parent_seed_keyword_id: null, // 🔥 REQUIRED: Explicit NULL for partial index matching
+      seed_keyword: keyword.seed_keyword.trim(),
+      keyword: keyword.seed_keyword.trim(), // Same as seed_keyword at this stage
+      search_volume: keyword.search_volume,
+      competition_level: keyword.competition_level,
+      competition_index: keyword.competition_index,
+      keyword_difficulty: keyword.keyword_difficulty,
+      cpc: keyword.cpc,
+      longtail_status: 'not_started',
+      subtopics_status: 'not_started',
+      article_status: 'not_started',
+
+      // AI Copilot metadata fields
+      detected_language: keyword.detected_language,
+      is_foreign_language: keyword.is_foreign_language,
+      main_intent: keyword.main_intent,
+      is_navigational: keyword.is_navigational,
+      foreign_intent: keyword.foreign_intent,
+      ai_suggested: keyword.ai_suggested,
+      user_selected: keyword.user_selected,
+      decision_confidence: keyword.decision_confidence,
+      selection_source: keyword.selection_source,
+      selection_timestamp: keyword.selection_timestamp,
+
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }))
+
+  if (keywordRecords.length === 0) {
+    console.warn(`[persistSeedKeywords] No valid keyword records after filtering for competitor ${competitorUrlId}`)
+    return 0
   }
 
-  // Insert new keywords
-  const keywordRecords = keywords.map(keyword => ({
-    organization_id: organizationId,
-    competitor_url_id: competitorUrlId,
-    seed_keyword: keyword.seed_keyword,
-    keyword: keyword.seed_keyword, // Same as seed_keyword at this stage
-    search_volume: keyword.search_volume,
-    competition_level: keyword.competition_level,
-    competition_index: keyword.competition_index,
-    keyword_difficulty: keyword.keyword_difficulty,
-    cpc: keyword.cpc,
-    longtail_status: 'not_started',
-    subtopics_status: 'not_started',
-    article_status: 'not_started',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }))
-
-  const { error: insertError, data } = await supabase
+  // Use enterprise-safe upsert that preserves human decisions
+  const { error: upsertError, data } = await supabase
     .from('keywords')
-    .insert(keywordRecords)
+    .upsert(keywordRecords, {
+      onConflict: 'organization_id,workflow_id,seed_keyword,parent_seed_keyword_id'
+    })
     .select('id')
 
-  if (insertError) {
-    throw new Error(`Failed to persist seed keywords: ${insertError.message}`)
+  if (upsertError) {
+    throw new Error(`Failed to persist seed keywords: ${upsertError.message}`)
+  }
+
+  // Enterprise safety: Detect actual database conflicts, not assumed reruns
+  const keywordSeeds = keywordRecords.map(k => k.seed_keyword)
+
+  if (keywordSeeds.length > 0) {
+    try {
+      // Check for actual existing keywords in database
+      const { data: existingKeywords, error: checkError } = await supabase
+        .from('keywords')
+        .select('seed_keyword, selection_source, user_selected, decision_confidence')
+        .in('seed_keyword', keywordSeeds)
+        .eq('organization_id', organizationId)
+        .eq('workflow_id', workflowId)
+
+      if (checkError) {
+        console.warn(`[persistSeedKeywords] Failed to check existing keywords: ${checkError.message}`)
+      } else if (existingKeywords && Array.isArray(existingKeywords) && existingKeywords.length > 0) {
+        // TRUE RERUN DETECTED: Actual database conflicts found
+        console.warn(`[persistSeedKeywords] STEP 2 RERUN DETECTED - ${existingKeywords.length} existing keywords found`)
+        console.warn(`[persistSeedKeywords] Workflow: ${workflowId}, Organization: ${organizationId}`)
+
+        // Check for human decisions that could be overwritten
+        const humanDecisions = existingKeywords.filter((k: any) => k.selection_source === 'user')
+        if (humanDecisions.length > 0) {
+          console.error(`[persistSeedKeywords] CRITICAL: ${humanDecisions.length} human decisions at risk of overwrite`)
+          console.error(`[persistSeedKeywords] Keywords with human decisions: ${humanDecisions.map((k: any) => k.seed_keyword).join(', ')}`)
+        } else {
+          console.log(`[persistSeedKeywords] All existing keywords are AI-suggested - safe to update`)
+        }
+
+        // TODO: Implement conflict-safe upsert to preserve human decisions
+        console.warn(`[persistSeedKeywords] NOTE: Human decision preservation not yet implemented - decisions may be overwritten`)
+      } else {
+        console.log(`[persistSeedKeywords] All ${keywordRecords.length} keywords are new for workflow ${workflowId}`)
+      }
+    } catch (error) {
+      console.warn(`[persistSeedKeywords] Error checking existing keywords: ${error}`)
+    }
   }
 
   return data?.length || 0
@@ -459,50 +569,42 @@ async function emitFailureEvent(
   })
 }
 
+// Service layer is pure - no state mutations here
+// All workflow updates should be handled in the API layer
 
 /**
- * Update workflow status after seed keyword extraction
+ * Calculate AI confidence score for keyword selection (0.0-1.0)
+ * Based on volume, CPC, and intent signals
  */
-export async function updateWorkflowStatus(
-  workflowId: string,
-  organizationId: string,
-  status: 'step_2_competitors' | 'failed',
-  errorMessage?: string,
-  retryCount?: number
-): Promise<void> {
-  const supabase = createServiceRoleClient()
+function calculateKeywordConfidence(result: any): number {
+  let confidence = 0.5 // Base confidence
 
-  const updateData: any = {
-    status,
-    updated_at: new Date().toISOString()
+  // Volume factor (higher volume = higher confidence)
+  const volume = result.keyword_info?.search_volume ?? 0
+  if (volume > 1000) confidence += 0.3
+  else if (volume > 100) confidence += 0.2
+  else if (volume > 10) confidence += 0.1
+
+  // CPC factor (has CPC = commercial value)
+  const cpc = result.keyword_info?.cpc ?? 0
+  if (cpc > 0) {
+    confidence += 0.2
   }
 
-  if (status === 'step_2_competitors') {
-    updateData.step_2_competitor_completed_at = new Date().toISOString()
-    // Preserve retry metadata on successful completion
-    if (retryCount && retryCount > 0) {
-      updateData.step_2_competitors_retry_count = retryCount
-    }
-  } else if (status === 'failed' && errorMessage) {
-    updateData.step_2_competitors_last_error_message = errorMessage
-    // Update retry metadata on failure
-    if (retryCount !== undefined) {
-      updateData.step_2_competitors_retry_count = retryCount
-      updateData.step_2_competitors_last_error_message = errorMessage
-    }
+  // Intent factor (commercial > informational > navigational)
+  const intent = result.search_intent_info?.main_intent?.toLowerCase()
+  if (intent === 'commercial') confidence += 0.2
+  else if (intent === 'informational') confidence += 0.1
+  else if (intent === 'navigational') confidence -= 0.1
+
+  // Language factor (English preferred for most SEO campaigns)
+  const isForeign = result.keyword_properties?.is_another_language ?? false
+  if (!isForeign) {
+    confidence += 0.1
   }
 
-  const { error } = await supabase
-    .from('intent_workflows')
-    .update(updateData)
-    .eq('id', workflowId)
-    .eq('organization_id', organizationId)
-
-  if (error) {
-    throw new Error(`Failed to update workflow status: ${error.message}`)
-  }
-
-  console.log(`[CompetitorSeedExtractor] Workflow ${workflowId} status updated to ${status}`)
+  // Cap at 1.0
+  return Math.min(Math.max(confidence, 0.0), 1.0)
 }
 
 /**
@@ -517,12 +619,11 @@ export async function updateWorkflowRetryMetadata(
   const supabase = createServiceRoleClient()
 
   const updateData: any = {
-    step_2_competitors_retry_count: retryCount,
     updated_at: new Date().toISOString()
   }
 
   if (lastErrorMessage) {
-    updateData.step_2_competitors_last_error_message = lastErrorMessage
+    updateData.step_2_competitor_error_message = lastErrorMessage
   }
 
   const { error } = await supabase

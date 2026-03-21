@@ -16,6 +16,11 @@ vi.mock('@/lib/supabase/get-current-user')
 vi.mock('@/lib/supabase/server')
 vi.mock('@/lib/services/audit-logger')
 vi.mock('@/lib/services/intent-engine/article-queuing-processor')
+// Mock gate middleware — tested in their own test files
+vi.mock('@/lib/middleware/intent-engine-gate', () => ({
+  enforceICPGate: vi.fn().mockResolvedValue(null),
+  enforceSubtopicApprovalGate: vi.fn().mockResolvedValue(null),
+}))
 
 describe('Queue Articles API Endpoint', () => {
   let mockRequest: Partial<NextRequest>
@@ -32,7 +37,7 @@ describe('Queue Articles API Endpoint', () => {
       })
     }
 
-    // Setup mock Supabase client
+    // Setup mock Supabase client — route calls .eq().eq().single() for workflow lookup
     mockSupabase = {
       from: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
@@ -40,7 +45,7 @@ describe('Queue Articles API Endpoint', () => {
       single: vi.fn(),
     }
 
-    vi.mocked(createServiceRoleClient).mockResolvedValue(mockSupabase)
+    vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase)
     vi.mocked(logActionAsync).mockResolvedValue(undefined)
   })
 
@@ -81,10 +86,10 @@ describe('Queue Articles API Endpoint', () => {
 
       expect(response.status).toBe(404)
       const data = await response.json()
-      expect(data.error).toBe('Workflow not found')
+      expect(data.error).toBe('Workflow not found')  // org isolation check returns 404
     })
 
-    it('should return 400 when workflow is not at step_8_approval', async () => {
+    it('should return 409 when workflow is not at step_9_articles', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue({
         id: 'user-123',
         org_id: 'org-123',
@@ -94,7 +99,7 @@ describe('Queue Articles API Endpoint', () => {
       mockSupabase.single.mockResolvedValue({
         data: {
           id: 'workflow-123',
-          status: 'step_7_validation',
+          state: 'step_8_subtopics',
           organization_id: 'org-123'
         },
         error: null
@@ -105,10 +110,10 @@ describe('Queue Articles API Endpoint', () => {
         { params: Promise.resolve({ workflow_id: 'workflow-123' }) }
       )
 
-      expect(response.status).toBe(400)
+      expect(response.status).toBe(409)
       const data = await response.json()
-      expect(data.error).toBe('Invalid workflow state')
-      expect(data.message).toContain('step_8_approval')
+      expect(data.error).toBe('INVALID_STATE')
+      expect(data.message).toContain('step_9_articles')
     })
 
     it('should successfully queue articles for approved subtopics', async () => {
@@ -121,20 +126,21 @@ describe('Queue Articles API Endpoint', () => {
       mockSupabase.single.mockResolvedValue({
         data: {
           id: 'workflow-123',
-          status: 'step_8_approval',
+          state: 'step_9_articles',
           organization_id: 'org-123'
         },
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockResolvedValue({
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockResolvedValue({
         workflow_id: 'workflow-123',
+        workflow_state: 'step_9_articles',
         articles_created: 2,
         articles: [
-          { id: 'article-1', keyword: 'keyword-1', status: 'queued' },
-          { id: 'article-2', keyword: 'keyword-2', status: 'queued' }
+          { id: 'article-1', keyword: 'keyword-1', status: 'draft' },
+          { id: 'article-2', keyword: 'keyword-2', status: 'draft' }
         ],
-        errors: []
+        message: 'Articles queued successfully'
       })
 
       const response = await POST(
@@ -145,10 +151,9 @@ describe('Queue Articles API Endpoint', () => {
       expect(response.status).toBe(200)
       const data = await response.json()
       expect(data.success).toBe(true)
-      expect(data.workflow_status).toBe('step_9_articles')
+      expect(data.workflow_state).toBe('step_9_articles')
       expect(data.articles_created).toBe(2)
       expect(data.articles).toHaveLength(2)
-      expect(data.errors).toHaveLength(0)
     })
 
     it('should log workflow start action', async () => {
@@ -161,17 +166,18 @@ describe('Queue Articles API Endpoint', () => {
       mockSupabase.single.mockResolvedValue({
         data: {
           id: 'workflow-123',
-          status: 'step_8_approval',
+          state: 'step_9_articles',
           organization_id: 'org-123'
         },
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockResolvedValue({
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockResolvedValue({
         workflow_id: 'workflow-123',
-        articles_created: 0,
-        articles: [],
-        errors: []
+        workflow_state: 'step_9_articles',
+        articles_created: 1,
+        articles: [{ id: 'article-1', keyword: 'kw', status: 'draft' }],
+        message: '1 article queued'
       })
 
       await POST(
@@ -198,17 +204,18 @@ describe('Queue Articles API Endpoint', () => {
       mockSupabase.single.mockResolvedValue({
         data: {
           id: 'workflow-123',
-          status: 'step_8_approval',
+          state: 'step_9_articles',
           organization_id: 'org-123'
         },
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockResolvedValue({
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockResolvedValue({
         workflow_id: 'workflow-123',
+        workflow_state: 'step_9_articles',
         articles_created: 1,
-        articles: [{ id: 'article-1', keyword: 'keyword-1', status: 'queued' }],
-        errors: []
+        articles: [{ id: 'article-1', keyword: 'keyword-1', status: 'draft' }],
+        message: '1 article queued successfully'
       })
 
       await POST(
@@ -222,14 +229,13 @@ describe('Queue Articles API Endpoint', () => {
           userId: 'user-123',
           action: 'workflow.article_queuing.completed',
           details: expect.objectContaining({
-            articles_created: 1,
-            errors_count: 0
+            articles_created: 1
           })
         })
       )
     })
 
-    it('should handle partial failures with error reporting', async () => {
+    it('should return 200 with partial article count on mixed results', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue({
         id: 'user-123',
         org_id: 'org-123',
@@ -239,17 +245,18 @@ describe('Queue Articles API Endpoint', () => {
       mockSupabase.single.mockResolvedValue({
         data: {
           id: 'workflow-123',
-          status: 'step_8_approval',
+          state: 'step_9_articles',
           organization_id: 'org-123'
         },
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockResolvedValue({
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockResolvedValue({
         workflow_id: 'workflow-123',
+        workflow_state: 'step_9_articles',
         articles_created: 1,
-        articles: [{ id: 'article-1', keyword: 'keyword-1', status: 'queued' }],
-        errors: ['Failed to trigger Planner Agent for article article-2']
+        articles: [{ id: 'article-1', keyword: 'keyword-1', status: 'draft' }],
+        message: 'Queued 1 of 2 articles (1 failed)'
       })
 
       const response = await POST(
@@ -260,8 +267,7 @@ describe('Queue Articles API Endpoint', () => {
       expect(response.status).toBe(200)
       const data = await response.json()
       expect(data.articles_created).toBe(1)
-      expect(data.errors).toHaveLength(1)
-      expect(data.errors[0]).toContain('Failed to trigger Planner Agent')
+      expect(data.message).toContain('1 of 2')
     })
 
     it('should return 500 on fatal error', async () => {
@@ -274,13 +280,13 @@ describe('Queue Articles API Endpoint', () => {
       mockSupabase.single.mockResolvedValue({
         data: {
           id: 'workflow-123',
-          status: 'step_8_approval',
+          state: 'step_9_articles',
           organization_id: 'org-123'
         },
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockRejectedValue(
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockRejectedValue(
         new Error('Database connection failed')
       )
 
@@ -304,13 +310,13 @@ describe('Queue Articles API Endpoint', () => {
       mockSupabase.single.mockResolvedValue({
         data: {
           id: 'workflow-123',
-          status: 'step_8_approval',
+          state: 'step_9_articles',
           organization_id: 'org-123'
         },
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockRejectedValue(
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockRejectedValue(
         new Error('Fatal error')
       )
 
@@ -341,17 +347,18 @@ describe('Queue Articles API Endpoint', () => {
       mockSupabase.single.mockResolvedValue({
         data: {
           id: 'workflow-123',
-          status: 'step_8_approval',
+          state: 'step_9_articles',
           organization_id: 'org-123'
         },
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockResolvedValue({
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockResolvedValue({
         workflow_id: 'workflow-123',
+        workflow_state: 'step_9_articles',
         articles_created: 1,
-        articles: [{ id: 'article-1', keyword: 'keyword-1', status: 'queued' }],
-        errors: []
+        articles: [{ id: 'article-1', keyword: 'keyword-1', status: 'draft' }],
+        message: '1 article queued successfully'
       })
 
       const response = await POST(
@@ -398,20 +405,21 @@ describe('Queue Articles API Endpoint', () => {
       mockSupabase.single.mockResolvedValue({
         data: {
           id: 'workflow-123',
-          status: 'step_8_approval',
+          state: 'step_9_articles',
           organization_id: 'org-123'
         },
         error: null
       })
 
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockResolvedValue({
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockResolvedValue({
         workflow_id: 'workflow-123',
+        workflow_state: 'step_9_articles',
         articles_created: 2,
         articles: [
           { id: 'article-1', keyword: 'keyword-1', status: 'queued' },
           { id: 'article-2', keyword: 'keyword-2', status: 'queued' }
         ],
-        errors: []
+        message: 'Articles queued successfully'
       })
 
       // First run
@@ -424,14 +432,15 @@ describe('Queue Articles API Endpoint', () => {
       expect(data1.articles_created).toBe(2)
 
       // Second run should skip existing articles
-      vi.mocked(queueingProcessor.queueApprovedSubtopicsForArticles).mockResolvedValue({
+      vi.mocked(queueingProcessor.queueArticlesForWorkflow).mockResolvedValue({
         workflow_id: 'workflow-123',
+        workflow_state: 'step_9_articles',
         articles_created: 2,
         articles: [
           { id: 'article-1', keyword: 'keyword-1', status: 'queued' },
           { id: 'article-2', keyword: 'keyword-2', status: 'queued' }
         ],
-        errors: []
+        message: 'Articles queued successfully'
       })
 
       const response2 = await POST(
@@ -441,7 +450,7 @@ describe('Queue Articles API Endpoint', () => {
       expect(response2.status).toBe(200)
       const data2 = await response2.json()
       expect(data2.articles_created).toBe(2)
-      expect(data2.errors).toHaveLength(0)
+      expect(data2.message).toBeDefined()
     })
   })
 })

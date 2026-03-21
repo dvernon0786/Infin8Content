@@ -140,7 +140,7 @@ export async function validateOnboardingComplete(
   try {
     await logActionAsync({
       orgId: organizationId,
-      userId: 'system', // This is a system validation, not user-initiated
+      userId: null, // System validation - no user context
       action: validationResult.isValid ? AuditAction.ONBOARDING_VALIDATION_SUCCEEDED : AuditAction.ONBOARDING_VALIDATION_FAILED,
       details: {
         validationTime,

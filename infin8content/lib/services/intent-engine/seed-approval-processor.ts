@@ -20,7 +20,7 @@ export interface SeedApprovalRequest {
 export interface SeedApprovalResponse {
   success: boolean
   approval_id: string
-  workflow_status: 'step_3_seeds'
+  workflow_status: 'step_3_keywords'
   message: string
 }
 
@@ -54,8 +54,8 @@ export async function processSeedApproval(
     throw new Error('Authentication required')
   }
 
-  // Validate user is organization admin
-  if (currentUser.role !== 'admin') {
+  // Validate user is organization admin or owner
+  if (currentUser.role !== 'admin' && currentUser.role !== 'owner') {
     throw new Error('Admin access required')
   }
 
@@ -65,7 +65,7 @@ export async function processSeedApproval(
   // Validate workflow exists and is at correct step
   const workflowResult = await supabase
     .from('intent_workflows')
-    .select('id, status, organization_id')
+    .select('id, state, organization_id')
     .eq('id', workflowId)
     .single()
 
@@ -75,12 +75,12 @@ export async function processSeedApproval(
 
   const workflow = workflowResult.data as unknown as {
     id: string
-    status: string
+    state: string
     organization_id: string
   }
 
-  // Validate workflow is at step_3_seeds
-  if (workflow.status !== 'step_3_seeds') {
+  // Validate workflow is at step_3_keywords
+  if (workflow.state !== 'step_3_seeds') {
     throw new Error('Workflow must be at step_3_seeds for seed approval')
   }
 
@@ -156,7 +156,7 @@ export async function processSeedApproval(
   return {
     success: true,
     approval_id: approval.id,
-    workflow_status: 'step_3_seeds', // Status unchanged - this is a governance gate
+    workflow_status: 'step_3_keywords', // Status unchanged - this is a governance gate
     message,
   }
 }

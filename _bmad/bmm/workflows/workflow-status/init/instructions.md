@@ -1,346 +1,395 @@
-# Workflow Init - Project Setup Instructions
+# Workflow Status Init - Local instructions
 
 <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
-<critical>You MUST have already loaded and processed: workflow-init/workflow.yaml</critical>
-<critical>Communicate in {communication_language} with {user_name}</critical>
-<critical>This workflow handles BOTH new projects AND legacy projects following the BMad Method</critical>
+<critical>You MUST have already loaded and processed: {project-root}/_bmad/bmm/workflows/workflow-status/workflow.yaml</critical>
+<critical>This workflow operates in multiple modes: interactive (default), validate, data, init-check, update</critical>
+<critical>Other workflows can call this as a service to avoid duplicating status logic</critical>
+<critical>⚠️ ABSOLUTELY NO TIME ESTIMATES - NEVER mention hours, days, weeks, months, or ANY time-based predictions. AI has fundamentally changed development speed - what once took teams weeks/months can now be done by one person in hours. DO NOT give ANY time estimates whatsoever.</critical>
 
 <workflow>
 
-<step n="1" goal="Scan for existing work">
-<output>Welcome to BMad Method, {user_name}!</output>
+<step n="0" goal="Determine execution mode">
+  <action>Check for {{mode}} parameter passed by calling workflow</action>
+  <action>Default mode = "interactive" if not specified</action>
 
-<action>Perform comprehensive scan for existing work:
+  <check if="mode == interactive">
+    <action>Continue to Step 1 for normal status check flow</action>
+  </check>
 
-- BMM artifacts: PRD, epics, architecture, UX, brief, research, brainstorm
-- Implementation: stories, sprint-status, workflow-status
-- Codebase: source directories, package files, git repo
-- Check both {planning_artifacts} and {implementation_artifacts} locations
-</action>
+  <check if="mode == validate">
+    <action>Jump to Step 10 for workflow validation service</action>
+  </check>
 
-<action>Categorize into one of these states:
+  <check if="mode == data">
+    <action>Jump to Step 20 for data extraction service</action>
+  </check>
 
-- CLEAN: No artifacts or code (or scaffold only)
-- PLANNING: Has PRD/spec but no implementation
-- ACTIVE: Has stories or sprint status
-- LEGACY: Has code but no BMM artifacts
-- UNCLEAR: Mixed state needs clarification
-</action>
+  <check if="mode == init-check">
+    <action>Jump to Step 30 for simple init check</action>
+  </check>
 
-<ask>What's your project called? {{#if project_name}}(Config shows: {{project_name}}){{/if}}</ask>
-<action>Store project_name</action>
-<template-output>project_name</template-output>
+  <check if="mode == update">
+    <action>Jump to Step 40 for status update service</action>
+  </check>
 </step>
 
-<step n="2" goal="Choose setup path">
-<check if="state == CLEAN">
-  <output>Perfect! Fresh start detected.</output>
-  <action>Continue to step 3</action>
-</check>
+<step n="1" goal="Check for status file">
+<action>Search {planning_artifacts}/ for file: bmm-workflow-status.yaml</action>
 
-<check if="state == ACTIVE AND workflow_status exists">
-  <output>✅ You already have workflow tracking at: {{workflow_status_path}}
+<check if="no status file found">
+  <output>No workflow status found.</output>
+  <ask>Would you like to run Workflow Init now? (y/n)</ask>
 
-To check progress: Load any BMM agent and run /bmad:bmm:workflows:workflow-status
-
-Happy building! 🚀</output>
-<action>Exit workflow (already initialized)</action>
-</check>
-
-<check if="state != CLEAN">
-  <output>Found existing work:
-{{summary_of_findings}}</output>
-
-<ask>How would you like to proceed?
-
-1. **Continue** - Work with existing artifacts
-2. **Archive & Start Fresh** - Move old work to archive
-3. **Express Setup** - I know exactly what I need
-4. **Guided Setup** - Walk me through options
-
-Choice [1-4]</ask>
-
-  <check if="choice == 1">
-    <action>Set continuing_existing = true</action>
-    <action>Store found artifacts</action>
-    <action>Continue to step 7 (detect track from artifacts)</action>
+  <check if="response == y OR response == yes">
+    <action>Launching workflow-init to set up your project tracking...</action>
+    <invoke-workflow path="{project-root}/_bmad/bmm/workflows/workflow-status/init/workflow.yaml"></invoke-workflow>
+    <action>Exit workflow and let workflow-init take over</action>
   </check>
 
-  <check if="choice == 2">
-    <ask>Archive existing work? (y/n)</ask>
-    <action if="y">Move artifacts to {planning_artifacts}/archive/</action>
-    <output>Ready for fresh start!</output>
-    <action>Continue to step 3</action>
-  </check>
-
-  <check if="choice == 3">
-    <action>Jump to step 3 (express path)</action>
-  </check>
-
-  <check if="choice == 4">
-    <action>Continue to step 4 (guided path)</action>
+  <check if="else">
+    <output>No workflow status file. Run workflow-init when ready to enable progress tracking.</output>
+    <action>Exit workflow</action>
   </check>
 </check>
 
-<check if="state == CLEAN">
-  <ask>Setup approach:
-
-1. **Express** - I know what I need
-2. **Guided** - Show me the options
-
-Choice [1 or 2]:</ask>
-
-  <check if="choice == 1">
-    <action>Continue to step 3 (express)</action>
-  </check>
-
-  <check if="choice == 2">
-    <action>Continue to step 4 (guided)</action>
-  </check>
+<check if="status file found">
+  <action>Continue to step 2</action>
 </check>
 </step>
 
-<step n="3" goal="Express setup path">
-<ask>Is this for:
-1. **New project** (greenfield)
-2. **Existing codebase** (brownfield)
+<step n="2" goal="Read and parse status">
+<action>Read bmm-workflow-status.yaml</action>
+<action>Parse YAML file and extract metadata from comments and fields:</action>
 
-Choice [1/2]:</ask>
-<action>Set field_type based on choice</action>
+Parse these fields from YAML comments and metadata:
 
-<ask>Planning approach:
+- project (from YAML field)
+- project_type (from YAML field)
+- project_level (from YAML field)
+- field_type (from YAML field)
+- workflow_path (from YAML field)
 
-1. **BMad Method** - Full planning for complex projects
-2. **Enterprise Method** - Extended planning with security/DevOps
+<action>Parse workflow_status section:</action>
 
-Choice [1/2]:</ask>
-<action>Map to selected_track: method/enterprise</action>
+- Extract all workflow entries with their statuses
+- Identify completed workflows (status = file path)
+- Identify pending workflows (status = required/optional/recommended/conditional)
+- Identify skipped workflows (status = skipped)
 
-<output>🚀 **For Quick Flow (minimal planning, straight to code):**
-Load the **quick-flow-solo-dev** agent instead - use Quick Flow agent for faster development</output>
+<action>Determine current state:</action>
 
-<template-output>field_type</template-output>
-<template-output>selected_track</template-output>
-<action>Jump to step 6 (discovery options)</action>
-</step>
+- Find first workflow with status != file path and != skipped
+- This is the NEXT workflow to work on
+- Look up agent and command from workflow path file
+  </step>
 
-<step n="4" goal="Guided setup - understand project">
-<ask>Tell me about what you're working on. What's the goal?</ask>
-<action>Store user_description</action>
+<step n="3" goal="Display current status and options">
+<action>Load workflow path file based on workflow_path field</action>
+<action>Identify current phase from next workflow to be done</action>
+<action>Build list of completed, pending, and optional workflows</action>
+<action>For each workflow, look up its agent from the path file</action>
 
-<action>Analyze for field type indicators:
+<output>
+## 📊 Current Status
 
-- Brownfield: "existing", "current", "enhance", "modify"
-- Greenfield: "new", "build", "create", "from scratch"
-- If codebase exists, default to brownfield unless user indicates scaffold
-  </action>
+**Project:** {{project}} (Level {{project_level}} {{project_type}})
 
-<check if="field_type unclear AND codebase exists">
-  <ask>I see existing code. Are you:
-1. **Modifying** existing codebase (brownfield)
-2. **Starting fresh** - code is just scaffold (greenfield)
+**Path:** {{workflow_path}}
 
-Choice [1/2]:</ask>
-<action>Set field_type based on answer</action>
+**Progress:**
+
+{{#each phases}}
+{{phase_name}}:
+{{#each workflows_in_phase}}
+
+- {{workflow_name}} ({{agent}}): {{status_display}}
+  {{/each}}
+  {{/each}}
+
+## 🎯 Next Steps
+
+**Next Workflow:** {{next_workflow_name}}
+
+**Agent:** {{next_agent}}
+
+**Command:** /bmad:bmm:workflows:{{next_workflow_id}}
+
+{{#if optional_workflows_available}}
+**Optional Workflows Available:**
+{{#each optional_workflows}}
+
+- {{workflow_name}} ({{agent}}) - {{status}}
+  {{/each}}
+  {{/if}}
+  </output>
+  </step>
+
+<step n="4" goal="Offer actions">
+<ask>What would you like to do?
+
+1. **Start next workflow** - {{next_workflow_name}} ({{next_agent}})
+   {{#if optional_workflows_available}}
+2. **Run optional workflow** - Choose from available options
+   {{/if}}
+3. **View full status YAML** - See complete status file
+4. **Update workflow status** - Mark a workflow as completed or skipped
+5. **Exit** - Return to agent
+
+Your choice:</ask>
+
+<action>Handle user selection based on available options</action>
+
+<check if="choice == 1">
+  <output>Ready to run {{next_workflow_name}}!
+
+**Command:** /bmad:bmm:workflows:{{next_workflow_id}}
+
+**Agent:** Load {{next_agent}} agent first
+
+{{#if next_agent !== current_agent}}
+Tip: Start a new chat and load the {{next_agent}} agent before running this workflow.
+{{/if}}
+</output>
 </check>
 
-<action if="field_type not set">Set based on codebase presence</action>
+<check if="choice == 2 AND optional_workflows_available">
+  <ask>Which optional workflow?
+{{#each optional_workflows numbered}}
+{{number}}. {{workflow_name}} ({{agent}})
+{{/each}}
 
-<action>Check for game development keywords</action>
-<check if="game_detected">
-<output>🎮 **GAME DEVELOPMENT DETECTED**
-
-For game development, install the BMGD module:
-
-```bash
-bmad install bmgd
-```
-
-Continue with software workflows? (y/n)</output>
-<ask>Choice:</ask>
-<action if="n">Exit workflow</action>
-</check>
-
-<template-output>user_description</template-output>
-<template-output>field_type</template-output>
-<action>Continue to step 5</action>
-</step>
-
-<step n="5" goal="Guided setup - select track">
-<output>Based on your project, here are your BMad Method planning options:
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**1. BMad Method** 🎯 {{#if recommended}}(RECOMMENDED){{/if}}
-
-- Full planning: PRD + UX + Architecture
-- Best for: Products, platforms, complex features
-- Benefit: AI agents have complete context for better results
-
-**2. Enterprise Method** 🏢
-
-- Extended: Method + Security + DevOps + Testing
-- Best for: Enterprise, compliance, mission-critical
-- Benefit: Comprehensive planning for complex systems
-
-**🚀 For Quick Flow (minimal planning, straight to code):**
-Load the **quick-flow-solo-dev** agent instead - use Quick Flow agent for faster development
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-{{#if brownfield}}
-💡 Architecture creates focused solution design from your codebase, keeping AI agents on track.
-{{/if}}</output>
-
-<ask>Which BMad Method approach fits best?
-
-1. BMad Method {{#if recommended}}(recommended){{/if}}
-2. Enterprise Method
-3. Help me decide
-4. Switch to Quick Flow (use quick-flow-solo-dev agent)
-
-Choice [1/2/3/4]:</ask>
-
-<check if="choice == 4">
-  <output>🚀 **Switching to Quick Flow!**
-
-Load the **quick-flow-solo-dev** agent instead:
-
-- Start a new chat
-- Load the quick-flow-solo-dev agent
-- Use Quick Flow for minimal planning and faster development
-
-Quick Flow is perfect for:
-
-- Simple features and bug fixes
-- Rapid prototyping
-- When you want to get straight to code
-
-Happy coding! 🚀</output>
-<action>Exit workflow</action>
+Your choice:</ask>
+<action>Display selected workflow command and agent</action>
 </check>
 
 <check if="choice == 3">
-  <ask>What concerns you about choosing?</ask>
-  <action>Provide tailored guidance based on concerns</action>
-  <action>Loop back to choice</action>
+  <action>Display complete bmm-workflow-status.yaml file contents</action>
 </check>
 
-<action>Map choice to selected_track</action>
-<template-output>selected_track</template-output>
-</step>
+<check if="choice == 4">
+  <ask>What would you like to update?
 
-<step n="6" goal="Discovery workflows selection (unified)">
-<action>Determine available discovery workflows based on:
-- field_type (greenfield gets product-brief option)
-- selected_track (method/enterprise options)
-</action>
+1. Mark a workflow as **completed** (provide file path)
+2. Mark a workflow as **skipped**
 
-<check if="field_type == greenfield AND selected_track in [method, enterprise]">
-  <output>Optional discovery workflows can help clarify your vision:</output>
-  <ask>Select any you'd like to include:
+Your choice:</ask>
 
-1. 🧠 **Brainstorm** - Creative exploration and ideation
-2. 🔍 **Research** - Technical/competitive analysis
-3. 📋 **Product Brief** - Strategic product planning (recommended)
+  <check if="update_choice == 1">
+    <ask>Which workflow? (Enter workflow ID like 'prd' or 'create-architecture')</ask>
+    <ask>File path created? (e.g., docs/prd.md)</ask>
+    <critical>ONLY write the file path as the status value - no other text, notes, or metadata</critical>
+    <action>Update workflow_status in YAML file: {{workflow_id}}: {{file_path}}</action>
+    <action>Save updated YAML file preserving ALL structure and comments</action>
+    <output>✅ Updated {{workflow_id}} to completed: {{file_path}}</output>
+  </check>
 
-Enter numbers (e.g., "1,3" or "all" or "none"): </ask>
-</check>
-
-<check if="field_type == brownfield AND selected_track in [method, enterprise]">
-  <output>Optional discovery workflows:</output>
-  <ask>Include any of these?
-
-1. 🧠 **Brainstorm** - Creative exploration
-2. 🔍 **Research** - Domain analysis
-
-Enter numbers (e.g., "1,2" or "none"): </ask>
-</check>
-
-<action>Parse selections and set:
-
-- brainstorm_requested
-- research_requested
-- product_brief_requested (if applicable)
-  </action>
-
-<template-output>brainstorm_requested</template-output>
-<template-output>research_requested</template-output>
-<template-output>product_brief_requested</template-output>
-
-<check if="brownfield">
-  <output>💡 **Note:** For brownfield projects, run document-project workflow first to analyze your codebase.</output>
+  <check if="update_choice == 2">
+    <ask>Which workflow to skip? (Enter workflow ID)</ask>
+    <action>Update workflow status in YAML file: {{workflow_id}}: skipped</action>
+    <action>Save updated YAML file</action>
+    <output>✅ Marked {{workflow_id}} as skipped</output>
+  </check>
 </check>
 </step>
 
-<step n="7" goal="Detect track from artifacts" if="continuing_existing OR migrating_legacy">
-<action>Analyze artifacts to detect track:
-- Has PRD → BMad Method
-- Has Security/DevOps → Enterprise Method
-- Has tech-spec only → Suggest switching to quick-flow-solo-dev agent
-</action>
+<!-- ============================================= -->
+<!-- SERVICE MODES - Called by other workflows -->
+<!-- ============================================= -->
 
-<output>Detected: **{{detected_track}}** based on {{found_artifacts}}</output>
-<ask>Correct? (y/n)</ask>
+<step n="10" goal="Validate mode - Check if calling workflow should proceed">
+<action>Read {output_folder}/bmm-workflow-status.yaml if exists</action>
 
-<ask if="n">Which BMad Method track instead?
-
-1. BMad Method
-2. Enterprise Method
-3. Switch to Quick Flow (use quick-flow-solo-dev agent)
-
-Choice:</ask>
-
-<action>Set selected_track</action>
-<template-output>selected_track</template-output>
-</step>
-
-<step n="8" goal="Generate workflow path">
-<action>Load path file: {path_files}/{{selected_track}}-{{field_type}}.yaml</action>
-<action>Build workflow_items from path file</action>
-<action>Scan for existing completed work and update statuses</action>
-<action>Set generated date</action>
-
-<template-output>generated</template-output>
-<template-output>workflow_path_file</template-output>
-<template-output>workflow_items</template-output>
-</step>
-
-<step n="9" goal="Create tracking file">
-<output>Your BMad workflow path:
-
-**Track:** {{selected_track}}
-**Type:** {{field_type}}
-**Project:** {{project_name}}
-
-{{#if brownfield}}Prerequisites: document-project{{/if}}
-{{#if has_discovery}}Discovery: {{list_selected_discovery}}{{/if}}
-
-{{workflow_path_summary}}
-</output>
-
-<ask>Create workflow tracking file? (y/n)</ask>
-
-<check if="y">
-  <action>Generate YAML from template with all variables</action>
-  <action>Save to {planning_artifacts}/bmm-workflow-status.yaml</action>
-  <action>Identify next workflow and agent</action>
-
-<output>✅ **Created:** {planning_artifacts}/bmm-workflow-status.yaml
-
-**Next:** {{next_workflow_name}}
-**Agent:** {{next_agent}}
-**Command:** /bmad:bmm:workflows:{{next_workflow_id}}
-
-{{#if next_agent not in [analyst, pm]}}
-💡 Start new chat with **{{next_agent}}** agent first.
-{{/if}}
-
-To check progress: /bmad:bmm:workflows:workflow-status
-
-Happy building! 🚀</output>
+<check if="status file not found">
+  <template-output>status_exists = false</template-output>
+  <template-output>should_proceed = true</template-output>
+  <template-output>warning = "No status file found. Running without progress tracking."</template-output>
+  <template-output>suggestion = "Consider running workflow-init first for progress tracking"</template-output>
+  <action>Return to calling workflow</action>
 </check>
 
+<check if="status file found">
+  <action>Parse YAML file to extract project metadata and workflow_status</action>
+  <action>Load workflow path file from workflow_path field</action>
+  <action>Find first non-completed workflow in workflow_status (next workflow)</action>
+  <action>Check if {{calling_workflow}} matches next workflow or is in the workflow list</action>
+
+<template-output>status_exists = true</template-output>
+<template-output>project_level = {{project_level}}</template-output>
+<template-output>project_type = {{project_type}}</template-output>
+<template-output>field_type = {{field_type}}</template-output>
+<template-output>next_workflow = {{next_workflow_id}}</template-output>
+
+  <check if="calling_workflow == next_workflow">
+    <template-output>should_proceed = true</template-output>
+    <template-output>warning = ""</template-output>
+    <template-output>suggestion = "Proceeding with planned next step"</template-output>
+  </check>
+
+  <check if="calling_workflow in workflow_status list">
+    <action>Check the status of calling_workflow in YAML</action>
+
+    <check if="status is file path">
+      <template-output>should_proceed = true</template-output>
+      <template-output>warning = "⚠️ Workflow already completed: {{calling_workflow}}"</template-output>
+      <template-output>suggestion = "This workflow was already completed. Re-running will overwrite: {{status}}"</template-output>
+    </check>
+
+    <check if="status is optional/recommended">
+      <template-output>should_proceed = true</template-output>
+      <template-output>warning = "Running optional workflow {{calling_workflow}}"</template-output>
+      <template-output>suggestion = "This is optional. Expected next: {{next_workflow}}"</template-output>
+    </check>
+
+    <check if="status is required but not next">
+      <template-output>should_proceed = true</template-output>
+      <template-output>warning = "⚠️ Out of sequence: Expected {{next_workflow}}, running {{calling_workflow}}"</template-output>
+      <template-output>suggestion = "Consider running {{next_workflow}} instead, or continue if intentional"</template-output>
+    </check>
+
+  </check>
+
+  <check if="calling_workflow NOT in workflow_status list">
+    <template-output>should_proceed = true</template-output>
+    <template-output>warning = "⚠️ Unknown workflow: {{calling_workflow}} not in workflow path"</template-output>
+    <template-output>suggestion = "This workflow is not part of the defined path for this project"</template-output>
+  </check>
+
+<template-output>status_file_path = {{path to bmm-workflow-status.yaml}}</template-output>
+</check>
+
+<action>Return control to calling workflow with all template outputs</action>
+</step>
+
+<step n="20" goal="Data mode - Extract specific information">
+<action>Read {output_folder}/bmm-workflow-status.yaml if exists</action>
+
+<check if="status file not found">
+  <template-output>status_exists = false</template-output>
+  <template-output>error = "No status file to extract data from"</template-output>
+  <action>Return to calling workflow</action>
+</check>
+
+<check if="status file found">
+  <action>Parse YAML file completely</action>
+  <template-output>status_exists = true</template-output>
+
+  <check if="data_request == project_config">
+    <template-output>project_name = {{project}}</template-output>
+    <template-output>project_type = {{project_type}}</template-output>
+    <template-output>project_level = {{project_level}}</template-output>
+    <template-output>field_type = {{field_type}}</template-output>
+    <template-output>workflow_path = {{workflow_path}}</template-output>
+  </check>
+
+  <check if="data_request == workflow_status">
+    <action>Parse workflow_status section and return all workflow: status pairs</action>
+    <template-output>workflow_status = {{workflow_status_object}}</template-output>
+    <action>Calculate completion stats:</action>
+    <template-output>total_workflows = {{count all workflows}}</template-output>
+    <template-output>completed_workflows = {{count file path statuses}}</template-output>
+    <template-output>pending_workflows = {{count required/optional/etc}}</template-output>
+    <template-output>skipped_workflows = {{count skipped}}</template-output>
+  </check>
+
+  <check if="data_request == all">
+    <action>Return all parsed fields as template outputs</action>
+    <template-output>project = {{project}}</template-output>
+    <template-output>project_type = {{project_type}}</template-output>
+    <template-output>project_level = {{project_level}}</template-output>
+    <template-output>field_type = {{field_type}}</template-output>
+    <template-output>workflow_path = {{workflow_path}}</template-output>
+    <template-output>workflow_status = {{workflow_status_object}}</template-output>
+    <template-output>generated = {{generated}}</template-output>
+  </check>
+
+<template-output>status_file_path = {{path to bmm-workflow-status.yaml}}</template-output>
+</check>
+
+<action>Return control to calling workflow with requested data</action>
+</step>
+
+<step n="30" goal="Init-check mode - Simple existence check">
+<action>Check if {output_folder}/bmm-workflow-status.yaml exists</action>
+
+<check if="exists">
+  <template-output>status_exists = true</template-output>
+  <template-output>suggestion = "Status file found. Ready to proceed."</template-output>
+</check>
+
+<check if="not exists">
+  <template-output>status_exists = false</template-output>
+  <template-output>suggestion = "No status file. Run workflow-init to create one (optional for progress tracking)"</template-output>
+</check>
+
+<action>Return immediately to calling workflow</action>
+</step>
+
+<step n="40" goal="Update mode - Centralized status file updates">
+<action>Read {output_folder}/bmm-workflow-status.yaml</action>
+
+<check if="status file not found">
+  <template-output>success = false</template-output>
+  <template-output>error = "No status file found. Cannot update."</template-output>
+  <action>Return to calling workflow</action>
+</check>
+
+<check if="status file found">
+  <action>Parse YAML file completely</action>
+  <action>Load workflow path file from workflow_path field</action>
+  <action>Check {{action}} parameter to determine update type</action>
+
+  <!-- ============================================= -->
+  <!-- ACTION: complete_workflow -->
+  <!-- ============================================= -->
+  <check if="action == complete_workflow">
+    <action>Get {{workflow_id}} parameter (required)</action>
+    <action>Get {{default_output_file}} parameter (required - path to created file)</action>
+
+    <critical>ONLY write the file path as the status value - no other text, notes, or metadata</critical>
+    <action>Update workflow status in YAML:</action>
+    - In workflow_status section, update: {{workflow_id}}: {{default_output_file}}
+
+    <action>Find {{workflow_id}} in loaded path YAML</action>
+    <action>Determine next workflow from path sequence</action>
+    <action>Find first workflow in workflow_status with status != file path and != skipped</action>
+
+    <action>Save updated YAML file preserving ALL structure and comments</action>
+
+    <template-output>success = true</template-output>
+    <template-output>next_workflow = {{determined next workflow}}</template-output>
+    <template-output>next_agent = {{determined next agent from path file}}</template-output>
+    <template-output>completed_workflow = {{workflow_id}}</template-output>
+    <template-output>default_output_file = {{default_output_file}}</template-output>
+
+  </check>
+
+  <!-- ============================================= -->
+  <!-- ACTION: skip_workflow -->
+  <!-- ============================================= -->
+  <check if="action == skip_workflow">
+    <action>Get {{workflow_id}} parameter (required)</action>
+
+    <action>Update workflow status in YAML:</action>
+    - In workflow_status section, update: {{workflow_id}}: skipped
+
+    <action>Save updated YAML file</action>
+
+    <template-output>success = true</template-output>
+    <template-output>skipped_workflow = {{workflow_id}}</template-output>
+
+  </check>
+
+  <!-- ============================================= -->
+  <!-- Unknown action -->
+  <!-- ============================================= -->
+  <check if="action not recognized">
+    <template-output>success = false</template-output>
+    <template-output>error = "Unknown action: {{action}}. Valid actions: complete_workflow, skip_workflow"</template-output>
+  </check>
+
+</check>
+
+<action>Return control to calling workflow with template outputs</action>
 </step>
 
 </workflow>

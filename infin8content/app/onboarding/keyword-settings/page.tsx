@@ -8,9 +8,23 @@ import { useRouter } from "next/navigation"
 export default function KeywordSettingsStepPage() {
   const router = useRouter()
 
-  const handleNext = (data: any) => {
-    localStorage.setItem('onboarding-keyword-settings', JSON.stringify(data))
-    router.push('/onboarding/integration')
+  const handleNext = async (data: any) => {
+    try {
+      const response = await fetch('/api/onboarding/keyword-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error?.error || 'Keyword settings failed')
+      }
+
+      router.push('/onboarding/integration')
+    } catch (error) {
+      throw error
+    }
   }
 
   const handleSkip = () => {

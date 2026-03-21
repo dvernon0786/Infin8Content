@@ -1,94 +1,114 @@
-// Publish API Route
-// Story C-3: WordPress Publishing Service (Idempotent Service Layer)
-// POST /api/articles/publish
-
-import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
-import { publishArticleToWordPress, WordPressPublishInput } from '@/lib/services/publishing/wordpress-publisher';
+import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { AuditAction } from '@/types/audit'
+import { publishArticle } from '@/lib/services/publishing/cms-publisher'
+import { NextResponse } from 'next/server'
 
-// Feature flag for instant rollback capability
-const WORDPRESS_PUBLISH_ENABLED = process.env.WORDPRESS_PUBLISH_ENABLED === 'true';
+/**
+ * POST /api/articles/publish
+ *
+ * Publishes a completed article to a CMS connection.
+ * 
+ * Body: { articleId: string, connectionId?: string }
+ *
+ * If connectionId is omitted, falls back to the org's first active WordPress
+ * connection (backward compatibility for existing WordPress-only integrations).
+ */
+export async function POST(request: Request) {
+    try {
+        const currentUser = await getCurrentUser()
+        if (!currentUser || !currentUser.org_id) {
+            return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+        }
 
-export async function POST(request: NextRequest) {
-  try {
-    // Check feature flag
-    if (!WORDPRESS_PUBLISH_ENABLED) {
-      return NextResponse.json(
-        { error: 'WordPress publishing is currently disabled' },
-        { status: 503 }
-      );
+        // Trial Plan Restriction
+        const org = currentUser.organizations as any
+        const planType = (org?.plan || org?.plan_type || 'starter').toLowerCase()
+
+        if (planType === 'trial') {
+            return NextResponse.json({
+                error: 'Publishing is not available on the trial plan. Please upgrade to a paid plan to publish to CMS.'
+            }, { status: 403 })
+        }
+
+        const body = await request.json()
+        const { articleId, connectionId: explicitConnectionId } = body
+
+        if (!articleId) {
+            return NextResponse.json({ error: 'Article ID is required' }, { status: 400 })
+        }
+
+        const supabase = await createClient()
+
+        // Resolve connectionId — explicit or fallback to first active WP connection
+        let connectionId = explicitConnectionId as string | undefined
+
+        if (!connectionId) {
+            const { data: fallback } = await (supabase
+                .from('cms_connections')
+                .select('id, platform')
+                .eq('org_id', currentUser.org_id)
+                .eq('status', 'active')
+                .eq('platform', 'wordpress')
+                .order('created_at', { ascending: true })
+                .limit(1)
+                .single() as any)
+
+            if (!fallback) {
+                return NextResponse.json({
+                    error: 'No CMS connection found. Please connect a platform in Settings → Integrations.'
+                }, { status: 400 })
+            }
+
+            connectionId = fallback.id
+        }
+
+        // Publish via generic adapter
+        try {
+            const result = await publishArticle({
+                articleId,
+                organizationId: currentUser.org_id,
+                connectionId: connectionId as string,
+            })
+
+            // Load platform for audit log
+            const { data: connData } = await (supabase
+                .from('cms_connections')
+                .select('platform, name')
+                .eq('id', connectionId)
+                .single() as any)
+
+            await logActionAsync({
+                orgId: currentUser.org_id,
+                userId: currentUser.id,
+                action: AuditAction.ARTICLE_PUBLISHED,
+                details: {
+                    article_id: articleId,
+                    platform: connData?.platform || 'unknown',
+                    connection_id: connectionId,
+                    connection_name: connData?.name,
+                    url: result.url,
+                    already_published: result.alreadyPublished
+                },
+                ipAddress: extractIpAddress(request.headers),
+                userAgent: extractUserAgent(request.headers),
+            })
+
+            return NextResponse.json({
+                success: true,
+                url: result.url,
+                alreadyPublished: result.alreadyPublished
+            })
+
+        } catch (publishError: any) {
+            return NextResponse.json({
+                error: publishError.message || 'Failed to publish article'
+            }, { status: 500 })
+        }
+
+    } catch (error) {
+        console.error('Unexpected error in POST /api/articles/publish:', error)
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
-
-    // Get current user using existing pattern
-    const currentUser = await getCurrentUser()
-    if (!currentUser || !currentUser.org_id) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    // Parse request body
-    const body = await request.json();
-    const { articleId, credentials } = body;
-
-    if (!articleId) {
-      return NextResponse.json(
-        { error: 'Article ID is required' },
-        { status: 400 }
-      );
-    }
-
-    // Use provided credentials or system defaults
-    const wordpressCredentials = credentials || {
-      site_url: process.env.WORDPRESS_DEFAULT_SITE_URL!,
-      username: process.env.WORDPRESS_DEFAULT_USERNAME!,
-      application_password: process.env.WORDPRESS_DEFAULT_APPLICATION_PASSWORD!,
-    };
-
-    // Validate credentials are configured
-    if (!wordpressCredentials.username || !wordpressCredentials.application_password || !wordpressCredentials.site_url) {
-      return NextResponse.json(
-        { error: 'WordPress credentials not configured' },
-        { status: 500 }
-      );
-    }
-
-    // Prepare input for WordPress publishing service
-    const publishInput: WordPressPublishInput = {
-      articleId,
-      organizationId: currentUser.org_id,
-      credentials: wordpressCredentials
-    };
-
-    // Publish using the new service (handles idempotency, validation, etc.)
-    const result = await publishArticleToWordPress(publishInput);
-
-    // Return success response
-    return NextResponse.json({
-      success: true,
-      url: result.url,
-      postId: result.postId,
-      alreadyPublished: result.alreadyPublished,
-    });
-
-  } catch (error) {
-    console.error('Publish API error:', error);
-    return NextResponse.json(
-      { 
-        error: error instanceof Error ? error.message : 'Internal server error' 
-      },
-      { status: 500 }
-    );
-  }
-}
-
-// Health check endpoint for feature flag status
-export async function GET() {
-  return NextResponse.json({
-    enabled: WORDPRESS_PUBLISH_ENABLED,
-    configured: !!(process.env.WORDPRESS_DEFAULT_USERNAME && 
-                   process.env.WORDPRESS_DEFAULT_APPLICATION_PASSWORD && 
-                   process.env.WORDPRESS_DEFAULT_SITE_URL),
-  });
 }

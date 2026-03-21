@@ -1,15 +1,28 @@
-/**
- * TypeScript types for dashboard search and filtering
- * Story 15.4: Dashboard Search and Filtering
- */
+import type { ArticleStatus } from '@/types/article';
+import { ARTICLE_STATUSES } from '@/types/article';
+export type { ArticleStatus };
+export { ARTICLE_STATUSES };
 
-import type { DashboardArticle } from '@/lib/supabase/realtime';
+export interface DashboardArticle {
+  id: string;
+  keyword: string;
+  title: string;
+  status: ArticleStatus;
+  created_at: string;
+  updated_at: string;
+  scheduled_at?: string | null;
+  publish_at?: string | null;
+}
 
-// Re-export DashboardArticle for convenience
-export type { DashboardArticle };
+export interface DashboardUpdateEvent {
+  type: 'article_completed' | 'article_status_changed';
+  articleId: string;
+  status: ArticleStatus;
+  timestamp: string;
+  orgId: string;
+  metadata?: Record<string, unknown>;
+}
 
-// Article status types from database
-export type ArticleStatus = 'queued' | 'generating' | 'completed' | 'failed' | 'cancelled';
 
 // Sort options for article ordering
 export type SortOption = 'mostRecent' | 'oldest' | 'titleAZ' | 'titleZA';
@@ -22,10 +35,6 @@ export interface FilterState {
     end?: Date;
   };
   keywords: string[];
-  wordCountRange: {
-    min?: number;
-    max?: number;
-  };
   sortBy?: SortOption;
 }
 
@@ -51,8 +60,6 @@ export interface FilterQueryParams {
   dateStart?: string; // ISO date string
   dateEnd?: string; // ISO date string
   keywords?: string; // Comma-separated keywords
-  wordCountMin?: string;
-  wordCountMax?: string;
 }
 
 // Search result with highlighting
@@ -70,13 +77,12 @@ export interface FilterMetrics {
   filteredArticles: number;
   filterTime: number; // milliseconds
   searchTime: number; // milliseconds
-  hasVirtualScrolling: boolean;
 }
 
 // Active filter badge data
 export interface ActiveFilterBadge {
   id: string;
-  type: 'status' | 'dateRange' | 'keyword' | 'wordCount' | 'search' | 'sort';
+  type: 'status' | 'dateRange' | 'keyword' | 'search' | 'sort';
   label: string;
   value: string;
   removable: boolean;
@@ -121,21 +127,17 @@ export interface ActiveFiltersProps {
   className?: string;
 }
 
-// Virtualized list component props
-export interface VirtualizedArticleListProps {
+// Scrollable list component props
+export interface ScrollableArticleListProps {
   articles: DashboardArticle[];
-  itemHeight: number;
-  height: number;
-  overscanCount?: number;
   className?: string;
-  selectedArticle?: string | null;
-  onArticleSelect?: (id: string) => void;
-  onArticleNavigation?: (id: string, e?: React.MouseEvent) => void;
-  onKeyDown?: (id: string, e: React.KeyboardEvent) => void;
-  onTouchStart?: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
-  onTouchMove?: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
-  onTouchEnd?: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
-  showProgress?: boolean;
+  highlightArticleId?: string | null;
+  onArticleNavigation: (id: string, e?: React.MouseEvent | React.KeyboardEvent | React.TouchEvent) => void;
+  onKeyDown: (id: string, e: React.KeyboardEvent) => void;
+  onTouchStart: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
+  onTouchMove: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
+  onTouchEnd: (id: string, e: React.TouchEvent, element: HTMLElement) => void;
+  plan?: string;
 }
 
 // Dashboard filters hook return type
@@ -146,7 +148,7 @@ export interface UseDashboardFiltersReturn {
   filteredArticles: DashboardArticle[];
   activeFilters: ActiveFilterBadge[];
   metrics: FilterMetrics;
-  
+
   // Actions
   setSearchQuery: (query: string) => void;
   setFilters: (filters: Partial<FilterState>) => void;
@@ -154,11 +156,11 @@ export interface UseDashboardFiltersReturn {
   clearFilters: () => void;
   clearAll: () => void;
   removeFilter: (filterId: string) => void;
-  
+
   // URL synchronization
   syncToUrl: () => void;
   syncFromUrl: () => void;
-  
+
   // Utilities
   hasActiveFilters: boolean;
   isFilterActive: (filterType: keyof FilterState) => boolean;
@@ -173,7 +175,6 @@ export type SortFunction = (articles: DashboardArticle[], sortBy: SortOption) =>
 export const DASHBOARD_FILTER_CONFIG = {
   SEARCH_DEBOUNCE_MS: 300,
   SEARCH_DEBOUNCE_MS_MOBILE: 500,
-  VIRTUAL_SCROLL_THRESHOLD: 50,
   MAX_FILTERED_ARTICLES: 1000,
   PERFORMANCE_TARGET_MS: 100,
 } as const;
@@ -183,7 +184,6 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   status: [],
   dateRange: {},
   keywords: [],
-  wordCountRange: {},
   sortBy: undefined,
 };
 

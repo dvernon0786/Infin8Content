@@ -2,11 +2,11 @@
 
 ## Overview
 
-The Intent Engine is the core orchestration system for Infin8Content, managing the complete workflow from ICP generation through article completion. It consists of 23 service files organized around workflow stages and governance patterns.
+The Intent Engine is the core orchestration system for Infin8Content, managing the complete workflow from ICP generation through article completion. It consists of 27 service files organized around workflow stages and governance patterns.
 
 ## Service Architecture
 
-### Core Services (23 files)
+### Core Services (27 files)
 
 #### 1. ICP & Competitor Analysis Stage
 - **icp-generator.ts** (16,077 bytes)
@@ -160,13 +160,68 @@ The Intent Engine is the core orchestration system for Infin8Content, managing t
   - Supports long-term compliance storage
   - Handles archival scheduling
 
-#### 9. Utilities
+#### 9. Workflow Management & Governance
+- **workflow-steps.ts** (1,007 bytes)
+  - Defines workflow step constants
+  - Step enumeration and ordering
+
+- **workflow-gate-validator.ts** (8,021 bytes)
+  - Validates workflow state transitions
+  - Enforces step ordering
+  - Checks prerequisites for each step
+  - Prevents invalid state changes
+
+- **blocking-condition-resolver.ts** (7,572 bytes)
+  - Resolves blocking conditions
+  - Checks data availability
+  - Validates prerequisites
+  - Provides detailed blocking reasons
+
+- **workflow-dashboard-service.ts** (5,267 bytes)
+  - Provides workflow progress data
+  - Aggregates step completion metrics
+  - Calculates progress percentages
+  - Supports real-time dashboard updates
+
+- **workflow-state-engine.ts** (8,456 bytes)
+  - Centralized atomic state machine
+  - Database-level concurrency control
+  - Single source of truth for transitions
+  - Race condition prevention
+
+#### 10. Audit & Logging
+- **intent-audit-logger.ts** (8,213 bytes)
+  - Core audit logging service
+  - Sync and async logging options
+  - IP address and user agent tracking
+  - Actor identification
+  - Non-blocking error handling
+
+- **intent-audit-archiver.ts** (5,301 bytes)
+  - Archives old audit logs
+  - Manages retention policies
+  - Supports long-term compliance storage
+  - Handles archival scheduling
+
+#### 11. Utilities
 - **retry-utils.ts** (5,173 bytes)
   - Exponential backoff retry logic
   - Configurable attempt counts
   - Delay calculation (2s, 4s, 8s pattern)
   - Transient error detection
   - Timeout management
+
+#### 12. Testing & Deterministic Services
+- **deterministic-fake-extractor.ts** (3,245 bytes)
+  - Test-only deterministic extractor
+  - Predictable results for testing
+  - Eliminates external API dependencies
+  - Supports concurrent testing scenarios
+
+- **cluster-validator-types.ts** (1,912 bytes)
+  - Type definitions for validation results
+  - Validation status enums
+  - Similarity score types
 
 ## Workflow State Machine
 
@@ -325,7 +380,7 @@ organization_id = public.get_auth_user_org_id()
 ## Code Quality Metrics
 
 - **Total Lines**: ~200K+ across all services
-- **Service Count**: 23 specialized services
+- **Service Count**: 27 specialized services
 - **Error Handling**: Comprehensive try-catch with specific error types
 - **Type Safety**: Full TypeScript with strict mode
 - **Test Coverage**: Unit and integration tests for critical paths

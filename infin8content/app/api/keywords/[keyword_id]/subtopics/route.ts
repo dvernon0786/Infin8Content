@@ -5,7 +5,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { KeywordSubtopicGenerator } from '@/lib/services/keyword-engine/subtopic-generator'
-import { WorkflowGateValidator } from '@/lib/services/intent-engine/workflow-gate-validator'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 
 export async function POST(
@@ -48,38 +47,52 @@ export async function POST(
       )
     }
 
-    // Validate workflow gate - longtails and clustering must be complete
-    // Pass organization ID for cross-org isolation validation
-    const gateValidator = new WorkflowGateValidator()
-    const gateResult = await gateValidator.validateLongtailsRequiredForSubtopics(keyword.workflow_id, currentUser.org_id)
+    // Check if workflow is at appropriate state for subtopic generation
+    const supabaseWorkflow = createServiceRoleClient()
+    const { data: workflow, error: workflowError } = await supabaseWorkflow
+      .from('intent_workflows')
+      .select('id, state, organization_id')
+      .eq('id', keyword.workflow_id)
+      .eq('organization_id', currentUser.org_id)
+      .single()
 
-    // Log gate enforcement for audit trail
-    await gateValidator.logGateEnforcement(keyword.workflow_id, 'subtopic-generation', gateResult)
-
-    // If gate validation fails, return 423 Locked response
-    if (!gateResult.allowed) {
+    if (workflowError || !workflow) {
       return NextResponse.json(
-        gateResult.errorResponse || {
-          error: gateResult.error || 'Longtail expansion and clustering required before subtopics',
-          workflowStatus: gateResult.workflowStatus,
-          longtailStatus: gateResult.longtailStatus,
-          clusteringStatus: gateResult.clusteringStatus,
-          requiredAction: 'Complete longtail expansion (step 4) and topic clustering (step 6) before subtopic generation',
-          currentStep: 'subtopic-generation',
-          blockedAt: new Date().toISOString()
-        },
-        { status: 423 }
+        { error: 'Workflow not found' },
+        { status: 404 }
       )
     }
 
-    // Initialize subtopic generator
-    const generator = new KeywordSubtopicGenerator()
+    // FSM GUARD: Only allow subtopic generation in step_8_subtopics with terminal idempotency
+    const typedWorkflow = workflow as unknown as { id: string; state: string; organization_id: string }
+    const currentState = typedWorkflow.state
+    
+    // IDEMPOTENCY: Already beyond Step 8
+    if (currentState === 'step_9_articles' || currentState === 'completed') {
+      return NextResponse.json({
+        success: true,
+        workflow_state: currentState,
+        cached: true
+      })
+    }
+    
+    // STRICT GUARD: Only allow execution in Step 8
+    if (currentState !== 'step_8_subtopics') {
+      return NextResponse.json(
+        { 
+          error: 'INVALID_STATE',
+          message: `Subtopic generation requires step_8_subtopics. Current state: ${currentState}`
+        },
+        { status: 409 }
+      )
+    }
 
-    // Generate subtopics
-    const subtopics = await generator.generate(keyword_id)
+    // Generate subtopics using DataForSEO
+    const subtopicGenerator = new KeywordSubtopicGenerator()
+    const subtopics = await subtopicGenerator.generate(keyword_id)
 
     // Store subtopics and update status
-    await generator.store(keyword_id, subtopics)
+    await subtopicGenerator.store(keyword_id, subtopics)
 
     return NextResponse.json({
       success: true,

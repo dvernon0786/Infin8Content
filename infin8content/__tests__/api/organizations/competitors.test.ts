@@ -85,7 +85,7 @@ describe('/api/organizations/[orgId]/competitors', () => {
       });
 
       // Mock params
-      const params = { orgId: 'org-123' };
+      const params = Promise.resolve({ orgId: 'org-123' });
 
       const response = await POST(request, { params });
       const data = await response.json();
@@ -113,7 +113,7 @@ describe('/api/organizations/[orgId]/competitors', () => {
       });
 
       // Mock params
-      const params = { orgId: 'org-123' };
+      const params = Promise.resolve({ orgId: 'org-123' });
 
       const response = await POST(request, { params });
       const data = await response.json();
@@ -159,7 +159,7 @@ describe('/api/organizations/[orgId]/competitors', () => {
       });
 
       // Mock params
-      const params = { orgId: 'org-123' };
+      const params = Promise.resolve({ orgId: 'org-123' });
 
       const response = await POST(request, { params });
       const data = await response.json();
@@ -180,7 +180,7 @@ describe('/api/organizations/[orgId]/competitors', () => {
       });
 
       // Mock params
-      const params = { orgId: 'org-123' };
+      const params = Promise.resolve({ orgId: 'org-123' });
 
       const response = await POST(request, { params });
       const data = await response.json();
@@ -234,7 +234,7 @@ describe('/api/organizations/[orgId]/competitors', () => {
       const request = new NextRequest('http://localhost/api/organizations/org-123/competitors');
       
       // Mock params
-      const params = { orgId: 'org-123' };
+      const params = Promise.resolve({ orgId: 'org-123' });
 
       const response = await GET(request, { params });
       const data = await response.json();
@@ -253,7 +253,7 @@ describe('/api/organizations/[orgId]/competitors', () => {
       const request = new NextRequest('http://localhost/api/organizations/org-123/competitors');
       
       // Mock params
-      const params = { orgId: 'org-123' };
+      const params = Promise.resolve({ orgId: 'org-123' });
 
       const response = await GET(request, { params });
       const data = await response.json();

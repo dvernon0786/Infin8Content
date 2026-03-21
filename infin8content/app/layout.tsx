@@ -2,6 +2,16 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Poppins, Lato } from "next/font/google";
 import "./globals.css";
 
+// 🔒 REQUIRED: Startup graph validation to prevent drift
+import { validateWorkflowGraph } from "@/lib/services/workflow-engine/workflow-progression";
+
+const validation = validateWorkflowGraph();
+
+if (!validation.valid) {
+  console.error('Workflow graph validation failed:', validation.errors);
+  throw new Error('Invalid workflow graph. Refusing to start.');
+}
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

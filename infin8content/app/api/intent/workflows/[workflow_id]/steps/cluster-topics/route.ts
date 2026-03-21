@@ -11,9 +11,7 @@ import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
-import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
-import { KeywordClusterer } from '@/lib/services/intent-engine/keyword-clusterer'
-import { enforceICPGate } from '@/lib/middleware/intent-engine-gate'
+import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
 
 export async function POST(
   request: NextRequest,
@@ -37,38 +35,46 @@ export async function POST(
     organizationId = currentUser.org_id
     userId = currentUser.id
 
-    // ENFORCE ICP GATE - Check if ICP is complete before proceeding
-    const gateResponse = await enforceICPGate(workflowId, 'cluster-topics')
-    if (gateResponse) {
-      return gateResponse
-    }
-
-    // Verify workflow exists and belongs to user's organization
+    // 1️⃣ AUTH: Already handled above
+    
+    // 2️⃣ FETCH WORKFLOW (READ ONLY)
     const supabase = createServiceRoleClient()
-    const { data: workflow, error: workflowError } = await supabase
+    const { data: workflow, error } = await supabase
       .from('intent_workflows')
-      .select('id, status, organization_id')
+      .select('id, state, organization_id')
       .eq('id', workflowId)
-      .eq('organization_id', organizationId)
-      .single()
+      .eq('organization_id', currentUser.org_id)
+      .single() as { data: { id: string; state: string; organization_id: string } | null; error: any }
 
-    if (workflowError || !workflow) {
+    if (error || !workflow) {
       return NextResponse.json(
         { error: 'Workflow not found' },
         { status: 404 }
       )
     }
 
-    // Type guard: ensure workflow is properly typed
-    const typedWorkflow = workflow as unknown as { id: string; status: string; organization_id: string }
+    const currentState = workflow.state
 
-    // Validate workflow state - must be at step_5_filtering
-    if (typedWorkflow.status !== 'step_5_filtering') {
+    // 3️⃣ IDEMPOTENCY CASE
+    // If not exactly at this step — return success safely (future-proof)
+    if (currentState !== 'step_6_clustering') {
+      return NextResponse.json({
+        success: true,
+        workflow_id: workflowId,
+        workflow_state: currentState,
+        cached: true
+      })
+    }
+
+    // 4️⃣ STRICT FSM GUARD
+    // For validation, we need to check if transition is allowed
+    // Use internal FSM for validation since unified engine doesn't export canTransition
+    const { InternalWorkflowFSM } = await import('@/lib/fsm/fsm.internal')
+    if (!InternalWorkflowFSM.canTransition(currentState as any, 'CLUSTERING_START')) {
       return NextResponse.json(
-        { 
-          error: 'Invalid workflow state',
-          current_status: typedWorkflow.status,
-          required_status: 'step_5_filtering'
+        {
+          error: 'INVALID_STATE',
+          message: `Workflow must be in step_6_clustering. Current state: ${currentState}` 
         },
         { status: 409 }
       )
@@ -81,60 +87,33 @@ export async function POST(
       action: AuditAction.WORKFLOW_TOPIC_CLUSTERING_STARTED,
       details: {
         workflow_id: workflowId,
-        current_status: typedWorkflow.status
+        current_state: currentState
       },
       ipAddress: extractIpAddress(request.headers),
       userAgent: extractUserAgent(request.headers),
     })
 
-    // Initialize clusterer and perform clustering
-    const clusterer = new KeywordClusterer()
-    const clusterResult = await clusterer.clusterKeywords(workflowId, {
-      similarityThreshold: 0.6,
-      maxSpokesPerHub: 8,
-      minClusterSize: 3
-    })
-
-    // Update workflow status to step_6_clustering
-    const { error: updateError } = await supabase
-      .from('intent_workflows')
-      .update({
-        status: 'step_6_clustering',
-        step_6_clustering_completed_at: new Date().toISOString(),
-        cluster_count: clusterResult.cluster_count,
-        keywords_clustered: clusterResult.keywords_clustered
-      })
-      .eq('id', workflowId)
-
-    if (updateError) {
-      console.error('Failed to update workflow status:', updateError)
-      // Don't fail the request, but log the error
+    // 5️⃣ UNIFIED TRANSITION (async trigger)
+    // This automatically emits the required event
+    const result = await transitionWithAutomation(workflowId, 'CLUSTERING_START', userId)
+    if (!result.success) {
+      return NextResponse.json(
+        { 
+          error: 'Failed to advance workflow',
+          message: result.error || 'Unknown error'
+        },
+        { status: 500 }
+      )
     }
 
-    // Log completion audit action
-    await logActionAsync({
-      orgId: organizationId,
-      userId: userId,
-      action: AuditAction.WORKFLOW_TOPIC_CLUSTERING_COMPLETED,
-      details: {
-        workflow_id: workflowId,
-        cluster_count: clusterResult.cluster_count,
-        keywords_clustered: clusterResult.keywords_clustered,
-        avg_cluster_size: clusterResult.avg_cluster_size
-      },
-      ipAddress: extractIpAddress(request.headers),
-      userAgent: extractUserAgent(request.headers),
-    })
-
-    // Return success response
+    // 6️⃣ RETURN IMMEDIATE 202 ACCEPTED
     return NextResponse.json({
+      success: true,
       workflow_id: workflowId,
-      status: 'step_6_clustering',
-      cluster_count: clusterResult.cluster_count,
-      keywords_clustered: clusterResult.keywords_clustered,
-      avg_cluster_size: clusterResult.avg_cluster_size,
-      completed_at: clusterResult.completed_at
-    })
+      workflow_state: 'step_6_clustering', // Still in idle until worker processes
+      status: 'triggered',
+      message: 'Topic clustering triggered. Check workflow state for progress.'
+    }, { status: 202 })
 
   } catch (error) {
     console.error('Topic clustering failed:', error)
@@ -154,26 +133,8 @@ export async function POST(
       })
     }
 
-    // Update workflow with error state
-    if (workflowId) {
-      const supabase = createServiceRoleClient()
-      await supabase
-        .from('intent_workflows')
-        .update({
-          step_6_clustering_error_message: error instanceof Error ? error.message : 'Unknown error'
-        })
-        .eq('id', workflowId)
-    }
-
     // Return appropriate error response
     if (error instanceof Error) {
-      if (error.message.includes('Insufficient keywords')) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 400 }
-        )
-      }
-      
       if (error.message.includes('Workflow not found')) {
         return NextResponse.json(
           { error: error.message },
