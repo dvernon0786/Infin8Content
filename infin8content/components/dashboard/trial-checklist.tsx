@@ -26,7 +26,7 @@ export function TrialChecklist({ hasWorkflow, hasCompletedArticle }: TrialCheckl
     const progress = Math.round((completedCount / steps.length) * 100)
 
     return (
-        <Card className="border-[--brand-electric-blue]/20 bg-gradient-to-r from-[--brand-electric-blue]/5 to-white">
+        <Card className="border-[--brand-electric-blue]/20 bg-linear-to-r from-[--brand-electric-blue]/5 to-white">
             <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
                     <p className="font-poppins font-semibold text-sm text-neutral-900">

@@ -42,12 +42,12 @@ The Infin8Content register page has been completely redesigned to achieve **perf
   <div className="group relative w-full h-full">
     {/* Animated background blur */}
     <div className="absolute inset-0 rounded-2xl overflow-hidden">
-      <div className="absolute -inset-10 bg-gradient-to-r from-transparent via-[#217CEB]/25 to-transparent blur-xl opacity-60 animate-spin [animation-duration:12s]" />
-      <div className="absolute -inset-20 bg-gradient-to-r from-transparent via-[#4A42CC]/20 to-transparent blur-2xl opacity-40 animate-spin [animation-duration:20s] [animation-direction:reverse]" />
+      <div className="absolute -inset-10 bg-linear-to-r from-transparent via-[#217CEB]/25 to-transparent blur-xl opacity-60 animate-spin [animation-duration:12s]" />
+      <div className="absolute -inset-20 bg-linear-to-r from-transparent via-[#4A42CC]/20 to-transparent blur-2xl opacity-40 animate-spin [animation-duration:20s] [animation-direction:reverse]" />
     </div>
     
     {/* Gradient border */}
-    <div className="absolute inset-0 rounded-2xl p-px bg-gradient-to-b from-[#217CEB]/40 via-[#4A42CC]/50 to-neutral-900/60" />
+    <div className="absolute inset-0 rounded-2xl p-px bg-linear-to-b from-[#217CEB]/40 via-[#4A42CC]/50 to-neutral-900/60" />
     
     {/* Card */}
     <div className={`${styles.loginCard} ${styles.authCard} relative rounded-2xl ring-1 ring-white/10 shadow-inner`}>

@@ -12,7 +12,7 @@ export function TrialUpgradeCard({ lockedCount, lockedTitles }: TrialUpgradeCard
     if (lockedCount === 0) return null
 
     return (
-        <Card className="border-[--brand-electric-blue]/20 bg-gradient-to-br from-[--brand-electric-blue]/5 to-white shadow-md overflow-hidden">
+        <Card className="border-[--brand-electric-blue]/20 bg-linear-to-br from-[--brand-electric-blue]/5 to-white shadow-md overflow-hidden">
             <CardContent className="p-6 sm:p-8">
                 <div className="flex flex-col md:flex-row gap-8 items-center">
                     <div className="flex-1 space-y-4">

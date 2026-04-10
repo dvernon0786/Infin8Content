@@ -98,7 +98,7 @@ export function SidebarNavigation({ orgName = "Acme Agency", plan, usage }: Side
             {/* 1. Org Switcher / Header */}
             <SidebarHeader className="p-4 mb-2 border-b border-[#F4F4F6]">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#217CEB] to-[#4A42CC] flex items-center justify-center text-white font-black text-lg shadow-lg">
+                    <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#217CEB] to-[#4A42CC] flex items-center justify-center text-white font-black text-lg shadow-lg">
                         ∞
                     </div>
                     <span className="font-poppins text-sm font-extrabold text-[#2C2C2E] tracking-tight">
@@ -179,13 +179,13 @@ export function SidebarNavigation({ orgName = "Acme Agency", plan, usage }: Side
                     {limit ? (
                         <div className="h-1.5 bg-[#E5E5E7] rounded-full overflow-hidden">
                             <div
-                                className="h-full bg-gradient-to-r from-[#217CEB] to-[#4A42CC] rounded-full transition-all duration-500 ease-out shadow-[0_0_4px_rgba(33,124,235,0.3)]"
+                                className="h-full bg-linear-to-r from-[#217CEB] to-[#4A42CC] rounded-full transition-all duration-500 ease-out shadow-[0_0_4px_rgba(33,124,235,0.3)]"
                                 style={{ width: `${progressPercentage}%` }}
                             />
                         </div>
                     ) : (
                         <div className="h-1.5 bg-[#217CEB]/10 rounded-full overflow-hidden">
-                            <div className="h-full w-full bg-gradient-to-r from-[#217CEB] to-[#4A42CC] opacity-20" />
+                            <div className="h-full w-full bg-linear-to-r from-[#217CEB] to-[#4A42CC] opacity-20" />
                         </div>
                     )}
                 </div>

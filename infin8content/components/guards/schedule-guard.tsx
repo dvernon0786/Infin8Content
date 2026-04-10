@@ -50,7 +50,7 @@ export function ScheduleGuard({ plan, children }: ScheduleGuardProps) {
                 </p>
                 <Link
                     href="/payment"
-                    className="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-sm px-5 py-2.5 rounded-lg hover:opacity-90 transition-opacity"
+                    className="inline-block bg-linear-to-r from-blue-600 to-indigo-600 text-white font-bold text-sm px-5 py-2.5 rounded-lg hover:opacity-90 transition-opacity"
                 >
                     Upgrade to Starter →
                 </Link>

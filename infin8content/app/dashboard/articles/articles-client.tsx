@@ -22,7 +22,7 @@ import { ScheduleCalendar } from '@/components/dashboard/schedule-calendar'
 function MetricCard({ label, value, alert, icon }: { label: string; value: string | number; alert?: boolean; icon?: string }) {
   return (
     <div className={`bg-white rounded-[10px] border px-3.5 py-2.5 relative overflow-hidden ${alert ? 'border-amber-500/30 shadow-[0_4px_12px_rgba(245,158,11,0.1)]' : 'border-neutral-200 shadow-sm'}`}>
-      <div className={`absolute top-0 left-0 right-0 h-[2px] ${alert ? 'bg-gradient-to-r from-amber-500 to-red-500 opacity-100' : 'bg-gradient-brand opacity-60'}`} />
+      <div className={`absolute top-0 left-0 right-0 h-[2px] ${alert ? 'bg-linear-to-r from-amber-500 to-red-500 opacity-100' : 'bg-gradient-brand opacity-60'}`} />
       <div className="relative">
         <div className="flex justify-between items-start mb-2">
           <span className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold font-lato">

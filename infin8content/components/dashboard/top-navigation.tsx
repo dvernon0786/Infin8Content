@@ -128,7 +128,7 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
                                 <div className="flex items-center gap-2">
                                     <div className="h-1.5 w-24 bg-[#E5E5E7] rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-gradient-to-r from-[#F59E0B] to-[#D97706] rounded-full transition-all duration-500 ease-out"
+                                            className="h-full bg-linear-to-r from-[#F59E0B] to-[#D97706] rounded-full transition-all duration-500 ease-out"
                                             style={{ width: `${Math.min(100, Math.round(((usage || 0) / limit) * 100))}%` }}
                                         />
                                     </div>
@@ -169,7 +169,7 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
                             variant="ghost"
                             className="relative h-9 w-9 rounded-full p-0 overflow-hidden ring-2 ring-transparent hover:ring-[#217CEB]/30 transition-all"
                         >
-                            <div className="h-full w-full bg-gradient-to-br from-[#217CEB] to-[#4A42CC] flex items-center justify-center text-white text-[11px] font-bold font-poppins shadow-md">
+                            <div className="h-full w-full bg-linear-to-br from-[#217CEB] to-[#4A42CC] flex items-center justify-center text-white text-[11px] font-bold font-poppins shadow-md">
                                 {initials}
                             </div>
                         </Button>
