@@ -20,6 +20,12 @@ export async function POST(request: Request) {
     const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
     
     if (authError || !authUser) {
+      console.error('[/api/organizations/create] Auth failed:', {
+        hasError: !!authError,
+        errorMessage: authError?.message,
+        errorStatus: authError?.status,
+        hasUser: !!authUser,
+      })
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }

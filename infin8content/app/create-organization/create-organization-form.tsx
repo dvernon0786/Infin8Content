@@ -38,6 +38,11 @@ export default function CreateOrganizationForm() {
 
       const data = await response.json()
       if (!response.ok) {
+        if (response.status === 401) {
+          // Session expired or lost — redirect to login
+          router.push('/login?expired=true')
+          return
+        }
         setErrors({ name: data.error || 'Failed to create organization' })
         return
       }
