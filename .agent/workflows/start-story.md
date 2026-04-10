@@ -1,4 +1,43 @@
 ---
+description: Start a new story
+---
+
+# Start Story
+
+Short: Steps to begin work on a new story.
+
+## Steps
+
+1. Update the sprint board and claim the story.
+2. Create a branch:
+
+```bash
+git checkout -b story/<ID>-short-description
+```
+
+3. Add tests and an initial implementation stub.
+4. Run linters and type checks:
+
+```bash
+npm run lint
+npm run build
+```
+
+5. Commit with a conventional message:
+
+```bash
+git add .
+git commit -m "feat(story-<ID>): start implementation"
+git push -u origin HEAD
+```
+
+6. Open a PR, link the story/issue, and add reviewers.
+
+## Notes
+
+- Use the PR template and include testing notes for reviewers.
+- Keep changes small and focused; add tests for new behavior.
+---
 description: Start working on a new story from the sprint backlog
 ---
 

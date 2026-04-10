@@ -99,8 +99,12 @@ export async function POST(request: Request) {
       redirectTo = '/create-organization'
     } else {
       // Organization exists - check payment status (Story 1.7, enhanced in Story 1.8)
+      // Use service role client to bypass RLS — auth.uid() may not be set in this
+      // server-action context when the session cookie hasn't been flushed yet.
+      const { createServiceRoleClient } = await import('@/lib/supabase/server')
+      const adminSupabase = createServiceRoleClient()
       // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-      const { data: org, error: orgError } = await (supabase as any)
+      const { data: org, error: orgError } = await (adminSupabase as any)
         .from('organizations')
         .select('*')
         .eq('id', userRecord.org_id)

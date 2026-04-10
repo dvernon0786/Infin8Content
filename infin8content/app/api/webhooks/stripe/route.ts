@@ -483,7 +483,9 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
     const updateData: any = {
       plan: newPlan,
       payment_status: newPaymentStatus,
-      usage_reset_at: new Date(subscription.current_period_end * 1000).toISOString(),
+      usage_reset_at: subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000).toISOString()
+        : null,
     }
 
     applyGracePeriod(updateData, organization.payment_status, newPaymentStatus)

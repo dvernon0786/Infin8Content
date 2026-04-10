@@ -1,4 +1,36 @@
 ---
+description: Deploy application
+---
+
+# Deploy
+
+## Pre-deploy
+
+- Ensure CI is green and all tests pass.
+- Review changelog and confirm version bump if required.
+
+## Deploy Steps
+
+1. Merge the PR into `main` (use squash/merge as project policy).
+2. Tag the release, e.g.:
+
+```bash
+git tag -a vX.Y.Z -m "Release vX.Y.Z"
+git push origin --tags
+```
+
+3. Trigger the deployment pipeline (example):
+
+```bash
+gh workflow run deploy.yml -f ref=main
+```
+
+4. Run smoke tests and monitor application metrics.
+
+## Rollback
+
+- Follow the rollback playbook in the runbook if issues are detected.
+---
 description: Deploy the Infin8Content application
 ---
 

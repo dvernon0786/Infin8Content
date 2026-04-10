@@ -51,7 +51,7 @@ export async function middleware(request: NextRequest) {
   let response = await updateSession(request);
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/register', '/login', '/verify-email'];
+  const publicRoutes = ['/register', '/login', '/verify-email', '/forgot-password', '/update-password'];
   const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route));
 
   // Inngest webhook endpoint - bypass authentication (Inngest handles its own auth)

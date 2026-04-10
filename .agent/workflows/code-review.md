@@ -1,4 +1,34 @@
 ---
+description: Submit code for review
+---
+
+# Code Review
+
+## Pre-PR Checklist
+
+- All tests pass locally.
+- Lint and type checks completed.
+- Clear PR description and linked issue.
+
+## Submit PR
+
+1. Push your branch and open a PR.
+2. Assign reviewers and add context for the change.
+3. Include a short testing guide and any migration notes.
+
+## Addressing Feedback
+
+- Respond to comments and make iterative fixes on the same branch.
+- Re-run tests and request follow-up review when ready.
+
+## Commands
+
+```bash
+git push
+# Using GitHub CLI:
+gh pr create --fill
+```
+---
 description: Submit story for code review
 ---
 

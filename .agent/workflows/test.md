@@ -1,4 +1,29 @@
 ---
+description: Run test suite
+---
+
+# Test
+
+## Local
+
+Run unit and integration tests:
+
+```bash
+npm test
+npm run test:unit
+npm run test:e2e
+```
+
+Generate coverage report:
+
+```bash
+npm run coverage
+```
+
+## CI
+
+- Ensure tests and coverage run in CI pipelines and pass before merging.
+---
 description: Run the complete test suite
 ---
 

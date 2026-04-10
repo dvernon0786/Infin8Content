@@ -1,5 +1,5 @@
 // OTP verification API route
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { verifyOTPCode } from '@/lib/services/otp'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
@@ -44,7 +44,6 @@ export async function POST(request: Request) {
 
     // Sync status with Supabase Auth to ensure session consistency
     try {
-      const { createServiceRoleClient } = await import('@/lib/supabase/server')
       const supabaseAdmin = createServiceRoleClient()
       await supabaseAdmin.auth.admin.updateUserById(user.auth_user_id, {
         email_confirm: true
@@ -56,10 +55,15 @@ export async function POST(request: Request) {
 
     // Note: Middleware checks otp_verified in the 'users' table
     // verifyOTPCode() already set that to true atomically.
-
+    //
+    // IMPORTANT: Do NOT redirect directly to /create-organization here.
+    // No Supabase session cookies exist yet at this point in the flow.
+    // Redirect to /login so the user authenticates and session cookies are
+    // properly established before hitting any protected route.
     return NextResponse.json({
       success: true,
-      message: 'Email verified successfully. You can now access your account.',
+      message: 'Email verified successfully. Please log in to continue.',
+      redirectTo: '/login?verified=true',
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
