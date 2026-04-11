@@ -5,6 +5,7 @@ import { Breadcrumb, generateArticleBreadcrumbs } from '@/components/ui/breadcru
 import { ArticleContentViewer, ArticleMarkdownViewer } from '@/components/articles/article-content-viewer'
 import { ArticleStatusMonitor } from '@/components/articles/article-status-monitor'
 import { PublishToCmsButton } from '@/components/articles/PublishToCmsButton'
+import { PublishHistory } from '@/components/articles/publish-history'
 import { GenerateArticleButton } from '@/components/articles/generate-article-button'
 import { TrialUpgradeCard } from '@/components/articles/trial-upgrade-card'
 import ArticleErrorBoundary from './article-error-boundary'
@@ -165,8 +166,10 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
   const isLoading = article.status === 'queued' || article.status === 'processing'
 
-  // Compute WordPress publishing eligibility server-side
-  const isPublishEnabled = process.env.WORDPRESS_PUBLISH_ENABLED === 'true';
+  // Compute publishing eligibility server-side (supports both env flag names)
+  const isPublishEnabled =
+    process.env.PUBLISH_TO_CMS_ENABLED === 'true' ||
+    process.env.WORDPRESS_PUBLISH_ENABLED === 'true'
   const canPublish = isPublishEnabled && article.status === 'completed' && !isTrial;
 
   console.log('[ArticleDetailPage] Rendering with state:', {
@@ -280,6 +283,15 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                 articleId={article.id}
                 articleStatus={article.status}
               />
+            )}
+
+            {/* Publish History — shows all platforms this article has been published to */}
+            {article.status === 'completed' && !isTrial && (
+              <Card>
+                <CardContent className="pt-5 pb-5">
+                  <PublishHistory articleId={article.id} />
+                </CardContent>
+              </Card>
             )}
 
             {/* Trial Upgrade Nudge */}

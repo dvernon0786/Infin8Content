@@ -1,79 +1,123 @@
+/**
+ * WordPress Adapter — implements CMSAdapter interface.
+ *
+ * Backward-compat note: CmsConnectionForm.tsx stores the site URL under
+ * credential key `url`. This adapter reads `site_url ?? url` so both
+ * existing connections (key: url) and new connections (key: site_url) work.
+ */
+
 import type { CMSAdapter, PublishInput, PublishResult, ConnectionTestResult } from './cms-adapter'
 
-export class WordPressAdapter implements CMSAdapter {
-  constructor(private creds: Record<string, string>) {}
-  private get authHeader(): string {
-    return 'Basic ' + Buffer.from(
-      `${this.creds.username}:${this.creds.application_password}`
-    ).toString('base64')
-  }
+interface WPPostResponse {
+  id: number
+  link: string
+  status: string
+}
 
-  /**
-   * Resolve and validate the base site URL from credentials.
-   * Supports both `site_url` (new) and `url` (existing connections).
-   */
-  private get siteUrl(): string | null {
-    const raw = (this.creds.url ?? this.creds.site_url) as string | undefined
-    if (!raw) return null
-    try {
-      const parsed = new URL(raw)
-      return parsed.href.replace(/\/+$/, '')
-    } catch {
-      return null
-    }
-  }
+const TIMEOUT_MS = 30_000
+
+export class WordPressAdapter implements CMSAdapter {
+  constructor(private credentials: Record<string, string>) {}
 
   async publishPost(input: PublishInput): Promise<PublishResult> {
-    const baseUrl = this.siteUrl
-    if (!baseUrl) return { success: false, error: 'Invalid WordPress site URL' }
+    const { username, application_password } = this.credentials
+    // Backward compat: CmsConnectionForm stores URL as `url`; new form uses `site_url`
+    const site_url = this.credentials.site_url ?? this.credentials.url
+
+    if (!username || !application_password || !site_url) {
+      return {
+        success: false,
+        error: 'WordPress credentials incomplete. Required: site_url (or url), username, application_password.',
+      }
+    }
+
+    const apiUrl = `${site_url.replace(/\/+$/, '')}/wp-json/wp/v2/posts`
+    const auth = Buffer.from(`${username}:${application_password}`).toString('base64')
 
     const controller = new AbortController()
-    const timeoutMs = 15000
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
+
     try {
-      const res = await fetch(`${baseUrl}/wp-json/wp/v2/posts`, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: { Authorization: this.authHeader, 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Basic ${auth}`,
+        },
         body: JSON.stringify({
-          title:   input.title,
-          content: input.html,
-          slug:    input.slug,
-          excerpt: input.excerpt ?? '',
-          status:  'publish',
+          title: input.title,
+          content: input.html,        // PublishInput.html → WP `content` field
+          status: 'publish',
+          ...(input.slug ? { slug: input.slug } : {}),
+          ...(input.excerpt ? { excerpt: input.excerpt } : {}),
         }),
         signal: controller.signal,
       })
-      const json = await res.json()
-      if (!res.ok) return { success: false, error: json.message ?? `HTTP ${res.status}` }
-      return { success: true, postId: String(json.id), url: json.link }
-    } catch (err: any) {
-      if (err && err.name === 'AbortError') return { success: false, error: 'Request to WordPress timed out' }
-      return { success: false, error: err?.message ?? 'Failed to publish post' }
-    } finally {
+
       clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        return this.handleError(response.status, errorText)
+      }
+
+      const data: WPPostResponse = await response.json()
+      return {
+        success: true,
+        url: data.link,
+        postId: String(data.id),
+      }
+    } catch (err: any) {
+      clearTimeout(timeoutId)
+      if (err.name === 'AbortError') {
+        return { success: false, error: 'Request timeout (30s limit exceeded)' }
+      }
+      return { success: false, error: err.message || 'Unknown error occurred' }
     }
   }
 
   async testConnection(): Promise<ConnectionTestResult> {
-    const baseUrl = this.siteUrl
-    if (!baseUrl) return { success: false, message: 'Invalid WordPress site URL' }
+    const { username, application_password } = this.credentials
+    // Backward compat: same key fallback as publishPost
+    const site_url = this.credentials.site_url ?? this.credentials.url
 
-    const controller = new AbortController()
-    const timeoutMs = 10000
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+    if (!username || !application_password || !site_url) {
+      return { success: false, message: 'Missing required credentials' }
+    }
+
+    const testUrl = `${site_url.replace(/\/+$/, '')}/wp-json/wp/v2/posts?per_page=1`
+    const auth = Buffer.from(`${username}:${application_password}`).toString('base64')
+
     try {
-      const res = await fetch(`${baseUrl}/wp-json/wp/v2/users/me`, {
-        headers: { Authorization: this.authHeader },
-        signal: controller.signal,
+      const response = await fetch(testUrl, {
+        headers: { Authorization: `Basic ${auth}` },
+        signal: AbortSignal.timeout(10_000),
       })
-      if (!res.ok) return { success: false, message: `Auth failed: HTTP ${res.status}` }
-      const json = await res.json()
-      return { success: true, message: `Connected as ${json.name ?? 'WordPress user'}` }
+
+      if (!response.ok) {
+        return { success: false, message: `HTTP ${response.status} — check credentials and site URL` }
+      }
+
+      return { success: true, message: `Connected to ${site_url}` }
     } catch (err: any) {
-      if (err && err.name === 'AbortError') return { success: false, message: 'Request timeout (10s)' }
-      return { success: false, message: err.message ?? 'Connection failed' }
-    } finally {
-      clearTimeout(timeoutId)
+      return { success: false, message: err.message || 'Connection test failed' }
+    }
+  }
+
+  private handleError(status: number, errorText: string): PublishResult {
+    switch (status) {
+      case 401:
+        return { success: false, error: 'Authentication failed. Check your username and application password.' }
+      case 403:
+        return { success: false, error: 'Access forbidden. The application password may lack publish permissions.' }
+      case 404:
+        return { success: false, error: 'REST API not found. Check your site URL and ensure the WordPress REST API is enabled.' }
+      case 429:
+        return { success: false, error: 'Rate limit exceeded. Please try again later.' }
+      case 500:
+        return { success: false, error: 'WordPress server error. Please try again later.' }
+      default:
+        return { success: false, error: `WordPress API error (${status}): ${errorText}` }
     }
   }
 }
