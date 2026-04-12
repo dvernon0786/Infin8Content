@@ -70,6 +70,9 @@ You are an expert Blog Content Writer specializing in creating valuable, human-c
 • Semantic keywords should appear no more than once per section each
 • Include diverse, properly cited sources from provided research materials
 • Do NOT open any section with a blockquote or callout box defining the target keyword. Start with substantive content immediately.
+• Do NOT insert any blockquote, pull-quote, or callout box definition anywhere in the section unless the exact quoted text and its source URL appear in the Supporting research block. Definitions invented or paraphrased from general knowledge are forbidden.
+• Never mention the organization name (provided under "Product / ICP context") as a recommended service provider, consulting firm, or named entity within the article body. The organization context is background information only — it must never appear in the written article text.
+• CTAs are assembled in a separate post-processing step. Do NOT write promotional references, service recommendations, or calls-to-action that name the organization anywhere in the body of any section.
 • Never fabricate statistics, percentages, or numerical claims. If the Supporting research block does not contain a specific statistic, do not invent one. Write around the gap using qualitative language instead.
 • Maintain the specified word count for each article section (±20% tolerance)
 • Use markdown formatting with tables, bullet points, and proper headers
@@ -237,7 +240,7 @@ export async function runContentWritingAgent(
     Supporting research:
     ${JSON.stringify(input.researchPayload, null, 2)}
 
-    Product / ICP context:
+    Product / ICP context (background only — NEVER name the company in the article text):
     Company: ${input.organizationContext.name}
     Description: ${input.organizationContext.description}
 
@@ -250,7 +253,7 @@ export async function runContentWritingAgent(
 
     ${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter(Boolean).length === 0
           ? 'No verified URLs are available for this section. Do NOT write any markdown links or parenthetical citations. Write prose only.'
-          : 'Only link to URLs explicitly present in the Supporting research block above.'}`;
+          : 'Only link to URLs explicitly present in the Supporting research block above.'}\`;
 
     } else if (input.position === 'final') {
       userMessage = `${styleTemplate}
@@ -297,14 +300,14 @@ export async function runContentWritingAgent(
     - Language: ${input.generationConfig.language ?? 'en'}
     - Add emojis: ${input.generationConfig.add_emojis ?? false}
 
-    Product / ICP context:
+    Product / ICP context (background only — NEVER name the company in the article text):
     Company: ${input.organizationContext.name}
     Description: ${input.organizationContext.description}
 
     Close the article with:
     - A clear, actionable conclusion (2–3 sentences max)
     ${input.generationConfig.add_cta
-          ? `- One natural CTA pointing readers toward ${input.organizationContext.name}'s services or next steps.`
+          ? `- One natural CTA encouraging readers to explore relevant next steps or professional guidance — do NOT name the organization or any specific company.`
           : `- Do NOT include any CTA, promotional mention, or call-to-action. End with a factual summary sentence only.`
         }
 
@@ -353,13 +356,13 @@ export async function runContentWritingAgent(
     - Language: ${input.generationConfig.language ?? 'en'}
     - Add emojis: ${input.generationConfig.add_emojis ?? false}
 
-    Product / ICP context:
+    Product / ICP context (background only — NEVER name the company in the article text):
     Company: ${input.organizationContext.name}
     Description: ${input.organizationContext.description}
 
     ${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter(Boolean).length === 0
           ? 'No verified URLs are available for this section. Do NOT write any markdown links or parenthetical citations. Write prose only.'
-          : 'Only link to URLs explicitly present in the Supporting research block above.'}`;
+          : 'Only link to URLs explicitly present in the Supporting research block above.'}\`;
     }
 
     userMessage = dedent(userMessage).trim();
