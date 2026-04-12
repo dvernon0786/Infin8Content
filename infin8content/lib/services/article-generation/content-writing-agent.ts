@@ -253,7 +253,7 @@ export async function runContentWritingAgent(
 
     ${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter(Boolean).length === 0
           ? 'No verified URLs are available for this section. Do NOT write any markdown links or parenthetical citations. Write prose only.'
-          : 'Only link to URLs explicitly present in the Supporting research block above.'}\`;
+          : 'Only link to URLs explicitly present in the Supporting research block above.'}`;
 
     } else if (input.position === 'final') {
       userMessage = `${styleTemplate}
@@ -362,7 +362,7 @@ export async function runContentWritingAgent(
 
     ${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter(Boolean).length === 0
           ? 'No verified URLs are available for this section. Do NOT write any markdown links or parenthetical citations. Write prose only.'
-          : 'Only link to URLs explicitly present in the Supporting research block above.'}\`;
+          : 'Only link to URLs explicitly present in the Supporting research block above.'}`;
     }
 
     userMessage = dedent(userMessage).trim();
