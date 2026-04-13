@@ -72,7 +72,7 @@ export async function storeOTPCode(
 export async function verifyOTPCode(
   email: string,
   code: string
-): Promise<{ valid: boolean; userId?: string }> {
+): Promise<{ valid: boolean; userId?: string; authUserId?: string }> {
   // Use service role client to bypass RLS since user is unauthenticated
   const supabase = createServiceRoleClient()
   const now = new Date().toISOString()
@@ -109,16 +109,19 @@ export async function verifyOTPCode(
     return { valid: false }
   }
 
-  // Mark user as OTP verified
-  // If this fails, rollback the OTP verification
-  const { error: userUpdateError } = await supabase
+  // Mark user as OTP verified and fetch auth_user_id in the same write.
+  // Using .select().single() here means we get auth_user_id back without a
+  // second anon-client lookup (which would be blocked by RLS pre-login).
+  const { data: updatedUser, error: userUpdateError } = await supabase
     .from('users')
     .update({ otp_verified: true } as any)
     .eq('id', (updatedOTP as any).user_id)
+    .select('id, auth_user_id')
+    .single()
 
-  if (userUpdateError) {
-    console.error('Failed to update user OTP verification status:', userUpdateError)
-    // Rollback: Mark OTP as unverified since user update failed
+  if (userUpdateError || !updatedUser || !(updatedUser as any).auth_user_id) {
+    console.error('Failed to update user OTP verification status or auth_user_id is null:', userUpdateError)
+    // Rollback: Mark OTP as unverified since user update failed or auth_user_id missing
     await supabase
       .from('otp_codes' as any)
       .update({ verified_at: null })
@@ -127,7 +130,11 @@ export async function verifyOTPCode(
     return { valid: false }
   }
 
-  return { valid: true, userId: (updatedOTP as any).user_id }
+  return {
+    valid: true,
+    userId: (updatedOTP as any).user_id,
+    authUserId: (updatedUser as any).auth_user_id,
+  }
 }
 
 /**

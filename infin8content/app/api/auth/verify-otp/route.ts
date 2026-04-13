@@ -1,5 +1,5 @@
 // OTP verification API route
-import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 import { verifyOTPCode } from '@/lib/services/otp'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
@@ -16,41 +16,27 @@ export async function POST(request: Request) {
     const email = parsed.email.toLowerCase().trim()
     const code = parsed.code
 
-    // Verify OTP code
-    const { valid, userId } = await verifyOTPCode(email, code)
+    // Verify OTP code — authUserId is returned from the same service-role
+    // UPDATE query inside verifyOTPCode(), eliminating the secondary anon-client
+    // lookup that was blocked by RLS and caused 404s.
+    const { valid, userId, authUserId } = await verifyOTPCode(email, code)
 
-    if (!valid || !userId) {
+    if (!valid || !userId || !authUserId) {
       return NextResponse.json(
         { error: 'Invalid or expired verification code. Please try again.' },
         { status: 400 }
       )
     }
 
-    // Get the auth_user_id from users table
-    // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-    const supabase = await createClient()
-    const { data: user, error: userError } = await (supabase as any)
-      .from('users')
-      .select('auth_user_id')
-      .eq('id', userId)
-      .single()
-
-    if (userError || !user || !user.auth_user_id) {
-      return NextResponse.json(
-        { error: 'User not found. Please try registering again.' },
-        { status: 404 }
-      )
-    }
-
-    // Sync status with Supabase Auth to ensure session consistency
+    // Sync email_confirmed status with Supabase Auth (non-blocking)
     try {
       const supabaseAdmin = createServiceRoleClient()
-      await supabaseAdmin.auth.admin.updateUserById(user.auth_user_id, {
-        email_confirm: true
+      await supabaseAdmin.auth.admin.updateUserById(authUserId, {
+        email_confirm: true,
       })
     } catch (syncError) {
       console.error('Failed to sync OTP status with Supabase Auth:', syncError)
-      // Non-blocking: we still have the flag in our 'users' table which middleware checks
+      // Non-blocking: middleware checks otp_verified in users table
     }
 
     // Note: Middleware checks otp_verified in the 'users' table
