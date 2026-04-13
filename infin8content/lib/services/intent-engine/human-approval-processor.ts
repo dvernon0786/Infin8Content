@@ -13,6 +13,7 @@ import { WorkflowState } from '@/lib/fsm/workflow-events'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
+import { getOrganizationCompetitors } from '@/lib/services/competitor-workflow-integration'
 
 export interface HumanApprovalRequest {
   decision: 'approved' | 'rejected'
@@ -33,8 +34,8 @@ export interface WorkflowSummary {
   organization_id: string
   created_at: string
   updated_at: string
-  icp_document: any
-  competitor_analysis: any
+  icp_data: any
+  competitor_context: any
   seed_keywords: any[]
   longtail_keywords: any[]
   topic_clusters: any[]
@@ -105,7 +106,7 @@ export async function processHumanApproval(
   // Validate workflow exists and is at correct step - READ ONLY
   const workflowResult = await supabase
     .from('intent_workflows')
-    .select('id, state, organization_id, created_at, updated_at, icp_document, competitor_analysis')
+    .select('id, state, organization_id, created_at, updated_at, icp_data')
     .eq('id', workflowId)
     .single()
 
@@ -118,8 +119,7 @@ export async function processHumanApproval(
     organization_id: string
     created_at: string
     updated_at: string
-    icp_document: any
-    competitor_analysis: any
+    icp_data: any
     state: string
   }
 
@@ -259,7 +259,7 @@ export async function getWorkflowSummary(workflowId: string): Promise<WorkflowSu
   // Get workflow details - READ ONLY
   const workflowResult = await supabase
     .from('intent_workflows')
-    .select('id, state, organization_id, created_at, updated_at, icp_document, competitor_analysis')
+    .select('id, state, organization_id, created_at, updated_at, icp_data')
     .eq('id', workflowId)
     .single()
 
@@ -273,8 +273,7 @@ export async function getWorkflowSummary(workflowId: string): Promise<WorkflowSu
     organization_id: string
     created_at: string
     updated_at: string
-    icp_document: any
-    competitor_analysis: any
+    icp_data: any
   }
 
   // Validate user belongs to the same organization as the workflow
@@ -339,14 +338,17 @@ export async function getWorkflowSummary(workflowId: string): Promise<WorkflowSu
     approved_keywords_count: approvedKeywords.length,
   }
 
+  // Fetch organization competitors as canonical source
+  const orgCompetitors = await getOrganizationCompetitors(workflow.organization_id)
+
   return {
     workflow_id: workflowId,
     state: workflow.state as WorkflowState,
     organization_id: workflow.organization_id,
     created_at: workflow.created_at,
     updated_at: workflow.updated_at,
-    icp_document: workflow.icp_document,
-    competitor_analysis: workflow.competitor_analysis,
+    icp_data: workflow.icp_data,
+    competitor_context: (orgCompetitors && orgCompetitors.length > 0) ? orgCompetitors.map((c: any) => ({ domain: c.domain, name: c.name })) : [],
     seed_keywords: seedKeywords,
     longtail_keywords: longtailKeywords,
     topic_clusters: topicClusters,

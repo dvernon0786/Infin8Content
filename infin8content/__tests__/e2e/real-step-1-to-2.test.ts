@@ -223,9 +223,9 @@ describe('Real E2E: Step 1 to Step 2 Canonical Progression', () => {
   it('should verify real database mutations occurred', async () => {
     // Check if competitor analysis data was actually created
     const { data: competitors } = await supabase
-      .from('competitor_analysis')
+      .from('organization_competitors')
       .select('*')
-      .eq('intent_workflow_id', workflowId)
+      .eq('organization_id', organizationId)
 
     expect(competitors).toBeDefined()
     expect(competitors!.length).toBeGreaterThan(0)

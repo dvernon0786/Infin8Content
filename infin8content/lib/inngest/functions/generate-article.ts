@@ -1,6 +1,7 @@
 import { inngest } from '@/lib/inngest/client'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { runContentPlannerAgent } from '@/lib/services/article-generation/content-planner-agent'
+import { getOrganizationCompetitors } from '@/lib/services/competitor-workflow-integration'
 import { runResearchAgent } from '@/lib/services/article-generation/research-agent'
 import { runContentWritingAgent } from '@/lib/services/article-generation/content-writing-agent'
 import { ArticleAssembler } from '@/lib/services/article-generation/article-assembler'
@@ -64,7 +65,9 @@ export const generateArticle = inngest.createFunction(
           title,
           subtopic_data,
           article_plan,
-          generation_config
+          generation_config,
+          icp_context,
+          competitor_context
         `)
         .eq('id', articleId)
         .single()
@@ -96,7 +99,7 @@ export const generateArticle = inngest.createFunction(
       // Load Workflow for ICP context (Phase 6 req)
       const { data: wfData } = await supabase
         .from('intent_workflows')
-        .select('icp_analysis')
+        .select('icp_data')
         .eq('id', (article.intent_workflow_id as string))
         .single()
 
@@ -116,6 +119,58 @@ export const generateArticle = inngest.createFunction(
         .in('status', ['queued', 'draft', 'failed'])
 
       if (error) throw new Error(`Status transition failed: ${error.message}`)
+    })
+
+    /* -------------------------------------------------- */
+    /* 1.5 Resolve + persist ICP context                 */
+    /*     Backfills any article rows the queuer missed  */
+    /* -------------------------------------------------- */
+
+    const resolvedIcpContext = await step.run('persist-icp-context', async () => {
+      const existingIcp = (article as any).icp_context
+      const existingCompetitor = (article as any).competitor_context
+
+      const icpIsEmpty = !existingIcp || Object.keys(existingIcp).length === 0
+      const competitorIsEmpty = !existingCompetitor || Object.keys(existingCompetitor).length === 0
+
+      // Both already populated — nothing to do
+      if (!icpIsEmpty && !competitorIsEmpty) {
+        return { icp: existingIcp, competitor: existingCompetitor }
+      }
+
+      const updates: Record<string, any> = {}
+
+      const freshIcp = workflow?.icp_data ?? null
+
+      // Fetch organization competitors as the source of truth (not a workflow column)
+      let freshCompetitor: any = null
+      try {
+        const organizationId = (article as any).organization_id ?? orgId ?? (organization as any)?.id
+        const competitorRows = organizationId ? await getOrganizationCompetitors(organizationId) : []
+        freshCompetitor = (competitorRows && competitorRows.length > 0)
+          ? competitorRows.map((c: any) => ({ domain: c.domain, name: c.name }))
+          : null
+      } catch (err) {
+        console.error(`[Worker] Error fetching organization competitors for article ${articleId}:`, err)
+        freshCompetitor = null
+      }
+
+      if (icpIsEmpty && freshIcp) updates.icp_context = freshIcp
+      if (competitorIsEmpty && freshCompetitor) updates.competitor_context = freshCompetitor
+
+      if (Object.keys(updates).length > 0) {
+        await supabase
+          .from('articles')
+          .update(updates)
+          .eq('id', articleId)
+
+        console.log(`[Worker] Backfilled icp_context/competitor_context on article ${articleId}`)
+      }
+
+      return {
+        icp: freshIcp ?? existingIcp ?? {},
+        competitor: freshCompetitor ?? existingCompetitor ?? {},
+      }
     })
 
     /* -------------------------------------------------- */
@@ -160,9 +215,12 @@ export const generateArticle = inngest.createFunction(
 
       const icpText = [
         `Business Description:\n${organization.business_description || ''}`,
-        workflow?.icp_analysis
-          ? `ICP Analysis:\n${JSON.stringify(workflow.icp_analysis, null, 2)}`
-          : ''
+        resolvedIcpContext.icp && Object.keys(resolvedIcpContext.icp).length > 0
+          ? `ICP Analysis:\n${JSON.stringify(resolvedIcpContext.icp, null, 2)}`
+          : '',
+        resolvedIcpContext.competitor && Object.keys(resolvedIcpContext.competitor).length > 0
+          ? `Competitor Analysis:\n${JSON.stringify(resolvedIcpContext.competitor, null, 2)}`
+          : '',
       ].filter(Boolean).join('\n\n')
 
       const plannerOutput = await runContentPlannerAgent({
@@ -352,7 +410,9 @@ export const generateArticle = inngest.createFunction(
                 .join('\n\n'),
               organizationContext: {
                 name: organization.name,
-                description: organization.business_description || ''
+                description: organization.business_description || '',
+                icpContext: resolvedIcpContext.icp,
+                competitorContext: resolvedIcpContext.competitor,
               }
             }))
 

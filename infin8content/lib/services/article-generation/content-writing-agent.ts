@@ -18,6 +18,8 @@ export interface ContentWritingAgentInput {
   organizationContext: {
     name: string
     description: string
+    icpContext?: Record<string, any>
+    competitorContext?: Record<string, any>
   }
   priorContentMarkdown?: string // 🆕 NEW: For section continuity (Phase 6)
 }
@@ -165,10 +167,49 @@ Solutions
  */
 const WRITING_MODEL = 'x-ai/grok-4-fast'
 
+/**
+ * Build the ICP context block to inject into writer prompts.
+ * Returns empty string if no ICP data available.
+ */
+function buildIcpBlock(icpContext?: Record<string, any>, competitorContext?: Record<string, any>): string {
+  const parts: string[] = []
+
+  if (icpContext && Object.keys(icpContext).length > 0) {
+    const painPoints = icpContext.pain_points || icpContext.painPoints || []
+    const goals = icpContext.goals || []
+    const challenges = icpContext.challenges || []
+    const audience = icpContext.target_audience || icpContext.audience || icpContext.description || ''
+
+    if (audience) parts.push(`Target audience: ${audience}`)
+    if (painPoints.length) parts.push(`Reader pain points:\n${painPoints.map((p: string) => `- ${p}`).join('\n')}`)
+    if (goals.length) parts.push(`Reader goals:\n${goals.map((g: string) => `- ${g}`).join('\n')}`)
+    if (challenges.length) parts.push(`Reader challenges:\n${challenges.map((c: string) => `- ${c}`).join('\n')}`)
+
+    if (!audience && !painPoints.length && !goals.length && !challenges.length) {
+      parts.push(`ICP context: ${JSON.stringify(icpContext)}`)
+    }
+  }
+
+  if (competitorContext && Object.keys(competitorContext).length > 0) {
+    parts.push(`Competitor landscape: ${JSON.stringify(competitorContext)}`)
+  }
+
+  return parts.length ? parts.join('\n\n') : ''
+}
+
 export async function runContentWritingAgent(
   input: ContentWritingAgentInput
 ): Promise<ContentWritingAgentOutput> {
   const startTime = Date.now();
+
+  // FIX: Build ICP block once, inject into all position prompts
+  const icpBlock = buildIcpBlock(
+    input.organizationContext.icpContext,
+    input.organizationContext.competitorContext
+  )
+  const icpSection = icpBlock
+    ? `\nICP & audience context (use to tailor tone, examples, and pain points — do NOT name the org):\n${icpBlock}\n`
+    : ''
 
   // Dedent helper: compute the exact leading whitespace prefix from the
   // first non-empty line and remove that exact prefix from other lines that
@@ -243,7 +284,7 @@ export async function runContentWritingAgent(
     Product / ICP context (background only — NEVER name the company in the article text):
     Company: ${input.organizationContext.name}
     Description: ${input.organizationContext.description}
-
+    ${icpSection}
     Generation config:
     - Tone: ${input.generationConfig.tone ?? 'professional'}
     - Language: ${input.generationConfig.language ?? 'en'}
@@ -303,7 +344,7 @@ export async function runContentWritingAgent(
     Product / ICP context (background only — NEVER name the company in the article text):
     Company: ${input.organizationContext.name}
     Description: ${input.organizationContext.description}
-
+    ${icpSection}
     Close the article with:
     - A clear, actionable conclusion (2–3 sentences max)
     ${input.generationConfig.add_cta
@@ -359,7 +400,7 @@ export async function runContentWritingAgent(
     Product / ICP context (background only — NEVER name the company in the article text):
     Company: ${input.organizationContext.name}
     Description: ${input.organizationContext.description}
-
+    ${icpSection}
     ${(input.researchPayload.results ?? []).flatMap(r => r.source_urls ?? []).filter(Boolean).length === 0
           ? 'No verified URLs are available for this section. Do NOT write any markdown links or parenthetical citations. Write prose only.'
           : 'Only link to URLs explicitly present in the Supporting research block above.'}`;
