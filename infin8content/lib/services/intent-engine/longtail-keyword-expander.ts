@@ -6,7 +6,92 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { RetryPolicy, retryWithPolicy } from './retry-utils'
 import { emitAnalyticsEvent } from '../analytics/event-emitter'
-import { resolveLocationCode, resolveLanguageCode } from '@/lib/config/dataforseo-geo'
+import { getOrganizationGeoOrThrow, LANGUAGE_NAME_MAP } from '@/lib/config/dataforseo-geo'
+import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
+import { logIntentAction } from './intent-audit-logger'
+import { AuditAction } from '@/types/audit'
+
+// 🚨 COMPREHENSIVE ERROR LOGGING
+async function logLongtailError(
+  workflowId: string,
+  organizationId: string,
+  seedKeyword: string,
+  errorType: string,
+  errorMessage: string,
+  context?: any
+) {
+  try {
+    const supabase = createServiceRoleClient()
+
+    // Log to intent_audit_logs using standardized logger
+    await logIntentAction({
+      organizationId: organizationId,
+      workflowId: workflowId,
+      entityType: 'keyword',
+      entityId: workflowId as any, // Using workflow ID as entity for step-level errors
+      actorId: SYSTEM_USER_ID,
+      action: 'workflow.longtail_keywords.error' as any,
+      details: {
+        seed_keyword: seedKeyword,
+        error_type: errorType,
+        error_message: errorMessage,
+        context: context || {},
+        timestamp: new Date().toISOString()
+      }
+    })
+
+    // Also emit analytics event
+    await emitAnalyticsEvent({
+      event_type: 'workflow_step_error',
+      organization_id: organizationId,
+      workflow_id: workflowId,
+      step: 'step_4_longtails',
+      error_type: errorType,
+      error_message: errorMessage,
+      seed_keyword: seedKeyword,
+      context: context || {},
+      timestamp: new Date().toISOString()
+    })
+
+    console.error(`[LongtailExpander ERROR] Workflow: ${workflowId}, Seed: "${seedKeyword}", Type: ${errorType}, Message: ${errorMessage}`, context)
+  } catch (logError) {
+    console.error('[LongtailExpander] Failed to log error:', logError)
+  }
+}
+
+async function logLongtailSuccess(
+  workflowId: string,
+  organizationId: string,
+  seedKeyword: string,
+  longtailsCreated: number,
+  longtailsSkipped: number,
+  details: any
+) {
+  try {
+    const supabase = createServiceRoleClient()
+
+    // Log to intent_audit_logs using standardized logger
+    await logIntentAction({
+      organizationId: organizationId,
+      workflowId: workflowId,
+      entityType: 'keyword',
+      entityId: workflowId as any,
+      actorId: SYSTEM_USER_ID,
+      action: 'workflow.longtail_keywords.seed_completed' as any,
+      details: {
+        seed_keyword: seedKeyword,
+        longtails_created: longtailsCreated,
+        longtails_skipped: longtailsSkipped,
+        ...details,
+        timestamp: new Date().toISOString()
+      }
+    })
+
+    console.log(`[LongtailExpander SUCCESS] Workflow: ${workflowId}, Seed: "${seedKeyword}", Created: ${longtailsCreated}, Skipped: ${longtailsSkipped}`)
+  } catch (logError) {
+    console.error('[LongtailExpander] Failed to log success:', logError)
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 /*                                   CONFIG                                   */
@@ -116,7 +201,7 @@ function extractTaskItems(
     (typeof response.tasks_error === 'number' && response.tasks_error > 0)
   ) {
     throw new Error(
-      `${endpoint} failed: ${response.status_message} (code=${response.status_code})` 
+      `${endpoint} failed: ${response.status_message} (code=${response.status_code})`
     )
   }
 
@@ -202,6 +287,38 @@ function deduplicate(keywords: LongtailKeywordData[]): LongtailKeywordData[] {
 }
 
 /* -------------------------------------------------------------------------- */
+/*                             PAYLOAD BUILDER                                */
+/* -------------------------------------------------------------------------- */
+
+function buildGeoPayload(
+  endpoint: string,
+  seed: string,
+  locationCode: number,
+  languageCode: string
+) {
+  const base: any = {
+    keyword: seed,
+    location_code: locationCode
+  }
+
+  // SERP APIs use language_name
+  if (endpoint.startsWith('/serp/')) {
+    base.language_name = LANGUAGE_NAME_MAP[languageCode]
+  }
+
+  // DATAFORSEO LABS APIs use language_code
+  else if (endpoint.startsWith('/dataforseo_labs/')) {
+    base.language_code = languageCode
+  }
+
+  else {
+    throw new Error(`Unsupported DataForSEO endpoint family: ${endpoint}`)
+  }
+
+  return [base]
+}
+
+/* -------------------------------------------------------------------------- */
 /*                             SOURCE FETCHERS                                */
 /* -------------------------------------------------------------------------- */
 
@@ -210,57 +327,83 @@ async function fetchSource(
   source: LongtailKeywordData['source'],
   seed: string,
   locationCode: number,
-  languageCode: string
+  languageCode: string,
+  workflowId?: string,
+  organizationId?: string
 ): Promise<LongtailKeywordData[]> {
 
-  const payload = [{
-    keyword: seed,
-    location_code: locationCode,
-    language_code: languageCode,
-    limit: 3
-  }]
+  const payload = buildGeoPayload(endpoint, seed, locationCode, languageCode)
+  payload[0].limit = 3
 
-  const response = await retryWithPolicy(
-    () => makeDataForSEORequest(endpoint, payload),
-    LONGTAIL_RETRY_POLICY,
-    `DataForSEO:${source}` 
-  )
+  try {
+    const response = await retryWithPolicy(
+      () => makeDataForSEORequest(endpoint, payload),
+      LONGTAIL_RETRY_POLICY,
+      `DataForSEO:${source}`
+    )
 
-  const items = extractTaskItems(response, source)
+    const items = extractTaskItems(response, source)
 
-  return items.map((item: any): LongtailKeywordData | null => {
+    const results = items.map((item: any): LongtailKeywordData | null => {
 
-    if (source === 'autocomplete') {
-      const keyword = item.keyword || item.q
-      if (!keyword || !keyword.trim()) return null
+      if (source === 'autocomplete') {
+        const keyword = item.keyword || item.q
+        if (!keyword || !keyword.trim()) return null
+
+        return {
+          keyword: keyword.trim(),
+          search_volume: 0,
+          competition_level: 'low',
+          competition_index: 0,
+          keyword_difficulty: 0,
+          source
+        }
+      }
+
+      const data = item.keyword_data
+      const info = data?.keyword_info ?? {}
+
+      if (!data?.keyword) return null
 
       return {
-        keyword: keyword.trim(),
-        search_volume: 0,
-        competition_level: 'low',
-        competition_index: 0,
-        keyword_difficulty: 0,
+        keyword: data.keyword,
+        search_volume: info.search_volume ?? 0,
+        competition_level: mapCompetitionLevel(info.competition),
+        competition_index: normalizeCompetitionIndex(info.competition),
+        keyword_difficulty: normalizeInteger(
+          data?.keyword_properties?.keyword_difficulty
+        ),
+        cpc: info.cpc,
         source
       }
+    }).filter((k): k is LongtailKeywordData => k !== null)
+
+    // 🚨 LOG SUCCESS
+    if (workflowId && organizationId) {
+      await logLongtailSuccess(workflowId, organizationId, seed, results.length, 0, {
+        source,
+        endpoint,
+        items_processed: items.length,
+        keywords_returned: results.length
+      })
     }
 
-    const data = item.keyword_data
-    const info = data?.keyword_info ?? {}
+    return results
 
-    if (!data?.keyword) return null
+  } catch (error) {
+    // 🚨 COMPREHENSIVE ERROR LOGGING
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
 
-    return {
-      keyword: data.keyword,
-      search_volume: info.search_volume ?? 0,
-      competition_level: mapCompetitionLevel(info.competition),
-      competition_index: normalizeCompetitionIndex(info.competition),
-      keyword_difficulty: normalizeInteger(
-        data?.keyword_properties?.keyword_difficulty
-      ),
-      cpc: info.cpc,
-      source
+    if (workflowId && organizationId) {
+      await logLongtailError(workflowId, organizationId, seed, 'API_CALL_FAILED', errorMessage, {
+        source,
+        endpoint,
+        payload: payload[0]
+      })
     }
-  }).filter((k): k is LongtailKeywordData => k !== null)
+
+    throw error
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -270,7 +413,10 @@ async function fetchSource(
 async function expandSingleSeed(
   seed: SeedKeyword,
   locationCode: number,
-  languageCode: string
+  languageCode: string,
+  existingKeywordsSet: Set<string>,
+  workflowId: string,
+  organizationId: string
 ) {
 
   const endpoints = [
@@ -282,28 +428,82 @@ async function expandSingleSeed(
 
   const results = await Promise.allSettled(
     endpoints.map(([endpoint, source]) =>
-      fetchSource(endpoint, source, seed.keyword, locationCode, languageCode)
+      fetchSource(endpoint, source, seed.keyword, locationCode, languageCode, workflowId, organizationId)
     )
   )
 
   const collected: LongtailKeywordData[] = []
   const errors: string[] = []
+  const sourceResults: { [key: string]: { success: number, failed: boolean, error?: string } } = {}
 
   for (const result of results) {
+    const source = endpoints[results.indexOf(result)][1]
+
     if (result.status === 'fulfilled') {
+      console.log(`[LongtailExpander] Seed "${seed.keyword}" - ${result.value.length} keywords from ${source}`)
       collected.push(...result.value)
+      sourceResults[source] = { success: result.value.length, failed: false }
     } else {
-      errors.push(result.reason?.message ?? 'Unknown error')
+      const errorMessage = result.reason?.message ?? 'Unknown error'
+      console.error(`[LongtailExpander] Seed "${seed.keyword}" - API Error from ${source}: ${errorMessage}`)
+      errors.push(errorMessage)
+      sourceResults[source] = { success: 0, failed: true, error: errorMessage }
+
+      // 🚨 LOG SOURCE-SPECIFIC ERROR
+      await logLongtailError(workflowId, organizationId, seed.keyword, 'SOURCE_API_FAILED', errorMessage, {
+        source,
+        endpoint: endpoints[results.indexOf(result)][0]
+      })
     }
   }
 
+  console.log(`[LongtailExpander] Seed "${seed.keyword}" - Total collected: ${collected.length}, Errors: ${errors.length}`)
+
   const unique = deduplicate(collected).slice(0, 12)
+
+  console.log(`[LongtailExpander] Seed "${seed.keyword}" - After deduplication: ${unique.length} unique longtails`)
+
+  // 🚨 CRITICAL FIX: Filter out self-duplicates and existing keywords
+  const seedNormalized = normalizeKeyword(seed.keyword)
+  const filteredLongtails = unique.filter(lt => {
+    const normalized = normalizeKeyword(lt.keyword)
+
+    // 1. Prevent self-duplicate (longtail identical to seed)
+    if (normalized === seedNormalized) {
+      console.log(`[LongtailExpander] Seed "${seed.keyword}" - Skipping self-duplicate: "${lt.keyword}"`)
+      return false
+    }
+
+    // 2. Prevent inserting if keyword already exists in workflow
+    if (existingKeywordsSet.has(normalized)) {
+      console.log(`[LongtailExpander] Seed "${seed.keyword}" - Skipping existing keyword: "${lt.keyword}"`)
+      return false
+    }
+
+    return true
+  })
+
+  const skippedCount = unique.length - filteredLongtails.length
+  console.log(`[LongtailExpander] Seed "${seed.keyword}" - After filtering: ${filteredLongtails.length} valid longtails (skipped ${skippedCount} duplicates/existing)`)
+
+  // 🚨 LOG COMPREHENSIVE SEED RESULTS
+  await logLongtailSuccess(workflowId, organizationId, seed.keyword, filteredLongtails.length, skippedCount, {
+    total_collected: collected.length,
+    after_deduplication: unique.length,
+    after_filtering: filteredLongtails.length,
+    self_duplicates_skipped: unique.filter(lt => normalizeKeyword(lt.keyword) === seedNormalized).length,
+    existing_keywords_skipped: unique.filter(lt => existingKeywordsSet.has(normalizeKeyword(lt.keyword))).length,
+    source_results: sourceResults,
+    endpoints_processed: endpoints.length,
+    successful_sources: Object.values(sourceResults).filter(r => !r.failed).length,
+    failed_sources: Object.values(sourceResults).filter(r => r.failed).length
+  })
 
   return {
     seed_keyword_id: seed.id,
     seed_keyword: seed.keyword,
-    longtails_created: unique.length,
-    longtails: unique,
+    longtails_created: filteredLongtails.length,
+    longtails: filteredLongtails,
     errors
   }
 }
@@ -320,6 +520,8 @@ async function persistLongtails(
   const supabase = createServiceRoleClient()
 
   if (longtails.length) {
+    console.log(`[LongtailExpander] Persisting ${longtails.length} longtails for seed "${seed.keyword}"`)
+
     const rows = longtails.map(lt => ({
       workflow_id: workflowId,
       organization_id: seed.organization_id,
@@ -338,22 +540,33 @@ async function persistLongtails(
     }))
 
     const { error } = await supabase.from('keywords').upsert(rows, {
-      onConflict: 'workflow_id,keyword'
+      onConflict: 'workflow_id,keyword,parent_seed_keyword_id'
     })
 
     if (error && error.code !== '23505') {
+      console.error(`[LongtailExpander] Bulk upsert failed for seed "${seed.keyword}": ${error.message}`)
       throw new Error(`Bulk upsert failed: ${error.message}`)
+    } else if (error && error.code === '23505') {
+      console.log(`[LongtailExpander] Duplicate longtails detected for seed "${seed.keyword}" - skipping duplicates`)
+    } else {
+      console.log(`[LongtailExpander] Successfully persisted ${longtails.length} longtails for seed "${seed.keyword}"`)
     }
+  } else {
+    console.warn(`[LongtailExpander] No longtails to persist for seed "${seed.keyword}"`)
   }
 
   // ALWAYS mark seed completed - ensures deterministic workflow integrity
+  console.log(`[LongtailExpander] Marking seed "${seed.keyword}" as completed`)
   const { error: updateError } = await supabase
     .from('keywords')
     .update({ longtail_status: 'completed' })
     .eq('id', seed.id)
 
   if (updateError) {
+    console.error(`[LongtailExpander] Seed status update failed for "${seed.keyword}": ${updateError.message}`)
     throw new Error(`Seed status update failed: ${updateError.message}`)
+  } else {
+    console.log(`[LongtailExpander] Successfully marked seed "${seed.keyword}" as completed`)
   }
 }
 
@@ -366,6 +579,8 @@ export async function expandSeedKeywordsToLongtails(
 ) {
 
   const supabase = createServiceRoleClient()
+
+  console.log(`[LongtailExpander] Starting longtail expansion for workflow: ${workflowId}`)
 
   const { data: workflow, error: workflowError } = await supabase
     .from('intent_workflows')
@@ -386,6 +601,7 @@ export async function expandSeedKeywordsToLongtails(
     .eq('longtail_status', 'not_started')
 
   if (seedsError || !seeds?.length) {
+    console.log(`[LongtailExpander] No seeds found for expansion in workflow: ${workflowId}`)
     return {
       workflow_id: workflowId,
       seeds_processed: 0,
@@ -393,6 +609,21 @@ export async function expandSeedKeywordsToLongtails(
       results: []
     }
   }
+
+  console.log(`[LongtailExpander] Found ${seeds.length} seeds to process for workflow: ${workflowId}`)
+
+  // 🚨 CRITICAL FIX: Query existing keywords once for filtering
+  const { data: existingKeywords } = await supabase
+    .from('keywords')
+    .select('keyword')
+    .eq('workflow_id', workflowId)
+    .eq('organization_id', orgId)
+
+  const existingKeywordsSet = new Set(
+    (existingKeywords as any[])?.map(k => normalizeKeyword(k.keyword)) || []
+  )
+
+  console.log(`[LongtailExpander] Loaded ${existingKeywordsSet.size} existing keywords for filtering`)
 
   const { data: org, error: orgError } = await supabase
     .from('organizations')
@@ -404,29 +635,39 @@ export async function expandSeedKeywordsToLongtails(
     throw new Error('Organization not found')
   }
 
-  const orgData = org as { keyword_settings?: { target_region?: string; language_code?: string } }
-  const locationCode = resolveLocationCode(orgData.keyword_settings?.target_region)
-  const languageCode = resolveLanguageCode(orgData.keyword_settings?.language_code)
+  // Use STRICT geo resolution - no fallbacks
+  const { locationCode, languageCode } = await getOrganizationGeoOrThrow(supabase, orgId)
+
+  console.log(`[LongtailExpander] Using geo settings: location=${locationCode}, language=${languageCode}`)
 
   const results = []
   let total = 0
 
   for (const seed of seeds as unknown as SeedKeyword[]) {
-    const expansion = await expandSingleSeed(seed, locationCode, languageCode)
+    console.log(`[LongtailExpander] Processing seed: "${seed.keyword}"`)
+    const expansion = await expandSingleSeed(seed, locationCode, languageCode, existingKeywordsSet, workflowId, orgId)
 
     await persistLongtails(workflowId, seed, expansion.longtails)
 
     results.push(expansion)
     total += expansion.longtails_created
 
-    emitAnalyticsEvent({
-      event_type: 'longtail_keywords_expanded',
-      timestamp: new Date().toISOString(),
-      organization_id: orgId,
-      workflow_id: workflowId,
-      seed_keyword: seed.keyword,
-      longtails_created: expansion.longtails_created
+    console.log(`[LongtailExpander] Seed "${seed.keyword}" completed: ${expansion.longtails_created} longtails, ${expansion.errors.length} errors`)
+  }
+
+  console.log(`[LongtailExpander] Workflow ${workflowId} expansion completed: ${total} total longtails created from ${seeds.length} seeds`)
+
+  // 🚨 LOG WORKFLOW COMPLETION
+  try {
+    await logLongtailSuccess(workflowId, orgId, 'WORKFLOW_COMPLETE', total, 0, {
+      seeds_processed: seeds.length,
+      total_longtails_created: total,
+      average_longtails_per_seed: seeds.length > 0 ? Math.round(total / seeds.length * 10) / 10 : 0,
+      workflow_completion_time: new Date().toISOString(),
+      existing_keywords_filtered: existingKeywordsSet.size
     })
+  } catch (logError) {
+    console.error('[LongtailExpander] Failed to log workflow completion:', logError)
   }
 
   return {

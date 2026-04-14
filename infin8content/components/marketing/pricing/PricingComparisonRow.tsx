@@ -41,7 +41,7 @@ export default function PricingComparisonRow() {
         <div className="relative bg-white rounded-2xl border border-[#217CEB]/30 p-8 shadow-lg">
 
           {/* Badge */}
-          <div className="absolute -top-3 left-6 bg-gradient-to-r from-[#217CEB] to-[#4A42CC] text-white text-xs font-semibold px-3 py-1 rounded-full font-lato">
+          <div className="absolute -top-3 left-6 bg-linear-to-r from-[#217CEB] to-[#4A42CC] text-white text-xs font-semibold px-3 py-1 rounded-full font-lato">
             White-Glove
           </div>
 

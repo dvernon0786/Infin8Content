@@ -33,7 +33,7 @@ export interface SeedKeywordData {
   competition_index: number
   keyword_difficulty: number
   cpc?: number
-  
+
   // AI Copilot metadata fields
   detected_language?: string
   is_foreign_language?: boolean
@@ -68,8 +68,8 @@ export interface ExtractSeedKeywordsRequest {
   organizationId: string
   workflowId?: string  // Optional workflow ID for retry tracking
   maxSeedsPerCompetitor?: number
-  locationCode?: number
-  languageCode?: string
+  locationCode: number
+  languageCode: string
   timeoutMs?: number
 }
 
@@ -95,8 +95,8 @@ export async function extractSeedKeywords(
     organizationId,
     workflowId,
     maxSeedsPerCompetitor = 3,
-    locationCode = 2840,
-    languageCode = 'en',
+    locationCode,
+    languageCode,
     timeoutMs = 600000
   } = request
 
@@ -108,9 +108,6 @@ export async function extractSeedKeywords(
     throw new Error('Organization ID is required for seed keyword extraction')
   }
 
-  if (!workflowId) {
-    throw new Error('Workflow ID is required for seed keyword extraction')
-  }
 
   console.log(`[CompetitorSeedExtractor] Starting extraction for ${competitors.length} competitors`)
 
@@ -133,7 +130,7 @@ export async function extractSeedKeywords(
       }
 
       const keywords = await extractKeywordsFromCompetitor(
-        competitor.url,
+        competitor.domain,
         maxSeedsPerCompetitor,
         locationCode,
         languageCode,
@@ -213,6 +210,10 @@ async function extractKeywordsFromCompetitor(
   }
 
   // Prepare DataForSEO request
+  // target must be a bare domain without scheme (DataForSEO requirement).
+  // language_code scopes results to the org's configured language; without it,
+  // DataForSEO defaults to the most-indexed language for the location (e.g. Vietnamese
+  // for location 2704), returning keywords that get filtered out downstream.
   const requestBody = [{
     target: url,
     location_code: locationCode,
@@ -253,7 +254,7 @@ async function extractKeywordsFromCompetitor(
         if (data.status_code === 42900 && attempt < COMPETITOR_RETRY_POLICY.maxAttempts - 1) {
           const retryAfter = response.headers.get('Retry-After')
           let delay: number
-          
+
           // Use Retry-After header if valid, otherwise use exponential backoff
           if (retryAfter) {
             const delaySeconds = parseInt(retryAfter, 10)
@@ -270,12 +271,12 @@ async function extractKeywordsFromCompetitor(
             delay = calculateBackoffDelay(attempt, COMPETITOR_RETRY_POLICY)
             console.warn(`DataForSEO rate limited (attempt ${attempt + 1}/${COMPETITOR_RETRY_POLICY.maxAttempts}), retrying in ${delay}ms (exponential backoff)...`)
           }
-          
+
           // Update retry metadata before retry
           if (workflowId && organizationId) {
             await updateWorkflowRetryMetadata(workflowId, organizationId, attempt + 1, errorMessage)
           }
-          
+
           await sleep(delay)
           continue
         }
@@ -302,7 +303,7 @@ async function extractKeywordsFromCompetitor(
 
       // Sort by keyword_info.search_volume (nested structure)
       const sortedKeywords = taskResults
-        .sort((a: any, b: any) => 
+        .sort((a: any, b: any) =>
           (b.keyword_info?.search_volume || 0) - (a.keyword_info?.search_volume || 0)
         )
         .slice(0, maxKeywords)
@@ -311,7 +312,7 @@ async function extractKeywordsFromCompetitor(
 
       // DEBUG: Log the raw DataForSEO response structure
       console.log(`[DataForSEO DEBUG] Raw item structure for ${url}:`, JSON.stringify(taskResults.slice(0, 2), null, 2))
-      
+
       // DEBUG: Log each result to understand filtering
       console.log(`[DataForSEO DEBUG] Analyzing ${taskResults.length} keyword items for filtering:`)
       taskResults.forEach((result: any, index: number) => {
@@ -332,31 +333,31 @@ async function extractKeywordsFromCompetitor(
       // Filter out null/undefined keywords and map to seed keyword format
       const validKeywords = sortedKeywords
         .filter((result: any) => result.keyword && typeof result.keyword === 'string' && result.keyword.trim().length > 0)
-      
+
       console.log(`[DataForSEO DEBUG] Filtered ${validKeywords.length} valid keywords from ${taskResults.length} total (maxKeywords: ${maxKeywords})`)
 
       return validKeywords.map((result: any) => ({
-          seed_keyword: result.keyword.trim(),
-          search_volume: result.keyword_info?.search_volume ?? 0,
-          competition_level: (result.keyword_info?.competition_level || 'LOW').toLowerCase() as 'low' | 'medium' | 'high',
-          competition_index: result.keyword_info?.competition_index ?? 0,
-          keyword_difficulty: result.keyword_properties?.keyword_difficulty ?? result.keyword_info?.competition_index ?? 0,
-          cpc: result.keyword_info?.cpc ?? null,
-          
-          // NEW TAGGING FIELDS FOR DECISION TRACKING
-          detected_language: result.keyword_properties?.detected_language ?? null,
-          is_foreign_language: result.keyword_properties?.is_another_language ?? false,
-          main_intent: result.search_intent_info?.main_intent ?? null,
-          is_navigational: result.search_intent_info?.main_intent === 'navigational',
-          foreign_intent: result.search_intent_info?.foreign_intent ?? null,
-          
-          // DECISION TRACKING FIELDS
-          ai_suggested: true, // AI initially suggests all extracted keywords
-          user_selected: true, // Default to selected for human review
-          decision_confidence: calculateKeywordConfidence(result),
-          selection_source: 'ai',
-          selection_timestamp: new Date().toISOString()
-        }))
+        seed_keyword: result.keyword.trim(),
+        search_volume: result.keyword_info?.search_volume ?? 0,
+        competition_level: (result.keyword_info?.competition_level || 'LOW').toLowerCase() as 'low' | 'medium' | 'high',
+        competition_index: result.keyword_info?.competition_index ?? 0,
+        keyword_difficulty: result.keyword_properties?.keyword_difficulty ?? result.keyword_info?.competition_index ?? 0,
+        cpc: result.keyword_info?.cpc ?? null,
+
+        // NEW TAGGING FIELDS FOR DECISION TRACKING
+        detected_language: result.keyword_properties?.detected_language ?? null,
+        is_foreign_language: result.keyword_properties?.is_another_language ?? false,
+        main_intent: result.search_intent_info?.main_intent ?? null,
+        is_navigational: result.search_intent_info?.main_intent === 'navigational',
+        foreign_intent: result.search_intent_info?.foreign_intent ?? null,
+
+        // DECISION TRACKING FIELDS
+        ai_suggested: true, // AI initially suggests all extracted keywords
+        user_selected: true, // Default to selected for human review
+        decision_confidence: calculateKeywordConfidence(result),
+        selection_source: 'ai',
+        selection_timestamp: new Date().toISOString()
+      }))
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
 
@@ -371,17 +372,17 @@ async function extractKeywordsFromCompetitor(
         const delay = calculateBackoffDelay(attempt, COMPETITOR_RETRY_POLICY)
         const errorType = classifyErrorType(lastError)
         console.warn(`DataForSEO API call failed (attempt ${attempt + 1}/${COMPETITOR_RETRY_POLICY.maxAttempts}), retrying in ${delay}ms... Error: ${lastError.message}`)
-        
+
         // Update retry metadata before retry
         if (workflowId && organizationId) {
           await updateWorkflowRetryMetadata(workflowId, organizationId, attempt + 1, lastError.message)
         }
-        
+
         // Emit retry analytics event
         if (workflowId && organizationId) {
           await emitRetryEvent(workflowId, organizationId, url, attempt + 1, errorType, delay)
         }
-        
+
         await sleep(delay)
       }
     }
@@ -390,17 +391,17 @@ async function extractKeywordsFromCompetitor(
   // All retries exhausted
   const errorType = classifyErrorType(lastError)
   console.error('DataForSEO API call failed after all retries:', lastError?.message)
-  
+
   // Update final retry metadata
   if (workflowId && organizationId) {
     await updateWorkflowRetryMetadata(workflowId, organizationId, COMPETITOR_RETRY_POLICY.maxAttempts, lastError?.message)
   }
-  
+
   // Emit terminal failure analytics event
   if (workflowId && organizationId) {
     await emitFailureEvent(workflowId, organizationId, url, COMPETITOR_RETRY_POLICY.maxAttempts, lastError?.message || 'Unknown error')
   }
-  
+
   throw lastError || new Error('DataForSEO API call failed')
 }
 
@@ -409,7 +410,7 @@ async function extractKeywordsFromCompetitor(
  */
 export async function persistSeedKeywords(
   organizationId: string,
-  workflowId: string,
+  workflowId: string | undefined,
   competitorUrlId: string,
   keywords: SeedKeywordData[]
 ): Promise<number> {
@@ -431,6 +432,7 @@ export async function persistSeedKeywords(
       organization_id: organizationId,
       workflow_id: workflowId, // Critical for workflow isolation
       competitor_url_id: null, // ALWAYS NULL for stateless Step 2
+      parent_seed_keyword_id: null, // 🔥 REQUIRED: Explicit NULL for partial index matching
       seed_keyword: keyword.seed_keyword.trim(),
       keyword: keyword.seed_keyword.trim(), // Same as seed_keyword at this stage
       search_volume: keyword.search_volume,
@@ -441,7 +443,7 @@ export async function persistSeedKeywords(
       longtail_status: 'not_started',
       subtopics_status: 'not_started',
       article_status: 'not_started',
-      
+
       // AI Copilot metadata fields
       detected_language: keyword.detected_language,
       is_foreign_language: keyword.is_foreign_language,
@@ -453,7 +455,7 @@ export async function persistSeedKeywords(
       decision_confidence: keyword.decision_confidence,
       selection_source: keyword.selection_source,
       selection_timestamp: keyword.selection_timestamp,
-      
+
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }))
@@ -467,7 +469,7 @@ export async function persistSeedKeywords(
   const { error: upsertError, data } = await supabase
     .from('keywords')
     .upsert(keywordRecords, {
-      onConflict: 'organization_id,workflow_id,seed_keyword'
+      onConflict: 'organization_id,workflow_id,seed_keyword,parent_seed_keyword_id'
     })
     .select('id')
 
@@ -477,7 +479,7 @@ export async function persistSeedKeywords(
 
   // Enterprise safety: Detect actual database conflicts, not assumed reruns
   const keywordSeeds = keywordRecords.map(k => k.seed_keyword)
-  
+
   if (keywordSeeds.length > 0) {
     try {
       // Check for actual existing keywords in database
@@ -494,7 +496,7 @@ export async function persistSeedKeywords(
         // TRUE RERUN DETECTED: Actual database conflicts found
         console.warn(`[persistSeedKeywords] STEP 2 RERUN DETECTED - ${existingKeywords.length} existing keywords found`)
         console.warn(`[persistSeedKeywords] Workflow: ${workflowId}, Organization: ${organizationId}`)
-        
+
         // Check for human decisions that could be overwritten
         const humanDecisions = existingKeywords.filter((k: any) => k.selection_source === 'user')
         if (humanDecisions.length > 0) {
@@ -503,7 +505,7 @@ export async function persistSeedKeywords(
         } else {
           console.log(`[persistSeedKeywords] All existing keywords are AI-suggested - safe to update`)
         }
-        
+
         // TODO: Implement conflict-safe upsert to preserve human decisions
         console.warn(`[persistSeedKeywords] NOTE: Human decision preservation not yet implemented - decisions may be overwritten`)
       } else {

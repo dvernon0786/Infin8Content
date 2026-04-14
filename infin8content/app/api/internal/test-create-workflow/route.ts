@@ -16,10 +16,15 @@ const JWT_SECRET = process.env.NEXT_PUBLIC_SUPABASE_JWT_SECRET || 'test-secret'
 
 export async function POST(request: NextRequest) {
   try {
+    // 🔒 SECURITY: This endpoint must never be reachable in production
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const supabase = createServiceRoleClient()
     let organizationId: string
     let userId: string
-    
+
     // Create test organization if needed
     const { data: org, error: orgError } = await supabase
       .from('organizations')
@@ -46,7 +51,7 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         )
       }
-      
+
       organizationId = (newOrg as any).id
     } else {
       organizationId = (org as any)[0].id
@@ -75,7 +80,7 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         )
       }
-      
+
       userId = newUser.user.id
     } else {
       userId = (user as any)[0].id

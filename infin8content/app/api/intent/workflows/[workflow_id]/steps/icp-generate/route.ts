@@ -11,9 +11,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
+import { AuditAction } from '@/types/audit'
 import { checkRateLimit, type RateLimitConfig } from '@/lib/services/rate-limiting/persistent-rate-limiter'
 import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
-import { 
+import {
   generateICPDocument,
   storeICPGenerationResult,
   handleICPGenerationFailure,
@@ -33,9 +35,6 @@ const icpGenerationSchema = z.object({
   organization_url: z.string().url('Invalid website URL format'),
   organization_linkedin_url: z.string().url('Invalid LinkedIn URL format'),
 })
-
-// Concurrent prevention handled by database status gate (step_0_auth only)
-// This provides multi-instance safety and restart resilience
 
 export async function POST(
   request: NextRequest,
@@ -73,7 +72,7 @@ export async function POST(
     // Parse and validate request body
     const body = await request.json()
     const validationResult = icpGenerationSchema.safeParse(body)
-    
+
     if (!validationResult.success) {
       return NextResponse.json(
         {
@@ -136,7 +135,7 @@ export async function POST(
     if (currentState !== 'step_1_icp') {
       return NextResponse.json({
         error: 'INVALID_STATE',
-        message: `Cannot generate ICP from state: ${currentState}` 
+        message: `Cannot generate ICP from state: ${currentState}`
       }, { status: 409 })
     }
 
@@ -176,7 +175,7 @@ export async function POST(
         },
         timestamp: new Date().toISOString()
       }
-      await emitAnalyticsEvent(analyticsEvent)
+      await emitAnalyticsEvent(analyticsEvent as any)
       console.log(`[ICP-Generate] Analytics event emitted: ${JSON.stringify(analyticsEvent)}`)
     } catch (analyticsError) {
       console.error(`[ICP-Generate] Failed to emit analytics event:`, analyticsError)

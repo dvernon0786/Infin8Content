@@ -14,7 +14,7 @@ import { GenerationProgress } from './generation-progress';
 const mockProps = {
   articleId: 'test-article-123',
   orgId: 'test-org-456',
-  status: 'generating' as const,
+  status: 'processing' as const,
   overallProgress: 65,
   parallelSections: [
     {
@@ -80,25 +80,25 @@ export function TestGenerationProgress() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">Generation Progress Test</h1>
-      
+
       {/* Desktop Version */}
       <div>
         <h2 className="text-lg font-semibold mb-4">Desktop Version</h2>
         <GenerationProgress {...mockProps} />
       </div>
-      
+
       {/* Mobile Version */}
       <div>
         <h2 className="text-lg font-semibold mb-4">Mobile Version</h2>
         <GenerationProgress {...mockProps} mobileOptimized={true} />
       </div>
-      
+
       {/* Completed State */}
       <div>
         <h2 className="text-lg font-semibold mb-4">Completed State</h2>
-        <GenerationProgress 
-          {...mockProps} 
-          status="completed" 
+        <GenerationProgress
+          {...mockProps}
+          status="completed"
           overallProgress={100}
         />
       </div>

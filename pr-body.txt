@@ -1,0 +1,9 @@
+This PR hardens the article generation pipeline v2, addressing audit findings, type safety, and architectural consistency.
+
+### Key Changes:
+- **Renamed has_cta to add_cta**: Standardized branding fields to align with agent logic.
+- **Research Agent Cleanup**: Removed brand-specific references and contradictory prompt instructions.
+- **Planner Fallback**: Added gpt-4o-mini as a robust fallback for the planner agent.
+- **ICP Context**: Hardened the assembly of business description and analyst data for planning.
+- **reseed_sections RPC**: Implemented atomic section reseeding.
+- **Type Safety**: Fixed ArticleStatus enums and import paths in integration tests.

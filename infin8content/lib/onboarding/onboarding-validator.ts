@@ -41,49 +41,47 @@ export async function validateOnboarding(orgId: string): Promise<OnboardingValid
     }
   }
 
-  // Check competitor count
-  const { count: competitorCount } = await supabase
+  // Optimized check: Exit as soon as we find 1 competitor instead of full count
+  const { data: competitors } = await supabase
     .from('organization_competitors')
-    .select('*', { count: 'exact', head: true })
+    .select('id')
     .eq('organization_id', orgId)
     .eq('is_active', true)
+    .limit(1)
+
+  const hasCompetitors = (competitors?.length ?? 0) > 0
 
   const missing: string[] = []
-
   // Strict validation of each field
   if (!org.website_url || org.website_url.trim() === '') {
     missing.push('website_url')
   }
-  
+
   if (!org.business_description || org.business_description.trim().length < 20) {
     missing.push('business_description')
   }
-  
+
   if (!Array.isArray(org.target_audiences) || org.target_audiences.length === 0) {
     missing.push('target_audiences')
   } else {
     // Validate each audience item
-    const invalidAudiences = org.target_audiences.filter(audience => 
+    const invalidAudiences = org.target_audiences.filter(audience =>
       !audience || typeof audience !== 'string' || audience.trim().length < 2
     )
     if (invalidAudiences.length > 0) {
       missing.push('target_audiences')
     }
   }
-  
+
   if (!org.keyword_settings || typeof org.keyword_settings !== 'object' || Object.keys(org.keyword_settings).length === 0) {
     missing.push('keyword_settings')
   }
-  
+
   if (!org.content_defaults || typeof org.content_defaults !== 'object' || Object.keys(org.content_defaults).length === 0) {
     missing.push('content_defaults')
   }
-  
-  if (!org.integration || typeof org.integration !== 'object' || Object.keys(org.integration).length === 0) {
-    missing.push('integration')
-  }
-  
-  if (!competitorCount || competitorCount < 1) {
+
+  if (!hasCompetitors) {
     missing.push('competitors')
   }
 
@@ -102,22 +100,22 @@ export async function validateOnboarding(orgId: string): Promise<OnboardingValid
  */
 export async function deriveOnboardingState(orgId: string): Promise<void> {
   const supabase = createServiceRoleClient()
-  
+
   // Check current completion state first
   const { data: currentOrg } = await supabase
     .from('organizations')
     .select('onboarding_completed')
     .eq('id', orgId)
     .single() as { data: { onboarding_completed: boolean } | null, error: any }
-  
+
   // If already completed, never allow reversal (System Law: irreversible)
   if (currentOrg?.onboarding_completed) {
     return
   }
-  
+
   // Validate current state
   const validation = await validateOnboarding(orgId)
-  
+
   // Update completion status based on validation (only if not already completed)
   if (validation.valid) {
     await supabase

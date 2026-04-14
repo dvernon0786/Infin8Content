@@ -17,22 +17,31 @@ export async function getWorkflowState(workflowId: string): Promise<WorkflowStat
   if (!user?.org_id) return null
 
   const supabase = createServiceRoleClient()
-  
+
   const { data, error } = await supabase
     .from('intent_workflows')
-    .select('*')
+    .select('id, name, state, created_at, updated_at')
     .eq('id', workflowId)
     .eq('organization_id', user.org_id)
-    .single() as { data: any; error: any }
+    .single()
 
   if (error || !data) return null
 
+  // Type guard to ensure data has expected shape
+  const workflowData = data as unknown as {
+    id: string
+    name: string
+    state: StateMachineState
+    created_at: string
+    updated_at: string
+  }
+
   return {
-    id: data.id as string,
-    name: data.name as string,
-    state: data.state as StateMachineState,
-    created_at: data.created_at as string,
-    updated_at: data.updated_at as string,
+    id: workflowData.id,
+    name: workflowData.name,
+    state: workflowData.state,
+    created_at: workflowData.created_at,
+    updated_at: workflowData.updated_at,
   }
 }
 
@@ -43,19 +52,24 @@ export function canAccessStep(workflowState: WorkflowState, targetStep: number):
 
 export async function requireWorkflowStepAccess(workflowId: string, targetStep: number): Promise<WorkflowState> {
   const workflowState = await getWorkflowState(workflowId)
-  
-  if (!workflowState) {
-    redirect('/dashboard')
-  }
 
-  // If workflow is completed, redirect to dashboard
-  if (workflowState.state === 'completed') {
+  if (!workflowState) {
     redirect('/dashboard')
   }
 
   // If workflow is cancelled, redirect to dashboard
   if (workflowState.state === 'cancelled') {
     redirect('/dashboard')
+  }
+
+  // Terminal state handling: Redirect completed workflows to completed view
+  if (workflowState.state === 'completed') {
+    redirect(`/workflows/${workflowId}/completed`)
+  }
+
+  // Redirect queueing workflows to articles dashboard
+  if (workflowState.state.startsWith('step_9_articles')) {
+    redirect('/dashboard/articles')
   }
 
   // If trying to access future step, redirect to current step
@@ -72,13 +86,13 @@ export function getStepUrl(workflowId: string, step: number): string {
 }
 
 export function getNextStepUrl(workflowState: WorkflowState): string | null {
-    const nextStep = getNextStep(workflowState.state)
-    if (!nextStep) return null
-    return getStepUrl(workflowState.id, nextStep)
-  }
+  const nextStep = getNextStep(workflowState.state)
+  if (!nextStep) return null
+  return getStepUrl(workflowState.id, nextStep)
+}
 
 export function getPreviousStepUrl(workflowState: WorkflowState): string | null {
-    const previousStep = getPreviousStep(workflowState.state)
-    if (!previousStep) return null
-    return getStepUrl(workflowState.id, previousStep)
-  }
+  const previousStep = getPreviousStep(workflowState.state)
+  if (!previousStep) return null
+  return getStepUrl(workflowState.id, previousStep)
+}

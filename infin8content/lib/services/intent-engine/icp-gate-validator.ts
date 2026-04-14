@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
 import { AuditAction } from '@/types/audit'
 
@@ -120,12 +121,17 @@ export class ICPGateValidator {
         .eq('id', workflowId)
         .single() as { data: { organization_id: string } | null }
 
+      if (!workflow?.organization_id) {
+        console.warn('[ICPGate] Missing organization_id, skipping audit log')
+        return
+      }
+
       await logIntentAction({
-        organizationId: workflow?.organization_id || '',
+        organizationId: workflow.organization_id,
         workflowId,
         entityType: 'workflow',
         entityId: workflowId,
-        actorId: 'system', // no FK violation
+        actorId: SYSTEM_USER_ID, // System actor UUID
         action: result.allowed
           ? AuditAction.WORKFLOW_GATE_ICP_ALLOWED
           : AuditAction.WORKFLOW_GATE_ICP_BLOCKED,

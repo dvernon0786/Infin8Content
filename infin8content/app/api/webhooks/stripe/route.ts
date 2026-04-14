@@ -6,6 +6,8 @@ import { NextResponse } from 'next/server'
 import { sendPaymentFailureEmail, sendPaymentReactivationEmail } from '@/lib/services/payment-notifications'
 import { logActionAsync } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
+import { getPlanFromPriceId } from '@/lib/stripe/prices'
+import { applyGracePeriod } from '@/lib/stripe/sync-grace-period'
 
 // Required for webhooks - must use Node.js runtime for raw body access
 export const runtime = 'nodejs'
@@ -21,6 +23,7 @@ function logWebhookEvent(event: any, action: string, details?: any) {
     timestamp: new Date().toISOString(),
     ...details,
   }
+  // PII Protection: Only log sanitized IDs and types, never the full event payload
   console.log(`[Webhook] ${action}:`, JSON.stringify(logData, null, 2))
 }
 
@@ -29,15 +32,15 @@ function logWebhookEvent(event: any, action: string, details?: any) {
  */
 function logWebhookError(event: any, action: string, error: any, context?: any) {
   const errorData = {
-    eventId: event.id,
-    eventType: event.type,
+    eventId: event?.id,
+    eventType: event?.type,
     action,
-    error: {
+    error: error ? {
       message: error.message,
       code: error.code,
       statusCode: error.statusCode,
       type: error.type,
-    },
+    } : null,
     context,
     timestamp: new Date().toISOString(),
   }
@@ -77,11 +80,13 @@ export async function POST(request: Request) {
 
     // Check idempotency: Query stripe_webhook_events table for stripe_event_id
     // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-    const { data: existingEvent, error: idempotencyError } = await (supabase as any)
+    const { data: idempotencyRows, error: idempotencyError } = await (supabase as any)
       .from('stripe_webhook_events')
       .select('id, stripe_event_id, processed_at')
       .eq('stripe_event_id', event.id)
-      .single()
+      .limit(1)
+
+    const existingEvent = idempotencyRows?.[0]
 
     // If event already processed, return 200 immediately (prevent duplicate processing)
     if (existingEvent) {
@@ -98,44 +103,51 @@ export async function POST(request: Request) {
       // Continue processing - idempotency is best effort
     }
 
-    // Process event with retry logic
+    // Process event
     try {
-      await retryWithBackoff(async () => {
-        // Handle different event types
-        switch (event.type) {
-          case 'checkout.session.completed':
-            await handleCheckoutSessionCompleted(event, supabase)
-            break
+      // Handle different event types
+      switch (event.type) {
+        case 'checkout.session.completed':
+          await handleCheckoutSessionCompleted(event, supabase)
+          break
 
-          case 'customer.subscription.updated':
-            await handleSubscriptionUpdated(event, supabase)
-            break
+        case 'customer.subscription.updated':
+          await handleSubscriptionUpdated(event, supabase)
+          break
 
-          case 'customer.subscription.deleted':
-            await handleSubscriptionDeleted(event, supabase)
-            break
+        case 'customer.subscription.deleted':
+          await handleSubscriptionDeleted(event, supabase)
+          break
 
-          case 'invoice.payment_failed':
-            await handleInvoicePaymentFailed(event, supabase)
-            break
+        case 'invoice.payment_failed':
+          await handleInvoicePaymentFailed(event, supabase)
+          break
 
-          case 'invoice.payment_succeeded':
-            await handleInvoicePaymentSucceeded(event, supabase)
-            break
+        case 'invoice.payment_succeeded':
+          await handleInvoicePaymentSucceeded(event, supabase)
+          break
 
-          default:
-            logWebhookEvent(event, 'Unhandled event type')
-            // Still store the event for monitoring
-            await storeWebhookEvent(event, supabase, null)
-        }
-      })
+        case 'invoice.finalized':
+          // Logic for finalized invoices could be added here later if needed
+          // For now, we just store it to mark it as processed
+          await storeWebhookEvent(event, supabase, null)
+          break
+
+        case 'payment_intent.succeeded':
+          await handlePaymentIntentSucceeded(event, supabase)
+          break
+
+        default:
+          logWebhookEvent(event, 'Unhandled event type')
+          // Still store the event for monitoring
+          await storeWebhookEvent(event, supabase, null)
+      }
 
       logWebhookEvent(event, 'Event processed successfully')
       // Always return 200 to Stripe (Stripe requires 2xx response)
       return new Response('Webhook processed', { status: 200 })
     } catch (error: any) {
-      // Retry logic failed - log error but return 200 to prevent Stripe retries
-      // Stripe will retry on 5xx errors, but we want to handle retries ourselves
+      // Retry logic failed - log error
       logWebhookError(event, 'Event processing failed after retries', error, {
         retriesExhausted: true,
         requiresManualIntervention: true,
@@ -145,36 +157,45 @@ export async function POST(request: Request) {
       // Store event even on failure for monitoring (with error flag)
       try {
         await storeWebhookEvent(event, supabase, null)
-        // Log additional alert for monitoring systems
-        console.error('[Webhook Alert] CRITICAL: Webhook processing failed after all retries', {
-          eventId: event.id,
-          eventType: event.type,
-          error: error.message,
-          timestamp: new Date().toISOString(),
-          alertLevel: 'CRITICAL',
-        })
       } catch (storeError) {
-        logWebhookError(event, 'Failed to store event after processing failure', storeError, {
-          originalError: error.message,
-        })
+        logWebhookError(event, 'Failed to store event after processing failure', storeError)
       }
 
-      // Return 200 to prevent Stripe from retrying (we handle retries internally)
-      // Log errors for manual investigation
-      return new Response('Webhook processing error', { status: 200 })
+      // ARCHITECTURE FIX: Return 500 for critical events so Stripe retries
+      const criticalEvents = [
+        'checkout.session.completed',
+        'invoice.payment_succeeded',
+        'invoice.finalized',
+        'customer.subscription.updated',
+        'customer.subscription.deleted',
+        'payment_intent.succeeded'
+      ]
+      if (criticalEvents.includes(event.type)) {
+        return new Response('Webhook processing error', { status: 500 })
+      }
+
+      // Return 200 for non-critical failures to stop retries if they aren't essential
+      return new Response('Webhook processed with errors', { status: 200 })
     }
   } catch (error) {
-    // Top-level error handler for unexpected errors
     logWebhookError({ id: 'unknown', type: 'unknown' }, 'Unexpected webhook error', error)
-    return new Response('Webhook processing error', { status: 200 })
+    return new Response('Webhook processing error', { status: 500 })
   }
 }
 
 async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   const session = event.data.object
   const orgId = session.metadata?.org_id
-  const plan = session.metadata?.plan
+  let plan = session.metadata?.plan
   const billingFrequency = session.metadata?.billing_frequency
+  // Resolve the subscription to check status and store the subscription ID early
+  // Declared here so it's available both when org is missing and later when updating the org
+  let subscriptionForCheckout: any = null
+
+  // Trial one-time payments are fully handled by handlePaymentIntentSucceeded.
+  // checkout.session.completed still fires for payment mode but must not
+  // overwrite payment_status: 'trialing' with 'active'.
+  // (early return removed — trial processing handled below after org lookup)
 
   logWebhookEvent(event, 'Processing checkout.session.completed', {
     orgId,
@@ -195,11 +216,13 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
 
   // Check if organization exists before processing
   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-  const { data: organization, error: orgCheckError } = await (supabase as any)
+  const { data: orgRows, error: orgCheckError } = await (supabase as any)
     .from('organizations')
     .select('id, name, payment_status, grace_period_started_at, suspended_at')
     .eq('id', orgId)
-    .single()
+    .limit(1)
+
+  const organization = orgRows?.[0]
 
   if (orgCheckError || !organization) {
     const error = new Error(`Organization not found: ${orgId}`)
@@ -217,31 +240,99 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
       sessionId: session.id,
       customerId: session.customer,
       timestamp: new Date().toISOString(),
-      alertLevel: 'WARNING',
-      recommendation: 'Check if organization creation is delayed or if org_id in metadata is incorrect',
     })
-      // Mark as retryable - organization may be created later
-      ; (error as any).retryable = true
+
+    // Resolve the subscription to check status and store the subscription ID early
+    // This helps later events (subscription.updated) find the org reliably.
+    if (session.subscription) {
+      try {
+        subscriptionForCheckout = await retryWithBackoff(() => stripe.subscriptions.retrieve(session.subscription))
+      } catch (err) {
+        // Log and continue; subscription resolution is best-effort
+        logWebhookError(event, 'Failed to resolve subscription for checkout', err, { subscriptionId: session.subscription })
+      }
+
+      // If subscription status is 'trialing', ensure plan stays as 'trial'
+      if (subscriptionForCheckout && subscriptionForCheckout.status === 'trialing') {
+        plan = 'trial'
+      } else if (subscriptionForCheckout) {
+        const planItem = subscriptionForCheckout.items.data.find((item: any) => getPlanFromPriceId(item.price?.id))
+        const priceId = planItem?.price?.id
+        const resolvedPlan = priceId ? getPlanFromPriceId(priceId) : null
+        if (resolvedPlan) plan = resolvedPlan
+      }
+    }
+
+    // WEBHOOK PLAN VALIDATION: Ensure only canonical plans are written to DB
+    if (plan && !['starter', 'pro', 'agency', 'trial'].includes(plan.toLowerCase())) {
+      console.warn(`[Webhook] Invalid plan detected in checkout: ${plan}. Falling back to trial.`)
+      plan = 'trial'
+    }
+
+    // Safety guard to prevent silent plan corruption
+    if (!plan) {
+      throw new Error(`Unable to determine plan for checkout session ${session.id}`)
+    }
+
+    // (trial activation block moved below, after org exists)
+    // Ensure we don't continue processing when the org is missing
     throw error
   }
+
+    // Special handling for trial purchases: only activate trialing state when payment is confirmed
+    if (plan === 'trial' && session.mode === 'payment' && session.payment_status === 'paid') {
+      const { error: trialUpdateError } = await (supabase as any)
+        .from('organizations')
+        .update({
+          payment_status: 'trialing',
+          plan: 'trial',
+          plan_type: 'trial',
+          has_used_trial: true,
+          stripe_customer_id: session.customer,
+          trial_ends_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+          usage_reset_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+          article_usage: 0,
+        })
+        .eq('id', orgId)
+
+      if (trialUpdateError) {
+        logWebhookError(event, 'Failed to update trial org', trialUpdateError, { orgId })
+        ;(trialUpdateError as any).retryable = true
+        throw trialUpdateError
+      }
+
+      logActionAsync({
+        orgId,
+        userId: null,
+        action: AuditAction.BILLING_PAYMENT_SUCCEEDED,
+        details: { paymentIntentId: session.payment_intent, plan: 'trial' },
+      })
+
+      await storeWebhookEvent(event, supabase, orgId)
+      return
+    }
 
   // Check if this is a reactivation (payment_status is 'suspended' or 'past_due')
   const isReactivation = organization.payment_status === 'suspended' || organization.payment_status === 'past_due'
 
   // Update organizations table with retry logic
   const updateData: any = {
-    plan: plan,
+    plan: plan || 'trial',
+    plan_type: plan || 'trial', // Keep plan_type in sync — plan is authoritative; plan_type kept as legacy fallback
     stripe_customer_id: session.customer,
     stripe_subscription_id: session.subscription,
     payment_status: 'active',
     payment_confirmed_at: new Date().toISOString(),
+    article_usage: 0, // Reset usage on new subscription
   }
 
-  // If reactivating, clear grace period and suspension fields
-  if (isReactivation) {
-    updateData.grace_period_started_at = null
-    updateData.suspended_at = null
+  // NB_STRIPE_DOUBLE FIX: Reuse the already-retrieved subscription for current_period_end
+  if (subscriptionForCheckout) {
+    updateData.usage_reset_at = new Date((subscriptionForCheckout as any).current_period_end * 1000).toISOString()
   }
+
+  // Clear grace period and suspension fields upon successful checkout
+  applyGracePeriod(updateData, organization.payment_status, 'active')
 
   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
   const { error: updateError } = await (supabase as any)
@@ -263,12 +354,14 @@ async function handleCheckoutSessionCompleted(event: any, supabase: any) {
   if (isReactivation) {
     try {
       // Get user email from users table for this organization
-      const { data: ownerUser } = await supabase
+      const { data: userRows } = await supabase
         .from('users')
         .select('email')
         .eq('org_id', orgId)
         .eq('role', 'owner')
-        .single()
+        .limit(1)
+
+      const ownerUser = userRows?.[0]
 
       if (ownerUser?.email) {
         await sendPaymentReactivationEmail({
@@ -327,13 +420,95 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
 
   // Find organization by stripe_subscription_id
   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-  const { data: organization, error: orgError } = await (supabase as any)
+  const { data: orgRows, error: orgError } = await (supabase as any)
     .from('organizations')
-    .select('id, name')
+    .select('id, name, plan, payment_status, grace_period_started_at')
     .eq('stripe_subscription_id', subscription.id)
-    .single()
+    .limit(1)
+
+  const organization = orgRows?.[0]
 
   if (organization) {
+    // BUG 6 FIX: Respect remaining time for canceled subscriptions
+    if (subscription.cancel_at_period_end) {
+      logWebhookEvent(event, 'Subscription marked for cancellation (cancel_at_period_end) - keeping plan active until period ends', {
+        organizationId: organization.id,
+        cancelAt: new Date(subscription.cancel_at * 1000).toISOString()
+      })
+      await storeWebhookEvent(event, supabase, organization.id)
+      return
+    }
+
+    let resolvedPlan: string | undefined;
+
+    // BUG 1 FIX: If status is trialing, force plan to 'trial'
+    if (subscription.status === 'trialing') {
+      resolvedPlan = 'trial'
+    } else {
+      const planItem = subscription.items.data.find(
+        (item: any) => getPlanFromPriceId(item.price?.id)
+      )
+      const priceId = planItem?.price?.id
+      const newPlan = priceId ? getPlanFromPriceId(priceId) : (subscription.metadata?.plan as string)
+
+      if (!newPlan) {
+        // If it's a non-plan update (e.g. quantity change on a non-mapped price), just skip
+        logWebhookEvent(event, 'Subscription update without plan change - skipping')
+        return
+      }
+
+      resolvedPlan = newPlan
+    }
+
+    // 🔒 WEBHOOK PLAN VALIDATION: Ensure only canonical plans are written to DB
+    if (resolvedPlan && !['starter', 'pro', 'agency', 'trial'].includes(resolvedPlan.toLowerCase())) {
+      console.warn(`[Webhook] Invalid plan detected in update: ${resolvedPlan}. Falling back to trial.`)
+      resolvedPlan = 'trial'
+    }
+
+    // NB_STRIPE_SUBUPD FIX: Map Stripe subscription status to internal payment_status
+    // ensures past_due and unpaid are reflected correctly in the org model.
+    const statusMap: Record<string, string> = {
+      active: 'active',
+      trialing: 'active',
+      past_due: 'past_due',
+      unpaid: 'suspended',
+      canceled: 'canceled',
+      incomplete: 'past_due',
+      paused: 'suspended'
+    }
+
+    const newPaymentStatus = statusMap[subscription.status] || 'active'
+    const newPlan = resolvedPlan || 'trial'
+    const updateData: any = {
+      plan: newPlan,
+      payment_status: newPaymentStatus,
+      usage_reset_at: subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000).toISOString()
+        : null,
+    }
+
+    applyGracePeriod(updateData, organization.payment_status, newPaymentStatus)
+
+    // Only reset usage when the plan actually changes (upgrade/downgrade).
+    const previousPlan = organization.plan
+    if (newPlan && newPlan !== previousPlan) {
+      updateData.article_usage = 0
+    }
+
+    const { error: updateError } = await (supabase as any)
+      .from('organizations')
+      .update(updateData)
+      .eq('id', organization.id)
+
+    if (updateError) {
+      logWebhookError(event, 'Failed to update plan upon subscription update', updateError, {
+        organizationId: organization.id,
+        subscriptionId: subscription.id,
+      })
+        ; (updateError as any).retryable = true
+      throw updateError
+    }
     // Update subscription status if needed
     // For now, just log and store the event
     logWebhookEvent(event, 'Subscription updated', {
@@ -350,6 +525,7 @@ async function handleSubscriptionUpdated(event: any, supabase: any) {
       details: {
         subscriptionId: subscription.id,
         status: subscription.status,
+        plan: resolvedPlan,
       },
     })
 
@@ -374,11 +550,13 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
 
   // Find organization by stripe_subscription_id
   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-  const { data: organization, error: orgError } = await (supabase as any)
+  const { data: orgRows, error: orgError } = await (supabase as any)
     .from('organizations')
     .select('id, name, payment_status')
     .eq('stripe_subscription_id', subscription.id)
-    .single()
+    .limit(1)
+
+  const organization = orgRows?.[0]
 
   if (organization) {
     // Update organization payment status to 'canceled'
@@ -386,12 +564,13 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
     const updateData: any = {
       payment_status: 'canceled',
       stripe_subscription_id: null, // Clear subscription ID
+      plan: 'trial',
+       article_usage: 0,
+       usage_reset_at: null,
+      // Note: Trial limits are enforced dynamically via count(status='completed') in generate route.
     }
 
-    // If payment_status was 'active', start grace period
-    if (organization.payment_status === 'active') {
-      updateData.grace_period_started_at = new Date().toISOString()
-    }
+    applyGracePeriod(updateData, organization.payment_status, 'canceled')
 
     // TODO: Remove type assertion after regenerating types from Supabase Dashboard
     const { error: updateError } = await (supabase as any)
@@ -413,12 +592,14 @@ async function handleSubscriptionDeleted(event: any, supabase: any) {
     if (organization.payment_status === 'active') {
       try {
         // Get user email from users table for this organization
-        const { data: ownerUser } = await supabase
+        const { data: userRows } = await supabase
           .from('users')
           .select('email')
           .eq('org_id', organization.id)
           .eq('role', 'owner')
-          .single()
+          .limit(1)
+
+        const ownerUser = userRows?.[0]
 
         if (ownerUser?.email) {
           await sendPaymentFailureEmail({
@@ -481,29 +662,25 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
 
   // Find organization by customer ID
   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-  const { data: organization, error: orgError } = await (supabase as any)
+  const { data: orgRows, error: orgError } = await (supabase as any)
     .from('organizations')
     .select('id, name, payment_status, grace_period_started_at')
     .eq('stripe_customer_id', invoice.customer)
-    .single()
+    .limit(1)
+
+  const organization = orgRows?.[0]
 
   if (organization) {
     // Process payment failure: reset grace period if already past_due, or start grace period if active
     const shouldProcessFailure = organization.payment_status === 'active' || organization.payment_status === 'past_due'
-    
+
     if (shouldProcessFailure) {
       // Update payment status to 'past_due' and reset/start grace period
       // This ensures repeated payment failures reset the grace period clock
       const updateData: any = {
         payment_status: 'past_due',
-        grace_period_started_at: new Date().toISOString(),
       }
-      
-      // If account was suspended, clear suspension when new payment failure occurs
-      // This allows users to retry payment even after suspension
-      if (organization.payment_status === 'suspended') {
-        updateData.suspended_at = null
-      }
+      applyGracePeriod(updateData, organization.payment_status, 'past_due')
 
       const { error: updateError } = await supabase
         .from('organizations')
@@ -526,12 +703,14 @@ async function handleInvoicePaymentFailed(event: any, supabase: any) {
       if (isNewFailure) {
         try {
           // Get user email from users table for this organization
-          const { data: ownerUser } = await supabase
+          const { data: userRows } = await supabase
             .from('users')
             .select('email')
             .eq('org_id', organization.id)
             .eq('role', 'owner')
-            .single()
+            .limit(1)
+
+          const ownerUser = userRows?.[0]
 
           if (ownerUser?.email) {
             await sendPaymentFailureEmail({
@@ -615,27 +794,61 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
 
   // Find organization by customer ID
   // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-  const { data: organization, error: orgError } = await (supabase as any)
+  const { data: orgRows, error: orgError } = await (supabase as any)
     .from('organizations')
     .select('id, name, payment_status, grace_period_started_at, suspended_at')
     .eq('stripe_customer_id', invoice.customer)
-    .single()
+    .limit(1)
+
+  const organization = orgRows?.[0]
 
   if (organization) {
     // Check if this is a reactivation (payment_status is 'suspended' or 'past_due')
     const isReactivation = organization.payment_status === 'suspended' || organization.payment_status === 'past_due'
 
+    // FIX: Also resolve plan from invoice lines to handle upgrades correctly
+    let currentInvoicedPlan: string | undefined
+
+    // Bug 3 Fix: Handle possible truncation in invoice line items
+    // If lines are missing or possibly more exist, fetch full list
+    const lines = await retryWithBackoff(() => stripe.invoices.listLineItems(invoice.id, { limit: 100 }))
+
+    if (lines.data?.length > 0) {
+      // CRITICAL FIX: Find the 'subscription' line item, not just the first line (which might be proration)
+      const subscriptionLine = lines.data.find((line: any) => line.type === 'subscription')
+      const priceId = (subscriptionLine as any)?.price?.id || (lines.data[0] as any)?.price?.id
+      currentInvoicedPlan = priceId ? getPlanFromPriceId(priceId) : undefined
+    }
+
     // Update payment status to active for successful recurring payments
     const updateData: any = {
       payment_status: 'active',
       payment_confirmed_at: new Date().toISOString(),
+      article_usage: 0, // Reset usage on new billing cycle
+    }
+
+    // Sync usage_reset_at from subscription
+    if (invoice.subscription) {
+      const subscription = await retryWithBackoff(() => stripe.subscriptions.retrieve(invoice.subscription)) as any
+      updateData.usage_reset_at = new Date(subscription.current_period_end * 1000).toISOString()
+
+      // BUG 1 FIX: If subscription is currently trialing, force plan to trial
+      if (subscription.status === 'trialing') {
+        updateData.plan = 'trial'
+      } else if (currentInvoicedPlan) {
+        // 🔒 BUG 5 FIX: Validate plan before writing to prevent org lockout from bad price IDs
+        const validPlans = ['starter', 'pro', 'agency', 'trial']
+        updateData.plan = validPlans.includes(currentInvoicedPlan) ? currentInvoicedPlan : 'trial'
+      }
+    } else if (currentInvoicedPlan) {
+      // 🔒 BUG 5 FIX: Validate plan before writing
+      const validPlans = ['starter', 'pro', 'agency', 'trial']
+      updateData.plan = validPlans.includes(currentInvoicedPlan) ? currentInvoicedPlan : 'trial'
     }
 
     // If reactivating, clear grace period and suspension fields
-    if (isReactivation) {
-      updateData.grace_period_started_at = null
-      updateData.suspended_at = null
-    }
+    // Clear grace period and suspension fields upon successful invoice payment
+    applyGracePeriod(updateData, organization.payment_status, 'active')
 
     // TODO: Remove type assertion after regenerating types from Supabase Dashboard
     const { error: updateError } = await (supabase as any)
@@ -657,12 +870,14 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
     if (isReactivation) {
       try {
         // Get user email from users table for this organization
-        const { data: ownerUser } = await supabase
+        const { data: userRows } = await supabase
           .from('users')
           .select('email')
           .eq('org_id', organization.id)
           .eq('role', 'owner')
-          .single()
+          .limit(1)
+
+        const ownerUser = userRows?.[0]
 
         if (ownerUser?.email) {
           await sendPaymentReactivationEmail({
@@ -717,6 +932,67 @@ async function handleInvoicePaymentSucceeded(event: any, supabase: any) {
   }
 }
 
+async function handlePaymentIntentSucceeded(event: any, supabase: any) {
+  const intent = event.data.object
+  const { org_id: organizationId, plan } = intent.metadata
+
+  logWebhookEvent(event, 'Processing payment_intent.succeeded', {
+    organizationId,
+    plan,
+    paymentIntentId: intent.id,
+  })
+
+  if (plan === 'trial' && organizationId) {
+    // Set org to trial status with expiry
+    const { error: updateError } = await (supabase as any)
+      .from('organizations')
+      .update({
+        payment_status: 'trialing',
+        plan: 'trial',
+        plan_type: 'trial',
+        has_used_trial: true,
+        trial_ends_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        usage_reset_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        article_usage: 0,
+      })
+      .eq('id', organizationId)
+
+    if (updateError) {
+      logWebhookError(event, 'Failed to update organization after trial payment', updateError, {
+        organizationId,
+      })
+        ; (updateError as any).retryable = true
+      throw updateError
+    }
+
+    logWebhookEvent(event, 'Trial started via payment intent', {
+      organizationId,
+    })
+
+    // Log audit event for compliance
+    logActionAsync({
+      orgId: organizationId,
+      userId: null,
+      action: AuditAction.BILLING_PAYMENT_SUCCEEDED,
+      details: {
+        paymentIntentId: intent.id,
+        plan: 'trial',
+        trial_ends_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+    })
+
+    await storeWebhookEvent(event, supabase, organizationId)
+  } else {
+    // Other payment intents or missing metadata
+    logWebhookEvent(event, 'Ignored payment_intent.succeeded', {
+      organizationId,
+      plan,
+      reason: !plan ? 'Missing plan metadata' : 'Not a trial plan'
+    })
+    await storeWebhookEvent(event, supabase, null)
+  }
+}
+
 async function storeWebhookEvent(event: any, supabase: any, organizationId: string | null) {
   // Store processed event in stripe_webhook_events table for idempotency
   try {
@@ -731,8 +1007,13 @@ async function storeWebhookEvent(event: any, supabase: any, organizationId: stri
       })
 
     if (insertError) {
+      // BUG 2 FIX: Handle unique constraint conflict as success (already processed)
+      if ((insertError as any).code === '23505') {
+        logWebhookEvent(event, 'Event already recorded (idempotent ignore)', { organizationId })
+        return
+      }
+
       // Log error but don't throw - idempotency is best effort
-      // This is a non-critical operation
       logWebhookError(event, 'Failed to store webhook event (non-critical)', insertError, {
         organizationId,
       })

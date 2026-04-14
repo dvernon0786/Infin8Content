@@ -1,0 +1,30 @@
+/**
+ * Base interfaces for the CMS publishing adapter layer.
+ * Each platform adapter must implement CMSAdapter.
+ */
+
+export interface PublishInput {
+  title:          string
+  html:           string
+  slug?:          string
+  excerpt?:       string
+  tags?:          string[]
+  coverImageUrl?: string
+}
+
+export interface PublishResult {
+  success: boolean
+  postId?: string
+  url?: string
+  error?: string
+}
+
+export interface ConnectionTestResult {
+  success:  boolean
+  message?: string
+}
+
+export interface CMSAdapter {
+  publishPost(input: PublishInput): Promise<PublishResult>
+  testConnection(): Promise<ConnectionTestResult>
+}

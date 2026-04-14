@@ -17,7 +17,13 @@ export async function POST(
 ) {
   try {
     const { workflow_id: workflowId } = await params
-    const body = await request.json()
+    
+    let body: any = {}
+    try {
+      body = await request.json()
+    } catch {
+      body = {}
+    }
 
     // Validate request body
     const { decision, feedback, reset_to_step } = body

@@ -11,7 +11,7 @@ import { ArticleStatusList } from '@/components/dashboard/article-status-list';
 vi.mock('@/lib/supabase/client', () => ({
   createClient: vi.fn(() => {
     const channelMock = {
-      on: vi.fn(function(this: unknown) {
+      on: vi.fn(function (this: unknown) {
         // Support chaining .on() calls
         return this;
       }),
@@ -24,13 +24,7 @@ vi.mock('@/lib/supabase/client', () => ({
   })
 }));
 
-// Mock realtime module
-vi.mock('@/lib/supabase/realtime', () => ({
-  articleProgressRealtime: {
-    subscribeToDashboardUpdates: vi.fn(),
-    unsubscribeFromDashboard: vi.fn(),
-  }
-}));
+// Mock realtime module - removed as it's legacy
 
 // Mock fetch for API calls
 global.fetch = vi.fn() as any;
@@ -41,7 +35,7 @@ describe('Real-time Dashboard Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockClear();
-    
+
     // Set up default fetch mock for all tests
     mockFetch.mockResolvedValue({
       ok: true,
@@ -64,7 +58,7 @@ describe('Real-time Dashboard Integration', () => {
     });
 
     render(<ArticleStatusList orgId="test-org" />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Article Status')).toBeInTheDocument();
       expect(screen.getByText('No articles found')).toBeInTheDocument();
@@ -77,7 +71,7 @@ describe('Real-time Dashboard Integration', () => {
         id: '1',
         keyword: 'test-article',
         title: 'Test Article',
-        status: 'generating',
+        status: 'processing',
         created_at: '2024-01-10T10:00:00Z',
         updated_at: '2024-01-10T10:05:00Z',
         progress: {
@@ -108,7 +102,7 @@ describe('Real-time Dashboard Integration', () => {
     });
 
     render(<ArticleStatusList orgId="test-org" />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Test Article')).toBeInTheDocument();
       expect(screen.getByText('Completed Article')).toBeInTheDocument();
@@ -116,24 +110,24 @@ describe('Real-time Dashboard Integration', () => {
   });
 
   it('handles connection failures and polling fallback', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+
     // Mock initial connection failure
     mockFetch.mockRejectedValueOnce(new Error('Connection failed'));
-    
+
     render(<ArticleStatusList orgId="test-org" />);
-    
+
     // Verify error handling works - check for any error-related element or polling fallback
     await waitFor(() => {
       // Check for error display OR polling fallback activation
       const errorElement = screen.queryByText(/Connection failed|Error|Polling/i);
       const pollingElement = screen.queryByText(/Polling|fetching/i);
       const reconnectButton = screen.queryByRole('button', { name: /reconnect/i });
-      
+
       // At least one error handling element should be present
       expect(errorElement || pollingElement || reconnectButton).toBeInTheDocument();
     }, { timeout: 3000 });
-    
+
     errorSpy.mockRestore();
   });
 
@@ -148,13 +142,13 @@ describe('Real-time Dashboard Integration', () => {
     });
 
     render(<ArticleStatusList orgId="test-org" />);
-    
+
     // Wait for component to render and check for connection elements
     await waitFor(() => {
       // Check for either connection status or connection button
       const connectionElement = screen.queryByText(/Disconnected|Connected|Reconnect/i);
       const connectionButton = screen.queryByRole('button', { name: /reconnect/i });
-      
+
       // At least one connection-related element should be present
       expect(connectionElement || connectionButton).toBeInTheDocument();
     });
@@ -171,29 +165,29 @@ describe('Real-time Dashboard Integration', () => {
     });
 
     render(<ArticleStatusList orgId="test-org" />);
-    
+
     await waitFor(() => {
       const refreshButton = screen.getByText('Refresh');
       fireEvent.click(refreshButton);
     });
-    
+
     // Verify fetch was called again
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
   it('displays error states properly', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+
     mockFetch.mockRejectedValue(new Error('API Error'));
-    
+
     render(<ArticleStatusList orgId="test-org" />);
-    
+
     await waitFor(() => {
       // Check for error display - could be in different forms
       const errorElement = screen.queryByText(/API Error|Connection failed|Error/i);
       expect(errorElement).toBeInTheDocument();
     }, { timeout: 10000 });
-    
+
     errorSpy.mockRestore();
   });
 });

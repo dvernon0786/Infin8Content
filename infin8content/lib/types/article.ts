@@ -3,7 +3,8 @@
  * Shared types for article data structures
  */
 
-export type ArticleStatus = 'queued' | 'generating' | 'completed' | 'failed' | 'cancelled'
+import { ArticleStatus } from '@/types/article';
+export type { ArticleStatus };
 
 export interface ArticleMetadata {
   id: string
@@ -16,40 +17,18 @@ export interface ArticleMetadata {
   created_at: string
   updated_at: string
   org_id: string
+  intent_workflow_id?: string | null
 }
 
-export interface ArticleSection {
-  section_type: 'introduction' | 'h2' | 'h3' | 'conclusion' | 'faq'
-  section_index: number
-  h2_index?: number
-  h3_index?: number
-  title: string
-  content: string
-  word_count: number
-  generated_at: string
-  research_sources?: Array<{
-    title: string
-    url: string
-    excerpt?: string
-    published_date?: string | null
-    author?: string | null
-    relevance_score?: number
-  }>
-  citations_included?: number
-  research_query?: string
-  tokens_used?: number
-  model_used?: string
-  quality_metrics?: {
-    word_count: number
-    citations_included: number
-    readability_score?: number
-    keyword_density?: number
-    quality_passed: boolean
-    quality_retry_count: number
-  }
+export interface SnapshotSection {
+  header: string
+  markdown: string
+  html: string
+  order: number
+  section_type?: 'introduction' | 'h2' | 'h3' | 'conclusion' | 'faq'
 }
 
 export interface ArticleWithSections {
-  sections: ArticleSection[] | null
+  sections: SnapshotSection[] | null
 }
 

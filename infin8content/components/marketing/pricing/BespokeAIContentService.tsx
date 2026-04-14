@@ -12,7 +12,7 @@ export default function BespokeAIContentService() {
         <div className="relative bg-white rounded-3xl shadow-xl overflow-hidden">
 
           {/* Top Banner */}
-          <div className="bg-gradient-to-r from-[#4A42CC] to-[#217CEB] px-6 py-3 text-center">
+          <div className="bg-linear-to-r from-[#4A42CC] to-[#217CEB] px-6 py-3 text-center">
             <p className="text-white text-sm font-semibold font-lato">
               ✨ Limited Launch Offer — Only Accepting 10 Companies
             </p>
@@ -22,7 +22,7 @@ export default function BespokeAIContentService() {
 
             {/* LEFT — CTA FIRST */}
             <div>
-              <h2 className="text-4xl md:text-5xl font-bold font-poppins mb-4 bg-gradient-to-r from-[#4A42CC] to-[#217CEB] bg-clip-text text-transparent">
+              <h2 className="text-4xl md:text-5xl font-bold font-poppins mb-4 bg-linear-to-r from-[#4A42CC] to-[#217CEB] bg-clip-text text-transparent">
                 Bespoke AI Content Service
               </h2>
 
@@ -50,7 +50,7 @@ export default function BespokeAIContentService() {
                   // replace with your Calendly modal trigger
                   window.dispatchEvent(new Event("open-calendly"));
                 }}
-                className="w-full bg-gradient-to-r from-[#4A42CC] to-[#217CEB] text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transition"
+                className="w-full bg-linear-to-r from-[#4A42CC] to-[#217CEB] text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transition"
               >
                 Schedule Strategy Call
               </button>

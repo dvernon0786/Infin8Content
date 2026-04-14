@@ -1,33 +1,327 @@
 # Infin8Content Workflow Engine Documentation
 
+*Last Updated: 2026-02-26*  
+*System Version: v2.3.0 - Transition-Driven Automation*
+
 ## Overview
 
-The Infin8Content Workflow Engine is a sophisticated system that orchestrates the entire content creation pipeline, from initial research to final publication. It follows a step-by-step approach with human approval gates and comprehensive audit trails.
+The Infin8Content Workflow Engine is a production-grade deterministic FSM (Finite State Machine) system that orchestrates the entire 9-step content creation pipeline. It features **Transition-Driven Automation**, where state changes automatically trigger background workers via Inngest, ensuring no partial states or race conditions.
+
+### **Core Principles:**
+- **Deterministic FSM**: Single state enum with legal transitions.
+- **Atomic Transitions**: Database-level WHERE clause protection in `InternalWorkflowFSM.transition`.
+- **Structural Coupling**: The `AUTOMATION_GRAPH` in `unified-workflow-engine.ts` guarantees event emission for every required step.
+- **Human-in-the-Loop**: Explicit pauses at Step 3 (Seeds) and Step 8 (Subtopics) for user verification.
+
+## FSM State Machine
+
+### Complete State Flow
+```
+step_1_icp → step_2_competitors → step_3_seeds → step_4_longtails 
+→ step_5_filtering → step_6_clustering → step_7_validation 
+→ step_8_subtopics → step_9_articles → completed
+```
+
+### State Definitions
+| State | Purpose | Type | Automation |
+|-------|---------|------|------------|
+| `step_1_icp` | Ideal Customer Profile generation | Automated | ✅ |
+| `step_2_competitors` | Competitor analysis | Automated | ✅ |
+| `step_3_seeds` | Seed keyword extraction | Automated | ✅ |
+| `step_4_longtails` | Long-tail keyword expansion | Automated | ✅ |
+| `step_5_filtering` | Keyword filtering | Automated | ✅ |
+| `step_6_clustering` | Topic clustering | Automated | ✅ |
+| `step_7_validation` | Cluster validation | Automated | ✅ |
+| `step_8_subtopics` | Subtopic generation | Automated | ✅ |
+| `step_9_articles` | Article generation | Automated | ✅ |
+| `completed` | Workflow finished | Terminal | - |
+| `cancelled` | Workflow cancelled | Terminal | - |
+
+### Human Approval Gates
+- **Step 3**: Seed keyword approval (human gate)
+- **Step 8**: Subtopic approval (human gate)
 
 ## Epic Structure
 
 The workflow engine is organized into 5 main epics, each containing multiple stories that implement specific functionality.
 
-### Epic 34: ICP & Competitor Analysis
+### Epic 34: ICP & Competitor Analysis ✅ COMPLETED
 **Purpose**: Establish Ideal Customer Profile and analyze competitive landscape.
 
 **Stories**:
-- 34.1: Generate ICP via OpenRouter
-- 34.2: Extract Seed Keywords from Competitor URLs via DataForSEO  
-- 34.3: Retry Utilities and Error Handling
+- 34.1: Generate ICP via OpenRouter ✅
+- 34.2: Extract Seed Keywords from Competitor URLs via DataForSEO ✅  
+- 34.3: Retry Utilities and Error Handling ✅
 
 **Workflow States**: `step_1_icp` → `step_2_competitors` → `step_3_seeds`
 
-### Epic 35: Keyword Research & Expansion
+**Key Services**:
+- `lib/services/intent-engine/competitor-seed-extractor.ts`
+- `lib/services/intent-engine/icp-generator.ts`
+
+### Epic 35: Keyword Research & Expansion ✅ COMPLETED
 **Purpose**: Expand seed keywords into comprehensive long-tail keyword sets.
 
 **Stories**:
-- 35.1: Expand Seed Keywords into Long-Tail Keywords (4-Source Model)
-- 35.2: Expand Keywords Using Multiple DataForSEO Methods
+- 35.1: Expand Seed Keywords into Long-Tail Keywords (4-Source Model) ✅
+- 35.2: Expand Keywords Using Multiple DataForSEO Methods ✅
 
 **Workflow States**: `step_3_seeds` → `step_4_longtails`
 
-### Epic 36: Keyword Refinement & Topic Clustering
+**DataForSEO Endpoints**:
+- Related Keywords
+- Keyword Suggestions  
+- Keyword Ideas
+- Google Autocomplete
+
+**Key Services**:
+- `lib/services/intent-engine/longtail-keyword-expander.ts`
+
+### Epic 36: Keyword Refinement & Topic Clustering ✅ COMPLETED
+**Purpose**: Filter keywords and organize into hub-and-spoke topic structures.
+
+**Stories**:
+- 36.1: Filter Keywords Based on Business Criteria ✅
+- 36.2: Cluster Keywords into Hub-and-Spoke Structure ✅
+- 36.3: Validate Cluster Coherence and Structure 📋 backlog
+
+**Workflow States**: `step_4_longtails` → `step_5_filtering` → `step_6_clustering` → `step_7_validation`
+
+**Key Services**:
+- `lib/services/intent-engine/keyword-filter.ts`
+- `lib/services/intent-engine/keyword-clusterer.ts`
+- `lib/services/intent-engine/cluster-validator.ts`
+
+### Epic 37: Content Topic Generation & Approval ✅ COMPLETED
+**Purpose**: Generate subtopics for each keyword and implement approval workflow.
+
+**Stories**:
+- 37.1: Generate Subtopic Definitions via DataForSEO ✅
+- 37.2: Review and Approve Subtopics Before Article Generation ✅
+- 37.3: Human Approval Gates Implementation ✅
+- 37.4: Maintain Complete Audit Trail of All Decisions ✅
+
+**Workflow States**: `step_7_validation` → `step_8_subtopics`
+
+**Key Services**:
+- `lib/services/keyword-engine/subtopic-generator.ts`
+- `lib/services/keyword-engine/subtopic-approval-processor.ts`
+
+### Epic 38: Article Generation & Workflow Completion 🔄 ready-for-dev
+**Purpose**: Generate articles and complete the workflow pipeline.
+
+**Stories**:
+- 38.1: Queue Approved Subtopics for Article Generation ✅
+- 38.2: Track Article Generation Progress 📋 ready-for-dev
+- 38.3: Article Assembly Service ✅
+- 38.4: WordPress Publishing Execution 📋 backlog
+
+**Workflow States**: `step_8_subtopics` → `step_9_articles` → `completed`
+
+**Key Services**:
+- `lib/services/article-generation/article-assembler.ts`
+- `lib/services/article-generation/section-processor.ts`
+- `lib/services/publishing/wordpress-publisher.ts`
+
+## Automation Graph & Chaining
+
+The `AUTOMATION_GRAPH` in `lib/fsm/unified-workflow-engine.ts` is the single source of truth for all automated triggers.
+
+```typescript
+export const AUTOMATION_GRAPH = {
+  // Human → Automation boundaries
+  'SEEDS_APPROVED': 'intent.step4.longtails',
+  'HUMAN_SUBTOPICS_APPROVED': 'intent.step9.articles',
+  
+  // Worker → Worker chaining
+  'LONGTAIL_SUCCESS': 'intent.step5.filtering',
+  'FILTERING_SUCCESS': 'intent.step6.clustering',
+  'CLUSTERING_SUCCESS': 'intent.step7.validation',
+  'VALIDATION_SUCCESS': 'intent.step8.subtopics',
+} as const
+```
+
+### **Transition Pattern**
+Every automated worker follows a strict execution pattern:
+1. **Transition to START**: `transitionWithAutomation(workflowId, 'STEP_START', SYSTEM_USER_ID)`
+2. **Execute Business Logic**: Call specialized service (e.g., `expandSeedKeywordsToLongtails`).
+3. **Transition to SUCCESS**: `transitionWithAutomation(workflowId, 'STEP_SUCCESS', SYSTEM_USER_ID)`
+4. **Handle Failure**: Catch errors and trigger `transitionWithAutomation(workflowId, 'STEP_FAILED', SYSTEM_USER_ID)`.
+
+## FSM Implementation
+
+### Core Files
+- `/lib/fsm/unified-workflow-engine.ts` - Central transition engine
+- `/lib/fsm/fsm.internal.ts` - Internal FSM implementation
+- `/lib/fsm/workflow-events.ts` - Event and state definitions
+
+### Transition Pattern
+```typescript
+// 1. Validate current state
+if (workflow.state !== 'step_3_seeds') {
+  return NextResponse.json({ error: 'Invalid state' }, { status: 409 })
+}
+
+// 2. Execute side effects
+const result = await service.process(request)
+
+// 3. Transition state ONLY after success
+const transitionResult = await transitionWithAutomation(workflowId, 'SEEDS_APPROVED', userId)
+
+// 4. Handle concurrent requests
+if (!transitionResult) {
+  return NextResponse.json({ message: 'Already processed' }, { status: 200 })
+}
+```
+
+## Inngest Functions
+
+### Background Workers
+- `step4Longtails` - Long-tail keyword expansion
+- `step5Filtering` - Keyword filtering
+- `step6Clustering` - Topic clustering
+- `step7Validation` - Cluster validation
+- `step8Subtopics` - Subtopic generation
+- `step9Articles` - Article generation
+
+### Event Flow
+```
+FSM Transition → Inngest Event → Background Worker → Service Processing → Next FSM Transition
+```
+
+## API Endpoints
+
+### Workflow Step Endpoints
+- `POST /api/intent/workflows/[id]/steps/competitor-analyze` - Step 2
+- `POST /api/intent/workflows/[id]/steps/seed-extract` - Step 3
+- `POST /api/intent/workflows/[id]/steps/longtail-expand` - Step 4
+- `POST /api/intent/workflows/[id]/steps/cluster-topics` - Step 6
+- `POST /api/intent/workflows/[id]/steps/validate-clusters` - Step 7
+- `POST /api/intent/workflows/[id]/steps/human-approval` - Step 8
+
+### Approval Endpoints
+- `POST /api/keywords/[id]/approve-subtopics` - Subtopic approval
+
+## DataForSEO Integration
+
+### Endpoints by Step
+- **Step 2**: `/v3/dataforseo_labs/google/keywords_for_site/live`
+- **Step 4**: 4 endpoints (related, suggestions, ideas, autocomplete)
+- **Step 8**: `/v3/content_generation/generate_sub_topics/live`
+
+### Geo Configuration
+- Single source of truth: `organizations.keyword_settings`
+- 94 locations and 48 languages supported
+- Case-insensitive resolution with safe fallbacks
+
+## Error Handling
+
+### FSM Error States
+Each state has corresponding error states:
+- `step_1_icp_failed`
+- `step_2_competitors_failed`
+- `step_4_longtails_failed`
+- etc.
+
+### Recovery Strategies
+- **Retry Logic**: 3 attempts with exponential backoff
+- **Manual Intervention**: Human gates for critical decisions
+- **Rollback Support**: Atomic transitions prevent partial states
+
+## Testing Strategy
+
+### Unit Tests
+- FSM state transitions
+- Service business logic
+- API endpoint validation
+
+### Integration Tests
+- End-to-end workflow execution
+- Human approval workflows
+- External API integration
+
+### Concurrency Tests
+- Atomic transition validation
+- Race condition prevention
+- Database lock verification
+
+## Monitoring and Observability
+
+### Metrics
+- Workflow state distribution
+- Step completion rates
+- Error frequencies
+- Processing times
+
+### Audit Trail
+All operations logged to `intent_audit_logs`:
+- User actions
+- State transitions
+- External API calls
+- Error events
+
+## Performance Considerations
+
+### Database Optimization
+- Indexed state queries
+- Partial indexes for status tracking
+- Connection pooling
+
+### Background Processing
+- Inngest job queuing
+- Timeout handling
+- Retry policies
+
+## Security Features
+
+### Multi-tenant Isolation
+- RLS policies on all tables
+- Organization-based data scoping
+- JWT authentication
+
+### Audit Compliance
+- WORM-compliant logging
+- IP address tracking
+- User agent logging
+
+## Development Patterns
+
+### Service Pattern
+```typescript
+export class ServiceProcessor {
+  async process(workflowId: string): Promise<ProcessResult> {
+    // 1. Validate workflow state
+    // 2. Execute business logic
+    // 3. Update database
+    // 4. Return result
+  }
+}
+```
+
+### API Route Pattern
+```typescript
+export async function POST(request: NextRequest) {
+  // 1. Authenticate user
+  // 2. Validate workflow state
+  // 3. Execute service
+  // 4. Transition FSM state
+  // 5. Return response
+}
+```
+
+## Troubleshooting
+
+### Common Issues
+- **State Mismatch**: Workflow in unexpected state
+- **Concurrency Conflicts**: Multiple simultaneous requests
+- **External API Failures**: DataForSEO/OpenRouter errors
+
+### Debug Tools
+- Workflow state inspection
+- Audit log analysis
+- Performance metrics
+
+This workflow engine represents a production-ready, deterministic system with enterprise-grade reliability and comprehensive automation capabilities.
 **Purpose**: Filter and organize keywords into semantic topic clusters.
 
 **Stories**:

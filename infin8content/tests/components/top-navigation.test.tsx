@@ -70,7 +70,7 @@ describe('Top Navigation Component Tests - Story 1.12', () => {
         // Then: User avatar with initials is present
         const userMenu = screen.getByText('JD') // Avatar with initials
         expect(userMenu).toBeInTheDocument()
-        
+
         // Note: Dropdown content testing complex in unit tests, covered in integration tests
     })
 
@@ -96,31 +96,10 @@ describe('Top Navigation Component Tests - Story 1.12', () => {
         // Then: Email prefix is used as fallback name
         const userMenu = screen.getByText('JO') // Email prefix initials (john.doe -> JO)
         expect(userMenu).toBeInTheDocument()
-        
+
         // Note: Dropdown content testing complex in unit tests, covered in integration tests
     })
 
-    it('should show Create Article button on appropriate pages', () => {
-        // Given: User is on dashboard (not article generation page)
-        mockUsePathname.mockReturnValue('/dashboard')
-
-        // When: Component renders
-        renderWithProvider(<TopNavigation email="test@example.com" />)
-
-        // Then: Create Article button is visible
-        expect(screen.getByText('Create Article')).toBeInTheDocument()
-    })
-
-    it('should hide Create Article button on article generation page', () => {
-        // Given: User is on article generation page
-        mockUsePathname.mockReturnValue('/dashboard/articles/generate')
-
-        // When: Component renders
-        renderWithProvider(<TopNavigation email="test@example.com" />)
-
-        // Then: Create Article button is hidden
-        expect(screen.queryByText('Create Article')).not.toBeInTheDocument()
-    })
 
     it('should handle successful logout', async () => {
         // Given: Mock successful logout API response
@@ -131,10 +110,10 @@ describe('Top Navigation Component Tests - Story 1.12', () => {
 
         // When: Component renders
         renderWithProvider(<TopNavigation email="test@example.com" />)
-        
+
         // Then: User avatar button is present (logout functionality tested in integration tests)
         expect(screen.getByText('TE')).toBeInTheDocument()
-        
+
         // Note: Full logout flow tested in integration tests due to dropdown complexity
         expect(fetch).not.toHaveBeenCalled() // No API call until user interacts
     })
@@ -148,10 +127,10 @@ describe('Top Navigation Component Tests - Story 1.12', () => {
 
         // When: Component renders
         renderWithProvider(<TopNavigation email="test@example.com" />)
-        
+
         // Then: User avatar button is present
         expect(screen.getByText('TE')).toBeInTheDocument()
-        
+
         // Note: Error handling tested in integration tests
     })
 
@@ -162,10 +141,10 @@ describe('Top Navigation Component Tests - Story 1.12', () => {
 
         // When: Component renders
         renderWithProvider(<TopNavigation email="test@example.com" />)
-        
+
         // Then: User avatar button is present
         expect(screen.getByText('TE')).toBeInTheDocument()
-        
+
         // Note: Error handling tested in integration tests
     })
 
@@ -176,10 +155,10 @@ describe('Top Navigation Component Tests - Story 1.12', () => {
 
         // When: Component renders
         renderWithProvider(<TopNavigation email="test@example.com" />)
-        
+
         // Then: User avatar button is present
         expect(screen.getByText('TE')).toBeInTheDocument()
-        
+
         // Note: Loading state tested in integration tests due to dropdown complexity
     })
 

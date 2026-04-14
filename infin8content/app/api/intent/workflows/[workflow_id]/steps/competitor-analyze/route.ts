@@ -23,7 +23,7 @@ import {
 import type { SeedExtractor } from '@/lib/services/intent-engine/seed-extractor.interface'
 import { DeterministicFakeExtractor } from '@/lib/services/intent-engine/deterministic-fake-extractor'
 import { enforceICPGate, enforceCompetitorGate } from '@/lib/middleware/intent-engine-gate'
-import { resolveLocationCode, resolveLanguageCode } from '@/lib/config/dataforseo-geo'
+import { getOrganizationGeoOrThrow } from '@/lib/config/dataforseo-geo'
 
 // Pure dependency injection factory - no global state
 function createExtractor(): SeedExtractor {
@@ -184,15 +184,17 @@ export async function POST(
       .eq('id', organizationId)
       .single()
 
-    const keywordSettings = (orgData as any)?.keyword_settings || {}
+    if (!orgData) {
+      return NextResponse.json(
+        { error: 'Organization keyword settings not configured' },
+        { status: 400 }
+      )
+    }
 
-    // Map onboarding region to DataForSEO location code, default to US
-    const locationCode = resolveLocationCode(keywordSettings.target_region)
+    // Use STRICT geo resolution - no fallbacks
+    const { locationCode, languageCode } = await getOrganizationGeoOrThrow(supabase, organizationId)
 
-    // Validate language code against supported set, default to English
-    const languageCode = resolveLanguageCode(keywordSettings.language_code)
-
-    console.log(`[CompetitorAnalyze] Using location ${locationCode} and language ${languageCode} for region "${keywordSettings.target_region}"`)
+    console.log(`[CompetitorAnalyze] Using location ${locationCode} and language ${languageCode}`)
 
     // UNIFIED ENGINE: No processing state needed
     // Work happens synchronously, then advance to next step

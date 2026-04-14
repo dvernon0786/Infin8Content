@@ -85,7 +85,7 @@ const PricingSection = () => {
                 onClick={() => setBillingCycle('monthly')}
                 className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all ${
                   billingCycle === 'monthly'
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                    ? 'bg-linear-to-r from-blue-500 to-purple-600 text-white shadow-md'
                     : 'text-neutral-600 hover:text-neutral-900'
                 }`}
               >
@@ -95,7 +95,7 @@ const PricingSection = () => {
                 onClick={() => setBillingCycle('annually')}
                 className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all ${
                   billingCycle === 'annually'
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                    ? 'bg-linear-to-r from-blue-500 to-purple-600 text-white shadow-md'
                     : 'text-neutral-600 hover:text-neutral-900'
                 }`}
               >
@@ -126,7 +126,7 @@ const PricingSection = () => {
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                         isActive
-                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                          ? 'bg-linear-to-r from-blue-500 to-purple-600 text-white'
                           : 'bg-neutral-100 text-neutral-400'
                       }`}
                     >
@@ -140,7 +140,7 @@ const PricingSection = () => {
 
           {/* RIGHT COLUMN - Plan Details (60%) */}
           <div className="md:col-span-3">
-            <div className="bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-3xl p-10 shadow-2xl text-white">
+            <div className="bg-linear-to-br from-neutral-900 to-neutral-800 rounded-3xl p-10 shadow-2xl text-white">
               {/* Plan Name */}
               <h3 className="text-3xl font-bold mb-2">{currentPlan.name}</h3>
 

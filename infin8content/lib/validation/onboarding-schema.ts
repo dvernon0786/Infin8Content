@@ -33,7 +33,7 @@ export const blogSchema = z.object({
 
 // Content defaults schema
 export const contentDefaultsSchema = z.object({
-  language: z.string().min(2, 'Language must be at least 2 characters').max(10, 'Language must be less than 10 characters'),
+  language: z.string().min(2, 'Language must be at least 2 characters').max(20, 'Language must be less than 20 characters'),
   tone: z.enum(['professional', 'casual', 'formal', 'friendly'], {
     errorMap: () => ({ message: 'Tone must be one of: professional, casual, formal, friendly' })
   }),
@@ -42,6 +42,16 @@ export const contentDefaultsSchema = z.object({
   }),
   target_word_count: z.number().int('Word count must be an integer').min(500, 'Word count must be at least 500').max(10000, 'Word count must be less than 10,000'),
   auto_publish: z.boolean(),
+
+  // 🏗️ PIPELINE V2 FIELDS
+  brand_color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Invalid hex color').default("#" + "000000"),
+  image_style: z.string().min(2).max(50).default('realistic'),
+  add_youtube_video: z.boolean().default(false),
+  add_cta: z.boolean().default(false),
+  add_infographics: z.boolean().default(false),
+  add_emojis: z.boolean().default(false),
+  internal_links: z.boolean().default(true),
+  num_internal_links: z.number().int().min(0).max(10).default(3),
 })
 
 // Keyword settings schema

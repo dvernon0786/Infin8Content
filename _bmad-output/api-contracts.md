@@ -1,421 +1,83 @@
 # API Contracts - Infin8Content
 
-## Overview
-Infin8Content uses Next.js 16.1.1 API routes with TypeScript, providing RESTful endpoints for article generation, user authentication, payment processing, and team management.
+This document provides a comprehensive catalog of the API endpoints available in the Infin8Content platform.
 
 ## Base URL
-```
-/api/
-```
+All API requests are relative to the application's root URL (e.g., `https://app.infin8content.com/api`).
 
 ## Authentication
-- **Method**: Supabase Auth with JWT tokens
-- **Header**: `Authorization: Bearer <token>`
-- **Validation**: Middleware-based authentication checks
+Most endpoints require an active session via Supabase Auth. Authentication is typically handled via `cookie` or `authorization` headers.
 
-## API Endpoints
+## Endpoints Catalog
 
-### Authentication Endpoints
+### Authentication
+- `POST /auth/login` - User login initiation.
+- `POST /auth/register` - New user registration.
+- `POST /auth/verify-otp` - OTP code verification.
+- `POST /auth/resend-otp` - Resend verification code.
+- `POST /auth/logout` - Invalidate user session.
 
-#### POST /api/auth/login
-Login user with email and password
-```typescript
-Request: {
-  email: string;
-  password: string;
-}
-Response: {
-  success: true;
-  user: { id: string; email: string; role: string };
-  redirectTo: '/dashboard' | '/payment' | '/create-organization';
-}
-```
+### Intent Workflows (FSM)
+- `GET /intent/workflows` - List all intent workflows for the organization.
+- `POST /intent/workflows` - Create a new intent workflow.
+- `GET /intent/workflows/[id]` - Get detailed state and data for a specific workflow.
+- `POST /intent/workflows/[id]/cancel` - Cancel an active workflow.
+- `GET /intent/workflows/[id]/blocking-conditions` - Check for conditions preventing progression.
 
-#### POST /api/auth/register
-Register new user with email and password
-```typescript
-Request: {
-  email: string;
-  password: string;
-}
-Response: {
-  success: true;
-  user: { id: string; email: string };
-  redirectTo: '/auth';
-}
-```
+#### Workflow Steps
+- `POST /intent/workflows/[id]/steps/icp-generate` - Generate Ideal Customer Profile.
+- `POST /intent/workflows/[id]/steps/competitor-analyze` - Analyze competitor content.
+- `POST /intent/workflows/[id]/steps/seed-extract` - Extract seed keywords.
+- `POST /intent/workflows/[id]/steps/cluster-topics` - Cluster keywords into topics.
+- `POST /intent/workflows/[id]/steps/filter-keywords` - User review of keyword filtering.
+- `POST /intent/workflows/[id]/steps/validate-clusters` - Validate topic clusters.
+- `POST /intent/workflows/[id]/steps/longtail-expand` - Expand into longtail keywords.
+- `POST /intent/workflows/[id]/steps/human-approval` - Submit for final human review.
+- `POST /intent/workflows/[id]/steps/queue-articles` - Queue approved topics for generation.
+- `POST /intent/workflows/[id]/steps/link-articles` - Link generated articles back to the workflow.
 
-#### POST /api/auth/verify-otp
-Verify OTP code for authentication
-```typescript
-Request: {
-  email: string;
-  code: string;
-}
-Response: {
-  success: boolean;
-  message: string;
-}
-```
+### Article Generation
+- `POST /articles/generate` - Initiate article generation pipeline.
+- `GET /intent/workflows/[id]/articles/progress` - Monitor real-time generation progress.
 
-#### POST /api/auth/resend-otp
-Resend OTP code to user email
-```typescript
-Request: {
-  email: string;
-}
-Response: {
-  success: boolean;
-  message: string;
-}
-```
+### Organization & Team
+- `GET /organizations` - List user's organizations (via `create` and `update` routes).
+- `POST /organizations/create` - Create a new organization.
+- `PUT /organizations/update` - Update organization settings.
+- `GET /team/members` - List organization members.
+- `POST /team/invite` - Invite a new team member.
+- `POST /team/update-role` - Change member permissions.
 
-#### POST /api/auth/logout
-Logout user and invalidate session
-```typescript
-Request: {}
-Response: {
-  success: boolean;
-  message: string;
-}
-```
+### Analytics & Metrics
+- `GET /admin/metrics/dashboard` - High-level system metrics.
+- `GET /admin/metrics/efficiency-summary` - Project efficiency statistics.
+- `GET /analytics/metrics` - Detailed analytics data.
+- `GET /analytics/trends` - Historical performance trends.
+- `POST /analytics/export/[format]` - Export data as CSV or PDF.
 
-### Article Management Endpoints
+### Onboarding
+- `GET /onboarding/status` - Current user onboarding progress.
+- `POST /onboarding/persist` - Save onboarding step data.
+- `GET /onboarding/content-defaults` - Get default settings for content.
 
-#### POST /api/articles/generate
-Generate new article with AI
-```typescript
-Request: {
-  keyword: string;
-  targetWordCount: number;
-  writingStyle?: 'Professional' | 'Conversational' | 'Technical' | 'Casual' | 'Formal';
-  targetAudience?: 'General' | 'B2B' | 'B2C' | 'Technical' | 'Consumer';
-  customInstructions?: string;
-}
-Response: {
-  success: boolean;
-  articleId?: string;
-  message?: string;
-}
-```
+### Payment
+- `POST /payment/create-checkout-session` - Start Stripe Checkout flow.
+- `POST /webhooks/stripe` - Handle Stripe asynchronous events.
 
-#### GET /api/articles/[id]/status
-Get generation status for specific article
-```typescript
-Response: {
-  id: string;
-  status: 'queued' | 'generating' | 'completed' | 'failed';
-  progress?: number;
-  error?: string;
-}
-```
+### Developer & Debug
+- `GET /inngest` - Inngest function management and debugging.
+- `GET /debug/auth-test` - Verify authentication configuration.
+- `GET /debug/payment-status` - Check Stripe integration health.
 
-#### POST /api/articles/[id]/publish
-Publish article to external CMS (WordPress)
-```typescript
-Request: {
-  cmsType: 'wordpress';
-  cmsCredentials: CMSConnectionDetails;
-}
-Response: {
-  success: boolean;
-  publishedUrl?: string;
-  externalId?: string;
-  error?: string;
-}
-```
-
-#### GET /api/articles/queue
-Get all articles in generation queue
-```typescript
-Response: {
-  articles: Article[];
-  total: number;
-}
-```
-
-#### POST /api/articles/bulk
-Bulk operations on multiple articles
-```typescript
-Request: {
-  action: 'delete' | 'publish' | 'regenerate';
-  articleIds: string[];
-}
-Response: {
-  success: boolean;
-  processed: number;
-  failed: number;
-}
-```
-
-### Organization Management Endpoints
-
-#### GET /api/organizations
-Get user's organizations
-```typescript
-Response: {
-  organizations: Organization[];
-  current: Organization;
-}
-```
-
-#### POST /api/organizations
-Create new organization
-```typescript
-Request: {
-  name: string;
-  plan: 'starter' | 'pro' | 'agency';
-}
-Response: {
-  success: boolean;
-  organization: Organization;
-}
-```
-
-#### PUT /api/organizations/[id]
-Update organization details
-```typescript
-Request: {
-  name?: string;
-  settings?: OrganizationSettings;
-}
-Response: {
-  success: boolean;
-  organization: Organization;
-}
-```
-
-### Payment Endpoints
-
-#### POST /api/payment/create-checkout
-Create Stripe checkout session
-```typescript
-Request: {
-  planId: string;
-  successUrl: string;
-  cancelUrl: string;
-}
-Response: {
-  success: boolean;
-  checkoutUrl?: string;
-  sessionId?: string;
-}
-```
-
-#### POST /api/payment/webhooks
-Handle Stripe webhook events
-```typescript
-Headers: {
-  'stripe-signature': string;
-}
-Request: StripeWebhookEvent
-Response: {
-  received: boolean;
-}
-```
-
-### Team Management Endpoints
-
-#### GET /api/team/members
-Get organization team members
-```typescript
-Response: {
-  members: TeamMember[];
-  total: number;
-}
-```
-
-#### POST /api/team/invite
-Invite new team member
-```typescript
-Request: {
-  email: string;
-  role: 'admin' | 'member' | 'viewer';
-}
-Response: {
-  success: boolean;
-  inviteId: string;
-}
-```
-
-#### PUT /api/team/members/[id]/role
-Update team member role
-```typescript
-Request: {
-  role: 'admin' | 'member' | 'viewer';
-}
-Response: {
-  success: boolean;
-  member: TeamMember;
-}
-```
-
-### Analytics Endpoints
-
-#### GET /api/analytics/dashboard
-Get dashboard analytics data
-```typescript
-Response: {
-  articles: {
-    total: number;
-    published: number;
-    inProgress: number;
-  };
-  usage: {
-    current: number;
-    limit: number;
-    period: string;
-  };
-  performance: {
-    avgGenerationTime: number;
-    successRate: number;
-  };
-}
-```
-
-#### GET /api/analytics/usage
-Get usage statistics
-```typescript
-Response: {
-  usage: UsageStats[];
-  billing: BillingInfo;
-}
-```
-
-### Research Endpoints
-
-#### POST /api/research/keyword
-Perform keyword research
-```typescript
-Request: {
-  keyword: string;
-  location?: string;
-  language?: string;
-}
-Response: {
-  success: boolean;
-  data: KeywordResearchData;
-}
-```
-
-#### GET /api/research/suggestions
-Get keyword suggestions
-```typescript
-Request: {
-  seedKeyword: string;
-  limit?: number;
-}
-Response: {
-  suggestions: KeywordSuggestion[];
-}
-```
-
-### SEO Endpoints
-
-#### GET /api/seo/metrics
-Get SEO metrics for articles
-```typescript
-Response: {
-  metrics: SEOMetrics[];
-  summary: SEOSummary;
-}
-```
-
-#### POST /api/seo/optimize
-Get SEO optimization suggestions
-```typescript
-Request: {
-  articleId: string;
-  targetKeywords: string[];
-}
-Response: {
-  suggestions: SEOSuggestion[];
-  score: number;
-}
-```
-
-### Admin Endpoints
-
-#### GET /api/admin/system
-Get system health and metrics
-```typescript
-Response: {
-  system: SystemHealth;
-  metrics: SystemMetrics;
-}
-```
-
-#### POST /api/admin/maintenance
-Perform maintenance operations
-```typescript
-Request: {
-  operation: 'cleanup' | 'backup' | 'optimize';
-}
-Response: {
-  success: boolean;
-  result: MaintenanceResult;
-}
-```
+## Request/Response Format
+Unless otherwise specified, all endpoints consume and produce `application/json`.
 
 ## Error Handling
-
-All endpoints return consistent error responses:
-```typescript
-{
-  error: string;
-  details?: any;
-  code?: string;
-}
-```
-
-Common error codes:
-- `400` - Bad Request (validation errors)
-- `401` - Unauthorized (authentication required)
-- `403` - Forbidden (insufficient permissions)
-- `404` - Not Found (resource doesn't exist)
-- `429` - Too Many Requests (rate limit exceeded)
-- `500` - Internal Server Error
-
-## Rate Limiting
-
-- **Authentication endpoints**: 5 requests per minute
-- **Article generation**: Based on plan limits
-- **Research endpoints**: 100 requests per hour
-- **General endpoints**: 1000 requests per hour
-
-## Data Validation
-
-All requests are validated using Zod schemas with:
-- Type checking
-- Length limits
-- Format validation
-- Sanitization for security
-
-## Security Features
-
-- **CSRF Protection**: Built-in Next.js middleware
-- **Input Sanitization**: All user inputs sanitized
-- **SQL Injection Prevention**: Supabase RLS policies
-- **Rate Limiting**: Endpoint-specific limits
-- **Audit Logging**: All actions logged for compliance
-
-## WebSocket Support
-
-Real-time updates available via:
-- **Article generation progress**: `/api/articles/[id]/status` with polling
-- **Team collaboration**: Real-time updates via WebSocket connections
-- **Dashboard metrics**: Live data updates
-
-## Testing
-
-API endpoints covered by:
-- **Unit tests**: Vitest for individual functions
-- **Integration tests**: Full endpoint testing
-- **E2E tests**: Playwright for user flows
-
-## Versioning
-
-Current API version: **v1**
-- Version specified in URL: `/api/v1/...`
-- Backward compatibility maintained
-- Deprecation notices sent for breaking changes
+The platform uses standard HTTP status codes:
+- `200 OK` - Request succeeded.
+- `201 Created` - Resource created successfully.
+- `400 Bad Request` - Invalid input or validation error.
+- `401 Unauthorized` - Authentication required.
+- `403 Forbidden` - Insufficient permissions.
+- `404 Not Found` - Resource not found.
+- `500 Internal Server Error` - Unexpected server error.

@@ -21,7 +21,7 @@ export interface SubtopicApprovalResponse {
   success: boolean
   decision: 'approved' | 'rejected'
   keyword_id: string
-  article_status: 'ready' | 'not_started'
+  article_status: 'ready' | 'rejected'
   message: string
 }
 
@@ -55,8 +55,8 @@ export async function processSubtopicApproval(
     throw new Error('Authentication required')
   }
 
-  // Validate user is organization admin
-  if (currentUser.role !== 'admin') {
+  // Validate user is organization admin or owner
+  if (!['admin', 'owner'].includes(currentUser.role)) {
     throw new Error('Admin access required')
   }
 
@@ -89,7 +89,7 @@ export async function processSubtopicApproval(
   }
 
   // Validate subtopics are complete before approval
-  if (keyword.subtopics_status !== 'complete') {
+  if (keyword.subtopics_status !== 'completed') {
     throw new Error('Subtopics must be complete before approval')
   }
 
@@ -99,54 +99,57 @@ export async function processSubtopicApproval(
   }
 
   // Update keyword article_status based on decision
-  const newArticleStatus = decision === 'approved' ? 'ready' : 'not_started'
-  
-  const keywordUpdateResult = await supabase
+  // Approve -> 'ready' (eligible for generation)
+  // Reject  -> 'rejected' (explicit user removal)
+  if (decision === 'approved') {
+    const keywordUpdateResult = await supabase
+      .from('keywords')
+      .update({
+        article_status: 'ready',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', keywordId)
+      .select('id')
+      .single()
+
+    if (keywordUpdateResult.error || !keywordUpdateResult.data) {
+      console.error('Failed to update keyword status:', keywordUpdateResult.error)
+      throw new Error('Failed to update keyword status')
+    }
+  } else {
+    const keywordUpdateResult = await supabase
+      .from('keywords')
+      .update({
+        article_status: 'rejected',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', keywordId)
+      .select('id')
+      .single()
+
+    if (keywordUpdateResult.error || !keywordUpdateResult.data) {
+      console.error('Failed to mark keyword rejected:', keywordUpdateResult.error)
+      throw new Error('Failed to update keyword status')
+    }
+  }
+
+  // Get workflow_id for approval record
+  const { data: workflowRow } = await supabase
     .from('keywords')
-    .update({
-      article_status: newArticleStatus,
-      updated_at: new Date().toISOString()
-    })
+    .select('workflow_id')
     .eq('id', keywordId)
-    .select('id')
-    .single()
+    .single() as { data: { workflow_id: string } | null }
 
-  if (keywordUpdateResult.error || !keywordUpdateResult.data) {
-    console.error('Failed to update keyword status:', keywordUpdateResult.error)
-    throw new Error('Failed to update keyword status')
+  if (!workflowRow?.workflow_id) {
+    throw new Error('Workflow not found for keyword')
   }
 
-  // Create or update approval record (idempotent)
-  const approvalData = {
-    entity_id: keywordId,
-    entity_type: 'keyword',
-    approval_type: 'subtopics',
-    decision,
-    approver_id: currentUser.id,
-    feedback: feedback || null,
-  }
-
-  const approvalResult = await supabase
-    .from('intent_approvals')
-    .upsert(approvalData, {
-      onConflict: 'entity_id,entity_type,approval_type',
-      ignoreDuplicates: false,
-    })
-    .select('id')
-    .single()
-
-  if (approvalResult.error || !approvalResult.data) {
-    console.error('Failed to process approval:', approvalResult.error)
-    throw new Error('Failed to process approval')
-  }
-
-  const approval = approvalResult.data as unknown as {
-    id: string
-  }
+  // Extract for use throughout this function scope
+  const workflowId = workflowRow.workflow_id
 
   // Log audit action
-  const auditAction = decision === 'approved' 
-    ? AuditAction.KEYWORD_SUBTOPICS_APPROVED 
+  const auditAction = decision === 'approved'
+    ? AuditAction.KEYWORD_SUBTOPICS_APPROVED
     : AuditAction.KEYWORD_SUBTOPICS_REJECTED
 
   logActionAsync({
@@ -165,12 +168,12 @@ export async function processSubtopicApproval(
 
   // 🔥 WORKFLOW-LEVEL APPROVAL CHECK
   // Check if this was the final keyword approval needed to trigger Step 9
-  if (decision === 'approved') {
-    await checkAndTriggerWorkflowCompletion(keywordId, currentUser.org_id, currentUser.id)
-  }
+  // Must fire on both approved AND rejected so that a workflow where the
+  // last pending keyword is rejected doesn't get stuck at step_8_subtopics.
+  await checkAndTriggerWorkflowCompletion(workflowId, currentUser.id)
 
   // Return success response
-  const message = decision === 'approved' 
+  const message = decision === 'approved'
     ? 'Subtopics approved successfully'
     : 'Subtopics rejected successfully'
 
@@ -178,153 +181,129 @@ export async function processSubtopicApproval(
     success: true,
     decision,
     keyword_id: keywordId,
-    article_status: newArticleStatus,
+    article_status: decision === 'approved' ? 'ready' : 'rejected',
     message,
   }
 }
 
 /**
- * Check if subtopics are approved for a keyword
- * 
- * @param keywordId - The keyword ID to check
- * @returns True if subtopics are approved, false otherwise
+ * Deterministically process bulk approval for multiple keywords from Step 8.
+ * Overwrites the approved_items array instead of incremental append to prevent race conditions.
+ *
+ * @param workflowId - The workflow ID
+ * @param approvedKeywordIds - Array of approved keyword IDs
+ * @param headers - Request headers for audit logging
  */
-export async function areSubtopicsApproved(keywordId: string): Promise<boolean> {
-  if (!keywordId) {
-    return false
-  }
+export async function processBulkSubtopicApproval(
+  workflowId: string,
+  headers?: Headers
+) {
+  if (!workflowId) throw new Error('Workflow ID is required')
+
+  const currentUser = await getCurrentUser()
+  if (!currentUser?.org_id) throw new Error('Authentication required')
+  if (!['admin', 'owner'].includes(currentUser.role)) throw new Error('Admin access required')
 
   const supabase = await createServiceRoleClient()
 
-  const approvalResult = await supabase
-    .from('intent_approvals')
-    .select('decision')
-    .eq('entity_id', keywordId)
-    .eq('entity_type', 'keyword')
-    .eq('approval_type', 'subtopics')
+  // Verify the workflow belongs to the current user's organization before mutating.
+  // The service-role client bypasses RLS, so we must enforce org isolation explicitly.
+  const { data: workflow, error: workflowError } = await supabase
+    .from('intent_workflows')
+    .select('id, organization_id')
+    .eq('id', workflowId)
     .single()
 
-  if (approvalResult.error || !approvalResult.data) {
-    return false
+  if (workflowError || !workflow) {
+    console.error('Failed to load workflow for bulk approval:', workflowError)
+    throw new Error('Failed to load workflow')
   }
 
-  const approval = approvalResult.data as unknown as {
-    decision: string
+  if (workflow.organization_id !== currentUser.org_id) {
+    throw new Error('Access denied: workflow belongs to a different organization')
   }
 
-  return approval.decision === 'approved'
+  // Single UPDATE — set all non-rejected (still 'not_started') keywords to 'ready'
+  const { data: updatedKeywords, error } = await supabase
+    .from('keywords')
+    .update({
+      article_status: 'ready',
+      updated_at: new Date().toISOString()
+    })
+    .eq('workflow_id', workflowId)
+    .eq('organization_id', currentUser.org_id)
+    .eq('subtopics_status', 'completed')
+    .eq('article_status', 'not_started')
+    .select('id')
+
+  if (error) {
+    console.error('Failed to bulk approve keywords:', error)
+    throw new Error('Failed to bulk approve keywords')
+  }
+
+  const approvedCount = updatedKeywords?.length ?? 0
+
+  console.log(`[BulkApprove] Set ${approvedCount} keywords to 'ready' for workflow ${workflowId}`)
+
+  // Audit log
+  logActionAsync({
+    orgId: currentUser.org_id,
+    userId: currentUser.id,
+    action: AuditAction.KEYWORD_SUBTOPICS_APPROVED,
+    details: { workflow_id: workflowId, count: approvedCount, decision: 'approved_bulk' },
+    ipAddress: headers ? extractIpAddress(headers) : null,
+    userAgent: headers ? extractUserAgent(headers) : null,
+  })
+
+  // Check and trigger step 9
+  await checkAndTriggerWorkflowCompletion(workflowId, currentUser.id)
+
+  return { success: true, message: `${approvedCount} keywords approved for article generation` }
 }
 
 /**
- * Get approved keyword IDs from a list of keyword IDs
+ * Check if all keywords in the workflow have approved subtopics and trigger Step 9 if ready.
  * 
- * @param keywordIds - Array of keyword IDs to check
- * @returns Array of keyword IDs that have approved subtopics
- */
-export async function getApprovedKeywordIds(keywordIds: string[]): Promise<string[]> {
-  if (!keywordIds || keywordIds.length === 0) {
-    return []
-  }
-
-  const supabase = await createServiceRoleClient()
-
-  const approvalResult = await supabase
-    .from('intent_approvals')
-    .select('entity_id')
-    .in('entity_id', keywordIds)
-    .eq('entity_type', 'keyword')
-    .eq('approval_type', 'subtopics')
-    .eq('decision', 'approved')
-
-  if (approvalResult.error || !approvalResult.data) {
-    return []
-  }
-
-  const approvals = approvalResult.data as unknown as Array<{
-    entity_id: string
-  }>
-
-  return approvals.map(approval => approval.entity_id)
-}
-
-/**
- * Check if all keywords in the workflow have approved subtopics and trigger Step 9 if ready
+ * P5: workflowId passed in directly — already resolved in processSubtopicApproval.
+ * No additional keyword → workflow_id DB lookup needed.
  * 
- * @param keywordId - The keyword ID that was just approved
- * @param organizationId - The organization ID for validation
- * @param userId - The user ID for audit logging
+ * @param workflowId     - The workflow that owns the keywords (pre-resolved by caller)
+ * @param organizationId - The organization ID for row isolation
+ * @param userId         - The user ID for audit logging
  */
 async function checkAndTriggerWorkflowCompletion(
-  keywordId: string,
-  organizationId: string,
+  workflowId: string,
   userId: string
 ): Promise<void> {
   const supabase = createServiceRoleClient()
+  const { getWorkflowState } = await import('@/lib/fsm/unified-workflow-engine')
+  const currentState = await getWorkflowState(workflowId)
 
-  // Get the workflow ID from the keyword
-  const { data: keyword } = await supabase
+  if (currentState !== 'step_8_subtopics') return
+
+  // Count keywords with completed subtopics that are NOT yet approved ('not_started')
+  const { count, error } = await supabase
     .from('keywords')
-    .select('workflow_id')
-    .eq('id', keywordId)
-    .single()
-
-  if (!keyword) {
-    console.error(`[SubtopicApproval] Cannot find workflow for keyword ${keywordId}`)
-    return
-  }
-
-  const workflowId = (keyword as any).workflow_id
-
-  // Get current workflow state
-  // For state query, we need to use internal FSM since unified engine doesn't export getCurrentState
-  const { InternalWorkflowFSM } = await import('@/lib/fsm/fsm.internal')
-  const currentState = await InternalWorkflowFSM.getCurrentState(workflowId)
-  
-  // Only proceed if workflow is in step_8_subtopics state
-  if (currentState !== 'step_8_subtopics') {
-    console.log(`[SubtopicApproval] Workflow ${workflowId} not in step_8_subtopics, current: ${currentState}`)
-    return
-  }
-
-  // Check if ALL keywords in this workflow have approved subtopics
-  const { data: allKeywords } = await supabase
-    .from('keywords')
-    .select('id, subtopics_status')
+    .select('id', { count: 'exact', head: true })
     .eq('workflow_id', workflowId)
-    .eq('organization_id', organizationId)
+    .eq('subtopics_status', 'completed')
+    .eq('article_status', 'not_started')
 
-  if (!allKeywords || allKeywords.length === 0) {
-    console.log(`[SubtopicApproval] No keywords found for workflow ${workflowId}`)
+  if (error) {
+    console.error(`[SubtopicApproval] Error counting pending keywords: ${error.message}`)
     return
   }
 
-  // Get all keyword IDs for this workflow
-  const workflowKeywordIds = allKeywords.map(k => (k as any).id)
-
-  // Get approved keyword IDs
-  const approvedKeywordIds = await getApprovedKeywordIds(workflowKeywordIds)
-
-  // Check if all keywords have approved subtopics
-  const allApproved = workflowKeywordIds.length === approvedKeywordIds.length
-
-  if (!allApproved) {
-    console.log(`[SubtopicApproval] Not all keywords approved yet: ${approvedKeywordIds.length}/${workflowKeywordIds.length}`)
+  if (count === null || count > 0) {
+    console.log(`[SubtopicApproval] ${count} keywords still pending approval`)
     return
   }
 
-  console.log(`🔥🔥🔥 [SubtopicApproval] ALL KEYWORDS APPROVED - Triggering Step 9 for workflow ${workflowId}`)
+  console.log(`[SubtopicApproval] All keywords resolved → triggering step 9`)
 
-  // Unified transition - automatic event emission guaranteed
-  const result = await transitionWithAutomation(
-    workflowId,
-    'HUMAN_SUBTOPICS_APPROVED',
-    userId
-  )
+  const result = await transitionWithAutomation(workflowId, 'HUMAN_SUBTOPICS_APPROVED', userId)
 
   if (!result.success) {
-    console.log(`⚠️⚠️⚠️ [SubtopicApproval] Unified transition failed for ${workflowId}: ${result.error}`)
-    return
+    console.error(`[SubtopicApproval] Transition failed: ${result.error}`)
   }
-
-  console.log(`✅✅✅ [SubtopicApproval] Unified transition completed for workflow ${workflowId}`)
 }

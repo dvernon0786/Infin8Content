@@ -55,14 +55,12 @@ function VerifyOTPContent() {
       }
 
       setSuccess(true)
-      const redirectUrl = invitationToken
-        ? `/accept-invitation?token=${invitationToken}` 
-        : '/create-organization'
+      // Use redirectTo from API response (defaults to /login?verified=true).
+      // Invitation tokens are preserved in localStorage and picked up by the
+      // login page, so we don't need to carry them in the URL here.
+      const redirectUrl = data.redirectTo || '/login?verified=true'
       setTimeout(() => {
         router.push(redirectUrl)
-        if (invitationToken) {
-          localStorage.removeItem('invitation_token')
-        }
       }, 2000)
     } catch (error) {
       setError('An error occurred. Please try again.')

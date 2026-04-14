@@ -106,7 +106,9 @@ describe('Competitor Seed Extractor Service', () => {
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
         organizationId: mockOrganizationId,
-        maxSeedsPerCompetitor: 3
+        maxSeedsPerCompetitor: 3,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       const result = await extractSeedKeywords(request)
@@ -178,7 +180,9 @@ describe('Competitor Seed Extractor Service', () => {
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
         organizationId: mockOrganizationId,
-        maxSeedsPerCompetitor: 3
+        maxSeedsPerCompetitor: 3,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       const result = await extractSeedKeywords(request)
@@ -248,7 +252,9 @@ describe('Competitor Seed Extractor Service', () => {
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
         organizationId: mockOrganizationId,
-        maxSeedsPerCompetitor: 3
+        maxSeedsPerCompetitor: 3,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       await extractSeedKeywords(request)
@@ -314,7 +320,9 @@ describe('Competitor Seed Extractor Service', () => {
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
         organizationId: mockOrganizationId,
-        maxSeedsPerCompetitor: 3
+        maxSeedsPerCompetitor: 3,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       await extractSeedKeywords(request)
@@ -323,23 +331,27 @@ describe('Competitor Seed Extractor Service', () => {
     it('should handle empty competitors list', async () => {
       const request: ExtractSeedKeywordsRequest = {
         competitors: [],
-        organizationId: mockOrganizationId
+        organizationId: mockOrganizationId,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       await expect(extractSeedKeywords(request)).rejects.toThrow(
         'No competitors provided for seed keyword extraction'
       )
-    })
 
-    it('should handle missing organization ID', async () => {
-      const request: ExtractSeedKeywordsRequest = {
-        competitors: mockCompetitors,
-        organizationId: ''
-      }
+it('should handle missing organization ID', async () => {
+const request: ExtractSeedKeywordsRequest = {
+competitors: mockCompetitors,
+organizationId: '',
+locationCode: 2840, // US for testing
+languageCode: 'en' // English for testing
+}
 
-      await expect(extractSeedKeywords(request)).rejects.toThrow(
-        'Organization ID is required'
-      )
+await expect(extractSeedKeywords(request)).rejects.toThrow(
+'Organization ID is required'
+)
+})
     })
 
     it('should continue processing when one competitor fails', async () => {
@@ -411,7 +423,9 @@ describe('Competitor Seed Extractor Service', () => {
 
       const request: ExtractSeedKeywordsRequest = {
         competitors,
-        organizationId: mockOrganizationId
+        organizationId: mockOrganizationId,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       const result = await extractSeedKeywords(request)
@@ -434,7 +448,9 @@ describe('Competitor Seed Extractor Service', () => {
 
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
-        organizationId: mockOrganizationId
+        organizationId: mockOrganizationId,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       const result = await extractSeedKeywords(request)
@@ -456,7 +472,9 @@ describe('Competitor Seed Extractor Service', () => {
       try {
         const request: ExtractSeedKeywordsRequest = {
           competitors: mockCompetitors,
-          organizationId: mockOrganizationId
+          organizationId: mockOrganizationId,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
         }
 
         // When credentials are missing, all competitors fail, resulting in structured error
@@ -523,7 +541,9 @@ describe('Competitor Seed Extractor Service', () => {
 
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
-        organizationId: mockOrganizationId
+        organizationId: mockOrganizationId,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       await extractSeedKeywords(request)
@@ -584,7 +604,9 @@ describe('Competitor Seed Extractor Service', () => {
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
         organizationId: mockOrganizationId,
-        maxSeedsPerCompetitor: 3
+        maxSeedsPerCompetitor: 3,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       await extractSeedKeywords(request)
@@ -639,7 +661,9 @@ describe('Competitor Seed Extractor Service', () => {
 
       const request: ExtractSeedKeywordsRequest = {
         competitors: mockCompetitors,
-        organizationId: mockOrganizationId
+        organizationId: mockOrganizationId,
+        locationCode: 2840, // US for testing
+        languageCode: 'en' // English for testing
       }
 
       // Should return structured error when deletion fails (caught as competitor failure)

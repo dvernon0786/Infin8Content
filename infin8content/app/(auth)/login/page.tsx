@@ -12,11 +12,12 @@ function LoginPageContent() {
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [emailVerified, setEmailVerified] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const invitationToken = searchParams.get('invitation_token')
   
-  // Check for expired session message
+  // Check for expired session message or email-verified redirect
   useEffect(() => {
     const expired = searchParams.get('expired')
     if (expired === 'true') {
@@ -24,6 +25,10 @@ function LoginPageContent() {
         ...prev,
         form: 'Your session has expired. Please log in again.',
       }))
+    }
+    const verified = searchParams.get('verified')
+    if (verified === 'true') {
+      setEmailVerified(true)
     }
   }, [searchParams])
   
@@ -115,12 +120,12 @@ function LoginPageContent() {
               
               {/* Rotating brand blur background */}
               <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                <div className="pointer-events-none absolute -inset-10 rounded-full bg-gradient-to-r from-transparent via-[#217CEB]/25 to-transparent blur-xl opacity-60 animate-spin [animation-duration:10s]" />
-                <div className="pointer-events-none absolute -inset-20 rounded-full bg-gradient-to-r from-transparent via-[#4A42CC]/20 to-transparent blur-2xl opacity-40 animate-spin [animation-duration:18s] [animation-direction:reverse]" />
+                <div className="pointer-events-none absolute -inset-10 rounded-full bg-linear-to-r from-transparent via-[#217CEB]/25 to-transparent blur-xl opacity-60 animate-spin [animation-duration:10s]" />
+                <div className="pointer-events-none absolute -inset-20 rounded-full bg-linear-to-r from-transparent via-[#4A42CC]/20 to-transparent blur-2xl opacity-40 animate-spin [animation-duration:18s] [animation-direction:reverse]" />
               </div>
 
               {/* Border gradient */}
-              <div className="absolute inset-0 rounded-2xl p-px bg-gradient-to-b from-[#217CEB]/40 via-[#4A42CC]/50 to-neutral-900/60" />
+              <div className="absolute inset-0 rounded-2xl p-px bg-linear-to-b from-[#217CEB]/40 via-[#4A42CC]/50 to-neutral-900/60" />
 
               {/* Card */}
               <div
@@ -152,6 +157,16 @@ function LoginPageContent() {
                   </div>
 
                   {/* EXISTING LOGIN FORM - UNCHANGED LOGIC */}
+                  {emailVerified && (
+                    <div
+                      className={styles.formSuccess}
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <span aria-hidden="true">✓</span> Email verified! Please log in to continue.
+                    </div>
+                  )}
+
                   {errors.form && (
                     <div
                       className={styles.formError}

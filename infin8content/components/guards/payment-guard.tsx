@@ -11,14 +11,14 @@ interface PaymentGuardProps {
 
 export function PaymentGuard({ children, fallback }: PaymentGuardProps) {
   const router = useRouter()
-  
+
   useEffect(() => {
     const checkPaymentStatus = async () => {
       try {
         // Get current user
         const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
-        
+
         if (!user) {
           router.push('/login')
           return
@@ -40,17 +40,37 @@ export function PaymentGuard({ children, fallback }: PaymentGuardProps) {
         if (userRecord.org_id) {
           // Use server-side API to check payment status (bypasses RLS)
           const response = await fetch('/api/debug/payment-status')
-          
+
           if (!response.ok) {
             console.error('Failed to check payment status')
             return
           }
-          
+
           const data = await response.json()
-          
+          const org = data.organization
+
+          if (org) {
+            const trialExpired =
+              org.plan_type === 'trial' &&
+              org.trial_ends_at &&
+              new Date(org.trial_ends_at) < new Date()
+
+            if (trialExpired) {
+              router.push('/payment/upgrade')
+              return
+            }
+          }
+
           if (data.paymentAccessStatus === 'pending_payment') {
-            router.push('/payment')
-            return
+            // Only redirect if they haven't initiated checkout at all.
+            // If stripe_customer_id exists, payment was initiated — webhook is just delayed.
+            // Bouncing them on every load creates an infinite loop.
+            const hasInitiatedPayment = !!org?.stripe_customer_id
+            if (!hasInitiatedPayment) {
+              router.push('/payment')
+              return
+            }
+            // Webhook delayed — let them through, they've paid
           } else if (data.paymentAccessStatus === 'suspended') {
             router.push('/suspended')
             return

@@ -9,11 +9,11 @@ This workflow sets up the `.agent/workflows` directory structure and creates fou
 ## Steps
 
 1. **Create workflows directory structure**
-   - Directory: `/home/dghost/Infin8Content-1/.agent/workflows/`
+   - Directory: `/home/dghost/Infin8Content/.agent/workflows/`
    - This is where all workflow definitions are stored
 
 2. **Review sprint status**
-   - File: `_bmad-output/sprint-status.yaml`
+   - File: `_bmad-output/implementation-artifacts/sprint-status.yaml`
    - Understand current epic and story progress
 
 3. **Create core workflows**

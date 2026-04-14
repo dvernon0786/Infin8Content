@@ -13,35 +13,40 @@ export default async function PaymentPage({
   searchParams: Promise<{ suspended?: string; redirect?: string }>
 }) {
   const currentUser = await getCurrentUser()
-  
+
   // Await searchParams before accessing properties (Next.js 15+ requirement)
   const params = await searchParams
-  
+
   // Redirect if user is not authenticated
   if (!currentUser) {
     redirect('/login')
   }
-  
+
   // Redirect if user has no organization (must create organization first)
   if (!currentUser?.org_id) {
     redirect('/create-organization')
   }
-  
+
   // Check if organization already has active payment (redirect to dashboard if payment confirmed)
   if (currentUser?.organizations) {
+    const org = currentUser.organizations as any
     const accessStatus = getPaymentAccessStatus(currentUser.organizations)
-    if (accessStatus === 'active') {
+    const isMidTrial = org.payment_status === 'trialing'
+
+    // Only redirect away if truly active (paid subscription) — not mid-trial
+    if (accessStatus === 'active' && !isMidTrial) {
       // Check for redirect parameter for post-reactivation redirect
       const redirectTo = validateRedirect(params?.redirect, '/dashboard')
       redirect(redirectTo)
     }
   }
-  
+
   // Pass suspended flag and suspension date to form component
   const isSuspended = params?.suspended === 'true'
   // Note: suspended_at is not in current schema, using updated_at as fallback
   const suspendedAt = (currentUser?.organizations as any)?.suspended_at || currentUser?.organizations?.updated_at || null
   const redirectTo = validateRedirect(params?.redirect, '/dashboard')
-  
-  return <PaymentForm isSuspended={isSuspended} suspendedAt={suspendedAt} redirectTo={redirectTo} />
+  const hasUsedTrial = (currentUser?.organizations as any)?.has_used_trial ?? false
+
+  return <PaymentForm isSuspended={isSuspended} suspendedAt={suspendedAt} redirectTo={redirectTo} hasUsedTrial={hasUsedTrial} />
 }

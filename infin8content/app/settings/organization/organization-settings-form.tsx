@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function OrganizationSettingsForm({ organization }: Props) {
-  const [name, setName] = useState(organization.name)
+  const [name, setName] = useState(organization.name ?? '')
   const [errors, setErrors] = useState<{ name?: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -30,7 +30,7 @@ export default function OrganizationSettingsForm({ organization }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateName(name)) {
       return
     }
@@ -54,12 +54,12 @@ export default function OrganizationSettingsForm({ organization }: Props) {
 
       // Show success message using toast notification pattern
       setSuccessMessage('Organization updated successfully')
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccessMessage(null)
       }, 3000)
-      
+
       // Reload page to show updated name
       window.location.reload()
     } catch (error) {
@@ -80,7 +80,7 @@ export default function OrganizationSettingsForm({ organization }: Props) {
           <span aria-hidden="true">✓</span> {successMessage}
         </div>
       )}
-      
+
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-900">
           Organization Name *

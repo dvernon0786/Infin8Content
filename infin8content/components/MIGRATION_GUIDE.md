@@ -169,7 +169,7 @@ import { ProgressBar, SectionProgress } from '@/components/custom'
 
 #### Before
 ```css
-.bg-gradient-to-r { background: linear-gradient(to right, ...); }
+.bg-linear-to-r { background: linear-gradient(to right, ...); }
 ```
 
 #### After

@@ -1,58 +1,102 @@
 'use client';
 
+import { useState, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArticleStatusList } from '@/components/dashboard/article-status-list'
 import { SearchInput } from '@/components/dashboard/search-input'
 import { FilterDropdown } from '@/components/dashboard/filter-dropdown'
 import { SortDropdown } from '@/components/dashboard/sort-dropdown'
 import { ActiveFilters } from '@/components/dashboard/active-filters'
-import { VirtualizedArticleList } from '@/components/dashboard/virtualized-article-list'
+import { ScrollableArticleList } from '@/components/dashboard/scrollable-article-list'
 import { useDashboardFilters } from '@/hooks/use-dashboard-filters'
 import { useRealtimeArticles } from '@/hooks/use-realtime-articles'
 import { Loader2, FileText, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
+import { ARTICLE_STATUSES, type DashboardArticle } from '@/lib/types/dashboard.types'
+import { ScheduleGuard } from '@/components/guards/schedule-guard'
+import { ScheduleCalendar } from '@/components/dashboard/schedule-calendar'
 
-// Client component for interactive features
-function ArticlesClient({ orgId }: { orgId: string }) {
-  console.log('🔧 ArticlesClient initializing with orgId:', orgId);
-  
-  try {
-    const { articles, isConnected, error, lastUpdated, refresh } = useRealtimeArticles({
-      orgId,
-      onError: (error) => {
-        console.error('🚨 Real-time articles error:', error);
-      }
-    })
-    
-    console.log('📊 useRealtimeArticles result:', {
-      articlesCount: articles?.length || 0,
-      isConnected,
-      error: error?.message,
-      lastUpdated
-    });
-    
-    const {
-      search,
-      filters,
-      filteredArticles,
-      activeFilters,
-      metrics,
-      setSearchQuery,
-      setFilters,
-      clearSearch,
-      clearFilters,
-      clearAll,
-      removeFilter,
-      hasActiveFilters,
-    } = useDashboardFilters(articles || []);
-    
-    console.log('🔍 useDashboardFilters result:', {
-      search,
-      filters,
-      filteredArticlesCount: filteredArticles?.length || 0,
-      activeFiltersCount: activeFilters?.length || 0
-    });
+// ─── Metrics ──────────────────────────────────────────────────────────────────
+function MetricCard({ label, value, alert, icon }: { label: string; value: string | number; alert?: boolean; icon?: string }) {
+  return (
+    <div className={`bg-white rounded-[10px] border px-3.5 py-2.5 relative overflow-hidden ${alert ? 'border-amber-500/30 shadow-[0_4px_12px_rgba(245,158,11,0.1)]' : 'border-neutral-200 shadow-sm'}`}>
+      <div className={`absolute top-0 left-0 right-0 h-[2px] ${alert ? 'bg-linear-to-r from-amber-500 to-red-500 opacity-100' : 'bg-gradient-brand opacity-60'}`} />
+      <div className="relative">
+        <div className="flex justify-between items-start mb-2">
+          <span className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold font-lato">
+            {label}
+          </span>
+          {icon && <span className={`text-[13px] ${alert ? 'text-amber-500' : 'text-neutral-200'}`}>{icon}</span>}
+        </div>
+        <div className={`text-[22px] font-extrabold leading-none mb-1 font-poppins ${alert ? 'text-amber-500' : 'text-neutral-800'}`}>
+          {value}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ArticlesKPI({ articles }: { articles: DashboardArticle[] }) {
+  const total = articles.length
+  const completed = articles.filter(a => a.status === 'completed').length
+  const generating = articles.filter(a => (a.status as string) === 'processing' || (a.status as string).endsWith('_running')).length
+  const failed = articles.filter(a => (a.status as string) === 'failed' || (a.status as string).endsWith('_failed')).length
+
+  const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
+
+  return (
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4 mb-4">
+      <MetricCard label="Total Articles" value={total} icon="▤" />
+      <MetricCard label="Completed" value={completed} icon="✓" />
+      <MetricCard label="Generating" value={generating} icon="◈" alert={generating > 0} />
+      <MetricCard label="Failed" value={failed} icon="⚠" alert={failed > 0} />
+      <MetricCard label="Completion Rate" value={`${completionRate}%`} icon="◉" />
+    </div>
+  )
+}
+
+function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
+  orgId: string
+  plan: string
+  articleUsage?: number
+  generationLimit?: number | null
+}) {
+  const router = useRouter();
+
+  const [recentlyUpdatedId, setRecentlyUpdatedId] = useState<string | null>(null);
+
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const { articles, isConnected, error, lastUpdated, refresh } = useRealtimeArticles({
+    orgId,
+    onDashboardUpdate: (event) => {
+      setRecentlyUpdatedId(event.articleId);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        setRecentlyUpdatedId(null);
+        timerRef.current = null;
+      }, 3000);
+    }
+  })
+
+  const {
+    search,
+    filters,
+    filteredArticles,
+    activeFilters,
+    metrics,
+    setSearchQuery,
+    setFilters,
+    clearSearch,
+    clearFilters,
+    clearAll,
+    removeFilter,
+    hasActiveFilters,
+  } = useDashboardFilters(articles);
+
+  const blockedArticles = articles.filter(a => (a.status as string) === 'failed' || (a.status as string).endsWith('_failed'))
 
   if (error) {
     return (
@@ -88,157 +132,137 @@ function ArticlesClient({ orgId }: { orgId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Search and Filters */}
-      <div className="flex flex-col lg:flex-row gap-4">
+    <div className="flex flex-col gap-0">
+      <ArticlesKPI articles={articles} />
+
+      {/* Action Banner */}
+      {blockedArticles.length > 0 && (
+        <div className="px-4 py-3 bg-red-500/5 border border-red-500/15 rounded-lg mb-4 flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-red-500 animate-[i8c-pulse_2s_infinite]" />
+          <span className="text-[13px] font-bold text-red-500">
+            {blockedArticles.length} Article{blockedArticles.length > 1 ? 's' : ''} Failed — Action Required
+          </span>
+          <button
+            onClick={() => {
+              clearSearch()
+              setFilters({ status: ['failed'], sortBy: filters.sortBy })
+            }}
+            className="ml-auto px-3.5 py-1.5 rounded-md bg-red-500 text-white border-none text-[11px] font-extrabold cursor-pointer"
+          >Review Failures →</button>
+        </div>
+      )}
+
+      {/* Article Schedule */}
+      <div className="mb-6">
+        <ScheduleGuard plan={plan}>
+            <ScheduleCalendar
+              orgId={orgId}
+              plan={plan}
+              articles={articles}
+              onScheduled={refresh}
+              articleUsage={articleUsage}
+              generationLimit={generationLimit}
+            />
+        </ScheduleGuard>
+      </div>
+
+      {/* Control Bar */}
+      <div className="flex items-center gap-4 px-4 py-2 border border-neutral-200 bg-white rounded-md shadow-sm mb-4">
         <div className="flex-1">
           <SearchInput
             value={search.query}
             onChange={setSearchQuery}
             onClear={clearSearch}
-            placeholder="Search articles by title or keyword..."
-            className="w-full"
+            placeholder="Search articles..."
+            className="border-none bg-transparent shadow-none focus-visible:ring-0"
           />
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <FilterDropdown
-            value={filters}
-            onChange={setFilters}
-            availableStatuses={['queued', 'generating', 'completed', 'failed']}
-          />
-          <SortDropdown
-            value={filters.sortBy}
-            onChange={(sortBy) => setFilters({ ...filters, sortBy })}
-          />
-        </div>
+        <div className="h-6 w-px bg-neutral-200" />
+        <FilterDropdown
+          value={filters}
+          onChange={setFilters}
+          availableStatuses={ARTICLE_STATUSES}
+        />
+        <SortDropdown
+          value={filters.sortBy}
+          onChange={(sortBy) => setFilters({ ...filters, sortBy })}
+        />
       </div>
 
       {/* Active Filters */}
       {activeFilters.length > 0 && (
-        <ActiveFilters
-          filters={filters}
-          search={search}
-          onClearFilter={removeFilter}
-          onClearAll={clearAll}
-        />
+        <div className="mb-4">
+          <ActiveFilters
+            filters={filters}
+            search={search}
+            onClearFilter={removeFilter}
+            onClearAll={clearAll}
+          />
+        </div>
       )}
 
       {/* Results Summary */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-        <div className="font-lato text-neutral-600 text-small">
-          {filteredArticles.length === 0 
-            ? 'No articles found'
-            : filteredArticles.length === 1
-            ? '1 article'
-            : `${filteredArticles.length} articles`
-          }
-          {articles.length > 0 && filteredArticles.length !== articles.length && (
-            <> of {articles.length} total</>
-          )}
+      <div className="flex justify-between items-center mb-4 px-1">
+        <div className="font-lato text-neutral-600 text-xs font-semibold uppercase tracking-wider">
+          Showing {filteredArticles.length} of {articles.length} Articles
         </div>
-        
         {process.env.NODE_ENV === 'development' && (
-          <div className="font-lato text-neutral-500 text-xs">
-            Search: {metrics.searchTime?.toFixed(1)}ms | 
-            Filter: {metrics.filterTime?.toFixed(1)}ms
+          <div className="font-lato text-neutral-400 text-[10px] uppercase tracking-widest font-bold">
+            PFM: {metrics.filterTime?.toFixed(1)}ms
           </div>
         )}
       </div>
 
       {/* Articles List */}
-      {filteredArticles.length === 0 && articles.length > 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-neutral-600 mx-auto mb-4" />
-              <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">No articles found</h3>
-              <p className="font-lato text-neutral-600 text-body mb-4">
-                Try adjusting your search or filters to find articles.
-              </p>
-<Button variant="outline" className="font-lato text-neutral-600 hover:text-primary" onClick={clearAll}>
-                Clear all filters
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : filteredArticles.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-neutral-600 mx-auto mb-4" />
-              <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">No articles yet</h3>
-              <p className="font-lato text-neutral-600 text-body mb-4">
-                Generate your first article to begin content production.
-              </p>
-              <Link href="/dashboard/articles/generate">
-                <Button
-                  variant="ghost"
-                  className="font-lato text-neutral-600 hover:text-primary"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Generate article
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <VirtualizedArticleList
-          articles={filteredArticles}
-          itemHeight={160}
-          height={600}
-          overscanCount={5}
-          className="border rounded-lg"
-          selectedArticle={null}
-          onArticleSelect={(id) => {
-            // Navigate to article detail page
-            window.location.href = `/dashboard/articles/${id}`
-          }}
-          onArticleNavigation={(id, e) => {
-            if (e?.defaultPrevented) return
-            window.location.href = `/dashboard/articles/${id}`
-          }}
-          onKeyDown={(id, e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              window.location.href = `/dashboard/articles/${id}`
-            }
-          }}
-          onTouchStart={(id, e, element) => {
-            // Handle touch start for mobile navigation
-            console.log('Touch start:', id);
-          }}
-          onTouchMove={(id, e, element) => {
-            // Handle touch move for mobile navigation
-            console.log('Touch move:', id);
-          }}
-          onTouchEnd={(id, e, element) => {
-            // Navigate on touch end for mobile
-            window.location.href = `/dashboard/articles/${id}`
-          }}
-          showProgress={true}
-        />
-      )}
-    </div>
-  )
-  } catch (error) {
-    console.error('🚨 ArticlesClient error:', error);
-    return (
-      <Card className="border-destructive">
-        <CardContent className="pt-6">
-          <div className="text-center py-8">
-            <FileText className="h-12 w-12 text-neutral-600 mx-auto mb-4" />
-            <h3 className="font-poppins text-neutral-900 text-h3-desktop mb-2">
-              Component Error
-            </h3>
-            <p className="font-lato text-neutral-600">
-              An unexpected error occurred. Please refresh the page.
+      <div className="flex-1 min-h-[50vh]">
+        {filteredArticles.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-20 text-center">
+            <FileText className="h-12 w-12 text-neutral-300 mb-4" />
+            <h3 className="font-poppins text-neutral-900 font-semibold mb-1">No articles found</h3>
+            <p className="font-lato text-neutral-500 text-sm max-w-[200px]">
+              {articles.length > 0 ? "Try adjusting your filters" : "Start by generating your first article"}
             </p>
           </div>
-        </CardContent>
-      </Card>
-    );
-  }
+        ) : (
+          <ScrollableArticleList
+            articles={filteredArticles}
+            className="h-full"
+            plan={plan}
+            highlightArticleId={recentlyUpdatedId}
+            onArticleNavigation={(id, e) => {
+              if (e) e.preventDefault()
+              router.push(`/dashboard/articles/${id}`)
+            }}
+            onKeyDown={(id, e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                router.push(`/dashboard/articles/${id}`)
+              }
+            }}
+            onTouchStart={() => { }}
+            onTouchMove={() => { }}
+            onTouchEnd={(id) => {
+              router.push(`/dashboard/articles/${id}`)
+            }}
+          />
+        )}
+      </div>
+
+      {/* System Status Footer */}
+      <div className="mt-4 py-4 border-t border-neutral-200 flex items-center gap-[18px]">
+        {[
+          { label: "Realtime", status: isConnected ? "Live" : "Polling", ok: isConnected },
+          { label: "Last Sync", status: lastUpdated ? new Date(lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "Never", ok: true },
+        ].map(s => (
+          <div key={s.label} className="flex items-center gap-1.5">
+            <div className={`w-1 h-1 rounded-full ${s.ok ? 'bg-green-500 shadow-[0_0_0_2px_rgba(34,197,94,0.2)]' : 'bg-amber-500 shadow-[0_0_0_2px_rgba(245,158,11,0.2)]'}`} />
+            <span className="text-[10px] text-neutral-800 font-lato font-bold">{s.label}</span>
+            <span className="text-[10px] text-neutral-500 font-lato">· {s.status}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
-export default ArticlesClient
+export default ArticlesClient;

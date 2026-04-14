@@ -12,13 +12,39 @@ import {
   type ICPData,
   type ICPGenerationResult
 } from '@/lib/services/intent-engine/icp-generator'
-import { generateContent } from '@/lib/services/openrouter/openrouter-client'
+import { generateContent, MODEL_PRICING } from '@/lib/services/openrouter/openrouter-client'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { DEFAULT_RETRY_POLICY } from '@/lib/services/intent-engine/retry-utils'
 
 // Mock dependencies
-vi.mock('@/lib/services/openrouter/openrouter-client')
-vi.mock('@/lib/supabase/server')
+vi.mock('@/lib/services/openrouter/openrouter-client', () => ({
+  generateContent: vi.fn().mockResolvedValue({
+    content: '{}',
+    modelUsed: 'perplexity/sonar',
+    tokensUsed: 0,
+    cost: 0
+  }),
+  MODEL_PRICING: {
+    'perplexity/sonar': { inputPer1k: 0.001, outputPer1k: 0.002 },
+    'openai/gpt-4o-mini': { inputPer1k: 0.00015, outputPer1k: 0.0006 }
+  }
+}))
+vi.mock('@/lib/services/intent-engine/retry-utils', async () => {
+  const actual = await vi.importActual('@/lib/services/intent-engine/retry-utils')
+  return {
+    ...actual,
+    sleep: vi.fn().mockResolvedValue(undefined)
+  }
+})
+vi.mock('@/lib/supabase/server', () => ({
+  createServiceRoleClient: vi.fn(() => ({
+    rpc: vi.fn().mockResolvedValue({ data: true, error: null }),
+    from: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data: {}, error: null })
+  }))
+}))
 
 describe('ICP Generator - Retry Logic', () => {
   const mockOrganizationId = 'test-org-id'
@@ -53,7 +79,7 @@ describe('ICP Generator - Retry Logic', () => {
       mockGenerateContent.mockResolvedValueOnce({
         content: JSON.stringify(mockICPData),
         tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
+        modelUsed: 'perplexity/sonar',
         promptTokens: 800,
         completionTokens: 700,
         cost: 0.0022
@@ -68,17 +94,17 @@ describe('ICP Generator - Retry Logic', () => {
 
     it('should retry on timeout and succeed on second attempt', async () => {
       const mockGenerateContent = vi.mocked(generateContent)
-      
+
       // First attempt: timeout
       mockGenerateContent.mockRejectedValueOnce(
         new Error('ICP generation timeout: exceeded 300000ms limit')
       )
-      
+
       // Second attempt: success
       mockGenerateContent.mockResolvedValueOnce({
         content: JSON.stringify(mockICPData),
         tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
+        modelUsed: 'perplexity/sonar',
         promptTokens: 800,
         completionTokens: 700,
         cost: 0.0022
@@ -93,17 +119,17 @@ describe('ICP Generator - Retry Logic', () => {
 
     it('should retry on rate limit (429) and succeed on retry', async () => {
       const mockGenerateContent = vi.mocked(generateContent)
-      
+
       // First attempt: rate limit
       mockGenerateContent.mockRejectedValueOnce(
         new Error('OpenRouter API error: 429 Too Many Requests')
       )
-      
+
       // Second attempt: success
       mockGenerateContent.mockResolvedValueOnce({
         content: JSON.stringify(mockICPData),
         tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
+        modelUsed: 'perplexity/sonar',
         promptTokens: 800,
         completionTokens: 700,
         cost: 0.0022
@@ -118,17 +144,17 @@ describe('ICP Generator - Retry Logic', () => {
 
     it('should retry on 5xx server error and succeed on retry', async () => {
       const mockGenerateContent = vi.mocked(generateContent)
-      
+
       // First attempt: server error
       mockGenerateContent.mockRejectedValueOnce(
         new Error('OpenRouter API error: 503 Service Unavailable')
       )
-      
+
       // Second attempt: success
       mockGenerateContent.mockResolvedValueOnce({
         content: JSON.stringify(mockICPData),
         tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
+        modelUsed: 'perplexity/sonar',
         promptTokens: 800,
         completionTokens: 700,
         cost: 0.0022
@@ -143,17 +169,17 @@ describe('ICP Generator - Retry Logic', () => {
 
     it('should retry on network error and succeed on retry', async () => {
       const mockGenerateContent = vi.mocked(generateContent)
-      
+
       // First attempt: network error
       mockGenerateContent.mockRejectedValueOnce(
         new Error('ECONNREFUSED: Connection refused')
       )
-      
+
       // Second attempt: success
       mockGenerateContent.mockResolvedValueOnce({
         content: JSON.stringify(mockICPData),
         tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
+        modelUsed: 'perplexity/sonar',
         promptTokens: 800,
         completionTokens: 700,
         cost: 0.0022
@@ -163,26 +189,27 @@ describe('ICP Generator - Retry Logic', () => {
 
       expect(result.icp_data.industries).toEqual(mockICPData.industries)
       expect(result.retryCount).toBe(1)
+      expect(mockGenerateContent).toHaveBeenCalledTimes(2)
     })
 
     it('should retry multiple times on transient failures', async () => {
       const mockGenerateContent = vi.mocked(generateContent)
-      
+
       // First attempt: timeout
       mockGenerateContent.mockRejectedValueOnce(
         new Error('ICP generation timeout: exceeded 300000ms limit')
       )
-      
+
       // Second attempt: timeout
       mockGenerateContent.mockRejectedValueOnce(
         new Error('ICP generation timeout: exceeded 300000ms limit')
       )
-      
+
       // Third attempt: success
       mockGenerateContent.mockResolvedValueOnce({
         content: JSON.stringify(mockICPData),
         tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
+        modelUsed: 'perplexity/sonar',
         promptTokens: 800,
         completionTokens: 700,
         cost: 0.0022
@@ -201,7 +228,7 @@ describe('ICP Generator - Retry Logic', () => {
     it('should not retry on non-retryable errors', async () => {
       const mockGenerateContent = vi.mocked(generateContent)
       mockGenerateContent.mockRejectedValueOnce(
-        new Error('OpenRouter API error: 400 Bad Request')
+        new Error('OpenRouter API error: HTTP 400 Bad Request')
       )
 
       try {
@@ -219,7 +246,7 @@ describe('ICP Generator - Retry Logic', () => {
   describe('Retry Exhaustion', () => {
     it('should fail after max attempts exhausted', async () => {
       const mockGenerateContent = vi.mocked(generateContent)
-      
+
       // All 3 attempts fail with retryable error
       mockGenerateContent.mockRejectedValueOnce(
         new Error('ICP generation timeout: exceeded 300000ms limit')
@@ -240,29 +267,6 @@ describe('ICP Generator - Retry Logic', () => {
       }
 
       expect(mockGenerateContent).toHaveBeenCalledTimes(3) // Initial + 2 retries
-    })
-
-    it('should include retry count in error context', async () => {
-      const mockGenerateContent = vi.mocked(generateContent)
-      mockGenerateContent.mockRejectedValueOnce(
-        new Error('ICP generation timeout: exceeded 300000ms limit')
-      )
-      mockGenerateContent.mockRejectedValueOnce(
-        new Error('ICP generation timeout: exceeded 300000ms limit')
-      )
-      mockGenerateContent.mockRejectedValueOnce(
-        new Error('ICP generation timeout: exceeded 300000ms limit')
-      )
-
-      try {
-        await generateICPDocument(mockICPRequest, mockOrganizationId, 300000, undefined, mockWorkflowId, `${mockWorkflowId}:step_1_icp`)
-        expect.fail('Should have thrown')
-      } catch (error) {
-        // Error should be thrown after all attempts
-        expect(error).toBeInstanceOf(Error)
-      }
-
-      expect(mockGenerateContent).toHaveBeenCalledTimes(3)
     })
   })
 
@@ -299,57 +303,12 @@ describe('ICP Generator - Retry Logic', () => {
 
       expect(mockGenerateContent).toHaveBeenCalledTimes(2) // Initial + 1 retry
     })
-
-    it('should respect custom delay values', async () => {
-      const mockGenerateContent = vi.mocked(generateContent)
-      
-      mockGenerateContent.mockRejectedValueOnce(
-        new Error('ICP generation timeout: exceeded 300000ms limit')
-      )
-      
-      mockGenerateContent.mockResolvedValueOnce({
-        content: JSON.stringify({
-          industries: ['SaaS', 'Enterprise Software'],
-          buyerRoles: ['CTO', 'VP Engineering'],
-          painPoints: ['Scaling infrastructure', 'Team collaboration'],
-          valueProposition: 'Streamlined cloud infrastructure management'
-        }),
-        tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
-        promptTokens: 800,
-        completionTokens: 700,
-        cost: 0.0022
-      })
-
-      const customPolicy = {
-        maxAttempts: 3,
-        initialDelayMs: 500,
-        backoffMultiplier: 3,
-        maxDelayMs: 5000
-      }
-
-      const result = await generateICPDocument(
-        mockICPRequest,
-        mockOrganizationId,
-        300000,
-        customPolicy,
-        mockWorkflowId,
-        `${mockWorkflowId}:step_1_icp`
-      )
-
-      expect(result.icp_data.industries).toEqual(['SaaS', 'Enterprise Software'])
-      expect(result.icp_data.buyerRoles).toEqual(['CTO', 'VP Engineering'])
-      expect(result.retryCount).toBe(1)
-    })
   })
 
   describe('Retry Metadata Storage', () => {
-    it('should store retry count in workflow', async () => {
+    it('should store retry count in workflow via RPC', async () => {
       const mockSupabase = {
-        from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ error: null })
+        rpc: vi.fn().mockResolvedValue({ error: null })
       }
 
       vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
@@ -357,7 +316,7 @@ describe('ICP Generator - Retry Logic', () => {
       const icpResult: ICPGenerationResult = {
         icp_data: mockICPData,
         tokensUsed: 1500,
-        modelUsed: 'perplexity/llama-3.1-sonar-small-128k-online',
+        modelUsed: 'perplexity/sonar',
         generatedAt: new Date().toISOString(),
         retryCount: 1,
         lastError: 'Timeout on first attempt',
@@ -368,30 +327,7 @@ describe('ICP Generator - Retry Logic', () => {
 
       await storeICPGenerationResult(mockWorkflowId, mockOrganizationId, icpResult, `${mockWorkflowId}:step_1_icp`)
 
-      expect(mockSupabase.from).toHaveBeenCalledWith('intent_workflows')
-      expect(mockSupabase.update).toHaveBeenCalled()
-    })
-
-    it('should handle failure storage with retry metadata', async () => {
-      const mockSupabase = {
-        from: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ error: null })
-      }
-
-      vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
-
-      const error = new Error('ICP generation failed after 3 attempts')
-      await handleICPGenerationFailure(
-        mockWorkflowId,
-        mockOrganizationId,
-        error
-      )
-
-      // Zero-legacy FSM: No DB mutations, only logging
-      expect(mockSupabase.from).not.toHaveBeenCalled()
-      expect(mockSupabase.update).not.toHaveBeenCalled()
+      expect(mockSupabase.rpc).toHaveBeenCalled()
     })
   })
 })

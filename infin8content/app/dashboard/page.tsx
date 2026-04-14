@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/supabase/get-current-user"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { WorkflowDashboard } from "@/components/dashboard/workflow-dashboard/WorkflowDashboard"
+import { TrialChecklist } from "@/components/dashboard/trial-checklist"
 
 export default async function DashboardPage() {
   const user = await getCurrentUser()
@@ -19,6 +20,28 @@ export default async function DashboardPage() {
     .eq("organization_id", user.org_id)
 
   if (!workflows || workflows.length === 0) {
+    const isTrial = (user.organizations?.plan || user.organizations?.plan_type)?.toLowerCase() === 'trial'
+
+    if (isTrial) {
+      return (
+        <div className="space-y-6 mx-auto max-w-xl py-20">
+          <TrialChecklist hasWorkflow={false} hasCompletedArticle={false} />
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold">Your $1 trial is active ✨</h1>
+            <p className="mt-2 text-muted-foreground">
+              Experience the power of Infin8Content. You can generate one complete, full-length article during your trial to see the quality of our AI engine.
+            </p>
+            <Link
+              href="/dashboard/workflows/new"
+              className="inline-block mt-6 rounded-md bg-primary px-6 py-3 text-white"
+            >
+              Generate your first article
+            </Link>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="mx-auto max-w-xl py-20 text-center">
         <h1 className="text-2xl font-semibold">You're all set 🎉</h1>
@@ -26,7 +49,7 @@ export default async function DashboardPage() {
           Your workspace is ready. Create your first workflow to start generating content automatically.
         </p>
         <Link
-          href="/workflows/new"
+          href="/dashboard/workflows/new"
           className="inline-block mt-6 rounded-md bg-primary px-6 py-3 text-white"
         >
           Create your first workflow
@@ -35,5 +58,36 @@ export default async function DashboardPage() {
     )
   }
 
-  return <WorkflowDashboard />
+  const isTrial = (user.organizations?.plan || user.organizations?.plan_type)?.toLowerCase() === 'trial'
+
+  let hasWorkflow = false
+  let hasCompletedArticle = false
+
+  if (isTrial) {
+    // workflows is already fetched above — no extra query needed
+    hasWorkflow = (workflows?.length ?? 0) > 0
+
+    // Only one extra query needed instead of two
+    // Optimized check: Exit as soon as we find 1 completed article instead of full count
+    const { data: completedArticles } = await supabase
+      .from('articles')
+      .select('id')
+      .eq('org_id', user.org_id)
+      .eq('status', 'completed')
+      .limit(1)
+
+    hasCompletedArticle = (completedArticles?.length ?? 0) > 0
+  }
+
+  return (
+    <div className="space-y-6">
+      {isTrial && (
+        <TrialChecklist
+          hasWorkflow={hasWorkflow}
+          hasCompletedArticle={hasCompletedArticle}
+        />
+      )}
+      <WorkflowDashboard orgId={user.org_id} />
+    </div>
+  )
 }

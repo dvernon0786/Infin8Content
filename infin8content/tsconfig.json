@@ -18,6 +18,8 @@
         "name": "next"
       }
     ],
+    "typeRoots": ["./types", "./node_modules/@types"],
+    "ignoreDeprecations": "5.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
@@ -31,6 +33,10 @@
     ".next/dev/types/**/*.ts",
     "types/**/*.d.ts",
     "**/*.mts"
+  ],
+  "files": [
+    "types/styles.d.ts",
+    "types/jest.d.ts"
   ],
   "exclude": ["node_modules", "scripts/**/*"]
 }

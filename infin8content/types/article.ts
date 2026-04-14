@@ -3,69 +3,97 @@
  * Story 4a.6: Real-Time Progress Tracking and Updates
  */
 
-export type ArticleProgressStatus = 
+export type ArticleStatus =
+  | 'draft'
   | 'queued'
-  | 'researching' 
-  | 'writing'
-  | 'generating'
+  | 'processing'
   | 'completed'
-  | 'failed';
+  | 'failed'
+  | 'cancelled'
+  | 'reviewing'
+  | 'generating';
 
-export interface ArticleProgress {
+export const ARTICLE_STATUSES: ArticleStatus[] = [
+  'draft',
+  'queued',
+  'processing',
+  'completed',
+  'failed',
+  'cancelled',
+  'reviewing',
+  'generating'
+];
+
+/**
+ * CMS status enum aligned with the cms_status_type DB enum
+ */
+export type CmsStatus = 'none' | 'draft' | 'published';
+
+/**
+ * Domain-aligned Article interface matching Supabase schema v2.2
+ */
+export interface Article {
   id: string;
-  article_id: string;
-  org_id: string;
-  status: ArticleProgressStatus;
-  current_section: number;
-  total_sections: number;
-  progress_percentage: number;
-  current_stage: string;
-  estimated_time_remaining: number | null; // seconds
-  actual_time_spent: number; // seconds
+  organization_id: string;
+  workflow_id?: string;
+  keyword_id?: string;
+  title: string;
+  slug?: string;
+  content?: string;
+  html_content?: string;
   word_count: number;
-  citations_count: number;
-  api_cost: number;
-  error_message: string | null;
-  metadata: Record<string, unknown>;
+  reading_time_minutes: number;
+  status: ArticleStatus;
+  published_at?: string;
   created_at: string;
   updated_at: string;
+  workflow_step?: string;
+  generation_metadata: Record<string, any>;
+  subtopic_id?: string;
+  generation_queue_id?: string;
+
+  // 🏗️ PIPELINE V2 FIELDS
+  article_plan: ArticlePlannerOutput | null;
+  generation_config: ContentDefaults | null;
+  intent_workflow_id?: string;
+  subtopic_data?: Array<{ title: string; type: string; keywords: string[] }> | null;
+
+  // 📅 SCHEDULING FIELDS (added 2026-03-09)
+  scheduled_at?: string;          // ISO — date/time to trigger generation
+  publish_at?: string;            // ISO — date/time to remind user to publish
+  cms_status?: CmsStatus;         // CMS publication state
+  draft_notified_at?: string;     // ISO — draft-ready notification sent at
+  publish_reminded_at?: string;   // ISO — publish-reminder notification sent at
 }
 
-export interface CreateArticleProgressParams {
-  article_id: string;
-  org_id: string;
-  status: ArticleProgressStatus;
-  total_sections: number;
-  current_stage: string;
-  metadata?: Record<string, unknown>;
+// 3. API request / response shapes for the schedule endpoint
+
+export interface ScheduleArticleRequest {
+  /** ISO datetime — when the scheduler should trigger generation */
+  scheduled_at: string;
+  /** Optional ISO datetime — when to send the publish-reminder email */
+  publish_at?: string;
 }
 
-export interface UpdateArticleProgressParams {
-  status?: ArticleProgressStatus;
-  current_section?: number;
-  progress_percentage?: number;
-  current_stage?: string;
-  estimated_time_remaining?: number | null;
-  actual_time_spent?: number;
-  word_count?: number;
-  citations_count?: number;
-  api_cost?: number;
-  error_message?: string | null;
-  metadata?: Record<string, unknown>;
+export interface ScheduleArticleResponse {
+  success: true;
+  articleId: string;
+  scheduled_at: string;
+  publish_at?: string;
 }
 
-export interface ProgressUpdate {
-  article_id: string;
-  status: ArticleProgressStatus;
-  current_section: number;
-  total_sections: number;
-  progress_percentage: number;
-  current_stage: string;
-  estimated_time_remaining: number | null;
-  word_count?: number;
-  citations_count?: number;
-  api_cost?: number;
-  error_message?: string | null;
+export interface ScheduleArticleErrorResponse {
+  success: false;
+  error: string;
+  code:
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'PLAN_GATE'       // trial plan — scheduling not available
+  | 'QUOTA_EXCEEDED'  // monthly schedule quota hit
+  | 'INVALID_STATUS'  // article not in schedulable state
+  | 'INVALID_DATE'    // scheduled_at in the past
+  | 'DATABASE_ERROR';
 }
 
 export interface GenerationStatistics {
@@ -82,20 +110,36 @@ export interface GenerationStatistics {
  * Story B-1: Article Sections Data Model
  */
 
-export type SectionStatus = 
+export type SectionStatus =
   | 'pending'
-  | 'researching' 
+  | 'researching'
   | 'researched'
   | 'writing'
   | 'completed'
   | 'failed';
 
-export interface PlannerPayload {
-  section_header: string;
-  section_type: string;
-  instructions: string;
-  context_requirements: string[];
+/**
+ * Structured output from Content Planner Agent (Per Section)
+ */
+export interface SectionPlannerOutput {
+  section_type: 'introduction' | 'h2' | 'h3' | 'conclusion' | 'faq';
+  header: string;
+  supporting_points: string[];
+  research_questions: string[];
+  supporting_elements: string;
   estimated_words: number;
+}
+
+/**
+ * Structured output from Content Planner Agent (Top Level)
+ */
+export interface ArticlePlannerOutput {
+  article_title: string;
+  content_style: 'informative' | 'listicle';
+  target_keyword: string;
+  semantic_keywords: string[];
+  total_estimated_words: number;
+  article_structure: SectionPlannerOutput[]; // 🆕 NEW: Stored for re-generation integrity
 }
 
 export interface ResearchPayload {
@@ -104,9 +148,14 @@ export interface ResearchPayload {
     query: string;
     answer: string;
     citations: string[];
+    source_urls?: string[]; // 🔗 NEW: Carry URLs through to the writer (Phase 6)
   }[];
   total_searches: number;
   research_timestamp: string;
+
+  // 🏗️ PIPELINE V2 FIELDS
+  consolidated_queries: string[];
+  source_types_found: string[];
 }
 
 export interface ArticleSection {
@@ -114,8 +163,11 @@ export interface ArticleSection {
   article_id: string;
   section_order: number;
   section_header: string;
-  section_type: string;
-  planner_payload: PlannerPayload;
+  section_type: 'introduction' | 'h2' | 'h3' | 'conclusion' | 'faq';
+
+  // 🏗️ PIPELINE V2 FIELD (Single source of truth)
+  planner_output: SectionPlannerOutput | null;
+
   research_payload?: ResearchPayload;
   content_markdown?: string;
   content_html?: string;
@@ -126,17 +178,6 @@ export interface ArticleSection {
 }
 
 // Research Agent Types (Story B-2)
-export interface ResearchAgentInput {
-  sectionHeader: string;
-  sectionType: string;
-  priorSections: ArticleSection[];
-  organizationContext: {
-    name: string;
-    description: string;
-    website?: string;
-    industry?: string;
-  };
-}
 
 export interface ResearchAgentOutput {
   queries: string[];
@@ -144,8 +185,11 @@ export interface ResearchAgentOutput {
     query: string;
     answer: string;
     citations: string[];
+    source_urls?: string[];
   }[];
-  totalSearches: number;
+  total_searches: number;
+  consolidated_queries: string[];
+  source_types_found: string[];
 }
 
 export interface CreateArticleSectionParams {
@@ -153,7 +197,7 @@ export interface CreateArticleSectionParams {
   section_order: number;
   section_header: string;
   section_type: string;
-  planner_payload: PlannerPayload;
+  planner_output: SectionPlannerOutput;
 }
 
 export interface UpdateArticleSectionParams {
@@ -165,13 +209,6 @@ export interface UpdateArticleSectionParams {
 }
 
 // Content Writing Agent Types (Story B-3)
-export interface ContentWritingAgentInput {
-  sectionHeader: string
-  sectionType: string
-  researchPayload: ResearchPayload
-  priorSections: ArticleSection[]
-  organizationDefaults: ContentDefaults
-}
 
 export interface ContentWritingAgentOutput {
   markdown: string
@@ -180,17 +217,32 @@ export interface ContentWritingAgentOutput {
 }
 
 export interface ContentDefaults {
-  tone: string
-  language: string
-  internal_links: boolean
-  global_instructions: string
-  auto_publish_rules?: Record<string, any>
+  // LEGACY BASE
+  tone: string;
+  language: string;
+  style: string;
+  target_word_count: number;
+  auto_publish: boolean;
+
+  // 🏗️ PIPELINE V2 CONFIG (ONBOARDING)
+  brand_color: string;
+  image_style: string;
+  add_youtube_video: boolean;
+  add_cta: boolean;
+  add_infographics: boolean;
+  add_emojis: boolean;
+  internal_links: boolean;
+  num_internal_links: number;
+
+  // OPTIONAL EXTRAS
+  global_instructions?: string;
+  auto_publish_rules?: Record<string, any>;
 }
 
 // Article Progress Tracking Types (Story B-5)
 export interface ArticleProgressResponse {
   articleId: string
-  status: ArticleProgressStatus
+  status: ArticleStatus
 
   progress: {
     completedSections: number
@@ -200,7 +252,7 @@ export interface ArticleProgressResponse {
       id: string
       section_order: number
       section_header: string
-      status: string
+      status: SectionStatus
     }
   }
 
@@ -232,27 +284,19 @@ export interface ProgressApiErrorResponse {
 export interface AssemblyInput {
   articleId: string
   organizationId: string
+  allowReassembly?: boolean
 }
 
-export interface TOCEntry {
-  level: number
-  header: string
-  anchor: string
-}
+
 
 export interface AssemblyOutput {
-  markdown: string
-  html: string
   wordCount: number
   readingTimeMinutes: number
-  tableOfContents: TOCEntry[]
 }
 
-export interface AssembledSection {
-  id: string
-  section_order: number
-  title: string
-  content_markdown: string
-  content_html: string
-  status: 'completed'
+export interface SnapshotSection {
+  header: string
+  markdown: string
+  html: string
+  order: number
 }

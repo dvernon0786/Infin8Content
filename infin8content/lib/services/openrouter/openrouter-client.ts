@@ -73,13 +73,27 @@ export const MODEL_PRICING: Record<string, {
   'openai/gpt-4o-mini': {
     inputPer1k: 0.00015,   // $0.00015 per 1k input tokens
     outputPer1k: 0.0006     // $0.0006 per 1k output tokens
+  },
+  'x-ai/grok-4-fast': {
+    inputPer1k: 0.0002,    // $0.20 per 1M input tokens
+    outputPer1k: 0.0005    // $0.50 per 1M output tokens
+  },
+  'z-ai/glm-5': {
+    inputPer1k: 0.0001,
+    outputPer1k: 0.0001
+  },
+  'z-ai/glm-4.7': {
+    inputPer1k: 0.0001,
+    outputPer1k: 0.0001
   }
 }
 
 function normalizeModel(model: string): string {
-  if (model.startsWith('perplexity/sonar')) return 'perplexity/sonar'
-  if (model.startsWith('openai/gpt-4o-mini')) return 'openai/gpt-4o-mini'
   return model
+    .replace(/@[\w-]+$/, '') // strip @provider suffix
+    .replace(/-\d{8}$/, '') // remove date suffix (e.g. -20251222)
+    .replace(/:free$/, '')  // remove :free suffix
+    .toLowerCase();
 }
 
 function calculateCost(
@@ -90,8 +104,8 @@ function calculateCost(
   const normalized = normalizeModel(model)
   const pricing = MODEL_PRICING[normalized]
   if (!pricing) {
-    console.error(`Missing pricing configuration for model: ${model} (normalized: ${normalized})`)
-    throw new Error('AI pricing configuration error')
+    console.warn(`No pricing config for: ${model} (normalized: ${normalized}) — cost logged as 0`)
+    return 0
   }
 
   const inputCost = (promptTokens / 1000) * pricing.inputPer1k
@@ -127,9 +141,13 @@ export async function generateContent(
   const requestedModel = options.model
 
   // Model selection with fallback chain
-  const modelsToTry = requestedModel 
+  const modelsToTry = requestedModel
     ? [requestedModel, ...FREE_MODELS]
     : [...FREE_MODELS]
+
+  if (options.disableFallback && requestedModel) {
+    modelsToTry.length = 1  // only try the requested model
+  }
 
   let lastError: Error | null = null
 
@@ -163,7 +181,7 @@ export async function generateContent(
           const error = new Error(
             `OpenRouter API error: ${response.status} ${response.statusText} - ${errorMessage}`
           )
-          
+
           // Don't retry on 401 (invalid API key)
           if (response.status === 401) {
             throw error
@@ -171,10 +189,10 @@ export async function generateContent(
 
           // Handle 400 errors - check if it's an invalid model ID (should fallback to next model)
           if (response.status === 400) {
-            const isInvalidModel = errorMessage.includes('is not a valid model ID') || 
-                                   errorMessage.includes('invalid model') ||
-                                   errorMessage.includes('model not found')
-            
+            const isInvalidModel = errorMessage.includes('is not a valid model ID') ||
+              errorMessage.includes('invalid model') ||
+              errorMessage.includes('model not found')
+
             if (isInvalidModel) {
               // Invalid model ID - try next model instead of retrying
               console.warn(`Model ${model} is invalid, trying next model in fallback chain`)
@@ -190,8 +208,14 @@ export async function generateContent(
             throw error
           }
 
-          // Retry on 429 (rate limit) or 500 (server error) with exponential backoff
-          if (response.status === 429 || response.status === 500) {
+          // Retry on 429 (rate limit) or 50x (server error) with exponential backoff
+          if (
+            response.status === 429 ||
+            response.status === 500 ||
+            response.status === 502 ||
+            response.status === 503 ||
+            response.status === 504
+          ) {
             lastError = error
             if (attempt < maxRetries - 1) {
               const delay = baseDelay * Math.pow(2, attempt) // Exponential backoff: 1s, 2s, 4s
@@ -210,7 +234,7 @@ export async function generateContent(
         }
 
         const data: OpenRouterResponse = await response.json()
-        
+
         if (!data.choices || data.choices.length === 0) {
           // Non-retryable error: API returned invalid response
           // Try next model if available
@@ -252,7 +276,7 @@ export async function generateContent(
 
         // Check if it's a non-retryable API response error
         if (error instanceof Error && (
-          error.message.includes('no choices') || 
+          error.message.includes('no choices') ||
           error.message.includes('empty content')
         )) {
           // Already handled above, but if we get here, try next model
@@ -264,7 +288,7 @@ export async function generateContent(
 
         // Network errors or other retryable errors
         lastError = error instanceof Error ? error : new Error(String(error))
-        
+
         if (attempt < maxRetries - 1) {
           const delay = baseDelay * Math.pow(2, attempt) // Exponential backoff: 1s, 2s, 4s
           await new Promise(resolve => setTimeout(resolve, delay))

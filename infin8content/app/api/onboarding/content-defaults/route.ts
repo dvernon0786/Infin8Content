@@ -35,12 +35,12 @@ import { NextResponse } from 'next/server'
  */
 export async function POST(request: Request) {
   console.log('[Onboarding Content Defaults] API route called')
-  
+
   try {
     // Parse request body
     const body = await request.json()
     console.log('[Onboarding Content Defaults] Request body parsed:', body)
-    
+
     // Authenticate user first
     const currentUser = await getCurrentUser()
     if (!currentUser || !currentUser.org_id) {
@@ -49,44 +49,40 @@ export async function POST(request: Request) {
         { status: 401 }
       )
     }
-    
+
     const organizationId = currentUser.org_id
     console.log('[Onboarding Content Defaults] Authenticated user for organization:', organizationId)
-    
+
     // Validate request body
     const validated = contentDefaultsSchema.parse(body)
     console.log('[Onboarding Content Defaults] Request validated successfully')
-    
+
     // Create Supabase client
     const supabase = await createClient()
-    
+
     // Get current content_defaults to merge with new defaults
     const { data: currentOrg } = await supabase
       .from('organizations')
       .select('content_defaults')
       .eq('id', organizationId)
       .single() as any
-    
+
     const currentContentDefaults = currentOrg?.content_defaults || {}
-    
+
     // Update organization with content defaults
     const { data: organization, error: updateError } = await supabase
       .from('organizations')
       .update({
         content_defaults: {
           ...currentContentDefaults,
-          language: validated.language,
-          tone: validated.tone,
-          style: validated.style,
-          target_word_count: validated.target_word_count,
-          auto_publish: validated.auto_publish,
+          ...validated
         },
         updated_at: new Date().toISOString(),
       })
       .eq('id', organizationId)
       .select('id, content_defaults')
       .single() as any
-    
+
     if (updateError) {
       console.error('[Onboarding Content Defaults] Failed to update organization:', updateError)
       return NextResponse.json(
@@ -94,7 +90,7 @@ export async function POST(request: Request) {
         { status: 500 }
       )
     }
-    
+
     if (!organization) {
       console.error('[Onboarding Content Defaults] Organization not found after update')
       return NextResponse.json(
@@ -102,9 +98,9 @@ export async function POST(request: Request) {
         { status: 404 }
       )
     }
-    
+
     console.log('[Onboarding Content Defaults] Content defaults saved successfully')
-    
+
     return NextResponse.json({
       success: true,
       organization: {
@@ -112,20 +108,20 @@ export async function POST(request: Request) {
         content_defaults: organization.content_defaults,
       },
     })
-    
+
   } catch (error: any) {
     console.error('[Onboarding Content Defaults] Error occurred:', {
       error: error?.message,
       stack: error?.stack,
       name: error?.name,
     })
-    
+
     // Handle Zod validation errors
     if (error instanceof Error && 'issues' in error) {
       const zodError = error as any
       const firstError = zodError.issues?.[0]
       return NextResponse.json(
-        { 
+        {
           error: 'Invalid input',
           details: {
             field: firstError?.path?.[0] || 'unknown',
@@ -135,7 +131,7 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    
+
     // Handle JSON parsing errors
     if (error instanceof SyntaxError && error.message.includes('JSON')) {
       return NextResponse.json(
@@ -143,7 +139,7 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    
+
     // Handle database errors
     if (error?.code === 'PGRST' || error?.message?.includes('supabase')) {
       return NextResponse.json(
@@ -151,10 +147,10 @@ export async function POST(request: Request) {
         { status: 503 }
       )
     }
-    
+
     // Generic error
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
         details: process.env.NODE_ENV === 'development' ? error?.message : 'Something went wrong'
       },

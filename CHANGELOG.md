@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] - 2026-03-09
+
+### ✅ ADDED
+- **Article Scheduling System** - Complete end-to-end pipeline for future-dated article generation
+- **CMS Draft Syncing** - Automated "Draft Ready" notifications when generation completes
+- **Publish Reminders** - Daily cron alerts for human-action publishing on scheduled dates
+- **Interactive Schedule Calendar** - High-fidelity dashboard component for visual content planning
+- **Scheduling Quotas** - Plan-based monthly scheduling limits (10/50/Unlimited)
+- **Trial Plan Gating** - Locked scheduling features for trial users with premium upgrade paths
+
+### 🔧 CHANGED
+- **Article Schema** - Added `scheduled_at`, `publish_at`, and `cms_status` columns with partial indexes
+- **Inngest Workflow** - Registered new `article-cms-draft-notifier` and `publish-reminder-scheduler` workers
+- **Articles Dashboard** - Integrated `ScheduleGuard` and `ScheduleCalendar` into the client-side experience
+
+---
+
+## [2.1.0] - 2026-02-24
+
+### ✅ ADDED
+- **Quota Telemetry System** - Integrated structured logging for quota limit hits across all boundaries
+- **Centralized Plan Limits** - Unified source of truth for all plan-based constraints (`lib/config/plan-limits.ts`)
+- **Premium Quota UX** - Plan-aware error modals and upgrade guidance across all modules
+- **Article Generation Quota** - Monthly article generation tracking and enforcement with premium dialog UX
+- **Workflow Concurrency Guard** - Active workflow limit enforcement at activation boundary
+- **Keyword Research Quota** - Usage tracking and plan-aware alerting for keyword research
+- **CMS Connection Quota** - Plan-based limits for WordPress integrations in onboarding
+
+### 🔧 CHANGED
+- **API Response Format** - Standardized 403 JSON payloads for all quota boundaries (limit, usage, plan, metric)
+- **Dashboard UI** - Enhanced `WorkflowDetailModal` and article generation button with actionable upgrade paths
+- **Onboarding flow** - Integrated connection limits into `StepIntegration` with guidance for multi-platform users
+
+### 🔒 SECURITY
+- **Limit Hit Telemetry** - Automatic audit logging of all quota breaches (`quota.*.limit_hit`) for abuse detection and product analysis
+- **Plan Enforcement** - Strict server-side verification of usage against centralized limits
+
+---
+
 ## [2.0.0] - 2026-02-15
 
 ### 🚀 BREAKING CHANGES

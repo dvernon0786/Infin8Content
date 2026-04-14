@@ -11,7 +11,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 
 export interface ProgressFilters {
-  status?: 'queued' | 'generating' | 'completed' | 'failed'
+  status?: 'queued' | 'processing' | 'completed' | 'failed'
   date_from?: string // ISO 8601
   date_to?: string // ISO 8601
   limit?: number
@@ -21,7 +21,7 @@ export interface ProgressFilters {
 export interface ArticleProgress {
   article_id: string
   subtopic_id?: string
-  status: 'queued' | 'generating' | 'completed' | 'failed'
+  status: 'queued' | 'processing' | 'completed' | 'failed'
   progress_percent: number
   sections_completed: number
   sections_total: number
@@ -45,7 +45,7 @@ export interface ProgressResponse {
   articles: ArticleProgress[]
   summary: {
     queued_count: number
-    generating_count: number
+    processing_count: number
     completed_count: number
     failed_count: number
     average_generation_time_seconds: number
@@ -70,7 +70,7 @@ export async function validateWorkflowAccess(
   workflowId: string
 ): Promise<boolean> {
   const supabase = createServiceRoleClient()
-  
+
   try {
     const { data: workflow, error: workflowError } = await supabase
       .from('intent_workflows')
@@ -102,26 +102,10 @@ export async function validateWorkflowAccess(
 
 /**
  * Fetches progress data for a single article
+ * BUG NB3 FIX: article_progress table does not exist. Handled gracefully.
  */
 export async function getArticleProgress(articleId: string) {
-  const supabase = createServiceRoleClient()
-  
-  try {
-    const { data, error } = await supabase
-      .from('article_progress')
-      .select('*')
-      .eq('article_id', articleId)
-      .single()
-
-    if (error) {
-      return null
-    }
-
-    return data
-  } catch (error) {
-    console.error('Error fetching article progress:', error)
-    return null
-  }
+  return null
 }
 
 /**
@@ -136,18 +120,18 @@ export function calculateEstimatedCompletion(article: {
   updated_at: string
 }): Date | null {
   // Only calculate for in-progress articles
-  if (article.status !== 'generating' && article.status !== 'writing') {
+  if (article.status !== 'processing' && article.status !== 'writing') {
     return null
   }
 
   const progress = article.progress_percentage || 0
-  
+
   // If no progress yet, estimate based on average time per section
   if (progress === 0) {
     const avgTimePerSection = 60 // 60 seconds per section (adjustable)
     const remainingSections = article.total_sections - article.current_section + 1
     const estimatedRemainingTime = remainingSections * avgTimePerSection * 1000 // Convert to milliseconds
-    
+
     return new Date(Date.now() + estimatedRemainingTime)
   }
 
@@ -169,7 +153,7 @@ export function formatProgressResponse(
 ): ProgressResponse {
   const summary = {
     queued_count: 0,
-    generating_count: 0,
+    processing_count: 0,
     completed_count: 0,
     failed_count: 0,
     average_generation_time_seconds: 0,
@@ -177,7 +161,7 @@ export function formatProgressResponse(
   }
 
   const completedArticles = articles.filter(a => a.status === 'completed')
-  const generatingArticles = articles.filter(a => a.status === 'generating')
+  const generatingArticles = articles.filter(a => a.status === 'processing')
 
   // Count by status
   articles.forEach(article => {
@@ -185,8 +169,8 @@ export function formatProgressResponse(
       case 'queued':
         summary.queued_count++
         break
-      case 'generating':
-        summary.generating_count++
+      case 'processing':
+        summary.processing_count++
         break
       case 'completed':
         summary.completed_count++
@@ -246,7 +230,7 @@ export async function getWorkflowArticleProgress(
   filters: ProgressFilters = {}
 ): Promise<ArticleProgress[]> {
   const supabase = createServiceRoleClient()
-  
+
   try {
     // Build query for articles in the workflow
     let query = supabase
@@ -257,37 +241,21 @@ export async function getWorkflowArticleProgress(
         subtopic_id,
         status,
         created_at,
-        updated_at,
-        article_progress!inner(
-          id,
-          article_id,
-          status,
-          progress_percentage,
-          current_section,
-          total_sections,
-          current_stage,
-          estimated_time_remaining,
-          actual_time_spent,
-          word_count,
-          error_message,
-          metadata,
-          created_at,
-          updated_at
-        )
+        updated_at
       `)
       .eq('intent_workflow_id', workflowId)
 
     // Apply status filter
     if (filters.status) {
-      query = query.in('article_progress.status', [filters.status])
+      query = query.eq('status', filters.status)
     }
 
     // Apply date filters
     if (filters.date_from) {
-      query = query.gte('articles.created_at', filters.date_from)
+      query = query.gte('created_at', filters.date_from)
     }
     if (filters.date_to) {
-      query = query.lte('articles.created_at', filters.date_to)
+      query = query.lte('created_at', filters.date_to)
     }
 
     // Apply ordering and pagination
@@ -295,7 +263,7 @@ export async function getWorkflowArticleProgress(
     const offset = filters.offset || 0
 
     query = query
-      .order('articles.created_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
     const { data, error } = await query
@@ -310,48 +278,30 @@ export async function getWorkflowArticleProgress(
 
     // Transform data to match ArticleProgress interface
     const articles: ArticleProgress[] = data.map((item: any) => {
-      const progress = item.article_progress
-      if (!progress) {
-        // Handle missing progress data
-        return {
-          article_id: item.id,
-          subtopic_id: item.subtopic_id,
-          status: 'queued',
-          progress_percent: 0,
-          sections_completed: 0,
-          sections_total: 0,
-          current_section: undefined,
-          estimated_completion_time: null,
-          created_at: item.created_at,
-          started_at: null,
-          completed_at: null,
-          error: null,
-          word_count: null,
-          quality_score: null
-        }
-      }
+      // Logic for deriving progress from article status exclusively
+      // until article_progress table is established
+      const isCompleted = item.status === 'completed'
+      const isProcessing = item.status === 'processing'
 
       return {
         article_id: item.id,
         subtopic_id: item.subtopic_id,
-        status: progress.status,
-        progress_percent: progress.progress_percentage || 0,
-        sections_completed: progress.current_section ? progress.current_section - 1 : 0,
-        sections_total: progress.total_sections || 0,
-        current_section: progress.current_stage,
-        estimated_completion_time: progress.estimated_time_remaining 
-          ? new Date(Date.now() + progress.estimated_time_remaining * 1000).toISOString()
-          : null,
+        status: item.status as any,
+        progress_percent: isCompleted ? 100 : (isProcessing ? 50 : 0),
+        sections_completed: isCompleted ? 1 : 0,
+        sections_total: 1,
+        current_section: undefined,
+        estimated_completion_time: null,
         created_at: item.created_at,
-        started_at: progress.created_at,
-        completed_at: progress.status === 'completed' ? progress.updated_at : null,
-        error: progress.error_message ? {
+        started_at: isProcessing ? item.updated_at : null,
+        completed_at: isCompleted ? item.updated_at : null,
+        error: item.status === 'failed' ? {
           code: 'GENERATION_ERROR',
-          message: progress.error_message,
-          details: progress.metadata || {}
+          message: 'Article generation failed',
+          details: {}
         } : null,
-        word_count: progress.word_count,
-        quality_score: null // Not tracked in current schema
+        word_count: null,
+        quality_score: null
       }
     })
 

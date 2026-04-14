@@ -80,7 +80,7 @@ describe('Onboarding System Law Invariants', () => {
     test('onboarding fails with missing website_url', async () => {
       await seedOnboardingMissing(testOrgId, 'website_url')
       const result = await validateOnboarding(testOrgId)
-      
+
       expect(result.valid).toBe(false)
       expect(result.missing).toContain('website_url')
     })
@@ -88,7 +88,7 @@ describe('Onboarding System Law Invariants', () => {
     test('onboarding fails with missing business_description', async () => {
       await seedOnboardingMissing(testOrgId, 'business_description')
       const result = await validateOnboarding(testOrgId)
-      
+
       expect(result.valid).toBe(false)
       expect(result.missing).toContain('business_description')
     })
@@ -96,7 +96,7 @@ describe('Onboarding System Law Invariants', () => {
     test('onboarding fails with missing target_audiences', async () => {
       await seedOnboardingMissing(testOrgId, 'target_audiences')
       const result = await validateOnboarding(testOrgId)
-      
+
       expect(result.valid).toBe(false)
       expect(result.missing).toContain('target_audiences')
     })
@@ -104,7 +104,7 @@ describe('Onboarding System Law Invariants', () => {
     test('onboarding fails with missing keyword_settings', async () => {
       await seedOnboardingMissing(testOrgId, 'keyword_settings')
       const result = await validateOnboarding(testOrgId)
-      
+
       expect(result.valid).toBe(false)
       expect(result.missing).toContain('keyword_settings')
     })
@@ -112,7 +112,7 @@ describe('Onboarding System Law Invariants', () => {
     test('onboarding fails with missing content_defaults', async () => {
       await seedOnboardingMissing(testOrgId, 'content_defaults')
       const result = await validateOnboarding(testOrgId)
-      
+
       expect(result.valid).toBe(false)
       expect(result.missing).toContain('content_defaults')
     })
@@ -120,9 +120,9 @@ describe('Onboarding System Law Invariants', () => {
     test('onboarding fails with missing competitors', async () => {
       await seedCompleteOnboardingData(testOrgId)
       await supabase.from('organization_competitors').delete().eq('organization_id', testOrgId)
-      
+
       const result = await validateOnboarding(testOrgId)
-      
+
       expect(result.valid).toBe(false)
       expect(result.missing).toContain('competitors')
     })
@@ -257,7 +257,7 @@ describe('Onboarding System Law Invariants', () => {
     test('competitors are never read from blog_config or workflow_data', async () => {
       // Arrange: Add competitors to canonical table
       await seedCompetitors(testOrgId, 2)
-      
+
       // Add fake competitors to blog_config (should be ignored)
       await supabase
         .from('organizations')

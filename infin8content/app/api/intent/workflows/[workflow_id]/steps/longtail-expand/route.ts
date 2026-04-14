@@ -12,8 +12,6 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { logActionAsync, extractIpAddress, extractUserAgent } from '@/lib/services/audit-logger'
 import { AuditAction } from '@/types/audit'
 import { transitionWithAutomation } from '@/lib/fsm/unified-workflow-engine'
-import { emitAnalyticsEvent } from '@/lib/services/analytics/event-emitter'
-import { inngest } from '@/lib/inngest/client'
 import {
   expandSeedKeywordsToLongtails,
   type ExpansionSummary
@@ -42,7 +40,7 @@ export async function POST(
     userId = currentUser.id
 
     // 1️⃣ AUTH: Already handled above
-    
+
     // 2️⃣ FETCH WORKFLOW (READ ONLY)
     const supabase = createServiceRoleClient()
     const { data: workflow, error } = await supabase
@@ -73,31 +71,29 @@ export async function POST(
     }
 
     // 4️⃣ STRICT FSM GUARD
-    // For validation, we need to check if transition is allowed
-    // Use internal FSM for validation since unified engine doesn't export canTransition
     const { InternalWorkflowFSM } = await import('@/lib/fsm/fsm.internal')
     if (!InternalWorkflowFSM.canTransition(currentState as any, 'LONGTAIL_START')) {
       return NextResponse.json(
         {
           error: 'INVALID_STATE',
-          message: `Workflow must be in step_4_longtails. Current state: ${currentState}` 
+          message: `Workflow must be in step_4_longtails. Current state: ${currentState}`
         },
         { status: 409 }
       )
     }
 
-    // 5️⃣ APPROVAL VALIDATION (FIRST - before any service logic)
+    // 5️⃣ APPROVAL VALIDATION
     const { ApprovalGateValidator } = await import('@/lib/workflow/approval/approval-gate-validator')
     const { APPROVAL_THRESHOLDS } = await import('@/lib/constants/approval-thresholds')
-    
+
     const approvalResult = await ApprovalGateValidator.countApproved(
       workflowId,
       'seeds',
-      organizationId
+      organizationId!
     )
-    
+
     const requiredMinimum = APPROVAL_THRESHOLDS['seeds']
-    
+
     if (approvalResult.approvedCount < requiredMinimum) {
       return NextResponse.json({
         error: 'APPROVAL_REQUIRED',
@@ -112,8 +108,8 @@ export async function POST(
     // Log action start
     try {
       await logActionAsync({
-        orgId: organizationId,
-        userId: userId,
+        orgId: organizationId!,
+        userId: userId!,
         action: AuditAction.WORKFLOW_LONGTAIL_KEYWORDS_STARTED,
         details: {
           workflow_id: workflowId,
@@ -124,28 +120,19 @@ export async function POST(
       })
     } catch (logError) {
       console.error('Failed to log workflow start:', logError)
-      // Continue anyway - logging is non-blocking
     }
 
-    console.log(`[LongtailExpand] Starting long-tail expansion for workflow ${workflowId}`)
-
-    // 6️⃣ NON-BLOCKING TRIGGER (async only)
-    // UNIFIED TRANSITION (async trigger)
-    // This automatically emits the required event
-    const result = await transitionWithAutomation(workflowId, 'LONGTAIL_START', userId)
+    // 6️⃣ NON-BLOCKING TRIGGER
+    const result = await transitionWithAutomation(workflowId, 'LONGTAIL_START', userId!)
     if (!result.success) {
       console.error(`[LongtailExpand] Failed to advance workflow:`, result.error)
-      // Still return 202 since processing was triggered
     }
-    console.log(`✅✅✅ [LongtailExpand] INNGEST EVENT SENT SUCCESSFULLY for workflow ${workflowId}`)
-
-    console.log(`[LongtailExpand] Triggered async processing for workflow ${workflowId}`)
 
     // 7️⃣ RETURN IMMEDIATE 202 ACCEPTED
     return NextResponse.json({
       success: true,
       workflow_id: workflowId,
-      workflow_state: 'step_4_longtails', // Still in idle until worker processes
+      workflow_state: 'step_4_longtails',
       status: 'triggered',
       message: 'Long-tail expansion triggered. Check workflow state for progress.'
     }, { status: 202 })
@@ -153,12 +140,11 @@ export async function POST(
   } catch (error) {
     console.error('[LongtailExpand] Expansion failed:', error)
 
-    // Log error
     if (organizationId && userId) {
       try {
         await logActionAsync({
-          orgId: organizationId,
-          userId: userId,
+          orgId: organizationId!,
+          userId: userId!,
           action: AuditAction.WORKFLOW_LONGTAIL_KEYWORDS_FAILED,
           details: {
             workflow_id: workflowId,
@@ -172,11 +158,10 @@ export async function POST(
       }
     }
 
-    // Return structured error responses
     if (error instanceof Error) {
       if (error.message.includes('No seed keywords found')) {
         return NextResponse.json(
-          { 
+          {
             success: false,
             error: 'NO_SEED_KEYWORDS',
             message: 'No seed keywords found for expansion'
@@ -184,10 +169,10 @@ export async function POST(
           { status: 400 }
         )
       }
-      
+
       if (error.message.includes('Workflow not found')) {
         return NextResponse.json(
-          { 
+          {
             success: false,
             error: 'WORKFLOW_NOT_FOUND',
             message: 'Workflow not found'
@@ -197,9 +182,8 @@ export async function POST(
       }
     }
 
-    // Generic system error
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: 'SYSTEM_ERROR',
         message: 'Long-tail keyword expansion failed due to a system error'

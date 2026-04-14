@@ -26,24 +26,27 @@ export class ApprovalGateValidator {
 
     let table: string
     let workflowColumn: string = 'workflow_id'
-    let approvalColumn: string = 'user_selected'
+    let approvalColumn: string
     let subtopicFilter: string | undefined
 
     switch (entityType) {
       case 'seeds':
       case 'longtails':
         table = 'keywords'
+        approvalColumn = 'user_selected'
         break
 
       case 'clusters':
         table = 'topic_clusters'
+        approvalColumn = 'user_selected'
         break
 
       case 'subtopics':
-        // Deterministic schema: subtopics are stored in keywords table
-        // with subtopics_status = 'complete' filter
-        table = 'keywords'
-        subtopicFilter = 'subtopics_status'
+        // Use intent_approvals table for subtopic approvals
+        table = 'intent_approvals'
+        workflowColumn = 'workflow_id'
+        approvalColumn = 'decision'
+        subtopicFilter = undefined
         break
 
       default:
@@ -60,7 +63,7 @@ export class ApprovalGateValidator {
       .from(table)
       .select('id', { count: 'exact', head: true })
       .eq(workflowColumn, workflowId)
-      .eq(approvalColumn, true)
+      .eq(approvalColumn, entityType === 'subtopics' ? 'approved' : true)
 
     // Add organization isolation if column exists
     const hasOrgColumn = await this.checkColumnExists(table, 'organization_id')
@@ -71,8 +74,8 @@ export class ApprovalGateValidator {
 
     // Add subtopic filter if needed (when using keywords table for subtopics)
     if (subtopicFilter) {
-      totalQuery = totalQuery.eq(subtopicFilter, 'complete')
-      approvedQuery = approvedQuery.eq(subtopicFilter, 'complete')
+      totalQuery = totalQuery.eq(subtopicFilter, 'completed')
+      approvedQuery = approvedQuery.eq(subtopicFilter, 'completed')
     }
 
     // Total count with entity isolation
@@ -114,22 +117,25 @@ export class ApprovalGateValidator {
 
     let table: string
     let workflowColumn: string = 'workflow_id'
-    let approvalColumn: string = 'user_selected'
+    let approvalColumn: string
     let subtopicFilter: string | undefined
 
     switch (entityType) {
       case 'seeds':
       case 'longtails':
         table = 'keywords'
+        approvalColumn = 'user_selected'
         break
       case 'clusters':
         table = 'topic_clusters'
+        approvalColumn = 'user_selected'
         break
       case 'subtopics':
-        // Deterministic schema: subtopics are stored in keywords table
-        // with subtopics_status = 'complete' filter
-        table = 'keywords'
-        subtopicFilter = 'subtopics_status'
+        // Use intent_approvals table for subtopic approvals
+        table = 'intent_approvals'
+        workflowColumn = 'workflow_id'
+        approvalColumn = 'decision'
+        subtopicFilter = undefined
         break
       default:
         throw new Error(`Unsupported approval entity type: ${entityType}`)
@@ -140,7 +146,7 @@ export class ApprovalGateValidator {
       .from(table)
       .select('id')
       .eq(workflowColumn, workflowId)
-      .eq(approvalColumn, true)
+      .eq(approvalColumn, entityType === 'subtopics' ? 'approved' : true)
 
     // Add organization isolation if column exists
     const hasOrgColumn = await this.checkColumnExists(table, 'organization_id')
@@ -150,7 +156,7 @@ export class ApprovalGateValidator {
 
     // Add subtopic filter if needed (when using keywords table for subtopics)
     if (subtopicFilter) {
-      query = query.eq(subtopicFilter, 'complete')
+      query = query.eq(subtopicFilter, 'completed')
     }
 
     const { data, error } = await query.order('id')

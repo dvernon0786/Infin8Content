@@ -10,11 +10,11 @@ export interface ResponsiveNavigationState {
   isDesktop: boolean
   breakpoint: Breakpoint
   viewport: ViewportInfo
-  
+
   // Navigation state
   sidebarOpen: boolean
   sidebarOpenMobile: boolean
-  
+
   // Actions
   toggleSidebar: () => void
   setSidebarOpen: (open: boolean) => void
@@ -44,14 +44,21 @@ export function ResponsiveNavigationProvider({
   open: openProp,
   onOpenChange: setOpenProp,
 }: ResponsiveNavigationProviderProps) {
-  // Viewport state with debounced updates
-  const [viewport, setViewport] = React.useState<ViewportInfo>(getViewportInfo())
+  // Viewport state with stable SSR-safe initialization
+  const [viewport, setViewport] = React.useState<ViewportInfo>({
+    width: 1024,
+    height: 768,
+    isMobile: false,
+    isTablet: false,
+    isDesktop: true,
+    breakpoint: 'DESKTOP'
+  })
   const [debouncedViewport, setDebouncedViewport] = React.useState<ViewportInfo>(viewport)
-  
+
   // Sidebar state
   const [sidebarOpen, setSidebarOpen] = React.useState(defaultOpen)
   const [sidebarOpenMobile, setSidebarOpenMobile] = React.useState(false)
-  
+
   // Sync controlled/uncontrolled state
   const open = openProp ?? sidebarOpen
   const setOpen = React.useCallback(
@@ -149,11 +156,11 @@ export function ResponsiveNavigationProvider({
       isDesktop: debouncedViewport.isDesktop,
       breakpoint: debouncedViewport.breakpoint,
       viewport: debouncedViewport,
-      
+
       // Navigation state
       sidebarOpen: open,
       sidebarOpenMobile,
-      
+
       // Actions
       toggleSidebar,
       setSidebarOpen: setOpen,

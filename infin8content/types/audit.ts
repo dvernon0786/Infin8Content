@@ -33,6 +33,7 @@ export const AuditAction = {
     ARTICLE_GENERATION_STARTED: 'article.generation.started',
     ARTICLE_GENERATION_COMPLETED: 'article.generation.completed',
     ARTICLE_GENERATION_FAILED: 'article.generation.failed',
+    ARTICLE_PUBLISHED: 'article.published',
 
     // Intent workflow actions
     INTENT_WORKFLOW_CREATED: 'intent.workflow.created',
@@ -160,6 +161,13 @@ export const AuditAction = {
     // Blocking conditions actions (Story 39.7)
     WORKFLOW_BLOCKING_CONDITIONS_QUERIED: 'workflow.blocking_conditions.queried',
     WORKFLOW_BLOCKING_CONDITION_RESOLVED: 'workflow.blocking_condition.resolved',
+    // Article scheduling actions
+    ARTICLE_DRAFT_NOTIFIED: 'article.draft.notified',
+    ARTICLE_PUBLISH_REMINDED: 'article.publish.reminded',
+    ARTICLE_SCHEDULED: 'article.scheduled',
+    // CMS integration actions
+    INTEGRATION_CONNECTED: 'integration.connected',
+    INTEGRATION_DISCONNECTED: 'integration.disconnected',
 } as const;
 
 export type AuditActionType = typeof AuditAction[keyof typeof AuditAction];

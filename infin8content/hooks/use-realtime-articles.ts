@@ -1,368 +1,181 @@
-/**
- * React hook for real-time dashboard article updates
- * Story 15.1: Real-time Article Status Display
- * STABLE VERSION - Rate limited and crash-proof
- */
+'use client'
 
-'use client';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { DashboardArticle, DashboardUpdateEvent } from '@/lib/types/dashboard.types'
+import type { Database } from '@/lib/supabase/database.types'
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { articleProgressRealtime, type DashboardUpdateEvent, type DashboardArticle } from '@/lib/supabase/realtime';
-import type { ArticleProgress } from '@/types/article';
+type ArticlesRow = Database['public']['Tables']['articles']['Row']
 
 interface UseRealtimeArticlesOptions {
-  orgId: string;
-  onDashboardUpdate?: (event: DashboardUpdateEvent) => void;
-  onError?: (error: Error) => void;
-  onConnectionChange?: (connected: boolean) => void;
-  pollingInterval?: number; // milliseconds
-  enablePolling?: boolean;
-}
-
-interface UseRealtimeArticlesReturn {
-  articles: DashboardArticle[];
-  isConnected: boolean;
-  connectionStatus: 'connected' | 'disconnected' | 'reconnecting';
-  isPollingMode: boolean;
-  error: Error | null;
-  lastUpdated: string | null;
-  refresh: () => void;
-  reconnect: () => void;
+  orgId: string
+  onDashboardUpdate?: (event: DashboardUpdateEvent) => void
+  onError?: (error: Error) => void
+  onConnectionChange?: (connected: boolean) => void
 }
 
 export function useRealtimeArticles({
   orgId,
   onDashboardUpdate,
   onError,
-  onConnectionChange,
-  pollingInterval = 120000, // 2 minutes
-  enablePolling = true,
-}: UseRealtimeArticlesOptions): UseRealtimeArticlesReturn {
-  const [articles, setArticles] = useState<DashboardArticle[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('disconnected');
-  const [isPollingMode, setIsPollingMode] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  onConnectionChange
+}: UseRealtimeArticlesOptions) {
+  const supabase = useMemo(() => createClient(), [])
 
-  // Refs for cleanup and performance tracking
-  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isInitializedRef = useRef(false);
-  const lastPollRef = useRef<string | null>(null);
-  const performanceMetricsRef = useRef({
-    updateCount: 0,
-    totalLatency: 0,
-    averageLatency: 0,
-    lastUpdateTimestamp: 0,
-  });
-  const fetchInProgressRef = useRef(false);
-  const lastFetchTimeRef = useRef(0);
+  const [articles, setArticles] = useState<DashboardArticle[]>([])
+  const [isConnected, setIsConnected] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
 
-  // Fetch articles from API with rate limiting
-  const fetchArticles = useCallback(async (since?: string) => {
-    if (!orgId) {
-      console.warn('🔥 fetchArticles called without orgId');
-      return [];
-    }
+  const channelRef = useRef<any>(null)
+  const fetchingRef = useRef(false)
 
-    // Rate limiting to prevent browser crash
-    const now = Date.now();
-    if (fetchInProgressRef.current || (now - lastFetchTimeRef.current < 500)) {
-      console.log('🚨 Rate limiting fetch - request in progress or too soon');
-      return articles;
-    }
+  // 1. Ref Hardening: Wrap all external callbacks in refs to avoid subscription churn
+  const dashboardUpdateRef = useRef(onDashboardUpdate)
+  const connectionChangeRef = useRef(onConnectionChange)
+  const errorRef = useRef(onError)
 
-    fetchInProgressRef.current = true;
-    lastFetchTimeRef.current = now;
+  useEffect(() => {
+    dashboardUpdateRef.current = onDashboardUpdate
+    connectionChangeRef.current = onConnectionChange
+    errorRef.current = onError
+  }, [onDashboardUpdate, onConnectionChange, onError])
+
+  /* ---------------------------------------- */
+  /* Initial Fetch (Single Source of Truth)  */
+  /* ---------------------------------------- */
+
+  const fetchArticles = useCallback(async () => {
+    if (!orgId || fetchingRef.current) return
+    fetchingRef.current = true
 
     try {
-      console.log('📡 Fetching articles for orgId:', orgId);
-      
-      const url = since 
-        ? `/api/articles/queue?orgId=${orgId}&limit=50&since=${since}`
-        : `/api/articles/queue?orgId=${orgId}&limit=50`;
-      
-      console.log('📡 Fetching articles from:', url);
+      const { data, error } = await supabase
+        .from('articles')
+        .select(`
+          id,
+          keyword,
+          title,
+          status,
+          created_at,
+          updated_at,
+          scheduled_at,
+          publish_at
+        `)
+        .eq('org_id', orgId)
+        .order('created_at', { ascending: false })
 
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch articles: ${response.status} ${response.statusText}`);
+      const articlesData: DashboardArticle[] = (data ?? []).map(
+        (row: any) => ({
+          id: row.id,
+          keyword: row.keyword,
+          title: row.title || row.keyword || '',
+          status: row.status,
+          created_at: row.created_at ?? '',
+          updated_at: row.updated_at ?? '',
+          scheduled_at: row.scheduled_at ?? null,
+          publish_at: row.publish_at ?? null,
+        })
+      )
+
+      if (error) {
+        setError(error)
+        if (errorRef.current) errorRef.current(error)
+        return
       }
 
-      const data = await response.json();
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Raw response data:', data);
-      
-      // Handle wrapped API response: { articles: [...], total: N, includeCompleted: boolean }
-      let articlesArray = data;
-      if (data && typeof data === 'object' && 'articles' in data) {
-        articlesArray = data.articles;
-        console.log('📡 Extracted articles array from wrapped response:', articlesArray.length, 'articles');
-      }
-      
-      // Defensive: Ensure data is an array
-      if (!Array.isArray(articlesArray)) {
-        console.error('🔥 Expected array from API, received:', typeof articlesArray, articlesArray);
-        throw new Error(`API returned non-array data: ${typeof articlesArray}`);
-      }
-      
-      // Transform API response to DashboardArticle format
-      const transformedArticles: DashboardArticle[] = articlesArray.map((article: any) => ({
-        id: article.id,
-        keyword: article.keyword,
-        title: article.title,
-        status: article.status,
-        created_at: article.created_at,
-        updated_at: article.updated_at,
-        target_word_count: article.target_word_count,
-        writing_style: article.writing_style,
-        target_audience: article.target_audience,
-        custom_instructions: article.custom_instructions,
-        inngest_event_id: article.inngest_event_id,
-        created_by: article.created_by,
-        outline: article.outline,
-        sections: article.sections,
-        current_section_index: article.current_section_index,
-        generation_started_at: article.generation_started_at,
-        generation_completed_at: article.generation_completed_at,
-        error_details: article.error_details,
-        outline_generation_duration_ms: article.outline_generation_duration_ms,
-      }));
-
-      console.log('🔄 fetchArticles called with data:', transformedArticles.length, 'articles');
-      console.log('📊 Current state has:', articles.length, 'articles');
-
-      // Update state with new articles
-      setArticles(prevArticles => {
-        const newArticles = since ? [...prevArticles] : [];
-        
-        if (since) {
-          // Incremental update for polling
-          transformedArticles.forEach((newArticle: DashboardArticle) => {
-            const existingIndex = newArticles.findIndex(a => a.id === newArticle.id);
-            if (existingIndex >= 0) {
-              const existingArticle = newArticles[existingIndex];
-              // Don't overwrite completed status with stale data
-              if (existingArticle.status === 'completed' && newArticle.status !== 'completed') {
-                console.log('🔄 Preserving completed status for article:', newArticle.id);
-                return; // Skip overwrite
-              }
-              newArticles[existingIndex] = newArticle;
-              console.log('🔄 Updated article:', newArticle.id);
-            } else {
-              newArticles.unshift(newArticle);
-              console.log('➕ Adding new article:', newArticle.id);
-            }
-          });
-        } else {
-          // Full replace for initial fetch
-          transformedArticles.forEach((article: DashboardArticle) => {
-            console.log('➕ Adding new article:', article.id);
-          });
-          return transformedArticles;
-        }
-        
-        console.log('✅ Final result has:', newArticles.length, 'articles');
-        return newArticles;
-      });
-
-      // Update last poll timestamp for incremental updates
-      if (since) {
-        lastPollRef.current = since;
-      } else {
-        setLastUpdated(new Date().toISOString());
-      }
-
-      setError(null);
-      
-      return transformedArticles;
-    } catch (err) {
-      const error = err as Error;
-      console.error('🔥 Fetch error details:', {
-        message: error.message,
-        stack: error.stack,
-        orgId,
-        timestamp: new Date().toISOString()
-      });
-      setError(error);
-      onError?.(error);
-      throw error;
+      setArticles(articlesData || [])
+      setLastUpdated(new Date().toISOString())
     } finally {
-      fetchInProgressRef.current = false;
+      fetchingRef.current = false
     }
-  }, [orgId, onError, articles.length]);
+  }, [orgId, supabase])
 
-  // Handle dashboard updates from real-time subscription with rate limiting
-  const handleDashboardUpdate = useCallback((event: DashboardUpdateEvent) => {
-    console.log('🛰️ Realtime signal received → refetching articles', {
-      type: event.type,
-      articleId: event.articleId,
-      status: event.status
-    });
-    
-    // ⚠️ Do NOT patch articles state directly from realtime payloads.
-    // Multiple tables emit events. Always reconcile with DB.
-    
-    // Rate limiting to prevent browser crash
-    const now = Date.now();
-    if (performanceMetricsRef.current.lastUpdateTimestamp && 
-        now - performanceMetricsRef.current.lastUpdateTimestamp < 1000) {
-      console.warn('🚨 Rate limiting realtime fetch - too many events');
-      return;
-    }
-    
-    fetchArticles();
-    
-    // Still emit event for other listeners
-    onDashboardUpdate?.(event);
-  }, [fetchArticles, onDashboardUpdate]);
-
-  // Polling functions with debouncing
-  const startPolling = useCallback(() => {
-    // Prevent starting polling if it's already running
-    if (pollingTimeoutRef.current) {
-      console.log('📡 Polling already running, skipping');
-      return;
-    }
-    
-    
-    console.log('🚀 Starting polling with interval:', pollingInterval);
-    
-    pollingTimeoutRef.current = setInterval(async () => {
-      try {
-        console.log('📡 Polling fetch triggered...');
-        await fetchArticles(lastPollRef.current || undefined);
-      } catch (error) {
-        console.error('Polling error:', error);
-      }
-    }, pollingInterval);
-  }, [fetchArticles, pollingInterval]);
-
-  const stopPolling = useCallback(() => {
-    if (pollingTimeoutRef.current) {
-      clearInterval(pollingTimeoutRef.current);
-      pollingTimeoutRef.current = null;
-    }
-  }, []);
-
-  // Handle connection changes
-  const handleConnectionChange = useCallback((connected: boolean) => {
-    setIsConnected(connected);
-    setConnectionStatus(connected ? 'connected' : 'reconnecting');
-    onConnectionChange?.(connected);
-    
-    if (!connected && enablePolling && !isPollingMode) {
-      // Start polling if real-time connection fails
-      setIsPollingMode(true);
-      startPolling();
-    } else if (connected && isPollingMode) {
-      // Stop polling when real-time connection is restored
-      setIsPollingMode(false);
-      stopPolling();
-    }
-    
-    // Set to disconnected after a delay if not reconnected
-    if (!connected) {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      reconnectTimeoutRef.current = setTimeout(() => {
-        setConnectionStatus('disconnected');
-      }, 3000);
-    } else {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
-      }
-    }
-  }, [enablePolling, isPollingMode, onConnectionChange, startPolling, stopPolling]);
-
-  // Handle errors
-  const handleError = useCallback((error: Error) => {
-    console.error('🔥 Realtime error:', error);
-    setError(error);
-    onError?.(error);
-  }, [onError]);
-
-  // Refresh function with debouncing
-  const refresh = useCallback(() => {
-    if (fetchInProgressRef.current) {
-      console.log('🔄 Refresh already in progress, skipping');
-      return;
-    }
-    console.log('🔄 Manual refresh triggered');
-    return fetchArticles();
-  }, [fetchArticles]);
-
-  // Reconnect function
-  const reconnect = useCallback(() => {
-    console.log('🔄 Manual reconnect triggered');
-    articleProgressRealtime.unsubscribeFromDashboard();
-    setIsPollingMode(false);
-    stopPolling();
-    isInitializedRef.current = false;
-    
-    // Re-initialize will happen in useEffect
-  }, [stopPolling]);
-
-  // Initialize real-time subscription with cleanup
+  // 2. Ref Hardening: Wrap the fetcher itself in a ref for use inside the subscription effect
+  const fetchArticlesRef = useRef(fetchArticles)
   useEffect(() => {
-    if (!orgId) {
-      return;
-    }
+    fetchArticlesRef.current = fetchArticles
+  }, [fetchArticles])
 
-    // Prevent multiple initializations
-    if (isInitializedRef.current) {
-      console.log('🔧 Already initialized, skipping');
-      return;
-    }
+  /* ---------------------------------------- */
+  /* Realtime Subscription                   */
+  /* ---------------------------------------- */
 
-    console.log('🔧 Initializing hook for orgId:', orgId);
-    isInitializedRef.current = true;
+  useEffect(() => {
+    if (!orgId) return
 
-    // Initial fetch first, then start polling if needed
-    fetchArticles().then((fetchedArticles) => {
-      // Only start polling after initial fetch if we have articles
-      if (enablePolling && !isPollingMode && fetchedArticles.length > 0) {
-        console.log('🚀 Starting polling after initial fetch');
-        setIsPollingMode(true);
-        startPolling();
-      }
-    }).catch(() => {
-      // Error is handled in fetchArticles function
-    });
+    // Initial load
+    fetchArticlesRef.current()
 
-    // Also try real-time subscription
-    articleProgressRealtime.subscribeToDashboardUpdates(
-      orgId,
-      handleDashboardUpdate,
-      handleError,
-      handleConnectionChange
-    );
+    const channel = supabase
+      .channel(`articles-org-${orgId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'articles',
+          filter: `org_id=eq.${orgId}`
+        },
+        (payload: any) => {
+          // Trigger optional callback using ref
+          if (dashboardUpdateRef.current) {
+            const oldStatus = payload.old?.status
+            const newStatus = payload.new?.status
 
-    // Cleanup on unmount
+            let eventType: DashboardUpdateEvent['type'] | null = null
+
+            if (newStatus === 'completed' && oldStatus !== 'completed') {
+              eventType = 'article_completed'
+            } else if (newStatus !== oldStatus) {
+              eventType = 'article_status_changed'
+            }
+
+            if (eventType) {
+              dashboardUpdateRef.current({
+                type: eventType,
+                articleId: payload.new.id,
+                status: newStatus,
+                timestamp: payload.new.updated_at,
+                orgId: payload.new.org_id
+              })
+            }
+          }
+
+          // Always re-fetch full truth using ref
+          fetchArticlesRef.current()
+        }
+      )
+      .subscribe((status: string) => {
+        const connected = status === 'SUBSCRIBED'
+        setIsConnected(connected)
+        if (connectionChangeRef.current) {
+          connectionChangeRef.current(connected)
+        }
+      })
+
+    channelRef.current = channel
+
+    const interval = setInterval(() => {
+      fetchArticlesRef.current()
+    }, 60000)
+
     return () => {
-      console.log('🧹 Cleaning up hook for orgId:', orgId);
-      isInitializedRef.current = false;
-      articleProgressRealtime.unsubscribeFromDashboard();
-      stopPolling();
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
       }
-      fetchInProgressRef.current = false;
-    };
-  }, [orgId]); // Only depend on orgId, not functions
+      clearInterval(interval)
+    }
+  }, [orgId, supabase]) // Only re-subscribe if orgId or supabase instance changes
 
   return {
     articles,
     isConnected,
-    connectionStatus,
-    isPollingMode,
+    connectionStatus: (isConnected ? 'connected' : 'reconnecting') as 'connected' | 'reconnecting' | 'disconnected',
+    isPollingMode: false,
     error,
     lastUpdated,
-    refresh,
-    reconnect,
-  };
+    refresh: fetchArticles,
+    reconnect: fetchArticles,
+  }
 }

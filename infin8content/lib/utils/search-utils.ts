@@ -3,7 +3,7 @@
  * Story 15.4: Dashboard Search and Filtering
  */
 
-import type { DashboardArticle } from '@/lib/supabase/realtime';
+import type { DashboardArticle } from '@/lib/types/dashboard.types';
 import type { SearchResult, SearchFunction } from '@/lib/types/dashboard.types';
 
 /**
@@ -11,7 +11,7 @@ import type { SearchResult, SearchFunction } from '@/lib/types/dashboard.types';
  */
 export const searchArticles: SearchFunction = (articles, query) => {
   const startTime = performance.now();
-  
+
   if (!query.trim()) {
     return articles.map(article => ({
       article,
@@ -52,7 +52,7 @@ function searchSingleArticle(article: DashboardArticle, searchTerm: string): Sea
   if (titleMatch) {
     matchedFields.push('title');
     score += 10;
-    
+
     // Exact title match gets bonus points
     if (title === searchTerm) {
       score += 20;
@@ -65,7 +65,7 @@ function searchSingleArticle(article: DashboardArticle, searchTerm: string): Sea
   if (keywordMatch) {
     matchedFields.push('keyword');
     score += 8;
-    
+
     // Exact keyword match gets bonus points
     if (keyword === searchTerm) {
       score += 15;
@@ -75,16 +75,12 @@ function searchSingleArticle(article: DashboardArticle, searchTerm: string): Sea
   // Content search (medium weight) - using metadata or current stage info
   let content = '';
   let currentStage = '';
-  
+
   try {
-    if (article.progress && typeof article.progress === 'object') {
-      content = JSON.stringify(article.progress.metadata || {}).toLowerCase();
-      currentStage = (article.progress.current_stage || '').toLowerCase();
-    }
   } catch (error) {
     console.warn('Error processing article progress for search:', error);
   }
-  
+
   const combinedContent = `${content} ${currentStage}`;
   const contentMatch = combinedContent.includes(searchTerm);
   if (contentMatch) {
@@ -216,7 +212,7 @@ export class SearchHistory {
 
   static getHistory(): string[] {
     if (typeof window === 'undefined') return [];
-    
+
     try {
       const history = localStorage.getItem(this.STORAGE_KEY);
       return history ? JSON.parse(history) : [];
@@ -231,9 +227,9 @@ export class SearchHistory {
     const history = this.getHistory();
     const filtered = history.filter(item => item !== query);
     filtered.unshift(query);
-    
+
     const updated = filtered.slice(0, this.MAX_HISTORY_ITEMS);
-    
+
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
     } catch {
@@ -243,7 +239,7 @@ export class SearchHistory {
 
   static clearHistory(): void {
     if (typeof window === 'undefined') return;
-    
+
     try {
       localStorage.removeItem(this.STORAGE_KEY);
     } catch {
@@ -256,7 +252,7 @@ export class SearchHistory {
 
     const history = this.getHistory();
     const filtered = history.filter(item => item !== query);
-    
+
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
     } catch {
@@ -269,7 +265,7 @@ export class SearchHistory {
  * Advanced search with multiple terms and operators
  */
 export function advancedSearch(
-  articles: DashboardArticle[], 
+  articles: DashboardArticle[],
   query: string
 ): SearchResult[] {
   if (!query.trim()) {
@@ -308,7 +304,7 @@ function parseSearchQuery(query: string): {
 
   // Simple implementation - can be enhanced with proper parsing
   const terms = query.toLowerCase().split(/\s+/);
-  
+
   for (const term of terms) {
     if (term.startsWith('-')) {
       excluded.push(term.slice(1));
@@ -334,10 +330,8 @@ function advancedSearchSingleArticle(
 
   const searchText = [
     article.title || '',
-    article.keyword,
+    article.keyword || '',
     article.status,
-    JSON.stringify(article.progress?.metadata || ''),
-    article.progress?.current_stage || '',
   ].join(' ').toLowerCase();
 
   // Check excluded terms first
@@ -370,7 +364,7 @@ function advancedSearchSingleArticle(
     article,
     highlightedTitle: highlightText(article.title || '', searchTerms.optional.join(' ')),
     highlightedContent: highlightText(
-      JSON.stringify(article.progress?.metadata || '') + ' ' + (article.progress?.current_stage || ''),
+      article.status,
       searchTerms.optional.join(' ')
     ),
     matchedFields,
@@ -389,12 +383,12 @@ export class SearchPerformanceMonitor {
     maxTime: number;
     minTime: number;
   } = {
-    searchCount: 0,
-    totalTime: 0,
-    averageTime: 0,
-    maxTime: 0,
-    minTime: Infinity,
-  };
+      searchCount: 0,
+      totalTime: 0,
+      averageTime: 0,
+      maxTime: 0,
+      minTime: Infinity,
+    };
 
   static measureSearch<T>(searchFn: () => T, articleCount: number): T {
     const startTime = performance.now();
@@ -403,7 +397,7 @@ export class SearchPerformanceMonitor {
     const duration = endTime - startTime;
 
     this.updateMetrics(duration);
-    
+
     // Performance warning would be shown in development
 
     return result;

@@ -20,19 +20,27 @@ export const AUTOMATION_GRAPH = {
   // Human → Automation boundaries
   'SEEDS_APPROVED': 'intent.step4.longtails',
   'HUMAN_SUBTOPICS_APPROVED': 'intent.step9.articles',
-  
+
   // Worker → Worker chaining
   'LONGTAIL_SUCCESS': 'intent.step5.filtering',
   'FILTERING_SUCCESS': 'intent.step6.clustering',
   'CLUSTERING_SUCCESS': 'intent.step7.validation',
   'VALIDATION_SUCCESS': 'intent.step8.subtopics',
-  'ARTICLES_SUCCESS': 'WORKFLOW_COMPLETED',
+  // REMOVED: 'ARTICLES_SUCCESS': 'WORKFLOW_COMPLETED', - Completion is now 100% async driven by checkAndCompleteWorkflow
   // REMOVED: 'SUBTOPICS_SUCCESS': 'intent.step9.articles' - Step 9 is human gate only
-  
 } as const
 
 export type AutomationEvent = keyof typeof AUTOMATION_GRAPH
 export type EmittedEvent = typeof AUTOMATION_GRAPH[AutomationEvent]
+
+/**
+ * Get current workflow state (read-only)
+ * This is the only way to query workflow state - maintains architectural closure
+ */
+export async function getWorkflowState(workflowId: string): Promise<WorkflowState> {
+  const { InternalWorkflowFSM } = await import('./fsm.internal')
+  return await InternalWorkflowFSM.getCurrentState(workflowId)
+}
 
 /**
  * Check if an event requires automation
@@ -63,14 +71,20 @@ export async function transitionWithAutomation(
   userId?: string,
   options?: { resetTo?: WorkflowState }
 ): Promise<{ success: boolean; error?: string; emittedEvent?: string }> {
-  
+
   console.log(`[UnifiedEngine] Transitioning ${workflowId}: ${event}`)
-  
+
   try {
+    // 🔍 DEBUG: Get current state before transition
+    const currentState = await getWorkflowState(workflowId)
+    console.log(`[UnifiedEngine] Current state: ${currentState}`)
+
     // 1. Execute FSM transition with options
     const fsmOptions = userId ? { userId, ...(options?.resetTo && { resetTo: options.resetTo }) } : options
     const transitionResult = await InternalWorkflowFSM.transition(workflowId, event, fsmOptions)
-    
+
+    console.log(`[UnifiedEngine] FSM Transition Result:`, JSON.stringify(transitionResult, null, 2))
+
     if (!transitionResult.applied) {
       console.log(`[UnifiedEngine] Transition not applied for ${workflowId}`)
       return {
@@ -87,19 +101,19 @@ export async function transitionWithAutomation(
 
     // 3. AUTOMATIC EMISSION - Guaranteed by structural coupling
     const requiredEvent = getEmittedEvent(event)
-    
+
     console.log(`[UnifiedEngine] Auto-emitting ${requiredEvent} for ${workflowId}`)
-    
+
     await inngest.send({
       name: requiredEvent,
       data: { workflowId }
     })
 
     console.log(`[UnifiedEngine] Unified transition completed: ${event} → ${requiredEvent}`)
-    
-    return { 
-      success: true, 
-      emittedEvent: requiredEvent 
+
+    return {
+      success: true,
+      emittedEvent: requiredEvent
     }
 
   } catch (error) {

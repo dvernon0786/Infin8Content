@@ -1,48 +1,34 @@
 "use client"
-
 import { StepIntegration } from "@/components/onboarding/StepIntegration"
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard"
 import { useRouter } from "next/navigation"
 
-console.log("🔥🔥🔥 INTEGRATION PAGE LOADED 🔥🔥🔥")
-
 export default function IntegrationStepPage() {
   const router = useRouter()
 
-  // 🔥 System Law: onNext calls handleComplete for integration
   const handleNext = async (data: any) => {
     await handleComplete(data)
   }
 
   const handleComplete = async (data: any) => {
-    console.log("🔥🔥🔥 HANDLE COMPLETE CALLED 🔥🔥🔥", data)
-
     const res = await fetch("/api/onboarding/integration", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
 
-    console.log("🔥🔥🔥 API RESPONSE STATUS 🔥🔥🔥", res.status)
-
     if (!res.ok) {
       const error = await res.json()
-      console.error("🔥🔥🔥 API FAILED 🔥🔥🔥", error)
       throw new Error(error?.error || "WordPress integration failed")
     }
 
-    const result = await res.json()
-    console.log("🔥🔥🔥 API SUCCESS 🔥🔥🔥", result)
-
-    // ✅ Redirect ONLY after backend success
+    // Redirect ONLY after backend success
     router.push("/dashboard")
   }
 
-  // 🚫 Skipping completion is NOT allowed without an API
+  // Skip is allowed — CMS integration is optional
   const handleSkip = () => {
-    router.push("/onboarding")
+    router.push("/dashboard")
   }
 
   return (
@@ -51,7 +37,7 @@ export default function IntegrationStepPage() {
         <div className="mb-8">
           <OnboardingWizard currentStep={6} />
         </div>
-        <StepIntegration onNext={handleNext} />
+        <StepIntegration onNext={handleNext} onSkip={handleSkip} />
       </div>
     </div>
   )

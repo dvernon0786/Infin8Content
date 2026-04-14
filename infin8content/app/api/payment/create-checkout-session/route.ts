@@ -10,7 +10,7 @@ import type { Database } from '@/lib/supabase/database.types'
 type Organization = Database['public']['Tables']['organizations']['Row']
 
 const checkoutSchema = z.object({
-  plan: z.enum(['starter', 'pro', 'agency']),
+  plan: z.enum(['trial', 'starter', 'pro', 'agency']),
   billingFrequency: z.enum(['monthly', 'annual']),
   redirect: z.string().optional(),
 })
@@ -20,16 +20,16 @@ export async function POST(request: Request) {
     // Validate environment variables
     validateStripeEnv()
     const appUrl = validateAppUrl()
-    
+
     // Parse and validate request body
     const body = await request.json()
     const { plan, billingFrequency, redirect } = checkoutSchema.parse(body)
 
     const supabase = await createClient()
-    
+
     // Get current user from session
     const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-    
+
     if (authError || !authUser) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     // TODO: Remove type assertion after regenerating types from Supabase Dashboard
     const { data: organization, error: orgError } = await (supabase as any)
       .from('organizations')
-      .select('id, name, plan, stripe_customer_id, payment_status, suspended_at')
+      .select('id, name, plan, stripe_customer_id, payment_status, suspended_at, has_used_trial')
       .eq('id', userRecord.org_id)
       .single()
 
@@ -84,9 +84,16 @@ export async function POST(request: Request) {
       )
     }
 
+    if (plan === 'trial' && organization.has_used_trial) {
+      return NextResponse.json(
+        { error: 'Trial has already been used for this account.' },
+        { status: 400 }
+      )
+    }
+
     // Create or retrieve Stripe customer
     let customerId: string
-    
+
     if (organization.stripe_customer_id) {
       // Use existing customer ID
       customerId = organization.stripe_customer_id
@@ -105,48 +112,40 @@ export async function POST(request: Request) {
             user_id: userRecord.id,
           },
         })
-        
+
         customerId = customer.id
         console.log(`[Checkout] Created new Stripe customer: ${customerId}`, {
           organizationId: organization.id,
           email: userRecord.email,
         })
-        
-        // Store stripe_customer_id in organization record
-        // Retry up to 3 times if update fails (customer was created, we must store the ID)
-        let updateSuccess = false
-        for (let attempt = 0; attempt < 3; attempt++) {
-          // TODO: Remove type assertion after regenerating types from Supabase Dashboard
-          const { error: updateError } = await (supabase as any)
+
+        // Store stripe_customer_id in organization record, preventing race conditions
+        const { error: updateError, data: updateData } = await (supabase as any)
+          .from('organizations')
+          .update({ stripe_customer_id: customerId })
+          .eq('id', organization.id)
+          .is('stripe_customer_id', null)
+          .select()
+
+        if (updateError || !updateData || updateData.length === 0) {
+          // Another request won the race — fetch their customer ID and use it instead
+          const { data: freshOrg } = await (supabase as any)
             .from('organizations')
-            .update({ stripe_customer_id: customerId })
+            .select('stripe_customer_id')
             .eq('id', organization.id)
-          
-          if (!updateError) {
-            updateSuccess = true
-            break
-          }
-          
-          if (attempt < 2) {
-            // Wait before retry (exponential backoff: 100ms, 200ms)
-            await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, attempt)))
-            console.warn(`[Checkout] Retry ${attempt + 1}/3 storing Stripe customer ID:`, {
+            .single()
+
+          if (freshOrg && freshOrg.stripe_customer_id) {
+            console.log(`[Checkout] Race condition detected. Using previously created Stripe customer: ${freshOrg.stripe_customer_id}`)
+            customerId = freshOrg.stripe_customer_id
+          } else {
+            // Log critical error - customer created but ID not stored and no existing ID found
+            console.error('[Checkout] CRITICAL: Failed to store Stripe customer ID and no existing ID found:', {
               organizationId: organization.id,
               customerId,
-              error: updateError.message,
+              action: 'MANUAL_INTERVENTION_REQUIRED',
             })
           }
-        }
-        
-        if (!updateSuccess) {
-          // Log critical error - customer created but ID not stored
-          // This requires manual intervention to fix data consistency
-          console.error('[Checkout] CRITICAL: Failed to store Stripe customer ID after 3 retries:', {
-            organizationId: organization.id,
-            customerId,
-            action: 'MANUAL_INTERVENTION_REQUIRED',
-          })
-          // Continue anyway - customer was created, webhook will update it later
         }
       } catch (error: any) {
         console.error('[Checkout] Failed to create Stripe customer:', {
@@ -167,15 +166,15 @@ export async function POST(request: Request) {
 
     // Validate price ID format (Stripe price IDs start with 'price_' and are 27+ characters)
     // Also check for placeholder values
-    if (!priceId.startsWith('price_') || priceId.length < 27 || 
-        priceId.startsWith('price_xxx') || priceId.startsWith('price_yyy') || 
-        priceId.startsWith('price_zzz') || priceId.startsWith('price_aaa') ||
-        priceId.startsWith('price_bbb') || priceId.startsWith('price_ccc')) {
+    if (!priceId || !priceId.startsWith('price_') || priceId.length < 27 ||
+      priceId.startsWith('price_xxx') || priceId.startsWith('price_yyy') ||
+      priceId.startsWith('price_zzz') || priceId.startsWith('price_aaa') ||
+      priceId.startsWith('price_bbb') || priceId.startsWith('price_ccc')) {
       console.error('[Checkout] Invalid price ID (placeholder or invalid format detected):', {
         plan,
         billingFrequency,
         priceId,
-        priceIdLength: priceId.length,
+        priceIdLength: priceId?.length,
         organizationId: organization.id,
       })
       return NextResponse.json(
@@ -186,17 +185,42 @@ export async function POST(request: Request) {
 
     // Create Stripe Checkout session
     try {
+      const isTrial = plan === 'trial'
+
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
-        mode: 'subscription',
+        mode: isTrial ? 'payment' : 'subscription',
         line_items: [
           {
             price: priceId,
             quantity: 1,
           },
         ],
-        success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${appUrl}/payment?canceled=true`,
+        ...(isTrial ? {
+          payment_intent_data: {
+            metadata: {
+              org_id: organization.id,
+              user_id: userRecord.id,
+              plan: plan,
+              billing_frequency: billingFrequency,
+              ...(redirect && { redirect: redirect }),
+            }
+          },
+          success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&plan=trial`,
+          cancel_url: `${appUrl}/payment?canceled=true`,
+        } : {
+          subscription_data: {
+            metadata: {
+              org_id: organization.id,
+              user_id: userRecord.id,
+              plan: plan,
+              billing_frequency: billingFrequency,
+              ...(redirect && { redirect: redirect }),
+            }
+          },
+          success_url: `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${appUrl}/payment?canceled=true`,
+        }),
         metadata: {
           org_id: organization.id,
           user_id: userRecord.id,
@@ -282,7 +306,7 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    
+
     console.error('[Checkout] Unexpected error:', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,

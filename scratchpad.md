@@ -1,5 +1,32 @@
 # Scratchpad
 
+## Dashboard Minimalization & Pure Generation Engine Integration - ✅ COMPLETE
+
+**Date:** 2026-02-28  
+**Type:** Architectural Hardening & Editorial Domain Removal  
+**Status:** ✅ PRODUCTION SEALED
+
+### Summary
+Extracted the editorial domain completely, sealing the lifecycle authority to a single source of truth (`types/article.ts`). Purged all bulk UI mutations, shadow states, and fallback status logic, leaving only a pure `queued → generating → completed → failed` lifecycle path.
+
+### Critical Fixes Applied
+1. **Canonical Enum Authority**: Fixed duplicate `ArticleStatus` definitions. The true source is now solely `types/article.ts`, mapped throughout the application.
+2. **Bulk Mutation Purged**: Eradicated `onChangeStatus` and UI mutation flows in `BulkActionsBar`, `MobileBulkActions`, and status lists.
+3. **Strict Ingress Types**: Removed `as any` and `unknown` casting in `useRealtimeArticles.ts` in favor of strict `Database` typing.
+4. **Deleted Editorial Literals**: Eliminated 'draft', 'in-review', 'published', 'archived', and 'cancelled' fallback configurations.
+
+### Files Modified
+- `types/article.ts` & `lib/types/article.ts` - Centralized `ArticleStatus`
+- `hooks/use-realtime-articles.ts` - Strict `Database` typings
+- `components/mobile/mobile-article-status-list.tsx` - Dropped unused status callbacks
+- `lib/constants/status-configs.ts` - Stripped fallback states
+- `lib/services/bulk-operations.ts` - Removed `status_change` operation
+
+### Certification
+- No UI lifecycle mutations remaining.
+- FSM & backend processes retain sole authority over article transition state.
+
+---
 ## Inngest START Transition Fixes + Production Security Hardening - ✅ COMPLETE
 
 **Date:** 2026-02-18  
