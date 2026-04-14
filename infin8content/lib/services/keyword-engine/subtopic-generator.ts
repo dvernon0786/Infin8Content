@@ -46,7 +46,7 @@ interface KeywordRow {
 
 // Matches the explicit columns we SELECT from `intent_workflows` 
 interface WorkflowRow {
-  icp_analysis: Record<string, unknown> | null
+  icp_data: Record<string, unknown> | null
 }
 
 interface OrganizationGeo {
@@ -365,7 +365,7 @@ Return ONLY this JSON — no markdown fences, no explanation:
   }
 
   /**
-   * ICP data lives on `intent_workflows.icp_analysis` (JSONB), reached via
+   * ICP data lives on `intent_workflows.icp_data` (JSONB), reached via
    * the keyword's `workflow_id`. There is no separate `icp_profiles` table.
    * Returns null gracefully — the prompt handles the missing-ICP case.
    */
@@ -376,17 +376,15 @@ Return ONLY this JSON — no markdown fences, no explanation:
 
     const { data, error } = await this.supabase
       .from('intent_workflows')
-      .select('*') // SAFE TEMP FIX – avoids column mismatch
+      .select('icp_data')
       .eq('id', workflowId)
-      .single()
+      .single<WorkflowRow>()
 
     if (error || !data) {
       return null
     }
 
-    // If icp_analysis exists, use it.
-    // If not, return null silently.
-    return (data as any).icp_analysis ?? null
+    return data.icp_data ?? null
   }
 
   private async fetchGeoSettings(organizationId: string): Promise<OrganizationGeo> {
