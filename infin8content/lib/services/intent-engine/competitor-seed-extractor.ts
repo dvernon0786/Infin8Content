@@ -130,7 +130,7 @@ export async function extractSeedKeywords(
       }
 
       const keywords = await extractKeywordsFromCompetitor(
-        competitor.url,
+        competitor.domain,
         maxSeedsPerCompetitor,
         locationCode,
         languageCode,
@@ -210,9 +210,14 @@ async function extractKeywordsFromCompetitor(
   }
 
   // Prepare DataForSEO request
+  // target must be a bare domain without scheme (DataForSEO requirement).
+  // language_code scopes results to the org's configured language; without it,
+  // DataForSEO defaults to the most-indexed language for the location (e.g. Vietnamese
+  // for location 2704), returning keywords that get filtered out downstream.
   const requestBody = [{
     target: url,
     location_code: locationCode,
+    language_code: languageCode,
     limit: maxKeywords
   }]
 

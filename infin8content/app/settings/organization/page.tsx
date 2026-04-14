@@ -30,6 +30,12 @@ export default async function OrganizationSettingsPage() {
             {currentUser.role === 'owner' && (
               <>
                 <Link
+                  href="/settings/keyword-settings"
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Keyword Settings →
+                </Link>
+                <Link
                   href="/settings/organization/audit-logs"
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
