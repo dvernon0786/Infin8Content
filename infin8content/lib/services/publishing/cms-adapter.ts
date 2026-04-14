@@ -4,11 +4,12 @@
  */
 
 export interface PublishInput {
-  title:       string
-  html:        string
-  slug?:       string
-  excerpt?:    string
-  tags?:       string[]
+  title:          string
+  html:           string
+  slug?:          string
+  excerpt?:       string
+  tags?:          string[]
+  coverImageUrl?: string
 }
 
 export interface PublishResult {

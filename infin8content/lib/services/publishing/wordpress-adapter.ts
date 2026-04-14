@@ -31,8 +31,16 @@ export class WordPressAdapter implements CMSAdapter {
       }
     }
 
-    const apiUrl = `${site_url.replace(/\/+$/, '')}/wp-json/wp/v2/posts`
+    const baseUrl = site_url.replace(/\/+$/, '')
+    const apiUrl = `${baseUrl}/wp-json/wp/v2/posts`
     const auth = Buffer.from(`${username}:${application_password}`).toString('base64')
+
+    // Upload cover image to WP Media Library and get its ID (non-fatal if it fails)
+    let featuredMediaId: number | undefined
+    if (input.coverImageUrl) {
+      const mediaId = await this.uploadFeaturedImage(baseUrl, auth, input.coverImageUrl)
+      if (mediaId) featuredMediaId = mediaId
+    }
 
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
@@ -46,10 +54,11 @@ export class WordPressAdapter implements CMSAdapter {
         },
         body: JSON.stringify({
           title: input.title,
-          content: input.html,        // PublishInput.html → WP `content` field
+          content: input.html,
           status: 'publish',
           ...(input.slug ? { slug: input.slug } : {}),
           ...(input.excerpt ? { excerpt: input.excerpt } : {}),
+          ...(featuredMediaId ? { featured_media: featuredMediaId } : {}),
         }),
         signal: controller.signal,
       })
@@ -73,6 +82,38 @@ export class WordPressAdapter implements CMSAdapter {
         return { success: false, error: 'Request timeout (30s limit exceeded)' }
       }
       return { success: false, error: err.message || 'Unknown error occurred' }
+    }
+  }
+
+  private async uploadFeaturedImage(
+    baseUrl: string,
+    auth: string,
+    imageUrl: string
+  ): Promise<number | null> {
+    try {
+      const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(15_000) })
+      if (!imgRes.ok) return null
+
+      const buffer = await imgRes.arrayBuffer()
+      const contentType = imgRes.headers.get('content-type') || 'image/jpeg'
+      const filename = imageUrl.split('/').pop()?.split('?')[0] || 'cover.jpg'
+
+      const mediaRes = await fetch(`${baseUrl}/wp-json/wp/v2/media`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${auth}`,
+          'Content-Type': contentType,
+          'Content-Disposition': `attachment; filename="${filename}"`,
+        },
+        body: buffer,
+        signal: AbortSignal.timeout(30_000),
+      })
+
+      if (!mediaRes.ok) return null
+      const mediaData = await mediaRes.json()
+      return (mediaData as any).id ?? null
+    } catch {
+      return null  // Non-fatal — publish still proceeds without featured image
     }
   }
 

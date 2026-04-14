@@ -92,7 +92,7 @@ export async function publishArticle(
   // 4. Load article — sections JSONB snapshot populated by ArticleAssembler
   const { data: article, error: articleError } = await (supabase
     .from('articles')
-    .select('title, sections, status')
+    .select('title, sections, status, cover_image_url')
     .eq('id', articleId)
     .eq('org_id', organizationId)
     .single() as any)
@@ -103,7 +103,12 @@ export async function publishArticle(
 
   const sections = (article as any).sections
   const fullHtml = Array.isArray(sections) && sections.length > 0
-    ? sections.map((s: any) => s.html ?? '').join('\n')
+    ? sections.map((s: any) => {
+        const imgTag = s.section_image_url
+          ? `<img src="${s.section_image_url}" alt="" style="max-width:100%;height:auto;margin-bottom:1rem;" />\n`
+          : ''
+        return imgTag + (s.html ?? '')
+      }).join('\n')
     : ''
 
   if (!fullHtml.trim()) {
@@ -115,8 +120,9 @@ export async function publishArticle(
   let result
   try {
     result = await adapter.publishPost({
-      title: (article as any).title,
-      html:  fullHtml,
+      title:         (article as any).title,
+      html:          fullHtml,
+      coverImageUrl: (article as any).cover_image_url ?? undefined,
     })
   } catch (err: any) {
     throw new Error(`Adapter error: ${err?.message ?? 'unknown'}`)
