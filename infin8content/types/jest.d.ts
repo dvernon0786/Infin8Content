@@ -2,6 +2,7 @@
 
 declare global {
   namespace jest {
+    type Mock = any;
     interface Matchers<R> {
       toBeValidWorkflowState(): R
     }
