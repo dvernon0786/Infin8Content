@@ -92,7 +92,7 @@ export async function publishArticle(
   // 4. Load article — ✅ Fix 3: use html_content + generation_metadata, not sections
   const { data: article, error: articleError } = await (supabase
     .from('articles')
-    .select('title, slug, html_content, generation_metadata')
+    .select('title, html_content, generation_metadata')
     .eq('id', articleId)
     .eq('org_id', organizationId)
     .single() as any)
