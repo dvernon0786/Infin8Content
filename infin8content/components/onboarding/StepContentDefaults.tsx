@@ -51,7 +51,7 @@ export function StepContentDefaults({
       target_word_count: 1500,
       auto_publish: false,
       brand_color: "#" + "000000",
-      image_style: "realistic",
+      image_style: "brand_text_realism",
       add_youtube_video: false,
       add_cta: false,
       add_infographics: false,
@@ -241,10 +241,11 @@ export function StepContentDefaults({
                 onChange={(e) => updateField("image_style", e.target.value)}
                 className="w-full rounded-md border px-3 py-2 text-sm"
               >
-                <option value="realistic">Realistic</option>
-                <option value="illustrated">Illustrated</option>
-                <option value="minimalist">Minimalist</option>
-                <option value="abstract">Abstract</option>
+                <option value="brand_text_realism">Brand &amp; Text Realism</option>
+                <option value="watercolor_realism">Watercolor Realism</option>
+                <option value="cinematic_realism">Cinematic Realism</option>
+                <option value="illustration">Illustration</option>
+                <option value="sketch">Sketch</option>
               </select>
             </div>
 

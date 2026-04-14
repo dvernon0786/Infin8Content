@@ -5,7 +5,7 @@ import { getOrganizationCompetitors } from '@/lib/services/competitor-workflow-i
 import { runResearchAgent } from '@/lib/services/article-generation/research-agent'
 import { runContentWritingAgent } from '@/lib/services/article-generation/content-writing-agent'
 import { ArticleAssembler } from '@/lib/services/article-generation/article-assembler'
-import { generateArticleImage, getSectionImagePurpose } from '@/lib/services/image-generation/image-generation-agent'
+import { generateArticleImage, selectSectionImages } from '@/lib/services/image-generation/image-generation-agent'
 import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 import type {
   Article,
@@ -736,7 +736,7 @@ export const generateArticleImages = inngest.createFunction(
     const { article, sections } = await step.run('load-image-context', async () => {
       const { data: artData } = await supabase
         .from('articles')
-        .select('id, title, keyword, article_plan, generation_config, org_id')
+        .select('id, title, keyword, article_plan, generation_config, org_id, word_count')
         .eq('id', articleId)
         .single()
 
@@ -756,15 +756,14 @@ export const generateArticleImages = inngest.createFunction(
     const generationConfig = (article.generation_config as any) ?? {}
 
     // 2. Generate Section Images
-    for (const section of sections) {
-      const purpose = getSectionImagePurpose(
-        section.section_type,
-        section.section_order,
-        section.section_header
-      )
+    // Spec: <1500 words → 2 total images, 1500-2500 → 3, >2500 → 4.
+    // Cover accounts for 1; selectSectionImages returns the remaining inline/chart slots,
+    // evenly distributed across h2 sections. Defaults to 3 images if word_count is missing.
+    const wordCount: number = (article as any).word_count ?? 0
+    const sectionImagesToGenerate = selectSectionImages(sections, wordCount)
+    console.log(`[ImageWorker] word_count=${wordCount} → ${sectionImagesToGenerate.length + 1} total images (1 cover + ${sectionImagesToGenerate.length} inline/chart)`)
 
-      if (!purpose) continue
-
+    for (const { section, purpose } of sectionImagesToGenerate) {
       await step.run(`generate-image-section-${section.section_order}`, async () => {
         // Skip if already exists
         if (section.section_image_url) return section.section_image_url

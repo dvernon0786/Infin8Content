@@ -64,36 +64,44 @@ const ASPECT_RATIO_MAP: Record<ImagePurpose, string> = {
 // ── Supabase Storage bucket ────────────────────────────────────────────────────
 const STORAGE_BUCKET = 'article-images'
 
+// ── Style base prompts ────────────────────────────────────────────────────────
+// Maps onboarding image_style values → fixed base prompt prefix per spec.
+// All prefixes explicitly exclude text from the generated image.
+const STYLE_BASE_PROMPT_MAP: Record<string, string> = {
+    'brand_text_realism': 'photorealistic, high detail, no text,',
+    'watercolor_realism':  'watercolor painting, soft edges, artistic, no text,',
+    'cinematic_realism':   'cinematic still, dramatic lighting, high resolution, no text,',
+    'illustration':        'digital illustration, clean lines, vibrant colors, no text,',
+    'sketch':              'pencil sketch, hand-drawn, minimalist, no text,',
+}
+
 // ── Prompt builder ─────────────────────────────────────────────────────────────
 function buildPrompt(input: ImageGenerationInput): string {
-    const style = input.imageStyle || 'professional, modern, editorial'
-    const colorHint = input.brandColor ? `, accent color ${input.brandColor}` : ''
+    const styleKey = input.imageStyle ?? 'brand_text_realism'
+    // Unknown/legacy style values fall back to brand_text_realism
+    let basePrompt = STYLE_BASE_PROMPT_MAP[styleKey] ?? STYLE_BASE_PROMPT_MAP['brand_text_realism']
 
+    // For Brand & Text Realism, splice brand color into the base prefix per spec
+    if (styleKey === 'brand_text_realism' && input.brandColor) {
+        basePrompt = `photorealistic, high detail, no text, dominant color ${input.brandColor},`
+    }
+
+    let dynamic: string
     switch (input.purpose) {
         case 'cover':
-            return [
-                `Hero cover image for a blog article titled: "${input.articleTitle}".`,
-                `Topic: ${input.keyword}.`,
-                `Style: ${style}${colorHint}.`,
-                `Wide cinematic composition. Photorealistic. No text. No overlays. High resolution.`,
-            ].join(' ')
-
+            dynamic = `hero banner for article "${input.articleTitle}". Topic: ${input.keyword}. Wide composition. No text overlays. High resolution.`
+            break
         case 'inline':
-            return [
-                `Editorial illustration for a blog section about: "${input.prompt}".`,
-                `Article topic: ${input.keyword}.`,
-                `Style: ${style}, clean, informative illustration.`,
-                `No text overlays. Professional. White or neutral background.`,
-            ].join(' ')
-
+            dynamic = `editorial illustration for blog section: "${input.prompt}". Topic: ${input.keyword}. Informative. White background.`
+            break
         case 'chart':
-            return [
-                `Clean data visualization or diagram showing: "${input.prompt}".`,
-                `Style: minimal, professional${colorHint}.`,
-                `White background. Clear visual structure. No decorative elements.`,
-                `Suitable for a business blog article about ${input.keyword}.`,
-            ].join(' ')
+            dynamic = `data visualization for "${input.prompt}". Business blog about ${input.keyword}. White background. Clear visual structure.`
+            break
     }
+
+    const full = `${basePrompt} ${dynamic}`
+    // Spec requires < 300 chars; hard-truncate if dynamic content pushes over
+    return full.length <= 300 ? full : full.slice(0, 297) + '...'
 }
 
 // ── Upload base64 data URL to Supabase Storage ─────────────────────────────────
@@ -215,4 +223,35 @@ export function getSectionImagePurpose(
         .test(sectionHeader)
 
     return isDataHeavy ? 'chart' : 'inline'
+}
+
+// ── Word-count-based section image selection ───────────────────────────────────
+// Spec: <1500 words → 2 total images, 1500-2500 → 3, >2500 → 4.
+// Cover is always 1 (generated separately in the main pipeline),
+// so inline/chart slots = total - 1.
+// Sections are evenly distributed across eligible h2 sections only.
+export function selectSectionImages(
+    sections: Array<{ section_type: string; section_order: number; section_header: string; [key: string]: any }>,
+    wordCount: number
+): Array<{ section: (typeof sections)[0]; purpose: ImagePurpose }> {
+    // Default to 3 images if word count unavailable (per spec error-handling rule)
+    const totalImages = wordCount <= 0 ? 3 : wordCount < 1500 ? 2 : wordCount <= 2500 ? 3 : 4
+    const inlineSlots = Math.max(1, totalImages - 1)
+
+    const eligible = sections.filter(s => s.section_type === 'h2')
+    if (eligible.length === 0) return []
+
+    const count = Math.min(inlineSlots, eligible.length)
+    const isDataHeavy = /statistic|cost|price|percentage|roi|comparison|table|chart|budget|revenue|%|\$/i
+    const selected: Array<{ section: (typeof sections)[0]; purpose: ImagePurpose }> = []
+
+    for (let i = 0; i < count; i++) {
+        // Evenly space selections: pick section nearest to each interval midpoint
+        const idx = Math.floor((i + 0.5) / count * eligible.length)
+        const section = eligible[idx]
+        const purpose: ImagePurpose = isDataHeavy.test(section.section_header) ? 'chart' : 'inline'
+        selected.push({ section, purpose })
+    }
+
+    return selected
 }
