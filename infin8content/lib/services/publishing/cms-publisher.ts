@@ -89,10 +89,10 @@ export async function publishArticle(
     }
   }
 
-  // 4. Load article — ✅ Fix 3: use html_content + generation_metadata, not sections
+  // 4. Load article — sections JSONB snapshot populated by ArticleAssembler
   const { data: article, error: articleError } = await (supabase
     .from('articles')
-    .select('title, html_content, generation_metadata')
+    .select('title, sections, status')
     .eq('id', articleId)
     .eq('org_id', organizationId)
     .single() as any)
@@ -101,15 +101,14 @@ export async function publishArticle(
     throw new Error(`Article not found: ${articleError?.message ?? 'unknown error'}`)
   }
 
-  if (!(article as any).html_content?.trim()) {
+  const sections = (article as any).sections
+  const fullHtml = Array.isArray(sections) && sections.length > 0
+    ? sections.map((s: any) => s.html ?? '').join('\n')
+    : ''
+
+  if (!fullHtml.trim()) {
     throw new Error('Article has no HTML content — run assembly first')
   }
-
-  // ✅ Fix 3: Inject schema markup produced by the Schema Markup Generator
-  const schemaMarkup = ((article as any).generation_metadata?.schema_markup as string) ?? ''
-  const fullHtml     = schemaMarkup
-    ? `${schemaMarkup}\n${(article as any).html_content}`
-    : (article as any).html_content
 
   // 5. Publish via adapter
   const adapter = createCMSAdapter(platform, credentials)
@@ -118,7 +117,6 @@ export async function publishArticle(
     result = await adapter.publishPost({
       title: (article as any).title,
       html:  fullHtml,
-      slug:  (article as any).slug ?? undefined,
     })
   } catch (err: any) {
     throw new Error(`Adapter error: ${err?.message ?? 'unknown'}`)
