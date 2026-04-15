@@ -296,6 +296,15 @@ function buildGeoPayload(
   locationCode: number,
   languageCode: string
 ) {
+  // keyword_ideas uses a different schema: `keywords` (array) not `keyword` (string)
+  if (endpoint.includes('/keyword_ideas/')) {
+    return [{
+      keywords: [seed],
+      location_code: locationCode,
+      language_code: languageCode
+    }]
+  }
+
   const base: any = {
     keyword: seed,
     location_code: locationCode
@@ -333,7 +342,11 @@ async function fetchSource(
 ): Promise<LongtailKeywordData[]> {
 
   const payload = buildGeoPayload(endpoint, seed, locationCode, languageCode)
-  payload[0].limit = 3
+
+  // autocomplete (/serp/) does NOT accept `limit` — only labs endpoints do
+  if (!endpoint.startsWith('/serp/')) {
+    payload[0].limit = 3
+  }
 
   try {
     const response = await retryWithPolicy(
