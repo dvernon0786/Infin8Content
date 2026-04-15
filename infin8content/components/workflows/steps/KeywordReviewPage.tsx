@@ -161,25 +161,6 @@ export default function KeywordReviewPage({
     return buckets[idx]
   }
 
-  const getWidthClass = (confidence?: number) => {
-    const pct = Math.round((confidence || 0) * 100)
-    const buckets = [
-      'w-[0%]',
-      'w-[10%]',
-      'w-[20%]',
-      'w-[30%]',
-      'w-[40%]',
-      'w-[50%]',
-      'w-[60%]',
-      'w-[70%]',
-      'w-[80%]',
-      'w-[90%]',
-      'w-[100%]'
-    ]
-    const idx = Math.min(10, Math.max(0, Math.floor(pct / 10)))
-    return buckets[idx]
-  }
-
   return (
     <div className="max-w-7xl mx-auto p-8 space-y-6">
       
