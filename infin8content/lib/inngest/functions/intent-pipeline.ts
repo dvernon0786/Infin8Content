@@ -55,42 +55,41 @@ export const step4Longtails = inngest.createFunction(
   {
     id: 'intent-step4-longtails',
     concurrency: { limit: 1, key: 'event.data.workflowId' },
-    retries: 2,
-    onFailure: async ({ event }: any) => {
-      const workflowId = event.data.event.data.workflowId
-      console.log(`🔴 [Inngest step4Longtails] onFailure - emitting LONGTAIL_FAILED for workflow ${workflowId}`)
-      await transitionWithAutomation(workflowId, 'LONGTAIL_FAILED', SYSTEM_USER_ID)
-    }
+    retries: 2
   },
   { event: 'intent.step4.longtails' },
-  async ({ event, step }: any) => {
+  async ({ event }) => {
     const workflowId = event.data.workflowId
     console.log(`🚨🚨🚨 [Inngest step4Longtails] WORKER TRIGGERED for workflow ${workflowId} 🚨🚨🚨`)
 
-    const start = await step.run('transition-longtail-start', () =>
-      transitionWithAutomation(workflowId, 'LONGTAIL_START', SYSTEM_USER_ID)
-    )
+    // Pure minimal: transition-driven only (no race window)
+    const start = await transitionWithAutomation(workflowId, 'LONGTAIL_START', SYSTEM_USER_ID)
     if (!start.success) {
       console.log(`⚠️⚠️⚠️ [Inngest step4Longtails] SKIPPED workflow ${workflowId} - transition not applied`)
       return { skipped: true }
     }
 
-    await step.run('expand-longtails', () => expandSeedKeywordsToLongtails(workflowId))
+    try {
+      await expandSeedKeywordsToLongtails(workflowId)
 
-    const result = await step.run('transition-longtail-success', () =>
-      transitionWithAutomation(workflowId, 'LONGTAIL_SUCCESS', SYSTEM_USER_ID)
-    )
+      // Unified transition - automatic event emission guaranteed
+      const result = await transitionWithAutomation(workflowId, 'LONGTAIL_SUCCESS', SYSTEM_USER_ID)
 
-    if (!result.success) {
-      const isConcurrent = result.error?.includes('concurrent') || result.error?.includes('not applied')
-      if (isConcurrent) {
-        console.log(`⚠️⚠️⚠️ [Inngest step4Longtails] SKIPPED workflow ${workflowId} - concurrent SUCCESS transition`)
-        return { skipped: true }
+      if (!result.success) {
+        const isConcurrent = result.error?.includes('concurrent') || result.error?.includes('not applied')
+        if (isConcurrent) {
+          console.log(`⚠️⚠️⚠️ [Inngest step4Longtails] SKIPPED workflow ${workflowId} - concurrent SUCCESS transition`)
+          return { skipped: true }
+        }
+        throw new Error(result.error || 'Failed to transition LONGTAIL_SUCCESS')
       }
-      throw new Error(result.error || 'Failed to transition LONGTAIL_SUCCESS')
-    }
 
-    return { success: true }
+      return { success: true }
+
+    } catch (error) {
+      await transitionWithAutomation(workflowId, 'LONGTAIL_FAILED', SYSTEM_USER_ID)
+      throw error
+    }
   }
 )
 
@@ -99,41 +98,39 @@ export const step5Filtering = inngest.createFunction(
   {
     id: 'intent-step5-filtering',
     concurrency: { limit: 1, key: 'event.data.workflowId' },
-    retries: 2,
-    onFailure: async ({ event }: any) => {
-      const workflowId = event.data.event.data.workflowId
-      await transitionWithAutomation(workflowId, 'FILTERING_FAILED', SYSTEM_USER_ID)
-    }
+    retries: 2
   },
   { event: 'intent.step5.filtering' },
-  async ({ event, step }: any) => {
+  async ({ event }) => {
     const workflowId = event.data.workflowId
 
-    const start = await step.run('transition-filtering-start', () =>
-      transitionWithAutomation(workflowId, 'FILTERING_START', SYSTEM_USER_ID)
-    )
+    // Pure minimal: transition-driven only (no race window)
+    const start = await transitionWithAutomation(workflowId, 'FILTERING_START', SYSTEM_USER_ID)
     if (!start.success) return { skipped: true }
 
-    await step.run('run-filtering', async () => {
+    try {
       const orgId = await getOrganizationId(workflowId)
       const filterOptions = await getOrganizationFilterSettings()
       await filterKeywords(workflowId, orgId, filterOptions)
-    })
 
-    const result = await step.run('transition-filtering-success', () =>
-      transitionWithAutomation(workflowId, 'FILTERING_SUCCESS', SYSTEM_USER_ID)
-    )
+      // Unified transition - automatic event emission guaranteed
+      const result = await transitionWithAutomation(workflowId, 'FILTERING_SUCCESS', SYSTEM_USER_ID)
 
-    if (!result.success) {
-      const isConcurrent = result.error?.includes('concurrent') || result.error?.includes('not applied')
-      if (isConcurrent) {
-        console.log(`⚠️⚠️⚠️ [Inngest step5Filtering] SKIPPED workflow ${workflowId} - concurrent SUCCESS transition`)
-        return { skipped: true }
+      if (!result.success) {
+        const isConcurrent = result.error?.includes('concurrent') || result.error?.includes('not applied')
+        if (isConcurrent) {
+          console.log(`⚠️⚠️⚠️ [Inngest step5Filtering] SKIPPED workflow ${workflowId} - concurrent SUCCESS transition`)
+          return { skipped: true }
+        }
+        throw new Error(result.error || 'Failed to transition FILTERING_SUCCESS')
       }
-      throw new Error(result.error || 'Failed to transition FILTERING_SUCCESS')
-    }
 
-    return { success: true }
+      return { success: true }
+
+    } catch (error) {
+      await transitionWithAutomation(workflowId, 'FILTERING_FAILED', SYSTEM_USER_ID)
+      throw error
+    }
   }
 )
 
@@ -142,40 +139,38 @@ export const step6Clustering = inngest.createFunction(
   {
     id: 'intent-step6-clustering',
     concurrency: { limit: 1, key: 'event.data.workflowId' },
-    retries: 2,
-    onFailure: async ({ event }: any) => {
-      const workflowId = event.data.event.data.workflowId
-      await transitionWithAutomation(workflowId, 'CLUSTERING_FAILED', SYSTEM_USER_ID)
-    }
+    retries: 2
   },
   { event: 'intent.step6.clustering' },
-  async ({ event, step }: any) => {
+  async ({ event }) => {
     const workflowId = event.data.workflowId
 
-    const start = await step.run('transition-clustering-start', () =>
-      transitionWithAutomation(workflowId, 'CLUSTERING_START', SYSTEM_USER_ID)
-    )
+    // Pure minimal: transition-driven only (no race window)
+    const start = await transitionWithAutomation(workflowId, 'CLUSTERING_START', SYSTEM_USER_ID)
     if (!start.success) return { skipped: true }
 
-    await step.run('run-clustering', () => {
+    try {
       const clusterer = new KeywordClusterer()
-      return clusterer.clusterKeywords(workflowId)
-    })
+      await clusterer.clusterKeywords(workflowId)
 
-    const result = await step.run('transition-clustering-success', () =>
-      transitionWithAutomation(workflowId, 'CLUSTERING_SUCCESS', SYSTEM_USER_ID)
-    )
+      // Unified transition - automatic event emission guaranteed
+      const result = await transitionWithAutomation(workflowId, 'CLUSTERING_SUCCESS', SYSTEM_USER_ID)
 
-    if (!result.success) {
-      const isConcurrent = result.error?.includes('concurrent') || result.error?.includes('not applied')
-      if (isConcurrent) {
-        console.log(`⚠️⚠️⚠️ [Inngest step6Clustering] SKIPPED workflow ${workflowId} - concurrent SUCCESS transition`)
-        return { skipped: true }
+      if (!result.success) {
+        const isConcurrent = result.error?.includes('concurrent') || result.error?.includes('not applied')
+        if (isConcurrent) {
+          console.log(`⚠️⚠️⚠️ [Inngest step6Clustering] SKIPPED workflow ${workflowId} - concurrent SUCCESS transition`)
+          return { skipped: true }
+        }
+        throw new Error(result.error || 'Failed to transition CLUSTERING_SUCCESS')
       }
-      throw new Error(result.error || 'Failed to transition CLUSTERING_SUCCESS')
-    }
 
-    return { success: true }
+      return { success: true }
+
+    } catch (error) {
+      await transitionWithAutomation(workflowId, 'CLUSTERING_FAILED', SYSTEM_USER_ID)
+      throw error
+    }
   }
 )
 
@@ -184,24 +179,20 @@ export const step7Validation = inngest.createFunction(
   {
     id: 'intent-step7-validation',
     concurrency: { limit: 1, key: 'event.data.workflowId' },
-    retries: 2,
-    onFailure: async ({ event }: any) => {
-      const workflowId = event.data.event.data.workflowId
-      await transitionWithAutomation(workflowId, 'VALIDATION_FAILED', SYSTEM_USER_ID)
-    }
+    retries: 2
   },
   { event: 'intent.step7.validation' },
-  async ({ event, step }: any) => {
+  async ({ event }) => {
     const workflowId = event.data.workflowId
 
-    const start = await step.run('transition-validation-start', () =>
-      transitionWithAutomation(workflowId, 'VALIDATION_START', SYSTEM_USER_ID)
-    )
+    // Pure minimal: transition-driven only (no race window)
+    const start = await transitionWithAutomation(workflowId, 'VALIDATION_START', SYSTEM_USER_ID)
     if (!start.success) return { skipped: true }
 
-    await step.run('run-validation', async () => {
+    try {
       const supabase = createServiceRoleClient()
 
+      // First get organization_id from workflow for enterprise isolation
       const { data: workflow, error: workflowError } = await supabase
         .from('intent_workflows')
         .select('organization_id')
@@ -212,6 +203,10 @@ export const step7Validation = inngest.createFunction(
         throw new Error(`Workflow not found: ${workflowId}`)
       }
 
+      // Type guard for organization_id
+      const typedWorkflow = workflow as unknown as { organization_id: string }
+
+      // Fetch clusters and keywords for validation
       const { data: clusters } = await supabase
         .from('topic_clusters')
         .select('hub_keyword_id, spoke_keyword_id, similarity_score')
@@ -228,22 +223,25 @@ export const step7Validation = inngest.createFunction(
 
       const validator = new ClusterValidator()
       await validator.validateWorkflowClusters(workflowId, clusters as any, keywords as any)
-    })
 
-    const result = await step.run('transition-validation-success', () =>
-      transitionWithAutomation(workflowId, 'VALIDATION_SUCCESS', SYSTEM_USER_ID)
-    )
+      // Unified transition - automatic event emission guaranteed
+      const result = await transitionWithAutomation(workflowId, 'VALIDATION_SUCCESS', SYSTEM_USER_ID)
 
-    if (!result.success) {
-      const isConcurrent = result.error?.includes('concurrent') || result.error?.includes('not applied')
-      if (isConcurrent) {
-        console.log(`⚠️⚠️⚠️ [Inngest step7Validation] SKIPPED workflow ${workflowId} - concurrent SUCCESS transition`)
-        return { skipped: true }
+      if (!result.success) {
+        const isConcurrent = result.error?.includes('concurrent') || result.error?.includes('not applied')
+        if (isConcurrent) {
+          console.log(`⚠️⚠️⚠️ [Inngest step7Validation] SKIPPED workflow ${workflowId} - concurrent SUCCESS transition`)
+          return { skipped: true }
+        }
+        throw new Error(result.error || 'Failed to transition VALIDATION_SUCCESS')
       }
-      throw new Error(result.error || 'Failed to transition VALIDATION_SUCCESS')
-    }
 
-    return { success: true }
+      return { success: true }
+
+    } catch (error) {
+      await transitionWithAutomation(workflowId, 'VALIDATION_FAILED', SYSTEM_USER_ID)
+      throw error
+    }
   }
 )
 
@@ -252,25 +250,25 @@ export const step8Subtopics = inngest.createFunction(
   {
     id: 'intent-step8-subtopics',
     concurrency: { limit: 1, key: 'event.data.workflowId' },
-    retries: 2,
-    onFailure: async ({ event }: any) => {
-      const workflowId = event.data.event.data.workflowId
-      await transitionWithAutomation(workflowId, 'SUBTOPICS_FAILED', SYSTEM_USER_ID)
-    }
+    retries: 2
   },
   { event: 'intent.step8.subtopics' },
-  async ({ event, step }: any) => {
+  async ({ event }) => {
     const workflowId = event.data.workflowId
 
-    const start = await step.run('transition-subtopics-start', async () => {
-      const { getWorkflowState } = await import('@/lib/fsm/unified-workflow-engine')
-      const currentState = await getWorkflowState(workflowId)
-      const startEvent = currentState === 'step_8_subtopics_failed' ? 'SUBTOPICS_RETRY' : 'SUBTOPICS_START'
-      return transitionWithAutomation(workflowId, startEvent, SYSTEM_USER_ID)
-    })
+    // Check state to properly handle retries
+    const { getWorkflowState } = await import('@/lib/fsm/unified-workflow-engine')
+    const currentState = await getWorkflowState(workflowId)
+
+    const startEvent = currentState === 'step_8_subtopics_failed'
+      ? 'SUBTOPICS_RETRY'
+      : 'SUBTOPICS_START'
+
+    // Pure minimal: transition-driven only (no race window)
+    const start = await transitionWithAutomation(workflowId, startEvent, SYSTEM_USER_ID)
     if (!start.success) return { skipped: true }
 
-    await step.run('generate-subtopics', async () => {
+    try {
       const supabase = createServiceRoleClient()
 
       const { data: keywords } = await supabase
@@ -288,22 +286,25 @@ export const step8Subtopics = inngest.createFunction(
           await generator.store((keyword as any).id, subtopics)
         }
       }
-    })
 
-    const result = await step.run('transition-subtopics-success', () =>
-      transitionWithAutomation(workflowId, 'SUBTOPICS_SUCCESS', SYSTEM_USER_ID)
-    )
+      // Unified transition - automatic event emission guaranteed
+      const result = await transitionWithAutomation(workflowId, 'SUBTOPICS_SUCCESS', SYSTEM_USER_ID)
 
-    if (!result.success) {
-      const isConcurrent = result.error?.includes('concurrent') || result.error?.includes('not applied')
-      if (isConcurrent) {
-        console.log(`⚠️⚠️⚠️ [Inngest step8Subtopics] SKIPPED workflow ${workflowId} - concurrent SUCCESS transition`)
-        return { skipped: true }
+      if (!result.success) {
+        const isConcurrent = result.error?.includes('concurrent') || result.error?.includes('not applied')
+        if (isConcurrent) {
+          console.log(`⚠️⚠️⚠️ [Inngest step8Subtopics] SKIPPED workflow ${workflowId} - concurrent SUCCESS transition`)
+          return { skipped: true }
+        }
+        throw new Error(result.error || 'Failed to transition SUBTOPICS_SUCCESS')
       }
-      throw new Error(result.error || 'Failed to transition SUBTOPICS_SUCCESS')
-    }
 
-    return { success: true }
+      return { success: true }
+
+    } catch (error) {
+      await transitionWithAutomation(workflowId, 'SUBTOPICS_FAILED', SYSTEM_USER_ID)
+      throw error
+    }
   }
 )
 
@@ -312,45 +313,54 @@ export const step9Articles = inngest.createFunction(
   {
     id: 'intent-step9-articles',
     concurrency: { limit: 1, key: 'event.data.workflowId' },
-    retries: 2,
-    onFailure: async ({ event }: any) => {
-      const workflowId = event.data.event.data.workflowId
-      await transitionWithAutomation(workflowId, 'ARTICLES_FAILED', SYSTEM_USER_ID)
-    }
+    retries: 2
   },
   { event: 'intent.step9.articles' },
-  async ({ event, step }: any) => {
+  async ({ event }) => {
     const workflowId = event.data.workflowId
 
-    const start = await step.run('transition-articles-start', async () => {
-      const { getWorkflowState } = await import('@/lib/fsm/unified-workflow-engine')
-      const currentState = await getWorkflowState(workflowId)
-      const startEvent = currentState === 'step_9_articles_failed' ? 'ARTICLES_RETRY' : 'ARTICLES_START'
-      return transitionWithAutomation(workflowId, startEvent, SYSTEM_USER_ID)
-    })
+    // Check state to properly handle retries
+    const { getWorkflowState } = await import('@/lib/fsm/unified-workflow-engine')
+    const currentState = await getWorkflowState(workflowId)
+
+    const startEvent = currentState === 'step_9_articles_failed'
+      ? 'ARTICLES_RETRY'
+      : 'ARTICLES_START'
+
+    // Pure minimal: transition-driven only (no race window)
+    const start = await transitionWithAutomation(workflowId, startEvent, SYSTEM_USER_ID)
     if (!start.success) {
-      console.log(`[Step9] Skipping due to failed transition`)
+      console.log(`[Step9] Skipping due to failed transition: ${start.error}`)
       return { skipped: true }
     }
 
-    const queueingResult = await step.run('queue-articles', async () => {
-      await getOrganizationId(workflowId) // validates org exists
-      return queueArticlesForWorkflow(workflowId)
-    })
+    try {
+      const organizationId = await getOrganizationId(workflowId)
+      const queueingResult = await queueArticlesForWorkflow(workflowId)
 
-    await step.run('transition-articles-success', async () => {
+      // 🟠 PRODUCTION HARDENING: Prevent ghost triggers if no articles created
       if (queueingResult.articles_created === 0) {
         console.log(`[Step9] No articles created for workflow ${workflowId}, skipping generation trigger`)
-      } else {
-        console.log(`[Step9] Planning complete for workflow ${workflowId}. Articles remain in 'queued'.`)
+        await transitionWithAutomation(workflowId, 'ARTICLES_SUCCESS', SYSTEM_USER_ID)
+        return { success: true }
       }
-      await transitionWithAutomation(workflowId, 'ARTICLES_SUCCESS', SYSTEM_USER_ID)
-    })
 
-    return {
-      success: true,
-      articlesQueued: queueingResult.articles_created,
-      articles: queueingResult.articles.map((a: any) => a.id)
+      // 🟠 PRODUCTION HARDENING: Workflow transition to completed summary state
+      // FSM state 'step_9_articles_queued' allows the UI to show the final summary
+      // while the background scheduler or user manually kicks off generation.
+      console.log(`[Step9] Planning complete for workflow ${workflowId}. Articles remain in 'queued'.`)
+
+      await transitionWithAutomation(workflowId, 'ARTICLES_SUCCESS', SYSTEM_USER_ID)
+
+      return {
+        success: true,
+        articlesQueued: queueingResult.articles_created,
+        articles: queueingResult.articles.map(a => a.id)
+      }
+
+    } catch (error) {
+      await transitionWithAutomation(workflowId, 'ARTICLES_FAILED', SYSTEM_USER_ID)
+      throw error
     }
   }
 )
