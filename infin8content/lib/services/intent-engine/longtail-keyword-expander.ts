@@ -558,6 +558,7 @@ async function persistLongtails(
 
     if (error && error.code !== '23505') {
       console.error(`[LongtailExpander] Bulk upsert failed for seed "${seed.keyword}": ${error.message}`)
+      await logLongtailError(workflowId, seed.organization_id, seed.keyword, 'PERSIST_UPSERT_FAILED', error.message, { seed_id: seed.id, longtails_count: longtails.length, error_code: error.code })
       throw new Error(`Bulk upsert failed: ${error.message}`)
     } else if (error && error.code === '23505') {
       console.log(`[LongtailExpander] Duplicate longtails detected for seed "${seed.keyword}" - skipping duplicates`)
@@ -577,6 +578,7 @@ async function persistLongtails(
 
   if (updateError) {
     console.error(`[LongtailExpander] Seed status update failed for "${seed.keyword}": ${updateError.message}`)
+    await logLongtailError(workflowId, seed.organization_id, seed.keyword, 'PERSIST_STATUS_UPDATE_FAILED', updateError.message, { seed_id: seed.id, error_code: updateError.code })
     throw new Error(`Seed status update failed: ${updateError.message}`)
   } else {
     console.log(`[LongtailExpander] Successfully marked seed "${seed.keyword}" as completed`)
@@ -601,7 +603,10 @@ export async function expandSeedKeywordsToLongtails(
     .eq('id', workflowId)
     .single()
 
-  if (workflowError || !workflow) throw new Error('Workflow not found')
+  if (workflowError || !workflow) {
+    await logLongtailError(workflowId, 'unknown', 'INIT', 'WORKFLOW_NOT_FOUND', workflowError?.message ?? 'Workflow not found', { workflowId })
+    throw new Error('Workflow not found')
+  }
 
   const orgId = (workflow as unknown as { organization_id: string }).organization_id
 
@@ -613,7 +618,12 @@ export async function expandSeedKeywordsToLongtails(
     .is('parent_seed_keyword_id', null)
     .eq('longtail_status', 'not_started')
 
-  if (seedsError || !seeds?.length) {
+  if (seedsError) {
+    await logLongtailError(workflowId, orgId, 'INIT', 'SEEDS_FETCH_FAILED', seedsError.message, { workflowId, orgId })
+    throw new Error(`Seeds fetch failed: ${seedsError.message}`)
+  }
+
+  if (!seeds?.length) {
     console.log(`[LongtailExpander] No seeds found for expansion in workflow: ${workflowId}`)
     return {
       workflow_id: workflowId,
@@ -645,11 +655,22 @@ export async function expandSeedKeywordsToLongtails(
     .single()
 
   if (orgError || !org) {
+    await logLongtailError(workflowId, orgId, 'INIT', 'ORG_NOT_FOUND', orgError?.message ?? 'Organization not found', { workflowId, orgId })
     throw new Error('Organization not found')
   }
 
   // Use STRICT geo resolution - no fallbacks
-  const { locationCode, languageCode } = await getOrganizationGeoOrThrow(supabase, orgId)
+  let locationCode: number
+  let languageCode: string
+  try {
+    const geo = await getOrganizationGeoOrThrow(supabase, orgId)
+    locationCode = geo.locationCode
+    languageCode = geo.languageCode
+  } catch (geoError) {
+    const errorMessage = geoError instanceof Error ? geoError.message : 'Geo resolution failed'
+    await logLongtailError(workflowId, orgId, 'INIT', 'GEO_RESOLUTION_FAILED', errorMessage, { workflowId, orgId })
+    throw geoError
+  }
 
   console.log(`[LongtailExpander] Using geo settings: location=${locationCode}, language=${languageCode}`)
 
@@ -658,14 +679,23 @@ export async function expandSeedKeywordsToLongtails(
 
   for (const seed of seeds as unknown as SeedKeyword[]) {
     console.log(`[LongtailExpander] Processing seed: "${seed.keyword}"`)
-    const expansion = await expandSingleSeed(seed, locationCode, languageCode, existingKeywordsSet, workflowId, orgId)
+    try {
+      const expansion = await expandSingleSeed(seed, locationCode, languageCode, existingKeywordsSet, workflowId, orgId)
 
-    await persistLongtails(workflowId, seed, expansion.longtails)
+      await persistLongtails(workflowId, seed, expansion.longtails)
 
-    results.push(expansion)
-    total += expansion.longtails_created
+      results.push(expansion)
+      total += expansion.longtails_created
 
-    console.log(`[LongtailExpander] Seed "${seed.keyword}" completed: ${expansion.longtails_created} longtails, ${expansion.errors.length} errors`)
+      console.log(`[LongtailExpander] Seed "${seed.keyword}" completed: ${expansion.longtails_created} longtails, ${expansion.errors.length} errors`)
+    } catch (seedError) {
+      const errorMessage = seedError instanceof Error ? seedError.message : 'Unknown seed processing error'
+      console.error(`[LongtailExpander] Seed "${seed.keyword}" failed fatally: ${errorMessage}`)
+      await logLongtailError(workflowId, orgId, seed.keyword, 'SEED_PROCESSING_FAILED', errorMessage, {
+        seed_id: seed.id,
+        seed_keyword: seed.keyword
+      })
+    }
   }
 
   console.log(`[LongtailExpander] Workflow ${workflowId} expansion completed: ${total} total longtails created from ${seeds.length} seeds`)

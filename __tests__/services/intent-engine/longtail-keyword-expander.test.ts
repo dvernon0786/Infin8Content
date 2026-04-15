@@ -24,9 +24,9 @@ vi.mock('@/lib/services/analytics/event-emitter', () => ({
 // Mock retry utils to control timing
 vi.mock('@/lib/services/intent-engine/retry-utils', () => ({
   RetryPolicy: {},
-  isRetryableError: vi.fn((error) => false),
-  calculateBackoffDelay: vi.fn((attempt) => attempt * 1000),
-  sleep: vi.fn((ms) => Promise.resolve()),
+  isRetryableError: vi.fn((_error: Error) => false),
+  calculateBackoffDelay: vi.fn((attempt: number) => attempt * 1000),
+  sleep: vi.fn((_ms: number) => Promise.resolve()),
   classifyErrorType: vi.fn(() => 'unknown')
 }))
 
@@ -146,7 +146,7 @@ describe('LongtailKeywordExpander', () => {
           }]
         })
       })
-      Object.defineProperty(global, 'fetch', {
+      Object.defineProperty(globalThis, 'fetch', {
         value: mockFetch,
         writable: true
       })

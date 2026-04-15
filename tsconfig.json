@@ -3,7 +3,17 @@
   "compilerOptions": {
     "ignoreDeprecations": "5.0",
     "baseUrl": "./infin8content",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": ["./*"],
+      "vitest": ["node_modules/vitest/dist/index.d.ts"],
+      "vitest/*": ["node_modules/vitest/*"]
+    },
+    "typeRoots": [
+      "./infin8content/node_modules/@types",
+      "./infin8content/node_modules"
+    ]
   },
+  "include": ["__tests__/**/*.ts", "__tests__/**/*.tsx"],
   "exclude": ["node_modules"]
 }
