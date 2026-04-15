@@ -271,7 +271,6 @@ export default function KeywordReviewPage({
               <th className="p-3 w-28">Intent</th>
               <th className="p-3 w-16">Lang</th>
               <th className="p-3 w-28">Confidence</th>
-              <th className="p-3 w-20">Source</th>
             </tr>
           </thead>
           <tbody>
@@ -283,7 +282,7 @@ export default function KeywordReviewPage({
                     onCheckedChange={() => toggleKeyword(keyword.id)}
                   />
                 </td>
-                <td className="p-3 font-medium break-words">
+                <td className="p-3 font-medium">
                   {keyword.keyword}
                 </td>
                 <td className="p-3">
@@ -312,9 +311,7 @@ export default function KeywordReviewPage({
                     </span>
                   </div>
                 </td>
-                <td className="p-3 text-muted-foreground text-xs">
-                  Competitor
-                </td>
+
               </tr>
             ))}
           </tbody>
