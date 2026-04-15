@@ -283,7 +283,7 @@ export default function KeywordReviewPage({
                     onCheckedChange={() => toggleKeyword(keyword.id)}
                   />
                 </td>
-                <td className="p-3 font-medium truncate" title={keyword.keyword}>
+                <td className="p-3 font-medium break-words">
                   {keyword.keyword}
                 </td>
                 <td className="p-3">
