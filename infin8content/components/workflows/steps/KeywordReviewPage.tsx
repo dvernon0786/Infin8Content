@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2, Search, Filter } from 'lucide-react'
-import { KeywordOpportunityChart } from './KeywordOpportunityChart'
 
 export interface Keyword {
   id: string
@@ -229,8 +228,8 @@ export default function KeywordReviewPage({
       </div>
 
       {/* Keywords Table */}
-      <div className="border rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="border rounded-lg overflow-x-auto">
+        <table className="w-full min-w-max text-sm">
           <thead className="bg-muted/50 text-left">
             <tr>
               <th className="p-3 w-10">
@@ -286,7 +285,8 @@ export default function KeywordReviewPage({
                   <div className="flex items-center gap-1">
                     <div className="w-12 bg-muted rounded-full h-2 overflow-hidden">
                       <div 
-                        className={`bg-blue-500 h-2 rounded-full transition-all duration-300 confidence-${Math.round((keyword.decision_confidence || 0) * 100)}`}
+                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.round((keyword.decision_confidence || 0) * 100)}%` }}
                       />
                     </div>
                     <span className="text-xs text-muted-foreground">
@@ -302,9 +302,6 @@ export default function KeywordReviewPage({
           </tbody>
         </table>
       </div>
-
-      {/* Opportunity Chart */}
-      <KeywordOpportunityChart keywords={filtered} />
 
       {/* Footer */}
       <div className="flex justify-between items-center pt-4 border-t">

@@ -114,8 +114,7 @@ export function Step2CompetitorsForm({ workflowId }: Step2CompetitorsFormProps) 
       <div>
         <h3 className="text-lg font-medium">Competitor Analysis</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Analyze competitor websites to extract seed keywords for your SEO strategy.
-          This step uses DataForSEO to identify high-value keywords from competitor domains.
+          Analyze competitor websites to identify the keywords they rank for and uncover high-value opportunities to inform your SEO strategy.
         </p>
       </div>
 
