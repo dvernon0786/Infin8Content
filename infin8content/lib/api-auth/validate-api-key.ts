@@ -228,20 +228,11 @@ async function notifyRateLimitApproaching(
   remaining: number
 ): Promise<void> {
   try {
-    // Reuse the existing team-notifications service
-    const { sendTeamNotification } = await import('@/lib/services/team-notifications')
-    const db = createServiceRoleClient()
-    const { data: org } = await (db
-      .from('organizations')
-      .select('name')
-      .eq('id', validated.orgId)
-      .single() as any)
-
-    await sendTeamNotification({
-      orgId: validated.orgId,
-      subject: 'API rate limit approaching — Infin8Content',
-      message: `Your API key has used ${limit - remaining} of ${limit} calls this month (${Math.round(((limit - remaining) / limit) * 100)}%). Upgrade your plan for higher limits.`,
-    })
+    // Log rate limit warning — notification system can be wired in when available
+    console.warn(
+      `[rate-limit] org=${validated.orgId} key=${validated.keyId} ` +
+      `used=${limit - remaining}/${limit} (${Math.round(((limit - remaining) / limit) * 100)}%)`
+    )
   } catch {
     // Non-fatal — never block the API request
   }

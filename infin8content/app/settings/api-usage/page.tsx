@@ -50,7 +50,9 @@ export default async function ApiUsagePage() {
     .select('id, name, key_prefix, status')
     .eq('org_id', currentUser.org_id) as any)
 
-  const keyMap = new Map((apiKeys ?? []).map((k: any) => [k.id, k]))
+  const keyMap = new Map<string, { id: string; name: string; key_prefix: string; status: string }>(
+    (apiKeys ?? []).map((k: any) => [k.id, k] as [string, any])
+  )
 
   const totalCallsThisMonth = (usageLogs ?? [])
     .filter((log: any) => {

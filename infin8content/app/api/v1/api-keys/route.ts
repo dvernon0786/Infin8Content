@@ -19,7 +19,7 @@ const createSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional(),
   scopes: z
-    .array(z.enum(API_SCOPES as [string, ...string[]]))
+    .array(z.enum(API_SCOPES as unknown as [string, ...string[]]))
     .min(1)
     .default(['articles:read']),
   expires_at: z.string().datetime().optional(), // ISO 8601
