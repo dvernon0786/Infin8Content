@@ -182,7 +182,7 @@ export function Step2CompetitorsForm({ workflowId }: Step2CompetitorsFormProps) 
       <Button
         onClick={runStep}
         disabled={state === 'running' || state === 'success' || additionalCompetitors.length < 1}
-        className="min-w-[160px]"
+        className="min-w-40"
       >
         {state === 'running' ? (
           <>

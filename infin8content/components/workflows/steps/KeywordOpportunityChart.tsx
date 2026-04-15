@@ -102,7 +102,7 @@ export function KeywordOpportunityChart({ keywords }: Props) {
   }
 
   return (
-    <div className="mt-8 rounded-xl border bg-white p-6 shadow-sm min-h-[400px]">
+    <div className="mt-8 rounded-xl border bg-white p-6 shadow-sm min-h-100">
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900">
           Keyword Opportunity Score
@@ -113,7 +113,7 @@ export function KeywordOpportunityChart({ keywords }: Props) {
         </p>
       </div>
 
-      <div className="h-[350px] w-full min-w-[300px]">
+      <div className="h-87.5 w-full min-w-75">
         <ResponsiveContainer width="100%" height={350}>
           <BarChart data={top10} layout="horizontal" margin={{ top: 5, right: 30, left: 180, bottom: 5 }}>
             <XAxis 
