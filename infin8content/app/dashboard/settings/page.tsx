@@ -88,6 +88,42 @@ export default function SettingsPage() {
 
           <Card>
             <CardHeader>
+              <CardTitle className="font-poppins text-neutral-900 text-h3-desktop">API Keys</CardTitle>
+              <CardDescription className="font-lato text-neutral-600 text-body">
+                Generate and manage API keys for programmatic access
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                asChild
+                variant="outline"
+                className="font-lato text-neutral-600 hover:text-primary border-neutral-200"
+              >
+                <Link href="/settings/api">Manage API Keys</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-poppins text-neutral-900 text-h3-desktop">Webhooks</CardTitle>
+              <CardDescription className="font-lato text-neutral-600 text-body">
+                Configure webhook endpoints to receive real-time event notifications
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                asChild
+                variant="outline"
+                className="font-lato text-neutral-600 hover:text-primary border-neutral-200"
+              >
+                <Link href="/settings/webhooks">Manage Webhooks</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle className="font-poppins text-neutral-900 text-h3-desktop">Profile</CardTitle>
               <CardDescription className="font-lato text-neutral-600 text-body">
                 Coming soon - Profile management
