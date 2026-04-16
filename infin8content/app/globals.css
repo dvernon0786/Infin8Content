@@ -530,6 +530,10 @@
     background: var(--gradient-mesh);
   }
 
+  .bg-surface {
+    background-color: var(--color-bg-surface);
+  }
+
   /* Shadow Utilities */
   .shadow-brand {
     box-shadow: var(--shadow-brand);

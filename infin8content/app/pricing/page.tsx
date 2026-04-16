@@ -14,6 +14,7 @@ import StickyUpgradeBar from "@/components/marketing/pricing/StickyUpgradeBar";
 import MobileStickyUpgradeBar from "@/components/marketing/pricing/MobileStickyUpgradeBar";
 import Footer from "@/components/marketing/Footer";
 import FeatureValueSection from "@/components/marketing/pricing/FeatureValueSection";
+import CTASection from "@/components/marketing/sections/CTASection";
 
 export default function PricingPage() {
   const [billing, setBilling] = useState<"monthly" | "annual">("annual");
@@ -30,6 +31,7 @@ export default function PricingPage() {
       <Testimonials />
       <PricingFAQ />
       <FinalCTA />
+      <CTASection />
       <StickyUpgradeBar />
       <MobileStickyUpgradeBar />
       <Footer />

@@ -1,254 +1,210 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { ChevronDown, Menu, X } from 'lucide-react';
+import { useState } from "react";
+import Link from "next/link";
+import { ChevronDown, Menu, X } from "lucide-react";
+import MegaMenu, { type MegaMenuItem } from "./navigation/MegaMenu";
+import clsx from "clsx";
+
+const FEATURES: MegaMenuItem[] = [
+  { label: "AI Article Generator", description: "Research-backed, E-E-A-T optimised long-form articles", href: "/features/ai-article-generator" },
+  { label: "Brand Voice Engine", description: "Capture your tone and apply it consistently at scale", href: "/features/brand-voice-engine" },
+  { label: "Research Assistant", description: "Live web research grounded in real citations", href: "/features/research-assistant" },
+  { label: "SEO Optimisation", description: "Schema, keyword density, and E-E-A-T engineered in", href: "/features/seo-optimization" },
+];
+
+const SOLUTIONS: MegaMenuItem[] = [
+  { label: "Content Marketing", description: "Scale content production without scaling headcount", href: "/solutions/content-marketing" },
+  { label: "SEO Teams", description: "Keyword-to-cluster-to-article pipeline, fully automated", href: "/solutions/seo-teams" },
+  { label: "Agencies", description: "Deliver client content at agency speed", href: "/solutions/agencies" },
+  { label: "Enterprise", description: "Brand-safe, audit-ready content for large teams", href: "/solutions/enterprise" },
+];
+
+const RESOURCES: MegaMenuItem[] = [
+  { label: "Documentation", description: "API references, guides, and integration docs", href: "/resources/documentation" },
+  { label: "Blog", description: "Guides on AI content, SEO, and scaling", href: "/resources/blog" },
+  { label: "Support", description: "Get help from the Infin8Content team", href: "/resources/support" },
+  { label: "Community", description: "Connect with other content teams", href: "/resources/community" },
+];
+
+type DropdownKey = "features" | "solutions" | "resources" | null;
+
+function NavDropdown({
+  label,
+  items,
+  open,
+  onEnter,
+  onLeave,
+}: {
+  label: string;
+  items: MegaMenuItem[];
+  open: boolean;
+  onEnter: () => void;
+  onLeave: () => void;
+}) {
+  return (
+    <div className="relative" onMouseEnter={onEnter} onMouseLeave={onLeave}>
+      <button className="flex items-center gap-1 font-lato text-neutral-900 font-medium text-base bg-transparent border-0 cursor-pointer py-2 focus:outline-none">
+        {label}
+        <ChevronDown
+          size={16}
+          className={clsx("transition-transform duration-200", open && "rotate-180")}
+        />
+      </button>
+      {open && <MegaMenu items={items} />}
+    </div>
+  );
+}
+
+function MobileAccordion({
+  label,
+  items,
+  open,
+  onToggle,
+}: {
+  label: string;
+  items: MegaMenuItem[];
+  open: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div>
+      <button
+        onClick={onToggle}
+        className="flex items-center justify-between w-full font-lato font-medium text-neutral-900 py-3 focus:outline-none"
+      >
+        {label}
+        <ChevronDown
+          size={16}
+          className={clsx("transition-transform duration-200", open && "rotate-180")}
+        />
+      </button>
+      <div
+        className={clsx(
+          "overflow-hidden transition-all duration-300 pl-3",
+          open ? "max-h-96" : "max-h-0"
+        )}
+      >
+        {items.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="block py-2 font-lato text-sm text-neutral-600 hover:text-(--brand-electric-blue) transition-colors"
+          >
+            {item.label}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const Navigation = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [featuresOpen, setFeaturesOpen] = useState(false);
-  const [solutionsOpen, setSolutionsOpen] = useState(false);
-  const [resourcesOpen, setResourcesOpen] = useState(false);
+  const [desktopOpen, setDesktopOpen] = useState<DropdownKey>(null);
+  const [mobileOpen, setMobileOpen] = useState<DropdownKey>(null);
+
+  const toggleMobile = (key: DropdownKey) =>
+    setMobileOpen((prev) => (prev === key ? null : key));
 
   return (
-    <nav style={{ 
-      position: 'sticky', 
-      top: 0, 
-      zIndex: 50, 
-      backgroundColor: '#FFFFFF',
-      borderBottom: '1px solid #E5E7EB'
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1rem 1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <nav className="sticky top-0 z-50 bg-white border-b border-(--neutral-200)">
+      <div className="max-w-300 mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" aria-label="Go to homepage">
-            <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-              <img 
-                src="/infin8content-logo.png" 
-                alt="Infin8Content Logo"
-                style={{ 
-                  width: '192px', 
-                  height: '41px',
-                  borderRadius: '6px',
-                  objectFit: 'contain'
-                }}
-              />
-            </div>
+            <img
+              src="/infin8content-logo.png"
+              alt="Infin8Content"
+              width={192}
+              height={41}
+              className="object-contain rounded-md"
+            />
           </Link>
 
-          {/* Desktop Menu */}
-          <div style={{ alignItems: 'center', gap: '2rem' }} className="hidden md:flex">
-            <a 
-              href="/pricing" 
-              style={{ 
-                color: '#2C2C2E', 
-                textDecoration: 'none', 
-                fontSize: '1rem',
-                fontWeight: '500'
-              }}
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-8">
+            <NavDropdown
+              label="Features"
+              items={FEATURES}
+              open={desktopOpen === "features"}
+              onEnter={() => setDesktopOpen("features")}
+              onLeave={() => setDesktopOpen(null)}
+            />
+            <NavDropdown
+              label="Solutions"
+              items={SOLUTIONS}
+              open={desktopOpen === "solutions"}
+              onEnter={() => setDesktopOpen("solutions")}
+              onLeave={() => setDesktopOpen(null)}
+            />
+            <NavDropdown
+              label="Resources"
+              items={RESOURCES}
+              open={desktopOpen === "resources"}
+              onEnter={() => setDesktopOpen("resources")}
+              onLeave={() => setDesktopOpen(null)}
+            />
+            <Link
+              href="/pricing"
+              className="font-lato font-medium text-neutral-900 text-base hover:text-(--brand-electric-blue) transition-colors"
             >
               Pricing
-            </a>
-
-            <div style={{ position: 'relative' }}>
-              <button 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.25rem', 
-                  color: '#2C2C2E', 
-                  cursor: 'pointer', 
-                  border: 'none', 
-                  background: 'none', 
-                  fontSize: '1rem' 
-                }}
-                onMouseEnter={() => setFeaturesOpen(true)}
-                onMouseLeave={() => setFeaturesOpen(false)}
-              >
-                Features <ChevronDown style={{ width: '16px', height: '16px' }} />
-              </button>
-              {featuresOpen && (
-                <div 
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    marginTop: '0.5rem',
-                    width: '224px',
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '8px',
-                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                    border: '1px solid #F4F4F6',
-                    padding: '0.5rem 0'
-                  }}
-                  onMouseEnter={() => setFeaturesOpen(true)}
-                  onMouseLeave={() => setFeaturesOpen(false)}
-                >
-                  <a href="/features/ai-article-generator" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>AI Article Generator</a>
-                  <a href="/features/brand-voice-engine" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Brand Voice Engine</a>
-                  <a href="/features/research-assistant" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Research Assistant</a>
-                  <a href="/features/seo-optimization" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>SEO Optimization</a>
-                </div>
-              )}
-            </div>
-
-            <div style={{ position: 'relative' }}>
-              <button 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.25rem', 
-                  color: '#2C2C2E', 
-                  cursor: 'pointer', 
-                  border: 'none', 
-                  background: 'none', 
-                  fontSize: '1rem' 
-                }}
-                onMouseEnter={() => setSolutionsOpen(true)}
-                onMouseLeave={() => setSolutionsOpen(false)}
-              >
-                Solutions <ChevronDown style={{ width: '16px', height: '16px' }} />
-              </button>
-              {solutionsOpen && (
-                <div 
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    marginTop: '0.5rem',
-                    width: '224px',
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '8px',
-                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                    border: '1px solid #F4F4F6',
-                    padding: '0.5rem 0'
-                  }}
-                  onMouseEnter={() => setSolutionsOpen(true)}
-                  onMouseLeave={() => setSolutionsOpen(false)}
-                >
-                  <a href="/solutions/content-marketing" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Content Marketing</a>
-                  <a href="/solutions/seo-teams" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>SEO Teams</a>
-                  <a href="/solutions/agencies" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Agencies</a>
-                  <a href="/solutions/enterprise" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Enterprise</a>
-                </div>
-              )}
-            </div>
-
-            <div style={{ position: 'relative' }}>
-              <button 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.25rem', 
-                  color: '#2C2C2E', 
-                  cursor: 'pointer', 
-                  border: 'none', 
-                  background: 'none', 
-                  fontSize: '1rem' 
-                }}
-                onMouseEnter={() => setResourcesOpen(true)}
-                onMouseLeave={() => setResourcesOpen(false)}
-              >
-                Resources <ChevronDown style={{ width: '16px', height: '16px' }} />
-              </button>
-              {resourcesOpen && (
-                <div 
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    marginTop: '0.5rem',
-                    width: '224px',
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '8px',
-                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                    border: '1px solid #F4F4F6',
-                    padding: '0.5rem 0'
-                  }}
-                  onMouseEnter={() => setResourcesOpen(true)}
-                  onMouseLeave={() => setResourcesOpen(false)}
-                >
-                  <a href="/resources/documentation" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Documentation</a>
-                  <a href="/resources/blog" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Blog</a>
-                  <a href="/resources/support" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Support</a>
-                  <a href="/resources/community" style={{ display: 'block', padding: '0.5rem 1rem', color: '#2C2C2E', textDecoration: 'none' }}>Community</a>
-                </div>
-              )}
-            </div>
-
-            <a 
-              href="/register"
-              style={{
-                background: 'linear-gradient(to right, #217CEB, #4A42CC)',
-                color: '#FFFFFF',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '8px',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                fontSize: '1rem',
-                textDecoration: 'none',
-                display: 'inline-block'
-              }}
-            >
+            </Link>
+            <Link href="/register" className="btn-primary inline-block">
               Get Started
-            </a>
+            </Link>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button 
-            style={{ 
-              display: 'none', 
-              background: 'none', 
-              border: 'none', 
-              cursor: 'pointer' 
-            }}
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden p-2 rounded-md focus:outline-none"
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X style={{ width: '24px', height: '24px' }} /> : <Menu style={{ width: '24px', height: '24px' }} />}
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div style={{ 
-            display: 'none',
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            backgroundColor: '#FFFFFF',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-            padding: '1rem'
-          }} className="md:hidden">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <a href="/pricing" style={{ color: '#2C2C2E', textDecoration: 'none', padding: '0.5rem 0' }}>Pricing</a>
-              <a href="#" style={{ color: '#2C2C2E', textDecoration: 'none', padding: '0.5rem 0' }}>Features</a>
-              <a href="#" style={{ color: '#2C2C2E', textDecoration: 'none', padding: '0.5rem 0' }}>Solutions</a>
-              <a href="#" style={{ color: '#2C2C2E', textDecoration: 'none', padding: '0.5rem 0' }}>Resources</a>
-              <a 
-                href="/register"
-                style={{
-                  background: 'linear-gradient(to right, #217CEB, #4A42CC)',
-                  color: '#FFFFFF',
-                  padding: '0.75rem 1.5rem',
-                  borderRadius: '8px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  fontSize: '1rem',
-                  width: '100%',
-                  textDecoration: 'none',
-                  display: 'inline-block',
-                  textAlign: 'center'
-                }}
-              >
+        {/* Mobile menu */}
+        <div
+          className={clsx(
+            "md:hidden overflow-hidden transition-all duration-300",
+            mobileMenuOpen ? "max-h-150 pt-4 pb-6" : "max-h-0"
+          )}
+        >
+          <div className="flex flex-col divide-y divide-(--neutral-200)">
+            <MobileAccordion
+              label="Features"
+              items={FEATURES}
+              open={mobileOpen === "features"}
+              onToggle={() => toggleMobile("features")}
+            />
+            <MobileAccordion
+              label="Solutions"
+              items={SOLUTIONS}
+              open={mobileOpen === "solutions"}
+              onToggle={() => toggleMobile("solutions")}
+            />
+            <MobileAccordion
+              label="Resources"
+              items={RESOURCES}
+              open={mobileOpen === "resources"}
+              onToggle={() => toggleMobile("resources")}
+            />
+            <Link
+              href="/pricing"
+              className="font-lato font-medium text-neutral-900 py-3 block"
+            >
+              Pricing
+            </Link>
+            <div className="pt-4">
+              <Link href="/register" className="btn-primary block text-center w-full">
                 Get Started
-              </a>
+              </Link>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </nav>
   );
