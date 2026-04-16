@@ -2,6 +2,21 @@
 
 All notable changes to the Infin8Content platform will be documented in this file.
 
+## [2.6.0] - 2026-04-16
+
+### Added
+- **Epic 12 — Onboarding & Feature Discovery**: Guided tours, announcements, feedback widget, WhatsNewCard, HelpDrawer, PaymentStatusBanner, and supporting APIs and services. Additive DB migrations and RLS applied for announcements and feedback.
+- **Inngest:** `onboarding-email-sequence` (welcome → day-3 → day-7)
+- **APIs:** onboarding success events, tour-shown patch, announcements, announcement read, feedback collection
+
+### Changed
+- Added feature flags: `ENABLE_GUIDED_TOURS`, `ENABLE_FEATURE_ANNOUNCEMENTS`, `ENABLE_FEEDBACK_WIDGET`
+
+### Tests
+- 22 vitest tests added for onboarding services and APIs
+
+**PR:** https://github.com/dvernon0786/Infin8Content/pull/458
+
 ## [2.5.0] - 2026-03-07
 ### Added
 - **Stripe Trial Support**: Added `trial_period_days: 3` to Stripe checkout sessions for the trial plan.

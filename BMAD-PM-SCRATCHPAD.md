@@ -4,6 +4,8 @@
 **Status:** ✅ COMPLETE & BMAD-CLEAN  
 **Phase:** Ready for Engineering
 
+**Update (2026-04-16):** Epic 12 — Onboarding & Feature Discovery completed (branch `feat/epic-12-onboarding-discovery`, PR #458)
+
 ---
 
 ## Phase Completion Summary

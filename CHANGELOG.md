@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.0] - 2026-04-16
+
+### ✅ ADDED
+- **Epic 12 — Onboarding & Feature Discovery** — Full implementation for onboarding and feature discovery (13 stories). Additive changes only: database migrations, feature announcements, feedback collection, onboarding services, Inngest onboarding-email sequence, guided tours, help drawer, WhatsNewCard, PaymentStatusBanner, and supporting UI primitives and pages.
+- **APIs:** `/api/onboarding/success-events`, `/api/onboarding/tour-shown`, `/api/announcements`, `/api/announcements/[id]/read`, `/api/feedback`
+- **Inngest:** `lib/inngest/functions/onboarding-email-sequence.ts` (welcome → day-3 → day-7)
+
+### 🔧 CHANGED
+- Added feature flags: `ENABLE_GUIDED_TOURS`, `ENABLE_FEATURE_ANNOUNCEMENTS`, `ENABLE_FEEDBACK_WIDGET`
+
+### 🧪 TESTS
+- 22 vitest tests added for onboarding services and APIs; local subset executed successfully
+
+**PR:** https://github.com/dvernon0786/Infin8Content/pull/458
+
+---
+
 ## [2.2.0] - 2026-03-09
 
 ### ✅ ADDED

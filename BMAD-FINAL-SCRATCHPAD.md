@@ -260,6 +260,28 @@ Next immediate steps:
 
 ---
 
+## 2026-04-16 — Epic 12: Onboarding & Feature Discovery — COMPLETED
+
+- **Branch:** `feat/epic-12-onboarding-discovery` (merged / fast-forwarded into `test-main-all`)
+- **PR:** https://github.com/dvernon0786/Infin8Content/pull/458
+- **Summary:** Implemented all 13 stories in Epic 12 (Onboarding & Feature Discovery). Changes are additive: database migrations, new APIs, onboarding services, Inngest onboarding email sequence, UI components, and documentation.
+- **Key deliverables:**
+	- DB migrations:
+		- `supabase/migrations/20260416000001_add_onboarding_discovery_state.sql`
+		- `supabase/migrations/20260416000002_create_feature_announcements.sql`
+		- `supabase/migrations/20260416000003_create_user_feedback.sql`
+	- Feature flags: `ENABLE_GUIDED_TOURS`, `ENABLE_FEATURE_ANNOUNCEMENTS`, `ENABLE_FEEDBACK_WIDGET`
+	- Services: `lib/services/onboarding/user-success-tracker.ts`, `lib/services/onboarding/onboarding-emails.ts`
+	- Inngest: `lib/inngest/functions/onboarding-email-sequence.ts`
+	- APIs: `/api/onboarding/success-events`, `/api/onboarding/tour-shown`, `/api/announcements`, `/api/announcements/[id]/read`, `/api/feedback`
+	- UI: `GuidedTour`, `GuidedTourWrapper`, `WhatsNewCard`, `HelpDrawer`, `AnnouncementBanner`, `FeedbackWidget`, `PaymentStatusBanner`, plus UI primitives and help pages (`/help/faq`, `/help/tutorials`).
+	- Tests: 22 new vitest tests focused on onboarding services and APIs (local subset executed; `tsc --noEmit` clean locally).
+- **Stats:** 36 files changed, ~2012 insertions (committed to `feat/epic-12-onboarding-discovery`, merged to `test-main-all`).
+- **Safety notes:** Additive DB changes; RLS policies applied where appropriate; tours and announcements are feature-flag gated and default-disabled for safe rollout. Rollback via flags is possible.
+- **Action:** PR #458 created and CI will run; awaiting maintainer review/merge.
+
+---
+
 **BMAD Status:** ✅ PHASE 1 & 2 COMPLETE | 🚀 PHASE 3 WEEK 1 STARTED  
 **Ready for Engineering:** ✅ YES  
 **Architecture Locked:** ✅ YES  
