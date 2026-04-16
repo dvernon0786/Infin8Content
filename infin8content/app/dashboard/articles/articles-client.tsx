@@ -22,7 +22,7 @@ import { ScheduleCalendar } from '@/components/dashboard/schedule-calendar'
 function MetricCard({ label, value, alert, icon }: { label: string; value: string | number; alert?: boolean; icon?: string }) {
   return (
     <div className={`bg-white rounded-[10px] border px-3.5 py-2.5 relative overflow-hidden ${alert ? 'border-amber-500/30 shadow-[0_4px_12px_rgba(245,158,11,0.1)]' : 'border-neutral-200 shadow-sm'}`}>
-      <div className={`absolute top-0 left-0 right-0 h-[2px] ${alert ? 'bg-linear-to-r from-amber-500 to-red-500 opacity-100' : 'bg-gradient-brand opacity-60'}`} />
+      <div className={`absolute top-0 left-0 right-0 h-0.5 ${alert ? 'bg-linear-to-r from-amber-500 to-red-500 opacity-100' : 'bg-gradient-brand opacity-60'}`} />
       <div className="relative">
         <div className="flex justify-between items-start mb-2">
           <span className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold font-lato">
@@ -219,7 +219,7 @@ function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
           <div className="flex flex-col items-center justify-center p-20 text-center">
             <FileText className="h-12 w-12 text-neutral-300 mb-4" />
             <h3 className="font-poppins text-neutral-900 font-semibold mb-1">No articles found</h3>
-            <p className="font-lato text-neutral-500 text-sm max-w-[200px]">
+            <p className="font-lato text-neutral-500 text-sm max-w-50">
               {articles.length > 0 ? "Try adjusting your filters" : "Start by generating your first article"}
             </p>
           </div>
@@ -249,7 +249,7 @@ function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
       </div>
 
       {/* System Status Footer */}
-      <div className="mt-4 py-4 border-t border-neutral-200 flex items-center gap-[18px]">
+      <div className="mt-4 py-4 border-t border-neutral-200 flex items-center gap-4.5">
         {[
           { label: "Realtime", status: isConnected ? "Live" : "Polling", ok: isConnected },
           { label: "Last Sync", status: lastUpdated ? new Date(lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "Never", ok: true },

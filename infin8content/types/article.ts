@@ -1,4 +1,52 @@
 /**
+ * Epic 13: Phase 2 Advanced Features — article type system
+ * Stories: 13-1 (news), 13-2 (listicle+comparison), 13-3 (youtube), 13-5 (multi-language)
+ */
+
+export type ArticleType = 'standard' | 'news' | 'listicle_comparison' | 'video_conversion';
+
+export interface NewsArticleConfig {
+  topic: string;
+  country?: string;           // ISO 3166-1 alpha-2 (e.g. 'US', 'GB'). Default: 'US'
+  time_range: '24h' | '7d' | '30d';
+  article_focus: 'breaking_news' | 'analysis' | 'roundup';
+  language?: string;          // ISO 639-1 (e.g. 'en', 'es'). Default: 'en'
+
+  // Polling / automated generation (Story 13-1)
+  source?: 'hackernews' | 'google_news';  // default: 'hackernews'
+  poll_interval_minutes?: 15 | 30 | 60;   // absent = one-time manual run only
+  auto_publish?: boolean;                  // default: false — saves as draft
+  last_polled_at?: string | null;          // ISO; managed by poller, not by user
+  min_hn_score?: number;                   // HN stories below this score are skipped
+  resolve_gn_links?: boolean;              // follow Google News redirects to real URLs
+  cms_connection_id?: string;              // CMS connection to push to after saving
+
+  // Set by story generator (stored in the child article's article_type_config)
+  source_story_id?: string;
+  source_story_url?: string;
+  source_story_title?: string;
+}
+
+export interface ListicleConfig {
+  list_type: string;                   // e.g. "Top 10", "Best 7", "Ultimate 15"
+  topic: string;
+  items_to_include?: string[];         // Optional user-specified items
+  comparison_criteria: string[];       // e.g. ["price", "features", "pros_cons", "ratings"]
+  include_comparison_table: boolean;
+  include_pros_cons: boolean;
+  include_pricing: boolean;
+  editors_choice?: string;             // Name of editor's top pick
+}
+
+export interface VideoConversionConfig {
+  video_url: string;
+  include_transcript: boolean;
+  include_timestamps: boolean;
+  include_embedded_video: boolean;
+  language?: string;                   // Target language code (e.g. 'en', 'es')
+}
+
+/**
  * Article progress tracking types for real-time updates
  * Story 4a.6: Real-Time Progress Tracking and Updates
  */
@@ -64,6 +112,12 @@ export interface Article {
   cms_status?: CmsStatus;         // CMS publication state
   draft_notified_at?: string;     // ISO — draft-ready notification sent at
   publish_reminded_at?: string;   // ISO — publish-reminder notification sent at
+
+  // 🎯 EPIC 13: Phase 2 Advanced Article Types (added 2026-04-16)
+  article_type?: ArticleType;                                                           // defaults to 'standard'
+  article_type_config?: NewsArticleConfig | ListicleConfig | VideoConversionConfig;    // type-specific payload
+  video_url?: string;             // YouTube URL (video_conversion only)
+  video_transcript?: string;      // Extracted transcript (video_conversion only)
 }
 
 // 3. API request / response shapes for the schedule endpoint
@@ -135,7 +189,7 @@ export interface SectionPlannerOutput {
  */
 export interface ArticlePlannerOutput {
   article_title: string;
-  content_style: 'informative' | 'listicle';
+  content_style: 'informative' | 'listicle' | 'news' | 'video_conversion';
   target_keyword: string;
   semantic_keywords: string[];
   total_estimated_words: number;

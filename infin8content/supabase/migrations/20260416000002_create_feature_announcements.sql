@@ -17,8 +17,7 @@ CREATE TABLE IF NOT EXISTS feature_announcements (
 
 -- Index for efficient active announcement lookup
 CREATE INDEX IF NOT EXISTS idx_feature_announcements_active
-  ON feature_announcements (active_from, active_until)
-  WHERE active_until IS NULL OR active_until > now();
+  ON feature_announcements (active_from, active_until);
 
 -- RLS: authenticated users can read active announcements; only service_role can write
 ALTER TABLE feature_announcements ENABLE ROW LEVEL SECURITY;

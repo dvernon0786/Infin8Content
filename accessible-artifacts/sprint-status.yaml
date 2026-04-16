@@ -412,13 +412,13 @@ development_status:
   12-13-payment-status-and-account-activation-display: done
   epic-12-retrospective: optional
 
-  # Epic 13: Phase 2 Advanced Features (BACKLOG)
-  epic-13: backlog
-  13-1-generate-news-articles-from-latest-events: backlog
-  13-2-generate-listicle-articles-with-comparison-tables: backlog
-  13-3-convert-youtube-videos-to-blog-posts: backlog
+  # Epic 13: Phase 2 Advanced Features (IN PROGRESS — 13-1, 13-2, 13-3, 13-5 implemented 2026-04-16)
+  epic-13: in-progress
+  13-1-generate-news-articles-from-latest-events: ready-for-dev
+  13-2-generate-listicle-articles-with-comparison-tables: ready-for-dev
+  13-3-convert-youtube-videos-to-blog-posts: ready-for-dev
   13-4-advanced-content-templates: backlog
-  13-5-multi-language-content-translation: backlog
+  13-5-multi-language-content-translation: ready-for-dev
   13-6-content-personalization-engine: backlog
   13-7-advanced-seo-optimization: backlog
   13-8-content-a-b-testing: backlog

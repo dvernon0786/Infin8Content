@@ -171,6 +171,16 @@ archived     - Removed from workflow
 All BMAD deliverables in:
 `/home/dghost/Infin8Content/_bmad-output/`
 
+---
+
+### 2026-04-17 — Tailwind canonical class fixes applied
+
+- Files modified: infin8content/app/dashboard/articles/articles-client.tsx, infin8content/components/dashboard/sidebar-navigation.tsx
+- Changes applied: canonicalized Tailwind utility classes to use design tokens and canonical forms (e.g. `h-[2px]` → `h-0.5`, `max-w-[200px]` → `max-w-50`, `gap-[18px]` → `gap-4.5`, replaced raw hex colors with token names like `text-text-primary` and `bg-warning/10`).
+- Git: these edits are included in a branch pushed as `test-main-all` (see repo branch for PR creation and CI run).
+
+---
+
 ### Core Documents
 - epic-primary-content-workflow-updated.md
 - ux-flow-diagrams.md

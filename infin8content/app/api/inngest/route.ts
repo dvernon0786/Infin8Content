@@ -19,6 +19,7 @@ import { publishReminderScheduler } from '@/lib/inngest/functions/publish-remind
 import { expireApiKeys } from '@/lib/inngest/functions/expire-api-keys'
 import { retryWebhookDelivery } from '@/lib/inngest/functions/retry-webhook-delivery'
 import { onboardingEmailSequence } from '@/lib/inngest/functions/onboarding-email-sequence'
+import { newsPollScheduled, newsPollWatch, newsGenerateStory } from '@/lib/inngest/functions/news-poller'
 
 // Validate environment variables at runtime
 const eventKey = process.env.INNGEST_EVENT_KEY
@@ -50,6 +51,9 @@ export const { GET, POST, PUT } = serve({
     expireApiKeys,
     retryWebhookDelivery,
     onboardingEmailSequence,
+    newsPollScheduled,
+    newsPollWatch,
+    newsGenerateStory,
   ],
 })
 

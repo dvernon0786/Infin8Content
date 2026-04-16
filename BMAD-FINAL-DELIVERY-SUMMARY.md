@@ -284,6 +284,8 @@ Week 6: Rollout (MEDIUM)
 https://github.com/dvernon0786/Infin8Content/pull/new/feature/bmad-final-deliverables
 ```
 
+**Recent update (2026-04-17):** Tailwind canonical class fixes applied to `infin8content/app/dashboard/articles/articles-client.tsx` and `infin8content/components/dashboard/sidebar-navigation.tsx` and pushed to branch `test-main-all`.
+
 ---
 
 ## Success Metrics

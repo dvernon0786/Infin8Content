@@ -101,14 +101,14 @@ export function SidebarNavigation({ orgName = "Acme Agency", plan, usage }: Side
                     <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#217CEB] to-[#4A42CC] flex items-center justify-center text-white font-black text-lg shadow-lg">
                         ∞
                     </div>
-                    <span className="font-poppins text-sm font-extrabold text-[#2C2C2E] tracking-tight">
+                    <span className="font-poppins text-sm font-extrabold text-text-primary tracking-tight">
                         Infin8Content
                     </span>
                 </div>
 
                 <div className="p-2 border border-[#E5E5E7] bg-[#F4F4F6] rounded-lg cursor-pointer flex items-center justify-between hover:bg-[#E5E5E7] transition-colors group">
                     <div className="flex flex-col">
-                        <span className="font-poppins text-[11px] font-bold text-[#2C2C2E] leading-4 truncate max-w-[120px]">
+                        <span className="font-poppins text-[11px] font-bold text-text-primary leading-4 truncate max-w-30">
                             {orgName}
                         </span>
                         <span className="font-lato text-[9px] font-bold text-[#71717A] uppercase tracking-wider">
@@ -134,7 +134,7 @@ export function SidebarNavigation({ orgName = "Acme Agency", plan, usage }: Side
                                             asChild
                                             isActive={isActive}
                                             className={cn(
-                                                "min-h-[40px] px-3 py-2 rounded-lg transition-all duration-200 border border-transparent",
+                                                "min-h-10 px-3 py-2 rounded-lg transition-all duration-200 border border-transparent",
                                                 isActive ? "bg-[#217CEB]/8 border-[#217CEB]/20 text-[#217CEB]" : "text-[#52525B] hover:bg-[#F4F4F6]"
                                             )}
                                         >
@@ -151,7 +151,7 @@ export function SidebarNavigation({ orgName = "Acme Agency", plan, usage }: Side
                                                     {item.title}
                                                 </span>
                                                 {item.title === "Articles" && currentUsage > 0 && (
-                                                    <Badge className="ml-auto bg-[#F59E0B]/10 text-[#F59E0B] text-[9px] font-black border-none px-1.5 py-0 h-4">
+                                                    <Badge className="ml-auto bg-warning/10 text-warning text-[9px] font-black border-none px-1.5 py-0 h-4">
                                                         {currentUsage}
                                                     </Badge>
                                                 )}
