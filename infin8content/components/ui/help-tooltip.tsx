@@ -32,7 +32,7 @@ export function HelpTooltip({ content, side = 'top', className }: HelpTooltipPro
             <HelpCircle className="h-3.5 w-3.5" />
           </button>
         </TooltipTrigger>
-        <TooltipContent side={side} className="max-w-[220px] text-xs leading-snug">
+        <TooltipContent side={side} className="max-w-55 text-xs leading-snug">
           {content}
         </TooltipContent>
       </Tooltip>

@@ -64,7 +64,7 @@ export default function BlogPage() {
         <div className="grid md:grid-cols-3 gap-6">
           {POSTS.map((post, i) => (
             <Link key={i} href={post.href} className="card block hover-lift no-underline">
-              <div className="text-xs font-bold font-lato uppercase tracking-widest text-[color:var(--brand-electric-blue)] mb-3">
+              <div className="text-xs font-bold font-lato uppercase tracking-widest text-(--brand-electric-blue) mb-3">
                 {post.category}
               </div>
               <h3 className="font-poppins font-semibold text-neutral-900 text-lg leading-snug mb-3">

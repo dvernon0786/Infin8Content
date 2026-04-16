@@ -437,13 +437,13 @@ const Testimonials = () => {
               <p style={{ fontFamily: 'var(--font-lato, Lato, sans-serif)', fontSize: '1rem', color: 'var(--neutral-800)', lineHeight: 1.7, fontStyle: 'italic', flex: 1 }}>"{t.quote}"</p>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div className="w-[42px] h-[42px] rounded-full flex items-center justify-center text-white font-bold text-[0.8125rem] font-poppins shrink-0 bg-gradient-to-br from-(--brand-electric-blue) to-(--brand-infinite-purple)">{t.initials}</div>
+                  <div className="w-10.5 h-10.5 rounded-full flex items-center justify-center text-white font-bold text-[0.8125rem] font-poppins shrink-0 bg-linear-to-br from-(--brand-electric-blue) to-(--brand-infinite-purple)">{t.initials}</div>
                   <div>
                     <div className="font-lato font-bold text-sm text-(--neutral-900)">{t.name}</div>
                     <div className="font-lato text-[0.8125rem] text-(--neutral-500)">{t.role}</div>
                   </div>
                 </div>
-                <div className="font-lato text-xs font-bold text-(--color-success) bg-green-50 px-[10px] py-1 rounded-full">{t.metric}</div>
+                <div className="font-lato text-xs font-bold text-(--color-success) bg-green-50 px-2.5 py-1 rounded-full">{t.metric}</div>
               </div>
             </div>
           ))}

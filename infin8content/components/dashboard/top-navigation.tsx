@@ -96,7 +96,7 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
             {/* Left side: Breadcrumb / Title */}
             <div className="flex items-center gap-3">
                 <SidebarTrigger className="md:hidden -ml-2 mr-1" />
-                <h1 className="font-poppins text-lg font-bold text-[#2C2C2E] tracking-tight">
+                <h1 className="font-poppins text-lg font-bold text-text-primary tracking-tight">
                     Dashboard
                 </h1>
                 <span className="text-[#E5E5E7]">·</span>
@@ -111,7 +111,7 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
                 <input
                     type="text"
                     placeholder="Search workflows…"
-                    className="bg-transparent border-none outline-none text-sm font-lato text-[#2C2C2E] placeholder:text-[#71717A] w-full"
+                    className="bg-transparent border-none outline-none text-sm font-lato text-text-primary placeholder:text-[#71717A] w-full"
                 />
                 <kbd className="hidden lg:inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-[#E5E5E7] bg-[#E5E5E7] text-[9px] font-bold text-[#71717A] font-sans">
                     <span className="text-xs">⌘</span>K
@@ -122,20 +122,20 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
             <div className="flex items-center gap-4">
                 {/* Plan Indicator */}
                 {plan && (
-                    <div className="hidden lg:flex items-center gap-3 px-4 py-1.5 bg-[#F59E0B]/5 border border-[#F59E0B]/15 rounded-lg mr-2">
+                    <div className="hidden lg:flex items-center gap-3 px-4 py-1.5 bg-warning/5 border border-warning/15 rounded-lg mr-2">
                         <div className="flex flex-col">
-                            <span className="font-lato text-[9px] font-black text-[#F59E0B] uppercase tracking-wider leading-none mb-1">
+                            <span className="font-lato text-[9px] font-black text-warning uppercase tracking-wider leading-none mb-1">
                                 {plan === 'trial' ? 'Trial Usage' : `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`}
                             </span>
                             {limit !== null && (
                                 <div className="flex items-center gap-2">
                                     <div className="h-1.5 w-24 bg-[#E5E5E7] rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-linear-to-r from-[#F59E0B] to-[#D97706] rounded-full transition-all duration-500 ease-out"
+                                            className="h-full bg-linear-to-r from-warning to-[#D97706] rounded-full transition-all duration-500 ease-out"
                                             style={{ width: `${Math.min(100, Math.round(((usage || 0) / limit) * 100))}%` }}
                                         />
                                     </div>
-                                    <span className="font-lato text-[11px] font-bold text-[#F59E0B]">
+                                    <span className="font-lato text-[11px] font-bold text-warning">
                                         {usage || 0} / {limit}
                                     </span>
                                 </div>
@@ -173,7 +173,7 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
                     <Button variant="ghost" size="icon" className="h-9 w-9 text-[#71717A] group-hover:bg-[#F4F4F6]">
                         <Bell className="h-5 w-5" />
                     </Button>
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#F59E0B] border-2 border-white ring-1 ring-[#F59E0B]/20" />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-warning border-2 border-white ring-1 ring-warning/20" />
                 </div>
 
                 {/* User Dropdown */}
@@ -191,7 +191,7 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
                     <DropdownMenuContent className="w-56" align="end" forceMount>
                         <DropdownMenuLabel className="font-normal p-4">
                             <div className="flex flex-col space-y-1">
-                                <p className="font-poppins text-sm font-bold text-[#2C2C2E] leading-none">
+                                <p className="font-poppins text-sm font-bold text-text-primary leading-none">
                                     {name || "User"}
                                 </p>
                                 <p className="font-lato text-xs text-[#71717A] truncate">
