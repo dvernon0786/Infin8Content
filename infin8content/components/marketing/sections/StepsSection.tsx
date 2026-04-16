@@ -28,7 +28,7 @@ export default function StepsSection({
             key={i}
             className="card hover-lift"
           >
-            className="text-sm font-bold font-lato mb-2 text-(--brand-electric-blue)">
+            <div className="text-sm font-bold font-lato mb-2 text-(--brand-electric-blue)">
               {String(i + 1).padStart(2, "0")}
             </div>
             <h3 className="font-poppins font-semibold text-lg text-neutral-900 mb-2">
