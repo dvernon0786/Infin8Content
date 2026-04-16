@@ -394,21 +394,21 @@ development_status:
   11-10-third-party-integrations-zapier-make: backlog
   epic-11-retrospective: optional
 
-  # Epic 12: Onboarding & Feature Discovery (BACKLOG)
-  epic-12: backlog
-  12-1-post-payment-guided-tours-and-tutorials: backlog
-  12-2-feature-discovery-mechanisms-for-new-users: backlog
-  12-3-help-documentation-and-support-resources: backlog
-  12-4-interactive-onboarding-checklist: backlog
-  12-5-contextual-help-and-tooltips: backlog
-  12-6-user-success-tracking: backlog
-  12-7-onboarding-email-sequences: backlog
-  12-8-feature-announcement-system: backlog
-  12-9-user-feedback-collection: backlog
-  12-10-knowledge-base-and-faq: backlog
-  12-11-video-tutorials-and-guides: backlog
-  12-12-account-creation-and-payment-before-dashboard-access: backlog
-  12-13-payment-status-and-account-activation-display: backlog
+  # Epic 12: Onboarding & Feature Discovery (DONE — branch: feat/epic-12-onboarding-discovery)
+  epic-12: done
+  12-1-post-payment-guided-tours-and-tutorials: done
+  12-2-feature-discovery-mechanisms-for-new-users: done
+  12-3-help-documentation-and-support-resources: done
+  12-4-interactive-onboarding-checklist: done
+  12-5-contextual-help-and-tooltips: done
+  12-6-user-success-tracking: done
+  12-7-onboarding-email-sequences: done
+  12-8-feature-announcement-system: done
+  12-9-user-feedback-collection: done
+  12-10-knowledge-base-and-faq: done
+  12-11-video-tutorials-and-guides: done
+  12-12-account-creation-and-payment-before-dashboard-access: done
+  12-13-payment-status-and-account-activation-display: done
   epic-12-retrospective: optional
 
   # Epic 13: Phase 2 Advanced Features (BACKLOG)

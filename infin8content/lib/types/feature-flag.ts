@@ -37,6 +37,10 @@ export interface FeatureFlagValidationError extends FeatureFlagError {
 // Feature flag keys constants
 export const FEATURE_FLAG_KEYS = {
   ENABLE_INTENT_ENGINE: 'ENABLE_INTENT_ENGINE',
+  // Epic 12: Onboarding & Feature Discovery
+  ENABLE_GUIDED_TOURS: 'ENABLE_GUIDED_TOURS',
+  ENABLE_FEATURE_ANNOUNCEMENTS: 'ENABLE_FEATURE_ANNOUNCEMENTS',
+  ENABLE_FEEDBACK_WIDGET: 'ENABLE_FEEDBACK_WIDGET',
 } as const;
 
 export type FeatureFlagKey = typeof FEATURE_FLAG_KEYS[keyof typeof FEATURE_FLAG_KEYS];

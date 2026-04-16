@@ -137,6 +137,8 @@ export type Database = {
           plan_type?: string | null
           trial_ends_at?: string | null
           usage_reset_at?: string | null
+          onboarding_checklist_state?: Json
+          onboarding_tour_shown?: boolean
           [key: string]: any;
         }
         Insert: {
@@ -160,6 +162,8 @@ export type Database = {
           plan_type?: string | null
           trial_ends_at?: string | null
           usage_reset_at?: string | null
+          onboarding_checklist_state?: Json
+          onboarding_tour_shown?: boolean
           [key: string]: any;
         }
         Update: {
@@ -183,6 +187,8 @@ export type Database = {
           plan_type?: string | null
           trial_ends_at?: string | null
           usage_reset_at?: string | null
+          onboarding_checklist_state?: Json
+          onboarding_tour_shown?: boolean
           [key: string]: any;
         }
         Relationships: []

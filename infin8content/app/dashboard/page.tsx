@@ -4,6 +4,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { WorkflowDashboard } from "@/components/dashboard/workflow-dashboard/WorkflowDashboard"
 import { TrialChecklist } from "@/components/dashboard/trial-checklist"
+import { WhatsNewCard } from "@/components/dashboard/whats-new-card"
 
 export default async function DashboardPage() {
   const user = await getCurrentUser()
@@ -87,6 +88,7 @@ export default async function DashboardPage() {
           hasCompletedArticle={hasCompletedArticle}
         />
       )}
+      <WhatsNewCard />
       <WorkflowDashboard orgId={user.org_id} />
     </div>
   )

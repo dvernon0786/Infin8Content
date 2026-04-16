@@ -18,6 +18,7 @@ import { articleCmsDraftNotifier } from '@/lib/inngest/functions/article-cms-dra
 import { publishReminderScheduler } from '@/lib/inngest/functions/publish-reminder-scheduler'
 import { expireApiKeys } from '@/lib/inngest/functions/expire-api-keys'
 import { retryWebhookDelivery } from '@/lib/inngest/functions/retry-webhook-delivery'
+import { onboardingEmailSequence } from '@/lib/inngest/functions/onboarding-email-sequence'
 
 // Validate environment variables at runtime
 const eventKey = process.env.INNGEST_EVENT_KEY
@@ -48,6 +49,7 @@ export const { GET, POST, PUT } = serve({
     publishReminderScheduler,
     expireApiKeys,
     retryWebhookDelivery,
+    onboardingEmailSequence,
   ],
 })
 

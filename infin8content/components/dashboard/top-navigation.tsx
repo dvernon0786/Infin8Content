@@ -1,6 +1,7 @@
 "use client"
 
-import { LogOut, User, Bell, Search, MoreHorizontal } from "lucide-react"
+import { LogOut, User, Bell, Search, MoreHorizontal, HelpCircle } from "lucide-react"
+import { HelpDrawer } from "@/components/dashboard/help-drawer"
 import { usePathname, useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -36,6 +37,7 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
     const [isLoggingOut, setIsLoggingOut] = useState(false)
     const [searchOpen, setSearchOpen] = useState(false)
     const [overflowOpen, setOverflowOpen] = useState(false)
+    const [helpOpen, setHelpOpen] = useState(false)
     const { isMobile, isTablet, isDesktop } = useResponsiveNavigation()
 
     const initials = name
@@ -86,6 +88,7 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
     }
 
     return (
+        <>
         <header className={cn(
             "flex shrink-0 items-center justify-between border-b bg-white shadow-sm transition-[width,height] ease-linear",
             "h-16 px-6"
@@ -154,6 +157,17 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
                     <Search className="h-5 w-5" />
                 </Button>
 
+                {/* Help Button — Epic 12, Story 12-3/12-5/12-10/12-11 */}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setHelpOpen(true)}
+                    aria-label="Open help"
+                    className="h-9 w-9 text-[#71717A] hover:bg-[#F4F4F6]"
+                >
+                    <HelpCircle className="h-5 w-5" />
+                </Button>
+
                 {/* Notifications */}
                 <div className="relative cursor-pointer group">
                     <Button variant="ghost" size="icon" className="h-9 w-9 text-[#71717A] group-hover:bg-[#F4F4F6]">
@@ -203,5 +217,7 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
                 </DropdownMenu>
             </div>
         </header>
+        <HelpDrawer open={helpOpen} onOpenChange={setHelpOpen} />
+        </>
     )
 }
