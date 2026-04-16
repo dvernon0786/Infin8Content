@@ -1,5 +1,20 @@
 # Scratchpad
 
+## Marketing site: Header/Footer + Design System Fixes — 2026-04-16 ✅
+
+- **Date:** 2026-04-16
+- **Type:** Marketing site / Design system
+- **Status:** ✅ Implemented & pushed to `test-main-all`
+- **Commits:** `fc70de23` (StepsSection JSX fix), `6c105c08` (LandingPage inline styles → Tailwind), `ab868627` (add `Navigation` + `Footer` to pages)
+- **Summary:** Fixed Turbopack JSX parse error in `infin8content/components/marketing/sections/StepsSection.tsx` (missing opening `<div>`), replaced inline styles with canonical Tailwind utility classes in `infin8content/components/marketing/LandingPageRedesigned.tsx`, and added a consistent header + footer across marketing pages by creating new layout files and updating six top-level pages.
+- **Branches & PRs:** Pushed `test-main-all` and created remote `main` from it; `main` and `test-main-all` currently point to the same commit (`ab868627`) so GitHub will not open a PR (no commit diff).
+- **Files (high-level):**
+  - `infin8content/components/marketing/sections/StepsSection.tsx` — JSX parse fix
+  - `infin8content/components/marketing/LandingPageRedesigned.tsx` — inline styles → Tailwind
+  - `infin8content/app/features/layout.tsx`, `app/solutions/layout.tsx`, `app/resources/layout.tsx` — new layouts injecting `Navigation` + `Footer`
+  - Updated pages: `app/about/page.tsx`, `app/careers/page.tsx`, `app/contact/page.tsx`, `app/terms/page.tsx`, `app/privacy/page.tsx`, `app/security/page.tsx`
+- **Next actions:** Confirm Vercel build logs for commit `ab868627`, optionally set `main` as default branch to standardize PR workflow.
+
 ## Dashboard Minimalization & Pure Generation Engine Integration - ✅ COMPLETE
 
 **Date:** 2026-02-28  

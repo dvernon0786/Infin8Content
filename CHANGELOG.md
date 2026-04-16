@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🔧 CHANGED
 - Added feature flags: `ENABLE_GUIDED_TOURS`, `ENABLE_FEATURE_ANNOUNCEMENTS`, `ENABLE_FEEDBACK_WIDGET`
+ - Marketing site: fix JSX parse error in `infin8content/components/marketing/sections/StepsSection.tsx` (`fc70de23`); replace inline styles with Tailwind utility classes in `infin8content/components/marketing/LandingPageRedesigned.tsx` (`6c105c08`); add `Navigation` + `Footer` across marketing pages via new layouts and page updates (`ab868627`). Pushed `test-main-all` and created remote `main` from it (branches identical; no PR diff).
 
 ### 🧪 TESTS
 - 22 vitest tests added for onboarding services and APIs; local subset executed successfully
