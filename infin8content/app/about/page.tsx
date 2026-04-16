@@ -1,4 +1,6 @@
 import ComingSoonPage from '@/components/shared/ComingSoonPage';
+import Navigation from '@/components/marketing/Navigation';
+import Footer from '@/components/marketing/Footer';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -7,5 +9,11 @@ export const metadata: Metadata = {
 };
 
 export default function AboutPage() {
-  return <ComingSoonPage title="About" showCTA={true} />;
+  return (
+    <>
+      <Navigation />
+      <ComingSoonPage title="About" showCTA={true} />
+      <Footer />
+    </>
+  );
 }

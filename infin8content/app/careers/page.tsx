@@ -1,4 +1,6 @@
 import ComingSoonPage from '@/components/shared/ComingSoonPage';
+import Navigation from '@/components/marketing/Navigation';
+import Footer from '@/components/marketing/Footer';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -7,5 +9,11 @@ export const metadata: Metadata = {
 };
 
 export default function CareersPage() {
-  return <ComingSoonPage title="Careers" showCTA={true} />;
+  return (
+    <>
+      <Navigation />
+      <ComingSoonPage title="Careers" showCTA={true} />
+      <Footer />
+    </>
+  );
 }
