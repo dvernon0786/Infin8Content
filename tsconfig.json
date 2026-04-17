@@ -4,8 +4,8 @@
     "skipLibCheck": true,
     "paths": {
       "@/*": ["./*"],
-      "vitest": ["node_modules/vitest/dist/index.d.ts"],
-      "vitest/*": ["node_modules/vitest/*"]
+      "vitest": ["./node_modules/vitest/dist/index.d.ts"],
+      "vitest/*": ["./node_modules/vitest/*"]
     },
     "typeRoots": [
       "./infin8content/node_modules/@types",
