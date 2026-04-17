@@ -4,6 +4,8 @@
 **Status:** ✅ COMPLETE & BMAD-CLEAN  
 **Phase:** Ready for Engineering
 
+**Sync (2026-04-18):** Docs synchronized for branch `docs/scratchpad-sync` (source: `origin/test-main-all`). See central `scratchpad.md` for full commit refs and next steps.
+
 **Update (2026-04-16):** Epic 12 — Onboarding & Feature Discovery completed (branch `feat/epic-12-onboarding-discovery`, PR #458)
 
 **Update (2026-04-16):** Marketing site refactor: header/footer added and design-system fixes applied. Commits: `fc70de23`, `6c105c08`, `ab868627`. Changes pushed to `test-main-all`; remote `main` created from it and points to the same commit (no PR diff).
