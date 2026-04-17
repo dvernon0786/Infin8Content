@@ -9,7 +9,7 @@ import { generateArticleImage, selectSectionImages } from '@/lib/services/image-
 import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
 import { searchHNStories } from '@/lib/services/hackernews/hackernews-client'
 import { searchGoogleNews } from '@/lib/services/googlenews/googlenews-client'
-import { fetchVideoMetadata, fetchTranscript, extractVideoId as extractVideoIdFromUrl } from '@/lib/services/youtube/youtube-transcript-service'
+import { fetchTranscript } from '@/lib/services/youtube/youtube-transcript-client'
 import type {
   Article,
   ArticleSection,
@@ -254,10 +254,7 @@ export const generateArticle = inngest.createFunction(
         }
 
         try {
-          const [metadata, transcript] = await Promise.all([
-            fetchVideoMetadata(videoUrl),
-            fetchTranscript(extractVideoIdFromUrl(videoUrl) ?? ''),
-          ])
+          const transcript = await fetchTranscript(videoUrl, videoConfig.language ?? 'en')
 
           // Persist transcript to avoid re-fetching on retry
           await supabase
@@ -266,7 +263,7 @@ export const generateArticle = inngest.createFunction(
             .eq('id', articleId)
 
           console.log(`[Worker] Video transcript fetched for article ${articleId} (${transcript.source})`)
-          return { videoTitle: metadata.title, videoTranscript: transcript.fullText }
+          return { videoTitle: '', videoTranscript: transcript.fullText }
         } catch (err) {
           console.warn('[Worker] Video transcript fetch failed (non-fatal):', err instanceof Error ? err.message : err)
           return { videoTitle: '', videoTranscript: '' }

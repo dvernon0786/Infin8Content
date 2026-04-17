@@ -11,7 +11,7 @@ import {
 import {
   extractVideoId,
   formatTimestamp,
-} from '@/lib/services/youtube/youtube-transcript-service'
+} from '@/lib/services/youtube/youtube-transcript-client'
 
 // ---------------------------------------------------------------------------
 // 13-2: Comparison Table Generator
