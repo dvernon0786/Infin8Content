@@ -177,7 +177,7 @@ All BMAD deliverables in:
 
 - Files modified: infin8content/app/dashboard/articles/articles-client.tsx, infin8content/components/dashboard/sidebar-navigation.tsx
 - Changes applied: canonicalized Tailwind utility classes to use design tokens and canonical forms (e.g. `h-[2px]` → `h-0.5`, `max-w-[200px]` → `max-w-50`, `gap-[18px]` → `gap-4.5`, replaced raw hex colors with token names like `text-text-primary` and `bg-warning/10`).
-- Git: these edits are included in a branch pushed as `test-main-all` (see repo branch for PR creation and CI run).
+- Git: these edits are committed on branch `test-main-all` (commit `a083416c`) and pushed to `origin`. PR #458 (test-main-all → main) is open for CI and review.
 
 ---
 

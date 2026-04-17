@@ -15,6 +15,19 @@
   - Updated pages: `app/about/page.tsx`, `app/careers/page.tsx`, `app/contact/page.tsx`, `app/terms/page.tsx`, `app/privacy/page.tsx`, `app/security/page.tsx`
 - **Next actions:** Confirm Vercel build logs for commit `ab868627`, optionally set `main` as default branch to standardize PR workflow.
 
+### Marketing nav dropdown hover-fix — 2026-04-17 ✅
+
+- **Date:** 2026-04-17
+- **Type:** Marketing UI fix (navigation)
+- **Status:** ✅ Implemented locally and prepared for push to `test-main-all`
+- **Summary:** Fixed a hover-gap race where the desktop mega-dropdown closed when moving the pointer from the trigger into the submenu. Implemented a short debounce on mouseleave and removed the small vertical gap between trigger and submenu to prevent accidental close.
+- **Files changed:**
+  - `infin8content/components/marketing/Navigation.tsx` — added small debounce on mouseleave and attached handlers to submenu
+  - `infin8content/components/marketing/navigation/MegaMenu.tsx` — removed `mt-2` gap (now `mt-0`) and allowed mouse handlers on the menu container
+- **Commit message (used):** `fix(marketing/nav): prevent dropdown disappearing on hover (debounce + remove hover gap)`
+- **Branch:** `test-main-all`
+- **Notes:** Recommended follow-up: consider migrating this UI to Radix `DropdownMenu`/`HoverCard` for robust ARIA/keyboard semantics.
+
 ## Dashboard Minimalization & Pure Generation Engine Integration - ✅ COMPLETE
 
 **Date:** 2026-02-28  

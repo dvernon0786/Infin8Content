@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { ChevronDown, Menu, X } from "lucide-react";
 import MegaMenu, { type MegaMenuItem } from "./navigation/MegaMenu";
@@ -42,8 +42,25 @@ function NavDropdown({
   onEnter: () => void;
   onLeave: () => void;
 }) {
+  const closeTimeoutRef = useRef<number | null>(null);
+
+  const handleEnter: React.MouseEventHandler<HTMLDivElement> = () => {
+    if (closeTimeoutRef.current) {
+      window.clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    onEnter();
+  };
+
+  const handleLeave: React.MouseEventHandler<HTMLDivElement> = () => {
+    closeTimeoutRef.current = window.setTimeout(() => {
+      onLeave();
+      closeTimeoutRef.current = null;
+    }, 150);
+  };
+
   return (
-    <div className="relative" onMouseEnter={onEnter} onMouseLeave={onLeave}>
+    <div className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       <button className="flex items-center gap-1 font-lato text-neutral-900 font-medium text-base bg-transparent border-0 cursor-pointer py-2 focus:outline-none">
         {label}
         <ChevronDown
@@ -51,7 +68,7 @@ function NavDropdown({
           className={clsx("transition-transform duration-200", open && "rotate-180")}
         />
       </button>
-      {open && <MegaMenu items={items} />}
+      {open && <MegaMenu items={items} onMouseEnter={handleEnter} onMouseLeave={handleLeave} />}
     </div>
   );
 }

@@ -1,3 +1,6 @@
+"use client";
+
+import React from "react";
 import Link from "next/link";
 
 export interface MegaMenuItem {
@@ -6,13 +9,16 @@ export interface MegaMenuItem {
   href: string;
 }
 
-interface MegaMenuProps {
+interface MegaMenuProps extends React.HTMLAttributes<HTMLDivElement> {
   items: MegaMenuItem[];
+  className?: string;
 }
 
-export default function MegaMenu({ items }: MegaMenuProps) {
+export default function MegaMenu({ items, className, ...props }: MegaMenuProps) {
+  const baseClasses =
+    "absolute top-full left-1/2 -translate-x-1/2 mt-0 w-160 bg-white shadow-xl border border-(--neutral-200) rounded-xl p-4 grid grid-cols-2 gap-2 z-50";
   return (
-    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-160 bg-white shadow-xl border border-(--neutral-200) rounded-xl p-4 grid grid-cols-2 gap-2 z-50">
+    <div {...props} className={`${baseClasses} ${className || ""}`}>
       {items.map((item) => (
         <Link
           key={item.href}
