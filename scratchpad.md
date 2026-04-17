@@ -1,5 +1,14 @@
 # Scratchpad
 
+2026-04-18 — Sync for branch: docs/scratchpad-sync
+
+- Summary: Synchronized local docs with latest feature work implementing analytics, billing, usage dashboard, Google integrations, PostHog, team dashboard, feature-discovery, and in-place article editor.
+- Key commits (working branch): 634c596b (Phase1+2), e8447ee8 (Phase3), 5a1a0c21 (Phase4), 539f7b8a (Phase5).
+- Files touched (representative): app/analytics/page.tsx, components/analytics/*, lib/analytics/*, app/api/articles/[id]/content/route.ts, components/articles/article-editor.tsx, app/dashboard/articles/[id]/page.tsx
+- Next actions: run `npm run typecheck` and `npm test`, push branch `docs/scratchpad-sync` (or create topic branch off `origin/test-main-all`), open PR to `main`.
+
+— End entry —
+
 ## Marketing site: Header/Footer + Design System Fixes — 2026-04-16 ✅
 
 - **Date:** 2026-04-16
