@@ -1,8 +1,7 @@
 {
   "extends": "./infin8content/tsconfig.json",
   "compilerOptions": {
-    "ignoreDeprecations": "5.0",
-    "baseUrl": "./infin8content",
+    "ignoreDeprecations": "6.0",
     "skipLibCheck": true,
     "paths": {
       "@/*": ["./*"],
