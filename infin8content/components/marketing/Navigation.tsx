@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useId } from "react";
 import Link from "next/link";
 import { ChevronDown, Menu, X } from "lucide-react";
 import MegaMenu, { type MegaMenuItem } from "./navigation/MegaMenu";
@@ -32,43 +32,57 @@ type DropdownKey = "features" | "solutions" | "resources" | null;
 function NavDropdown({
   label,
   items,
-  open,
-  onEnter,
-  onLeave,
 }: {
   label: string;
   items: MegaMenuItem[];
-  open: boolean;
-  onEnter: () => void;
-  onLeave: () => void;
 }) {
-  const closeTimeoutRef = useRef<number | null>(null);
+  const [open, setOpen] = useState(false);
+  const closeTimerRef = useRef<number | null>(null);
+  const id = useId();
+  const menuId = `nav-dropdown-${id}`;
 
-  const handleEnter: React.MouseEventHandler<HTMLDivElement> = () => {
-    if (closeTimeoutRef.current) {
-      window.clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleEnter = () => {
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
     }
-    onEnter();
+    setOpen(true);
   };
 
-  const handleLeave: React.MouseEventHandler<HTMLDivElement> = () => {
-    closeTimeoutRef.current = window.setTimeout(() => {
-      onLeave();
-      closeTimeoutRef.current = null;
+  const handleLeave = () => {
+    closeTimerRef.current = window.setTimeout(() => {
+      setOpen(false);
+      closeTimerRef.current = null;
     }, 150);
   };
 
   return (
     <div className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
-      <button className="flex items-center gap-1 font-lato text-neutral-900 font-medium text-base bg-transparent border-0 cursor-pointer py-2 focus:outline-none">
+      <button
+        className="flex items-center gap-1 font-lato text-neutral-900 font-medium text-base bg-transparent border-0 cursor-pointer py-2 focus:outline-none"
+        aria-expanded={open}
+        aria-controls={menuId}
+      >
         {label}
         <ChevronDown
           size={16}
           className={clsx("transition-transform duration-200", open && "rotate-180")}
         />
       </button>
-      {open && <MegaMenu items={items} onMouseEnter={handleEnter} onMouseLeave={handleLeave} />}
+      {open && (
+        <div id={menuId} role="menu" aria-hidden={!open} onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
+          <MegaMenu items={items} />
+        </div>
+      )}
     </div>
   );
 }
@@ -78,11 +92,13 @@ function MobileAccordion({
   items,
   open,
   onToggle,
+  onLinkClick,
 }: {
   label: string;
   items: MegaMenuItem[];
   open: boolean;
   onToggle: () => void;
+  onLinkClick?: () => void;
 }) {
   return (
     <div>
@@ -96,16 +112,12 @@ function MobileAccordion({
           className={clsx("transition-transform duration-200", open && "rotate-180")}
         />
       </button>
-      <div
-        className={clsx(
-          "overflow-hidden transition-all duration-300 pl-3",
-          open ? "max-h-96" : "max-h-0"
-        )}
-      >
+      <div style={{ maxHeight: open ? "400px" : "0px" }} className="overflow-hidden transition-all duration-300 pl-3">
         {items.map((item) => (
           <Link
             key={item.href}
             href={item.href}
+            onClick={() => onLinkClick && onLinkClick()}
             className="block py-2 font-lato text-sm text-neutral-600 hover:text-(--brand-electric-blue) transition-colors"
           >
             {item.label}
@@ -118,7 +130,6 @@ function MobileAccordion({
 
 const Navigation = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [desktopOpen, setDesktopOpen] = useState<DropdownKey>(null);
   const [mobileOpen, setMobileOpen] = useState<DropdownKey>(null);
 
   const toggleMobile = (key: DropdownKey) =>
@@ -141,27 +152,9 @@ const Navigation = () => {
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-8">
-            <NavDropdown
-              label="Features"
-              items={FEATURES}
-              open={desktopOpen === "features"}
-              onEnter={() => setDesktopOpen("features")}
-              onLeave={() => setDesktopOpen(null)}
-            />
-            <NavDropdown
-              label="Solutions"
-              items={SOLUTIONS}
-              open={desktopOpen === "solutions"}
-              onEnter={() => setDesktopOpen("solutions")}
-              onLeave={() => setDesktopOpen(null)}
-            />
-            <NavDropdown
-              label="Resources"
-              items={RESOURCES}
-              open={desktopOpen === "resources"}
-              onEnter={() => setDesktopOpen("resources")}
-              onLeave={() => setDesktopOpen(null)}
-            />
+            <NavDropdown label="Features" items={FEATURES} />
+            <NavDropdown label="Solutions" items={SOLUTIONS} />
+            <NavDropdown label="Resources" items={RESOURCES} />
             <Link
               href="/pricing"
               className="font-lato font-medium text-neutral-900 text-base hover:text-(--brand-electric-blue) transition-colors"
@@ -184,39 +177,38 @@ const Navigation = () => {
         </div>
 
         {/* Mobile menu */}
-        <div
-          className={clsx(
-            "md:hidden overflow-hidden transition-all duration-300",
-            mobileMenuOpen ? "max-h-150 pt-4 pb-6" : "max-h-0"
-          )}
-        >
-          <div className="flex flex-col divide-y divide-(--neutral-200)">
+        <div className="md:hidden overflow-hidden transition-all duration-300" style={{ maxHeight: mobileMenuOpen ? "600px" : "0px" }}>
+          <div className="flex flex-col divide-y divide-(--neutral-200) pt-4 pb-6">
             <MobileAccordion
               label="Features"
               items={FEATURES}
               open={mobileOpen === "features"}
               onToggle={() => toggleMobile("features")}
+              onLinkClick={() => setMobileMenuOpen(false)}
             />
             <MobileAccordion
               label="Solutions"
               items={SOLUTIONS}
               open={mobileOpen === "solutions"}
               onToggle={() => toggleMobile("solutions")}
+              onLinkClick={() => setMobileMenuOpen(false)}
             />
             <MobileAccordion
               label="Resources"
               items={RESOURCES}
               open={mobileOpen === "resources"}
               onToggle={() => toggleMobile("resources")}
+              onLinkClick={() => setMobileMenuOpen(false)}
             />
             <Link
               href="/pricing"
+              onClick={() => setMobileMenuOpen(false)}
               className="font-lato font-medium text-neutral-900 py-3 block"
             >
               Pricing
             </Link>
             <div className="pt-4">
-              <Link href="/register" className="btn-primary block text-center w-full">
+              <Link href="/register" onClick={() => setMobileMenuOpen(false)} className="btn-primary block text-center w-full">
                 Get Started
               </Link>
             </div>
