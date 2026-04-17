@@ -28,6 +28,16 @@
 - **Branch:** `test-main-all`
 - **Notes:** Recommended follow-up: consider migrating this UI to Radix `DropdownMenu`/`HoverCard` for robust ARIA/keyboard semantics.
 
+### TSConfig update — 2026-04-17 ⚠️
+
+- **Date:** 2026-04-17
+- **Type:** Build config
+- **Status:** ✅ Changes committed to `test-main-all` (see commit 2ed1df03)
+- **Summary:** Removed `baseUrl` from root and package tsconfig, and set `ignoreDeprecations` to "6.0" to prepare for TypeScript 6+.
+- **Files changed:** `tsconfig.json`, `infin8content/tsconfig.json`
+- **Notes:** Local `npm run typecheck` (TS 5) reported `TS5103: Invalid value for '--ignoreDeprecations'`. Recommendation: either upgrade `typescript` to ^6 in `infin8content/package.json` and run `npm install`, or revert `ignoreDeprecations` to "5.0" to restore typecheck compatibility.
+
+
 ## Dashboard Minimalization & Pure Generation Engine Integration - ✅ COMPLETE
 
 **Date:** 2026-02-28  

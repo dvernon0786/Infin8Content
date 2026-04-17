@@ -669,6 +669,11 @@ development_status:
   # - components/workflows/steps/KeywordOpportunityChart.tsx (Chart rendering)
   # - lib/services/intent-engine/competitor-seed-extractor.ts (Always null competitor_url_id)
   # - supabase/migrations/20260214000000_remove_competitor_url_fk_for_stateless_step2.sql (Schema fix)
+
+# TSConfig update (2026-04-17)
+# - Updated `tsconfig.json` and `infin8content/tsconfig.json`: removed `baseUrl`, set `ignoreDeprecations: "6.0"`.
+# - Commit: 2ed1df03; branch: test-main-all
+# - Note: TypeScript 5 reports `TS5103` for `ignoreDeprecations: "6.0"`. Recommend upgrading TypeScript to ^6 or reverting the setting to "5.0" to pass `tsc --noEmit`.
   # - __tests__/api/intent/workflows/competitor-analyze.test.ts (Updated tests)
   #
   # Database Fix: APPLIED AND VERIFIED 
