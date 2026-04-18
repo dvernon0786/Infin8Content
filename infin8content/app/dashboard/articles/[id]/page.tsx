@@ -6,6 +6,8 @@ import { ArticleContentViewer, ArticleMarkdownViewer } from '@/components/articl
 import { ArticleStatusMonitor } from '@/components/articles/article-status-monitor'
 import { PublishToCmsButton } from '@/components/articles/PublishToCmsButton'
 import { PublishHistory } from '@/components/articles/publish-history'
+import { PublishToSocialButton } from '@/components/articles/PublishToSocialButton'
+import { SocialAnalytics } from '@/components/articles/SocialAnalytics'
 import { GenerateArticleButton } from '@/components/articles/generate-article-button'
 import { TrialUpgradeCard } from '@/components/articles/trial-upgrade-card'
 import ArticleErrorBoundary from './article-error-boundary'
@@ -31,7 +33,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
   // First, get basic article info with authorization check
   const { data: articleData, error } = await supabase
     .from('articles')
-    .select('id, title, keyword, status, target_word_count, writing_style, target_audience, created_at, updated_at, org_id, intent_workflow_id')
+    .select('id, title, keyword, status, target_word_count, writing_style, target_audience, created_at, updated_at, org_id, intent_workflow_id, cms_status, slug')
     .eq('id', id)
     .eq('org_id', currentUser.org_id)
     .maybeSingle()
@@ -292,6 +294,21 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
                   <PublishHistory articleId={article.id} />
                 </CardContent>
               </Card>
+            )}
+
+            {/* Social Publishing */}
+            {article.status === 'completed' && !isTrial && (
+              <PublishToSocialButton
+                articleId={article.id}
+                articleTitle={article.title ?? ''}
+                articleStatus={article.status}
+                cmsStatus={(article as any).cms_status}
+              />
+            )}
+
+            {/* Social Analytics — only renders when publish_references row exists */}
+            {article.status === 'completed' && !isTrial && (
+              <SocialAnalytics articleId={article.id} />
             )}
 
             {/* Trial Upgrade Nudge */}

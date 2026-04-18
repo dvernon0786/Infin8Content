@@ -713,6 +713,18 @@ export const generateArticle = inngest.createFunction(
           id: `images-${articleId}`,
           data: { articleId }
         })
+
+        // 📣 TRIGGER SOCIAL PUBLISH PIPELINE (auto-publish path)
+        // Idempotency key prevents double-fire if this step retries.
+        // The handler exits early if the org has no active social accounts.
+        await inngest.send({
+          name: 'article/generation.completed',
+          id: `social-publish-${articleId}`,
+          data: {
+            articleId,
+            organizationId: orgId ?? event.data.organizationId,
+          }
+        })
       })
     } catch (pipelineError) {
       // Mark article as failed

@@ -1,7 +1,7 @@
 # BMAD Brownfield Primary Content Workflow — Final Scratchpad
 
-**Date:** 2026-03-17  
-**Status:** ✅ PHASE 1 & 2 COMPLETE | ✅ PHASE 3 WEEK 1 COMPLETE | ✅ MULTI-CMS ENGINE IMPLEMENTED
+**Date:** 2026-04-18  
+**Status:** ✅ PHASE 1 & 2 COMPLETE | ✅ PHASE 3 WEEK 1 COMPLETE | ✅ MULTI-CMS ENGINE IMPLEMENTED | ✅ OUTSTAND SOCIAL PUBLISHING IMPLEMENTED
 
 ---
 
@@ -34,6 +34,28 @@
 - AuditAction extended with INTEGRATION_CONNECTED / INTEGRATION_DISCONNECTED
 - All TypeScript errors resolved (0 tsc errors)
 
+### Outstand Social Publishing Integration (✅ COMPLETE — 2026-04-18)
+- **Backend (8 files)**
+  - `supabase/migrations/20260418000000_add_social_publishing.sql` — `org_social_accounts` + `article_social_analytics` tables, `publish_references` columns, RLS policies, trigger
+  - `lib/services/outstand/client.ts` — typed Outstand REST API wrapper (`listSocialAccounts`, `createPost`, `getPostAnalytics`, HMAC webhook verification)
+  - `lib/services/outstand/caption-generator.ts` — AI caption generation via OpenRouter (gpt-4o-mini)
+  - `lib/inngest/functions/publish-to-social.ts` — durable Inngest workers: `autoPublishToSocial` (event: `article/generation.completed`) + `manualPublishToSocial` (event: `article/publish.requested`)
+  - `app/api/v1/articles/[id]/publish-social/route.ts` — manual publish trigger (POST, 202 Accepted)
+  - `app/api/v1/articles/[id]/caption/route.ts` — AI caption preview (GET)
+  - `app/api/v1/articles/[id]/social-analytics/route.ts` — analytics fetch (GET)
+  - `app/api/v1/social/accounts/route.ts` — org social accounts list (GET)
+  - `app/api/webhooks/outstand/route.ts` — webhook receiver (`post.published` / `post.error`), HMAC verified
+- **Frontend (3 components)**
+  - `components/articles/SocialPublishModal.tsx` — Dialog with caption editor, char counter, regenerate, account chips, publish CTA, success/error states
+  - `components/articles/PublishToSocialButton.tsx` — self-contained trigger; shows "Published" badge post-publish
+  - `components/articles/SocialAnalytics.tsx` — inline analytics card: aggregated metrics grid + per-account breakdown
+- **Patched files**
+  - `app/api/inngest/route.ts` — registered `autoPublishToSocial` + `manualPublishToSocial`
+  - `lib/inngest/functions/generate-article.ts` — emits `article/generation.completed` in `complete-article` step
+  - `app/dashboard/articles/[id]/page.tsx` — added `cms_status`/`slug` to select; injected `<PublishToSocialButton>` + `<SocialAnalytics>` after `<PublishHistory>`
+- **TypeScript:** `tsc --noEmit` exits 0 (zero errors)
+- **Pending (manual):** Apply DB migration, set `OUTSTAND_API_KEY` + `OUTSTAND_WEBHOOK_SECRET`, register webhook URL in Outstand dashboard, seed `org_social_accounts` via `scripts/generate-social-seed.mjs`
+
 ### Navigation (✅ COMPLETE)
 - BMAD-INDEX.md - Complete navigation
 - BMAD-COMPLETION-SUMMARY.md - Full summary
@@ -45,7 +67,7 @@
 **Documents:** 15 comprehensive documents + 1 verify SQL  
 **Size:** ~200K documentation  
 **Commits:** 5 commits to feature/bmad-pm-deliverables + 1 pending multi-CMS commit  
-**Files:** 27 docs + 21 new code files  
+**Files:** 27 docs + 21 new code files (+ 17 new files for Outstand social publishing, 2026-04-18)  
 
 ---
 

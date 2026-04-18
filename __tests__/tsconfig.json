@@ -1,6 +1,7 @@
 {
   "extends": "../infin8content/tsconfig.json",
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "baseUrl": "../infin8content",
     "skipLibCheck": true,
     "paths": {
@@ -12,7 +13,7 @@
       "../infin8content/node_modules/@types",
       "../infin8content/node_modules"
     ],
-    "types": ["vitest/globals", "node"]
+    "types": ["vitest/globals", "node", "@testing-library/jest-dom"]
   },
-  "include": ["./**/*.ts", "./**/*.tsx"]
+  "include": ["./**/*.ts", "./**/*.tsx", "./setup-tests.ts"]
 }

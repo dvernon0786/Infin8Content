@@ -4,6 +4,13 @@
 # tracking_system: file-system
 # story_location: "{project-root}/_bmad-output/implementation-artifacts"
 # Note (2026-04-16): Marketing site header/footer and design-system fixes applied. Commits: fc70de23, 6c105c08, ab868627. Pushed to `test-main-all`; remote `main` created from it and currently points to same commit (no PR diff). Confirm Vercel build for `ab868627`.
+# Note (2026-04-18): Outstand social publishing integration implemented. Branch: test-main-all.
+# Files: 9 backend (migration, outstand client, caption generator, inngest functions, API routes, webhook),
+#         3 frontend components (SocialPublishModal, PublishToSocialButton, SocialAnalytics),
+#         3 patched files (inngest route, generate-article, article detail page).
+# TypeScript: tsc --noEmit exits 0. Migration + env vars still require manual deployment steps.
+# __tests__/tsconfig.json: ignoreDeprecations updated to "6.0".
+
 # Note (2026-04-17): Small marketing UI fix — desktop nav dropdown hover gap fixed to prevent premature close. Files changed: `infin8content/components/marketing/Navigation.tsx`, `infin8content/components/marketing/navigation/MegaMenu.tsx`. Branch: `test-main-all`. Commit message: "fix(marketing/nav): prevent dropdown disappearing on hover (debounce + remove hover gap)".
 
 # STATUS DEFINITIONS:
@@ -298,7 +305,7 @@ development_status:
   5-4-schedule-publishing-dates-and-times: backlog
   5-5-publish-to-multiple-cms-platforms: backlog
   5-6-content-export-formats-pdf-doc-markdown: backlog
-  5-7-social-media-sharing-integration: backlog
+  5-7-social-media-sharing-integration: done
   5-8-publishing-workflow-and-approvals: backlog
   5-9-validate-cms-connection-credentials: backlog
   5-10-refresh-expired-oauth-tokens-automatically: backlog
