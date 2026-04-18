@@ -29,6 +29,8 @@ Scan Level: Deep
 ### Workflows
 - **POST /api/workflows/[id]/approve-subtopics-bulk**: Approves multiple subtopics in a single request.
 - **GET /api/workflows/[id]/subtopics-for-review**: Retrieves subtopics requiring manual approval.
+	- Note: Returns `{ workflowId, workflowState, keywords }` where `keywords` includes `subtopics`, `subtopics_status`, and approval metadata.
+	- Implementation notes: Route marked `export const dynamic = 'force-dynamic'` to avoid App Router caching; server-side now safely handles missing approval rows (uses `maybeSingle()` to avoid PGRST116 when no `intent_approvals` row exists).
 
 ### SEO & Research
 - **POST /api/seo/score**: Calculates SEO score for given content.

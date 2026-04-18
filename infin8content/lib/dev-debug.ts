@@ -361,7 +361,7 @@ class DevDebugTools {
     return new Promise((resolve, reject) => {
       const tables = ['error_logs', 'performance_metrics', 'debug_sessions'];
       let completed = 0;
-      let errors: string[] = [];
+      const errors: string[] = [];
 
       tables.forEach(async (table) => {
         try {

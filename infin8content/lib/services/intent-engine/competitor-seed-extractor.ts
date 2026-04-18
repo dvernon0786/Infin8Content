@@ -115,7 +115,7 @@ export async function extractSeedKeywords(
   let totalKeywordsCreated = 0
   let competitorsProcessed = 0
   let competitorsFailed = 0
-  let totalRetryCount = 0
+  const totalRetryCount = 0
 
   // Distribute timeout across competitors (with 10% buffer for database operations)
   const perCompetitorTimeoutMs = Math.floor((timeoutMs * 0.9) / competitors.length)

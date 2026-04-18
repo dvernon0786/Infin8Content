@@ -72,6 +72,7 @@ export const workflowCompleted = inngest.createFunction(
 - **FSM States:** `step_8_subtopics` → `step_8_subtopics_running` → `step_8_subtopics_completed/failed`
 - **Events:** `SUBTOPICS_START/SUCCESS/FAILED/RETRY`
 - **Note:** Individual keyword subtopic generation exists, but workflow-level method needs implementation
+ - **Runtime Fix (2026-04-19):** API route `app/api/workflows/[id]/subtopics-for-review/route.ts` marked `force-dynamic` and updated to safely handle missing `intent_approvals` rows (uses `maybeSingle()`), preventing 500 errors when the approval record does not yet exist. Frontend now sees keywords as `pending` instead of encountering a server error.
 
 ### Step 9: Article Queuing ✅ COMPLETE
 - **Status:** Production Ready

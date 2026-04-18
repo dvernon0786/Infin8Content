@@ -232,7 +232,7 @@ export class BatchResearchOptimizer {
     let sources: any[] = [];
     let totalCost = 0;
     let apiCalls = 0;
-    let researchData: any = {};
+    const researchData: any = {};
 
     // Process DataForSEO results
     if (dataForSEOResult.status === 'fulfilled') {

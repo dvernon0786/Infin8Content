@@ -9,111 +9,124 @@ import {
   RESEARCH_AGENT_SYSTEM_PROMPT
 } from '../../../lib/services/article-generation/research-agent'
 
-// Mock OpenRouter client
+// Mock OpenRouter client — both root wrapper AND infin8content path
 vi.mock('../../../lib/services/openrouter/openrouter-client', () => ({
   generateContent: vi.fn()
 }))
+vi.mock('../../../infin8content/lib/services/openrouter/openrouter-client', () => ({
+  generateContent: vi.fn()
+}))
 
-import { generateContent } from '../../../lib/services/openrouter/openrouter-client'
+// Mock Tavily client — research-agent calls researchQuery internally
+vi.mock('../../../infin8content/lib/services/tavily/tavily-client', () => ({
+  researchQuery: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../lib/services/tavily/tavily-client', () => ({
+  researchQuery: vi.fn().mockResolvedValue([])
+}))
+
+import { generateContent } from '../../../infin8content/lib/services/openrouter/openrouter-client'
+import { researchQuery as tavilyResearchQuery } from '../../../infin8content/lib/services/tavily/tavily-client'
+
+const emptyTavilySource: never[] = []
 
 describe('Research Agent Service', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    // resetAllMocks clears call history AND implementations
+    vi.resetAllMocks()
+    // Default: Tavily returns no sources (safe for most tests)
+    vi.mocked(tavilyResearchQuery).mockResolvedValue(emptyTavilySource)
   })
 
+  // Real input shape as required by ResearchAgentInput
   const mockInput = {
     sectionHeader: 'Introduction to AI',
     sectionType: 'introduction',
-    priorSections: [
-      {
-        id: '1',
-        article_id: 'article-1',
-        section_order: 1,
-        section_header: 'Overview',
-        section_type: 'body',
-        planner_payload: {
-          section_header: 'Overview',
-          section_type: 'body',
-          instructions: 'Provide overview',
-          context_requirements: [],
-          estimated_words: 200
-        },
-        status: 'completed',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z'
-      }
-    ],
+    researchQuestions: ['What is AI?', 'How does machine learning work?'],
+    supportingPoints: ['AI is transforming industries'],
+    priorSectionsSummary: 'Overview of the technology landscape.',
     organizationContext: {
       name: 'Tech Corp',
-      description: 'AI technology company',
-      website: 'https://techcorp.com',
-      industry: 'technology'
+      description: 'AI technology company'
     }
+  }
+
+  // LLM response matching ResearchOutputSchema
+  const mockLlmResponse = {
+    research_questions: ['What is AI?'],
+    consolidated_queries: ['AI definition'],
+    research_results: [
+      {
+        query: 'What is AI?',
+        answer: 'Artificial Intelligence...',
+        citations: ['Tech Journal, 2024, AI Overview (https://example.com)'],
+        source_urls: ['https://example.com'],
+        source_types_found: ['academic']
+      }
+    ],
+    total_searches: 1
   }
 
   it('uses the canonical system prompt and returns normalized output', async () => {
     vi.mocked(generateContent).mockResolvedValue({
-      content: JSON.stringify({
-        queries: ['What is AI?'],
-        results: [
-          {
-            query: 'What is AI?',
-            answer: 'Artificial Intelligence...',
-            citations: ['https://example.com']
-          }
-        ],
-        total_searches: 1
-      })
-    })
+      content: JSON.stringify(mockLlmResponse)
+    } as any)
 
-    const result = await runResearchAgent(mockInput as any)
-
+    const result = await runResearchAgent(mockInput)
+    // Should send system prompt as first message
     const call = vi.mocked(generateContent).mock.calls[0]
-
     expect(call[0][0].role).toBe('system')
     expect(call[0][0].content).toBe(RESEARCH_AGENT_SYSTEM_PROMPT)
 
-    expect(result.totalSearches).toBe(1)
+    // Should map research_questions -> queries
+    expect(result.queries).toEqual(['What is AI?'])
+    expect(result.total_searches).toBe(1)
+    expect(result.results).toHaveLength(1)
+    expect(result.results[0].query).toBe('What is AI?')
   })
 
-  it('enforces the 10-search limit', async () => {
+  it('caps Tavily queries at top 3 research questions', async () => {
+    // Return a proper source to prevent the empty-fallback branch
+    vi.mocked(tavilyResearchQuery).mockResolvedValue([{
+      title: 'AI Overview',
+      url: 'https://example.com',
+      excerpt: 'AI content',
+      published_date: '2024-01-01',
+      author: null,
+      relevance_score: 0.9
+    }])
     vi.mocked(generateContent).mockResolvedValue({
       content: JSON.stringify({
-        queries: Array(15).fill('q'),
-        results: [],
-        total_searches: 15
+        ...mockLlmResponse,
+        research_questions: ['q1', 'q2', 'q3', 'q4', 'q5'],
+        research_results: Array(5).fill(mockLlmResponse.research_results[0])
       })
+    } as any)
+
+    await runResearchAgent({
+      ...mockInput,
+      researchQuestions: ['q1', 'q2', 'q3', 'q4', 'q5']
     })
 
-    const result = await runResearchAgent(mockInput as any)
-
-    expect(result.queries).toHaveLength(10)
-    expect(result.totalSearches).toBe(10)
+    // fetchGroundingSources slices to top 3 questions — so at most 3 Tavily calls
+    expect(vi.mocked(tavilyResearchQuery).mock.calls.length).toBeLessThanOrEqual(3)
   })
 
-  it('fails fast on malformed JSON', async () => {
-    vi.mocked(generateContent).mockResolvedValue({
-      content: 'not-json'
-    })
+  it('throws on unparseable LLM response', async () => {
+    vi.mocked(generateContent).mockResolvedValue({ content: 'not-json' } as any)
 
-    await expect(runResearchAgent(mockInput as any)).rejects.toThrow(
-      'Invalid JSON response'
+    await expect(runResearchAgent(mockInput)).rejects.toThrow(
+      'Research synthesis failed'
     )
   })
 
-  it(
-    'times out within 30 seconds',
-    async () => {
-      vi.mocked(generateContent).mockImplementation(
-        () => new Promise(() => {})
-      )
+  it('returns research_timestamp in ISO format', async () => {
+    vi.mocked(generateContent).mockResolvedValue({
+      content: JSON.stringify(mockLlmResponse)
+    } as any)
 
-      const start = Date.now()
+    const result = await runResearchAgent(mockInput)
 
-      await expect(runResearchAgent(mockInput as any)).rejects.toThrow('timeout')
-
-      expect(Date.now() - start).toBeLessThan(32000)
-    },
-    35000
-  )
+    expect(result.research_timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+  })
 })

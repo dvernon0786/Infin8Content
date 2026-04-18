@@ -124,7 +124,7 @@ export class MobilePerformanceMonitor {
     if (!this.isMonitoring) return
 
     let frameCount = 0
-    let startTime = performance.now()
+    const startTime = performance.now()
     let lastFrameTime = startTime
 
     const measureFrame = (currentTime: number) => {

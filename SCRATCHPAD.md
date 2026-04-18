@@ -781,6 +781,13 @@ export async function GET(...
 // RESULT: API returns fresh workflowState on every request
 ```
 
+### **✅ Issue 6: Missing Approval Row Handling (RESOLVED)**
+**Problem:** Fresh workflows without an `intent_approvals` row caused the API route to throw a PostgREST error (PGRST116) and return 500.
+**Root Cause:** The Supabase client call used `.single()` which throws when no rows exist.
+**Fix Applied:** Replaced `.single()` with `.maybeSingle()` in [app/api/workflows/[id]/subtopics-for-review/route.ts](infin8content/app/api/workflows/[id]/subtopics-for-review/route.ts). This returns `null` when no approval row exists and prevents an error.
+**Result:** New workflows show all keywords as `pending` instead of a 500 error; Step 8 UI correctly renders 25 pending keywords and continues polling where appropriate.
+
+
 ### **🔧 Fix 6: Database Constraint (Manual SQL Required)**
 ```sql
 -- Run in Supabase dashboard

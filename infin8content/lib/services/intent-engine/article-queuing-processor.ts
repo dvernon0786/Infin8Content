@@ -217,7 +217,7 @@ export async function queueArticlesForWorkflow(
     }
   }
 
-  let finalState: WorkflowState = workflow.state as WorkflowState
+  const finalState: WorkflowState = workflow.state as WorkflowState
   let message: string
 
   // QUEUE LAYER: Only responsible for queuing articles, NOT completing workflow

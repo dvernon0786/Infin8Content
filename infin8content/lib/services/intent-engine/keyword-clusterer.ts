@@ -347,7 +347,7 @@ export class KeywordClusterer {
     const union = new Set([...words1, ...words2])
     
     // Jaccard similarity with a boost for partial word matches
-    let jaccardScore = intersection.size / union.size
+    const jaccardScore = intersection.size / union.size
     
     // Add partial matching bonus for words that are substrings
     let partialBonus = 0
