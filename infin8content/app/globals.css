@@ -61,6 +61,12 @@
   --color-error: #EF4444;
   --color-info: #06B6D4;
 
+  /* Social Network Brand Colors (third-party brand guidelines) */
+  --social-twitter: #000000;
+  --social-linkedin: #0A66C2;
+  --social-instagram: #E1306C;
+  --social-facebook: #1877F2;
+
   /* Shadow System */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);

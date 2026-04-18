@@ -61,17 +61,17 @@ function NetworkIcon({ network, className }: { network: string; className?: stri
   }
 }
 
-function networkColor(network: string): string {
+function networkIconClass(network: string): string {
   switch (network.toLowerCase()) {
     case 'twitter':
     case 'x':
-      return '#000000'
+      return 'text-[--social-twitter]'
     case 'linkedin':
-      return '#0A66C2'
+      return 'text-[--social-linkedin]'
     case 'instagram':
-      return '#E1306C'
+      return 'text-[--social-instagram]'
     default:
-      return 'var(--color-primary-blue)'
+      return 'text-[--color-primary-blue]'
   }
 }
 
@@ -310,9 +310,7 @@ export function SocialPublishModal({
                       >
                         <NetworkIcon
                           network={acc.network}
-                          className="h-3.5 w-3.5"
-                          // @ts-ignore — inline style on custom component
-                          style={{ color: networkColor(acc.network) }}
+                          className={cn('h-3.5 w-3.5', networkIconClass(acc.network))}
                         />
                         <span className="font-lato text-xs text-neutral-700">
                           {acc.username ?? acc.network}
