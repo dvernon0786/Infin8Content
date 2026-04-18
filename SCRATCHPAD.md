@@ -787,6 +787,14 @@ export async function GET(...
 **Fix Applied:** Replaced `.single()` with `.maybeSingle()` in [app/api/workflows/[id]/subtopics-for-review/route.ts](infin8content/app/api/workflows/[id]/subtopics-for-review/route.ts). This returns `null` when no approval row exists and prevents an error.
 **Result:** New workflows show all keywords as `pending` instead of a 500 error; Step 8 UI correctly renders 25 pending keywords and continues polling where appropriate.
 
+### **✅ Issue 7: `column articles.slug does not exist` (RESOLVED)**
+**Problem:** Article detail page and 3 other API routes (`caption`, `publish-to-social`, `internal-linking-service`) selected `slug` from `articles`, but the column was never added via migration. The Postgres error propagated as "Access Denied" on the article detail page.
+**Root Cause:** Epic 13 / prior feature work referenced `slug` in queries and type definitions but the `ALTER TABLE` migration was never created.
+**Fix Applied:**
+- Created `supabase/migrations/20260419000001_add_slug_to_articles.sql`: adds `slug TEXT DEFAULT NULL`, a general index, and a partial unique index (`WHERE slug IS NOT NULL`).
+- Added `slug?: string | null` and `cms_status?: string | null` to `ArticleMetadata` interface in `lib/types/article.ts`.
+- Confirmed caption route and publish-to-social already null-guard slug usage (no code changes needed there).
+**Result:** Once migration runs in Supabase, all 4 slug query sites return `null` for existing articles safely. Article detail page loads correctly; Bug 2 (Access Denied) resolves automatically.
 
 ### **🔧 Fix 6: Database Constraint (Manual SQL Required)**
 ```sql
