@@ -54,7 +54,8 @@ export function ContentActivityChart({ articles }: ContentActivityChartProps) {
             if (genDay && genDay in generated) {
                 generated[genDay]++
             }
-            if (article.status === "published") {
+            // Treat articles with a `publish_at` timestamp as published for dashboard metrics
+            if (article.publish_at) {
                 const pubDay = toYMD(article.publish_at ?? null)
                 if (pubDay && pubDay in published) {
                     published[pubDay]++

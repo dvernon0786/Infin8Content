@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 import {
     FileText,
     Settings,
@@ -32,8 +34,20 @@ interface SidebarNavigationProps {
     usage?: number
 }
 
+type NavSub = { title: string; url: string }
+type NavItem = {
+    id: string
+    title: string
+    url: string
+    icon: React.ComponentType<any>
+    exact?: boolean
+    disabled?: boolean
+    badge?: string
+    sub?: NavSub[]
+}
+
 // Coming-soon items have no real routes
-const NAV_ITEMS = [
+const NAV_ITEMS: NavItem[] = [
     {
         id: "overview",
         title: "Overview",
@@ -100,7 +114,7 @@ const NAV_ITEMS = [
         disabled: true,
         badge: "NEW",
     },
-] as const
+]
 
 export function SidebarNavigation({ orgName = "Default Workspace", plan, usage }: SidebarNavigationProps) {
     const pathname = usePathname()
@@ -234,7 +248,7 @@ export function SidebarNavigation({ orgName = "Default Workspace", plan, usage }
                                         maxHeight: isOpen ? 200 : 0,
                                         transition: "max-height 0.25s ease",
                                     }}>
-                                        {item.sub.map((sub) => (
+                                        {item.sub?.map((sub) => (
                                             <Link
                                                 key={sub.title}
                                                 href={sub.url}

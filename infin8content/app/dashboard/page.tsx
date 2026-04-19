@@ -68,7 +68,7 @@ export default async function DashboardPage() {
   thisMonth.setHours(0, 0, 0, 0)
 
   const generatedThisMonth = articles.filter((a) => new Date(a.created_at) >= thisMonth).length
-  const publishedTotal = articles.filter((a) => a.status === "published").length
+  const publishedTotal = articles.filter((a) => !!a.publish_at).length
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>

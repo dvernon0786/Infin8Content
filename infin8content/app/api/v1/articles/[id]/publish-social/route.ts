@@ -21,7 +21,7 @@ const BodySchema = z.object({
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  context: any,
 ) {
   const supabase = await createClient()
 
@@ -46,7 +46,8 @@ export async function POST(
     )
   }
 
-  const articleId = params.id
+  const params = await context.params
+  const articleId = params?.id
 
   // ── Load article (verifies ownership via RLS) ────────────────────────────
   const { data: article, error: artErr } = await (supabase as any)

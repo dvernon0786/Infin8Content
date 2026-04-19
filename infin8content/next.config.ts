@@ -3,7 +3,8 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   turbopack: {
-    root: path.resolve("/home/dghost/Desktop/Infin8Content/infin8content"),
+    // Use the project directory dynamically so CI and local environments behave the same
+    root: path.resolve(__dirname),
   },
   images: {
     remotePatterns: [

@@ -14,7 +14,7 @@ import { generateSocialCaption } from '@/lib/services/outstand/caption-generator
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  context: any,
 ) {
   const supabase = await createClient()
 
@@ -27,7 +27,8 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const articleId = params.id
+  const params = await context.params
+  const articleId = params?.id
 
   // RLS enforces org ownership
   const { data: article, error: artErr } = await (supabase as any)
