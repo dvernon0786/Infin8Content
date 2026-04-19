@@ -2,9 +2,14 @@ import { createServiceRoleClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/supabase/get-current-user"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { WorkflowDashboard } from "@/components/dashboard/workflow-dashboard/WorkflowDashboard"
 import { TrialChecklist } from "@/components/dashboard/trial-checklist"
-import { WhatsNewCard } from "@/components/dashboard/whats-new-card"
+import { WorkflowDashboard } from "@/components/dashboard/workflow-dashboard/WorkflowDashboard"
+import { ActiveServicesCard } from "@/components/dashboard/active-services-card"
+import { GenerateArticlesCard } from "@/components/dashboard/generate-articles-card"
+import { ContentActivityChart } from "@/components/dashboard/content-activity-chart"
+import { calculateSummary } from "@/lib/services/intent-engine/workflow-dashboard-service"
+import type { DashboardArticle } from "@/lib/types/dashboard.types"
+import type { WorkflowDashboardItem } from "@/lib/services/intent-engine/workflow-dashboard-service"
 
 export default async function DashboardPage() {
   const user = await getCurrentUser()
@@ -15,14 +20,24 @@ export default async function DashboardPage() {
 
   const supabase = createServiceRoleClient()
 
-  const { data: workflows } = await supabase
-    .from("intent_workflows")
-    .select("id")
-    .eq("organization_id", user.org_id)
+  // Fetch workflows and articles in parallel
+  const [{ data: workflows }, { data: rawArticles }] = await Promise.all([
+    supabase
+      .from("intent_workflows")
+      .select("id, name, state, progress_percentage, created_at, updated_at, created_by, estimated_completion")
+      .eq("organization_id", user.org_id),
+    supabase
+      .from("articles")
+      .select("id, keyword, title, status, created_at, updated_at, scheduled_at, publish_at")
+      .eq("org_id", user.org_id)
+      .order("created_at", { ascending: false })
+      .limit(500),
+  ])
 
+  const isTrial = (user.organizations?.plan || user.organizations?.plan_type)?.toLowerCase() === 'trial'
+
+  // ----- No-workflow empty state -----
   if (!workflows || workflows.length === 0) {
-    const isTrial = (user.organizations?.plan || user.organizations?.plan_type)?.toLowerCase() === 'trial'
-
     if (isTrial) {
       return (
         <div className="space-y-6 mx-auto max-w-xl py-20">
@@ -42,7 +57,6 @@ export default async function DashboardPage() {
         </div>
       )
     }
-
     return (
       <div className="mx-auto max-w-xl py-20 text-center">
         <h1 className="text-2xl font-semibold">You're all set 🎉</h1>
@@ -59,36 +73,109 @@ export default async function DashboardPage() {
     )
   }
 
-  const isTrial = (user.organizations?.plan || user.organizations?.plan_type)?.toLowerCase() === 'trial'
-
+  // ----- Trial checklist flags -----
   let hasWorkflow = false
   let hasCompletedArticle = false
-
   if (isTrial) {
-    // workflows is already fetched above — no extra query needed
-    hasWorkflow = (workflows?.length ?? 0) > 0
-
-    // Only one extra query needed instead of two
-    // Optimized check: Exit as soon as we find 1 completed article instead of full count
-    const { data: completedArticles } = await supabase
-      .from('articles')
-      .select('id')
-      .eq('org_id', user.org_id)
-      .eq('status', 'completed')
-      .limit(1)
-
-    hasCompletedArticle = (completedArticles?.length ?? 0) > 0
+    hasWorkflow = workflows.length > 0
+    hasCompletedArticle = (rawArticles ?? []).some((a) => a.status === 'completed')
   }
 
+  // ----- Summary for ActiveServicesCard -----
+  // Build lightweight WorkflowDashboardItem list (only fields calculateSummary needs)
+  const workflowItems: WorkflowDashboardItem[] = (workflows ?? []).map((w) => ({
+    id: w.id,
+    name: w.name ?? "",
+    state: w.state,
+    progress_percentage: w.progress_percentage ?? 0,
+    created_at: w.created_at,
+    updated_at: w.updated_at,
+    created_by: w.created_by ?? "",
+    estimated_completion: w.estimated_completion ?? undefined,
+    keywords: 0,
+    articles: 0,
+    display_updated_at: w.updated_at,
+    display_created_at: w.created_at,
+  }))
+  const summary = calculateSummary(workflowItems)
+
+  // ----- Stat card calculations -----
+  const articles: DashboardArticle[] = (rawArticles ?? []) as DashboardArticle[]
+  const thisMonth = new Date()
+  thisMonth.setDate(1)
+  thisMonth.setHours(0, 0, 0, 0)
+
+  const generatedThisMonth = articles.filter((a) => new Date(a.created_at) >= thisMonth).length
+  const publishedTotal = articles.filter((a) => a.status === "published").length
+
   return (
-    <div className="space-y-6">
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Onboarding checklist (collapses to slim bar by default — TrialChecklist handles its own state) */}
       {isTrial && (
         <TrialChecklist
           hasWorkflow={hasWorkflow}
           hasCompletedArticle={hasCompletedArticle}
         />
       )}
-      <WhatsNewCard />
+
+      {/* Page header */}
+      <div>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: "#0a0a0a", margin: 0, letterSpacing: "-0.4px" }}>
+          Overview
+        </h1>
+        <p style={{ margin: "4px 0 0", fontSize: 13, color: "#9aa3b0" }}>
+          Welcome back. Here's what's happening with your content.
+        </p>
+      </div>
+
+      {/* Row 1: Active Services | Generate Articles */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.55fr", gap: 14 }}>
+        <ActiveServicesCard summary={summary} />
+        <GenerateArticlesCard />
+      </div>
+
+      {/* Row 2: Stat cards | Content Activity Chart */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.55fr", gap: 14 }}>
+        {/* Two stacked stat cards */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* Stat: Generated */}
+          <div style={{
+            background: "#fff", border: "1px solid #eaecf0", borderRadius: 12,
+            padding: "16px 18px", flex: 1,
+          }}>
+            <div style={{ fontSize: 12, color: "#9aa3b0", marginBottom: 6 }}>
+              📄 Generated
+            </div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: "#0a0a0a", lineHeight: 1 }}>
+              {generatedThisMonth}
+            </div>
+            <div style={{ fontSize: 11, color: "#b0b8c6", marginTop: 4 }}>
+              Articles created this month
+            </div>
+          </div>
+
+          {/* Stat: Published */}
+          <div style={{
+            background: "#fff", border: "1px solid #eaecf0", borderRadius: 12,
+            padding: "16px 18px", flex: 1,
+          }}>
+            <div style={{ fontSize: 12, color: "#9aa3b0", marginBottom: 6 }}>
+              ✅ Published
+            </div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: "#0a0a0a", lineHeight: 1 }}>
+              {publishedTotal}
+            </div>
+            <div style={{ fontSize: 11, color: "#b0b8c6", marginTop: 4 }}>
+              Live on your sites
+            </div>
+          </div>
+        </div>
+
+        {/* Content Activity Chart */}
+        <ContentActivityChart articles={articles} />
+      </div>
+
+      {/* Existing workflow dashboard (full width below) */}
       <WorkflowDashboard orgId={user.org_id} />
     </div>
   )

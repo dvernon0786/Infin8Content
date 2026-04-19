@@ -75,7 +75,7 @@ export default async function DashboardLayout({
                             plan={currentUser.organizations?.plan as any}
                             usage={currentUser.organizations?.article_usage}
                         />
-                        <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
+                        <div className="flex flex-1 flex-col" style={{ padding: "26px 30px 30px", background: "#f7f8fa", overflowY: "auto" }}>
                             {children}
                         </div>
                     </SidebarInset>

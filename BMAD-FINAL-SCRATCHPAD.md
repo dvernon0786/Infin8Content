@@ -1,7 +1,7 @@
 # BMAD Brownfield Primary Content Workflow — Final Scratchpad
 
-**Date:** 2026-04-18  
-**Status:** ✅ PHASE 1 & 2 COMPLETE | ✅ PHASE 3 WEEK 1 COMPLETE | ✅ MULTI-CMS ENGINE IMPLEMENTED | ✅ OUTSTAND SOCIAL PUBLISHING IMPLEMENTED
+**Date:** 2026-04-20  
+**Status:** ✅ PHASE 1 & 2 COMPLETE | ✅ PHASE 3 WEEK 1 COMPLETE | ✅ MULTI-CMS ENGINE IMPLEMENTED | ✅ OUTSTAND SOCIAL PUBLISHING IMPLEMENTED | ✅ ARVOW-STYLE DASHBOARD UI REMAP IMPLEMENTED
 
 ---
 
@@ -60,14 +60,27 @@
 - BMAD-INDEX.md - Complete navigation
 - BMAD-COMPLETION-SUMMARY.md - Full summary
 
+### Arvow-Style Dashboard UI Remap (✅ COMPLETE — 2026-04-20)
+- **Design tokens** — `globals.css`: `--brand-electric-blue: #0066FF`, added `--page-bg`, `--card-border`, `--text-muted`, `--primary-tint`
+- **Topbar** — `top-navigation.tsx`: 38px `#0066FF` bar, 3-zone layout (90px spacer | orange-dot promo + Watch Now | plan pill + Upgrade + avatar)
+- **Sidebar** — `sidebar-navigation.tsx`: 202px via `--sidebar-width` CSS var, brand square, 8 nav items (4 active, 4 disabled), Backlink Exchange NEW badge, bottom promos
+- **Layout** — `app/dashboard/layout.tsx`: `padding: 26px 30px 30px`, `background: #f7f8fa`
+- **Overview page** — `app/dashboard/page.tsx`: 2×2 grid with `ActiveServicesCard` + `GenerateArticlesCard` (row 1), stat cards + `ContentActivityChart` (row 2), collapsible onboarding bar, `WorkflowDashboard` full-width below
+- **ActiveServicesCard** — new component: 4 service rows with real `in_progress_workflows` count
+- **GenerateArticlesCard** — new component: 3 CTAs (SEO / News / YouTube) with SVG thumbs
+- **ContentActivityChart** — new component: Recharts `<LineChart>`, 30-day window, generated + published lines
+- **WorkflowDashboard** — `T.blue` patched from `#217CEB` → `#0066FF`
+- **Turbopack fix** — `next.config.ts`: `turbopack.root` set to absolute `infin8content/` path; resolved parent-dir lockfile detection issue
+- **TypeScript:** 0 errors across all 7 modified / 3 new files
+
 ---
 
 ## Total Deliverables
 
 **Documents:** 15 comprehensive documents + 1 verify SQL  
 **Size:** ~200K documentation  
-**Commits:** 5 commits to feature/bmad-pm-deliverables + 1 pending multi-CMS commit  
-**Files:** 27 docs + 21 new code files (+ 17 new files for Outstand social publishing, 2026-04-18)  
+**Commits:** 5 commits to feature/bmad-pm-deliverables + 1 multi-CMS commit + 1 dashboard UI remap commit  
+**Files:** 27 docs + 21 new code files (+ 17 new files for Outstand social publishing, 2026-04-18) + 10 files (7 modified + 3 new for dashboard UI remap, 2026-04-20)  
 
 ---
 

@@ -16,7 +16,7 @@
   /* === UX DESIGN SYSTEM COLORS === */
 
   /* Core Brand Colors */
-  --brand-electric-blue: #217CEB;
+  --brand-electric-blue: #0066FF;
   --brand-infinite-purple: #4A42CC;
   --brand-deep-charcoal: #2C2C2E;
   --brand-soft-light-gray: #F4F4F6;
@@ -66,6 +66,12 @@
   --social-linkedin: #0A66C2;
   --social-instagram: #E1306C;
   --social-facebook: #1877F2;
+
+  /* Arvow Layout Tokens */
+  --page-bg: #f7f8fa;
+  --card-border: #eaecf0;
+  --text-muted: #9aa3b0;
+  --primary-tint: #e6f0ff;
 
   /* Shadow System */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
