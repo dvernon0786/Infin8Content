@@ -314,6 +314,21 @@ Next immediate steps:
 
 ---
 
+### 2026-04-19 — Quick Dev Session: Test Fixes & Branch Push
+
+- **Summary:** Performed a targeted test-fix pass addressing auth route tests and the Stripe webhook suite. Resolved mocking issues for `createServiceRoleClient` and Stripe SDK calls (`invoices.listLineItems`, `subscriptions.retrieve`), and adjusted Supabase query mocks from `.single()` to `.limit(1)` where the route uses `.limit(1)`.
+- **Files fixed (tests):**
+  - `app/api/webhooks/stripe/route.test.ts` (10/10)
+  - `app/api/auth/login/route.test.ts`
+  - `app/api/auth/register/route.test.ts`
+  - `app/api/auth/verify-otp/route.test.ts`
+  - `app/api/organizations/create/route.test.ts`
+- **Result:** Local full-suite run reported 0 failing files after fixes.
+- **Branch work:** Created branch `test-main-all`, updated sprint docs and this scratchpad, committed changes, and pushed to `origin/test-main-all`.
+- **Next:** Open PR from `test-main-all` → `main` so CI can run on remote; request reviewer when ready.
+
+---
+
 **BMAD Status:** ✅ PHASE 1 & 2 COMPLETE | 🚀 PHASE 3 WEEK 1 STARTED  
 **Ready for Engineering:** ✅ YES  
 **Architecture Locked:** ✅ YES  

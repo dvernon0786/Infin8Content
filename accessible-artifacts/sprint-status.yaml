@@ -5,6 +5,10 @@
 # story_location: "{project-root}/_bmad-output/implementation-artifacts"
 # Note (2026-04-16): Marketing site header/footer and design-system fixes applied. Commits: fc70de23, 6c105c08, ab868627. Pushed to `test-main-all`; remote `main` created from it and currently points to same commit (no PR diff). Confirm Vercel build for `ab868627`.
 # Note (2026-04-18): Outstand social publishing integration implemented. Branch: test-main-all.
+# Note (2026-04-19): Quick dev session — fixed multiple failing tests (auth routes + stripe webhook).
+# - Key fixes: explicit factory mock for `createServiceRoleClient`, mock `stripe.invoices.listLineItems` and `stripe.subscriptions.retrieve`, and convert `.single()` mocks to `.limit(1)` where the route uses `limit(1)`.
+# - Files updated (tests): `app/api/webhooks/stripe/route.test.ts`, `app/api/auth/login/route.test.ts`, `app/api/auth/register/route.test.ts`, `app/api/auth/verify-otp/route.test.ts`, `app/api/organizations/create/route.test.ts`.
+# - Branch: `test-main-all` updated and pushed to `origin/test-main-all` (PR to `main` pending).
 # Files: 9 backend (migration, outstand client, caption generator, inngest functions, API routes, webhook),
 #         3 frontend components (SocialPublishModal, PublishToSocialButton, SocialAnalytics),
 #         3 patched files (inngest route, generate-article, article detail page).
