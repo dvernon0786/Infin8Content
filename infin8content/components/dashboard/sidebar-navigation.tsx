@@ -56,7 +56,6 @@ const NAV_ITEMS = [
         title: "Blog Automation",
         url: "#",
         icon: Bot,
-        disabled: true,
         sub: [
             { title: "Campaigns", url: "#" },
             { title: "AutoBlogs", url: "#" },
