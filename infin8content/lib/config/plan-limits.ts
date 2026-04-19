@@ -63,6 +63,20 @@ export const PLAN_LIMITS = {
         pro: 1000,
         agency: null,
     },
+
+    llm_visibility_prompts: {
+        trial: 0,
+        starter: 20,
+        pro: 75,
+        agency: 200,
+    },
+
+    llm_visibility_projects: {
+        trial: 0,
+        starter: 1,
+        pro: 3,
+        agency: 10,
+    },
 } as const;
 
 export type PlanType = keyof typeof PLAN_LIMITS.article_generation;

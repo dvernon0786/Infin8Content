@@ -265,6 +265,27 @@ Next immediate steps:
 
 ---
 
+## 2026-04-20 — LLM Brand Visibility Tracker (implementation notes)
+
+- **Status:** Implementation complete in code; DB migration present but NOT APPLIED in Supabase (manual step required).
+- **Files added/modified:**
+  - infin8content/supabase/migrations/20260419000000_add_llm_visibility.sql (migration)
+  - infin8content/lib/services/llm-visibility/visibility-engine.ts (new)
+  - infin8content/lib/services/llm-visibility/prompt-suggester.ts (new)
+  - infin8content/lib/inngest/functions/llm-visibility-tracker.ts (new)
+  - infin8content/lib/services/llm-visibility/route-handlers.ts (new)
+  - infin8content/app/api/llm-visibility/* (6 thin route files)
+  - infin8content/app/dashboard/llm-visibility/page.tsx (dashboard + new UI)
+
+- **Manual post-merge steps:**
+  1. Apply migration: open Supabase Dashboard → SQL Editor → paste `infin8content/supabase/migrations/20260419000000_add_llm_visibility.sql` and run.
+  2. Regenerate Supabase types: `supabase gen types typescript --project-id <id> > lib/supabase/database.types.ts`.
+  3. Remove temporary `as any` / `as unknown as` casts in `route-handlers.ts` and `llm-visibility-tracker.ts`.
+
+- **Notes:** All TypeScript checks passed locally after small type-cast workarounds; Inngest functions and sidebar nav were registered. See branch `test-main-all` for commits.
+
+---
+
 ## Pricing Alignment Update (2026-03-16)
 
 **Status:** ✅ COMPLETE - Stripe prices matched across codebase

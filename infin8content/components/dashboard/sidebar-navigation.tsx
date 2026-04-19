@@ -10,6 +10,7 @@ import {
     Menu,
     X,
     MoreHorizontal,
+    Eye,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -43,6 +44,11 @@ const items = [
         title: "Articles",
         url: "/dashboard/articles",
         icon: FileText,
+    },
+    {
+        title: "AI Visibility",
+        url: "/dashboard/llm-visibility",
+        icon: Eye,
     },
     {
         title: "Settings",

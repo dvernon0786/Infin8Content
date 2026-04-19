@@ -780,3 +780,8 @@ development_status:
   c-3-wordpress-publishing-service: done
   c-4-publishing-api-endpoint: done
   epic-c-retrospective: done
+
+# Update (2026-04-20): LLM Brand Visibility Tracker implemented in codebase.
+# Migration SQL: infin8content/supabase/migrations/20260419000000_add_llm_visibility.sql (NOT APPLIED)
+# Branch: test-main-all — changes committed; push initiated by automation.
+# Next: Apply migration in Supabase, regenerate types, remove temporary type casts.
