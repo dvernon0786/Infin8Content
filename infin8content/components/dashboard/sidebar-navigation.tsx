@@ -70,16 +70,6 @@ const NAV_ITEMS = [
         disabled: true,
     },
     {
-        id: "analytics",
-        title: "Analytics & Reports",
-        url: "/dashboard/llm-visibility",
-        icon: BarChart3,
-        sub: [
-            { title: "LLM Brand Monitors", url: "/dashboard/llm-visibility" },
-            { title: "SEO Reports", url: "#" },
-        ],
-    },
-    {
         id: "integrations",
         title: "Integrations",
         url: "#",
@@ -92,6 +82,16 @@ const NAV_ITEMS = [
         url: "#",
         icon: Rss,
         disabled: true,
+    },
+    {
+        id: "analytics",
+        title: "Analytics & Reports",
+        url: "/dashboard/llm-visibility",
+        icon: BarChart3,
+        sub: [
+            { title: "LLM Brand Monitors", url: "/dashboard/llm-visibility" },
+            { title: "SEO Reports", url: "#" },
+        ],
     },
     {
         id: "backlink",
