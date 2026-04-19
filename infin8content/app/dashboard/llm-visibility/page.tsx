@@ -165,7 +165,7 @@ function CompetitorTable({ sov }: { sov: Record<string, { score: number; delta: 
         {rows.map(([name, s]) => (
           <div key={name} className="flex items-center justify-between py-1.5 border-b border-neutral-50 last:border-0">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-[9px] font-bold">
+              <div className="w-6 h-6 rounded-md bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-[9px] font-bold">
                 {name[0]}
               </div>
               <span className="text-sm text-neutral-700">{name}</span>
@@ -210,7 +210,7 @@ function PromptRow({ prompt, onDrillDown }: { prompt: any; onDrillDown: (p: any)
   const badgeClasses: Record<string, string> = {
     informational: 'text-[10px] px-2 py-0.5 rounded-full font-semibold bg-blue-50 text-[#217CEB]',
     commercial: 'text-[10px] px-2 py-0.5 rounded-full font-semibold bg-purple-50 text-[#4A42CC]',
-    competitor: 'text-[10px] px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-[#F59E0B]',
+    competitor: 'text-[10px] px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-warning',
   }
 
   return (
@@ -276,7 +276,7 @@ function DrillDownModal({ prompt, onClose }: { prompt: any; onClose: () => void 
             <div className="text-sm font-semibold text-neutral-900">{prompt.prompt_text}</div>
             <span
               className={`text-[10px] px-2 py-0.5 rounded-full font-semibold mt-1 inline-block ${
-                prompt.category === 'informational' ? 'bg-blue-50 text-[#217CEB]' : prompt.category === 'commercial' ? 'bg-purple-50 text-[#4A42CC]' : 'bg-amber-50 text-[#F59E0B]'
+                prompt.category === 'informational' ? 'bg-blue-50 text-[#217CEB]' : prompt.category === 'commercial' ? 'bg-purple-50 text-[#4A42CC]' : 'bg-amber-50 text-warning'
               }`}
             >
               {CATEGORY_LABELS[prompt.category]}
@@ -370,14 +370,14 @@ function AddPromptModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: an
           <div>
             <label className="text-xs font-semibold text-neutral-500 uppercase tracking-widest mb-1.5 block">Category</label>
             <div className="flex gap-2">
-              {(['informational', 'commercial', 'competitor'] as const).map(cat => (
+                  {(['informational', 'commercial', 'competitor'] as const).map(cat => (
                 <button
                   key={cat}
                   onClick={() => setCategory(cat)}
                   className={`flex-1 py-2 text-xs font-semibold rounded-lg border transition-all ${
                     category === cat
-                      ? (cat === 'informational' ? 'bg-blue-50 text-[#217CEB] border-[#217CEB]' : cat === 'commercial' ? 'bg-purple-50 text-[#4A42CC] border-[#4A42CC]' : 'bg-amber-50 text-[#F59E0B] border-[#F59E0B]')
-                      : 'bg-white text-[#9CA3AF] border-neutral-200'
+                      ? (cat === 'informational' ? 'bg-blue-50 text-[#217CEB] border-[#217CEB]' : cat === 'commercial' ? 'bg-purple-50 text-[#4A42CC] border-[#4A42CC]' : 'bg-amber-50 text-warning border-warning')
+                      : 'bg-white text-text-muted border-neutral-200'
                   }`}
                 >
                   {CATEGORY_LABELS[cat]}
@@ -392,7 +392,7 @@ function AddPromptModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: an
           </button>
           <button
             onClick={() => { if (text.trim()) { onAdd({ promptText: text, category }); onClose() } }}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#217CEB] to-[#4A42CC]"
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-linear-to-r from-[#217CEB] to-[#4A42CC]"
           >
             Add prompt
           </button>
@@ -456,7 +456,7 @@ export default function LlmVisibilityPage() {
             </button>
             <button
               onClick={() => setShowAddPrompt(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#217CEB] to-[#4A42CC]"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-linear-to-r from-[#217CEB] to-[#4A42CC]"
             >
               <Plus size={14} />Add prompt
             </button>
@@ -576,7 +576,7 @@ export default function LlmVisibilityPage() {
               </button>
               <button
                 onClick={() => setShowAddPrompt(true)}
-                className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg text-white font-medium bg-gradient-to-r from-[#217CEB] to-[#4A42CC]"
+                className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg text-white font-medium bg-linear-to-r from-[#217CEB] to-[#4A42CC]"
               >
                 <Plus size={12} />Add prompt
               </button>

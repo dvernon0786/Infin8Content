@@ -135,7 +135,7 @@ function Step1Brand({ onNext, data }: StepProps) {
       <button
         onClick={() => onNext({ brandName, websiteUrl, brandAliases: aliases, businessDescription: desc, models: selectedModels })}
         disabled={!isValid}
-        className="w-full py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-40 bg-gradient-to-r from-[#217CEB] to-[#4A42CC]"
+        className="w-full py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-40 bg-linear-to-r from-[#217CEB] to-[#4A42CC]"
       >
         Continue <ArrowRight size={14} />
       </button>
@@ -209,7 +209,7 @@ function Step2Competitors({ onNext, onBack, data }: StepProps) {
         </button>
         <button
           onClick={() => onNext({ competitors })}
-          className="flex-1 py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 bg-gradient-to-r from-[#217CEB] to-[#4A42CC]"
+          className="flex-1 py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 bg-linear-to-r from-[#217CEB] to-[#4A42CC]"
         >
           Continue <ArrowRight size={14} />
         </button>
@@ -252,7 +252,7 @@ function Step3Confirm({ onNext, onBack, data }: StepProps) {
         <button
           onClick={handleActivate}
           disabled={loading}
-          className="flex-1 py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 bg-gradient-to-r from-[#217CEB] to-[#4A42CC]"
+          className="flex-1 py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 bg-linear-to-r from-[#217CEB] to-[#4A42CC]"
         >
           {loading ? <><Loader2 size={14} className="animate-spin" />Activating…</> : <>Activate tracking <ArrowRight size={14} /></>}
         </button>
@@ -285,7 +285,7 @@ export default function NewVisibilityProjectPage() {
               <div className="flex items-center gap-2">
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                    i <= step ? 'bg-gradient-to-r from-[#217CEB] to-[#4A42CC] text-white' : 'bg-neutral-200 text-neutral-400'
+                    i <= step ? 'bg-linear-to-r from-[#217CEB] to-[#4A42CC] text-white' : 'bg-neutral-200 text-neutral-400'
                   }`}
                 >
                   {i < step ? <CheckCircle2 size={12} /> : i + 1}
