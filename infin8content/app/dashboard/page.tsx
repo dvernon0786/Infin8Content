@@ -71,7 +71,7 @@ export default async function DashboardPage() {
   const publishedTotal = articles.filter((a) => !!a.publish_at).length
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div className="flex flex-col gap-5">
       {/* Onboarding checklist (collapses to slim bar by default — TrialChecklist handles its own state) */}
       {isTrial && (
         <TrialChecklist
@@ -81,52 +81,41 @@ export default async function DashboardPage() {
       )}
 
       {/* Page header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+      <div className="flex items-start justify-between">
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: "#0a0a0a", margin: 0, letterSpacing: "-0.4px" }}>
-            Overview
-          </h1>
-          <p style={{ margin: "3px 0 0", fontSize: 13, color: "#9aa3b0" }}>
-            Your content engine at a glance
-          </p>
+          <h1 className="text-2xl font-extrabold dashboard-header-title">Overview</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Your content engine at a glance</p>
         </div>
-        <div style={{
-          display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#444",
-          cursor: "pointer", padding: "6px 12px", borderRadius: 8,
-          border: "1px solid #e4e7ec", background: "#fff", whiteSpace: "nowrap",
-        }}>
-          <div style={{
-            width: 26, height: 26, borderRadius: "50%", background: "#0a0a0a",
-            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-          }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="#fff"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <div className="flex items-center gap-2 text-sm text-neutral-800 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white whitespace-nowrap dashboard-watch-btn">
+          <div className="dashboard-watch-icon">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           </div>
           Watch Video Tutorial
         </div>
       </div>
 
       {/* Row 1: Active Services | Generate Articles */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.55fr", gap: 14 }}>
+      <div className="dashboard-grid">
         <ActiveServicesCard summary={summary} />
         <GenerateArticlesCard />
       </div>
 
       {/* Row 2: Stat cards | Content Activity Chart */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.55fr", gap: 14 }}>
+      <div className="dashboard-grid">
         {/* Two stacked stat cards */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div className="flex flex-col gap-2.5">
           {/* Stat: Generated */}
-          <div style={{ background: "#fff", border: "1px solid #eaecf0", borderRadius: 12, padding: "16px 20px", flex: 1 }}>
-            <div style={{ fontSize: 17, marginBottom: 6 }}>📄</div>
-            <div style={{ fontSize: 12, color: "#9aa3b0", marginBottom: 5 }}>Generated — Articles created this month</div>
-            <div style={{ fontSize: 30, fontWeight: 800, color: "#0a0a0a", letterSpacing: "-0.5px" }}>{generatedThisMonth}</div>
+          <div className="stat-card">
+            <div className="text-lg mb-1.5">📄</div>
+            <div className="text-xs text-muted-foreground mb-1">Generated — Articles created this month</div>
+            <div className="text-3xl font-extrabold text-neutral-900">{generatedThisMonth}</div>
           </div>
 
           {/* Stat: Published */}
-          <div style={{ background: "#fff", border: "1px solid #eaecf0", borderRadius: 12, padding: "16px 20px", flex: 1 }}>
-            <div style={{ fontSize: 17, marginBottom: 6 }}>✅</div>
-            <div style={{ fontSize: 12, color: "#9aa3b0", marginBottom: 5 }}>Published — Live on your sites</div>
-            <div style={{ fontSize: 30, fontWeight: 800, color: "#0a0a0a", letterSpacing: "-0.5px" }}>{publishedTotal}</div>
+          <div className="stat-card">
+            <div className="text-lg mb-1.5">✅</div>
+            <div className="text-xs text-muted-foreground mb-1">Published — Live on your sites</div>
+            <div className="text-3xl font-extrabold text-neutral-900">{publishedTotal}</div>
           </div>
         </div>
 

@@ -718,3 +718,48 @@
     background-position: 400px 0;
   }
 }
+
+/* Dashboard-specific helper classes to avoid inline styles in app/dashboard */
+.dashboard-content-area {
+  padding: 26px 30px 30px;
+  background: var(--page-bg);
+  overflow-y: auto;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.55fr;
+  gap: 14px;
+}
+
+.stat-card {
+  background: var(--brand-white);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  flex: 1;
+}
+
+.dashboard-header-title {
+  letter-spacing: -0.4px;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.dashboard-watch-btn {
+  font-size: 13px;
+  color: var(--neutral-800);
+  cursor: pointer;
+}
+
+.dashboard-watch-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  background: var(--neutral-900);
+  color: var(--brand-white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
