@@ -10,7 +10,7 @@ import { PaymentGuard } from "@/components/guards/payment-guard"
 import { PaymentStatusBanner } from "@/components/dashboard/payment-status-banner"
 import { AnnouncementBanner } from "@/components/dashboard/announcement-banner"
 import { GuidedTourWrapper } from "@/components/onboarding/guided-tour/GuidedTourWrapper"
-import { isFeatureFlagEnabled } from "@/lib/utils/feature-flags"
+import { isFeatureFlagEnabled, getFeatureFlagsForOrg } from "@/lib/utils/feature-flags"
 import { FEATURE_FLAG_KEYS } from "@/lib/types/feature-flag"
 
 export default async function DashboardLayout({
@@ -44,12 +44,16 @@ export default async function DashboardLayout({
 
     // Epic 12: Load feature flags and org state for new components (additive)
     const tourShown = (currentUser.organizations as any)?.onboarding_tour_shown ?? true
-    const [toursEnabled, announcementsEnabled] = currentUser.org_id
-        ? await Promise.all([
-            isFeatureFlagEnabled(currentUser.org_id, FEATURE_FLAG_KEYS.ENABLE_GUIDED_TOURS),
-            isFeatureFlagEnabled(currentUser.org_id, FEATURE_FLAG_KEYS.ENABLE_FEATURE_ANNOUNCEMENTS),
-          ])
-        : [false, false]
+    let toursEnabled = false
+    let announcementsEnabled = false
+    if (currentUser.org_id) {
+        const flags = await getFeatureFlagsForOrg(currentUser.org_id, [
+            FEATURE_FLAG_KEYS.ENABLE_GUIDED_TOURS,
+            FEATURE_FLAG_KEYS.ENABLE_FEATURE_ANNOUNCEMENTS,
+        ])
+        toursEnabled = !!flags[FEATURE_FLAG_KEYS.ENABLE_GUIDED_TOURS]
+        announcementsEnabled = !!flags[FEATURE_FLAG_KEYS.ENABLE_FEATURE_ANNOUNCEMENTS]
+    }
 
     return (
         <PaymentGuard>
