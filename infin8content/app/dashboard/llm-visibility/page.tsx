@@ -189,10 +189,12 @@ function SentimentBar({ pos, neu, neg }: { pos: number; neu: number; neg: number
   return (
     <div className="bg-white rounded-2xl border border-neutral-100 p-5">
       <div className="text-sm font-semibold text-neutral-800 mb-4">Sentiment Breakdown</div>
-      <div className="flex h-2 rounded-full overflow-hidden gap-0.5 mb-4">
-        <div className="bg-green-400 rounded-l-full" style={{ width: `${pPos}%` }} />
-        <div className="bg-neutral-200" style={{ width: `${pNeu}%` }} />
-        <div className="bg-red-400 rounded-r-full" style={{ width: `${pNeg}%` }} />
+      <div className="h-2 rounded-full overflow-hidden mb-4">
+        <svg className="w-full h-2" viewBox="0 0 100 1" preserveAspectRatio="none" role="img" aria-label="Sentiment distribution">
+          <rect x="0" y="0" width={Number(pPos.toFixed(2))} height="1" fill="#34D399" />
+          <rect x={Number(pPos.toFixed(2))} y="0" width={Number(pNeu.toFixed(2))} height="1" fill="#E5E7EB" />
+          <rect x={Number((pPos + pNeu).toFixed(2))} y="0" width={Number(pNeg.toFixed(2))} height="1" fill="#F87171" />
+        </svg>
       </div>
       <div className="flex justify-between text-xs text-neutral-500">
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" />Positive ({pos})</span>
@@ -205,6 +207,12 @@ function SentimentBar({ pos, neu, neg }: { pos: number; neu: number; neg: number
 
 function PromptRow({ prompt, onDrillDown }: { prompt: any; onDrillDown: (p: any) => void }) {
   const rate = prompt.visibility_rate ?? 0
+  const badgeClasses: Record<string, string> = {
+    informational: 'text-[10px] px-2 py-0.5 rounded-full font-semibold bg-blue-50 text-[#217CEB]',
+    commercial: 'text-[10px] px-2 py-0.5 rounded-full font-semibold bg-purple-50 text-[#4A42CC]',
+    competitor: 'text-[10px] px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-[#F59E0B]',
+  }
+
   return (
     <div
       className="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-neutral-50 cursor-pointer transition-colors group border border-transparent hover:border-neutral-100"
@@ -213,26 +221,22 @@ function PromptRow({ prompt, onDrillDown }: { prompt: any; onDrillDown: (p: any)
       <div className="flex-1 min-w-0">
         <div className="text-sm text-neutral-800 truncate font-medium">{prompt.prompt_text}</div>
         <div className="flex items-center gap-2 mt-1">
-          <span
-            className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
-            style={{
-              background: CATEGORY_COLORS[prompt.category] + '18',
-              color: CATEGORY_COLORS[prompt.category],
-            }}
-          >
+          <span className={badgeClasses[prompt.category] || 'text-[10px] px-2 py-0.5 rounded-full font-semibold'}>
             {CATEGORY_LABELS[prompt.category]}
           </span>
         </div>
       </div>
       <div className="flex items-center gap-3 shrink-0">
         <div className="w-16 bg-neutral-100 rounded-full h-1.5 overflow-hidden">
-          <div
-            className="h-full rounded-full"
-            style={{
-              width: `${rate}%`,
-              background: 'linear-gradient(to right, #217CEB, #4A42CC)',
-            }}
-          />
+          <svg className="w-full h-full" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden>
+            <defs>
+              <linearGradient id={`grad-${prompt.id}`} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#217CEB" />
+                <stop offset="100%" stopColor="#4A42CC" />
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width={Math.max(0, Math.min(100, rate))} height="10" rx="6" fill={`url(#grad-${prompt.id})`} />
+          </svg>
         </div>
         <span className="text-xs font-semibold text-neutral-600 w-8 text-right">{rate}%</span>
         <ChevronRight size={14} className="text-neutral-300 group-hover:text-blue-500 transition-colors" />
@@ -262,8 +266,7 @@ function DrillDownModal({ prompt, onClose }: { prompt: any; onClose: () => void 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.45)' }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
@@ -272,8 +275,9 @@ function DrillDownModal({ prompt, onClose }: { prompt: any; onClose: () => void 
           <div>
             <div className="text-sm font-semibold text-neutral-900">{prompt.prompt_text}</div>
             <span
-              className="text-[10px] px-2 py-0.5 rounded-full font-semibold mt-1 inline-block"
-              style={{ background: CATEGORY_COLORS[prompt.category] + '18', color: CATEGORY_COLORS[prompt.category] }}
+              className={`text-[10px] px-2 py-0.5 rounded-full font-semibold mt-1 inline-block ${
+                prompt.category === 'informational' ? 'bg-blue-50 text-[#217CEB]' : prompt.category === 'commercial' ? 'bg-purple-50 text-[#4A42CC]' : 'bg-amber-50 text-[#F59E0B]'
+              }`}
             >
               {CATEGORY_LABELS[prompt.category]}
             </span>
@@ -344,8 +348,7 @@ function AddPromptModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: an
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.4)' }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
@@ -371,11 +374,11 @@ function AddPromptModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: an
                 <button
                   key={cat}
                   onClick={() => setCategory(cat)}
-                  className="flex-1 py-2 text-xs font-semibold rounded-lg border transition-all"
-                  style={category === cat
-                    ? { background: CATEGORY_COLORS[cat] + '18', color: CATEGORY_COLORS[cat], borderColor: CATEGORY_COLORS[cat] }
-                    : { background: 'white', color: '#9CA3AF', borderColor: '#E5E7EB' }
-                  }
+                  className={`flex-1 py-2 text-xs font-semibold rounded-lg border transition-all ${
+                    category === cat
+                      ? (cat === 'informational' ? 'bg-blue-50 text-[#217CEB] border-[#217CEB]' : cat === 'commercial' ? 'bg-purple-50 text-[#4A42CC] border-[#4A42CC]' : 'bg-amber-50 text-[#F59E0B] border-[#F59E0B]')
+                      : 'bg-white text-[#9CA3AF] border-neutral-200'
+                  }`}
                 >
                   {CATEGORY_LABELS[cat]}
                 </button>
@@ -389,8 +392,7 @@ function AddPromptModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: an
           </button>
           <button
             onClick={() => { if (text.trim()) { onAdd({ promptText: text, category }); onClose() } }}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white"
-            style={{ background: 'linear-gradient(to right, #217CEB, #4A42CC)' }}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#217CEB] to-[#4A42CC]"
           >
             Add prompt
           </button>
@@ -454,8 +456,7 @@ export default function LlmVisibilityPage() {
             </button>
             <button
               onClick={() => setShowAddPrompt(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white"
-              style={{ background: 'linear-gradient(to right, #217CEB, #4A42CC)' }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#217CEB] to-[#4A42CC]"
             >
               <Plus size={14} />Add prompt
             </button>
@@ -499,7 +500,6 @@ export default function LlmVisibilityPage() {
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9CA3AF' }} tickLine={false} axisLine={false} interval={6} />
                   <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
                   <Tooltip
-                    contentStyle={{ background: 'white', border: '0.5px solid #E5E7EB', borderRadius: '8px', fontSize: '12px' }}
                     formatter={(v: any) => [`${Number(v).toFixed(1)}%`, 'Visibility']}
                   />
                   <Area type="monotone" dataKey="score" stroke="#217CEB" strokeWidth={2} fill="url(#visGrad)" dot={false} />
@@ -515,19 +515,13 @@ export default function LlmVisibilityPage() {
                   {(snap.total_volume / 1000000).toFixed(1)}m
                 </div>
                 <div className="w-full bg-neutral-100 h-1 rounded-full mt-1">
-                  <div className="h-full bg-blue-400 rounded-full" style={{ width: '72%' }} />
+                  <div className="h-full bg-blue-400 rounded-full w-[72%]" />
                 </div>
               </div>
               <div>
                 <div className="text-xs text-neutral-400 mb-0.5">Frequency</div>
                 <div className="text-sm font-bold text-neutral-800 mt-1">
-                  <span
-                    className="px-2 py-1 rounded-lg text-xs font-semibold"
-                    style={{
-                      background: snap.frequency_label === 'FREQUENT' ? '#D1FAE5' : '#FEF3C7',
-                      color: snap.frequency_label === 'FREQUENT' ? '#065F46' : '#92400E',
-                    }}
-                  >
+                  <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${snap.frequency_label === 'FREQUENT' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
                     {snap.frequency_label}
                   </span>
                 </div>
@@ -582,8 +576,7 @@ export default function LlmVisibilityPage() {
               </button>
               <button
                 onClick={() => setShowAddPrompt(true)}
-                className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg text-white font-medium"
-                style={{ background: 'linear-gradient(to right, #217CEB, #4A42CC)' }}
+                className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg text-white font-medium bg-gradient-to-r from-[#217CEB] to-[#4A42CC]"
               >
                 <Plus size={12} />Add prompt
               </button>

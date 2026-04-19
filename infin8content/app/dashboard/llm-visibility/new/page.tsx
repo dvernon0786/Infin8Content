@@ -122,7 +122,9 @@ function Step1Brand({ onNext, data }: StepProps) {
                   : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'
               }`}
             >
-              <div className="w-3 h-3 rounded-full" style={{ background: m.color }} />
+              <svg className="w-3 h-3 shrink-0" viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="4" cy="4" r="4" fill={m.color} />
+              </svg>
               {m.label}
               {selectedModels.includes(m.id) && <CheckCircle2 size={14} className="ml-auto text-blue-500" />}
             </button>
@@ -133,8 +135,7 @@ function Step1Brand({ onNext, data }: StepProps) {
       <button
         onClick={() => onNext({ brandName, websiteUrl, brandAliases: aliases, businessDescription: desc, models: selectedModels })}
         disabled={!isValid}
-        className="w-full py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-40"
-        style={{ background: 'linear-gradient(to right, #217CEB, #4A42CC)' }}
+        className="w-full py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-40 bg-gradient-to-r from-[#217CEB] to-[#4A42CC]"
       >
         Continue <ArrowRight size={14} />
       </button>
@@ -208,8 +209,7 @@ function Step2Competitors({ onNext, onBack, data }: StepProps) {
         </button>
         <button
           onClick={() => onNext({ competitors })}
-          className="flex-1 py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(to right, #217CEB, #4A42CC)' }}
+          className="flex-1 py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 bg-gradient-to-r from-[#217CEB] to-[#4A42CC]"
         >
           Continue <ArrowRight size={14} />
         </button>
@@ -252,8 +252,7 @@ function Step3Confirm({ onNext, onBack, data }: StepProps) {
         <button
           onClick={handleActivate}
           disabled={loading}
-          className="flex-1 py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(to right, #217CEB, #4A42CC)' }}
+          className="flex-1 py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 bg-gradient-to-r from-[#217CEB] to-[#4A42CC]"
         >
           {loading ? <><Loader2 size={14} className="animate-spin" />Activating…</> : <>Activate tracking <ArrowRight size={14} /></>}
         </button>
@@ -286,9 +285,8 @@ export default function NewVisibilityProjectPage() {
               <div className="flex items-center gap-2">
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                    i <= step ? 'text-white' : 'bg-neutral-200 text-neutral-400'
+                    i <= step ? 'bg-gradient-to-r from-[#217CEB] to-[#4A42CC] text-white' : 'bg-neutral-200 text-neutral-400'
                   }`}
-                  style={i <= step ? { background: 'linear-gradient(to right, #217CEB, #4A42CC)' } : {}}
                 >
                   {i < step ? <CheckCircle2 size={12} /> : i + 1}
                 </div>
