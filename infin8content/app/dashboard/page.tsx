@@ -41,13 +41,7 @@ export default async function DashboardPage() {
   const hasWorkflow = (workflows ?? []).length > 0
   const hasCompletedArticle = (rawArticles ?? []).some((a) => a.status === 'completed')
 
-  // ----- Trial checklist flags -----
-  let hasWorkflow = false
-  let hasCompletedArticle = false
-  if (isTrial) {
-    hasWorkflow = workflows.length > 0
-    hasCompletedArticle = (rawArticles ?? []).some((a) => a.status === 'completed')
-  }
+  // (flags computed above) TrialChecklist will receive `hasWorkflow` and `hasCompletedArticle`.
 
   // ----- Summary for ActiveServicesCard -----
   // Build lightweight WorkflowDashboardItem list (only fields calculateSummary needs)
