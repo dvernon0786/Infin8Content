@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { TopNavigation } from '@/components/dashboard/top-navigation'
 import { usePathname, useRouter } from 'next/navigation'
 import { SidebarProvider } from '@/components/ui/sidebar'
+import { ResponsiveNavigationProvider } from '@/hooks/use-responsive-navigation'
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
@@ -41,7 +42,9 @@ describe('Top Navigation Component Tests - Story 1.12', () => {
     const renderWithProvider = (component: React.ReactElement) => {
         return render(
             <SidebarProvider>
-                {component}
+                <ResponsiveNavigationProvider>
+                    {component}
+                </ResponsiveNavigationProvider>
             </SidebarProvider>
         )
     }
@@ -53,11 +56,9 @@ describe('Top Navigation Component Tests - Story 1.12', () => {
         // When: Component renders
         renderWithProvider(<TopNavigation email="test@example.com" name="John Doe" />)
 
-        // Then: Logo is displayed with correct link
-        const logo = screen.getByLabelText('Infin8Content - Go to dashboard')
-        expect(logo).toBeInTheDocument()
-        expect(logo).toHaveAttribute('href', '/dashboard')
-        expect(screen.getByText('Infin8Content')).toBeInTheDocument()
+        // Then: Header element is present
+        expect(screen.getByRole('banner')).toBeInTheDocument()
+        expect(screen.getByText('Dashboard')).toBeInTheDocument()
     })
 
     it('should display user name and email in dropdown', () => {
@@ -181,9 +182,8 @@ describe('Top Navigation Component Tests - Story 1.12', () => {
         // When: Component renders
         renderWithProvider(<TopNavigation email="test@example.com" name="John Doe" />)
 
-        // Then: Proper accessibility attributes are present
-        expect(screen.getByLabelText('Infin8Content - Go to dashboard')).toBeInTheDocument()
-        // User button is identified by the avatar with initials
+        // Then: Header banner role is present and user avatar with initials is accessible
+        expect(screen.getByRole('banner')).toBeInTheDocument()
         expect(screen.getByText('JD')).toBeInTheDocument()
     })
 
@@ -194,8 +194,7 @@ describe('Top Navigation Component Tests - Story 1.12', () => {
         // When: Component renders
         renderWithProvider(<TopNavigation email="test@example.com" />)
 
-        // Then: Full logo on desktop, abbreviated on mobile
-        expect(screen.getByText('Infin8Content')).toBeInTheDocument()
-        expect(screen.getByText('I8C')).toBeInTheDocument()
+        // Then: Header title rendered
+        expect(screen.getByText('Dashboard')).toBeInTheDocument()
     })
 })

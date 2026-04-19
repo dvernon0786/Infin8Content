@@ -182,9 +182,6 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
     }
   }
 
-  const handleSkip = () => {
-    onSkip?.()
-  }
 
   const isFormValid = () => {
     // Website URL validation (optional)
@@ -268,7 +265,7 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
                   value={formData.business_description}
                   onChange={(e) => handleInputChange('business_description', e.target.value)}
                   className={cn(
-                    "w-full min-h-[80px] rounded-md border bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+                    "w-full min-h-20 rounded-md border bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
                     errors.business_description && "border-destructive"
                   )}
                   aria-describedby={errors.business_description ? "business_description-error" : "business_description-help"}
@@ -354,16 +351,6 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
                 className="flex-1"
               >
                 {isSubmitting ? "Saving..." : "Next Step"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="default"
-                onClick={handleSkip}
-                disabled={isSubmitting}
-                className="flex-1 sm:flex-initial"
-              >
-                Skip & Add Later
               </Button>
             </div>
           </form>

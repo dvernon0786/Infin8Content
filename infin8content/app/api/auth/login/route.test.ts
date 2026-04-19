@@ -7,11 +7,14 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { POST } from './route'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { validateSupabaseEnv } from '@/lib/supabase/env'
 
 // Mock dependencies
-vi.mock('@/lib/supabase/server')
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(),
+  createServiceRoleClient: vi.fn(),
+}))
 vi.mock('@/lib/supabase/env')
 
 describe('POST /api/auth/login', () => {
@@ -30,6 +33,7 @@ describe('POST /api/auth/login', () => {
     }
     
     vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
+    vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
     vi.mocked(validateSupabaseEnv).mockReturnValue(undefined)
   })
 

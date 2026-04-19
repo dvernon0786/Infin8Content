@@ -7,13 +7,16 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { POST } from './route'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { validateBrevoEnv } from '@/lib/supabase/env'
 import { generateOTP, storeOTPCode } from '@/lib/services/otp'
 import { sendOTPEmail } from '@/lib/services/brevo'
 
 // Mock dependencies
-vi.mock('@/lib/supabase/server')
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(),
+  createServiceRoleClient: vi.fn(),
+}))
 vi.mock('@/lib/supabase/env')
 vi.mock('@/lib/services/otp')
 vi.mock('@/lib/services/brevo')
@@ -29,11 +32,15 @@ describe('POST /api/auth/register', () => {
     mockSupabase = {
       auth: {
         signUp: vi.fn(),
+        admin: {
+          deleteUser: vi.fn().mockResolvedValue({ error: null }),
+        },
       },
       from: vi.fn(),
     }
     
     vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
+    vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
     vi.mocked(validateBrevoEnv).mockReturnValue('mock-api-key')
     vi.mocked(generateOTP).mockReturnValue('123456')
     vi.mocked(storeOTPCode).mockResolvedValue(undefined)
@@ -136,7 +143,7 @@ describe('POST /api/auth/register', () => {
       })
 
       mockSupabase.from.mockReturnValue({
-        insert: vi.fn().mockReturnValue({
+        upsert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
               data: mockUserRecord,
@@ -238,7 +245,7 @@ describe('POST /api/auth/register', () => {
       })
 
       mockSupabase.from.mockReturnValue({
-        insert: vi.fn().mockReturnValue({
+        upsert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
               data: null,
@@ -284,7 +291,7 @@ describe('POST /api/auth/register', () => {
       })
 
       mockSupabase.from.mockReturnValue({
-        insert: vi.fn().mockReturnValue({
+        upsert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
               data: mockUserRecord,

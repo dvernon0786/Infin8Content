@@ -147,9 +147,6 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
     }
   }
 
-  const handleSkip = () => {
-    console.warn('Skip not implemented - all steps required for System Law compliance')
-  }
 
   const validCompetitorsCount = competitors.filter(c => c.url.trim()).length
   const isFormValid = validCompetitorsCount >= 1 && validCompetitorsCount <= 7
@@ -211,7 +208,7 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
                       variant="outline"
                       size="icon"
                       onClick={() => removeCompetitor(index)}
-                      className="flex-shrink-0"
+                      className="shrink-0"
                     >
                       ×
                     </Button>
@@ -255,16 +252,6 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
                 className="flex-1"
               >
                 {isSubmitting ? "Saving..." : "Next Step"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="default"
-                onClick={handleSkip}
-                disabled={isSubmitting}
-                className="flex-1 sm:flex-initial"
-              >
-                Skip & Add Later
               </Button>
             </div>
           </form>

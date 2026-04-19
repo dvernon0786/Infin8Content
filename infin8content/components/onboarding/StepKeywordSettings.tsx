@@ -239,16 +239,6 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
               >
                 {isSubmitting ? "Saving..." : "Next Step"}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="default"
-                onClick={handleSkip}
-                disabled={isSubmitting}
-                className="flex-1 sm:flex-initial"
-              >
-                Skip & Add Later
-              </Button>
             </div>
           </form>
         </CardContent>

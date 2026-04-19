@@ -218,11 +218,10 @@ export async function queueArticlesForWorkflow(
   }
 
   const finalState: WorkflowState = workflow.state as WorkflowState
-  let message: string
 
   // QUEUE LAYER: Only responsible for queuing articles, NOT completing workflow
   // Terminal completion is driven by the article generation pipeline via ProgressService
-  message = `Queued ${queuedCount} of ${keywords.length} articles (${keywords.length - queuedCount} failed)`
+  const message = `Queued ${queuedCount} of ${keywords.length} articles (${keywords.length - queuedCount} failed)`
 
   // Log audit action
   await logIntentAction({
