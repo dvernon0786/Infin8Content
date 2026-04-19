@@ -36,42 +36,10 @@ export default async function DashboardPage() {
 
   const isTrial = (user.organizations?.plan || user.organizations?.plan_type)?.toLowerCase() === 'trial'
 
-  // ----- No-workflow empty state -----
-  if (!workflows || workflows.length === 0) {
-    if (isTrial) {
-      return (
-        <div className="space-y-6 mx-auto max-w-xl py-20">
-          <TrialChecklist hasWorkflow={false} hasCompletedArticle={false} />
-          <div className="text-center">
-            <h1 className="text-2xl font-semibold">Your $1 trial is active ✨</h1>
-            <p className="mt-2 text-muted-foreground">
-              Experience the power of Infin8Content. You can generate one complete, full-length article during your trial to see the quality of our AI engine.
-            </p>
-            <Link
-              href="/dashboard/workflows/new"
-              className="inline-block mt-6 rounded-md bg-primary px-6 py-3 text-white"
-            >
-              Generate your first article
-            </Link>
-          </div>
-        </div>
-      )
-    }
-    return (
-      <div className="mx-auto max-w-xl py-20 text-center">
-        <h1 className="text-2xl font-semibold">You're all set 🎉</h1>
-        <p className="mt-2 text-muted-foreground">
-          Your workspace is ready. Create your first workflow to start generating content automatically.
-        </p>
-        <Link
-          href="/dashboard/workflows/new"
-          className="inline-block mt-6 rounded-md bg-primary px-6 py-3 text-white"
-        >
-          Create your first workflow
-        </Link>
-      </div>
-    )
-  }
+  // Show the dashboard UI regardless of whether workflows exist.
+  // TrialChecklist will render as a collapsible banner when appropriate.
+  const hasWorkflow = (workflows ?? []).length > 0
+  const hasCompletedArticle = (rawArticles ?? []).some((a) => a.status === 'completed')
 
   // ----- Trial checklist flags -----
   let hasWorkflow = false
