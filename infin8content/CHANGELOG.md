@@ -2,6 +2,12 @@
 
 All notable changes to the Infin8Content platform will be documented in this file.
 
+## [Unreleased] - 2026-04-20
+
+### Fixed
+- **feature-flags:** Add short in-memory caching and `getFeatureFlagsForOrg()` batch fetch to reduce Supabase round-trips during server render; lower missing-flag log level to `info` to avoid noisy warnings. See branch `test-main-all` (commit `58ac8eab`).
+
+
 ## [2.6.0] - 2026-04-16
 
 ### Added

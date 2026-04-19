@@ -201,3 +201,7 @@ types/
 - **Services:** onboarding success tracker and onboarding email functions (Brevo) with Inngest sequence registered
 - **Safety:** Additive schema changes; RLS and feature flags enforce safe rollout and rollback
 
+### 2026-04-20: Feature-Flag Performance Improvement
+
+- Implemented short in-memory caching for feature flag lookups and a batch-fetch API (`getFeatureFlagsForOrg`) to reduce round-trips during server-rendered pages (dashboard). Missing flags still default to enabled; logging for absent flags lowered to `info` to avoid excessive warnings. See branch `test-main-all` (commit `58ac8eab`).
+

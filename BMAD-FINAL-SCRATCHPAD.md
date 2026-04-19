@@ -279,10 +279,18 @@ Next immediate steps:
 ---
 
 ## 2026-04-20 — LLM Brand Visibility Tracker (implementation notes)
-
 - **Status:** Implementation complete in code; DB migration present but NOT APPLIED in Supabase (manual step required).
 - **Files added/modified:**
-  - infin8content/supabase/migrations/20260419000000_add_llm_visibility.sql (migration)
+
+---
+
+### 2026-04-20 — Feature-Flag & Dashboard Performance Fix
+
+- **Status:** Implemented and pushed to `test-main-all` (commit `58ac8eab`). Local `tsc --noEmit` and `next build` completed successfully.
+- **Files changed:** `lib/utils/feature-flags.ts` (cache + batch fetch + lowered missing-flag log level), `app/dashboard/layout.tsx` (batch flag fetch usage).
+- **Why:** Reduce noisy warning logs when flags are absent and cut duplicate Supabase round-trips during server-render of the dashboard. Missing flags still default to enabled (preserve safe fail-open behavior).
+- **Notes:** Added `getFeatureFlagsForOrg()` for single-query flag retrieval and a short in-memory TTL cache. Follow-up: remove temporary inline styles on dashboard to satisfy design-system CI.
+
   - infin8content/lib/services/llm-visibility/visibility-engine.ts (new)
   - infin8content/lib/services/llm-visibility/prompt-suggester.ts (new)
   - infin8content/lib/inngest/functions/llm-visibility-tracker.ts (new)
