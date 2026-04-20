@@ -1,6 +1,7 @@
 {
   "extends": "./infin8content/tsconfig.json",
   "compilerOptions": {
+    "rootDir": ".",
     "skipLibCheck": true,
     "paths": {
       "@/*": ["./*"],
