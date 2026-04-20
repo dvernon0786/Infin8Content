@@ -13,10 +13,11 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-const DATAFORSEO_API = 'https://api.dataforseo.com/v3'
 const CRAWL_CACHE_TTL_DAYS = 30
-const MAX_POLL_ATTEMPTS = 12
-const POLL_INTERVAL_MS = 5000
+const SITEMAP_PATHS = ['/sitemap.xml', '/sitemap_index.xml', '/sitemap/sitemap.xml', '/page-sitemap.xml', '/post-sitemap.xml']
+const MAX_PAGES = 200
+const FETCH_TIMEOUT_MS = 8_000
+const PAGE_CONCURRENCY = 10 // fetch titles in parallel batches
 const WORDS_PER_LINK = 300 // SEO best practice: 1 internal link per 300 words
 
 /**
@@ -151,10 +152,8 @@ async function buildLinkMap(
   currentArticleId: string,
   supabase: SupabaseClient
 ): Promise<LinkEntry[]> {
-  const [dbLinks, settings] = await Promise.all([
-    getDBArticleLinks(orgId, currentArticleId, supabase),
-    getOrgSettings(orgId, supabase),
-  ])
+  const settings = await getOrgSettings(orgId, supabase)
+  const dbLinks = await getDBArticleLinks(orgId, currentArticleId, supabase, settings)
 
   const manualLinks: LinkEntry[] = ((settings?.manual_link_map as any[]) || []).map((l: any) => ({
     ...l,
@@ -175,7 +174,8 @@ async function buildLinkMap(
 async function getDBArticleLinks(
   orgId: string,
   currentArticleId: string,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  orgSettings: any
 ): Promise<LinkEntry[]> {
   const { data } = await supabase
     .from('articles')
@@ -190,13 +190,15 @@ async function getDBArticleLinks(
 
   if (!data) return []
 
+  const baseUrl = (orgSettings?.website_url || '').replace(/\/$/, '')
+
   return data.map((a: any) => {
     const canonicalUrl =
       a?.publish_references && typeof a.publish_references === 'object'
         ? (a.publish_references as any).platform_url
         : undefined
     return {
-      url: canonicalUrl || `/blog/${a.slug}`,
+      url: canonicalUrl || (baseUrl ? `${baseUrl}/blog/${a.slug}` : `/blog/${a.slug}`),
       anchor_text: a.keyword,
       title: a.title,
       source: 'db' as const,
@@ -242,7 +244,7 @@ function injectLinksIntoSection(params: {
         `(?!(?:[^<]|<(?!/?a\\b))*?<\\/a>)\\b(${escapeRegex(link.anchor_text)})\\b`,
         'i'
       )
-      html = html.replace(htmlRegex, `<a href="${link.url}" title="${link.title}">$1</a>`)
+      html = html.replace(htmlRegex, `<a href="${escapeHtmlAttr(link.url)}" title="${escapeHtmlAttr(link.title)}">$1</a>`)
 
       usedAnchors.add(anchor)
       injected++
@@ -252,12 +254,12 @@ function injectLinksIntoSection(params: {
   return { markdown, html, injected }
 }
 
-// ─── DataForSEO On-Page Crawl ──────────────────────────────────────────────────
+// ─── Sitemap Crawler (replaces DataForSEO) ────────────────────────────────────
 
 /**
- * Full DataForSEO On-Page crawl — caches results in organizations.settings.
- * Called ONLY by the separate `website/crawl.links` Inngest function.
- * Cost: ~$0.000125/page (Basic mode). 200-page site ≈ $0.025.
+ * Crawl a website via its sitemap and cache the link map in organizations.settings.
+ * Called ONLY by the `website/crawl.links` Inngest function — never during article generation.
+ * Free, no API key, no polling. Works for any site that publishes a sitemap.
  */
 export async function crawlAndCacheWebsiteLinks(params: {
   websiteUrl: string
@@ -265,17 +267,10 @@ export async function crawlAndCacheWebsiteLinks(params: {
   supabase: SupabaseClient
 }): Promise<{ success: boolean; pagesFound: number }> {
   const { websiteUrl, orgId, supabase } = params
-  const auth = getDataForSEOAuth()
 
-  if (!auth) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('[InternalLinking] DATAFORSEO_LOGIN/PASSWORD are not set — crawl cannot run. Set the env vars and retry.')
-    }
-    console.warn('[InternalLinking] DATAFORSEO_LOGIN/PASSWORD not set, skipping crawl.')
-    return { success: false, pagesFound: 0 }
-  }
+  const base = websiteUrl.replace(/\/$/, '')
 
-  // Short-circuit: skip a new crawl when the cache is still fresh for this URL
+  // ── Short-circuit: skip if cache is still fresh ───────────────────────────
   const existingSettings = await getOrgSettings(orgId, supabase)
   if (existingSettings?.crawled_at && existingSettings?.website_url === websiteUrl) {
     const ageInDays = (Date.now() - new Date(existingSettings.crawled_at).getTime()) / 86_400_000
@@ -287,71 +282,48 @@ export async function crawlAndCacheWebsiteLinks(params: {
   }
 
   try {
-    // 1. POST crawl task
-    const taskRes = await fetch(`${DATAFORSEO_API}/on_page/task_post`, {
-      method: 'POST',
-      headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify([{
-        target: websiteUrl,
-        max_crawl_pages: 200,
-        load_resources: false,
-        enable_javascript: false,
-        store_raw_html: false,
-        check_spell: false,
-        crawl_delay: 500,
-      }]),
-    })
-
-    const taskData = await taskRes.json()
-    const taskId = taskData?.tasks?.[0]?.id
-    if (!taskId) throw new Error(`task_post failed: ${JSON.stringify(taskData)}`)
-
-    console.log(`[InternalLinking] Crawl task started: ${taskId}`)
-
-    // 2. Poll for completion
-    let crawlFinished = false
-    for (let i = 0; i < MAX_POLL_ATTEMPTS; i++) {
-      await sleep(POLL_INTERVAL_MS)
-
-      const summaryRes = await fetch(`${DATAFORSEO_API}/on_page/summary/${taskId}`, {
-        headers: { Authorization: `Basic ${auth}` },
-      })
-      const summaryData = await summaryRes.json()
-      const progress = summaryData?.tasks?.[0]?.result?.[0]?.crawl_progress
-
-      console.log(`[InternalLinking] Crawl progress: ${progress} (${i + 1}/${MAX_POLL_ATTEMPTS})`)
-      if (progress === 'finished') { crawlFinished = true; break }
-    }
-
-    if (!crawlFinished) {
-      console.warn('[InternalLinking] Crawl timed out, will retry next generation.')
+    // ── 1. Discover sitemap ───────────────────────────────────────────────────
+    const sitemapXml = await fetchSitemap(base)
+    if (!sitemapXml) {
+      console.warn(`[InternalLinking] No sitemap found for ${base} — crawl skipped.`)
       return { success: false, pagesFound: 0 }
     }
 
-    // 3. Fetch pages
-    const pagesRes = await fetch(`${DATAFORSEO_API}/on_page/pages`, {
-      method: 'POST',
-      headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify([{
-        id: taskId,
-        limit: 200,
-        filters: [['resource_type', '=', 'html'], ['status_code', '=', 200]],
-      }]),
-    })
-    const pagesData = await pagesRes.json()
-    const pages: any[] = pagesData?.tasks?.[0]?.result?.[0]?.items || []
+    // ── 2. Parse URLs from sitemap (handles sitemap index recursion) ──────────
+    const urls = (await parseSitemapUrls(sitemapXml, base)).slice(0, MAX_PAGES)
+    console.log(`[InternalLinking] Sitemap: ${urls.length} URLs found for ${base}`)
 
-    const links: LinkEntry[] = pages
-      .filter((p: any) => p.url && p.meta?.title)
-      .map((p: any) => ({
-        url: p.url,
-        anchor_text: extractKeywordFromUrl(p.url) || p.meta?.title || '',
-        title: p.meta?.title || '',
-        source: 'crawl' as const,
-      }))
-      .filter((l) => l.anchor_text.length > 3)
+    if (urls.length === 0) {
+      return { success: false, pagesFound: 0 }
+    }
 
-    // 4. Cache in organizations.settings (merge, don't overwrite)
+    // ── 3. Fetch page titles in parallel batches ───────────────────────────────
+    const links: LinkEntry[] = []
+
+    for (let i = 0; i < urls.length; i += PAGE_CONCURRENCY) {
+      const batch = urls.slice(i, i + PAGE_CONCURRENCY)
+      const results = await Promise.allSettled(batch.map(fetchPageTitle))
+
+      for (let j = 0; j < results.length; j++) {
+        const result = results[j]
+        const url = batch[j]
+
+        if (result.status === 'fulfilled' && result.value) {
+          const { title } = result.value
+          const anchorText = extractKeywordFromUrl(url) || title
+          if (anchorText.length > 3) {
+            links.push({
+              url,
+              anchor_text: anchorText,
+              title,
+              source: 'crawl',
+            })
+          }
+        }
+      }
+    }
+
+    // ── 4. Cache in organizations.settings ────────────────────────────────────
     const { data: orgData } = await supabase
       .from('organizations')
       .select('settings')
@@ -370,12 +342,153 @@ export async function crawlAndCacheWebsiteLinks(params: {
       .update({ settings: updatedSettings })
       .eq('id', orgId)
 
-    console.log(`[InternalLinking] ✅ Crawl cached: ${links.length} pages for org ${orgId}`)
+    console.log(`[InternalLinking] ✅ Sitemap crawl cached: ${links.length} pages for org ${orgId}`)
     return { success: true, pagesFound: links.length }
 
   } catch (err) {
-    console.error('[InternalLinking] Crawl error:', err)
+    console.error('[InternalLinking] Sitemap crawl error:', err)
     return { success: false, pagesFound: 0 }
+  }
+}
+
+// ─── Sitemap Helpers ──────────────────────────────────────────────────────────
+
+/**
+ * Try each known sitemap path in order, return the first XML response found.
+ * Also checks robots.txt for a Sitemap: directive as a final fallback.
+ */
+async function fetchSitemap(base: string): Promise<string | null> {
+  // Try standard paths first
+  for (const path of SITEMAP_PATHS) {
+    try {
+      const res = await fetch(`${base}${path}`, {
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        headers: { 'User-Agent': 'Infin8Content-LinkCrawler/1.0' },
+      })
+      if (res.ok) {
+        const text = await res.text()
+        if (text.includes('<urlset') || text.includes('<sitemapindex')) {
+          return text
+        }
+      }
+    } catch {
+      // try next path
+    }
+  }
+
+  // Fallback: check robots.txt for Sitemap: directive
+  try {
+    const robotsRes = await fetch(`${base}/robots.txt`, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      headers: { 'User-Agent': 'Infin8Content-LinkCrawler/1.0' },
+    })
+    if (robotsRes.ok) {
+      const robotsTxt = await robotsRes.text()
+      const match = robotsTxt.match(/^Sitemap:\s*(.+)$/im)
+      if (match?.[1]) {
+        const sitemapUrl = match[1].trim()
+        const sitemapRes = await fetch(sitemapUrl, {
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+          headers: { 'User-Agent': 'Infin8Content-LinkCrawler/1.0' },
+        })
+        if (sitemapRes.ok) {
+          const text = await sitemapRes.text()
+          if (text.includes('<urlset') || text.includes('<sitemapindex')) {
+            return text
+          }
+        }
+      }
+    }
+  } catch {
+    // robots.txt not found or unreadable
+  }
+
+  return null
+}
+
+/**
+ * Parse <loc> URLs from a sitemap or sitemap index.
+ * For sitemap indexes: fetches each child sitemap and collects all URLs.
+ * Filters to HTML-likely URLs only (excludes images, feeds, etc.).
+ */
+async function parseSitemapUrls(xml: string, base: string): Promise<string[]> {
+  // Sitemap index — fetch child sitemaps recursively
+  if (xml.includes('<sitemapindex')) {
+    const childUrls: string[] = []
+    const locMatches = xml.matchAll(/<loc>\s*([^<]+)\s*<\/loc>/gi)
+    for (const match of locMatches) {
+      const childUrl = match[1].trim().replace(/&amp;/g, '&')
+      if (!childUrl.startsWith('http')) continue
+      try {
+        const res = await fetch(childUrl, {
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+          headers: { 'User-Agent': 'Infin8Content-LinkCrawler/1.0' },
+        })
+        if (res.ok) {
+          const childXml = await res.text()
+          const childPages = parseUrlset(childXml)
+          childUrls.push(...childPages)
+          if (childUrls.length >= MAX_PAGES) break
+        }
+      } catch { /* skip failed child */ }
+    }
+    return [...new Set(childUrls)]
+  }
+  return parseUrlset(xml)
+}
+
+function parseUrlset(xml: string): string[] {
+  const urls: string[] = []
+  const locMatches = xml.matchAll(/<loc>\s*([^<]+)\s*<\/loc>/gi)
+  for (const match of locMatches) {
+    const url = match[1].trim()
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+    if (/\.(jpg|jpeg|png|gif|webp|svg|pdf|xml|json|css|js)(\?|$)/i.test(url)) continue
+    if (/\/(tag|tags|category|categories|page\/\d+|feed)\//i.test(url)) continue
+    if (!url.startsWith('http')) continue
+    urls.push(url)
+  }
+  return [...new Set(urls)]
+}
+
+/**
+ * Fetch a single page and extract its title from <title> or og:title.
+ * Returns null on any failure — callers handle this gracefully.
+ */
+async function fetchPageTitle(url: string): Promise<{ title: string } | null> {
+  try {
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      headers: {
+        'User-Agent': 'Infin8Content-LinkCrawler/1.0',
+        // Range header removed for compatibility
+      },
+    })
+
+    if (!res.ok) return null
+
+    const html = await res.text()
+
+    // og:title takes priority (usually cleaner, no site suffix)
+    const ogTitle = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)?.[1]
+      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i)?.[1]
+
+    if (ogTitle?.trim()) return { title: ogTitle.trim() }
+
+    // Fall back to <title> tag, strip common suffixes like " | Site Name"
+    const titleTag = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]
+    if (titleTag) {
+      const cleaned = titleTag
+        .replace(/\s*[|\-–—]\s*.{1,60}$/, '') // strip "| Site Name" suffix
+        .trim()
+      if (cleaned.length > 3) return { title: cleaned }
+    }
+
+    return null
+  } catch {
+    return null
   }
 }
 
@@ -450,13 +563,3 @@ function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-function getDataForSEOAuth(): string | null {
-  const login = process.env.DATAFORSEO_LOGIN
-  const password = process.env.DATAFORSEO_PASSWORD
-  if (!login || !password) return null
-  return Buffer.from(`${login}:${password}`).toString('base64')
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms))
-}
