@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import ArticleEditClient from './ArticleEditClient'
+import ArticleEditClient from '../ArticleEditClient'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 
