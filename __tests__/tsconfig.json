@@ -1,5 +1,5 @@
 {
-  "extends": "../infin8content/tsconfig.json",
+  "extends": "../tsconfig.json",
   "compilerOptions": {
     "ignoreDeprecations": "6.0",
     "baseUrl": "../infin8content",
