@@ -546,7 +546,13 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
   const saveMeta = useCallback(async () => {
     setSaveStatus('saving')
     try {
-      const current = article.workflow_state || {}
+      const { data } = await supabase
+        .from('articles')
+        .select('workflow_state')
+        .eq('id', article.id)
+        .single()
+
+      const current = data?.workflow_state || {}
       await supabase
         .from('articles')
         .update({
@@ -566,7 +572,7 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
     } catch {
       setSaveStatus('error')
     }
-  }, [article.id, article.workflow_state, focusKeyword, metaDescription, featuredImageUrl, featuredImageAlt, tags, supabase])
+  }, [article.id, focusKeyword, metaDescription, featuredImageUrl, featuredImageAlt, tags, supabase])
 
   const debouncedMeta = useDebounce(saveMeta, 1500)
 
@@ -607,15 +613,15 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
 
           {/* Read-only notice */}
           {!isRevision && (
-            <div className="flex items-center gap-2.5 px-4 py-3 bg-neutral-100 border border-neutral-200 rounded-lg mb-6">
+            <div className="flex items-center gap-2.5 px-4 py-3 bg-blue-50 border border-blue-100 rounded-lg mb-6">
               <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
                 <Info className="w-3 h-3 text-white" />
               </div>
-              <p className="text-sm font-lato text-neutral-600">
+              <p className="text-sm font-lato text-blue-700">
                 This article is read-only.{' '}
                 <button
                   onClick={() => setViewMode('revision')}
-                  className="font-semibold text-neutral-800 underline underline-offset-2 hover:text-blue-600 transition-colors"
+                  className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-900 transition-colors"
                 >
                   Switch to revision to edit.
                 </button>

@@ -201,6 +201,19 @@ archived     - Removed from workflow
 
 ---
 
+## 2026-04-20 — Editor / Article Detail Fixes (applied locally, branch: test-main-all)
+
+- Added client-only editor: `app/dashboard/articles/[id]/ArticleEditClient.tsx` and converted `app/dashboard/articles/[id]/edit/page.tsx` into a server wrapper that mounts the client with serialized props.
+- Updated detail UI: `app/dashboard/articles/[id]/ArticleDetailClient.tsx` — read-only banner color changed to blue (info), meta-save now re-fetches `workflow_state` before merging to avoid stale merges.
+- Editor persistence: editor now saves both `content_markdown` and `content_html` for `article_sections` and updates local state after save.
+- Redirects: replaced `return null` flows in `edit/page.tsx` with `redirect('/login')` and `redirect('/dashboard/articles')` for auth/missing-article flows.
+- Security: guarded server Supabase client to avoid leaking service-role keys; RLS preserved via `.eq('org_id', currentUser.org_id)` checks.
+- Where to review: [app/dashboard/articles/[id]/ArticleEditClient.tsx](app/dashboard/articles/[id]/ArticleEditClient.tsx), [app/dashboard/articles/[id]/ArticleDetailClient.tsx](app/dashboard/articles/[id]/ArticleDetailClient.tsx), [app/dashboard/articles/[id]/edit/page.tsx](app/dashboard/articles/[id]/edit/page.tsx)
+
+Notes: Patches applied locally; next step is committing to `test-main-all` and opening a PR. Manual runtime QA recommended (dev server and browser validation for hydration/autosave behaviors).
+
+---
+
 ## Quick Git: Branch & PR commands
 
 Copy these commands to sync `test-main-all`, create a topic branch, commit, push, and open a PR:

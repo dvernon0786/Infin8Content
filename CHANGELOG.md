@@ -23,6 +23,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **PR:** https://github.com/dvernon0786/Infin8Content/pull/458
 
+## [Unreleased] - 2026-04-20
+
+### 🔧 CHANGED
+- Editor / Article Detail: moved to client editor pattern and fixed autosave/meta merge races
+   - Added `app/dashboard/articles/[id]/ArticleEditClient.tsx` (client-only editor mounted by server wrapper)
+   - Converted `app/dashboard/articles/[id]/edit/page.tsx` into a server wrapper that supplies serialized props and redirects on auth or missing article
+   - `app/dashboard/articles/[id]/ArticleDetailClient.tsx`: blue info banner for read-only mode; meta-save now re-fetches `workflow_state` before merging
+   - Editor saves now include `content_html` alongside `content_markdown`
+
+### 🐛 FIXED
+- Prevented service-role key leakage in server Supabase client; enforced RLS via `.eq('org_id', currentUser.org_id)` checks on article fetches
+
+
 ---
 
 ## [2.2.0] - 2026-03-09
