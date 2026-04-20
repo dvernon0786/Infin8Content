@@ -520,7 +520,7 @@ export default function ArticleEditPage() {
           <button
             onClick={saveMeta}
             disabled={saveStatus === 'saving'}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-lato text-white bg-gradient-to-r from-[#217CEB] to-[#4A42CC] rounded-md hover:opacity-95 disabled:opacity-50 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-lato text-white bg-linear-to-r from-[#217CEB] to-[#4A42CC] rounded-md hover:opacity-95 disabled:opacity-50 transition-all"
           >
             <Save className="w-3.5 h-3.5" />
             Save

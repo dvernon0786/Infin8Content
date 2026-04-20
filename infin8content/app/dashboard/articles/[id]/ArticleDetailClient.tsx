@@ -377,7 +377,7 @@ function FeaturedImagePanel({
           <div className="flex gap-2">
             <button
               onClick={() => { onChange(draftUrl, draftAlt); setEditing(false) }}
-              className="flex-1 py-1.5 text-xs font-semibold font-lato text-white rounded-md bg-gradient-to-r from-[#217CEB] to-[#4A42CC] hover:opacity-95"
+                className="flex-1 py-1.5 text-xs font-semibold font-lato text-white rounded-md bg-linear-to-r from-[#217CEB] to-[#4A42CC] hover:opacity-95"
             >
               Save Image
             </button>
@@ -765,7 +765,7 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-gradient-to-br from-[#217CEB] to-[#4A42CC]"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-linear-to-br from-[#217CEB] to-[#4A42CC]"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-white" />
                 </div>
@@ -803,7 +803,7 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
                 />
                 <div className="flex justify-end mt-2">
                   <button
-                    className="px-3 py-1.5 text-xs font-semibold font-lato text-white rounded-md bg-gradient-to-r from-[#217CEB] to-[#4A42CC] hover:opacity-95"
+                    className="px-3 py-1.5 text-xs font-semibold font-lato text-white rounded-md bg-linear-to-r from-[#217CEB] to-[#4A42CC] hover:opacity-95"
                   >
                     Apply
                   </button>

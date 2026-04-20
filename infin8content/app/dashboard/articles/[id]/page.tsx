@@ -107,7 +107,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
           {/* Edit button — visible for all statuses */}
           <Link
             href={`/dashboard/articles/${id}/edit`}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-lato text-white rounded-md transition-colors bg-gradient-to-r from-[#217CEB] to-[#4A42CC]"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-lato text-white rounded-md transition-colors bg-linear-to-r from-[#217CEB] to-[#4A42CC]"
           >
             <Edit2 className="w-3.5 h-3.5" />
             Edit
