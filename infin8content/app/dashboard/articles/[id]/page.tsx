@@ -37,7 +37,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
   const t0 = Date.now()
   const { data: article, error: articleError } = await supabase
     .from('articles')
-    .select('id, title, keyword, status, org_id, slug, workflow_state')
+    .select('id, title, keyword, status, org_id, slug, workflow_state, cover_image_url')
     .eq('id', id)
     .eq('org_id', currentUser.org_id)   // RLS-safe: ensure org ownership
     .single()
@@ -65,31 +65,33 @@ export default async function ArticleDetailPage({ params }: PageProps) {
   const { data: sections } = await supabase
     .from('article_sections')
     .select(
-      'id, article_id, section_order, section_header, section_type, content_markdown, content_html, status'
+      'id, article_id, section_order, section_header, section_type, content_markdown, content_html, status, section_image_url'
     )
     .eq('article_id', id)
     .order('section_order', { ascending: true })
 
   // ── Serialize (no Date objects — all strings) ───────────────────────────────
   const initialArticle: SerializedArticle = {
-    id:              article.id,
-    title:           article.title ?? null,
-    keyword:         (article as any).keyword ?? '',
-    status:          article.status ?? 'draft',
-    org_id:          article.org_id ?? '',
-    slug:            (article as any).slug ?? null,
-    workflow_state:  article.workflow_state ?? null,
+    id:               article.id,
+    title:            article.title ?? null,
+    keyword:          (article as any).keyword ?? '',
+    status:           article.status ?? 'draft',
+    org_id:           article.org_id ?? '',
+    slug:             (article as any).slug ?? null,
+    workflow_state:   article.workflow_state ?? null,
+    cover_image_url:  (article as any).cover_image_url ?? null,
   }
 
   const initialSections: SerializedSection[] = (sections ?? []).map((s: any) => ({
-    id:               s.id,
-    article_id:       s.article_id,
-    section_order:    s.section_order,
-    section_header:   s.section_header ?? '',
-    section_type:     s.section_type ?? 'h2',
-    content_markdown: s.content_markdown ?? null,
-    content_html:     s.content_html ?? null,
-    status:           s.status ?? 'pending',
+    id:                s.id,
+    article_id:        s.article_id,
+    section_order:     s.section_order,
+    section_header:    s.section_header ?? '',
+    section_type:      s.section_type ?? 'h2',
+    content_markdown:  s.content_markdown ?? null,
+    content_html:      s.content_html ?? null,
+    status:            s.status ?? 'pending',
+    section_image_url: s.section_image_url ?? null,
   }))
 
   // ── Mount client component directly — no extra wrapper div ────────────────

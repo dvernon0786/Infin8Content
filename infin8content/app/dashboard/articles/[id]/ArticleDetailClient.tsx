@@ -21,6 +21,7 @@ export interface SerializedArticle {
   org_id: string
   slug: string | null
   workflow_state: Record<string, any> | null
+  cover_image_url: string | null
 }
 
 export interface SerializedSection {
@@ -32,6 +33,7 @@ export interface SerializedSection {
   content_markdown: string | null
   content_html: string | null
   status: string
+  section_image_url: string | null
 }
 
 interface Props {
@@ -45,15 +47,19 @@ type SidebarTab = 'details' | 'ai_assistant'
 
 // ─── Debounce ─────────────────────────────────────────────────────────────────
 
-function useDebounce<T extends (...args: any[]) => any>(fn: T, delay: number): T {
+function useDebounce<T extends (...args: any[]) => any>(fn: T, delay: number): T & { cancel: () => void } {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  return useCallback(
+  const debounced = useCallback(
     (...args: Parameters<T>) => {
       if (timer.current) clearTimeout(timer.current)
       timer.current = setTimeout(() => fn(...args), delay)
     },
     [fn, delay]
-  ) as T
+  ) as T & { cancel: () => void }
+  debounced.cancel = () => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null }
+  }
+  return debounced
 }
 
 // ─── Section type config ──────────────────────────────────────────────────────
@@ -106,6 +112,16 @@ function ReadOnlySection({ section }: { section: SerializedSection }) {
       {section.section_header && (
         <div className={`${config.headerClass} mb-5`}>{section.section_header}</div>
       )}
+      {section.section_image_url && (
+        <div className="mb-6">
+          <img
+            src={section.section_image_url}
+            alt=""
+            className="w-full rounded-lg"
+            onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none' }}
+          />
+        </div>
+      )}
       <div
         className="font-lato text-neutral-700 leading-relaxed text-[1.0625rem]"
         dangerouslySetInnerHTML={{
@@ -156,6 +172,17 @@ function EditableSection({
           className={`${config.headerClass} mb-5 outline-none rounded px-1 -mx-1 focus:bg-blue-50/40 transition-colors cursor-text`}
         >
           {section.section_header}
+        </div>
+      )}
+
+      {section.section_image_url && (
+        <div className="mb-6">
+          <img
+            src={section.section_image_url}
+            alt=""
+            className="w-full rounded-lg"
+            onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none' }}
+          />
         </div>
       )}
 
@@ -547,18 +574,11 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
   const saveMeta = useCallback(async () => {
     setSaveStatus('saving')
     try {
-      const { data } = await supabase
-        .from('articles')
-        .select('workflow_state')
-        .eq('id', article.id)
-        .single()
-
-      const current = data?.workflow_state || {}
       await supabase
         .from('articles')
         .update({
           workflow_state: {
-            ...current,
+            ...(initialArticle.workflow_state || {}),
             focus_keyword: focusKeyword,
             meta_description: metaDescription,
             featured_image_url: featuredImageUrl,
@@ -573,7 +593,7 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
     } catch {
       setSaveStatus('error')
     }
-  }, [article.id, focusKeyword, metaDescription, featuredImageUrl, featuredImageAlt, tags, supabase])
+  }, [article.id, initialArticle.workflow_state, focusKeyword, metaDescription, featuredImageUrl, featuredImageAlt, tags, supabase])
 
   const debouncedMeta = useDebounce(saveMeta, 1500)
 
@@ -582,7 +602,7 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
   useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return }
     debouncedMeta()
-  }, [focusKeyword, metaDescription, featuredImageUrl, featuredImageAlt, tags])
+  }, [focusKeyword, metaDescription, featuredImageUrl, featuredImageAlt, tags, debouncedMeta])
 
   const isRevision = viewMode === 'revision'
 
@@ -636,7 +656,12 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
             {(['original', 'revision'] as ViewMode[]).map((mode) => (
               <button
                 key={mode}
-                onClick={() => setViewMode(mode)}
+                onClick={() => {
+                  if (viewMode === 'revision' && mode === 'original') {
+                    Object.keys(pendingEdits.current).forEach((id) => persistSection(id))
+                  }
+                  setViewMode(mode)
+                }}
                 className={`px-4 py-1.5 text-sm font-lato font-medium rounded-full border transition-all capitalize ${
                   viewMode === mode
                     ? 'border-purple-500 text-purple-600 bg-purple-50'
@@ -664,6 +689,17 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
                   Switch to revision to edit.
                 </button>
               </p>
+            </div>
+          )}
+
+          {/* Cover image */}
+          {article.cover_image_url && (
+            <div className="mb-8 rounded-xl overflow-hidden bg-neutral-100">
+              <img
+                src={article.cover_image_url}
+                alt={article.title || article.keyword}
+                className="w-full object-cover max-h-80"
+              />
             </div>
           )}
 

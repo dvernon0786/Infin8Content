@@ -1,7 +1,32 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-03-11 11:00 UTC+11  
-**Current Focus:** CMS PUBLISHING & GENERATION HARDENING
+**Last Updated:** 2026-04-21  
+**Current Focus:** ARTICLE DETAIL PAGE — IMAGE & CONTENT FIX
+
+## **🔥 ARTICLE DETAIL PAGE — IMAGE & CONTENT DISPLAY FIX**
+
+### **✅ Achievement: Article Detail Page — Cover Image, Section Images & Full Content**
+- **Status:** Complete. All three issues (redirect, no content, missing images) resolved.
+- **Branch:** `test-main-all`
+- **Deliverables:**
+  1. **DB: `workflow_state` column** — Added missing `workflow_state JSONB` column to `articles` table via migration `20260421000001`. Page query was failing with PostgREST 42703, causing every article detail visit to redirect to `/dashboard/articles`.
+  2. **DB: `article_sections` RLS** — Fixed SELECT/UPDATE policies on `article_sections` that used `request.jwt.claims ->> 'org_id'` (JWT hook not configured → always NULL → 0 rows). Rewrote both policies to use `public.get_auth_user_org_id()` via migration `20260421000002`.
+  3. **Cover image** — Added `cover_image_url` to the articles `.select()` in `page.tsx` and added `cover_image_url: string | null` to `SerializedArticle`. Rendered as a full-width image above the article title in `ArticleDetailClient`.
+  4. **Section inline images** — Added `section_image_url` to the `.select()` on `article_sections` in `page.tsx` (field exists directly on the `article_sections` table, not in the JSONB). Added `section_image_url: string | null` to `SerializedSection`. Rendered after the section header, before the body text in both `ReadOnlySection` and `EditableSection`. `onError` hides broken image containers silently.
+  5. **Error logging** — Added timing + detailed error logging to `ArticleDetailPage` before the redirect guard for future diagnostics.
+- **Files changed:**
+  - `infin8content/app/dashboard/articles/[id]/page.tsx`
+  - `infin8content/app/dashboard/articles/[id]/ArticleDetailClient.tsx`
+  - `infin8content/lib/supabase/database.types.ts` (added `workflow_state`, `slug` to articles Row)
+  - `infin8content/supabase/migrations/20260421000001_add_workflow_state_to_articles.sql`
+  - `infin8content/supabase/migrations/20260421000002_fix_article_sections_rls.sql`
+- **Root causes:**
+  - `workflow_state` column referenced in code but never migrated → PostgREST error on every article select
+  - `article_sections` SELECT RLS used non-existent JWT custom claims → silent 0 rows returned to browser
+  - `cover_image_url` not fetched in page query → never passed to client
+  - `section_image_url` lives in `article_sections` table (not JSONB) but was never selected
+
+---
 
 ## **🔥 CMS PUBLISHING & GENERATION HARDENING**
 
