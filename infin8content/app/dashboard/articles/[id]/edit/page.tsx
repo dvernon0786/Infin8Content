@@ -40,7 +40,7 @@ export default async function ArticleEditPage({ params }: PageProps) {
     status:          article.status ?? 'draft',
     org_id:          article.org_id ?? '',
     slug:            (article as any).slug ?? null,
-    workflow_state:  article.workflow_state ?? null,
+    workflow_state:  (article.workflow_state as Record<string, any> | null) ?? null,
   }
 
   const initialSections = (sections ?? []).map((s: any) => ({
