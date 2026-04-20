@@ -164,7 +164,7 @@ function EditableSection({
         contentEditable
         suppressContentEditableWarning
         onInput={(e) => onContentChange(section.id, e.currentTarget.innerHTML)}
-        className="font-lato text-neutral-700 leading-relaxed text-[1.0625rem] outline-none min-h-[48px] cursor-text rounded px-1 -mx-1 focus:bg-blue-50/20 transition-colors"
+        className="font-lato text-neutral-700 leading-relaxed text-[1.0625rem] outline-none min-h-12 cursor-text rounded px-1 -mx-1 focus:bg-blue-50/20 transition-colors"
       />
     </div>
   )
@@ -377,8 +377,7 @@ function FeaturedImagePanel({
           <div className="flex gap-2">
             <button
               onClick={() => { onChange(draftUrl, draftAlt); setEditing(false) }}
-              className="flex-1 py-1.5 text-xs font-semibold font-lato text-white rounded-md"
-              style={{ background: 'linear-gradient(to right, #217CEB, #4A42CC)' }}
+              className="flex-1 py-1.5 text-xs font-semibold font-lato text-white rounded-md bg-gradient-to-r from-[#217CEB] to-[#4A42CC] hover:opacity-95"
             >
               Save Image
             </button>
@@ -405,7 +404,7 @@ function TagInput({ tags, onChange }: { tags: string[]; onChange: (t: string[]) 
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-1.5 min-h-[24px]">
+      <div className="flex flex-wrap gap-1.5 min-h-6">
         {tags.map((tag) => (
           <span
             key={tag}
@@ -586,7 +585,7 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
 
       {/* ── Article canvas ──────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-[800px] mx-auto px-8 py-8">
+        <div className="max-w-200 mx-auto px-8 py-8">
 
           {/* View mode tabs + save indicator */}
           <div className="flex items-center gap-2 mb-6">
@@ -609,7 +608,7 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
           {/* Read-only notice */}
           {!isRevision && (
             <div className="flex items-center gap-2.5 px-4 py-3 bg-neutral-100 border border-neutral-200 rounded-lg mb-6">
-              <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+              <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
                 <Info className="w-3 h-3 text-white" />
               </div>
               <p className="text-sm font-lato text-neutral-600">
@@ -667,10 +666,10 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
       </div>
 
       {/* ── Right sidebar ────────────────────────────────────────────────── */}
-      <aside className="w-[280px] flex-shrink-0 border-l border-neutral-200 bg-white overflow-y-auto flex flex-col">
+      <aside className="w-70 shrink-0 border-l border-neutral-200 bg-white overflow-y-auto flex flex-col">
 
         {/* Tab bar */}
-        <div className="flex border-b border-neutral-200 sticky top-0 bg-white z-10 flex-shrink-0">
+        <div className="flex border-b border-neutral-200 sticky top-0 bg-white z-10 shrink-0">
           <button
             onClick={() => setSidebarTab('details')}
             className={`flex-1 py-3.5 text-xs font-semibold font-lato transition-colors relative ${
@@ -766,8 +765,7 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #217CEB, #4A42CC)' }}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-gradient-to-br from-[#217CEB] to-[#4A42CC]"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-white" />
                 </div>
@@ -805,8 +803,7 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
                 />
                 <div className="flex justify-end mt-2">
                   <button
-                    className="px-3 py-1.5 text-xs font-semibold font-lato text-white rounded-md"
-                    style={{ background: 'linear-gradient(to right, #217CEB, #4A42CC)' }}
+                    className="px-3 py-1.5 text-xs font-semibold font-lato text-white rounded-md bg-gradient-to-r from-[#217CEB] to-[#4A42CC] hover:opacity-95"
                   >
                     Apply
                   </button>

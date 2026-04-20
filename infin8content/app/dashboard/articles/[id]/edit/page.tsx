@@ -161,8 +161,7 @@ function EditableSection({
         contentEditable
         suppressContentEditableWarning
         onInput={(e) => onChange(section.id, e.currentTarget.innerText)}
-        className="font-lato text-neutral-700 leading-relaxed text-[1.0625rem] outline-none focus:outline-none min-h-[60px] cursor-text"
-        style={{ whiteSpace: 'pre-wrap' }}
+        className="font-lato text-neutral-700 leading-relaxed text-[1.0625rem] outline-none focus:outline-none min-h-15 cursor-text whitespace-pre-wrap"
         data-placeholder="Start writing..."
         dangerouslySetInnerHTML={{
           __html: section.content_html || section.content_markdown?.replace(/\n/g, '<br>') || ''
@@ -354,7 +353,7 @@ export default function ArticleEditPage() {
         .eq('article_id', articleId)
         .order('section_order', { ascending: true })
 
-      setSections((secs as ArticleSection[]) || [])
+      setSections((secs as unknown as ArticleSection[]) || [])
 
       // Load meta from workflow_state or a meta table if exists
       const { data: meta } = await (supabase as any)
@@ -489,7 +488,7 @@ export default function ArticleEditPage() {
     <div className="flex flex-col h-screen bg-neutral-50 overflow-hidden">
 
       {/* ── Top Bar ────────────────────────────────────────────────────────── */}
-      <header className="flex items-center justify-between px-4 py-2.5 bg-white border-b border-neutral-200 shadow-sm z-20 flex-shrink-0">
+      <header className="flex items-center justify-between px-4 py-2.5 bg-white border-b border-neutral-200 shadow-sm z-20 shrink-0">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push(`/dashboard/articles/${articleId}`)}
@@ -521,8 +520,7 @@ export default function ArticleEditPage() {
           <button
             onClick={saveMeta}
             disabled={saveStatus === 'saving'}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-lato text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            style={{ background: 'linear-gradient(to right, #217CEB, #4A42CC)' }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-lato text-white bg-gradient-to-r from-[#217CEB] to-[#4A42CC] rounded-md hover:opacity-95 disabled:opacity-50 transition-all"
           >
             <Save className="w-3.5 h-3.5" />
             Save
@@ -531,7 +529,7 @@ export default function ArticleEditPage() {
       </header>
 
       {/* ── Formatting Toolbar ─────────────────────────────────────────────── */}
-      <div className="flex items-center gap-0.5 px-4 py-1.5 bg-white border-b border-neutral-100 flex-shrink-0 overflow-x-auto">
+      <div className="flex items-center gap-0.5 px-4 py-1.5 bg-white border-b border-neutral-100 shrink-0 overflow-x-auto">
         <ToolbarBtn onClick={() => exec('formatBlock', 'h1')} title="Heading 1">
           <Heading1 className="w-4 h-4" />
         </ToolbarBtn>
@@ -639,7 +637,7 @@ export default function ArticleEditPage() {
         </main>
 
         {/* ── Right Sidebar ───────────────────────────────────────────────── */}
-        <aside className="w-72 flex-shrink-0 border-l border-neutral-200 bg-white overflow-y-auto">
+        <aside className="w-72 shrink-0 border-l border-neutral-200 bg-white overflow-y-auto">
 
           {/* Sidebar tabs */}
           <div className="flex border-b border-neutral-200 sticky top-0 bg-white z-10">

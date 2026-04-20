@@ -74,7 +74,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
     <div className="flex flex-col h-screen overflow-hidden bg-white">
 
       {/* ── Page header (server-rendered, always visible) ───────────────── */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-neutral-200 bg-white z-20 flex-shrink-0">
+      <div className="flex items-center justify-between px-6 py-3 border-b border-neutral-200 bg-white z-20 shrink-0">
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard/articles"
@@ -83,7 +83,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <h1 className="font-poppins font-bold text-sm text-neutral-900 leading-tight truncate max-w-[400px]">
+            <h1 className="font-poppins font-bold text-sm text-neutral-900 leading-tight truncate max-w-100">
               {article.title ?? (article as any).keyword ?? 'Article'}
             </h1>
             <p className="text-[10px] font-lato text-neutral-400 uppercase tracking-wider">
@@ -107,8 +107,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
           {/* Edit button — visible for all statuses */}
           <Link
             href={`/dashboard/articles/${id}/edit`}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-lato text-white rounded-md transition-colors"
-            style={{ background: 'linear-gradient(to right, #217CEB, #4A42CC)' }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-lato text-white rounded-md transition-colors bg-gradient-to-r from-[#217CEB] to-[#4A42CC]"
           >
             <Edit2 className="w-3.5 h-3.5" />
             Edit
