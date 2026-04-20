@@ -79,6 +79,12 @@
 - **Dashboard cards** — "Add SEO Articles", "Add News Article", "Add YouTube to Blogpost" now pre-select correct article type and show relevant settings panel
 - **TypeScript:** 0 errors in both modified files
 
+### Sidebar: Blog Automation (✅ UPDATED — 2026-04-21)
+- **sidebar-navigation.tsx** — Merged "Campaigns" and "AutoBlogs" into a single sub-item `Campaigns & Autoblogs` and moved `Site Optimizers`, `Integrations`, and `Feeds` to be sub-items under `Blog Automation` instead of top-level nav items.
+- **UI effect:** Blog Automation now expands to show 4 sub-items; sub-panel max height increased to avoid clipping. Sub-items currently point to `#` (disabled placeholder) and retain disabled appearance.
+- **Files modified:** `infin8content/components/dashboard/sidebar-navigation.tsx` (imports cleaned; sub-items adjusted; layout tweak)
+- **TypeScript / lint:** No TS errors introduced; visual QA recommended (open dashboard and expand Blog Automation to confirm labels and spacing).
+
 ---
 
 ## Total Deliverables
