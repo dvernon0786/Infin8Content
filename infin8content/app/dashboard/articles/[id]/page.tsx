@@ -24,7 +24,7 @@ export default async function ArticleDetailPage({ params }: PageProps) {
   }
 
   const supabase = await createClient()
-  const { id } = params
+  const { id } = await params
 
   // ── Fetch article ───────────────────────────────────────────────────────────
   const { data: article, error: articleError } = await supabase
