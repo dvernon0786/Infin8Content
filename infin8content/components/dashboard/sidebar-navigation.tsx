@@ -109,9 +109,8 @@ const NAV_ITEMS: NavItem[] = [
     {
         id: "backlink",
         title: "Backlink Exchange",
-        url: "#",
+        url: "/dashboard/backlink-exchange",
         icon: Link2,
-        disabled: true,
         badge: "NEW",
     },
 ]

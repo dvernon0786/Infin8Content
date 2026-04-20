@@ -201,6 +201,18 @@ archived     - Removed from workflow
 
 ---
 
+## Recent Changes (2026-04-20)
+
+- Added Backlink Exchange dashboard page and component:
+  - `infin8content/components/dashboard/BacklinkExchange.tsx` (new client component)
+  - `infin8content/app/dashboard/backlink-exchange/page.tsx` (new route)
+  - Sidebar updated: `infin8content/components/dashboard/sidebar-navigation.tsx` now links `Backlink Exchange` → `/dashboard/backlink-exchange` and enabled the item (badge: NEW)
+  - Removed top-level `/backlink-exchange` route and consolidated under dashboard
+
+These files were created/updated to add an internal Backlink Exchange dashboard. Verified local scaffolding; requires push and PR for CI checks.
+
+---
+
 ## 2026-04-20 — Editor / Article Detail Fixes (applied locally, branch: test-main-all)
 
 - Added client-only editor: `app/dashboard/articles/[id]/ArticleEditClient.tsx` and converted `app/dashboard/articles/[id]/edit/page.tsx` into a server wrapper that mounts the client with serialized props.
