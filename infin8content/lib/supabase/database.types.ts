@@ -65,6 +65,8 @@ export type Database = {
           generation_completed_at: string | null
           error_details: Json | null
           outline_generation_duration_ms: number | null
+          workflow_state: Json | null
+          slug: string | null
           [key: string]: any;
         }
         Insert: {

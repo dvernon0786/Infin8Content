@@ -23,6 +23,10 @@ export default async function ArticleDetailPage({ params }: PageProps) {
   // ── Auth ────────────────────────────────────────────────────────────────────
   const currentUser = await getCurrentUser()
   if (!currentUser || !currentUser.org_id) {
+    console.error('[ArticleDetailPage] Auth failed:', {
+      hasUser: !!currentUser,
+      hasOrgId: !!currentUser?.org_id,
+    })
     redirect('/login')
   }
 
@@ -30,14 +34,30 @@ export default async function ArticleDetailPage({ params }: PageProps) {
   const { id } = await params
 
   // ── Fetch article ───────────────────────────────────────────────────────────
+  const t0 = Date.now()
   const { data: article, error: articleError } = await supabase
     .from('articles')
     .select('id, title, keyword, status, org_id, slug, workflow_state')
     .eq('id', id)
     .eq('org_id', currentUser.org_id)   // RLS-safe: ensure org ownership
     .single()
+  console.log(`[ArticleDetailPage] articles query took ${Date.now() - t0}ms`, {
+    articleId: id,
+    orgId: currentUser.org_id,
+    found: !!article,
+    error: articleError?.message ?? null,
+    errorCode: articleError?.code ?? null,
+  })
 
   if (articleError || !article) {
+    console.error('[ArticleDetailPage] Article fetch failed:', {
+      articleId: id,
+      orgId: currentUser.org_id,
+      error: articleError?.message,
+      errorCode: articleError?.code,
+      errorDetails: articleError?.details,
+      articleFound: !!article,
+    })
     redirect('/dashboard/articles')
   }
 
