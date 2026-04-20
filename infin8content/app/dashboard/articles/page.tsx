@@ -30,7 +30,7 @@ export default async function ArticlesPage() {
             <p className="text-sm text-neutral-400 mt-1">Browse through all articles that you've generated so far.</p>
           </div>
           <Link href="/dashboard/articles/generate">
-            <Button className="bg-[var(--brand-electric-blue)] text-white rounded-md font-semibold text-sm px-4 py-2 flex items-center gap-2">
+            <Button className="bg-(--brand-electric-blue) text-white rounded-md font-semibold text-sm px-4 py-2 flex items-center gap-2">
               <Plus size={14} /> Write Article
             </Button>
           </Link>

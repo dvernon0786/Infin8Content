@@ -113,7 +113,7 @@ function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
     <div className="flex flex-col gap-0">
       {/* CTA Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 px-1">
-        {[
+          {[
           { label: 'Add SEO Articles', href: '/dashboard/articles/generate?type=seo', iconBg: '#eafaf1', color: '#22c55e', icon: (
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -138,9 +138,9 @@ function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
             <div
               onMouseEnter={() => setHoveredCard(card.label)}
               onMouseLeave={() => setHoveredCard(null)}
-              className={`bg-white border rounded-[10px] p-4 flex items-center gap-4 cursor-pointer transition-transform transition-shadow ${hoveredCard === card.label ? 'shadow-lg -translate-y-1' : ''}`}
+              className={`bg-white border rounded-[10px] p-4 flex items-center gap-4 cursor-pointer transition ${hoveredCard === card.label ? 'shadow-lg -translate-y-1' : ''}`}
             >
-              <div className="w-11 h-11 rounded-[8px] bg-neutral-50 flex items-center justify-center flex-shrink-0">
+              <div className="w-11 h-11 rounded-md bg-neutral-50 flex items-center justify-center shrink-0">
                 {card.icon}
               </div>
               <span className="text-sm font-semibold text-neutral-900">{card.label}</span>
@@ -159,7 +159,7 @@ function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3.5 py-2 text-[13px] ${isActive ? 'font-semibold text-[var(--brand-electric-blue)] border-b-2 border-[var(--brand-electric-blue)]' : 'font-normal text-neutral-500 border-b-2 border-transparent'} bg-none cursor-pointer transition-colors whitespace-nowrap`}
+              className={`px-3.5 py-2 text-[13px] ${isActive ? 'font-semibold text-(--brand-electric-blue) border-b-2 border-(--brand-electric-blue)' : 'font-normal text-neutral-500 border-b-2 border-transparent'} bg-none cursor-pointer transition-colors whitespace-nowrap`}
             >
               {labels[tab]} ({tabCounts[tab as keyof typeof tabCounts]})
             </button>
@@ -222,7 +222,7 @@ function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
       <div className="flex-1 min-h-[50vh]">
         {/* Table header */}
         <div className="grid grid-cols-[32px_1fr_200px_160px_120px_auto] items-center p-2.5 border-b border-neutral-200 bg-gray-50 rounded-t-md">
-          <input type="checkbox" className="w-3.5 h-3.5 accent-[var(--brand-electric-blue)]" />
+          <input type="checkbox" className="w-3.5 h-3.5 accent-(--brand-electric-blue)" />
           <span className="text-xs font-semibold text-neutral-500">Article</span>
           <span className="text-xs font-semibold text-neutral-500">Input</span>
           <span className="text-xs font-semibold text-neutral-500">Date</span>
@@ -238,12 +238,12 @@ function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9aa3b0" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               </div>
               <p className="text-sm font-semibold text-neutral-900 mb-1">No articles found</p>
-              <p className="text-sm text-neutral-400 mb-5 text-center max-w-[280px]">
+              <p className="text-sm text-neutral-400 mb-5 text-center max-w-70">
                 {articles.length > 0 ? 'Try adjusting your filters' : 'When you create articles, they will show up here.'}
               </p>
               {articles.length === 0 && (
                 <Link href="/dashboard">
-                  <Button className="bg-[var(--brand-electric-blue)] text-white rounded-full px-5 py-2 text-sm font-semibold flex items-center gap-2">Generate Articles →</Button>
+                  <Button className="bg-(--brand-electric-blue) text-white rounded-full px-5 py-2 text-sm font-semibold flex items-center gap-2">Generate Articles →</Button>
                 </Link>
               )}
             </div>
