@@ -186,6 +186,36 @@ Ready for engineering execution
 
 ---
 
+### Quick local commands (safe copy)
+
+Use these commands to sync `test-main-all`, create a branch, commit, push, and open a PR:
+
+```bash
+# fetch remote refs
+git fetch origin
+
+# switch to remote branch if present (or create local tracking branch)
+git checkout test-main-all || git checkout -b test-main-all origin/test-main-all
+git pull origin test-main-all
+
+# create a topic branch off test-main-all
+git checkout -b <your-branch-name>
+
+# make changes, then stage & commit
+git add .
+git commit -m "<meaningful-msg>"
+
+# push topic branch (do not push to main directly)
+git push -u origin <your-branch-name>
+
+# if you must update test-main-all directly
+git push -u origin test-main-all
+
+# open PR on GitHub targeting `main` (or `test-main-all` per workflow)
+# Example browser URL (replace owner/repo):
+# https://github.com/<owner>/<repo>/compare/<your-branch-name>...main
+```
+
 ## Next Steps
 
 1. **Create PR to test-main-all** (if needed)

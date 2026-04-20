@@ -6,76 +6,10 @@
 'use client';
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { GenerateArticleButton } from '@/components/articles/generate-article-button';
-import { VisualStatusIndicator } from '@/components/articles/visual-status-indicator';
-import { Eye, FileText } from 'lucide-react';
+import { Eye, Send, MoreVertical } from 'lucide-react';
 import type { DashboardArticle } from '@/lib/types/dashboard.types';
-import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import type { ScrollableArticleListProps } from '@/lib/types/dashboard.types';
-
-function ArticleAction({ article, plan }: { article: DashboardArticle; plan?: string }) {
-  const [pending, setPending] = useState(false)
-
-  // Clear pending state if article status actually changes (e.g. from realtime update)
-  useEffect(() => {
-    if (article.status !== 'failed') {
-      setPending(false)
-    }
-  }, [article.status])
-
-  if (article.status === 'completed') {
-    return (
-      <Button
-        size="sm"
-        className="bg-[--brand-electric-blue] text-white hover:opacity-90 font-semibold h-7 text-xs px-3"
-      >
-        View →
-      </Button>
-    )
-  }
-
-  if (article.status === 'failed') {
-    return (
-      <Button
-        size="sm"
-        disabled={pending}
-        className="bg-red-600 text-white hover:bg-red-700 font-semibold h-7 text-xs px-3"
-        onClick={async (e) => {
-          e.stopPropagation();
-          setPending(true);
-          try {
-            await fetch('/api/articles/generate', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ articleId: article.id }),
-            });
-          } catch (error) {
-            console.error('Retry failed:', error);
-          }
-        }}
-      >
-        {pending ? 'Starting...' : 'Retry'}
-      </Button>
-    )
-  }
-
-  if (article.status === 'draft' || article.status === 'queued') {
-    return (
-      <div onClick={(e) => e.stopPropagation()}>
-        <GenerateArticleButton articleId={article.id} />
-      </div>
-    )
-  }
-
-  return (
-    <span className="text-neutral-400 font-semibold text-xs">
-      Processing…
-    </span>
-  )
-}
 
 export function ScrollableArticleList({
   articles,
@@ -110,79 +44,71 @@ export function ScrollableArticleList({
     <div className={cn('scrollable-article-list', className)}>
       <div className="overflow-y-auto flex-1 min-h-0">
         {articles.map((article, index) => {
-          const statusColor =
-            article.status === 'completed'
-              ? '#22C55E' // success green
-              : article.status === 'failed'
-                ? '#EF4444' // error red
-                : article.status === 'queued'
-                  ? '#8B5CF6' // purple
-                  : '#217CEB'; // info blue
+          const isHighlighted = highlightArticleId === article.id
 
           return (
             <div
               key={article.id}
-              className="mb-4 relative"
+              role="button"
+              tabIndex={0}
+              aria-label={`Open article ${article.title || article.keyword}`}
+              onClick={(e) => onArticleNavigation(article.id, e)}
+              onKeyDown={(e) => onKeyDown(article.id, e)}
+              onTouchStart={(e) => onTouchStart(article.id, e, e.currentTarget as HTMLElement)}
+              onTouchMove={(e) => onTouchMove(article.id, e, e.currentTarget as HTMLElement)}
+              onTouchEnd={(e) => onTouchEnd(article.id, e, e.currentTarget as HTMLElement)}
+              className={cn('group', index % 2 === 1 && 'bg-neutral-50/40')}
               style={{
-                contentVisibility: 'auto',
-                containIntrinsicSize: '120px',
-                transform: 'translateZ(0)',
-                willChange: 'transform',
-                backfaceVisibility: 'hidden'
+                borderBottom: '1px solid #f3f4f6',
+                background: isHighlighted ? '#f0f7ff' : '#fff',
+                transition: 'background 0.12s',
               }}
             >
-              <div
-                className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg z-10"
-                style={{ background: statusColor }}
-              />
-              <Card
-                className={cn(
-                  'cursor-pointer border border-neutral-200 transition-all sm:hover:-translate-y-[1px] pl-4',
-                  'hover:border-[--brand-electric-blue]/40 hover:shadow-sm bg-white',
-                  index % 2 === 1 && 'bg-neutral-50/40',
-                  highlightArticleId === article.id && 'animate-[i8c-pulse_1.5s_ease-out] border-[--color-warning]'
-                )}
-                role="button"
-                tabIndex={0}
-                aria-label={`Open article ${article.title || article.keyword}`}
-                onClick={(e) => onArticleNavigation(article.id, e)}
-                onKeyDown={(e) => onKeyDown(article.id, e)}
-                onTouchStart={(e) => onTouchStart(article.id, e, e.currentTarget)}
-                onTouchMove={(e) => onTouchMove(article.id, e, e.currentTarget)}
-                onTouchEnd={(e) => onTouchEnd(article.id, e, e.currentTarget)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1 min-w-0">
-                      <h3
-                        className="font-poppins text-neutral-900 text-small font-semibold truncate"
-                      >
-                        {article.title || article.keyword}
-                      </h3>
-                      <p className="font-lato text-neutral-500 text-sm truncate">
-                        {article.keyword}
-                      </p>
-                    </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '32px 1fr 200px 160px 120px auto', alignItems: 'center', padding: '12px 16px' }}>
+                {/* Checkbox */}
+                <div>
+                  <input
+                    type="checkbox"
+                    style={{ width: 14, height: 14, accentColor: '#0066FF' }}
+                    onClick={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
+                  />
+                </div>
 
-                    <div className="opacity-90">
-                      <VisualStatusIndicator
-                        status={article.status}
-                        compact={true}
-                        hideStatuses={["draft"]}
-                      />
-                    </div>
+                {/* Title */}
+                <div style={{ paddingRight: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: '#0a0a0a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {article.title || article.keyword}
                   </div>
+                </div>
 
-                  <div className="flex items-center justify-between font-lato text-xs text-neutral-400">
-                    <div className="flex items-center gap-4">
-                      <span>Created {formatTimeAgo(article.created_at)}</span>
-                      <span>Updated {formatTimeAgo(article.updated_at)}</span>
-                    </div>
+                {/* Campaign / Keyword */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#22c55e', fontSize: 13 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{article.keyword}</span>
+                </div>
 
-                    <ArticleAction article={article} plan={plan} />
-                  </div>
-                </CardContent>
-              </Card>
+                {/* Date */}
+                <div style={{ fontSize: 12, color: '#6b7280' }}>
+                  {new Date(article.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, {new Date(article.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                </div>
+
+                {/* Language */}
+                <div style={{ fontSize: 12, color: '#6b7280' }}>English (US)</div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifySelf: 'end' }} onClick={(e) => e.stopPropagation()}>
+                  <button title="View" onClick={(e) => { e.stopPropagation(); onArticleNavigation(article.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9aa3b0', padding: 4 }}>
+                    <Eye size={14} />
+                  </button>
+                  <button title="Publish" onClick={(e) => { e.stopPropagation(); /* implement publish action later */ }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9aa3b0', padding: 4 }}>
+                    <Send size={14} />
+                  </button>
+                  <button title="More" onClick={(e) => { e.stopPropagation(); /* open menu later */ }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9aa3b0', padding: 4 }}>
+                    <MoreVertical size={14} />
+                  </button>
+                </div>
+              </div>
             </div>
           );
         })}

@@ -6,6 +6,26 @@
 
 **Sync (2026-04-18):** Docs synchronized for branch `docs/scratchpad-sync` (source: `origin/test-main-all`). See central `scratchpad.md` for full commit refs and next steps.
 
+## Quick Git: Branch & PR commands
+
+Copyable steps to sync `test-main-all`, create a topic branch, commit, push, and open a PR:
+
+```bash
+git fetch origin
+git checkout test-main-all || git checkout -b test-main-all origin/test-main-all
+git pull origin test-main-all
+
+# create a topic branch
+git checkout -b <your-branch-name>
+git add .
+git commit -m "<meaningful-msg>"
+git push -u origin <your-branch-name>
+
+# or to push updates directly to test-main-all
+git push -u origin test-main-all
+```
+
+
 **Update (2026-04-18):** Outstand social publishing integration complete. Branch `test-main-all`. Backend: 9 files (migration, Outstand client, caption generator, Inngest functions, API routes, webhook). Frontend: 3 new components (`SocialPublishModal`, `PublishToSocialButton`, `SocialAnalytics`). Article detail page patched. `tsc --noEmit` exits 0. Epic 5 story `5-7-social-media-sharing-integration` now implementable. `__tests__/tsconfig.json` `ignoreDeprecations` updated to `"6.0"`.
 
 **Update (2026-04-16):** Epic 12 — Onboarding & Feature Discovery completed (branch `feat/epic-12-onboarding-discovery`, PR #458)

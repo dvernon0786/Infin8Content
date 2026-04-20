@@ -40,6 +40,26 @@
   - **Polished (POST-01 to POST-03)**: Muted unclickable "Today" highlights, added developer documentation for timezone normalization edge cases, and documented mount-time freezing.
 - **Workflow State:** Formally moved to `test-main-all` for terminal validation and merge readiness.
 
+## Git: Local branch & PR commands (test-main-all)
+
+Copyable steps to sync and push the branch, then open a PR:
+
+```bash
+git fetch origin
+git checkout test-main-all || git checkout -b test-main-all origin/test-main-all
+git pull origin test-main-all
+
+# create a topic branch off test-main-all
+git checkout -b <your-branch-name>
+git add .
+git commit -m "<meaningful-msg>"
+git push -u origin <your-branch-name>
+
+# or to push updates directly to test-main-all
+git push -u origin test-main-all
+```
+
+
 
 ## **🔥 DESIGN SYSTEM COMPLIANCE & USAGE REFACTOR**
 

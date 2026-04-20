@@ -9,6 +9,39 @@
 
 — End entry —
 
+## Git: Local branch & PR commands (test-main-all)
+
+Follow these commands to align your local branch and open a PR targeting `main`.
+
+```bash
+# fetch remote refs and ensure local view is up-to-date
+git fetch origin
+
+# switch to the remote branch if it exists, otherwise create it tracking origin
+git checkout test-main-all || git checkout -b test-main-all origin/test-main-all
+
+# bring the branch up to date
+git pull origin test-main-all
+
+# (If you need a new feature branch off test-main-all)
+git checkout -b <your-branch-name>
+
+# Stage and commit your changes
+git add .
+git commit -m "<meaningful-msg>"
+
+# Push your topic branch to the remote (do NOT push straight to main)
+git push -u origin <your-branch-name>
+
+# If you intentionally want to push updates to test-main-all itself:
+git push -u origin test-main-all
+
+# Create a PR on GitHub targeting `main` (or `test-main-all` per workflow)
+# Example URL (replace owner/repo):
+# https://github.com/<owner>/<repo>/compare/test-main-all...main
+```
+
+
 ## Marketing site: Header/Footer + Design System Fixes — 2026-04-16 ✅
 
 - **Date:** 2026-04-16

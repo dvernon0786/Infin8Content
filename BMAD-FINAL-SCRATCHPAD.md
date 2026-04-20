@@ -201,6 +201,26 @@ archived     - Removed from workflow
 
 ---
 
+## Quick Git: Branch & PR commands
+
+Copy these commands to sync `test-main-all`, create a topic branch, commit, push, and open a PR:
+
+```bash
+git fetch origin
+git checkout test-main-all || git checkout -b test-main-all origin/test-main-all
+git pull origin test-main-all
+
+# create a topic branch
+git checkout -b <your-branch-name>
+git add .
+git commit -m "<meaningful-msg>"
+git push -u origin <your-branch-name>
+
+# or to push changes directly to test-main-all
+git push -u origin test-main-all
+```
+
+
 ## Files Location
 
 All BMAD deliverables in:
