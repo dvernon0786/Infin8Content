@@ -34,9 +34,10 @@ interface ArticleGenerationFormProps {
   isLoading: boolean
   error?: string | null
   initialKeyword?: string
+  initialArticleType?: ArticleType
 }
 
-export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKeyword = '' }: ArticleGenerationFormProps) {
+export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKeyword = '', initialArticleType = 'standard' }: ArticleGenerationFormProps) {
   const [keyword, setKeyword] = useState(initialKeyword)
   const [targetWordCount, setTargetWordCount] = useState<number>(2000)
   const [customWordCount, setCustomWordCount] = useState('')
@@ -48,7 +49,7 @@ export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKey
   const customWordCountRef = useRef<HTMLInputElement>(null)
 
   // Epic 13: article type state
-  const [articleType, setArticleType] = useState<ArticleType>('standard')
+  const [articleType, setArticleType] = useState<ArticleType>(initialArticleType)
   const [language, setLanguage] = useState('en')
   // News (13-1)
   const [newsTopic, setNewsTopic] = useState('')

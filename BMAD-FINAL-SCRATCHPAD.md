@@ -73,6 +73,12 @@
 - **Turbopack fix** — `next.config.ts`: `turbopack.root` set to absolute `infin8content/` path; resolved parent-dir lockfile detection issue
 - **TypeScript:** 0 errors across all 7 modified / 3 new files
 
+### Article Generation Form Type Pre-selection (✅ COMPLETE — 2026-04-21)
+- **article-generation-form.tsx** — Added `initialArticleType?: ArticleType` prop, default `'standard'`, used to initialize `articleType` state
+- **article-generation-client.tsx** — Reads `?type` URL param, maps `seo`→`standard`, `news`→`news`, `youtube`→`video_conversion`, `listicle`→`listicle_comparison`, passes as `initialArticleType` to form
+- **Dashboard cards** — "Add SEO Articles", "Add News Article", "Add YouTube to Blogpost" now pre-select correct article type and show relevant settings panel
+- **TypeScript:** 0 errors in both modified files
+
 ---
 
 ## Total Deliverables

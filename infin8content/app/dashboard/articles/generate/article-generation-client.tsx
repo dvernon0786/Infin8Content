@@ -15,12 +15,23 @@ export function ArticleGenerationPageClient({ organizationId }: ArticleGeneratio
   const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
   const [initialKeyword, setInitialKeyword] = useState<string>('')
+  const [initialArticleType, setInitialArticleType] = useState<import('@/types/article').ArticleType>('standard')
 
-  // Read keyword from URL params (for contextual link from keyword research)
+  // Read keyword and type from URL params
   useEffect(() => {
     const keywordParam = searchParams.get('keyword')
     if (keywordParam) {
       setInitialKeyword(decodeURIComponent(keywordParam))
+    }
+    const typeParam = searchParams.get('type')
+    const typeMap: Record<string, import('@/types/article').ArticleType> = {
+      seo: 'standard',
+      news: 'news',
+      youtube: 'video_conversion',
+      listicle: 'listicle_comparison',
+    }
+    if (typeParam && typeMap[typeParam]) {
+      setInitialArticleType(typeMap[typeParam])
     }
   }, [searchParams])
   const [error, setError] = useState<string | null>(null)
@@ -118,6 +129,7 @@ export function ArticleGenerationPageClient({ organizationId }: ArticleGeneratio
             isLoading={isLoading}
             error={error}
             initialKeyword={initialKeyword}
+            initialArticleType={initialArticleType}
           />
         </CardContent>
       </Card>
