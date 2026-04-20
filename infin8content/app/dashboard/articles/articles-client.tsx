@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation'
 import { ARTICLE_STATUSES, type DashboardArticle } from '@/lib/types/dashboard.types'
 import { ScheduleGuard } from '@/components/guards/schedule-guard'
 import { ScheduleCalendar } from '@/components/dashboard/schedule-calendar'
+import { Button } from '@/components/ui/button'
 
 // ─── Metrics ──────────────────────────────────────────────────────────────────
 
@@ -137,20 +138,19 @@ function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
             <div
               onMouseEnter={() => setHoveredCard(card.label)}
               onMouseLeave={() => setHoveredCard(null)}
-              className="bg-white border rounded-[10px] p-4 flex items-center gap-4 cursor-pointer"
-              style={{ boxShadow: hoveredCard === card.label ? '0 3px 14px rgba(0,102,255,0.1)' : 'none', transform: hoveredCard === card.label ? 'translateY(-1px)' : 'none' }}
+              className={`bg-white border rounded-[10px] p-4 flex items-center gap-4 cursor-pointer transition-transform transition-shadow ${hoveredCard === card.label ? 'shadow-lg -translate-y-1' : ''}`}
             >
-              <div style={{ width: 44, height: 44, borderRadius: 8, background: card.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div className="w-11 h-11 rounded-[8px] bg-neutral-50 flex items-center justify-center flex-shrink-0">
                 {card.icon}
               </div>
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#0a0a0a' }}>{card.label}</span>
+              <span className="text-sm font-semibold text-neutral-900">{card.label}</span>
             </div>
           </Link>
         ))}
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 16, borderBottom: '1px solid #eaecf0', paddingBottom: 0, paddingLeft: 4, paddingRight: 4 }}>
+      <div className="flex items-center gap-1 mb-4 border-b border-neutral-200 pb-0 px-1">
         {(['all', 'generated', 'edited'] as const).map(tab => {
           const labels: Record<string,string> = { all: 'All', generated: 'Generated', edited: 'Edited' }
           const isActive = activeTab === tab
@@ -159,20 +159,7 @@ function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              style={{
-                padding: '8px 14px',
-                fontSize: 13,
-                fontWeight: isActive ? 600 : 400,
-                color: isActive ? '#0066FF' : '#6b7280',
-                background: 'none',
-                border: 'none',
-                borderBottom: isActive ? '2px solid #0066FF' : '2px solid transparent',
-                cursor: 'pointer',
-                marginBottom: -1,
-                borderRadius: 0,
-                transition: 'color 0.15s',
-                whiteSpace: 'nowrap',
-              }}
+              className={`px-3.5 py-2 text-[13px] ${isActive ? 'font-semibold text-[var(--brand-electric-blue)] border-b-2 border-[var(--brand-electric-blue)]' : 'font-normal text-neutral-500 border-b-2 border-transparent'} bg-none cursor-pointer transition-colors whitespace-nowrap`}
             >
               {labels[tab]} ({tabCounts[tab as keyof typeof tabCounts]})
             </button>
@@ -234,58 +221,29 @@ function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
       {/* Articles List */}
       <div className="flex-1 min-h-[50vh]">
         {/* Table header */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '32px 1fr 200px 160px 120px auto',
-          alignItems: 'center',
-          padding: '10px 16px',
-          borderBottom: '1px solid #eaecf0',
-          background: '#f9fafb',
-          borderTop: '1px solid #eaecf0',
-          borderRadius: '8px 8px 0 0',
-        }}>
-          <input type="checkbox" style={{ width: 14, height: 14, accentColor: '#0066FF' }} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#6b7280' }}>Article</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#6b7280' }}>Input</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#6b7280' }}>Date</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#6b7280' }}>Language</span>
+        <div className="grid grid-cols-[32px_1fr_200px_160px_120px_auto] items-center p-2.5 border-b border-neutral-200 bg-gray-50 rounded-t-md">
+          <input type="checkbox" className="w-3.5 h-3.5 accent-[var(--brand-electric-blue)]" />
+          <span className="text-xs font-semibold text-neutral-500">Article</span>
+          <span className="text-xs font-semibold text-neutral-500">Input</span>
+          <span className="text-xs font-semibold text-neutral-500">Date</span>
+          <span className="text-xs font-semibold text-neutral-500">Language</span>
           <span />
         </div>
 
         {/* Table body wrapper */}
-        <div style={{
-          border: '1px solid #eaecf0',
-          borderTop: 'none',
-          borderRadius: '0 0 8px 8px',
-          overflow: 'hidden',
-          background: '#fff',
-        }}>
+        <div className="border border-neutral-200 border-t-0 rounded-b-md overflow-hidden bg-white">
           {tabFilteredArticles.length === 0 ? (
-            <div style={{ padding: '80px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ width: 48, height: 48, borderRadius: 12, border: '1px solid #eaecf0', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+            <div className="py-20 px-5 flex flex-col items-center justify-center">
+              <div className="w-12 h-12 rounded-lg border border-neutral-200 bg-white flex items-center justify-center mb-4">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9aa3b0" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               </div>
-              <p style={{ fontSize: 14, fontWeight: 600, color: '#0a0a0a', marginBottom: 6 }}>No articles found</p>
-              <p style={{ fontSize: 13, color: '#9aa3b0', marginBottom: 20, textAlign: 'center', maxWidth: 280 }}>
+              <p className="text-sm font-semibold text-neutral-900 mb-1">No articles found</p>
+              <p className="text-sm text-neutral-400 mb-5 text-center max-w-[280px]">
                 {articles.length > 0 ? 'Try adjusting your filters' : 'When you create articles, they will show up here.'}
               </p>
               {articles.length === 0 && (
                 <Link href="/dashboard">
-                  <button style={{
-                    background: '#0066FF',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 20,
-                    padding: '9px 20px',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}>
-                    Generate Articles →
-                  </button>
+                  <Button className="bg-[var(--brand-electric-blue)] text-white rounded-full px-5 py-2 text-sm font-semibold flex items-center gap-2">Generate Articles →</Button>
                 </Link>
               )}
             </div>
