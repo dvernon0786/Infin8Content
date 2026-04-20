@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { Eye, Send, MoreVertical } from 'lucide-react';
+import Link from 'next/link'
 import type { DashboardArticle } from '@/lib/types/dashboard.types';
 import { cn } from '@/lib/utils';
 import type { ScrollableArticleListProps } from '@/lib/types/dashboard.types';
@@ -98,9 +99,9 @@ export function ScrollableArticleList({
 
                 {/* Actions */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifySelf: 'end' }} onClick={(e) => e.stopPropagation()}>
-                  <button title="View" onClick={(e) => { e.stopPropagation(); onArticleNavigation(article.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9aa3b0', padding: 4 }}>
+                  <Link href={`/dashboard/articles/${article.id}`} onClick={(e) => { e.stopPropagation(); }} className="inline-flex items-center justify-center" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9aa3b0', padding: 4 }} title="View">
                     <Eye size={14} />
-                  </button>
+                  </Link>
                   <button title="Publish" onClick={(e) => { e.stopPropagation(); /* implement publish action later */ }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9aa3b0', padding: 4 }}>
                     <Send size={14} />
                   </button>
