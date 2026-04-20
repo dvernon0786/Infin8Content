@@ -1,8 +1,8 @@
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { getPaymentAccessStatus } from '@/lib/utils/payment-status'
-import { NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     const adminSupabase = createServiceRoleClient()
@@ -42,7 +42,7 @@ export async function GET() {
       accessStatus = getPaymentAccessStatus(org)
     }
 
-    return NextResponse.json({
+    const payload = {
       user: {
         id: user.id,
         email: user.email,
@@ -68,7 +68,20 @@ export async function GET() {
       } : null,
       paymentAccessStatus: accessStatus,
       timestamp: new Date().toISOString()
-    })
+    }
+
+    // ✅ Fix 2: When accessed directly from a browser (Accept: text/html), redirect back
+    // to the referrer so the user isn't left on a JSON page.
+    const accept = request.headers.get('accept') || ''
+    if (accept.includes('text/html')) {
+      const referer = request.headers.get('referer') || '/dashboard/articles'
+      const redirectUrl = new URL(referer, request.url)
+      // Pass status as a query param so the calling page can show a toast if needed
+      redirectUrl.searchParams.set('payment_status', accessStatus)
+      return NextResponse.redirect(redirectUrl, { status: 302 })
+    }
+
+    return NextResponse.json(payload)
   } catch (error) {
     console.error('Debug payment status error:', error)
     return NextResponse.json(

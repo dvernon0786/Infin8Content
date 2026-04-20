@@ -153,6 +153,11 @@ export async function middleware(request: NextRequest) {
 
   // Check payment status for protected routes (except payment-related routes)
   if (!isPaymentRoute && userRecord.org_id) {
+    // ✅ Fix 4: Cache hit — skip the org DB query entirely when payment was recently confirmed
+    const paymentCached = request.cookies.get('payment_ok')
+    if (paymentCached?.value === 'true') {
+      console.log(`[MIDDLEWARE-${requestId}] Payment status cache hit — skipping org DB query`)
+    } else {
     console.log(`[MIDDLEWARE-${requestId}] Starting payment status check for org: ${userRecord.org_id}`)
     
     // Use service role client to read organization payment status (bypasses RLS)
@@ -404,16 +409,31 @@ export async function middleware(request: NextRequest) {
         // Payment not confirmed - redirect to payment page
         return NextResponse.redirect(new URL('/payment', request.url));
       } else if (accessStatus === 'grace_period') {
+        // ✅ Fix 4: Cache active payment status for 5 minutes to skip the org DB query
+        response.cookies.set('payment_ok', 'true', {
+          maxAge: 300,
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+        })
         console.log(`[MIDDLEWARE-${requestId}] Access granted - grace period active`)
         // Grace period active - allow access (future: show banner)
         // For now, allow access during grace period
       } else {
         console.log(`[MIDDLEWARE-${requestId}] Access granted - payment active`)
+        // ✅ Fix 4: Cache active payment status for 5 minutes to skip the org DB query
+        response.cookies.set('payment_ok', 'true', {
+          maxAge: 300,
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+        })
       }
       // accessStatus === 'active' - allow access (continue below)
     } else {
       console.log(`[MIDDLEWARE-${requestId}] No organization found or payment route, allowing access`)
     }
+    } // end of payment_ok cache-miss block
   } else {
     console.log(`[MIDDLEWARE-${requestId}] Payment route check bypassed or no org_id, allowing access`)
   }
@@ -459,21 +479,21 @@ export async function middleware(request: NextRequest) {
         value: c.value,
       })),
     })
-    
-    // ⏱️ Edge replica lag bridge — MUST run FIRST before any redirect decisions
-    const justCompleted = request.cookies.get('onboarding_just_completed')
-    
-    console.log(`[MIDDLEWARE-${requestId}] Cookie onboarding_just_completed`, {
-      exists: !!justCompleted,
-      value: justCompleted?.value,
-    })
 
+    const justCompleted = request.cookies.get('onboarding_just_completed')
+    console.log(`[MIDDLEWARE-${requestId}] onboarding_just_completed cookie:`, justCompleted?.value)
     if (justCompleted?.value === 'true') {
       console.log(`[MIDDLEWARE-${requestId}] Allowing protected route (onboarding just completed via cookie)`)
       return response
     }
 
-    // Now run normal onboarding logic
+    // ✅ Fix 1: Short-lived cache — skip DB call if onboarding was verified recently
+    const onboardingCached = request.cookies.get('onboarding_status_ok')
+    if (onboardingCached?.value === 'true') {
+      console.log(`[MIDDLEWARE-${requestId}] Onboarding status cache hit — skipping DB call`)
+      return response
+    }
+
     if (!isOnboardingAllowedRoute) {
       console.log(`[MIDDLEWARE-${requestId}] Starting onboarding status check for org: ${userRecord.org_id}`)
 
@@ -492,6 +512,13 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(onboardingUrl);
       } else {
         console.log(`[MIDDLEWARE-${requestId}] Onboarding completed, allowing access`)
+        // ✅ Fix 1: Cache result for 5 minutes to skip this DB call on subsequent requests
+        response.cookies.set('onboarding_status_ok', 'true', {
+          maxAge: 300,
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+        })
       }
     }
   } else {
