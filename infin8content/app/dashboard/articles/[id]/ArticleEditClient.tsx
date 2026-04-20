@@ -36,12 +36,16 @@ export interface SerializedArticle {
 
 // ─── Debounce helper ──────────────────────────────────────────────────────────
 
-function useDebounce<T extends (...args: any[]) => any>(fn: T, delay: number): T {
+function useDebounce<T extends (...args: any[]) => any>(fn: T, delay: number): T & { cancel: () => void } {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  return useCallback((...args: Parameters<T>) => {
+  const debounced = useCallback((...args: Parameters<T>) => {
     if (timer.current) clearTimeout(timer.current)
     timer.current = setTimeout(() => fn(...args), delay)
-  }, [fn, delay]) as T
+  }, [fn, delay]) as T & { cancel: () => void }
+  debounced.cancel = () => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null }
+  }
+  return debounced
 }
 
 // ─── Save status indicator ───────────────────────────────────────────────────
@@ -177,6 +181,15 @@ function FeaturedImageUploader({
   const [url, setUrl] = useState(currentUrl || '')
   const [alt, setAlt] = useState(altText || '')
   const [expanded, setExpanded] = useState(!!currentUrl)
+
+  // Sync url/alt when props change (e.g. parent saves and updates featuredImageUrl)
+  useEffect(() => {
+    if (!expanded) {
+      setUrl(currentUrl || '')
+      setAlt(altText || '')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUrl, altText])
 
   return (
     <div className="space-y-2">
@@ -316,7 +329,6 @@ export default function ArticleEditClient({ initialArticle, initialSections }: P
 
   const [article, setArticle] = useState<SerializedArticle>(initialArticle)
   const [sections, setSections] = useState<SerializedSection[]>(initialSections)
-  const [loading, setLoading] = useState(false)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [activeTab, setActiveTab] = useState<'details' | 'seo'>('details')
 
@@ -427,7 +439,16 @@ export default function ArticleEditClient({ initialArticle, initialSections }: P
   useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return }
     debouncedMetaSave()
-  }, [focusKeyword, metaDescription, featuredImageUrl, featuredImageAlt, tags])
+  }, [focusKeyword, metaDescription, featuredImageUrl, featuredImageAlt, tags, debouncedMetaSave])
+
+  // Title ref — set innerHTML once on mount, never overwrite (avoids cursor reset on state update)
+  const titleRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (titleRef.current) {
+      titleRef.current.innerHTML = initialArticle.title || ''
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // ── Toolbar execCommand helpers ───────────────────────────────────────────
 
@@ -471,7 +492,7 @@ export default function ArticleEditClient({ initialArticle, initialSections }: P
           </button>
 
           <button
-            onClick={saveMeta}
+            onClick={() => { debouncedMetaSave.cancel(); saveMeta() }}
             disabled={saveStatus === 'saving'}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-lato text-white bg-linear-to-r from-[#217CEB] to-[#4A42CC] rounded-md hover:opacity-95 disabled:opacity-50 transition-all"
           >
@@ -548,8 +569,9 @@ export default function ArticleEditClient({ initialArticle, initialSections }: P
         <main className="flex-1 overflow-y-auto bg-white">
           <div className="max-w-3xl mx-auto px-8 py-10">
 
-            {/* Article title (editable) */}
+            {/* Article title (editable) — ref-initialised to avoid cursor reset on state update */}
             <div
+              ref={titleRef}
               contentEditable
               suppressContentEditableWarning
               onBlur={async (e) => {
@@ -562,9 +584,7 @@ export default function ArticleEditClient({ initialArticle, initialSections }: P
               }}
               className="font-poppins text-3xl sm:text-4xl font-bold text-neutral-900 leading-tight mb-8 outline-none focus:outline-none border-b-2 border-transparent focus:border-blue-200 pb-2 transition-colors cursor-text empty:before:content-[attr(data-placeholder)] empty:before:text-neutral-300"
               data-placeholder="Article title…"
-            >
-              {article.title || ''}
-            </div>
+            />
 
             {/* Sections */}
             {sections.length === 0 ? (
