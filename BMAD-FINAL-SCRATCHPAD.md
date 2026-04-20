@@ -395,3 +395,10 @@ Next immediate steps:
 **Ready for Engineering:** ✅ YES  
 **Architecture Locked:** ✅ YES  
 
+## 2026-04-20 — Article Detail Revision UI update
+
+- **Summary:** Implemented `app/dashboard/articles/[id]/ArticleDetailClient.tsx` (client) and server wrapper `app/dashboard/articles/[id]/page.tsx` that serializes props and mounts the client. Fixed a parse error in `page.tsx` and verified `next build` completes successfully.
+- **Actions taken:** Added client file, replaced server `page.tsx`, ran `npm run build` — compiled successfully. Updated this scratchpad and delivery summary.
+- **Next:** Create branch `test-main-all`, commit these docs and code changes, push to `origin/test-main-all`, and open a PR to `main` for CI runs. Manual testing (editor autosave, meta save) pending.
+- **Notes:** Server-side auth (`getCurrentUser()`) preserved; client receives serialized `initialArticle` and `initialSections`. Autosave debounce: sections 1.2s, meta 1.5s. No DB migrations required for these changes.
+

@@ -286,6 +286,12 @@ https://github.com/dvernon0786/Infin8Content/pull/new/feature/bmad-final-deliver
 
 **Recent update (2026-04-17):** Tailwind canonical class fixes applied to `infin8content/app/dashboard/articles/articles-client.tsx` and `infin8content/components/dashboard/sidebar-navigation.tsx`; committed on branch `test-main-all` (commit `a083416c`) and pushed to `origin`. PR #458: https://github.com/dvernon0786/Infin8Content/pull/458 is open for CI and review.
 
+## 2026-04-20 — Article Detail Revision UI update
+
+- Implemented client `app/dashboard/articles/[id]/ArticleDetailClient.tsx` and server wrapper `app/dashboard/articles/[id]/page.tsx`; fixed parse error and verified `npm run build` completes successfully.
+- Updated `BMAD-FINAL-SCRATCHPAD.md` and added delivery notes. Next: create branch `test-main-all`, commit, push, and open PR to `main` for CI.
+- Manual testing (editor autosave, meta save) pending.
+
 ---
 
 ## Success Metrics
