@@ -1,6 +1,8 @@
+// app/dashboard/articles/[id]/page.tsx
+// SERVER COMPONENT — auth, data fetch, then mounts client UI.
+// Does NOT add its own layout wrapper (dashboard layout already provides sidebar/header).
+
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, Edit2, Download } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 import ArticleDetailClient, {
@@ -11,7 +13,8 @@ import ArticleDetailClient, {
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface PageProps {
-  params: { id: string }
+  // Next.js 15: params is a Promise
+  params: Promise<{ id: string }>
 }
 
 // ─── Server component ─────────────────────────────────────────────────--------
@@ -69,59 +72,13 @@ export default async function ArticleDetailPage({ params }: PageProps) {
     status:           s.status ?? 'pending',
   }))
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Mount client component directly — no extra wrapper div ────────────────
+  // The dashboard layout already provides the page container.
+  // ArticleDetailClient manages its own height/scroll internally.
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-white">
-
-      {/* ── Page header (server-rendered, always visible) ───────────────── */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-neutral-200 bg-white z-20 shrink-0">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/articles"
-            className="p-1.5 rounded-md hover:bg-neutral-100 text-neutral-500 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div>
-            <h1 className="font-poppins font-bold text-sm text-neutral-900 leading-tight truncate max-w-100">
-              {article.title ?? (article as any).keyword ?? 'Article'}
-            </h1>
-            <p className="text-[10px] font-lato text-neutral-400 uppercase tracking-wider">
-              {article.status}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Publish button — only for completed articles */}
-          {article.status === 'completed' && (
-            <Link
-              href={`/dashboard/articles/${id}/publish`}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-lato text-neutral-600 border border-neutral-200 rounded-md hover:bg-neutral-50 transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" />
-              Publish
-            </Link>
-          )}
-
-          {/* Edit button — visible for all statuses */}
-          <Link
-            href={`/dashboard/articles/${id}/edit`}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-lato text-white rounded-md transition-colors bg-linear-to-r from-[#217CEB] to-[#4A42CC]"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-            Edit
-          </Link>
-        </div>
-      </div>
-
-      {/* ── Client component (Original/Revision UI) ─────────────────────── */}
-      <div className="flex-1 overflow-hidden">
-        <ArticleDetailClient
-          initialArticle={initialArticle}
-          initialSections={initialSections}
-        />
-      </div>
-    </div>
+    <ArticleDetailClient
+      initialArticle={initialArticle}
+      initialSections={initialSections}
+    />
   )
 }

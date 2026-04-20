@@ -35,6 +35,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🐛 FIXED
 - Prevented service-role key leakage in server Supabase client; enforced RLS via `.eq('org_id', currentUser.org_id)` checks on article fetches
 
+### 📝 2026-04-21 - Quick Flow: Article editor fixes
+
+- Fixed layout clipping that hid the Edit button by removing a redundant h-screen wrapper and moving the page header into the client component.
+- Ensured Next.js 15 `params` is awaited in server pages (`params: Promise<{ id: string }>`).
+- Editor height corrected to use `h-full` so it fills the parent layout (prevents nested overflow clipping).
+- Prevent spurious meta saves on mount with an `isFirstRender` guard.
+- Preserve rich formatting: editor now saves `content_html` (capturing innerHTML) and strips tags only for `content_markdown`.
+- Avoid cursor reset by initializing editable content via a ref on mount instead of `dangerouslySetInnerHTML`.
+
 
 ---
 

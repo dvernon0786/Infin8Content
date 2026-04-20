@@ -1,10 +1,11 @@
 "use client"
 
+import Link from 'next/link'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import {
-  ArrowLeft, Heading2, Heading3,
+  ArrowLeft, Edit2, Download, Heading2, Heading3,
   List, ListOrdered, Link2, Image as ImageIcon,
   Strikethrough, AlignLeft, Undo2, Redo2,
   X, Plus, Loader2, CheckCircle2, Info, Sparkles, Upload,
@@ -587,7 +588,44 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-white">
+    <div className="flex flex-col h-full overflow-hidden bg-white">
+
+      {/* ── Page header ─────────────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-6 py-3 border-b border-neutral-200 bg-white z-20 shrink-0">
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard/articles" className="p-1.5 rounded-md hover:bg-neutral-100 text-neutral-500 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div>
+            <h1 className="font-poppins font-bold text-sm text-neutral-900 leading-tight truncate max-w-100">
+              {article.title ?? article.keyword ?? 'Article'}
+            </h1>
+            <p className="text-[10px] font-lato text-neutral-400 uppercase tracking-wider">
+              {article.status}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {article.status === 'completed' && (
+            <Link
+              href={`/dashboard/articles/${article.id}/publish`}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-lato text-neutral-600 border border-neutral-200 rounded-md hover:bg-neutral-50 transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Publish
+            </Link>
+          )}
+          <Link
+            href={`/dashboard/articles/${article.id}/edit`}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-lato text-white rounded-md transition-colors bg-linear-to-r from-[#217CEB] to-[#4A42CC]"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+            Edit
+          </Link>
+        </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
 
       {/* ── Article canvas ──────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">
@@ -819,6 +857,7 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
           )}
         </div>
       </aside>
+      </div>
     </div>
   )
 }

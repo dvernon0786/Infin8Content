@@ -13,7 +13,7 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface ArticleSection {
+export interface SerializedSection {
   id: string
   article_id: string
   section_order: number
@@ -24,14 +24,14 @@ interface ArticleSection {
   status: string
 }
 
-interface ArticleMeta {
+export interface SerializedArticle {
   id: string
   title: string | null
   keyword: string
   status: string
   org_id: string
-  slug?: string | null
-  workflow_state?: any
+  slug: string | null
+  workflow_state: Record<string, any> | null
 }
 
 // ─── Debounce helper ──────────────────────────────────────────────────────────
@@ -86,88 +86,81 @@ function ToolbarBtn({
   )
 }
 
+// ─── Section config ────────────────────────────────────────────────────────────
+
+const SECTION_CONFIG: Record<string, { headerClass: string; containerClass: string }> = {
+  introduction: {
+    headerClass: 'font-poppins text-3xl sm:text-4xl font-bold text-neutral-900 leading-tight',
+    containerClass: 'pb-10 mb-10 border-b border-neutral-200',
+  },
+  h2: {
+    headerClass: 'font-poppins text-2xl sm:text-3xl font-semibold text-neutral-900 leading-snug',
+    containerClass: 'py-8',
+  },
+  h3: {
+    headerClass: 'font-poppins text-xl sm:text-2xl font-semibold text-neutral-800 leading-snug',
+    containerClass: 'py-6',
+  },
+  section: {
+    headerClass: 'font-poppins text-2xl sm:text-3xl font-semibold text-neutral-900 leading-snug',
+    containerClass: 'py-8',
+  },
+  conclusion: {
+    headerClass: 'font-poppins text-2xl sm:text-3xl font-semibold text-neutral-900 leading-snug',
+    containerClass: 'pt-10 mt-10 border-t border-neutral-200',
+  },
+  faq: {
+    headerClass: 'font-poppins text-2xl sm:text-3xl font-semibold text-neutral-900 leading-snug',
+    containerClass: 'py-8',
+  },
+}
+
 // ─── Editable Section ─────────────────────────────────────────────────────────
 
 function EditableSection({
   section,
-  onChange,
+  onContentChange,
   onHeaderChange,
 }: {
-  section: ArticleSection
-  onChange: (id: string, markdown: string) => void
+  section: SerializedSection
+  onContentChange: (id: string, html: string) => void
   onHeaderChange: (id: string, header: string) => void
 }) {
+  const config = SECTION_CONFIG[section.section_type] ?? SECTION_CONFIG.h2
   const contentRef = useRef<HTMLDivElement>(null)
-  const [isEditingHeader, setIsEditingHeader] = useState(false)
 
-  const SECTION_TYPE_CONFIG: Record<string, {
-    headerTag: 'h1' | 'h2' | 'h3'
-    headerClass: string
-    containerClass: string
-  }> = {
-    introduction: {
-      headerTag: 'h1',
-      headerClass: 'font-poppins text-3xl sm:text-4xl font-bold text-neutral-900 leading-tight',
-      containerClass: 'pb-10 mb-10 border-b border-neutral-200',
-    },
-    h2: {
-      headerTag: 'h2',
-      headerClass: 'font-poppins text-2xl sm:text-3xl font-semibold text-neutral-900 leading-snug',
-      containerClass: 'py-8',
-    },
-    h3: {
-      headerTag: 'h3',
-      headerClass: 'font-poppins text-xl sm:text-2xl font-semibold text-neutral-800 leading-snug',
-      containerClass: 'py-6',
-    },
-    conclusion: {
-      headerTag: 'h2',
-      headerClass: 'font-poppins text-2xl sm:text-3xl font-semibold text-neutral-900 leading-snug',
-      containerClass: 'pt-10 mt-10 border-t border-neutral-200',
-    },
-    faq: {
-      headerTag: 'h2',
-      headerClass: 'font-poppins text-2xl sm:text-3xl font-semibold text-neutral-900 leading-snug',
-      containerClass: 'py-8',
-    },
-  }
-
-  const config = SECTION_TYPE_CONFIG[section.section_type] ?? SECTION_TYPE_CONFIG.h2
+  // FIX: set innerHTML once on mount only — never overwrite during edits (Bug 6)
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.innerHTML =
+        section.content_html || section.content_markdown?.replace(/\n/g, '<br>') || ''
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
-    <div className={`group relative ${config.containerClass}`}>
-      {/* Section type label */}
-      <div className="absolute -left-16 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <span className="text-[10px] font-lato font-bold uppercase tracking-widest text-neutral-400">
-          {section.section_type}
-        </span>
-      </div>
+    <div className="group relative">
+      <div className={config.containerClass}>
+        {section.section_header && (
+          <div
+            contentEditable
+            suppressContentEditableWarning
+            onBlur={(e) => onHeaderChange(section.id, e.currentTarget.textContent || '')}
+            className={`${config.headerClass} mb-5 outline-none border-b-2 border-transparent focus:border-blue-200 pb-1 transition-colors cursor-text`}
+          >
+            {section.section_header}
+          </div>
+        )}
 
-      {/* Header */}
-      {section.section_header && (
+        {/* FIX: onInput saves innerHTML (preserves rich formatting), not innerText (Bug 5) */}
         <div
+          ref={contentRef}
           contentEditable
           suppressContentEditableWarning
-          onBlur={(e) => onHeaderChange(section.id, e.currentTarget.textContent || '')}
-          className={`${config.headerClass} mb-5 outline-none focus:outline-none border-b-2 border-transparent focus:border-blue-200 pb-1 transition-colors cursor-text`}
-          data-placeholder="Section heading..."
-        >
-          {section.section_header}
-        </div>
-      )}
-
-      {/* Content area */}
-      <div
-        ref={contentRef}
-        contentEditable
-        suppressContentEditableWarning
-        onInput={(e) => onChange(section.id, e.currentTarget.innerText)}
-        className="font-lato text-neutral-700 leading-relaxed text-[1.0625rem] outline-none focus:outline-none min-h-15 cursor-text whitespace-pre-wrap"
-        data-placeholder="Start writing..."
-        dangerouslySetInnerHTML={{
-          __html: section.content_html || section.content_markdown?.replace(/\n/g, '<br>') || ''
-        }}
-      />
+          onInput={(e) => onContentChange(section.id, e.currentTarget.innerHTML)}
+          className="font-lato text-neutral-700 leading-relaxed text-[1.0625rem] outline-none focus:outline-none min-h-12 cursor-text"
+        />
+      </div>
     </div>
   )
 }
@@ -311,25 +304,24 @@ function TagInput({ tags, onChange }: { tags: string[], onChange: (tags: string[
 // ─── Main Editor (client-only, receives initial data from server) ──────────
 
 interface Props {
-  initialArticle: ArticleMeta
-  initialSections: ArticleSection[]
-  initialWorkflowState?: any
+  initialArticle: SerializedArticle
+  initialSections: SerializedSection[]
 }
 
-export default function ArticleEditClient({ initialArticle, initialSections, initialWorkflowState }: Props) {
+export default function ArticleEditClient({ initialArticle, initialSections }: Props) {
   const router = useRouter()
   const articleId = initialArticle.id
 
   const supabase = createClient()
 
-  const [article, setArticle] = useState<ArticleMeta | null>(initialArticle)
-  const [sections, setSections] = useState<ArticleSection[]>(initialSections)
+  const [article, setArticle] = useState<SerializedArticle>(initialArticle)
+  const [sections, setSections] = useState<SerializedSection[]>(initialSections)
   const [loading, setLoading] = useState(false)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [activeTab, setActiveTab] = useState<'details' | 'seo'>('details')
 
   // Sidebar state
-  const ws = initialWorkflowState || initialArticle.workflow_state || {}
+  const ws = initialArticle.workflow_state || {}
   const [tags, setTags] = useState<string[]>(ws.tags || [])
   const [focusKeyword, setFocusKeyword] = useState(ws.focus_keyword || initialArticle.keyword || '')
   const [metaDescription, setMetaDescription] = useState(ws.meta_description || '')
@@ -337,7 +329,7 @@ export default function ArticleEditClient({ initialArticle, initialSections, ini
   const [featuredImageAlt, setFeaturedImageAlt] = useState(ws.featured_image_alt || '')
 
   // In-memory edits before save
-  const sectionEdits = useRef<Record<string, { markdown?: string; header?: string }>>({})
+  const sectionEdits = useRef<Record<string, { html?: string; header?: string }>>({})
 
   // ── Save section ─────────────────────────────────────────────────────────
 
@@ -348,9 +340,9 @@ export default function ArticleEditClient({ initialArticle, initialSections, ini
     setSaveStatus('saving')
     try {
       const updates: Record<string, any> = { updated_at: new Date().toISOString() }
-      if (edits.markdown !== undefined) {
-        updates.content_markdown = edits.markdown
-        updates.content_html = edits.markdown.replace(/\n/g, '<br>')
+      if (edits.html !== undefined) {
+        updates.content_html     = edits.html
+        updates.content_markdown = edits.html.replace(/<[^>]+>/g, '')
       }
       if (edits.header !== undefined) updates.section_header = edits.header
 
@@ -366,7 +358,7 @@ export default function ArticleEditClient({ initialArticle, initialSections, ini
         prev.map((s) =>
           s.id !== sectionId ? s : {
             ...s,
-            ...(edits.markdown !== undefined ? { content_markdown: edits.markdown, content_html: edits.markdown.replace(/\n/g, '<br>') } : {}),
+            ...(edits.html !== undefined ? { content_html: edits.html, content_markdown: edits.html.replace(/<[^>]+>/g, '') } : {}),
             ...(edits.header !== undefined ? { section_header: edits.header } : {}),
           }
         )
@@ -382,10 +374,10 @@ export default function ArticleEditClient({ initialArticle, initialSections, ini
 
   const debouncedSave = useDebounce(persistSection, 1200)
 
-  const handleContentChange = useCallback((sectionId: string, markdown: string) => {
+  const handleContentChange = useCallback((sectionId: string, html: string) => {
     sectionEdits.current[sectionId] = {
       ...sectionEdits.current[sectionId],
-      markdown,
+      html,
     }
     setSaveStatus('saving')
     debouncedSave(sectionId)
@@ -406,14 +398,7 @@ export default function ArticleEditClient({ initialArticle, initialSections, ini
     if (!articleId) return
     setSaveStatus('saving')
     try {
-      // Fetch current workflow_state first to merge
-      const { data } = await (supabase as any)
-        .from('articles')
-        .select('workflow_state')
-        .eq('id', articleId)
-        .single()
-
-      const current = data?.workflow_state || {}
+      const current = article.workflow_state || {}
       const updated = {
         ...current,
         focus_keyword: focusKeyword,
@@ -433,11 +418,14 @@ export default function ArticleEditClient({ initialArticle, initialSections, ini
     } catch {
       setSaveStatus('error')
     }
-  }, [articleId, focusKeyword, metaDescription, featuredImageUrl, featuredImageAlt, tags, supabase])
+  }, [articleId, article.workflow_state, focusKeyword, metaDescription, featuredImageUrl, featuredImageAlt, tags, supabase])
 
   const debouncedMetaSave = useDebounce(saveMeta, 1500)
 
+  // FIX: isFirstRender guard prevents spurious save on mount (Bug 4)
+  const isFirstRender = useRef(true)
   useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return }
     debouncedMetaSave()
   }, [focusKeyword, metaDescription, featuredImageUrl, featuredImageAlt, tags])
 
@@ -451,7 +439,7 @@ export default function ArticleEditClient({ initialArticle, initialSections, ini
   if (!article) return null
 
   return (
-    <div className="flex flex-col h-screen bg-neutral-50 overflow-hidden">
+    <div className="flex flex-col h-full bg-neutral-50 overflow-hidden">
       {/* Top Bar, toolbar, editor layout — reuse markup from previous editor implementation */}
       <header className="flex items-center justify-between px-4 py-2.5 bg-white border-b border-neutral-200 shadow-sm z-20 shrink-0">
         <div className="flex items-center gap-3">
@@ -570,7 +558,7 @@ export default function ArticleEditClient({ initialArticle, initialSections, ini
                   .from('articles')
                   .update({ title: newTitle })
                   .eq('id', articleId)
-                setArticle((a) => a ? { ...a, title: newTitle } : a)
+                setArticle((a) => ({ ...a, title: newTitle }))
               }}
               className="font-poppins text-3xl sm:text-4xl font-bold text-neutral-900 leading-tight mb-8 outline-none focus:outline-none border-b-2 border-transparent focus:border-blue-200 pb-2 transition-colors cursor-text empty:before:content-[attr(data-placeholder)] empty:before:text-neutral-300"
               data-placeholder="Article title…"
@@ -591,7 +579,7 @@ export default function ArticleEditClient({ initialArticle, initialSections, ini
                 <EditableSection
                   key={section.id}
                   section={section}
-                  onChange={handleContentChange}
+                  onContentChange={handleContentChange}
                   onHeaderChange={handleHeaderChange}
                 />
               ))

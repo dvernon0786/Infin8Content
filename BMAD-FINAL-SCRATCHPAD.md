@@ -85,6 +85,14 @@
 - **Files modified:** `infin8content/components/dashboard/sidebar-navigation.tsx` (imports cleaned; sub-items adjusted; layout tweak)
 - **TypeScript / lint:** No TS errors introduced; visual QA recommended (open dashboard and expand Blog Automation to confirm labels and spacing).
 
+## Quick Flow Editor Fixes (2026-04-21)
+
+- Implemented a set of targeted fixes to the article detail & editor UX that addressed layout clipping, autosave races, and rich-text persistence.
+- Files changed: `app/dashboard/articles/[id]/page.tsx`, `app/dashboard/articles/[id]/ArticleDetailClient.tsx`, `app/dashboard/articles/[id]/edit/page.tsx`, `app/dashboard/articles/[id]/ArticleEditClient.tsx`.
+- Key outcomes: Edit button visible/clickable; editor fills parent layout; rich formatting preserved across saves; no spurious writes on initial mount; cursor position stable while typing.
+
+Notes: Follow the verification checklist in `CHANGELOG.md` under the Unreleased section. Run a quick local smoke test: open an article, switch to Revision, apply bold/italic in a section, wait 1.5s, reload, confirm formatting persists.
+
 ---
 
 ## Total Deliverables

@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
 
 interface PageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function ArticleEditPage({ params }: PageProps) {
@@ -55,12 +55,9 @@ export default async function ArticleEditPage({ params }: PageProps) {
   }))
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-white">
-      <ArticleEditClient
-        initialArticle={initialArticle}
-        initialSections={initialSections}
-        initialWorkflowState={article.workflow_state ?? null}
-      />
-    </div>
+    <ArticleEditClient
+      initialArticle={initialArticle}
+      initialSections={initialSections}
+    />
   )
 }

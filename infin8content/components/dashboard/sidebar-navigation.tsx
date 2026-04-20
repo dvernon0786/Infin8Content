@@ -9,10 +9,8 @@ import {
     Eye,
     LayoutGrid,
     Bot,
-    Gauge,
     BarChart3,
     Link2,
-    Rss,
     ChevronDown,
 } from "lucide-react"
 import Link from "next/link"
@@ -71,30 +69,11 @@ const NAV_ITEMS: NavItem[] = [
         url: "#",
         icon: Bot,
         sub: [
-            { title: "Campaigns", url: "#" },
-            { title: "AutoBlogs", url: "#" },
+            { title: "Campaigns & Autoblogs", url: "#" },
+            { title: "Site Optimizers", url: "#" },
+            { title: "Integrations", url: "#" },
+            { title: "Feeds", url: "#" },
         ],
-    },
-    {
-        id: "site-optimizers",
-        title: "Site Optimizers",
-        url: "#",
-        icon: Gauge,
-        disabled: true,
-    },
-    {
-        id: "integrations",
-        title: "Integrations",
-        url: "#",
-        icon: Link2,
-        disabled: true,
-    },
-    {
-        id: "feeds",
-        title: "Feeds",
-        url: "#",
-        icon: Rss,
-        disabled: true,
     },
     {
         id: "analytics",
@@ -244,7 +223,7 @@ export function SidebarNavigation({ orgName = "Default Workspace", plan, usage }
                                     {/* Sub-items */}
                                     <div style={{
                                         overflow: "hidden",
-                                        maxHeight: isOpen ? 200 : 0,
+                                        maxHeight: isOpen ? 300 : 0,
                                         transition: "max-height 0.25s ease",
                                     }}>
                                         {item.sub?.map((sub) => (
