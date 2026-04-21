@@ -747,17 +747,16 @@ export default function ArticleEditClient({ initialArticle, initialSections }: P
           </div>
         </aside>
       </div>
-    </div>
 
-    <Dialog open={showPublishModal} onOpenChange={setShowPublishModal}>
-      <DialogContent aria-describedby={undefined}>
-        <DialogTitle className="sr-only">Publish Article</DialogTitle>
-        <PublishToCmsButton
-          articleId={article.id}
-          articleStatus={article.status}
-        />
-      </DialogContent>
-    </Dialog>
+      <Dialog open={showPublishModal} onOpenChange={setShowPublishModal}>
+        <DialogContent aria-describedby={undefined}>
+          <DialogTitle className="sr-only">Publish Article</DialogTitle>
+          <PublishToCmsButton
+            articleId={article.id}
+            articleStatus={article.status}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
