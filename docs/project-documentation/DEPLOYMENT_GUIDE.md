@@ -372,6 +372,9 @@ jobs:
       - run: echo "CI passed"
 ```
 
+**Branch workflow:** For exact branch & PR steps related to `test-main-all`, see the central scratchpad: [SCRATCHPAD.md](../../SCRATCHPAD.md). Quick copyable commands are available there to fetch, sync, create a topic branch, commit, and push.
+
+
 #### 2. Manual Deployment
 ```bash
 #!/bin/bash
