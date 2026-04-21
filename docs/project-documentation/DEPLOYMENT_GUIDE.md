@@ -374,6 +374,11 @@ jobs:
 
 **Branch workflow:** For exact branch & PR steps related to `test-main-all`, see the central scratchpad: [SCRATCHPAD.md](../../SCRATCHPAD.md). Quick copyable commands are available there to fetch, sync, create a topic branch, commit, and push.
 
+**Vercel deploy note:** If a deployment is blocked with a message that the commit author does not have contributing access (Hobby Plan limitation for private repos), resolve by either:
+
+- Upgrading the Vercel project to the **Pro** plan and adding team members via Vercel Dashboard → Team → Members.
+- Or ensuring the commit author maps to a GitHub account with Vercel access (change commit author on a topic branch and push). See the central scratchpad for exact commands: [SCRATCHPAD.md](../../SCRATCHPAD.md).
+
 
 #### 2. Manual Deployment
 ```bash
