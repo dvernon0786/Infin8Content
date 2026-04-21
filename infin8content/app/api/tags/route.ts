@@ -29,10 +29,10 @@ export async function GET(request: NextRequest) {
     // 2. Resolve org_id
     const { data: profile, error: profileError } = await userClient
       .from('users')
-      .select('organization_id')
+      .select('org_id')
       .eq('id', user.id)
       .single()
-    if (profileError || !profile?.organization_id) {
+    if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     let query = serviceClient
       .from('org_tags')
       .select('name')
-      .eq('org_id', profile.organization_id)
+      .eq('org_id', profile.org_id)
       .order('name', { ascending: true })
       .limit(50)
 
@@ -86,10 +86,10 @@ export async function POST(request: NextRequest) {
     // 2. Resolve org_id
     const { data: profile, error: profileError } = await userClient
       .from('users')
-      .select('organization_id')
+      .select('org_id')
       .eq('id', user.id)
       .single()
-    if (profileError || !profile?.organization_id) {
+    if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     const { error: upsertError } = await serviceClient
       .from('org_tags')
       .upsert(
-        { org_id: profile.organization_id, name },
+        { org_id: profile.org_id, name },
         { onConflict: 'org_id,name', ignoreDuplicates: true }
       )
     if (upsertError) {
