@@ -22,6 +22,7 @@ import { onboardingEmailSequence } from '@/lib/inngest/functions/onboarding-emai
 import { newsPollScheduled, newsPollWatch, newsGenerateStory } from '@/lib/inngest/functions/news-poller'
 import { autoPublishToSocial, manualPublishToSocial } from '@/lib/inngest/functions/publish-to-social'
 import { llmVisibilityDailyCron, llmVisibilityRerun } from '@/lib/inngest/functions/llm-visibility-tracker'
+import { generateArticleMeta } from '@/lib/inngest/functions/generate-article-meta'
 
 // Validate environment variables at runtime
 const eventKey = process.env.INNGEST_EVENT_KEY
@@ -58,6 +59,7 @@ export const { GET, POST, PUT } = serve({
     newsGenerateStory,
     autoPublishToSocial,      // fires on article/generation.completed
     manualPublishToSocial,    // fires on article/publish.requested
+    generateArticleMeta,      // fires on article/generation.completed — populates meta, image, tags
     llmVisibilityDailyCron,
     llmVisibilityRerun,
   ],

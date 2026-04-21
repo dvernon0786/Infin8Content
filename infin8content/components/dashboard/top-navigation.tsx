@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, User, Bell, Search, MoreHorizontal, HelpCircle } from "lucide-react"
+import { LogOut, Bell, Search, MoreHorizontal, HelpCircle, Settings } from "lucide-react"
 import { HelpDrawer } from "@/components/dashboard/help-drawer"
 import { usePathname, useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
@@ -183,9 +183,12 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="cursor-pointer font-lato text-[#52525B] hover:text-[#0066FF]">
-                            <User className="mr-2 h-4 w-4" />
-                            <span>Profile</span>
+                        <DropdownMenuItem
+                            onClick={() => router.push('/dashboard/settings')}
+                            className="cursor-pointer font-lato text-[#52525B] hover:text-[#0066FF]"
+                        >
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Settings</span>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
