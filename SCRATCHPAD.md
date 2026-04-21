@@ -84,6 +84,34 @@ git push -u origin <your-branch-name>
 git push -u origin test-main-all
 ```
 
+## Vercel Deployment Blocked — Quick Resolutions
+
+Deployment failed because the commit author `dvernon0786` (email `engagehubonline@gmail.com`) did not have contributing access to the Vercel project. The Vercel Hobby Plan does not support adding collaborators for private repositories, so deployments from non-owner accounts are blocked.
+
+Immediate options to resolve:
+
+1. Upgrade Vercel to Pro and add team members
+   - Vercel Dashboard → Settings → Billing → Upgrade to Pro.
+   - Team → Members → Invite by GitHub username or email.
+
+2. Add the committing GitHub account to the Vercel team (owner access required)
+
+3. Reassign commit author locally (safe on topic branches) and force-push
+   - Amend last commit author (single-commit fix):
+     ```bash
+     git commit --amend --author="Dev Vernon <dvernon0786@users.noreply.github.com>" --no-edit
+     git push --force-with-lease origin <branch>
+     ```
+   - Rewrite many commits (only on topic branches; history rewrite):
+     ```bash
+     git filter-branch --env-filter 'OLD_EMAIL="engagehubonline@gmail.com"; CORRECT_NAME="dvernon0786"; CORRECT_EMAIL="dvernon0786@users.noreply.github.com"; if [ "$GIT_COMMITTER_EMAIL" = "$OLD_EMAIL" ]; then export GIT_COMMITTER_NAME="$CORRECT_NAME"; export GIT_COMMITTER_EMAIL="$CORRECT_EMAIL"; fi; if [ "$GIT_AUTHOR_EMAIL" = "$OLD_EMAIL" ]; then export GIT_AUTHOR_NAME="$CORRECT_NAME"; export GIT_AUTHOR_EMAIL="$CORRECT_EMAIL"; fi' -- --branches --tags
+     git push --force-with-lease origin <branch>
+     ```
+
+Warning: Do NOT force-push to protected branches such as `main` or `test-main-all`. Prefer creating a new topic branch, amending there, and opening a PR.
+
+If you want, I can prepare a topic branch with these docs changes and push it for you, or prepare the exact git commands to rewrite author emails on a topic branch.
+
 
 
 ## **🔥 DESIGN SYSTEM COMPLIANCE & USAGE REFACTOR**

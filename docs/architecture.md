@@ -1,32 +1,260 @@
 # Architecture Documentation
 
-Generated: 2026-01-13 (Updated)  
-Project: Infin8Content  
-Framework: Next.js 16.1.1 with TypeScript  
+Deep Scan: 2026-04-22
+Project: Infin8Content
+Framework: Next.js 16.1.1 with TypeScript
 Type: Multi-Tenant SaaS Platform
-Architecture Type: Full-stack SaaS Application
 
 ---
 
 ## Executive Summary
 
-**Infin8Content** is a multi-tenant SaaS platform for AI-powered content generation built on modern web architecture principles. The system combines real-time collaboration, payment processing, and advanced AI integration to deliver a comprehensive content creation solution.
+**Infin8Content** is a multi-tenant AI content SaaS with two distinct processing systems:
+
+1. **Article Generation Pipeline** — Trigger API → Inngest → LLM workers → database. Strictly deterministic, governed by the FSM.
+2. **Intent Workflow Engine** — 9-step human-in-the-loop workflow for ICP-driven keyword strategy and article scheduling.
+
+Both systems share Supabase (PostgreSQL + Auth + Realtime) as the single source of truth and use org-scoped RLS for complete tenant isolation.
 
 ### Key Architectural Characteristics
-- **Multi-Tenant Architecture**: Complete data isolation between organizations
-- **Event-Driven Design**: Asynchronous processing with Inngest workflows
-- **Microservice-Ready**: Modular service layer for future scaling
-- **Security-First**: Row-level security and comprehensive audit logging
-- **Performance-Optimized**: Intelligent caching and real-time updates
+- **Zero Drift Protocol**: No UI component may mutate article `status` — only the Trigger API and Inngest workers
+- **Event-Driven Background Jobs**: 16 Inngest functions covering generation, scheduling, publishing, cleanup, and metrics
+- **Multi-Adapter CMS Publishing**: 7 adapters (WordPress, Ghost, Notion, Shopify, Webflow, Custom, Outstand)
+- **Public v1 API**: Key-authenticated REST surface for external integrations
+- **Real-time UI**: Supabase Realtime subscriptions propagate DB state directly to dashboard components
 
 ---
 
-## Technology Stack Architecture
+## Technology Stack (Verified 2026-04-22)
 
-### Frontend Layer
+| Layer | Technology | Version | Role |
+|-------|-----------|---------|------|
+| Framework | Next.js (App Router) | 16.1.1 | Full-stack — pages, API routes, middleware |
+| UI Runtime | React | 19.2.3 | Component model |
+| Styling | Tailwind CSS | 4.x | Utility-first styling |
+| Component Primitives | Radix UI | multiple | Accessible headless primitives |
+| Icons | Lucide React | 0.562.0 | Icon set |
+| Database/Auth/Realtime | Supabase | 2.89.0 | PostgreSQL + JWT auth + WS realtime |
+| Background Jobs | Inngest | 3.48.1 | Durable function execution |
+| AI SDK | Vercel AI SDK | 6.0.0 | LLM streaming + tool calls |
+| LLM Router | OpenRouter | 2.1.1 | Multi-model failover (Gemini, Claude, Llama) |
+| Research | Tavily | — | Web research API |
+| SEO Data | DataForSEO | — | SERP + keyword data |
+| Payments | Stripe | 20.1.0 | Subscriptions + usage billing |
+| Email | Brevo | 3.0.1 | Transactional email |
+| Charts | Recharts | 3.7.0 | Analytics visualizations |
+| Validation | Zod | 3.23.8 | Schema validation at API boundaries |
+| Encryption | AES-256 | — | CMS credential encryption (lib/security/encryption.ts) |
+| Monitoring | Sentry | 10.34.0 | Error tracking |
+| Logging | Winston | 3.11.0 | Structured server logs |
+| Testing | Vitest / Playwright / Storybook | 4.0.16 / 1.57.0 / 10.1.11 | Unit / E2E / Component |
+
+---
+
+## System Architecture
+
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Frontend Architecture                    │
+┌──────────────────────────────────────────────────────────────┐
+│                       Client Browser                         │
+│              (React 19 + Next.js App Router)                 │
+└────────────────────────────┬─────────────────────────────────┘
+                             │ HTTPS / WebSocket
+┌────────────────────────────▼─────────────────────────────────┐
+│                  Next.js Application (Vercel)                │
+│  ┌──────────────┐  ┌─────────────────┐  ┌────────────────┐  │
+│  │  App Router  │  │   API Routes    │  │  Middleware     │  │
+│  │  /dashboard  │  │  /api/articles  │  │  Auth + Org     │  │
+│  │  /workflows  │  │  /api/intent    │  │  Onboarding Gate│  │
+│  │  /onboarding │  │  /api/v1/*      │  │  Payment Guard  │  │
+│  └──────────────┘  └────────┬────────┘  └────────────────┘  │
+└───────────────────────────┬─┴────────────────────────────────┘
+                            │
+        ┌───────────────────┼──────────────────────┐
+        │                   │                      │
+┌───────▼────────┐  ┌───────▼────────┐  ┌──────────▼────────┐
+│   Supabase     │  │   Inngest      │  │  External APIs    │
+│  PostgreSQL    │  │  (16 functions)│  │                   │
+│  Auth (JWT)    │  │  article gen   │  │  OpenRouter (LLM) │
+│  Realtime WS   │  │  intent pipe   │  │  Tavily (research)│
+│  RLS policies  │  │  scheduler     │  │  DataForSEO       │
+│  75 migrations │  │  social pub    │  │  Stripe (billing) │
+└────────────────┘  └───────┬────────┘  │  Brevo (email)    │
+                            │           │  Outstand (social)│
+                   ┌────────▼────────┐  └───────────────────┘
+                   │  CMS Adapters   │
+                   │  WordPress      │
+                   │  Ghost / Notion │
+                   │  Shopify / Webflow│
+                   └─────────────────┘
+```
+
+---
+
+## Article Generation Pipeline (Zero Drift Protocol)
+
+```
+User → POST /api/articles/generate
+         │
+         ▼ (validate org credits, check status)
+    Inngest event: article.generate
+         │
+         ▼ article-generate-planner.ts
+    ┌────┴──────────────────────────────────┐
+    │  1. Research Agent (Tavily + cache)   │
+    │  2. Content Planner Agent (outline)   │
+    │  3. Content Writing Agent (sections)  │
+    │  4. Article Assembler                 │
+    │  5. SEO Scoring Service               │
+    │  6. Metadata Generator                │
+    └────┬──────────────────────────────────┘
+         │
+         ▼ DB update → Supabase Realtime → Dashboard
+```
+
+**FSM States**: `backlog` → `queued` → `researching` → `outlining` → `generating` → `reviewing` → `completed` / `failed`
+
+**Enforcement**:
+- `lib/fsm/unified-workflow-engine.ts` — canonical state machine
+- `lib/fsm/automation-boundary-guard.ts` — prevents UI from bypassing FSM
+- `lib/fsm/boundary-transition-wrapper.ts` — wraps all transitions with audit logging
+
+---
+
+## Intent Workflow Engine (9-Step Pipeline)
+
+```
+Step 1: ICP Generation    → POST /api/intent/workflows/[id]/steps/icp-generate
+Step 2: Competitor Analyze→ POST /api/intent/workflows/[id]/steps/competitor-analyze
+Step 3: Seed Extraction   → POST /api/intent/workflows/[id]/steps/seed-extract
+Step 4: Approve Seeds     → POST /api/intent/workflows/[id]/steps/approve-seeds  ← Human gate
+Step 5: Longtail Expand   → POST /api/intent/workflows/[id]/steps/longtail-expand
+Step 6: Filter Keywords   → POST /api/intent/workflows/[id]/steps/filter-keywords
+Step 7: Cluster Topics    → POST /api/intent/workflows/[id]/steps/cluster-topics
+Step 8: Validate Clusters → POST /api/intent/workflows/[id]/steps/validate-clusters
+Step 9: Human Approval    → POST /api/intent/workflows/[id]/steps/human-approval  ← Human gate
+         │
+         ▼
+Step 9+: Queue Articles   → POST /api/intent/workflows/[id]/steps/queue-articles
+```
+
+**Key services**: `lib/services/intent-engine/` (20+ files) including ICP generator, keyword clusterer, longtail expander, competitor seed extractor, human approval processor.
+
+---
+
+## Service Layer Architecture
+
+```
+lib/
+├── agents/                          # AI planning agents
+│   ├── planner-agent.ts             # High-level generation coordinator
+│   └── planner-compiler.ts          # Prompt compilation
+├── fsm/                             # State machine (Zero Drift Protocol)
+│   ├── unified-workflow-engine.ts   # Canonical FSM
+│   ├── workflow-fsm.ts              # Core transitions
+│   ├── automation-boundary-guard.ts # Prevents invalid mutations
+│   └── boundary-transition-wrapper.ts
+├── inngest/functions/               # 16 background workers
+├── services/
+│   ├── article-generation/          # Generation pipeline (8 agents)
+│   ├── intent-engine/               # Keyword workflow (20+ services)
+│   ├── publishing/                  # CMS adapters (7 platforms)
+│   ├── dataforseo/                  # SERP analysis
+│   ├── llm-visibility/              # Brand presence tracking
+│   ├── openrouter/                  # LLM client
+│   ├── tavily/                      # Research client
+│   ├── webhooks/                    # Outbound webhook dispatcher
+│   └── workflow-engine/             # Workflow audit + progression
+├── research/                        # Research cache + batch optimizer
+├── seo/                             # SEO scoring, validation, recommendations
+├── stripe/                          # Payment client + prices + retry
+├── supabase/                        # DB client + types + auth wrappers
+├── api-auth/                        # v1 API key validation
+├── guards/                          # Onboarding + workflow step gates
+└── security/                        # AES-256 encryption for CMS credentials
+```
+
+---
+
+## Multi-Tenancy Model
+
+**Isolation mechanism**: Supabase Row Level Security (RLS) on all tables.
+
+```sql
+-- All tables enforce org-based isolation
+-- Policy pattern (verified in migrations):
+ALTER TABLE articles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "org_isolation" ON articles
+  FOR ALL TO authenticated
+  USING (org_id = auth.jwt() ->> 'organization_id');
+```
+
+**Organization scoping**:
+- `articles.org_id` — all article data
+- `activities.organization_id` — audit trail
+- `intent_workflows.organization_id` — keyword pipelines
+- `organization_competitors.organization_id` — competitor data
+- Service Role key (server-side only) bypasses RLS for admin operations
+
+---
+
+## Public v1 API Architecture
+
+Separate key-authenticated surface at `/api/v1/`:
+
+| Route | Auth | Notes |
+|-------|------|-------|
+| `GET/POST /api/v1/articles` | API key | CRUD articles |
+| `GET /api/v1/articles/[id]` | API key | Single article |
+| `POST /api/v1/articles/generate` | API key | Trigger generation |
+| `POST /api/v1/articles/[id]/publish` | API key | CMS publish |
+| `POST /api/v1/articles/[id]/publish-social` | API key | Social publish |
+| `GET /api/v1/analytics/articles/[id]` | API key | Article analytics |
+| `GET/POST /api/v1/api-keys` | API key | Key management |
+| `POST /api/v1/keywords/research` | API key | Keyword data |
+| `GET /api/v1/social/accounts` | API key | Social accounts |
+
+Auth middleware: `lib/api-auth/with-api-auth.ts` + `lib/api-auth/validate-api-key.ts`
+
+---
+
+## Security Architecture
+
+| Layer | Implementation |
+|-------|---------------|
+| Authentication | Supabase JWT + OTP email verification |
+| Multi-tenancy isolation | Supabase RLS on all tables |
+| API authorization | `lib/api-auth/with-api-auth.ts` for v1 API keys |
+| Input validation | Zod schemas at all API boundaries |
+| CMS credential storage | AES-256 encryption via `lib/security/encryption.ts` |
+| Redirect validation | `lib/utils/validate-redirect.ts` (prevents open redirect) |
+| Rate limiting | `lib/services/rate-limiting/persistent-rate-limiter.ts` + `rate_limits` table |
+| Session management | `lib/supabase/middleware.ts` — cookie-based SSR sessions |
+| Payment guards | `components/guards/payment-guard.tsx` |
+| Onboarding gates | `lib/guards/onboarding-gate.ts` + `lib/guards/onboarding-guard.ts` |
+
+---
+
+## CI/CD Architecture
+
+**GitHub Actions** (`.github/workflows/`):
+
+| Workflow | Purpose |
+|----------|---------|
+| `ci.yml` | Main CI: lint, type-check, unit tests |
+| `design-system.yml` | ESLint design system plugin compliance |
+| `performance.yml` | Performance benchmarks |
+| `sm-validation.yml` | State machine transition validation |
+| `ts-001.yml` | TypeScript strict checks |
+| `visual-regression.yml` | Storybook visual diffs |
+
+**Build Config** (`next.config.ts`):
+- Turbopack enabled (with explicit `root` for CI compatibility)
+- `typescript.ignoreBuildErrors: true` (TODO: remove once Supabase types stabilized)
+- Image domains: `images.unsplash.com`
+
+---
+
+*See [Data Models](./data-models.md) · [API Contracts](./api-contracts.md) · [Workflow Guide](./workflow-guide.md) · [Component Inventory](./component-inventory.md)*
 ├─────────────────────────────────────────────────────────────┤
 │ Next.js 16.1.1 (App Router)                                │
 │ ├── React 19.2.3 (Component Framework)                     │

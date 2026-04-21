@@ -188,6 +188,8 @@ Ready for engineering execution
 
 ### Quick local commands (safe copy)
 
+See the canonical central scratchpad for copyable branch & PR steps: [SCRATCHPAD.md](SCRATCHPAD.md)
+
 Use these commands to sync `test-main-all`, create a branch, commit, push, and open a PR:
 
 ```bash
