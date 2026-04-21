@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const { data: profileRaw, error: profileError } = await userClient
       .from('users')
       .select('org_id')
-      .eq('id', user.id)
+      .eq('auth_user_id', user.id)
       .single()
     const profile = profileRaw as unknown as { org_id: string } | null
     if (profileError || !profile?.org_id) {
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     const { data: profileRaw, error: profileError } = await userClient
       .from('users')
       .select('org_id')
-      .eq('id', user.id)
+      .eq('auth_user_id', user.id)
       .single()
     const profile = profileRaw as unknown as { org_id: string } | null
     if (profileError || !profile?.org_id) {
