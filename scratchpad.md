@@ -1,5 +1,26 @@
 # Scratchpad
 
+2026-04-21 — Standalone Article Generation Flow Fix ✅
+
+- **Type:** Bug fix / New API routes
+- **Branch:** `test-main-all`
+- **Status:** ✅ Implemented & pushed
+- **Summary:**
+  - Fixed broken Generate Article page (`/dashboard/articles/generate?type=seo|news|youtube`) — form was POSTing keyword/config directly to `/api/articles/generate` which only accepts an `articleId`, causing `400 "Article ID is required"` on every submit.
+  - Fixed `GET /api/articles/usage` returning `404` (route file was missing entirely).
+  - Fixed dashboard Overview "Generate Articles" card — all 3 cards were linking to `/dashboard/workflows/new` instead of the generate page with correct `?type=` param.
+- **Root cause:** `POST /api/articles/generate` is a trigger-only endpoint (expects existing DB record). Form needed a create-then-trigger two-step flow.
+- **Files changed:**
+  - `infin8content/app/api/articles/route.ts` — NEW: `POST /api/articles` creates article record (status: draft), returns `{ articleId }`. Stores `article_type`, `article_type_config`, `video_url`, `generation_config` from form input.
+  - `infin8content/app/api/articles/usage/route.ts` — NEW: `GET /api/articles/usage` reads `org.article_usage` + `article_limit` + `plan` from `getCurrentUser()`.
+  - `infin8content/app/dashboard/articles/generate/article-generation-client.tsx` — PATCH: `handleGenerate` updated to two-step (create → generate); now also forwards `articleType`/`language`/`articleTypeConfig` which were previously dropped.
+  - `infin8content/components/dashboard/generate-articles-card.tsx` — PATCH: Fixed `href` for all 3 cards to `/dashboard/articles/generate?type=seo|news|youtube`.
+- **No breaking changes:** Existing workflow/scheduler/Inngest paths unchanged — all already pass `articleId` directly.
+- **Context note:** Standalone generation uses `org.content_defaults` for generation config and empty `subtopic_data` / no ICP context — produces valid articles but less targeted than the full workflow path.
+- **Next actions:** Test all 3 type flows in browser, verify Inngest completes article, confirm usage counter increments.
+
+— End entry —
+
 2026-04-18 — Sync for branch: docs/scratchpad-sync
 
 - Summary: Synchronized local docs with latest feature work implementing analytics, billing, usage dashboard, Google integrations, PostHog, team dashboard, feature-discovery, and in-place article editor.

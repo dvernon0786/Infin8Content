@@ -10,7 +10,7 @@ const CARDS = [
         emoji: "🔍",
         label: "SEO Article",
         desc: "Optimized for search",
-        href: "/dashboard/workflows/new",
+        href: "/dashboard/articles/generate?type=seo",
     },
     {
         id: "news",
@@ -19,7 +19,7 @@ const CARDS = [
         emoji: "📰",
         label: "News Article",
         desc: "Real-world events",
-        href: "/dashboard/workflows/new",
+        href: "/dashboard/articles/generate?type=news",
     },
     {
         id: "youtube",
@@ -28,7 +28,7 @@ const CARDS = [
         emoji: "▶",
         label: "YouTube",
         desc: "Video to blog post",
-        href: "/dashboard/workflows/new",
+        href: "/dashboard/articles/generate?type=youtube",
     },
 ]
 

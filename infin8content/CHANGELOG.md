@@ -2,9 +2,13 @@
 
 All notable changes to the Infin8Content platform will be documented in this file.
 
-## [Unreleased] - 2026-04-20
+## [Unreleased] - 2026-04-21
 
 ### Fixed
+- **article-generation:** `POST /api/articles/generate` returned `400 "Article ID is required"` when submitting the standalone Generate Article form — form was sending raw keyword/config to a trigger-only endpoint. Fixed by adding `POST /api/articles` create endpoint and splitting `handleGenerate` into a create-then-trigger two-step flow.
+- **article-generation:** `GET /api/articles/usage` returned `404` — created missing route file that reads `org.article_usage`, `article_limit`, and `plan` from the authenticated user's organization.
+- **article-generation:** `handleGenerate` now correctly forwards `articleType`, `language`, and `articleTypeConfig` to the create step (previously dropped, causing default fallbacks).
+- **dashboard:** "Generate Articles" overview cards all linked to `/dashboard/workflows/new` instead of `/dashboard/articles/generate?type=seo|news|youtube` — fixed all 3 card hrefs.
 - **feature-flags:** Add short in-memory caching and `getFeatureFlagsForOrg()` batch fetch to reduce Supabase round-trips during server render; lower missing-flag log level to `info` to avoid noisy warnings. See branch `test-main-all` (commit `58ac8eab`).
 
 

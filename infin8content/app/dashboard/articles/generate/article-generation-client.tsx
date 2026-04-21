@@ -65,37 +65,58 @@ export function ArticleGenerationPageClient({ organizationId }: ArticleGeneratio
     writingStyle: string
     targetAudience: string
     customInstructions?: string
+    articleType?: import('@/types/article').ArticleType
+    language?: string
+    articleTypeConfig?: Record<string, any>
   }) => {
     setIsLoading(true)
     setError(null)
     setUsageInfo(null)
 
     try {
-      const response = await fetch('/api/articles/generate', {
+      // Step 1: Create the article record and get its ID
+      const createResponse = await fetch('/api/articles', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           keyword: data.keyword,
           targetWordCount: data.targetWordCount,
           writingStyle: data.writingStyle,
           targetAudience: data.targetAudience,
           customInstructions: data.customInstructions,
+          articleType: data.articleType,
+          language: data.language,
+          articleTypeConfig: data.articleTypeConfig,
         }),
       })
 
-      const result = await response.json()
+      const createResult = await createResponse.json()
 
-      if (!response.ok) {
+      if (!createResponse.ok) {
+        setError(createResult.error || 'Failed to create article')
+        return
+      }
+
+      const { articleId } = createResult
+
+      // Step 2: Trigger generation with the new articleId
+      const generateResponse = await fetch('/api/articles/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ articleId }),
+      })
+
+      const generateResult = await generateResponse.json()
+
+      if (!generateResponse.ok) {
         // Handle usage limit error
-        if (result.details?.usageLimitExceeded) {
+        if (generateResult.details?.usageLimitExceeded) {
           setUsageInfo({
-            current: result.details.currentUsage,
-            limit: result.details.limit,
+            current: generateResult.details.currentUsage,
+            limit: generateResult.details.limit,
           })
         }
-        setError(result.error || 'Failed to generate article')
+        setError(generateResult.error || 'Failed to start generation')
         return
       }
 
