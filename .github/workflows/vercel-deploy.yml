@@ -1,0 +1,56 @@
+name: Vercel Deploy
+
+# Deploys to Vercel via CLI using project owner token — bypasses the Hobby Plan
+# "commit author contributing access" restriction entirely.
+# Triggers on pushes to test-main-all (production) and any sm-* branches (preview).
+#
+# Required GitHub Secrets (Settings → Secrets and variables → Actions → New repository secret):
+#   VERCEL_TOKEN      — Vercel Dashboard → Settings → Tokens → Create
+#   VERCEL_ORG_ID     — Vercel Dashboard → Settings → General → Team ID (or Personal: skip if personal account)
+#   VERCEL_PROJECT_ID — Vercel Dashboard → Project → Settings → General → Project ID
+#
+# Once these three secrets are added, every push to test-main-all deploys to production.
+# Pushes to sm-* branches create Vercel preview deployments.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test-main-all
+      - sm-*
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment
+        working-directory: ./infin8content
+        run: vercel pull --yes --environment=${{ github.ref_name == 'test-main-all' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build Project
+        working-directory: ./infin8content
+        run: vercel build ${{ github.ref_name == 'test-main-all' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy to Vercel
+        working-directory: ./infin8content
+        run: vercel deploy --prebuilt ${{ github.ref_name == 'test-main-all' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
