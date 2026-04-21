@@ -732,6 +732,7 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
+    <>
     <div className="flex flex-col h-full overflow-hidden bg-white">
 
       {/* ── Page header ─────────────────────────────────────────────────────────────── */}
@@ -1038,5 +1039,6 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
         />
       </DialogContent>
     </Dialog>
+    </>
   )
 }

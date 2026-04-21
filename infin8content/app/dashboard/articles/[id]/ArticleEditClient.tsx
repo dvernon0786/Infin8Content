@@ -458,9 +458,10 @@ export default function ArticleEditClient({ initialArticle, initialSections }: P
   const exec = (cmd: string, value?: string) =>
     document.execCommand(cmd, false, value)
 
-  // ─── Render ──────────────────────────────────────────────────────────────
-
-  if (!article) return null
+  // ─── Render ───────────────────────────────────────────────────────────────
+  return (
+    <>
+    <div className="flex flex-col h-full bg-neutral-50 overflow-hidden">
 
   return (
     <div className="flex flex-col h-full bg-neutral-50 overflow-hidden">
@@ -758,5 +759,6 @@ export default function ArticleEditClient({ initialArticle, initialSections }: P
         />
       </DialogContent>
     </Dialog>
+    </>
   )
 }
