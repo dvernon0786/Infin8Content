@@ -460,7 +460,6 @@ export default function ArticleEditClient({ initialArticle, initialSections }: P
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <>
     <div className="flex flex-col h-full bg-neutral-50 overflow-hidden">
 
   return (
@@ -759,6 +758,6 @@ export default function ArticleEditClient({ initialArticle, initialSections }: P
         />
       </DialogContent>
     </Dialog>
-    </>
+    </div>
   )
 }
