@@ -461,9 +461,6 @@ export default function ArticleEditClient({ initialArticle, initialSections }: P
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full bg-neutral-50 overflow-hidden">
-
-  return (
-    <div className="flex flex-col h-full bg-neutral-50 overflow-hidden">
       {/* Top Bar, toolbar, editor layout — reuse markup from previous editor implementation */}
       <header className="flex items-center justify-between px-4 py-2.5 bg-white border-b border-neutral-200 shadow-sm z-20 shrink-0">
         <div className="flex items-center gap-3">
