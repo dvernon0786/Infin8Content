@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    // Use the project directory dynamically so CI and local environments behave the same
+    root: path.resolve(__dirname),
+  },
   images: {
     remotePatterns: [
       {

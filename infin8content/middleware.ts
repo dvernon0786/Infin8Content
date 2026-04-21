@@ -1,4 +1,4 @@
-// Root-level Next.js proxy (formerly middleware) — MUST live here (not in /app/).
+// Root-level Next.js middleware — MUST live here (not in /app/).
 // Its sole responsibility: refresh the Supabase session so that all Server
 // Components in the same request see a valid, non-expired access token.
 // Heavy auth/payment/onboarding logic stays in the dashboard layout and
@@ -7,7 +7,7 @@
 import { type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   return updateSession(request)
 }
 
