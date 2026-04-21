@@ -27,11 +27,12 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Resolve org_id
-    const { data: profile, error: profileError } = await userClient
+    const { data: profileRaw, error: profileError } = await userClient
       .from('users')
       .select('org_id')
       .eq('id', user.id)
       .single()
+    const profile = profileRaw as unknown as { org_id: string } | null
     if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      tags: (data ?? []).map((row: { name: string }) => row.name),
+      tags: ((data ?? []) as unknown as { name: string }[]).map((row) => row.name),
     })
   } catch (err) {
     console.error('[GET /api/tags] Unexpected:', err)
@@ -84,11 +85,12 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Resolve org_id
-    const { data: profile, error: profileError } = await userClient
+    const { data: profileRaw, error: profileError } = await userClient
       .from('users')
       .select('org_id')
       .eq('id', user.id)
       .single()
+    const profile = profileRaw as unknown as { org_id: string } | null
     if (profileError || !profile?.org_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
