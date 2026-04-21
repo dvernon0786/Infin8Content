@@ -238,7 +238,7 @@ export function PublishToCmsButton({ articleId, articleStatus, className }: Publ
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="min-w-[220px]">
+            <DropdownMenuContent align="center" className="min-w-55">
               <DropdownMenuLabel>Choose destination</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {connections.map(conn => {

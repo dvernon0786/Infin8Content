@@ -91,7 +91,16 @@
 - Files changed: `app/dashboard/articles/[id]/page.tsx`, `app/dashboard/articles/[id]/ArticleDetailClient.tsx`, `app/dashboard/articles/[id]/edit/page.tsx`, `app/dashboard/articles/[id]/ArticleEditClient.tsx`.
 - Key outcomes: Edit button visible/clickable; editor fills parent layout; rich formatting preserved across saves; no spurious writes on initial mount; cursor position stable while typing.
 
-Notes: Follow the verification checklist in `CHANGELOG.md` under the Unreleased section. Run a quick local smoke test: open an article, switch to Revision, apply bold/italic in a section, wait 1.5s, reload, confirm formatting persists.
+### Publish Touchpoints (2026-04-21)
+- Wired `PublishToCmsButton` into three publish touchpoints:
+  - Articles list (per-row Send icon in `components/dashboard/scrollable-article-list.tsx`)
+  - Article detail header (`app/dashboard/articles/[id]/ArticleDetailClient.tsx`)
+  - Article editor header (`app/dashboard/articles/[id]/ArticleEditClient.tsx`)
+- Accessibility: added visually-hidden `DialogTitle` to published dialogs to satisfy Radix/Screen-reader requirements.
+- Minor style tweak: replaced `min-w-[220px]` with `min-w-55` in `components/articles/PublishToCmsButton.tsx`.
+- Branch: `test-main-all` (changes committed and pushed).
+
+Notes: Follow the verification checklist in `CHANGELOG.md` under the Unreleased section. Run a quick local smoke test: open `/dashboard/articles`, click the Send icon on a row, confirm the publish modal appears; open an article and click Publish in the header/editor and confirm the publish flow (connect CMS -> publish) behaves as expected.
 
 ---
 

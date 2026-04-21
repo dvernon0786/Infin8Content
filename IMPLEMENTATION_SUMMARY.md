@@ -3,6 +3,8 @@
 **Date:** 2026-03-11 (11-Bug Fix Implementation)
 **Status:** ✅ **CONTENT ENGINE SECURED & PROMPT HARDENED - PRODUCTION READY**
 
+**Update (2026-04-21):** Wired frontend publish UI flows using `PublishToCmsButton` across articles list, article detail, and editor. Accessibility fixes applied to publish dialogs and minor style cleanups. Changes committed to branch `test-main-all`.
+
 ### 🎯 Objective Achieved
 Complete implementation of consolidated fixes for 11 critical, high, and medium-severity bugs identified across the CMS publishing workflow and article generation process.
 

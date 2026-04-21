@@ -10,6 +10,8 @@ import {
   Upload, X, Plus, ChevronDown, Loader2, CheckCircle2,
   ExternalLink, Tag, Search, FileText, Eye
 } from 'lucide-react'
+import { PublishToCmsButton } from '@/components/articles/PublishToCmsButton'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -330,6 +332,7 @@ export default function ArticleEditClient({ initialArticle, initialSections }: P
   const [article, setArticle] = useState<SerializedArticle>(initialArticle)
   const [sections, setSections] = useState<SerializedSection[]>(initialSections)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  const [showPublishModal, setShowPublishModal] = useState(false)
   const [activeTab, setActiveTab] = useState<'details' | 'seo'>('details')
 
   // Sidebar state
@@ -482,6 +485,14 @@ export default function ArticleEditClient({ initialArticle, initialSections }: P
 
         <div className="flex items-center gap-2">
           <SaveIndicator status={saveStatus} />
+
+          <button
+            onClick={() => setShowPublishModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-lato text-neutral-600 border border-neutral-200 rounded-md hover:bg-neutral-50 transition-colors"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Publish
+          </button>
 
           <button
             onClick={() => router.push(`/dashboard/articles/${articleId}`)}
@@ -737,5 +748,15 @@ export default function ArticleEditClient({ initialArticle, initialSections }: P
         </aside>
       </div>
     </div>
+
+    <Dialog open={showPublishModal} onOpenChange={setShowPublishModal}>
+      <DialogContent aria-describedby={undefined}>
+        <DialogTitle className="sr-only">Publish Article</DialogTitle>
+        <PublishToCmsButton
+          articleId={article.id}
+          articleStatus={article.status}
+        />
+      </DialogContent>
+    </Dialog>
   )
 }

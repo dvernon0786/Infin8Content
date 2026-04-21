@@ -10,6 +10,8 @@ import {
   Strikethrough, AlignLeft, Undo2, Redo2,
   X, Plus, Loader2, CheckCircle2, Info, Sparkles, Upload,
 } from 'lucide-react'
+import { PublishToCmsButton } from '@/components/articles/PublishToCmsButton'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -604,6 +606,7 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
   const [viewMode, setViewMode]   = useState<ViewMode>('original')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('details')
+  const [showPublishModal, setShowPublishModal] = useState(false)
 
   // Sidebar meta — initialise from workflow_state
   const ws = initialArticle.workflow_state || {}
@@ -748,13 +751,13 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
         </div>
         <div className="flex items-center gap-2">
           {article.status === 'completed' && (
-            <Link
-              href={`/dashboard/articles/${article.id}/publish`}
+            <button
+              onClick={() => setShowPublishModal(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-lato text-neutral-600 border border-neutral-200 rounded-md hover:bg-neutral-50 transition-colors"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Upload className="w-3.5 h-3.5" />
               Publish
-            </Link>
+            </button>
           )}
           <Link
             href={`/dashboard/articles/${article.id}/edit`}
@@ -1025,5 +1028,15 @@ export default function ArticleDetailClient({ initialArticle, initialSections }:
       </aside>
       </div>
     </div>
+
+    <Dialog open={showPublishModal} onOpenChange={setShowPublishModal}>
+      <DialogContent aria-describedby={undefined}>
+        <DialogTitle className="sr-only">Publish Article</DialogTitle>
+        <PublishToCmsButton
+          articleId={article.id}
+          articleStatus={article.status}
+        />
+      </DialogContent>
+    </Dialog>
   )
 }

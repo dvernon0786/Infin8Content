@@ -5,9 +5,11 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Eye, Send, MoreVertical } from 'lucide-react';
 import Link from 'next/link'
+import { PublishToCmsButton } from '@/components/articles/PublishToCmsButton'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import type { DashboardArticle } from '@/lib/types/dashboard.types';
 import { cn } from '@/lib/utils';
 import type { ScrollableArticleListProps } from '@/lib/types/dashboard.types';
@@ -23,6 +25,8 @@ export function ScrollableArticleList({
   onTouchEnd,
   highlightArticleId,
 }: ScrollableArticleListProps) {
+  const [publishingArticleId, setPublishingArticleId] = useState<string | null>(null)
+
   if (articles.length === 0) {
     return null;
   }
@@ -102,7 +106,7 @@ export function ScrollableArticleList({
                   <Link href={`/dashboard/articles/${article.id}`} onClick={(e) => { e.stopPropagation(); }} className="inline-flex items-center justify-center" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9aa3b0', padding: 4 }} title="View">
                     <Eye size={14} />
                   </Link>
-                  <button title="Publish" onClick={(e) => { e.stopPropagation(); /* implement publish action later */ }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9aa3b0', padding: 4 }}>
+                  <button title="Publish" onClick={(e) => { e.stopPropagation(); setPublishingArticleId(article.id) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9aa3b0', padding: 4 }}>
                     <Send size={14} />
                   </button>
                   <button title="More" onClick={(e) => { e.stopPropagation(); /* open menu later */ }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9aa3b0', padding: 4 }}>
@@ -114,6 +118,18 @@ export function ScrollableArticleList({
           );
         })}
       </div>
+
+      <Dialog open={publishingArticleId !== null} onOpenChange={(open) => { if (!open) setPublishingArticleId(null) }}>
+        <DialogContent aria-describedby={undefined}>
+          <DialogTitle className="sr-only">Publish Article</DialogTitle>
+          {publishingArticleId && (
+            <PublishToCmsButton
+              articleId={publishingArticleId}
+              articleStatus={articles.find(a => a.id === publishingArticleId)?.status ?? ''}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

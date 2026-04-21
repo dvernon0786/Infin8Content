@@ -32,6 +32,8 @@ git push -u origin test-main-all
 
 **Update (2026-04-21):** UI tweak — Header avatar dropdown: removed `Profile`, added `Settings` (redirects to `/dashboard/settings`). Tests updated to expect `Settings`. Committed on branch `test-main-all` and pushed. Verify UI and run unit tests.
 
+**Update (2026-04-21):** Publish flows wired — `PublishToCmsButton` integrated into three UI touchpoints (articles list Send icon, article detail header, article editor header). Accessibility improvement: added visually-hidden `DialogTitle` to all publish dialogs. Minor style tweak: `min-w-[220px]` → `min-w-55`. Changes committed and pushed to `test-main-all`.
+
 **Update (2026-04-16):** Marketing site refactor: header/footer added and design-system fixes applied. Commits: `fc70de23`, `6c105c08`, `ab868627`. Changes pushed to `test-main-all`; remote `main` created from it and points to the same commit (no PR diff).
 
 ---
