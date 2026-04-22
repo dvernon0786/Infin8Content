@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **PR:** https://github.com/dvernon0786/Infin8Content/pull/458
 
+## [Unreleased] - 2026-04-22
+
+### 🔧 CHANGED
+- **Homepage replacement:** `app/page.tsx` deleted; `app/route.ts` created to serve `public/homepage.html` at `/`. Static dark-themed marketing homepage (promo bar, hero with dashboard mockup, 5 feature rows, video section, testimonials, case studies, FAQ accordion, final CTA, full footer) now renders at the root route.
+
 ## [Unreleased] - 2026-04-20
 
 ### 🔧 CHANGED

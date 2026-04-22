@@ -1,7 +1,7 @@
 # BMAD Git Workflow Status
 
-**Date:** 2026-03-17  
-**Status:** 🔄 PENDING PUSH — multi-CMS engine ready to commit
+**Date:** 2026-04-22  
+**Status:** 🔄 READY — homepage replacement ready to commit & merge
 
 ---
 
@@ -19,9 +19,13 @@
 - Status: ✅ PUSHED to remote (merged)
 - Commits: 1 commit (BMAD-FINAL-SCRATCHPAD.md)
 
+**fix/homepage-replacement** (Current)
+- Status: 🔄 READY TO COMMIT
+- Scope: Replace `app/page.tsx` with static HTML homepage via `app/route.ts`
+- Files: `public/homepage.html` (new), `app/route.ts` (new), `app/page.tsx` (deleted)
+
 **test-main-all** (Current Working Branch)
-- Status: 🔄 Being updated — multi-CMS publishing engine
-- Scope: feat(cms): multi-platform CMS publishing engine
+- Status: 🔄 Being updated — homepage replacement
 - Protected: Yes (requires status checks + PR to main)
 
 ---
