@@ -45,6 +45,15 @@ export default function MarketingPageBody({ html, css }: Props) {
         if (el) el.classList.add('active');
       };
 
+    // toggleFaq global — used by homepage onclick="toggleFaq(this)"
+    (window as Window & { toggleFaq?: (el: HTMLElement) => void }).toggleFaq =
+      (el: HTMLElement) => {
+        const item = el.parentElement;
+        const wasOpen = item?.classList.contains('open');
+        document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+        if (!wasOpen && item) item.classList.add('open');
+      };
+
     // FAQ accordion
     document.querySelectorAll<HTMLElement>('.faq-q').forEach(q => {
       q.addEventListener('click', () => {
@@ -90,6 +99,7 @@ export default function MarketingPageBody({ html, css }: Props) {
     return () => {
       clearInterval(timer);
       delete (window as Window & { switchTab?: unknown }).switchTab;
+      delete (window as Window & { toggleFaq?: unknown }).toggleFaq;
     };
   }, []);
 

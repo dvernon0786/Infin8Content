@@ -1,13 +1,15 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Infin8Content — AI Content Engine</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
-  <style>
-    /* ===================== RESET & BASE ===================== */
+import { Metadata } from 'next';
+import Navigation from '@/components/marketing/Navigation';
+import Footer from '@/components/marketing/Footer';
+import MarketingPageBody from '@/components/marketing/MarketingPageBody';
+
+export const metadata: Metadata = {
+  title: 'Infin8Content — AI Content Engine',
+  description: 'AI-powered content creation platform. Research-backed articles, automated SEO, and one-click publishing for modern marketing teams.',
+};
+
+const CSS = `
+/* ===================== RESET & BASE ===================== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #08090d;
@@ -654,84 +656,10 @@
       z-index: 39;
     }
     .main-nav.open .dropdown { display: none !important; }
-  </style>
-</head>
-<body>
+`;
 
-  <!-- PROMO BAR -->
-  <div class="promo-bar">
-    <span class="countdown">
-      ✨ &nbsp;New Year Offer: <strong style="color:#a5b4fc;margin:0 4px;">40% Off</strong> on Yearly Plans &nbsp;
-      <span class="time-unit" id="ph">00</span>hrs
-      <span class="time-unit" id="pm">00</span>min
-      <span class="time-unit" id="ps">00</span>sec
-    </span>
-    <a class="deal-link" href="#pricing">Get Deal</a>
-  </div>
-
-  <!-- HEADER -->
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="brand" href="#"><img src="/infin8content_logo.png" alt="Infin8Content"></a>
-
-      <nav class="main-nav" id="main-nav">
-        <!-- Features -->
-        <div class="nav-item">
-          <span class="nav-link">Features <span class="chevron">▾</span></span>
-          <div class="dropdown">
-            <div class="dropdown-section">
-              <div class="dropdown-label">AI Writing</div>
-              <a class="dropdown-link" href="#">AI Content Writer</a>
-              <a class="dropdown-link" href="#">AI Brief Generator</a>
-              <a class="dropdown-link" href="#">News Writer</a>
-              <a class="dropdown-link" href="#">Video to Blog Post</a>
-            </div>
-            <hr>
-            <div class="dropdown-section">
-              <div class="dropdown-label">Automation</div>
-              <a class="dropdown-link" href="#">AutoPublish</a>
-              <a class="dropdown-link" href="#">Workflow Orchestration</a>
-              <a class="dropdown-link" href="#">SEO Reports</a>
-              <a class="dropdown-link" href="#">Analytics Tracker</a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Solutions -->
-        <div class="nav-item">
-          <span class="nav-link">Solutions <span class="chevron">▾</span></span>
-          <div class="dropdown">
-            <a class="dropdown-link" href="#"><strong>SaaS</strong><small>Scale organic traffic for your product</small></a>
-            <a class="dropdown-link" href="#"><strong>Agencies</strong><small>Manage multiple clients at scale</small></a>
-            <a class="dropdown-link" href="#"><strong>E-Commerce</strong><small>Upgrade your store's content</small></a>
-            <a class="dropdown-link" href="#"><strong>Enterprise</strong><small>SAML, SSO &amp; dedicated support</small></a>
-          </div>
-        </div>
-
-        <a class="nav-link" href="#pricing">Pricing</a>
-
-        <!-- Resources -->
-        <div class="nav-item">
-          <span class="nav-link">Resources <span class="chevron">▾</span></span>
-          <div class="dropdown">
-            <a class="dropdown-link" href="#">Case Studies</a>
-            <a class="dropdown-link" href="#">Learning &amp; Training</a>
-            <a class="dropdown-link" href="#">Help Docs</a>
-            <a class="dropdown-link" href="#">Blog</a>
-          </div>
-        </div>
-      </nav>
-
-      <div class="header-cta">
-        <a class="btn-link" href="#">Login</a>
-        <a class="btn btn-primary" href="#pricing">Get Started</a>
-      </div>
-
-      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">☰</button>
-    </div>
-  </header>
-
-  <main>
+const HTML = `
+<main>
 
     <!-- HERO -->
     <section class="hero">
@@ -1121,116 +1049,14 @@
   </main>
 
   <!-- FOOTER -->
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-top">
-        <div class="footer-brand">
-          <a class="brand" href="#"><img src="/infin8content_logo.png" alt="Infin8Content"></a>
-          <p>AI content workflows for modern teams and agencies.</p>
-          <div class="footer-founders">
-            <div class="f-founder">F1</div>
-            <div class="f-founder">F2</div>
-          </div>
-        </div>
+`;
 
-        <div class="footer-col">
-          <h4>AI Writing</h4>
-          <a href="#">AI Content Writer</a>
-          <a href="#">AI Brief Generator</a>
-          <a href="#">News Writer</a>
-          <a href="#">Video to Blog</a>
-        </div>
-
-        <div class="footer-col">
-          <h4>Automation</h4>
-          <a href="#">AutoPublish</a>
-          <a href="#">Workflow Orchestration</a>
-          <a href="#">SEO Reports</a>
-          <a href="#">Analytics Tracker</a>
-        </div>
-
-        <div class="footer-col">
-          <h4>Resources</h4>
-          <a href="#">Pricing</a>
-          <a href="#">Blog</a>
-          <a href="#">Help Docs</a>
-          <a href="#">API Docs</a>
-          <a href="#">Case Studies</a>
-          <a href="#">About Us</a>
-        </div>
-
-        <div class="footer-col">
-          <h4>Integrations</h4>
-          <a href="#">WordPress</a>
-          <a href="#">Shopify</a>
-          <a href="#">Ghost</a>
-          <a href="#">Webflow</a>
-          <a href="#">Wix</a>
-          <a href="#">Zapier</a>
-        </div>
-
-        <div class="footer-col">
-          <h4>Solutions</h4>
-          <a href="#">SaaS</a>
-          <a href="#">Agencies</a>
-          <a href="#">E-Commerce</a>
-          <a href="#">Enterprise</a>
-        </div>
-      </div>
-
-      <div class="footer-bottom">
-        <small>© <span id="year"></span> Infin8Content. All rights reserved.</small>
-        <div class="footer-legal">
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
-          <a href="#">contact@infin8content.com</a>
-        </div>
-      </div>
-    </div>
-  </footer>
-
-  <script>
-    // Year
-    document.getElementById('year').textContent = new Date().getFullYear();
-
-    // Countdown — 8h 34m 12s from page load (demo)
-    let total = 8 * 3600 + 34 * 60 + 12;
-    function tick() {
-      if (total <= 0) return;
-      total--;
-      const h = String(Math.floor(total / 3600)).padStart(2,'0');
-      const m = String(Math.floor((total % 3600) / 60)).padStart(2,'0');
-      const s = String(total % 60).padStart(2,'0');
-      document.getElementById('ph').textContent = h;
-      document.getElementById('pm').textContent = m;
-      document.getElementById('ps').textContent = s;
-    }
-    tick();
-    setInterval(tick, 1000);
-
-    // Mobile nav toggle
-    const navToggle = document.getElementById('nav-toggle');
-    const mainNav = document.getElementById('main-nav');
-    navToggle && navToggle.addEventListener('click', () => {
-      mainNav.classList.toggle('open');
-      navToggle.textContent = mainNav.classList.contains('open') ? '✕' : '☰';
-    });
-
-    // FAQ accordion
-    function toggleFaq(el) {
-      const item = el.parentElement;
-      const wasOpen = item.classList.contains('open');
-      document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
-      if (!wasOpen) item.classList.add('open');
-    }
-
-    // Smooth scroll
-    document.querySelectorAll('a[href^="#"]').forEach(a => {
-      a.addEventListener('click', e => {
-        const target = document.querySelector(a.getAttribute('href'));
-        if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-      });
-    });
-  </script>
-</body>
-</html>
+export default function HomePage() {
+  return (
+    <>
+      <Navigation />
+      <MarketingPageBody html={HTML} css={CSS} />
+      <Footer />
+    </>
+  );
+}
