@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 const shellCss = `
 :root {
   --mkt-bg: var(--mkt-bg); --mkt-surface: var(--mkt-surface); --mkt-surface2: var(--mkt-surface2);
-  --mkt-border: rgba(255,255,255,0.07);
+  --mkt-border: var(--mkt-border);
   --mkt-accent: var(--mkt-accent); --mkt-accent-lite: var(--mkt-accent-lite); --mkt-accent-border: var(--mkt-accent-border);
   --mkt-text: var(--mkt-text); --mkt-muted: var(--mkt-muted); --mkt-muted2: var(--mkt-muted2); --mkt-white: var(--mkt-white);
   --mkt-font-display: 'Sora', sans-serif; --mkt-font-body: 'DM Sans', sans-serif;
@@ -17,7 +17,7 @@ const shellCss = `
 .mkt-time-unit { background: var(--mkt-accent-lite); border: 1px solid var(--mkt-accent-border); border-radius: 4px; padding: 2px 6px; font-weight: 700; color: var(--mkt-accent-hover); font-variant-numeric: tabular-nums; min-width: 28px; display: inline-block; text-align: center; }
 .mkt-deal-link { background: var(--mkt-accent); color: var(--mkt-white); border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 600; margin-left: 10px; text-decoration: none; }
 /* HEADER */
-.mkt-site-header { position: sticky; top: 0; z-index: 40; background: rgba(8,9,13,.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--mkt-border); }
+.mkt-site-header { position: sticky; top: 0; z-index: 40; background: var(--mkt-bg-88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--mkt-border); }
 .mkt-header-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; gap: 16px; max-width: 1160px; margin: 0 auto; padding: 0 28px; }
 .mkt-brand { font-family: var(--mkt-font-display); font-weight: 800; font-size: 20px; letter-spacing: -.5px; color: var(--mkt-white); flex-shrink: 0; text-decoration: none; }
 .mkt-brand span { color: var(--mkt-accent); }
@@ -28,7 +28,7 @@ const shellCss = `
 .mkt-nav-link:hover { color: var(--mkt-white); background: rgba(255,255,255,.05); }
 .mkt-chevron { font-size: 10px; transition: transform .2s; display: inline-block; }
 .mkt-nav-item:hover .mkt-chevron { transform: rotate(180deg); }
-.mkt-dropdown { display: none; position: absolute; top: 100%; left: 0; background: #12141f; border: 1px solid var(--mkt-border); border-radius: var(--mkt-radius); padding: 16px 8px 8px; min-width: 230px; box-shadow: 0 20px 60px rgba(0,0,0,.5); z-index: 100; }
+.mkt-dropdown { display: none; position: absolute; top: 100%; left: 0; background: var(--mkt-surface2); border: 1px solid var(--mkt-border); border-radius: var(--mkt-radius); padding: 16px 8px 8px; min-width: 230px; box-shadow: 0 20px 60px rgba(0,0,0,.5); z-index: 100; }
 .mkt-nav-item:hover .mkt-dropdown { display: block; }
 .mkt-dropdown-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--mkt-muted2); padding: 4px 10px; margin-bottom: 2px; }
 .mkt-dropdown-link { display: block; padding: 8px 10px; border-radius: var(--mkt-radius-sm); font-size: 13.5px; color: var(--mkt-muted); transition: all .15s; text-decoration: none; }
@@ -39,11 +39,11 @@ const shellCss = `
 .mkt-header-cta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .mkt-btn-link { font-size: 14px; font-weight: 500; color: var(--mkt-muted); padding: 7px 12px; border-radius: var(--mkt-radius-sm); transition: all .2s; text-decoration: none; }
 .mkt-btn-link:hover { color: var(--mkt-white); background: rgba(255,255,255,.05); }
-.mkt-btn-primary { display: inline-flex; align-items: center; justify-content: center; font-family: var(--mkt-font-display); font-weight: 600; border-radius: var(--mkt-radius-sm); background: var(--mkt-accent); color: #fff; padding: 9px 18px; font-size: 14px; box-shadow: 0 0 20px rgba(79,110,247,.3); text-decoration: none; border: none; cursor: pointer; }
+.mkt-btn-primary { display: inline-flex; align-items: center; justify-content: center; font-family: var(--mkt-font-display); font-weight: 600; border-radius: var(--mkt-radius-sm); background: var(--mkt-accent); color: var(--mkt-white); padding: 9px 18px; font-size: 14px; box-shadow: 0 0 20px var(--mkt-accent-glow); text-decoration: none; border: none; cursor: pointer; }
 .mkt-btn-primary:hover { background: var(--mkt-accent-hover); box-shadow: 0 0 30px var(--mkt-accent-glow-heavy); transform: translateY(-1px); }
 .mkt-nav-toggle { display: none; background: transparent; border: 1px solid var(--mkt-border); border-radius: var(--mkt-radius-sm); color: var(--mkt-text); padding: 7px 10px; font-size: 18px; cursor: pointer; }
 @media(max-width:860px){ .mkt-main-nav{display:none;} .mkt-nav-toggle{display:flex;} }
-.mkt-main-nav.open { display:flex!important; flex-direction:column; position:fixed; top:62px; left:0; right:0; background:rgba(8,9,13,.97); backdrop-filter:blur(12px); padding:20px; border-bottom:1px solid var(--mkt-border); gap:4px; z-index:39; }
+.mkt-main-nav.open { display:flex!important; flex-direction:column; position:fixed; top:62px; left:0; right:0; background:var(--mkt-bg-97); backdrop-filter:blur(12px); padding:20px; border-bottom:1px solid var(--mkt-border); gap:4px; z-index:39; }
 .mkt-main-nav.open .mkt-dropdown{display:none!important;}
 /* FOOTER */
 .mkt-site-footer { border-top: 1px solid var(--mkt-border); padding: 60px 0 40px; }
@@ -99,27 +99,23 @@ export function CtaSection({
   return (
     <section className="py-24 text-center relative overflow-hidden">
       <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 600px 400px at 50% 50%, rgba(79,110,247,0.12) 0%, transparent 70%)",
-        }}
+        className="absolute inset-0 pointer-events-none bg-gradient-to-b from-mkt-accent/12 via-transparent to-transparent"
       />
       <div className="container mx-auto px-7 relative">
         <h2 className="font-display text-[clamp(28px,5vw,50px)] font-extrabold tracking-tight text-white mb-4 whitespace-pre-line">
           {heading}
         </h2>
-        <p className="text-[17px] text-[#7b8098] mb-9">{sub}</p>
+        <p className="text-[17px] text-mkt-muted mb-9">{sub}</p>
         <Link
           href="#"
-          className="inline-flex items-center justify-center font-display font-semibold bg-[#4f6ef7] text-white px-8 py-4 rounded-[10px] text-body shadow-[0_0_20px_rgba(79,110,247,0.3)] hover:bg-[#3d5df5] hover:shadow-[0_0_30px_rgba(79,110,247,0.5)] hover:-translate-y-0.5 transition-all"
+          className="inline-flex items-center justify-center font-display font-semibold bg-mkt-accent text-white px-8 py-4 rounded-[10px] text-body shadow-[0_0_20px_var(--mkt-accent-glow)] hover:bg-mkt-accent-hover hover:shadow-[0_0_30px_var(--mkt-accent-glow-heavy)] hover:-translate-y-0.5 transition-all"
         >
           {btnLabel}
         </Link>
         <div className="flex items-center justify-center gap-6 mt-5 flex-wrap">
           {perks.map((p) => (
-            <span key={p} className="flex items-center gap-1.5 text-[13px] text-[#7b8098]">
-              <span className="text-[#22c55e] font-bold">✓</span> {p}
+            <span key={p} className="flex items-center gap-1.5 text-[13px] text-mkt-muted">
+              <span className="text-mkt-green font-bold">✓</span> {p}
             </span>
           ))}
         </div>

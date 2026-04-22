@@ -36,11 +36,7 @@ export function MktHero({
   return (
     <section className="pt-20 pb-16 text-center relative overflow-hidden">
       <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            `radial-gradient(circle 350px at 50% 0%, ${tokens.accent}1f 0%, transparent 70%)`,
-        }}
+        className="absolute inset-0 pointer-events-none bg-gradient-to-b from-mkt-accent/30 via-transparent to-transparent"
       />
       <div className="container mx-auto px-7 relative">
         {eyebrow && (
@@ -67,7 +63,6 @@ export function MktHero({
           <Link
             href={ctaHref}
             className="inline-flex items-center font-display font-semibold bg-mkt-accent text-white px-7 py-3.5 rounded-[10px] text-body shadow-[0_0_20px_var(--mkt-accent-glow)] hover:bg-mkt-accent-hover hover:shadow-[0_0_30px_var(--mkt-accent-glow-heavy)] hover:-translate-y-0.5 transition-all"
-            style={{ fontFamily: "Sora, sans-serif" }}
           >
             {cta}
           </Link>
@@ -75,7 +70,6 @@ export function MktHero({
             <Link
               href={secondaryHref}
               className="inline-flex items-center font-display font-semibold border border-white/7 text-mkt-muted px-7 py-3.5 rounded-[10px] text-body hover:border-white/20 hover:text-white transition-all"
-              style={{ fontFamily: "Sora, sans-serif" }}
             >
               {secondaryCta}
             </Link>
@@ -88,7 +82,7 @@ export function MktHero({
               <div
                 key={idx}
                 className="w-7.5 h-7.5 rounded-full border-2 border-mkt-bg bg-mkt-surface2 flex items-center justify-center text-[10px] font-bold text-mkt-accent"
-                style={{ marginLeft: idx === 0 ? 0 : -8 }}
+                className={idx === 0 ? "" : "-ml-2"}
               >
                 {i}
               </div>
@@ -124,8 +118,7 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
 export function SectionTitle({ children, center = false }: { children: React.ReactNode; center?: boolean }) {
   return (
     <h2
-      className={`text-[clamp(24px,3.5vw,40px)] font-extrabold tracking-[-0.6px] text-white leading-[1.15] mb-3.5 ${center ? "text-center" : ""}`}
-      style={{ fontFamily: "Sora, sans-serif" }}
+      className={`font-display text-[clamp(24px,3.5vw,40px)] font-extrabold tracking-[-0.6px] text-white leading-[1.15] mb-3.5 ${center ? "text-center" : ""}`}
     >
       {children}
     </h2>
@@ -183,8 +176,7 @@ export function FeatureRow({ tag, title, body, bullets, linkLabel, linkHref = "#
               <span className="text-[11px]">Replace with screenshot</span>
             </p>
             <div
-              className="absolute inset-0 pointer-events-none"
-              style={{ background: `radial-gradient(ellipse at 60% 30%, ${tokens.accent}14 0%, transparent 60%)` }}
+              className="absolute inset-0 pointer-events-none bg-gradient-to-b from-mkt-accent/20 via-transparent to-transparent"
             />
           </div>
         )}
@@ -201,7 +193,7 @@ export function StepCard({ num, icon, title, body }: { num: number; icon: string
         {num}
       </div>
       <div className="text-[26px] mb-3">{icon}</div>
-      <h4 className="font-display text-[15px] font-semibold text-white mb-2 leading-[1.3]" style={{ fontFamily: "Sora, sans-serif" }}>
+      <h4 className="font-display text-[15px] font-semibold text-white mb-2 leading-[1.3]">
         {title}
       </h4>
       <p className="text-[13.5px] text-mkt-muted leading-[1.6]">{body}</p>
@@ -214,7 +206,7 @@ export function FeatCard({ icon, title, body }: { icon: string; title: string; b
   return (
     <div className="bg-mkt-surface border border-white/7 p-6 transition-all hover:bg-mkt-surface2">
       <div className="text-[22px] mb-3">{icon}</div>
-      <h4 className="font-display text-small font-semibold text-white mb-1.5" style={{ fontFamily: "Sora, sans-serif" }}>
+      <h4 className="font-display text-small font-semibold text-white mb-1.5">
         {title}
       </h4>
       <p className="text-[13px] text-mkt-muted leading-[1.55]">{body}</p>

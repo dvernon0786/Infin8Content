@@ -125,8 +125,8 @@ function TagPill({ tag, active = false }: { tag: string; active?: boolean }) {
     <span
       className={`px-3.5 py-1.5 rounded-full text-[12.5px] font-medium border transition-all cursor-pointer ${
         active
-          ? "bg-[rgba(79,110,247,0.15)] border-[rgba(79,110,247,0.3)] text-[#a5b4fc]"
-          : "bg-transparent border-white/7 text-[#7b8098] hover:border-[rgba(79,110,247,0.3)] hover:text-white"
+          ? "bg-mkt-accent-lite border-mkt-accent-border text-mkt-accent-hover"
+          : "bg-transparent border-white/7 text-mkt-muted hover:border-mkt-accent-border hover:text-white"
       }`}
     >
       {tag}
@@ -137,10 +137,10 @@ function TagPill({ tag, active = false }: { tag: string; active?: boolean }) {
 function AuthorAvatar({ initials, name }: { initials: string; name: string }) {
   return (
     <div className="flex items-center gap-2">
-      <div className="w-7 h-7 rounded-full bg-[#13151e] border border-white/7 flex items-center justify-center text-[10px] font-bold text-[#4f6ef7] shrink-0">
+      <div className="w-7 h-7 rounded-full bg-mkt-surface2 border border-white/7 flex items-center justify-center text-[10px] font-bold text-mkt-accent shrink-0">
         {initials}
       </div>
-      <span className="text-[12px] text-[#7b8098]">{name}</span>
+      <span className="text-[12px] text-mkt-muted">{name}</span>
     </div>
   );
 }
@@ -150,7 +150,7 @@ function PostCard({ post, size = "normal" }: { post: Post; size?: "normal" | "la
   return (
     <Link
       href={`/resources/blog/${post.slug}`}
-      className={`group bg-[#0f1117] border border-white/7 rounded-[14px] overflow-hidden flex flex-col hover:border-[rgba(79,110,247,0.3)] hover:-translate-y-1 transition-all ${
+      className={`group bg-mkt-surface border border-white/7 rounded-[14px] overflow-hidden flex flex-col hover:border-mkt-accent-border hover:-translate-y-1 transition-all ${
         isLarge ? "md:flex-row" : ""
       }`}
     >
@@ -158,23 +158,20 @@ function PostCard({ post, size = "normal" }: { post: Post; size?: "normal" | "la
         className={`relative overflow-hidden shrink-0 ${
           isLarge ? "w-full md:w-120 h-56 md:h-auto" : "w-full h-44"
         }`}
-        style={{ background: "linear-gradient(135deg,#0d1226 0%,#0a1020 100%)" }}
+        className="bg-gradient-to-br from-mkt-surface2 to-mkt-surface3"
       >
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-[44px] opacity-20">✍️</span>
         </div>
         <div
           className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse at 50% 50%, rgba(79,110,247,0.1) 0%, transparent 65%)",
-          }}
+          className="bg-gradient-to-b from-mkt-accent/10 via-transparent to-transparent"
         />
         <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
           {post.tags.slice(0, 2).map((t) => (
             <span
               key={t}
-              className="text-[10px] font-bold uppercase tracking-[0.06em] bg-[rgba(8,9,13,0.75)] backdrop-blur-sm border border-white/10 text-[#a5b4fc] rounded px-2 py-0.5"
+              className="text-[10px] font-bold uppercase tracking-[0.06em] bg-mkt-bg/75 backdrop-blur-sm border border-white/10 text-mkt-accent-hover rounded px-2 py-0.5"
             >
               {t}
             </span>
@@ -184,10 +181,9 @@ function PostCard({ post, size = "normal" }: { post: Post; size?: "normal" | "la
 
       <div className={`p-6 flex flex-col gap-3 flex-1 ${isLarge ? "md:p-9 md:justify-center" : ""}`}>
         <h3
-          className={`font-display font-bold text-white leading-tight group-hover:text-[#a5b4fc] transition-colors ${
+          className={`font-display font-bold text-white leading-tight group-hover:text-mkt-accent-hover transition-colors ${
             isLarge ? "text-[22px] md:text-[26px]" : "text-[15.5px]"
           }`}
-          style={{ fontFamily: "Sora, sans-serif" }}
         >
           {post.title}
         </h3>
@@ -230,13 +226,12 @@ export default function BlogPage() {
         <div className="container mx-auto px-7 relative">
           <SectionLabel>📝 Blog</SectionLabel>
           <h1
-            className="text-[clamp(36px,5.5vw,60px)] font-extrabold tracking-[-1.5px] leading-[1.06] text-white max-w-170 mx-auto mb-5"
-            style={{ fontFamily: "Sora, sans-serif" }}
+            className="font-display text-[clamp(36px,5.5vw,60px)] font-extrabold tracking-[-1.5px] leading-[1.06] text-white max-w-170 mx-auto mb-5"
           >
             AI Content &amp;{" "}
-            <em className="not-italic text-[#4f6ef7]">SEO Insights</em>
+            <em className="not-italic text-mkt-accent">SEO Insights</em>
           </h1>
-          <p className="text-large text-[#7b8098] max-w-120 mx-auto leading-[1.65]">
+          <p className="text-large text-mkt-muted max-w-120 mx-auto leading-[1.65]">
             Practical guides, real strategies, and case studies on AI-powered
             content marketing. Updated weekly.
           </p>

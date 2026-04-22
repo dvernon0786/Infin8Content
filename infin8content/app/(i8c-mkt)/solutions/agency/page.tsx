@@ -46,7 +46,7 @@ export default function AgencyPage() {
       />
 
       {/* Testimonial case studies hero */}
-      <section className="py-20" style={{ background: "linear-gradient(180deg,transparent,#13151e 20%,#13151e 80%,transparent)" }}>
+      <section className="py-20 bg-gradient-to-b from-transparent via-mkt-surface2 to-transparent">
         <div className="container mx-auto px-7">
           <div className="text-center mb-12">
             <SectionLabel>⭐ Real Stories</SectionLabel>
@@ -118,7 +118,7 @@ export default function AgencyPage() {
       </section>
 
       {/* Agency features grid */}
-      <section className="py-20" style={{ background: "linear-gradient(180deg,transparent,#13151e 20%,#13151e 80%,transparent)" }}>
+      <section className="py-20 bg-gradient-to-b from-transparent via-mkt-surface2 to-transparent">
         <div className="container mx-auto px-7">
           <div className="text-center mb-10">
             <SectionLabel>⚙️ Agency Features</SectionLabel>

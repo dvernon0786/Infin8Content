@@ -44,16 +44,16 @@ function VideoCard({ title, duration, emoji, href, badge }: VideoCardProps) {
   return (
     <Link
       href={href}
-      className="group bg-[#0f1117] border border-white/7 rounded-[14px] overflow-hidden hover:border-[rgba(79,110,247,0.3)] hover:-translate-y-1 transition-all flex flex-col"
+      className="group bg-mkt-surface border border-white/7 rounded-[14px] overflow-hidden hover:border-mkt-accent-border hover:-translate-y-1 transition-all flex flex-col"
     >
-      <div className="w-full aspect-video bg-linear-to-br from-[#0d1226] to-[#0a1020] flex items-center justify-center relative overflow-hidden">
+      <div className="w-full aspect-video bg-gradient-to-br from-mkt-surface2 to-mkt-surface3 flex items-center justify-center relative overflow-hidden">
         <span className="text-[44px]">{emoji}</span>
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="w-14 h-14 rounded-full bg-[rgba(79,110,247,0.8)] flex items-center justify-center text-white text-[20px] backdrop-blur-sm">
+          <div className="w-14 h-14 rounded-full bg-mkt-accent/80 flex items-center justify-center text-white text-[20px] backdrop-blur-sm">
             ▶
           </div>
         </div>
-        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 50%, rgba(79,110,247,0.08) 0%, transparent 60%)" }} />
+        <div className="absolute inset-0 bg-gradient-to-b from-mkt-accent/8 via-transparent to-transparent" />
       </div>
       <div className="p-5 flex flex-col gap-2 flex-1">
         {badge && (

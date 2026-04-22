@@ -49,12 +49,12 @@ function CaseCard({ stat, title, body, name, role, slug, tags }: CaseItem) {
     >
       <div
         className="w-full h-44 bg-linear-to-br from-[#13151e] to-[#0b0d14] flex items-center justify-center relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg,#0d1226,#0a1020)" }}
+        className="bg-gradient-to-br from-mkt-surface2 to-mkt-surface3"
       >
-        <span className="font-display text-[40px] font-extrabold text-[#4f6ef7] opacity-80" style={{ fontFamily: "Sora,sans-serif" }}>
+        <span className="font-display text-[40px] font-extrabold text-mkt-accent opacity-80">
           {stat}
         </span>
-        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 60% 30%, rgba(79,110,247,0.1) 0%, transparent 60%)" }} />
+        <div className="absolute inset-0 bg-gradient-to-b from-mkt-accent/10 via-transparent to-transparent" />
       </div>
       <div className="p-6 flex flex-col gap-3 flex-1">
         <div className="flex flex-wrap gap-1.5">
@@ -64,7 +64,7 @@ function CaseCard({ stat, title, body, name, role, slug, tags }: CaseItem) {
             </span>
           ))}
         </div>
-        <h3 className="font-display text-body font-bold text-white leading-[1.3] group-hover:text-mkt-accent transition-colors" style={{ fontFamily: "Sora,sans-serif" }}>
+        <h3 className="font-display text-body font-bold text-white leading-[1.3] group-hover:text-mkt-accent transition-colors">
           {title}
         </h3>
         <p className="text-[13.5px] text-mkt-muted leading-[1.6] flex-1">{body}</p>
@@ -87,12 +87,12 @@ export default function CaseStudiesPage() {
     <>
       {/* Hero */}
       <section className="pt-20 pb-16 text-center relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle 350px at 50% 0%, rgba(79,110,247,0.13) 0%, transparent 70%)" }} />
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-mkt-accent/20 via-transparent to-transparent" />
         <div className="container mx-auto px-7 relative">
           <SectionLabel>📊 Case Studies</SectionLabel>
           <h1
             className="text-[clamp(36px,5.5vw,62px)] font-extrabold tracking-[-1.5px] leading-[1.06] text-white max-w-150 mx-auto mb-5"
-            style={{ fontFamily: "Sora, sans-serif" }}
+            className="font-display"
           >
             It just <em className="not-italic text-[#4f6ef7]">works.</em>
           </h1>
@@ -102,7 +102,7 @@ export default function CaseStudiesPage() {
           <div className="flex items-center justify-center gap-2.5 text-[13.5px] text-[#7b8098]">
             <div className="flex">
               {["JL","MR","AK","SB","TD"].map((i,idx)=>(
-                <div key={idx} className="w-7.5 h-7.5 rounded-full border-2 border-[#08090d] bg-[#13151e] flex items-center justify-center text-[10px] font-bold text-[#4f6ef7]" style={{marginLeft:idx===0?0:-8}}>{i}</div>
+                <div key={idx} className="w-7.5 h-7.5 rounded-full border-2 border-mkt-bg bg-mkt-surface2 flex items-center justify-center text-[10px] font-bold text-mkt-accent" style={{marginLeft:idx===0?0:-8}}>{i}</div>
               ))}
             </div>
             Trusted by <strong className="text-white ml-1">10,000+</strong>&nbsp;Marketers & Agencies
@@ -137,10 +137,10 @@ export default function CaseStudiesPage() {
           >
             <div className="grid grid-cols-1 md:grid-cols-2">
               <div className="h-64 md:h-auto bg-linear-to-br from-[#0d1226] to-[#0a1020] flex items-center justify-center relative overflow-hidden">
-                <span className="font-display text-[56px] font-extrabold text-[#4f6ef7]" style={{ fontFamily: "Sora,sans-serif" }}>
+                <span className="font-display text-[56px] font-extrabold text-mkt-accent">
                   {featuredCase.stat}
                 </span>
-                <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 50%, rgba(79,110,247,0.15) 0%, transparent 60%)" }} />
+                <div className="absolute inset-0 bg-gradient-to-b from-mkt-accent/15 via-transparent to-transparent" />
               </div>
               <div className="p-10 flex flex-col justify-center gap-4">
                 <div className="flex gap-1.5">
@@ -148,7 +148,7 @@ export default function CaseStudiesPage() {
                     <span key={t} className="text-[10px] font-bold uppercase tracking-[0.06em] bg-[rgba(79,110,247,0.1)] border border-[rgba(79,110,247,0.2)] text-[#a5b4fc] rounded px-2 py-0.5">{t}</span>
                   ))}
                 </div>
-                <h2 className="font-display text-[24px] font-bold text-white leading-tight group-hover:text-[#a5b4fc] transition-colors" style={{ fontFamily: "Sora,sans-serif" }}>
+                <h2 className="font-display text-[24px] font-bold text-white leading-tight group-hover:text-mkt-accent-hover transition-colors">
                   {featuredCase.title}
                 </h2>
                 <p className="text-[15px] text-[#7b8098] leading-[1.65]">{featuredCase.body}</p>

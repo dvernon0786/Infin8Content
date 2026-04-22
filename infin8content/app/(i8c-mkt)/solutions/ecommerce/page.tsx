@@ -43,10 +43,10 @@ export default function EcommercePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {benefits.map((b) => (
-              <div key={b.title} className="bg-[#0f1117] border border-white/7 rounded-[14px] p-7 hover:border-[rgba(79,110,247,0.3)] transition-all text-center">
+              <div key={b.title} className="bg-mkt-surface border border-white/7 rounded-[14px] p-7 hover:border-mkt-accent-border transition-all text-center">
                 <div className="text-[36px] mb-4">{b.icon}</div>
-                <h4 className="font-display text-[15px] font-semibold text-white mb-2" style={{ fontFamily: "Sora,sans-serif" }}>{b.title}</h4>
-                <p className="text-[13.5px] text-[#7b8098] leading-[1.6]">{b.body}</p>
+                <h4 className="font-display text-[15px] font-semibold text-white mb-2">{b.title}</h4>
+                <p className="text-[13.5px] text-mkt-muted leading-[1.6]">{b.body}</p>
               </div>
             ))}
           </div>
@@ -110,7 +110,7 @@ export default function EcommercePage() {
       </section>
 
       {/* Before/After */}
-      <section className="py-20" style={{ background: "linear-gradient(180deg,transparent,#13151e 20%,#13151e 80%,transparent)" }}>
+      <section className="py-20 bg-gradient-to-b from-transparent via-mkt-surface2 to-transparent">
         <div className="container mx-auto px-7 max-w-215">
           <div className="text-center mb-4">
             <SectionLabel>⚡ The Difference</SectionLabel>

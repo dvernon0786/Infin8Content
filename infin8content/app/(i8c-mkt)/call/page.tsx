@@ -26,23 +26,22 @@ export default function CallPage() {
   return (
     <section className="pt-20 pb-24 relative overflow-hidden">
       <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: "radial-gradient(circle 500px at 50% 0%, rgba(79,110,247,0.12) 0%, transparent 70%)" }}
+        className="absolute inset-0 pointer-events-none bg-gradient-to-b from-mkt-accent/12 via-transparent to-transparent"
       />
       <div className="container mx-auto px-7 relative">
         <div className="max-w-250 mx-auto">
           {/* Header */}
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-1.5 bg-[rgba(79,110,247,0.1)] border border-[rgba(79,110,247,0.25)] rounded-full px-3.5 py-1.5 text-[13px] font-medium text-[#a5b4fc] mb-6">
+            <div className="inline-flex items-center gap-1.5 bg-mkt-accent-lite border border-mkt-accent-border rounded-full px-3.5 py-1.5 text-[13px] font-medium text-mkt-accent-hover mb-6">
               📞 Book a Demo
             </div>
             <h1
               className="text-[clamp(32px,5vw,56px)] font-extrabold tracking-[-1.5px] leading-[1.07] text-white mb-5 max-w-170 mx-auto"
               style={{ fontFamily: "Sora, sans-serif" }}
             >
-              See <em className="not-italic text-[#4f6ef7]">Infin8Content</em> in action — live
+              See <em className="not-italic text-mkt-accent">Infin8Content</em> in action — live
             </h1>
-            <p className="text-large text-[#7b8098] max-w-125 mx-auto leading-[1.65]">
+            <p className="text-large text-mkt-muted max-w-125 mx-auto leading-[1.65]">
               Book a 30-minute demo with our team. We&apos;ll show you how to 10x your content output and rank on Google in weeks.
             </p>
           </div>

@@ -78,7 +78,7 @@ export default function SaaSPage() {
       />
 
       {/* 2-step process */}
-      <section className="py-20" style={{ background: "linear-gradient(180deg,transparent,#13151e 20%,#13151e 80%,transparent)" }}>
+      <section className="py-20 bg-gradient-to-b from-transparent via-mkt-surface2 to-transparent">
         <div className="container mx-auto px-7">
           <div className="text-center mb-12">
             <SectionLabel>⚡ The Simple 2-Step Process</SectionLabel>
@@ -108,7 +108,7 @@ export default function SaaSPage() {
       </section>
 
       {/* Summary */}
-      <section className="py-20" style={{ background: "linear-gradient(180deg,transparent,#13151e 20%,#13151e 80%,transparent)" }}>
+      <section className="py-20 bg-gradient-to-b from-transparent via-mkt-surface2 to-transparent">
         <div className="container mx-auto px-7">
           <div className="text-center mb-10">
             <SectionLabel>✦ To Sum Up</SectionLabel>
