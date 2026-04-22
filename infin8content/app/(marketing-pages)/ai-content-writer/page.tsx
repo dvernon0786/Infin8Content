@@ -7,91 +7,7 @@ export const metadata: Metadata = {
 };
 
 const CSS = `
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #08090d;
-      --surface: #0f1117;
-      --surface2: #13151e;
-      --border: rgba(255,255,255,0.07);
-      --accent: #4f6ef7;
-      --accent-glow: rgba(79,110,247,0.18);
-      --text: #e8eaf2;
-      --muted: #7b8098;
-      --muted2: #4a4f68;
-      --white: #ffffff;
-      --green: #22c55e;
-      --font-display: 'Sora', sans-serif;
-      --font-body: 'DM Sans', sans-serif;
-      --radius: 14px;
-      --radius-sm: 8px;
-      --container: 1160px;
-    }
-    html { scroll-behavior: smooth; }
-    body { font-family: var(--font-body); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-    a { color: inherit; text-decoration: none; transition: color .2s; }
-    img { max-width: 100%; display: block; }
-    ul { list-style: none; }
-    .container { max-width: var(--container); margin: 0 auto; padding: 0 28px; }
-
-    /* ===== PROMO BAR ===== */
-    .promo-bar {
-      background: linear-gradient(90deg,#1a1060,#0f1340 50%,#1a1060);
-      border-bottom: 1px solid rgba(79,110,247,.2);
-      text-align: center; padding: 10px 20px;
-      font-size: 13px; font-family: var(--font-display); font-weight: 500; color: var(--text);
-      position: relative; z-index: 50;
-    }
-    .time-unit { background: rgba(79,110,247,.2); border: 1px solid rgba(79,110,247,.3); border-radius: 4px; padding: 2px 6px; font-weight: 700; color: #a5b4fc; font-variant-numeric: tabular-nums; min-width: 28px; display: inline-block; text-align: center; }
-    .deal-link { background: var(--accent); color: #fff; border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 600; margin-left: 10px; }
-
-    /* ===== HEADER ===== */
-    .site-header { position: sticky; top: 0; z-index: 40; background: rgba(8,9,13,.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
-    .header-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; gap: 16px; }
-    .brand { display:inline-flex; align-items:center; flex-shrink:0; line-height:0; }
-    .brand img { height:32px; width:auto; display:block; }
-    .main-nav { display: flex; align-items: center; gap: 4px; flex: 1; justify-content: center; }
-    .nav-item { position: relative; }
-    .nav-link { display: flex; align-items: center; gap: 4px; padding: 7px 12px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--muted); transition: all .2s; cursor: pointer; white-space: nowrap; }
-    .nav-link:hover { color: var(--white); background: rgba(255,255,255,.05); }
-    .nav-link .chevron { font-size: 10px; transition: transform .2s; }
-    .nav-item:hover .chevron { transform: rotate(180deg); }
-    .dropdown { display: none; position: absolute; top: 100%; left: 0; background: #12141f; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 8px 8px; min-width: 230px; box-shadow: 0 20px 60px rgba(0,0,0,.5); z-index: 100; }
-    .nav-item:hover .dropdown { display: block; }
-    .dropdown-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); padding: 4px 10px; margin-bottom: 2px; }
-    .dropdown-link { display: block; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13.5px; color: var(--muted); transition: all .15s; }
-    .dropdown-link:hover { color: var(--white); background: rgba(255,255,255,.05); }
-    .dropdown-link strong { display: block; color: var(--text); font-size: 13.5px; margin-bottom: 1px; }
-    .dropdown-link small { font-size: 12px; color: var(--muted); }
-    .dropdown hr { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
-    .header-cta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .btn-link { font-size: 14px; font-weight: 500; color: var(--muted); padding: 7px 12px; border-radius: var(--radius-sm); transition: all .2s; }
-    .btn-link:hover { color: var(--white); background: rgba(255,255,255,.05); }
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: var(--font-display); font-weight: 600; border-radius: var(--radius-sm); transition: all .2s; cursor: pointer; border: none; text-decoration: none; }
-    .btn-primary { background: var(--accent); color: #fff; padding: 9px 18px; font-size: 14px; box-shadow: 0 0 20px rgba(79,110,247,.3); }
-    .btn-primary:hover { background: #3d5df5; box-shadow: 0 0 30px rgba(79,110,247,.5); transform: translateY(-1px); }
-    .btn-primary-lg { padding: 14px 30px; font-size: 16px; border-radius: 10px; }
-    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 9px 18px; font-size: 14px; }
-    .btn-ghost:hover { border-color: rgba(255,255,255,.2); color: var(--white); }
-    .nav-toggle { display: none; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 7px 10px; font-size: 18px; cursor: pointer; }
-
-    /* ===== HERO ===== */
-    .hero { padding: 80px 0 60px; text-align: center; position: relative; overflow: hidden; }
-    .hero::before { content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%); width: 700px; height: 600px; background: radial-gradient(circle, rgba(79,110,247,.13) 0%, transparent 70%); pointer-events: none; }
-    .hero-eyebrow { display: inline-flex; align-items: center; gap: 6px; background: rgba(79,110,247,.1); border: 1px solid rgba(79,110,247,.25); border-radius: 20px; padding: 5px 14px; font-size: 13px; font-weight: 500; color: #a5b4fc; margin-bottom: 22px; }
-    .hero h1 { font-family: var(--font-display); font-size: clamp(34px,5.5vw,60px); font-weight: 800; line-height: 1.06; letter-spacing: -1.5px; color: var(--white); max-width: 800px; margin: 0 auto 18px; }
-    .hero h1 .high { color: var(--accent); font-style: italic; }
-    .hero .sub { font-size: 18px; color: var(--muted); max-width: 520px; margin: 0 auto 30px; line-height: 1.65; }
-    .hero-actions { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
-    .social-proof { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13.5px; color: var(--muted); margin-bottom: 14px; }
-    .avatars { display: flex; }
-    .avatars .av { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--bg); background: var(--surface2); margin-left: -8px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--accent); }
-    .avatars .av:first-child { margin-left: 0; }
-    .social-proof strong { color: var(--white); }
-    .hero-perks { display: flex; align-items: center; justify-content: center; gap: 20px; font-size: 13px; color: var(--muted); margin-bottom: 52px; flex-wrap: wrap; }
-    .hero-perks span { display: flex; align-items: center; gap: 6px; }
-    .hero-perks span::before { content: '✓'; color: var(--green); font-weight: 700; }
-
-    /* ===== ARTICLE PREVIEW MOCKUP ===== */
+/* ===== ARTICLE PREVIEW MOCKUP ===== */
     .article-preview-wrap { max-width: 880px; margin: 0 auto; position: relative; }
     .article-preview-wrap::after { content: ''; position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); width: 70%; height: 80px; background: radial-gradient(ellipse, rgba(79,110,247,.22) 0%, transparent 70%); filter: blur(20px); pointer-events: none; }
     .browser-frame { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04); }
@@ -135,12 +51,6 @@ const CSS = `
     .m-badge { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
     .m-badge .icon { font-size: 14px; }
     .m-badge strong { color: var(--white); }
-
-    /* ===== SECTIONS SHARED ===== */
-    section { padding: 90px 0; }
-    .section-label { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); margin-bottom: 14px; }
-    .section-title { font-family: var(--font-display); font-size: clamp(26px, 3.8vw, 42px); font-weight: 700; letter-spacing: -.6px; color: var(--white); margin-bottom: 14px; line-height: 1.15; }
-    .section-sub { font-size: 16px; color: var(--muted); line-height: 1.65; max-width: 600px; margin: 0 auto 50px; text-align: center; }
 
     /* ===== FEATURE HIGHLIGHTS (4-grid below article) ===== */
     .highlights-section { background: linear-gradient(180deg, transparent, var(--surface2) 20%, var(--surface2) 80%, transparent); }
@@ -238,25 +148,6 @@ const CSS = `
     .cta-mock .cm-icon { font-size: 32px; opacity: .3; }
     .cta-mock .cm-label { font-size: 12px; color: var(--muted2); font-family: var(--font-display); }
 
-    /* ===== FOOTER ===== */
-    .site-footer { border-top: 1px solid var(--border); padding: 60px 0 40px; }
-    .footer-top { display: grid; grid-template-columns: 220px repeat(5,1fr); gap: 40px; margin-bottom: 50px; }
-    .footer-brand .brand { display: block; margin-bottom: 12px; }
-    .footer-brand p { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
-    .footer-col h4 { font-family: var(--font-display); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); margin-bottom: 14px; }
-    .footer-col a { display: block; font-size: 13.5px; color: var(--muted); margin-bottom: 10px; transition: color .2s; }
-    .footer-col a:hover { color: var(--white); }
-    .footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 24px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
-    .footer-bottom small { font-size: 12.5px; color: var(--muted2); }
-    .footer-legal { display: flex; gap: 16px; }
-    .footer-legal a { font-size: 12.5px; color: var(--muted2); }
-    .footer-legal a:hover { color: var(--muted); }
-
-    /* ===== ANIMATIONS ===== */
-    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-    .fade-up { opacity:0; animation: fadeUp .6s ease forwards; }
-    .fade-up:nth-child(1){animation-delay:.05s}.fade-up:nth-child(2){animation-delay:.15s}.fade-up:nth-child(3){animation-delay:.25s}.fade-up:nth-child(4){animation-delay:.35s}.fade-up:nth-child(5){animation-delay:.45s}
-
     /* ===== RESPONSIVE ===== */
     @media(max-width:1024px){
       .footer-top{grid-template-columns:1fr 1fr 1fr;}
@@ -286,6 +177,64 @@ const CSS = `
 `;
 
 const HTML = `
+<!-- PROMO BAR -->
+<div class="promo-bar">
+  ✨ &nbsp;New Year Offer: <strong style="color:#a5b4fc;margin:0 6px;">40% Off</strong> on Yearly Plans &nbsp;
+  <span class="time-unit js-ph">08</span>hrs
+  <span class="time-unit js-pm">34</span>min
+  <span class="time-unit js-ps">12</span>sec
+  <a class="deal-link" href="#">Get Deal</a>
+</div>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/"><img src="/infin8content_logo.png" alt="Infin8Content"></a>
+    <nav class="main-nav" id="main-nav">
+      <div class="nav-item">
+        <span class="nav-link">Features <span class="chevron">▾</span></span>
+        <div class="dropdown">
+          <div class="dropdown-label">AI Writing</div>
+          <a class="dropdown-link" href="#">AI Content Writer</a>
+          <a class="dropdown-link" href="#">AI Brief Generator</a>
+          <a class="dropdown-link" href="#">News Writer</a>
+          <a class="dropdown-link" href="#">Video to Blog Post</a>
+          <hr>
+          <div class="dropdown-label">Automation</div>
+          <a class="dropdown-link" href="#">AutoPublish</a>
+          <a class="dropdown-link" href="#">Workflow Orchestration</a>
+          <a class="dropdown-link" href="#">SEO Reports</a>
+          <a class="dropdown-link" href="#">Analytics Tracker</a>
+        </div>
+      </div>
+      <div class="nav-item">
+        <span class="nav-link">Solutions <span class="chevron">▾</span></span>
+        <div class="dropdown">
+          <a class="dropdown-link" href="#"><strong>SaaS</strong><small>Scale organic traffic for your product</small></a>
+          <a class="dropdown-link" href="#"><strong>Agencies</strong><small>Manage multiple clients at scale</small></a>
+          <a class="dropdown-link" href="#"><strong>E-Commerce</strong><small>Upgrade your store's content</small></a>
+          <a class="dropdown-link" href="#"><strong>Enterprise</strong><small>SAML, SSO & dedicated support</small></a>
+        </div>
+      </div>
+      <a class="nav-link" href="#">Pricing</a>
+      <div class="nav-item">
+        <span class="nav-link">Resources <span class="chevron">▾</span></span>
+        <div class="dropdown">
+          <a class="dropdown-link" href="#">Case Studies</a>
+          <a class="dropdown-link" href="#">Learning & Training</a>
+          <a class="dropdown-link" href="#">Help Docs</a>
+          <a class="dropdown-link" href="#">Blog</a>
+        </div>
+      </div>
+    </nav>
+    <div class="header-cta">
+      <a class="btn-link" href="#">Login</a>
+      <a class="btn btn-primary" href="#">Get Started</a>
+    </div>
+    <button class="nav-toggle" id="nav-toggle">☰</button>
+  </div>
+</header>
+
 <main>
 
   <!-- ===== HERO ===== -->
@@ -651,6 +600,61 @@ const HTML = `
 </main>
 
 <!-- FOOTER -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a class="brand" href="/"><img src="/infin8content_logo.png" alt="Infin8Content"></a>
+        <p>AI content workflows for modern teams and agencies.</p>
+      </div>
+      <div class="footer-col">
+        <h4>AI Writing</h4>
+        <a href="#">AI Content Writer</a>
+        <a href="#">AI Brief Generator</a>
+        <a href="#">News Writer</a>
+        <a href="#">Video to Blog</a>
+      </div>
+      <div class="footer-col">
+        <h4>Automation</h4>
+        <a href="#">AutoPublish</a>
+        <a href="#">Workflow Orchestration</a>
+        <a href="#">SEO Reports</a>
+        <a href="#">Analytics Tracker</a>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <a href="#">Pricing</a>
+        <a href="#">Blog</a>
+        <a href="#">Help Docs</a>
+        <a href="#">Case Studies</a>
+        <a href="#">About Us</a>
+      </div>
+      <div class="footer-col">
+        <h4>Integrations</h4>
+        <a href="#">WordPress</a>
+        <a href="#">Shopify</a>
+        <a href="#">Ghost</a>
+        <a href="#">Webflow</a>
+        <a href="#">Zapier</a>
+      </div>
+      <div class="footer-col">
+        <h4>Solutions</h4>
+        <a href="#">SaaS</a>
+        <a href="#">Agencies</a>
+        <a href="#">E-Commerce</a>
+        <a href="#">Enterprise</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <small>© <span class="js-year"></span> Infin8Content. All rights reserved.</small>
+      <div class="footer-legal">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">contact@infin8content.com</a>
+      </div>
+    </div>
+  </div>
+</footer>
 `;
 
 export default function AIContentWriterPage() {

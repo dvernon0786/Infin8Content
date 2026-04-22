@@ -1,6 +1,4 @@
 import { Metadata } from 'next';
-import Navigation from '@/components/marketing/Navigation';
-import Footer from '@/components/marketing/Footer';
 import MarketingPageBody from '@/components/marketing/MarketingPageBody';
 
 export const metadata: Metadata = {
@@ -9,177 +7,7 @@ export const metadata: Metadata = {
 };
 
 const CSS = `
-/* ===================== RESET & BASE ===================== */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #08090d;
-      --surface: #0f1117;
-      --surface2: #13151e;
-      --border: rgba(255,255,255,0.07);
-      --accent: #4f6ef7;
-      --accent2: #7c3aed;
-      --accent-glow: rgba(79,110,247,0.18);
-      --text: #e8eaf2;
-      --muted: #7b8098;
-      --muted2: #4a4f68;
-      --white: #ffffff;
-      --green: #22c55e;
-      --font-display: 'Sora', sans-serif;
-      --font-body: 'DM Sans', sans-serif;
-      --radius: 14px;
-      --radius-sm: 8px;
-      --container: 1160px;
-    }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: var(--font-body);
-      background: var(--bg);
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-    }
-    a { color: inherit; text-decoration: none; transition: color .2s; }
-    img { max-width: 100%; display: block; }
-    ul { list-style: none; }
-
-    /* ===================== LAYOUT ===================== */
-    .container { max-width: var(--container); margin: 0 auto; padding: 0 28px; }
-
-    /* ===================== PROMO BAR ===================== */
-    .promo-bar {
-      background: linear-gradient(90deg, #1a1060 0%, #0f1340 50%, #1a1060 100%);
-      border-bottom: 1px solid rgba(79,110,247,0.2);
-      text-align: center;
-      padding: 10px 20px;
-      font-size: 13px;
-      font-family: var(--font-display);
-      font-weight: 500;
-      color: var(--text);
-      position: relative;
-      z-index: 50;
-    }
-    .promo-bar .countdown {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .promo-bar .time-unit {
-      background: rgba(79,110,247,0.2);
-      border: 1px solid rgba(79,110,247,0.3);
-      border-radius: 4px;
-      padding: 2px 6px;
-      font-weight: 700;
-      color: #a5b4fc;
-      font-variant-numeric: tabular-nums;
-      min-width: 28px;
-      text-align: center;
-    }
-    .promo-bar .deal-link {
-      background: var(--accent);
-      color: #fff;
-      border-radius: 20px;
-      padding: 3px 12px;
-      font-size: 12px;
-      font-weight: 600;
-      margin-left: 10px;
-    }
-
-    /* ===================== HEADER ===================== */
-    .site-header {
-      position: sticky;
-      top: 0;
-      z-index: 40;
-      background: rgba(8,9,13,0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-    }
-    .header-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 62px;
-      gap: 16px;
-    }
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      flex-shrink: 0;
-      line-height: 0;
-    }
-    .brand img { height: 32px; width: auto; display: block; }
-
-    /* Nav */
-    .main-nav { display: flex; align-items: center; gap: 4px; flex: 1; justify-content: center; }
-    .nav-item { position: relative; }
-    .nav-link {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 7px 12px;
-      border-radius: var(--radius-sm);
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--muted);
-      transition: all .2s;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .nav-link:hover { color: var(--white); background: rgba(255,255,255,0.05); }
-    .nav-link .chevron { font-size: 10px; transition: transform .2s; }
-    .nav-item:hover .chevron { transform: rotate(180deg); }
-
-    /* Dropdown */
-    .dropdown {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      background: #12141f;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px 8px 8px;
-      min-width: 240px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-      z-index: 100;
-    }
-    .nav-item:hover .dropdown { display: block; }
-    .dropdown-section { padding: 6px 0; }
-    .dropdown-label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted2);
-      padding: 4px 10px;
-      margin-bottom: 2px;
-    }
-    .dropdown-link {
-      display: block;
-      padding: 8px 10px;
-      border-radius: var(--radius-sm);
-      font-size: 13.5px;
-      color: var(--muted);
-      transition: all .15s;
-    }
-    .dropdown-link:hover { color: var(--white); background: rgba(255,255,255,0.05); }
-    .dropdown-link strong { display: block; color: var(--text); font-size: 13.5px; margin-bottom: 1px; }
-    .dropdown-link small { font-size: 12px; color: var(--muted); }
-    .dropdown hr { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
-
-    /* Header CTA */
-    .header-cta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .btn-link { font-size: 14px; font-weight: 500; color: var(--muted); padding: 7px 12px; border-radius: var(--radius-sm); transition: all .2s; }
-    .btn-link:hover { color: var(--white); background: rgba(255,255,255,0.05); }
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: var(--font-display); font-weight: 600; border-radius: var(--radius-sm); transition: all .2s; cursor: pointer; border: none; }
-    .btn-primary { background: var(--accent); color: #fff; padding: 9px 18px; font-size: 14px; box-shadow: 0 0 20px rgba(79,110,247,0.3); }
-    .btn-primary:hover { background: #3d5df5; box-shadow: 0 0 30px rgba(79,110,247,0.5); transform: translateY(-1px); }
-    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 9px 18px; font-size: 14px; }
-    .btn-ghost:hover { border-color: rgba(255,255,255,0.2); color: var(--white); }
-    .btn-lg { padding: 14px 28px; font-size: 16px; border-radius: 10px; }
-
-    .nav-toggle { display: none; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 7px 10px; font-size: 18px; cursor: pointer; }
-
+:root { --accent2: #7c3aed; }
     /* ===================== HERO ===================== */
     .hero {
       padding: 90px 0 70px;
@@ -659,7 +487,80 @@ const CSS = `
 `;
 
 const HTML = `
-<main>
+<!-- PROMO BAR -->
+  <div class="promo-bar">
+    <span class="countdown">
+      ✨ &nbsp;New Year Offer: <strong style="color:#a5b4fc;margin:0 4px;">40% Off</strong> on Yearly Plans &nbsp;
+      <span class="time-unit js-ph">00</span>hrs
+      <span class="time-unit js-pm">00</span>min
+      <span class="time-unit js-ps">00</span>sec
+    </span>
+    <a class="deal-link" href="#pricing">Get Deal</a>
+  </div>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/"><img src="/infin8content_logo.png" alt="Infin8Content"></a>
+
+      <nav class="main-nav" id="main-nav">
+        <!-- Features -->
+        <div class="nav-item">
+          <span class="nav-link">Features <span class="chevron">▾</span></span>
+          <div class="dropdown">
+            <div class="dropdown-section">
+              <div class="dropdown-label">AI Writing</div>
+              <a class="dropdown-link" href="#">AI Content Writer</a>
+              <a class="dropdown-link" href="#">AI Brief Generator</a>
+              <a class="dropdown-link" href="#">News Writer</a>
+              <a class="dropdown-link" href="#">Video to Blog Post</a>
+            </div>
+            <hr>
+            <div class="dropdown-section">
+              <div class="dropdown-label">Automation</div>
+              <a class="dropdown-link" href="#">AutoPublish</a>
+              <a class="dropdown-link" href="#">Workflow Orchestration</a>
+              <a class="dropdown-link" href="#">SEO Reports</a>
+              <a class="dropdown-link" href="#">Analytics Tracker</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Solutions -->
+        <div class="nav-item">
+          <span class="nav-link">Solutions <span class="chevron">▾</span></span>
+          <div class="dropdown">
+            <a class="dropdown-link" href="#"><strong>SaaS</strong><small>Scale organic traffic for your product</small></a>
+            <a class="dropdown-link" href="#"><strong>Agencies</strong><small>Manage multiple clients at scale</small></a>
+            <a class="dropdown-link" href="#"><strong>E-Commerce</strong><small>Upgrade your store's content</small></a>
+            <a class="dropdown-link" href="#"><strong>Enterprise</strong><small>SAML, SSO & dedicated support</small></a>
+          </div>
+        </div>
+
+        <a class="nav-link" href="#pricing">Pricing</a>
+
+        <!-- Resources -->
+        <div class="nav-item">
+          <span class="nav-link">Resources <span class="chevron">▾</span></span>
+          <div class="dropdown">
+            <a class="dropdown-link" href="#">Case Studies</a>
+            <a class="dropdown-link" href="#">Learning & Training</a>
+            <a class="dropdown-link" href="#">Help Docs</a>
+            <a class="dropdown-link" href="#">Blog</a>
+          </div>
+        </div>
+      </nav>
+
+      <div class="header-cta">
+        <a class="btn-link" href="#">Login</a>
+        <a class="btn btn-primary" href="#pricing">Get Started</a>
+      </div>
+
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">☰</button>
+    </div>
+  </header>
+
+  <main>
 
     <!-- HERO -->
     <section class="hero">
@@ -679,7 +580,7 @@ const HTML = `
             <div class="av">SB</div>
             <div class="av">TD</div>
           </div>
-          Trusted by <strong>&nbsp;10,000+&nbsp;</strong> Marketers &amp; Agencies
+          Trusted by <strong>&nbsp;10,000+&nbsp;</strong> Marketers & Agencies
         </div>
 
         <div class="hero-image-wrap fade-up">
@@ -756,7 +657,7 @@ const HTML = `
         <div class="feature-row reverse">
           <div>
             <div class="feature-tag">✏️ &nbsp;AI SEO Editor</div>
-            <h2>Edit New &amp; Existing Content</h2>
+            <h2>Edit New & Existing Content</h2>
             <ul class="feature-list">
               <li>Rewrite content with custom prompts</li>
               <li>Add internal and external links automatically</li>
@@ -821,11 +722,11 @@ const HTML = `
         <!-- Feature 5: Analytics -->
         <div class="feature-row">
           <div>
-            <div class="feature-tag">📊 &nbsp;Analytics &amp; Publishing</div>
-            <h2>Track Performance &amp; Brand Mentions</h2>
+            <div class="feature-tag">📊 &nbsp;Analytics & Publishing</div>
+            <h2>Track Performance & Brand Mentions</h2>
             <ul class="feature-list">
               <li>Track brand mentions across multiple platforms</li>
-              <li>One-click publish to WordPress, Shopify, Ghost, Webflow &amp; more</li>
+              <li>One-click publish to WordPress, Shopify, Ghost, Webflow & more</li>
               <li>Monitor content performance with integrated metrics</li>
               <li>Preview how your brand appears in search results</li>
             </ul>
@@ -1049,14 +950,75 @@ const HTML = `
   </main>
 
   <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a class="brand" href="/"><img src="/infin8content_logo.png" alt="Infin8Content"></a>
+          <p>AI content workflows for modern teams and agencies.</p>
+          <div class="footer-founders">
+            <div class="f-founder">F1</div>
+            <div class="f-founder">F2</div>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>AI Writing</h4>
+          <a href="#">AI Content Writer</a>
+          <a href="#">AI Brief Generator</a>
+          <a href="#">News Writer</a>
+          <a href="#">Video to Blog</a>
+        </div>
+
+        <div class="footer-col">
+          <h4>Automation</h4>
+          <a href="#">AutoPublish</a>
+          <a href="#">Workflow Orchestration</a>
+          <a href="#">SEO Reports</a>
+          <a href="#">Analytics Tracker</a>
+        </div>
+
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <a href="#">Pricing</a>
+          <a href="#">Blog</a>
+          <a href="#">Help Docs</a>
+          <a href="#">API Docs</a>
+          <a href="#">Case Studies</a>
+          <a href="#">About Us</a>
+        </div>
+
+        <div class="footer-col">
+          <h4>Integrations</h4>
+          <a href="#">WordPress</a>
+          <a href="#">Shopify</a>
+          <a href="#">Ghost</a>
+          <a href="#">Webflow</a>
+          <a href="#">Wix</a>
+          <a href="#">Zapier</a>
+        </div>
+
+        <div class="footer-col">
+          <h4>Solutions</h4>
+          <a href="#">SaaS</a>
+          <a href="#">Agencies</a>
+          <a href="#">E-Commerce</a>
+          <a href="#">Enterprise</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <small>© <span class="js-year"></span> Infin8Content. All rights reserved.</small>
+        <div class="footer-legal">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+          <a href="#">contact@infin8content.com</a>
+        </div>
+      </div>
+    </div>
+  </footer>
 `;
 
 export default function HomePage() {
-  return (
-    <>
-      <Navigation />
-      <MarketingPageBody html={HTML} css={CSS} />
-      <Footer />
-    </>
-  );
+  return <MarketingPageBody html={HTML} css={CSS} />;
 }
