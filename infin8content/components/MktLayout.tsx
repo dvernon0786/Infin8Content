@@ -73,7 +73,7 @@ export function SocialProof({ label = "10,000+ Marketers & Agencies" }: { label?
           <div
             key={idx}
             className="w-7.5 h-7.5 rounded-full border-2 border-mkt-bg bg-mkt-surface2 flex items-center justify-center text-[10px] font-bold text-mkt-accent"
-            style={{ marginLeft: idx === 0 ? 0 : -8 }}
+            className={idx === 0 ? "" : "-ml-2"}
           >
             {i}
           </div>
@@ -160,13 +160,13 @@ export default function MktLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div style={{ background: "#08090d", color: "#e8eaf2", minHeight: "100vh" }}>
+    <div className="bg-mkt-bg text-mkt-text min-h-screen">
       <style dangerouslySetInnerHTML={{ __html: shellCss }} />
 
       {/* Promo Bar */}
       <div className="mkt-promo-bar">
         ✨&nbsp; New Year Offer:{" "}
-        <strong style={{ color: "#a5b4fc", margin: "0 6px" }}>40% Off</strong> on Yearly Plans
+        <strong className="text-mkt-accent mx-1.5">40% Off</strong> on Yearly Plans
         &nbsp;
         <span className="mkt-time-unit">{ph}</span>hrs{" "}
         <span className="mkt-time-unit">{pm}</span>min{" "}

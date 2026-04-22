@@ -46,7 +46,6 @@ export function MktHero({
         )}
         <h1
           className="font-display text-[clamp(32px,5.2vw,58px)] font-extrabold tracking-[-1.5px] leading-[1.07] text-white max-w-205 mx-auto mb-5"
-          style={{ fontFamily: "Sora, sans-serif" }}
         >
           {parts.map((part, i) =>
             part === headingAccent ? (
@@ -169,7 +168,7 @@ export function FeatureRow({ tag, title, body, bullets, linkLabel, linkHref = "#
         {children ?? (
           <div className="rounded-[14px] border border-white/7 bg-mkt-surface aspect-4/3 flex flex-col items-center justify-center gap-3 shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden relative">
             <div className="text-[36px] opacity-35">{icon}</div>
-            <p className="text-[12px] text-mkt-muted2 text-center px-5" style={{ fontFamily: "Sora, sans-serif" }}>
+            <p className="text-[12px] text-mkt-muted2 text-center px-5 font-display">
               {title} Preview
               <br />
               <span className="text-[11px]">Replace with screenshot</span>
@@ -249,15 +248,15 @@ export function BeforeAfter({
         { title: beforeTitle, items: beforeItems, type: "before" },
         { title: afterTitle, items: afterItems, type: "after" },
       ].map(({ title, items, type }) => (
-        <div key={type} className="bg-[#0f1117] border border-white/7 rounded-[14px] overflow-hidden">
+        <div key={type} className="bg-mkt-surface border border-white/7 rounded-[14px] overflow-hidden">
           <div
-            className={`px-5 py-3 border-b border-white/7 flex items-center gap-2 text-[13px] font-bold ${type === "after" ? "text-[#22c55e]" : "text-[#7b8098]"}`}
+            className={`px-5 py-3 border-b border-white/7 flex items-center gap-2 text-[13px] font-bold ${type === "after" ? "text-mkt-success" : "text-mkt-muted"}`}
           >
             <span
               className={`text-[10px] font-bold uppercase tracking-[0.08em] rounded px-1.5 py-0.5 ${
                 type === "after"
-                  ? "bg-[rgba(34,197,94,0.1)] text-[#22c55e] border border-[rgba(34,197,94,0.2)]"
-                  : "bg-white/5 text-[#7b8098]"
+                  ? "bg-mkt-success-lite text-mkt-success border border-mkt-success-border"
+                  : "bg-white/5 text-mkt-muted"
               }`}
             >
               {type === "after" ? "After" : "Before"}
@@ -270,8 +269,8 @@ export function BeforeAfter({
             </div>
             <ul className="flex flex-col gap-1.5">
               {items.map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-[13.5px] text-[#7b8098] py-1">
-                  <span className={`font-bold shrink-0 ${type === "after" ? "text-[#22c55e]" : "text-[#ef4444]"}`}>
+                <li key={item} className="flex items-start gap-2.5 text-[13.5px] text-mkt-muted py-1">
+                  <span className={`font-bold shrink-0 ${type === "after" ? "text-mkt-success" : "text-mkt-error"}`}>
                     {type === "after" ? "✓" : "✗"}
                   </span>
                   {item}
@@ -291,13 +290,13 @@ export function FaqList({ items }: { items: { q: string; a: string }[] }) {
     <div className="max-w-190 mx-auto mt-10">
       {items.map(({ q, a }) => (
         <details key={q} className="border-b border-white/7 group">
-          <summary className="flex items-center justify-between py-5 cursor-pointer text-[15px] font-medium text-[#e8eaf2] hover:text-white transition-colors gap-5 list-none">
+          <summary className="flex items-center justify-between py-5 cursor-pointer text-[15px] font-medium text-mkt-text hover:text-white transition-colors gap-5 list-none">
             {q}
-            <span className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-body text-[#7b8098] shrink-0 group-open:bg-[rgba(79,110,247,0.15)] group-open:text-[#4f6ef7] group-open:rotate-45 transition-all">
+            <span className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-body text-mkt-muted shrink-0 group-open:bg-mkt-accent-lite group-open:text-mkt-accent group-open:rotate-45 transition-all">
               +
             </span>
           </summary>
-          <div className="pb-5 text-[14.5px] text-[#7b8098] leading-[1.7]">{a}</div>
+          <div className="pb-5 text-[14.5px] text-mkt-muted leading-[1.7]">{a}</div>
         </details>
       ))}
     </div>
