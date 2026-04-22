@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Poppins, Lato } from "next/font/google";
+import { Geist, Geist_Mono, Poppins, Lato, Sora, DM_Sans } from "next/font/google";
 import "./globals.css";
 
 // 🔒 REQUIRED: Startup graph validation to prevent drift
@@ -36,6 +36,21 @@ const lato = Lato({
   display: "swap",
 });
 
+const sora = Sora({
+  variable: "--font-sora",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+  weight: ["300", "400", "500"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Infin8Content - AI-Powered Content Creation Platform",
   description: "Create content that converts without the chaos. AI-powered platform for marketing teams.",
@@ -56,7 +71,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${lato.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${lato.variable} ${sora.variable} ${dmSans.variable} antialiased`}
         suppressHydrationWarning={true}
       >
         {children}

@@ -222,6 +222,47 @@ git push -u origin test-main-all
 # https://github.com/<owner>/<repo>/compare/<your-branch-name>...main
 ```
 
+---
+
+## Git Workflow: Direct Production Deployment
+
+**Key Rule:** Any push to `test-main-all` = Production deployment on Vercel. Any other branch = Preview deployment. No PRs needed for production — merge locally and push directly.
+
+### Complete Workflow:
+
+```bash
+# 1. Start from clean test-main-all
+git checkout test-main-all
+git pull origin test-main-all
+
+# 2. Create topic branch
+git checkout -b fix/your-feature-name
+
+# 3. Make changes, then commit
+git add .
+git commit -m "fix: description of change"
+
+# 4. Push topic branch
+git push -u origin fix/your-feature-name
+
+# 5. Merge directly to test-main-all (triggers Production on Vercel)
+git checkout test-main-all
+git merge fix/your-feature-name
+git push origin test-main-all
+
+# Configure git identity (if needed)
+git config user.name "Damien"
+git config user.email "engagehubonline@gmail.com"
+```
+
+### Important Notes:
+- `test-main-all` is the production branch
+- All merges to `test-main-all` trigger immediate Vercel production deployment
+- Use topic branches for development, then merge directly
+- No PR review required for production merges
+
+---
+
 ## Next Steps
 
 1. **Create PR to test-main-all** (if needed)

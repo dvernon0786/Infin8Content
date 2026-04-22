@@ -13,6 +13,10 @@
   --font-poppins: var(--font-poppins), 'Poppins', sans-serif;
   --font-lato: var(--font-lato), 'Lato', sans-serif;
 
+  /* === MARKETING TYPOGRAPHY === */
+  --font-display: var(--font-sora), 'Sora', system-ui, sans-serif;
+  --font-body: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
+
   /* === UX DESIGN SYSTEM COLORS === */
 
   /* Core Brand Colors */

@@ -240,11 +240,39 @@ npm test -- --testNamePattern="workflow"
 - **Husky**: Pre-commit hooks
 
 ### Development Workflow
-1. Create feature branch from `main`
-2. Implement changes with tests
-3. Run full test suite
-4. Submit pull request
-5. Code review and merge
+
+**Key Rule:** Any push to `test-main-all` = Production deployment on Vercel. Any other branch = Preview deployment. No PRs needed for production — merge locally and push directly.
+
+```bash
+# 1. Start from clean test-main-all
+git checkout test-main-all
+git pull origin test-main-all
+
+# 2. Create topic branch
+git checkout -b fix/your-feature-name
+
+# 3. Make changes, then commit
+git add .
+git commit -m "fix: description of change"
+
+# 4. Push topic branch
+git push -u origin fix/your-feature-name
+
+# 5. Merge directly to test-main-all (triggers Production on Vercel)
+git checkout test-main-all
+git merge fix/your-feature-name
+git push origin test-main-all
+
+# Configure git identity (if needed)
+git config user.name "Damien"
+git config user.email "engagehubonline@gmail.com"
+```
+
+**Important Notes:**
+- `test-main-all` is the production branch
+- All merges to `test-main-all` trigger immediate Vercel production deployment
+- Use topic branches for development, then merge directly
+- No PR review required for production merges
 
 ### Key Patterns
 - **Service Pattern**: One service per file with clear interfaces

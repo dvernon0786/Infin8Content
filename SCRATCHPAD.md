@@ -65,24 +65,42 @@
   - **Polished (POST-01 to POST-03)**: Muted unclickable "Today" highlights, added developer documentation for timezone normalization edge cases, and documented mount-time freezing.
 - **Workflow State:** Formally moved to `test-main-all` for terminal validation and merge readiness.
 
-## Git: Local branch & PR commands (test-main-all)
+## Git Workflow: Direct Production Deployment (test-main-all)
 
-Copyable steps to sync and push the branch, then open a PR:
+**Key Rule:** Any push to `test-main-all` = Production deployment on Vercel. Any other branch = Preview deployment. No PRs needed for production — merge locally and push directly.
+
+### Complete Workflow:
 
 ```bash
-git fetch origin
-git checkout test-main-all || git checkout -b test-main-all origin/test-main-all
+# 1. Start from clean test-main-all
+git checkout test-main-all
 git pull origin test-main-all
 
-# create a topic branch off test-main-all
-git checkout -b <your-branch-name>
-git add .
-git commit -m "<meaningful-msg>"
-git push -u origin <your-branch-name>
+# 2. Create topic branch
+git checkout -b fix/your-feature-name
 
-# or to push updates directly to test-main-all
-git push -u origin test-main-all
+# 3. Make changes, then commit
+git add .
+git commit -m "fix: description of change"
+
+# 4. Push topic branch
+git push -u origin fix/your-feature-name
+
+# 5. Merge directly to test-main-all (triggers Production on Vercel)
+git checkout test-main-all
+git merge fix/your-feature-name
+git push origin test-main-all
+
+# Configure git identity (if needed)
+git config user.name "Damien"
+git config user.email "engagehubonline@gmail.com"
 ```
+
+### Important Notes:
+- `test-main-all` is the production branch
+- All merges to `test-main-all` trigger immediate Vercel production deployment
+- Use topic branches for development, then merge directly
+- No PR review required for production merges
 
 ## Vercel Deployment Blocked — Quick Resolutions
 
