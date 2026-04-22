@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { tokens } from "./mkt-tokens";
 
 // ── MktHero ─────────────────────────────────────────────────────
 interface MktHeroProps {
@@ -38,12 +39,12 @@ export function MktHero({
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(circle 350px at 50% 0%, rgba(79,110,247,0.13) 0%, transparent 70%)",
+            `radial-gradient(circle 350px at 50% 0%, ${tokens.accent}1f 0%, transparent 70%)`,
         }}
       />
       <div className="container mx-auto px-7 relative">
         {eyebrow && (
-          <div className="inline-flex items-center gap-1.5 bg-[rgba(79,110,247,0.1)] border border-[rgba(79,110,247,0.25)] rounded-full px-3.5 py-1.5 text-[13px] font-medium text-[#a5b4fc] mb-6">
+          <div className="inline-flex items-center gap-1.5 bg-mkt-accent-lite border border-mkt-accent-border rounded-full px-3.5 py-1.5 text-[13px] font-medium text-mkt-accent mb-6">
             {eyebrow}
           </div>
         )}
@@ -53,7 +54,7 @@ export function MktHero({
         >
           {parts.map((part, i) =>
             part === headingAccent ? (
-              <em key={i} className="not-italic text-[#4f6ef7]">
+              <em key={i} className="not-italic text-mkt-accent">
                 {part}
               </em>
             ) : (
@@ -61,11 +62,11 @@ export function MktHero({
             )
           )}
         </h1>
-        <p className="text-large text-[#7b8098] max-w-140 mx-auto mb-8 leading-[1.65]">{sub}</p>
+        <p className="text-large text-mkt-muted max-w-140 mx-auto mb-8 leading-[1.65]">{sub}</p>
         <div className="flex items-center justify-center gap-3 flex-wrap mb-7">
           <Link
             href={ctaHref}
-            className="inline-flex items-center font-display font-semibold bg-[#4f6ef7] text-white px-7 py-3.5 rounded-[10px] text-body shadow-[0_0_20px_rgba(79,110,247,0.3)] hover:bg-[#3d5df5] hover:shadow-[0_0_30px_rgba(79,110,247,0.5)] hover:-translate-y-0.5 transition-all"
+            className="inline-flex items-center font-display font-semibold bg-mkt-accent text-white px-7 py-3.5 rounded-[10px] text-body shadow-[0_0_20px_var(--mkt-accent-glow)] hover:bg-mkt-accent-hover hover:shadow-[0_0_30px_var(--mkt-accent-glow-heavy)] hover:-translate-y-0.5 transition-all"
             style={{ fontFamily: "Sora, sans-serif" }}
           >
             {cta}
@@ -73,7 +74,7 @@ export function MktHero({
           {secondaryCta && (
             <Link
               href={secondaryHref}
-              className="inline-flex items-center font-display font-semibold border border-white/7 text-[#7b8098] px-7 py-3.5 rounded-[10px] text-body hover:border-white/20 hover:text-white transition-all"
+              className="inline-flex items-center font-display font-semibold border border-white/7 text-mkt-muted px-7 py-3.5 rounded-[10px] text-body hover:border-white/20 hover:text-white transition-all"
               style={{ fontFamily: "Sora, sans-serif" }}
             >
               {secondaryCta}
@@ -81,12 +82,12 @@ export function MktHero({
           )}
         </div>
         {/* Social proof */}
-        <div className="flex items-center justify-center gap-2.5 text-[13.5px] text-[#7b8098] mb-1.5">
+        <div className="flex items-center justify-center gap-2.5 text-[13.5px] text-mkt-muted mb-1.5">
           <div className="flex">
             {["JL", "MR", "AK", "SB", "TD"].map((i, idx) => (
               <div
                 key={idx}
-                className="w-7.5 h-7.5 rounded-full border-2 border-[#08090d] bg-[#13151e] flex items-center justify-center text-[10px] font-bold text-[#4f6ef7]"
+                className="w-7.5 h-7.5 rounded-full border-2 border-mkt-bg bg-mkt-surface2 flex items-center justify-center text-[10px] font-bold text-mkt-accent"
                 style={{ marginLeft: idx === 0 ? 0 : -8 }}
               >
                 {i}
@@ -96,9 +97,9 @@ export function MktHero({
           Trusted by <strong className="text-white ml-1">10,000+</strong>&nbsp;Marketers & Agencies
         </div>
         {perks && (
-          <div className="flex items-center justify-center gap-5 flex-wrap text-[13px] text-[#7b8098] mt-2">
+          <div className="flex items-center justify-center gap-5 flex-wrap text-[13px] text-mkt-muted mt-2">
             {perks.map((p) => (
-              <span key={p} className="flex items-center gap-1.5 before:content-['✓'] before:text-[#22c55e] before:font-bold">
+              <span key={p} className="flex items-center gap-1.5 before:content-['✓'] before:text-mkt-green before:font-bold">
                 {p}
               </span>
             ))}
@@ -113,7 +114,7 @@ export function MktHero({
 // ── SectionLabel ─────────────────────────────────────────────
 export function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="inline-flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-widest text-[#4f6ef7] mb-3.5">
+    <p className="inline-flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-widest text-mkt-accent mb-3.5">
       {children}
     </p>
   );
@@ -152,12 +153,12 @@ export function FeatureRow({ tag, title, body, bullets, linkLabel, linkHref = "#
       <div className={reverse ? "md:[direction:ltr]" : ""}>
         {tag && <SectionLabel>{tag}</SectionLabel>}
         <SectionTitle>{title}</SectionTitle>
-        <p className="text-[15px] text-[#7b8098] leading-[1.65] mb-5">{body}</p>
+        <p className="text-[15px] text-mkt-muted leading-[1.65] mb-5">{body}</p>
         {bullets && (
           <ul className="flex flex-col gap-2.5 mb-7">
             {bullets.map((b) => (
-              <li key={b} className="flex items-start gap-2.5 text-[15px] text-[#7b8098] leading-normal">
-                <span className="text-[#4f6ef7] font-bold shrink-0 mt-0.5">✓</span>
+              <li key={b} className="flex items-start gap-2.5 text-[15px] text-mkt-muted leading-normal">
+                <span className="text-mkt-accent font-bold shrink-0 mt-0.5">✓</span>
                 {b}
               </li>
             ))}
@@ -166,7 +167,7 @@ export function FeatureRow({ tag, title, body, bullets, linkLabel, linkHref = "#
         {linkLabel && (
           <Link
             href={linkHref}
-            className="inline-flex items-center gap-1.5 text-small font-semibold text-[#4f6ef7] border-b border-[rgba(79,110,247,0.3)] pb-0.5 hover:text-[#a5b4fc] hover:gap-2.5 transition-all"
+            className="inline-flex items-center gap-1.5 text-small font-semibold text-mkt-accent border-b border-mkt-accent-border pb-0.5 hover:text-mkt-accent-hover hover:gap-2.5 transition-all"
           >
             {linkLabel} →
           </Link>
@@ -174,16 +175,16 @@ export function FeatureRow({ tag, title, body, bullets, linkLabel, linkHref = "#
       </div>
       <div className={reverse ? "md:[direction:ltr]" : ""}>
         {children ?? (
-          <div className="rounded-[14px] border border-white/7 bg-[#0f1117] aspect-4/3 flex flex-col items-center justify-center gap-3 shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden relative">
+          <div className="rounded-[14px] border border-white/7 bg-mkt-surface aspect-4/3 flex flex-col items-center justify-center gap-3 shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden relative">
             <div className="text-[36px] opacity-35">{icon}</div>
-            <p className="text-[12px] text-[#4a4f68] text-center px-5" style={{ fontFamily: "Sora, sans-serif" }}>
+            <p className="text-[12px] text-mkt-muted2 text-center px-5" style={{ fontFamily: "Sora, sans-serif" }}>
               {title} Preview
               <br />
               <span className="text-[11px]">Replace with screenshot</span>
             </p>
             <div
               className="absolute inset-0 pointer-events-none"
-              style={{ background: "radial-gradient(ellipse at 60% 30%, rgba(79,110,247,0.08) 0%, transparent 60%)" }}
+              style={{ background: `radial-gradient(ellipse at 60% 30%, ${tokens.accent}14 0%, transparent 60%)` }}
             />
           </div>
         )}
@@ -195,15 +196,15 @@ export function FeatureRow({ tag, title, body, bullets, linkLabel, linkHref = "#
 // ── StepCard ─────────────────────────────────────────────────
 export function StepCard({ num, icon, title, body }: { num: number; icon: string; title: string; body: string }) {
   return (
-    <div className="bg-[#0f1117] border border-white/7 rounded-[14px] p-7 transition-all hover:border-[rgba(79,110,247,0.3)] hover:-translate-y-1">
-      <div className="w-8 h-8 rounded-full bg-[rgba(79,110,247,0.12)] border border-[rgba(79,110,247,0.25)] flex items-center justify-center font-display text-small font-bold text-[#4f6ef7] mb-4">
+    <div className="bg-mkt-surface border border-white/7 rounded-[14px] p-7 transition-all hover:border-mkt-accent-border hover:-translate-y-1">
+      <div className="w-8 h-8 rounded-full bg-mkt-accent-lite border border-mkt-accent-border flex items-center justify-center font-display text-small font-bold text-mkt-accent mb-4">
         {num}
       </div>
       <div className="text-[26px] mb-3">{icon}</div>
       <h4 className="font-display text-[15px] font-semibold text-white mb-2 leading-[1.3]" style={{ fontFamily: "Sora, sans-serif" }}>
         {title}
       </h4>
-      <p className="text-[13.5px] text-[#7b8098] leading-[1.6]">{body}</p>
+      <p className="text-[13.5px] text-mkt-muted leading-[1.6]">{body}</p>
     </div>
   );
 }
@@ -211,12 +212,12 @@ export function StepCard({ num, icon, title, body }: { num: number; icon: string
 // ── FeatCard ─────────────────────────────────────────────────
 export function FeatCard({ icon, title, body }: { icon: string; title: string; body: string }) {
   return (
-    <div className="bg-[#0f1117] border border-white/7 p-6 transition-all hover:bg-[#13151e]">
+    <div className="bg-mkt-surface border border-white/7 p-6 transition-all hover:bg-mkt-surface2">
       <div className="text-[22px] mb-3">{icon}</div>
       <h4 className="font-display text-small font-semibold text-white mb-1.5" style={{ fontFamily: "Sora, sans-serif" }}>
         {title}
       </h4>
-      <p className="text-[13px] text-[#7b8098] leading-[1.55]">{body}</p>
+      <p className="text-[13px] text-mkt-muted leading-[1.55]">{body}</p>
     </div>
   );
 }
@@ -224,15 +225,15 @@ export function FeatCard({ icon, title, body }: { icon: string; title: string; b
 // ── QuoteCard ────────────────────────────────────────────────
 export function QuoteCard({ quote, name, role }: { quote: string; name: string; role: string }) {
   return (
-    <div className="bg-[#0f1117] border border-white/7 rounded-[14px] p-7 flex flex-col gap-4 hover:border-[rgba(79,110,247,0.3)] transition-all">
-      <p className="text-[14.5px] text-[#e8eaf2] leading-[1.65] flex-1" dangerouslySetInnerHTML={{ __html: quote }} />
+    <div className="bg-mkt-surface border border-white/7 rounded-[14px] p-7 flex flex-col gap-4 hover:border-mkt-accent-border transition-all">
+      <p className="text-[14.5px] text-mkt-text leading-[1.65] flex-1" dangerouslySetInnerHTML={{ __html: quote }} />
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-[#13151e] border-2 border-white/7 flex items-center justify-center text-[12px] font-bold text-[#4f6ef7]">
+        <div className="w-9 h-9 rounded-full bg-mkt-surface2 border-2 border-white/7 flex items-center justify-center text-[12px] font-bold text-mkt-accent">
           {name.split(" ").map((n) => n[0]).join("")}
         </div>
         <div>
           <p className="text-[13px] font-semibold text-white">{name}</p>
-          <p className="text-[11.5px] text-[#7b8098]">{role}</p>
+          <p className="text-[11.5px] text-mkt-muted">{role}</p>
         </div>
       </div>
     </div>

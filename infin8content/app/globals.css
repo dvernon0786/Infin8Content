@@ -248,6 +248,25 @@
 
   /* Canonical Button System Variables */
   --color-primary-blue: #217CEB;
+
+  /* === MARKETING DESIGN SYSTEM COLORS === */
+  --mkt-bg: #08090d;
+  --mkt-surface: #0f1117;
+  --mkt-surface2: #13151e;
+  --mkt-surface3: #0b0d14;
+  --mkt-accent: #4f6ef7;
+  --mkt-accent-hover: #3d5df5;
+  --mkt-accent-lite: rgba(79, 110, 247, 0.12);
+  --mkt-accent-border: rgba(79, 110, 247, 0.25);
+  --mkt-accent-glow: rgba(79, 110, 247, 0.18);
+  --mkt-accent-glow-heavy: rgba(79, 110, 247, 0.5);
+  --mkt-text: #e8eaf2;
+  --mkt-muted: #7b8098;
+  --mkt-muted2: #4a4f68;
+  --mkt-green: #22c55e;
+  --mkt-green-lite: rgba(34, 197, 94, 0.1);
+  --mkt-red: #ef4444;
+  --mkt-white: #ffffff;
   --color-primary-purple: #4A42CC;
 
   /* ── MARKETING SITE TOKENS (dark theme — prefix --mkt- to avoid collisions) ── */

@@ -45,7 +45,7 @@ function CaseCard({ stat, title, body, name, role, slug, tags }: CaseItem) {
   return (
     <Link
       href={`/resources/case-studies/${slug}`}
-      className="group bg-[#0f1117] border border-white/7 rounded-[14px] overflow-hidden hover:border-[rgba(79,110,247,0.3)] hover:-translate-y-1 transition-all flex flex-col"
+      className="group bg-mkt-surface border border-white/7 rounded-[14px] overflow-hidden hover:border-mkt-accent-border hover:-translate-y-1 transition-all flex flex-col"
     >
       <div
         className="w-full h-44 bg-linear-to-br from-[#13151e] to-[#0b0d14] flex items-center justify-center relative overflow-hidden"
@@ -59,22 +59,22 @@ function CaseCard({ stat, title, body, name, role, slug, tags }: CaseItem) {
       <div className="p-6 flex flex-col gap-3 flex-1">
         <div className="flex flex-wrap gap-1.5">
           {tags.map((t) => (
-            <span key={t} className="text-[10px] font-bold uppercase tracking-[0.06em] bg-[rgba(79,110,247,0.1)] border border-[rgba(79,110,247,0.2)] text-[#a5b4fc] rounded px-2 py-0.5">
+            <span key={t} className="text-[10px] font-bold uppercase tracking-[0.06em] bg-mkt-accent-lite border border-mkt-accent-border text-mkt-accent rounded px-2 py-0.5">
               {t}
             </span>
           ))}
         </div>
-        <h3 className="font-display text-body font-bold text-white leading-[1.3] group-hover:text-[#a5b4fc] transition-colors" style={{ fontFamily: "Sora,sans-serif" }}>
+        <h3 className="font-display text-body font-bold text-white leading-[1.3] group-hover:text-mkt-accent transition-colors" style={{ fontFamily: "Sora,sans-serif" }}>
           {title}
         </h3>
-        <p className="text-[13.5px] text-[#7b8098] leading-[1.6] flex-1">{body}</p>
+        <p className="text-[13.5px] text-mkt-muted leading-[1.6] flex-1">{body}</p>
         <div className="flex items-center gap-2.5 pt-3 border-t border-white/7">
-          <div className="w-8 h-8 rounded-full bg-[#13151e] border border-white/7 flex items-center justify-center text-[11px] font-bold text-[#4f6ef7]">
+          <div className="w-8 h-8 rounded-full bg-mkt-surface2 border border-white/7 flex items-center justify-center text-[11px] font-bold text-mkt-accent">
             {name.split(" ")[0][0]}
           </div>
           <div>
-            <p className="text-[12.5px] font-semibold text-[#e8eaf2]">{name}</p>
-            <p className="text-[11px] text-[#7b8098]">{role}</p>
+            <p className="text-[12.5px] font-semibold text-mkt-text">{name}</p>
+            <p className="text-[11px] text-mkt-muted">{role}</p>
           </div>
         </div>
       </div>

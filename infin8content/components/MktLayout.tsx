@@ -5,17 +5,17 @@ import { useState, useEffect } from "react";
 // ─── Shell CSS (nav/footer only — no global reset/body/container overrides) ──
 const shellCss = `
 :root {
-  --mkt-bg: #08090d; --mkt-surface: #0f1117; --mkt-surface2: #13151e;
+  --mkt-bg: var(--mkt-bg); --mkt-surface: var(--mkt-surface); --mkt-surface2: var(--mkt-surface2);
   --mkt-border: rgba(255,255,255,0.07);
-  --mkt-accent: #4f6ef7; --mkt-accent-lite: rgba(79,110,247,0.12); --mkt-accent-border: rgba(79,110,247,0.25);
-  --mkt-text: #e8eaf2; --mkt-muted: #7b8098; --mkt-muted2: #4a4f68; --mkt-white: #ffffff;
+  --mkt-accent: var(--mkt-accent); --mkt-accent-lite: var(--mkt-accent-lite); --mkt-accent-border: var(--mkt-accent-border);
+  --mkt-text: var(--mkt-text); --mkt-muted: var(--mkt-muted); --mkt-muted2: var(--mkt-muted2); --mkt-white: var(--mkt-white);
   --mkt-font-display: 'Sora', sans-serif; --mkt-font-body: 'DM Sans', sans-serif;
   --mkt-radius: 14px; --mkt-radius-sm: 8px;
 }
 /* PROMO BAR */
-.mkt-promo-bar { background: linear-gradient(90deg,#1a1060,#0f1340 50%,#1a1060); border-bottom: 1px solid var(--mkt-accent-border); text-align: center; padding: 10px 20px; font-size: 13px; font-family: var(--mkt-font-display); font-weight: 500; color: var(--mkt-text); position: relative; z-index: 50; }
-.mkt-time-unit { background: var(--mkt-accent-lite); border: 1px solid var(--mkt-accent-border); border-radius: 4px; padding: 2px 6px; font-weight: 700; color: #a5b4fc; font-variant-numeric: tabular-nums; min-width: 28px; display: inline-block; text-align: center; }
-.mkt-deal-link { background: var(--mkt-accent); color: #fff; border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 600; margin-left: 10px; text-decoration: none; }
+.mkt-promo-bar { background: linear-gradient(90deg, var(--mkt-surface3), var(--mkt-surface) 50%, var(--mkt-surface3)); border-bottom: 1px solid var(--mkt-accent-border); text-align: center; padding: 10px 20px; font-size: 13px; font-family: var(--mkt-font-display); font-weight: 500; color: var(--mkt-text); position: relative; z-index: 50; }
+.mkt-time-unit { background: var(--mkt-accent-lite); border: 1px solid var(--mkt-accent-border); border-radius: 4px; padding: 2px 6px; font-weight: 700; color: var(--mkt-accent-hover); font-variant-numeric: tabular-nums; min-width: 28px; display: inline-block; text-align: center; }
+.mkt-deal-link { background: var(--mkt-accent); color: var(--mkt-white); border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 600; margin-left: 10px; text-decoration: none; }
 /* HEADER */
 .mkt-site-header { position: sticky; top: 0; z-index: 40; background: rgba(8,9,13,.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--mkt-border); }
 .mkt-header-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; gap: 16px; max-width: 1160px; margin: 0 auto; padding: 0 28px; }
@@ -40,7 +40,7 @@ const shellCss = `
 .mkt-btn-link { font-size: 14px; font-weight: 500; color: var(--mkt-muted); padding: 7px 12px; border-radius: var(--mkt-radius-sm); transition: all .2s; text-decoration: none; }
 .mkt-btn-link:hover { color: var(--mkt-white); background: rgba(255,255,255,.05); }
 .mkt-btn-primary { display: inline-flex; align-items: center; justify-content: center; font-family: var(--mkt-font-display); font-weight: 600; border-radius: var(--mkt-radius-sm); background: var(--mkt-accent); color: #fff; padding: 9px 18px; font-size: 14px; box-shadow: 0 0 20px rgba(79,110,247,.3); text-decoration: none; border: none; cursor: pointer; }
-.mkt-btn-primary:hover { background: #3d5df5; box-shadow: 0 0 30px rgba(79,110,247,.5); transform: translateY(-1px); }
+.mkt-btn-primary:hover { background: var(--mkt-accent-hover); box-shadow: 0 0 30px var(--mkt-accent-glow-heavy); transform: translateY(-1px); }
 .mkt-nav-toggle { display: none; background: transparent; border: 1px solid var(--mkt-border); border-radius: var(--mkt-radius-sm); color: var(--mkt-text); padding: 7px 10px; font-size: 18px; cursor: pointer; }
 @media(max-width:860px){ .mkt-main-nav{display:none;} .mkt-nav-toggle{display:flex;} }
 .mkt-main-nav.open { display:flex!important; flex-direction:column; position:fixed; top:62px; left:0; right:0; background:rgba(8,9,13,.97); backdrop-filter:blur(12px); padding:20px; border-bottom:1px solid var(--mkt-border); gap:4px; z-index:39; }
@@ -67,12 +67,12 @@ const shellCss = `
 export function SocialProof({ label = "10,000+ Marketers & Agencies" }: { label?: string }) {
   const initials = ["JL", "MR", "AK", "SB", "TD"];
   return (
-    <div className="flex items-center justify-center gap-2.5 text-[13.5px] text-[#7b8098]">
+    <div className="flex items-center justify-center gap-2.5 text-[13.5px] text-mkt-muted">
       <div className="flex">
         {initials.map((i, idx) => (
           <div
             key={idx}
-            className="w-7.5 h-7.5 rounded-full border-2 border-[#08090d] bg-[#13151e] flex items-center justify-center text-[10px] font-bold text-[#4f6ef7]"
+            className="w-7.5 h-7.5 rounded-full border-2 border-mkt-bg bg-mkt-surface2 flex items-center justify-center text-[10px] font-bold text-mkt-accent"
             style={{ marginLeft: idx === 0 ? 0 : -8 }}
           >
             {i}
