@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>AI SEO Agent — Fix Technical SEO Automatically | Infin8Content</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* Agent dashboard mockup */
+    .agent-wrap { max-width: 920px; margin: 52px auto 0; position: relative; }
+    .agent-wrap::after { content:''; position:absolute; bottom:-40px; left:50%; transform:translateX(-50%); width:70%; height:80px; background:radial-gradient(ellipse,rgba(79,110,247,.22) 0%,transparent 70%); filter:blur(20px); pointer-events:none; }
+    .agent-mock { display: grid; grid-template-columns: 220px 1fr; min-height: 400px; }
+    .am-sidebar { background: rgba(255,255,255,.015); border-right: 1px solid var(--border); padding: 20px 14px; display: flex; flex-direction: column; gap: 6px; }
+    .am-sidebar-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); margin: 6px 0 4px; }
+    .am-nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 7px; font-size: 12.5px; color: var(--muted); cursor: default; }
+    .am-nav-item.active { background: var(--accent-lite); color: var(--accent); }
+    .am-nav-item .dot-sm { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .am-main { padding: 22px 26px; }
+    .am-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .am-header h4 { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--white); }
+    .am-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--green); font-weight: 600; }
+    .am-status::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+    .am-issues { display: flex; flex-direction: column; gap: 8px; }
+    .am-issue { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 9px; background: rgba(255,255,255,.02); border: 1px solid var(--border); font-size: 12.5px; transition: all .2s; }
+    .am-issue:hover { border-color: var(--accent-border); background: var(--accent-lite); }
+    .am-issue .ai-icon { font-size: 16px; flex-shrink: 0; }
+    .am-issue .ai-body h5 { font-family: var(--font-display); font-size: 12px; font-weight: 600; color: var(--white); margin-bottom: 2px; }
+    .am-issue .ai-body p { font-size: 11.5px; color: var(--muted); }
+    .am-issue .ai-badge { margin-left: auto; flex-shrink: 0; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 2px 8px; }
+    .ai-badge.fixed { background: var(--green-lite); color: var(--green); border: 1px solid rgba(34,197,94,.2); }
+    .ai-badge.scanning { background: rgba(251,191,36,.1); color: #fbbf24; border: 1px solid rgba(251,191,36,.2); }
+    .ai-badge.pending { background: var(--accent-lite); color: #a5b4fc; border: 1px solid var(--accent-border); }
+    .am-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 14px; }
+    .am-stat { background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
+    .am-stat .as-val { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--white); }
+    .am-stat .as-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* 3-step flow */
+    .agent-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; position: relative; }
+    .agent-steps::before { content:''; position:absolute; top:42px; left:16.6%; right:16.6%; height:1px; background:linear-gradient(90deg,var(--accent-border),rgba(79,110,247,.1)); pointer-events:none; }
+    .agent-step { text-align: center; padding: 32px 24px; }
+    .as-icon-wrap { width: 80px; height: 80px; border-radius: 50%; background: var(--accent-lite); border: 1px solid var(--accent-border); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; font-size: 28px; position: relative; z-index: 1; }
+    .as-step-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); margin-bottom: 6px; }
+    .agent-step h4 { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--white); margin-bottom: 10px; }
+    .agent-step p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    /* NOT a to-do list callout */
+    .callout-box { background: linear-gradient(135deg, rgba(79,110,247,.08), rgba(79,110,247,.04)); border: 1px solid var(--accent-border); border-radius: var(--radius); padding: 40px; text-align: center; margin: 56px 0 0; }
+    .callout-box h2 { font-family: var(--font-display); font-size: clamp(22px,3.5vw,38px); font-weight: 800; color: var(--white); letter-spacing: -.5px; margin-bottom: 14px; }
+    .callout-box h2 span { color: var(--accent); }
+    .callout-box p { font-size: 16px; color: var(--muted); max-width: 600px; margin: 0 auto 32px; line-height: 1.65; }
+
+    /* 12-fix grid */
+    .fixes-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+    .fix-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 16px; transition: all .2s; }
+    .fix-item:hover { border-color: var(--accent-border); transform: translateY(-2px); }
+    .fix-item .fi-icon { font-size: 20px; margin-bottom: 10px; }
+    .fix-item h4 { font-family: var(--font-display); font-size: 13.5px; font-weight: 600; color: var(--white); margin-bottom: 6px; }
+    .fix-item p { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+
+    @media(max-width:860px){ .agent-mock{grid-template-columns:1fr;} .am-sidebar{display:none;} .agent-steps{grid-template-columns:1fr;} .agent-steps::before{display:none;} .fixes-grid{grid-template-columns:repeat(2,1fr);} }
+    @media(max-width:600px){ .fixes-grid{grid-template-columns:1fr;} .am-stats{grid-template-columns:1fr 1fr;} }
+  </style>
+</head>
+<body>
+
+<div class="promo-bar">✨&nbsp; New Year Offer: <strong style="color:#a5b4fc;margin:0 6px;">40% Off</strong> on Yearly Plans &nbsp;<span class="time-unit js-ph">08</span>hrs <span class="time-unit js-pm">34</span>min <span class="time-unit js-ps">12</span>sec<a class="deal-link" href="#">Get Deal</a></div>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="index.html">Infin8<span>Content</span></a>
+    <nav class="main-nav" id="main-nav">
+      <div class="nav-item"><span class="nav-link">Features <span class="chevron">▾</span></span><div class="dropdown"><div class="dropdown-label">AI Writing</div><a class="dropdown-link" href="ai-content-writer.html">AI Content Writer</a><a class="dropdown-link" href="ai-seo-editor.html">AI SEO Editor</a><a class="dropdown-link" href="#">News Writer</a><hr><div class="dropdown-label">Automation</div><a class="dropdown-link" href="ai-seo-agent.html">AI SEO Agent</a><a class="dropdown-link" href="autopublish.html">AutoPublish</a><a class="dropdown-link" href="llm-tracker.html">LLM Tracker</a></div></div>
+      <div class="nav-item"><span class="nav-link">Solutions <span class="chevron">▾</span></span><div class="dropdown"><a class="dropdown-link" href="#"><strong>SaaS</strong><small>Scale organic traffic</small></a><a class="dropdown-link" href="#"><strong>Agencies</strong><small>Manage clients at scale</small></a><a class="dropdown-link" href="#"><strong>E-Commerce</strong><small>Upgrade store content</small></a></div></div>
+      <a class="nav-link" href="#">Pricing</a>
+      <div class="nav-item"><span class="nav-link">Resources <span class="chevron">▾</span></span><div class="dropdown"><a class="dropdown-link" href="#">Case Studies</a><a class="dropdown-link" href="#">Help Docs</a><a class="dropdown-link" href="#">Blog</a></div></div>
+    </nav>
+    <div class="header-cta"><a class="btn-link" href="#">Login</a><a class="btn btn-primary" href="#">Get Started</a></div>
+    <button class="nav-toggle" id="nav-toggle">☰</button>
+  </div>
+</header>
+
+<main>
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow fade-up">⚙️ &nbsp;AI SEO Agent</div>
+    <h1 class="fade-up">The AI SEO Agent that improves<br>your SEO <span class="high">on autopilot</span></h1>
+    <p class="sub fade-up">The AI agent finds gaps in your site's technical SEO, reasons how to fix them, and implements changes live — all automatically, every single day.</p>
+    <div class="hero-actions fade-up">
+      <a class="btn btn-primary btn-lg" href="#">Try AI Agent Free</a>
+    </div>
+    <div class="social-proof fade-up">
+      <div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div>
+      Trusted by <strong>&nbsp;10,000+&nbsp;</strong> Marketers & Agencies
+    </div>
+
+    <!-- Agent dashboard mockup -->
+    <div class="agent-wrap fade-up">
+      <div class="browser-frame">
+        <div class="browser-bar">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <div class="browser-url">app.infin8content.com/seo-agent — yoursite.com</div>
+        </div>
+        <div class="agent-mock">
+          <div class="am-sidebar">
+            <div class="am-sidebar-label">Agent Status</div>
+            <div class="am-nav-item active"><span class="dot-sm"></span> Live Scanning</div>
+            <div class="am-nav-item"><span class="dot-sm"></span> Issues Found</div>
+            <div class="am-nav-item"><span class="dot-sm"></span> Fixes Applied</div>
+            <div class="am-sidebar-label" style="margin-top:10px;">Modules</div>
+            <div class="am-nav-item">Schema Markup</div>
+            <div class="am-nav-item">Meta Optimization</div>
+            <div class="am-nav-item">Internal Linking</div>
+            <div class="am-nav-item">Image Alt Texts</div>
+            <div class="am-nav-item">Canonical Tags</div>
+          </div>
+          <div class="am-main">
+            <div class="am-header">
+              <h4>AI SEO Agent — yoursite.com</h4>
+              <div class="am-status">Agent Running</div>
+            </div>
+            <div class="am-issues">
+              <div class="am-issue"><div class="ai-icon">📋</div><div class="ai-body"><h5>Schema Markup injected — 24 pages</h5><p>FAQ schema added to top-performing blog posts</p></div><div class="ai-badge fixed">Fixed</div></div>
+              <div class="am-issue"><div class="ai-icon">🔍</div><div class="ai-body"><h5>Scanning meta descriptions — 142 pages</h5><p>Identifying pages with missing or duplicate meta tags</p></div><div class="ai-badge scanning">Scanning</div></div>
+              <div class="am-issue"><div class="ai-icon">🖼️</div><div class="ai-body"><h5>Image alt texts — 67 images optimized</h5><p>Descriptive alt texts added for accessibility & SEO</p></div><div class="ai-badge fixed">Fixed</div></div>
+              <div class="am-issue"><div class="ai-icon">🔗</div><div class="ai-body"><h5>Internal linking opportunities detected</h5><p>12 new internal link opportunities found across site</p></div><div class="ai-badge pending">Queued</div></div>
+            </div>
+            <div class="am-stats">
+              <div class="am-stat"><div class="as-val">247</div><div class="as-label">Issues Fixed</div></div>
+              <div class="am-stat"><div class="as-val">94</div><div class="as-label">SEO Health Score</div></div>
+              <div class="am-stat"><div class="as-val">+38%</div><div class="as-label">Traffic Lift</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section section-alt">
+  <div class="container">
+    <p class="section-label" style="justify-content:center;">🔧 &nbsp;How the AI Agent Works</p>
+    <h2 class="section-title" style="text-align:center;margin-bottom:50px;">Three steps. Zero manual work.</h2>
+    <div class="agent-steps">
+      <div class="agent-step">
+        <div class="as-icon-wrap">🔍</div>
+        <div class="as-step-label">Step 1</div>
+        <h4>Dynamic Scanning</h4>
+        <p>The AI Agent constantly scans your site to look for flaws, gaps, and bugs in your technical SEO — from meta tags to schema to broken links.</p>
+      </div>
+      <div class="agent-step">
+        <div class="as-icon-wrap">🧠</div>
+        <div class="as-step-label">Step 2</div>
+        <h4>Smart Reasoning</h4>
+        <p>It thinks about the best way to fix each issue, evaluating impact vs. effort and prioritizing the changes that will drive the most ranking improvement.</p>
+      </div>
+      <div class="agent-step">
+        <div class="as-icon-wrap">⚡</div>
+        <div class="as-step-label">Step 3</div>
+        <h4>Implementation</h4>
+        <p>After a thorough analysis, it automatically implements the updates live on your site — no developer needed, no to-do list, no manual fixes.</p>
+      </div>
+    </div>
+
+    <div class="callout-box">
+      <h2>It's <span>NOT</span> a to-do list.</h2>
+      <p>It's an AI agent automatically applying changes to your site that dramatically improve its SEO performance — every single day, without you lifting a finger.</p>
+      <div class="before-after">
+        <div class="ba-card">
+          <div class="ba-header before"><span class="ba-label">Before</span> Without AI SEO Agent</div>
+          <div class="ba-body">
+            <div class="ba-img">📋</div>
+            <ul class="ba-list before">
+              <li>Manually identify the issues</li>
+              <li>Manually think how to fix them</li>
+              <li>Manually implement each fix</li>
+            </ul>
+          </div>
+        </div>
+        <div class="ba-card">
+          <div class="ba-header after"><span class="ba-label">After</span> With AI SEO Agent</div>
+          <div class="ba-body">
+            <div class="ba-img">🤖</div>
+            <ul class="ba-list after">
+              <li>Scans your site for flaws, gaps, and bugs</li>
+              <li>Thinks about the best way to fix and implement</li>
+              <li>Auto-implements updates on your live site</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 FIXES GRID -->
+<section class="section">
+  <div class="container">
+    <p class="section-label" style="justify-content:center;">🛠️ &nbsp;Everything It Fixes</p>
+    <h2 class="section-title" style="text-align:center;margin-bottom:10px;">The AI SEO Agent That Fixes Everything</h2>
+    <p class="section-sub" style="text-align:center;max-width:580px;margin:0 auto 40px;">From Schema Markup injection to broken links. The AI Agent fixes your technical SEO automatically.</p>
+    <div class="fixes-grid">
+      <div class="fix-item"><div class="fi-icon">📋</div><h4>Schema Markup</h4><p>Automatically inject structured data to help search engines understand your content.</p></div>
+      <div class="fix-item"><div class="fi-icon">📝</div><h4>Page Title Optimization</h4><p>Dynamically optimize page titles for better search visibility and click-through rates.</p></div>
+      <div class="fix-item"><div class="fi-icon">📣</div><h4>Social Metadata</h4><p>Generate and update Open Graph metadata to improve social media sharing presence.</p></div>
+      <div class="fix-item"><div class="fi-icon">❓</div><h4>Structured Data</h4><p>Add FAQ and How-To schema markup to enhance SERP features and rich results.</p></div>
+      <div class="fix-item"><div class="fi-icon">🔤</div><h4>Heading Structure</h4><p>Fix missing or improper heading hierarchies for better content organization and crawlability.</p></div>
+      <div class="fix-item"><div class="fi-icon">↪️</div><h4>Smart Redirects</h4><p>Implement and manage 301/302 redirects automatically to preserve link equity.</p></div>
+      <div class="fix-item"><div class="fi-icon">🔍</div><h4>Meta Optimization</h4><p>Optimize meta titles and descriptions for improved search performance and CTR.</p></div>
+      <div class="fix-item"><div class="fi-icon">🔗</div><h4>Internal Linking</h4><p>Enhance site structure through intelligent internal link optimization across all pages.</p></div>
+      <div class="fix-item"><div class="fi-icon">📄</div><h4>Duplicate Content</h4><p>Prevent duplicate content issues with automated noindex tag management.</p></div>
+      <div class="fix-item"><div class="fi-icon">🏷️</div><h4>Canonical Tags</h4><p>Implement canonical tags to specify preferred content versions for search engines.</p></div>
+      <div class="fix-item"><div class="fi-icon">🖼️</div><h4>Image Optimization</h4><p>Add descriptive alt texts to all images for better accessibility and SEO signals.</p></div>
+      <div class="fix-item"><div class="fi-icon">💔</div><h4>Broken Link Repair</h4><p>Automatically detect and fix broken links across your entire site to maintain health.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <div class="container">
+    <h2>Scale more clients.<br>Do less work.</h2>
+    <p>Get started and see why agencies trust Infin8Content.</p>
+    <a class="btn btn-primary btn-lg" href="#">Try AI Agent Free</a>
+    <div class="cta-perks"><span class="cta-perk">Cancel anytime</span><span class="cta-perk">No dev needed</span><span class="cta-perk">Works on autopilot</span></div>
+    <div class="cta-social"><div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div><span style="font-size:13.5px;color:var(--muted);">Trusted by <strong style="color:var(--white)">10,000+</strong> marketers</span></div>
+    <div class="cta-mock-img"><div class="cta-mock-inner"><div class="cm-icon">⚙️</div><div class="cm-label">Agent dashboard preview — replace with screenshot</div></div></div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand"><a class="brand" href="index.html">Infin8<span>Content</span></a><p>AI content workflows for modern teams and agencies.</p></div>
+      <div class="footer-col"><h4>AI Writing</h4><a href="ai-content-writer.html">AI Content Writer</a><a href="ai-seo-editor.html">AI SEO Editor</a><a href="#">News Writer</a><a href="#">Video to Blog</a></div>
+      <div class="footer-col"><h4>Automation</h4><a href="ai-seo-agent.html">AI SEO Agent</a><a href="autopublish.html">AutoPublish</a><a href="#">SEO Reports</a><a href="llm-tracker.html">LLM Tracker</a></div>
+      <div class="footer-col"><h4>Resources</h4><a href="#">Pricing</a><a href="#">Blog</a><a href="#">Help Docs</a><a href="#">Case Studies</a></div>
+      <div class="footer-col"><h4>Integrations</h4><a href="#">WordPress</a><a href="#">Shopify</a><a href="#">Ghost</a><a href="#">Webflow</a><a href="#">Zapier</a></div>
+      <div class="footer-col"><h4>Solutions</h4><a href="#">SaaS</a><a href="#">Agencies</a><a href="#">E-Commerce</a><a href="#">Enterprise</a></div>
+    </div>
+    <div class="footer-bottom"><small>© <span class="js-year"></span> Infin8Content. All rights reserved.</small><div class="footer-legal"><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">contact@infin8content.com</a></div></div>
+  </div>
+</footer>
+<script src="shared.js"></script>
+</body>
+</html>
