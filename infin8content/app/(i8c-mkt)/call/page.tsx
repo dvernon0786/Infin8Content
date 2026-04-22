@@ -26,7 +26,7 @@ export default function CallPage() {
   return (
     <section className="pt-20 pb-24 relative overflow-hidden">
       <div
-        className="absolute inset-0 pointer-events-none bg-gradient-to-b from-mkt-accent/12 via-transparent to-transparent"
+        className="absolute inset-0 pointer-events-none bg-linear-to-b from-mkt-accent/12 via-transparent to-transparent"
       />
       <div className="container mx-auto px-7 relative">
         <div className="max-w-250 mx-auto">
@@ -36,8 +36,7 @@ export default function CallPage() {
               📞 Book a Demo
             </div>
             <h1
-              className="text-[clamp(32px,5vw,56px)] font-extrabold tracking-[-1.5px] leading-[1.07] text-white mb-5 max-w-170 mx-auto"
-              style={{ fontFamily: "Sora, sans-serif" }}
+              className="text-[clamp(32px,5vw,56px)] font-extrabold tracking-[-1.5px] leading-[1.07] text-white mb-5 max-w-170 mx-auto font-display"
             >
               See <em className="not-italic text-mkt-accent">Infin8Content</em> in action — live
             </h1>
@@ -57,38 +56,37 @@ export default function CallPage() {
               <ul className="flex flex-col gap-4 mb-10">
                 {benefits.map((b) => (
                   <li key={b.text} className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-[10px] bg-[rgba(79,110,247,0.12)] border border-[rgba(79,110,247,0.25)] flex items-center justify-center text-large shrink-0">
+                    <div className="w-10 h-10 rounded-[10px] bg-mkt-accent-lite border border-mkt-accent-border flex items-center justify-center text-large shrink-0">
                       {b.icon}
                     </div>
-                    <span className="text-[15px] text-[#e8eaf2]">{b.text}</span>
+                    <span className="text-[15px] text-mkt-text">{b.text}</span>
                   </li>
                 ))}
               </ul>
 
               {/* Testimonial pull-quote */}
-              <div className="bg-[#0f1117] border border-white/7 rounded-[14px] p-6">
-                <p className="text-[15px] text-[#e8eaf2] leading-[1.65] mb-4 italic">
+              <div className="bg-mkt-surface border border-white/7 rounded-[14px] p-6">
+                <p className="text-[15px] text-mkt-text leading-[1.65] mb-4 italic">
                   &ldquo;After the demo I was onboarded same day. Within 2 weeks we had 12 articles ranking on page 1.&rdquo;
                 </p>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#13151e] border-2 border-white/7 flex items-center justify-center text-[12px] font-bold text-[#4f6ef7]">TS</div>
+                  <div className="w-9 h-9 rounded-full bg-mkt-surface2 border-2 border-white/7 flex items-center justify-center text-[12px] font-bold text-mkt-accent">TS</div>
                   <div>
                     <p className="text-[13px] font-semibold text-white">Timo S.</p>
-                    <p className="text-[11.5px] text-[#7b8098]">Agency Owner @ SpechtGmbH</p>
+                    <p className="text-[11.5px] text-mkt-muted">Agency Owner @ SpechtGmbH</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Right: Booking form */}
-            <div className="bg-[#0f1117] border border-white/7 rounded-xl p-8">
+            <div className="bg-mkt-surface border border-white/7 rounded-xl p-8">
               <h3
-                className="text-[20px] font-bold text-white mb-2"
-                style={{ fontFamily: "Sora, sans-serif" }}
+                className="text-[20px] font-bold text-white mb-2 font-display"
               >
                 Book your 30-min demo
               </h3>
-              <p className="text-[13.5px] text-[#7b8098] mb-7">Pick a time that works for you. Spots fill up fast.</p>
+              <p className="text-[13.5px] text-mkt-muted mb-7">Pick a time that works for you. Spots fill up fast.</p>
 
               {/* Form fields */}
               <div className="flex flex-col gap-4">
@@ -99,22 +97,22 @@ export default function CallPage() {
                   { label: "Company / website", placeholder: "yoursite.com", type: "text" },
                 ].map((f) => (
                   <div key={f.label}>
-                    <label className="block text-[12.5px] font-semibold text-[#7b8098] mb-1.5 uppercase tracking-[0.06em]">
+                    <label className="block text-[12.5px] font-semibold text-mkt-muted mb-1.5 uppercase tracking-[0.06em]">
                       {f.label}
                     </label>
                     <input
                       type={f.type}
                       placeholder={f.placeholder}
-                      className="w-full bg-[#13151e] border border-white/7 rounded-md px-4 py-3 text-small text-[#e8eaf2] placeholder:text-[#4a4f68] outline-none focus:border-[rgba(79,110,247,0.5)] transition-colors"
+                      className="w-full bg-mkt-surface2 border border-white/7 rounded-md px-4 py-3 text-small text-mkt-text placeholder:text-mkt-muted outline-none focus:border-mkt-accent-border transition-colors"
                     />
                   </div>
                 ))}
 
                 <div>
-                  <label className="block text-[12.5px] font-semibold text-[#7b8098] mb-1.5 uppercase tracking-[0.06em]">
+                  <label className="block text-[12.5px] font-semibold text-mkt-muted mb-1.5 uppercase tracking-[0.06em]">
                     What&apos;s your main goal?
                   </label>
-                  <select className="w-full bg-[#13151e] border border-white/7 rounded-md px-4 py-3 text-small text-[#e8eaf2] outline-none focus:border-[rgba(79,110,247,0.5)] transition-colors">
+                  <select className="w-full bg-mkt-surface2 border border-white/7 rounded-md px-4 py-3 text-small text-mkt-text outline-none focus:border-mkt-accent-border transition-colors">
                     <option value="">Select your use case...</option>
                     <option>Scale content for my SaaS</option>
                     <option>Manage multiple agency clients</option>
@@ -125,12 +123,11 @@ export default function CallPage() {
                 </div>
 
                 <button
-                  className="w-full bg-[#4f6ef7] text-white font-semibold py-4 rounded-[10px] text-[15px] shadow-[0_0_20px_rgba(79,110,247,0.3)] hover:bg-[#3d5df5] hover:shadow-[0_0_30px_rgba(79,110,247,0.5)] transition-all mt-2"
-                  style={{ fontFamily: "Sora, sans-serif" }}
+                  className="w-full bg-mkt-accent text-white font-semibold py-4 rounded-[10px] text-[15px] shadow-[0_0_20px_rgba(79,110,247,0.3)] hover:bg-mkt-accent-hover hover:shadow-[0_0_30px_rgba(79,110,247,0.5)] transition-all mt-2 font-display"
                 >
                   Book My Demo →
                 </button>
-                <p className="text-center text-[12px] text-[#4a4f68]">No credit card required • Cancel anytime</p>
+                <p className="text-center text-[12px] text-mkt-muted">No credit card required • Cancel anytime</p>
               </div>
             </div>
           </div>
@@ -142,11 +139,11 @@ export default function CallPage() {
             <div className="max-w-150 mx-auto mt-8">
               {faqs.map(({ q, a }) => (
                 <details key={q} className="border-b border-white/7 group text-left">
-                  <summary className="flex items-center justify-between py-5 cursor-pointer text-[15px] font-medium text-[#e8eaf2] hover:text-white transition-colors gap-5 list-none">
+                  <summary className="flex items-center justify-between py-5 cursor-pointer text-[15px] font-medium text-mkt-text hover:text-white transition-colors gap-5 list-none">
                     {q}
-                    <span className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-body text-[#7b8098] shrink-0 group-open:bg-[rgba(79,110,247,0.15)] group-open:text-[#4f6ef7] group-open:rotate-45 transition-all">+</span>
+                    <span className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-body text-mkt-muted shrink-0 group-open:bg-mkt-accent-lite group-open:text-mkt-accent group-open:rotate-45 transition-all">+</span>
                   </summary>
-                  <div className="pb-5 text-[14.5px] text-[#7b8098] leading-[1.7]">{a}</div>
+                  <div className="pb-5 text-[14.5px] text-mkt-muted leading-[1.7]">{a}</div>
                 </details>
               ))}
             </div>

@@ -155,17 +155,15 @@ function PostCard({ post, size = "normal" }: { post: Post; size?: "normal" | "la
       }`}
     >
       <div
-        className={`relative overflow-hidden shrink-0 ${
+        className={`relative overflow-hidden shrink-0 bg-linear-to-br from-mkt-surface2 to-mkt-surface3 ${
           isLarge ? "w-full md:w-120 h-56 md:h-auto" : "w-full h-44"
         }`}
-        className="bg-gradient-to-br from-mkt-surface2 to-mkt-surface3"
       >
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-[44px] opacity-20">✍️</span>
         </div>
         <div
-          className="absolute inset-0"
-          className="bg-gradient-to-b from-mkt-accent/10 via-transparent to-transparent"
+          className="absolute inset-0 bg-linear-to-b from-mkt-accent/10 via-transparent to-transparent"
         />
         <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
           {post.tags.slice(0, 2).map((t) => (
@@ -187,19 +185,19 @@ function PostCard({ post, size = "normal" }: { post: Post; size?: "normal" | "la
         >
           {post.title}
         </h3>
-        <p className={`text-[#7b8098] leading-[1.65] ${isLarge ? "text-[15px]" : "text-[13.5px]"}`}>
+        <p className={`text-mkt-muted leading-[1.65] ${isLarge ? "text-[15px]" : "text-[13.5px]"}`}>
           {post.excerpt}
         </p>
         <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/7">
           <AuthorAvatar initials={post.author.initials} name={post.author.name} />
-          <div className="flex items-center gap-3 text-[12px] text-[#4a4f68]">
+           <div className="flex items-center gap-3 text-[12px] text-mkt-muted">
             <span>{post.date}</span>
-            <span className="w-1 h-1 rounded-full bg-[#4a4f68]" />
+             <span className="w-1 h-1 rounded-full bg-mkt-muted" />
             <span>{post.readTime}</span>
           </div>
         </div>
         {isLarge && (
-          <span className="inline-flex items-center gap-1.5 text-small font-semibold text-[#4f6ef7] group-hover:gap-3 transition-all mt-1">
+           <span className="inline-flex items-center gap-1.5 text-small font-semibold text-mkt-accent group-hover:gap-3 transition-all mt-1">
             Read article →
           </span>
         )}
@@ -217,11 +215,7 @@ export default function BlogPage() {
       {/* Hero */}
       <section className="pt-20 pb-14 text-center relative overflow-hidden">
         <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(circle 350px at 50% 0%, rgba(79,110,247,0.13) 0%, transparent 70%)",
-          }}
+          className="absolute inset-0 pointer-events-none bg-radial-gradient from-mkt-accent/13 via-transparent to-transparent"
         />
         <div className="container mx-auto px-7 relative">
           <SectionLabel>📝 Blog</SectionLabel>
@@ -265,8 +259,7 @@ export default function BlogPage() {
 
           <div className="text-center mt-12">
             <button
-              className="border border-white/7 text-[#7b8098] font-semibold px-8 py-3.5 rounded-[10px] text-small hover:border-[rgba(79,110,247,0.3)] hover:text-white transition-all"
-              style={{ fontFamily: "Sora, sans-serif" }}
+              className="border border-white/7 text-mkt-muted font-semibold px-8 py-3.5 rounded-[10px] text-small hover:border-mkt-accent-border hover:text-white transition-all font-display"
             >
               Load more posts
             </button>
@@ -276,21 +269,16 @@ export default function BlogPage() {
 
       {/* Newsletter strip */}
       <section
-        className="py-16"
-        style={{
-          background:
-            "linear-gradient(180deg,transparent,#13151e 20%,#13151e 80%,transparent)",
-        }}
+        className="py-16 bg-linear-to-b from-transparent via-mkt-surface2 to-transparent"
       >
         <div className="container mx-auto px-7 max-w-165 text-center">
           <div className="text-[32px] mb-4">📬</div>
           <h2
-            className="text-[28px] font-extrabold text-white tracking-tight mb-3"
-            style={{ fontFamily: "Sora, sans-serif" }}
+            className="text-[28px] font-extrabold text-white tracking-tight mb-3 font-display"
           >
             Get the best posts in your inbox
           </h2>
-          <p className="text-[15px] text-[#7b8098] mb-7">
+          <p className="text-[15px] text-mkt-muted mb-7">
             Weekly roundup of the best AI content and SEO strategies. No spam,
             unsubscribe anytime.
           </p>

@@ -78,7 +78,7 @@ export default function SaaSPage() {
       />
 
       {/* 2-step process */}
-      <section className="py-20 bg-gradient-to-b from-transparent via-mkt-surface2 to-transparent">
+      <section className="py-20 bg-linear-to-b from-transparent via-mkt-surface2 to-transparent">
         <div className="container mx-auto px-7">
           <div className="text-center mb-12">
             <SectionLabel>⚡ The Simple 2-Step Process</SectionLabel>
@@ -108,7 +108,7 @@ export default function SaaSPage() {
       </section>
 
       {/* Summary */}
-      <section className="py-20 bg-gradient-to-b from-transparent via-mkt-surface2 to-transparent">
+      <section className="py-20 bg-linear-to-b from-transparent via-mkt-surface2 to-transparent">
         <div className="container mx-auto px-7">
           <div className="text-center mb-10">
             <SectionLabel>✦ To Sum Up</SectionLabel>
@@ -116,10 +116,10 @@ export default function SaaSPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {summaryPoints.map((p) => (
-              <div key={p.title} className="bg-[#0f1117] border border-white/7 rounded-[14px] p-7 hover:border-[rgba(79,110,247,0.3)] transition-all">
+              <div key={p.title} className="bg-mkt-surface border border-white/7 rounded-[14px] p-7 hover:border-mkt-accent-border transition-all">
                 <div className="text-[28px] mb-4">{p.icon}</div>
-                <h4 className="font-display text-[15px] font-semibold text-white mb-2" style={{ fontFamily: "Sora,sans-serif" }}>{p.title}</h4>
-                <p className="text-[13.5px] text-[#7b8098] leading-[1.6]">{p.body}</p>
+                <h4 className="font-display text-[15px] font-semibold text-white mb-2">{p.title}</h4>
+                <p className="text-[13.5px] text-mkt-muted leading-[1.6]">{p.body}</p>
               </div>
             ))}
           </div>
@@ -132,7 +132,7 @@ export default function SaaSPage() {
           <div className="text-center mb-10">
             <SectionLabel>⚙️ Advanced Features</SectionLabel>
             <SectionTitle center>Advanced SaaS SEO Tool Features</SectionTitle>
-            <p className="text-body text-[#7b8098] max-w-130 mx-auto mt-2">Allowing you to do SEO better and faster for your SaaS.</p>
+            <p className="text-body text-mkt-muted max-w-130 mx-auto mt-2">Allowing you to do SEO better and faster for your SaaS.</p>
           </div>
           <div className="grid grid-cols-1 gap-px bg-white/7 border border-white/7 rounded-[14px] overflow-hidden md:grid-cols-2 lg:grid-cols-4">
             {[
@@ -146,7 +146,7 @@ export default function SaaSPage() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20" style={{ background: "linear-gradient(180deg,transparent,#13151e 20%,#13151e 80%,transparent)" }}>
+      <section className="py-20 bg-linear-to-b from-transparent via-mkt-surface2 to-transparent">
         <div className="container mx-auto px-7">
           <div className="text-center mb-10">
             <SectionLabel>💬 Testimonials</SectionLabel>

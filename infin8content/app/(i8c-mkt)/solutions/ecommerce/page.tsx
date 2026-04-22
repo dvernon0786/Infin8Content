@@ -35,7 +35,7 @@ export default function EcommercePage() {
       />
 
       {/* Why you need it */}
-      <section className="py-20" style={{ background: "linear-gradient(180deg,transparent,#13151e 20%,#13151e 80%,transparent)" }}>
+      <section className="py-20 bg-linear-to-b from-transparent via-mkt-surface2 to-transparent">
         <div className="container mx-auto px-7">
           <div className="text-center mb-12">
             <SectionLabel>💡 Why Infin8Content</SectionLabel>
@@ -110,7 +110,7 @@ export default function EcommercePage() {
       </section>
 
       {/* Before/After */}
-      <section className="py-20 bg-gradient-to-b from-transparent via-mkt-surface2 to-transparent">
+      <section className="py-20 bg-linear-to-b from-transparent via-mkt-surface2 to-transparent">
         <div className="container mx-auto px-7 max-w-215">
           <div className="text-center mb-4">
             <SectionLabel>⚡ The Difference</SectionLabel>

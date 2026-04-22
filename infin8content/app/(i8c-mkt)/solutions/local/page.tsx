@@ -76,7 +76,7 @@ export default function LocalPage() {
       />
 
       {/* Why local businesses need it */}
-      <section className="py-20" style={{ background: "linear-gradient(180deg,transparent,#13151e 20%,#13151e 80%,transparent)" }}>
+      <section className="py-20 bg-linear-to-b from-transparent via-mkt-surface2 to-transparent">
         <div className="container mx-auto px-7">
           <div className="text-center mb-12">
             <SectionLabel>💡 Why It Matters</SectionLabel>
@@ -84,10 +84,10 @@ export default function LocalPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-225 mx-auto">
             {reasons.map((r) => (
-              <div key={r.title} className="bg-[#0f1117] border border-white/7 rounded-[14px] p-7 text-center hover:border-[rgba(79,110,247,0.3)] transition-all">
+              <div key={r.title} className="bg-mkt-surface border border-white/7 rounded-[14px] p-7 text-center hover:border-mkt-accent-border transition-all">
                 <div className="text-[36px] mb-4">{r.icon}</div>
-                <h4 className="font-display text-[15px] font-semibold text-white mb-2" style={{ fontFamily: "Sora,sans-serif" }}>{r.title}</h4>
-                <p className="text-[13.5px] text-[#7b8098] leading-[1.6]">{r.body}</p>
+                <h4 className="font-display text-[15px] font-semibold text-white mb-2">{r.title}</h4>
+                <p className="text-[13.5px] text-mkt-muted leading-[1.6]">{r.body}</p>
               </div>
             ))}
           </div>

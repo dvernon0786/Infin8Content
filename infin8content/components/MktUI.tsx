@@ -36,7 +36,7 @@ export function MktHero({
   return (
     <section className="pt-20 pb-16 text-center relative overflow-hidden">
       <div
-        className="absolute inset-0 pointer-events-none bg-gradient-to-b from-mkt-accent/30 via-transparent to-transparent"
+        className="absolute inset-0 pointer-events-none bg-linear-to-b from-mkt-accent/30 via-transparent to-transparent"
       />
       <div className="container mx-auto px-7 relative">
         {eyebrow && (
@@ -81,8 +81,7 @@ export function MktHero({
             {["JL", "MR", "AK", "SB", "TD"].map((i, idx) => (
               <div
                 key={idx}
-                className="w-7.5 h-7.5 rounded-full border-2 border-mkt-bg bg-mkt-surface2 flex items-center justify-center text-[10px] font-bold text-mkt-accent"
-                className={idx === 0 ? "" : "-ml-2"}
+                className={`w-7.5 h-7.5 rounded-full border-2 border-mkt-bg bg-mkt-surface2 flex items-center justify-center text-[10px] font-bold text-mkt-accent ${idx === 0 ? "" : "-ml-2"}`}
               >
                 {i}
               </div>
@@ -176,7 +175,7 @@ export function FeatureRow({ tag, title, body, bullets, linkLabel, linkHref = "#
               <span className="text-[11px]">Replace with screenshot</span>
             </p>
             <div
-              className="absolute inset-0 pointer-events-none bg-gradient-to-b from-mkt-accent/20 via-transparent to-transparent"
+              className="absolute inset-0 pointer-events-none bg-linear-to-b from-mkt-accent/20 via-transparent to-transparent"
             />
           </div>
         )}

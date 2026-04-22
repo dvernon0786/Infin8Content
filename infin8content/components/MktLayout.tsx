@@ -99,7 +99,7 @@ export function CtaSection({
   return (
     <section className="py-24 text-center relative overflow-hidden">
       <div
-        className="absolute inset-0 pointer-events-none bg-gradient-to-b from-mkt-accent/12 via-transparent to-transparent"
+        className="absolute inset-0 pointer-events-none bg-linear-to-b from-mkt-accent/12 via-transparent to-transparent"
       />
       <div className="container mx-auto px-7 relative">
         <h2 className="font-display text-[clamp(28px,5vw,50px)] font-extrabold tracking-tight text-white mb-4 whitespace-pre-line">

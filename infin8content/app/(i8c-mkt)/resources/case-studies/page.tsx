@@ -48,13 +48,12 @@ function CaseCard({ stat, title, body, name, role, slug, tags }: CaseItem) {
       className="group bg-mkt-surface border border-white/7 rounded-[14px] overflow-hidden hover:border-mkt-accent-border hover:-translate-y-1 transition-all flex flex-col"
     >
       <div
-        className="w-full h-44 bg-linear-to-br from-[#13151e] to-[#0b0d14] flex items-center justify-center relative overflow-hidden"
-        className="bg-gradient-to-br from-mkt-surface2 to-mkt-surface3"
+        className="w-full h-44 bg-linear-to-br from-mkt-surface2 to-mkt-surface3 flex items-center justify-center relative overflow-hidden"
       >
         <span className="font-display text-[40px] font-extrabold text-mkt-accent opacity-80">
           {stat}
         </span>
-        <div className="absolute inset-0 bg-gradient-to-b from-mkt-accent/10 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-b from-mkt-accent/10 via-transparent to-transparent" />
       </div>
       <div className="p-6 flex flex-col gap-3 flex-1">
         <div className="flex flex-wrap gap-1.5">
@@ -87,22 +86,21 @@ export default function CaseStudiesPage() {
     <>
       {/* Hero */}
       <section className="pt-20 pb-16 text-center relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-mkt-accent/20 via-transparent to-transparent" />
+        <div className="absolute inset-0 pointer-events-none bg-linear-to-b from-mkt-accent/20 via-transparent to-transparent" />
         <div className="container mx-auto px-7 relative">
           <SectionLabel>📊 Case Studies</SectionLabel>
           <h1
-            className="text-[clamp(36px,5.5vw,62px)] font-extrabold tracking-[-1.5px] leading-[1.06] text-white max-w-150 mx-auto mb-5"
-            className="font-display"
+            className="font-display text-[clamp(36px,5.5vw,62px)] font-extrabold tracking-[-1.5px] leading-[1.06] text-white max-w-150 mx-auto mb-5"
           >
-            It just <em className="not-italic text-[#4f6ef7]">works.</em>
+            It just <em className="not-italic text-mkt-accent">works.</em>
           </h1>
-          <p className="text-large text-[#7b8098] max-w-115 mx-auto mb-8 leading-[1.65]">
+          <p className="text-large text-mkt-muted max-w-115 mx-auto mb-8 leading-[1.65]">
             Real results, from real people. See how teams are growing organic traffic with Infin8Content.
           </p>
-          <div className="flex items-center justify-center gap-2.5 text-[13.5px] text-[#7b8098]">
+          <div className="flex items-center justify-center gap-2.5 text-[13.5px] text-mkt-muted">
             <div className="flex">
               {["JL","MR","AK","SB","TD"].map((i,idx)=>(
-                <div key={idx} className="w-7.5 h-7.5 rounded-full border-2 border-mkt-bg bg-mkt-surface2 flex items-center justify-center text-[10px] font-bold text-mkt-accent" style={{marginLeft:idx===0?0:-8}}>{i}</div>
+                <div key={idx} className={`w-7.5 h-7.5 rounded-full border-2 border-mkt-bg bg-mkt-surface2 flex items-center justify-center text-[10px] font-bold text-mkt-accent ${idx === 0 ? "" : "-ml-2"}`}>{i}</div>
               ))}
             </div>
             Trusted by <strong className="text-white ml-1">10,000+</strong>&nbsp;Marketers & Agencies
@@ -118,8 +116,8 @@ export default function CaseStudiesPage() {
               key={tag}
               className={`px-4 py-1.5 rounded-full text-[13px] font-medium border transition-all ${
                 tag === "All"
-                  ? "bg-[rgba(79,110,247,0.15)] border-[rgba(79,110,247,0.3)] text-[#a5b4fc]"
-                  : "bg-transparent border-white/7 text-[#7b8098] hover:border-[rgba(79,110,247,0.3)] hover:text-white"
+                  ? "bg-mkt-accent-lite border-mkt-accent-border text-mkt-accent-lite"
+                  : "bg-transparent border-white/7 text-mkt-muted hover:border-mkt-accent-border hover:text-white"
               }`}
             >
               {tag}
@@ -133,33 +131,33 @@ export default function CaseStudiesPage() {
         <div className="container mx-auto px-7">
           <Link
             href={`/resources/case-studies/${featuredCase.slug}`}
-            className="group block bg-[#0f1117] border border-white/7 rounded-xl overflow-hidden hover:border-[rgba(79,110,247,0.3)] transition-all"
+            className="group block bg-mkt-surface border border-white/7 rounded-xl overflow-hidden hover:border-mkt-accent-border transition-all"
           >
             <div className="grid grid-cols-1 md:grid-cols-2">
-              <div className="h-64 md:h-auto bg-linear-to-br from-[#0d1226] to-[#0a1020] flex items-center justify-center relative overflow-hidden">
+              <div className="h-64 md:h-auto bg-linear-to-br from-mkt-surface to-mkt-surface2 flex items-center justify-center relative overflow-hidden">
                 <span className="font-display text-[56px] font-extrabold text-mkt-accent">
                   {featuredCase.stat}
                 </span>
-                <div className="absolute inset-0 bg-gradient-to-b from-mkt-accent/15 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-b from-mkt-accent/15 via-transparent to-transparent" />
               </div>
               <div className="p-10 flex flex-col justify-center gap-4">
                 <div className="flex gap-1.5">
                   {featuredCase.tags.map((t) => (
-                    <span key={t} className="text-[10px] font-bold uppercase tracking-[0.06em] bg-[rgba(79,110,247,0.1)] border border-[rgba(79,110,247,0.2)] text-[#a5b4fc] rounded px-2 py-0.5">{t}</span>
+                    <span key={t} className="text-[10px] font-bold uppercase tracking-[0.06em] bg-mkt-accent-lite border border-mkt-accent-border text-mkt-accent-lite rounded px-2 py-0.5">{t}</span>
                   ))}
                 </div>
                 <h2 className="font-display text-[24px] font-bold text-white leading-tight group-hover:text-mkt-accent-hover transition-colors">
                   {featuredCase.title}
                 </h2>
-                <p className="text-[15px] text-[#7b8098] leading-[1.65]">{featuredCase.body}</p>
+                <p className="text-[15px] text-mkt-muted leading-[1.65]">{featuredCase.body}</p>
                 <div className="flex items-center gap-3 mt-2">
-                  <div className="w-9 h-9 rounded-full bg-[#13151e] border-2 border-white/7 flex items-center justify-center text-[12px] font-bold text-[#4f6ef7]">PW</div>
+                  <div className="w-9 h-9 rounded-full bg-mkt-surface2 border-2 border-white/7 flex items-center justify-center text-[12px] font-bold text-mkt-accent">PW</div>
                   <div>
                     <p className="text-[13px] font-semibold text-white">{featuredCase.name}</p>
-                    <p className="text-[11.5px] text-[#7b8098]">{featuredCase.role}</p>
+                    <p className="text-[11.5px] text-mkt-muted">{featuredCase.role}</p>
                   </div>
                 </div>
-                <span className="text-small font-semibold text-[#4f6ef7] group-hover:gap-3 transition-all">Read full case study →</span>
+                <span className="text-small font-semibold text-mkt-accent group-hover:gap-3 transition-all">Read full case study →</span>
               </div>
             </div>
           </Link>

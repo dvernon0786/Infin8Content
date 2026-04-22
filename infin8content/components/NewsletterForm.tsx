@@ -13,8 +13,7 @@ export default function NewsletterForm() {
       />
       <button
         type="submit"
-        className="shrink-0 bg-mkt-accent text-white font-semibold px-5 py-3 rounded-md text-small hover:bg-mkt-accent-hover transition-all"
-        style={{ fontFamily: "Sora, sans-serif" }}
+        className="shrink-0 bg-mkt-accent text-white font-semibold px-5 py-3 rounded-md text-small hover:bg-mkt-accent-hover transition-all font-display"
       >
         Subscribe
       </button>
