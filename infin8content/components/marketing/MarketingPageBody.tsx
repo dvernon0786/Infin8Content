@@ -9,31 +9,6 @@ interface Props {
 
 export default function MarketingPageBody({ html, css }: Props) {
   useEffect(() => {
-    // Year
-    const year = String(new Date().getFullYear());
-    document.querySelectorAll<HTMLElement>('.js-year').forEach(el => (el.textContent = year));
-    const yearEl = document.getElementById('year');
-    if (yearEl) yearEl.textContent = year;
-
-    // Countdown (8h 34m 12s starting point)
-    let total = 8 * 3600 + 34 * 60 + 12;
-    function tick() {
-      if (total <= 0) return;
-      total--;
-      const h = String(Math.floor(total / 3600)).padStart(2, '0');
-      const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
-      const s = String(total % 60).padStart(2, '0');
-      // class-based selectors (ai-seo-agent, ai-seo-editor, autopublish, llm-tracker)
-      document.querySelectorAll<HTMLElement>('.js-ph').forEach(e => (e.textContent = h));
-      document.querySelectorAll<HTMLElement>('.js-pm').forEach(e => (e.textContent = m));
-      document.querySelectorAll<HTMLElement>('.js-ps').forEach(e => (e.textContent = s));
-      // id-based selectors (ai-content-writer)
-      const ph = document.getElementById('ph'); if (ph) ph.textContent = h;
-      const pm = document.getElementById('pm'); if (pm) pm.textContent = m;
-      const ps = document.getElementById('ps'); if (ps) ps.textContent = s;
-    }
-    tick();
-    const timer = setInterval(tick, 1000);
 
     // switchTab global — used by ai-content-writer onclick="switchTab(this,'id')"
     (window as Window & { switchTab?: (btn: HTMLElement, panelId: string) => void }).switchTab =
@@ -97,7 +72,6 @@ export default function MarketingPageBody({ html, css }: Props) {
     });
 
     return () => {
-      clearInterval(timer);
       delete (window as Window & { switchTab?: unknown }).switchTab;
       delete (window as Window & { toggleFaq?: unknown }).toggleFaq;
     };
@@ -106,7 +80,6 @@ export default function MarketingPageBody({ html, css }: Props) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: css }} />
-      <style>{`.brand img { height: 32px; width: auto; display: block; }`}</style>
       <div dangerouslySetInnerHTML={{ __html: html }} />
     </>
   );

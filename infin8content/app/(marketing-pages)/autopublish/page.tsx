@@ -202,23 +202,7 @@ ul { list-style: none; }
     @media(max-width:860px){ .ap-pipeline{flex-direction:column; gap:16px;} .ap-connector{width:1px; height:24px; margin:0;} .ecosystem-grid{grid-template-columns:1fr;} .ap-cards{grid-template-columns:1fr 1fr;} }
     @media(max-width:600px){ .ap-cards{grid-template-columns:1fr;} }`;
 
-const html = `<div class="promo-bar">✨&nbsp; New Year Offer: <strong style="color:#a5b4fc;margin:0 6px;">40% Off</strong> on Yearly Plans &nbsp;<span class="time-unit js-ph">08</span>hrs <span class="time-unit js-pm">34</span>min <span class="time-unit js-ps">12</span>sec<a class="deal-link" href="#">Get Deal</a></div>
-
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/"><img src="/infin8content_logo.png" alt="Infin8Content"></a>
-    <nav class="main-nav" id="main-nav">
-      <div class="nav-item"><span class="nav-link">Features <span class="chevron">▾</span></span><div class="dropdown"><div class="dropdown-label">AI Writing</div><a class="dropdown-link" href="/ai-content-writer">AI Content Writer</a><a class="dropdown-link" href="/ai-seo-editor">AI SEO Editor</a><a class="dropdown-link" href="#">News Writer</a><hr><div class="dropdown-label">Automation</div><a class="dropdown-link" href="/ai-seo-agent">AI SEO Agent</a><a class="dropdown-link" href="/autopublish">AutoPublish</a><a class="dropdown-link" href="/llm-tracker">LLM Tracker</a></div></div>
-      <div class="nav-item"><span class="nav-link">Solutions <span class="chevron">▾</span></span><div class="dropdown"><a class="dropdown-link" href="#"><strong>SaaS</strong><small>Scale organic traffic</small></a><a class="dropdown-link" href="#"><strong>Agencies</strong><small>Manage clients at scale</small></a><a class="dropdown-link" href="#"><strong>E-Commerce</strong><small>Upgrade store content</small></a></div></div>
-      <a class="nav-link" href="#">Pricing</a>
-      <div class="nav-item"><span class="nav-link">Resources <span class="chevron">▾</span></span><div class="dropdown"><a class="dropdown-link" href="#">Case Studies</a><a class="dropdown-link" href="#">Help Docs</a><a class="dropdown-link" href="#">Blog</a></div></div>
-    </nav>
-    <div class="header-cta"><a class="btn-link" href="#">Login</a><a class="btn btn-primary" href="#">Get Started</a></div>
-    <button class="nav-toggle" id="nav-toggle">☰</button>
-  </div>
-</header>
-
-<main>
+const html = `<main>
 
 <section class="hero">
   <div class="container">
@@ -379,21 +363,7 @@ const html = `<div class="promo-bar">✨&nbsp; New Year Offer: <strong style="co
   </div>
 </section>
 
-</main>
-
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-top">
-      <div class="footer-brand"><a class="brand" href="/"><img src="/infin8content_logo.png" alt="Infin8Content"></a><p>AI content workflows for modern teams and agencies.</p></div>
-      <div class="footer-col"><h4>AI Writing</h4><a href="/ai-content-writer">AI Content Writer</a><a href="/ai-seo-editor">AI SEO Editor</a><a href="#">News Writer</a><a href="#">Video to Blog</a></div>
-      <div class="footer-col"><h4>Automation</h4><a href="/ai-seo-agent">AI SEO Agent</a><a href="/autopublish">AutoPublish</a><a href="#">SEO Reports</a><a href="/llm-tracker">LLM Tracker</a></div>
-      <div class="footer-col"><h4>Resources</h4><a href="#">Pricing</a><a href="#">Blog</a><a href="#">Help Docs</a><a href="#">Case Studies</a></div>
-      <div class="footer-col"><h4>Integrations</h4><a href="#">WordPress</a><a href="#">Shopify</a><a href="#">Ghost</a><a href="#">Webflow</a><a href="#">Zapier</a></div>
-      <div class="footer-col"><h4>Solutions</h4><a href="#">SaaS</a><a href="#">Agencies</a><a href="#">E-Commerce</a><a href="#">Enterprise</a></div>
-    </div>
-    <div class="footer-bottom"><small>© <span class="js-year"></span> Infin8Content. All rights reserved.</small><div class="footer-legal"><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">contact@infin8content.com</a></div></div>
-  </div>
-</footer>`;
+</main>`;
 
 export default function AutoPublishPage() {
   return <MarketingPageBody css={css} html={html} />;
