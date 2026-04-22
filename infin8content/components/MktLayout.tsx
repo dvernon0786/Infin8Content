@@ -72,8 +72,7 @@ export function SocialProof({ label = "10,000+ Marketers & Agencies" }: { label?
         {initials.map((i, idx) => (
           <div
             key={idx}
-            className="w-7.5 h-7.5 rounded-full border-2 border-mkt-bg bg-mkt-surface2 flex items-center justify-center text-[10px] font-bold text-mkt-accent"
-            className={idx === 0 ? "" : "-ml-2"}
+            className={`w-7.5 h-7.5 rounded-full border-2 border-mkt-bg bg-mkt-surface2 flex items-center justify-center text-[10px] font-bold text-mkt-accent${idx === 0 ? "" : " -ml-2"}`}
           >
             {i}
           </div>

@@ -264,7 +264,7 @@ export function BeforeAfter({
             {title}
           </div>
           <div className="p-5">
-            <div className="w-full h-36 bg-linear-to-br from-[#13151e] to-[#0b0d14] rounded-lg mb-4 flex items-center justify-center text-[28px] opacity-40 border border-white/7">
+            <div className="w-full h-36 bg-linear-to-br from-mkt-surface2 to-mkt-surface3 rounded-lg mb-4 flex items-center justify-center text-[28px] opacity-40 border border-white/7">
               {type === "after" ? "🚀" : "😩"}
             </div>
             <ul className="flex flex-col gap-1.5">
