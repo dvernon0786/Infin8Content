@@ -106,6 +106,7 @@ export default function MarketingPageBody({ html, css }: Props) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: css }} />
+      <style>{`.brand img { height: 32px; width: auto; display: block; }`}</style>
       <div dangerouslySetInnerHTML={{ __html: html }} />
     </>
   );
