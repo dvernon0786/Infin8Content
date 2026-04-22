@@ -144,7 +144,7 @@ export default function MarketingShell({ children }: { children: React.ReactNode
                 <a className="dropdown-link" href="/ai-seo-editor">AI SEO Editor</a>
                 <a className="dropdown-link" href="#">News Writer</a>
                 <hr />
-                <div className="dropdown-label">Automation</div>
+                <div className="dropdown-label">SEO &amp; Automation</div>
                 <a className="dropdown-link" href="/ai-seo-agent">AI SEO Agent</a>
                 <a className="dropdown-link" href="/autopublish">AutoPublish</a>
                 <a className="dropdown-link" href="/llm-tracker">LLM Tracker</a>
@@ -153,9 +153,10 @@ export default function MarketingShell({ children }: { children: React.ReactNode
             <div className="nav-item">
               <span className="nav-link">Solutions <span className="chevron">▾</span></span>
               <div className="dropdown">
-                <a className="dropdown-link" href="#"><strong>SaaS</strong><small>Scale organic traffic</small></a>
-                <a className="dropdown-link" href="#"><strong>Agencies</strong><small>Manage clients at scale</small></a>
-                <a className="dropdown-link" href="#"><strong>E-Commerce</strong><small>Upgrade store content</small></a>
+                <a className="dropdown-link" href="#"><strong>SaaS</strong><small>Scale organic traffic for your product</small></a>
+                <a className="dropdown-link" href="#"><strong>Agencies</strong><small>Manage multiple clients at scale</small></a>
+                <a className="dropdown-link" href="#"><strong>E-Commerce</strong><small>Upgrade your store&apos;s content</small></a>
+                <a className="dropdown-link" href="#"><strong>Enterprise</strong><small>SAML, SSO &amp; dedicated support</small></a>
               </div>
             </div>
             <a className="nav-link" href="#">Pricing</a>
@@ -163,6 +164,7 @@ export default function MarketingShell({ children }: { children: React.ReactNode
               <span className="nav-link">Resources <span className="chevron">▾</span></span>
               <div className="dropdown">
                 <a className="dropdown-link" href="#">Case Studies</a>
+                <a className="dropdown-link" href="#">Learning &amp; Training</a>
                 <a className="dropdown-link" href="#">Help Docs</a>
                 <a className="dropdown-link" href="#">Blog</a>
               </div>
