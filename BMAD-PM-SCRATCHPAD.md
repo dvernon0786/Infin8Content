@@ -6,23 +6,33 @@
 
 **Sync (2026-04-18):** Docs synchronized for branch `docs/scratchpad-sync` (source: `origin/test-main-all`). See central `scratchpad.md` for full commit refs and next steps.
 
-## Quick Git: Branch & PR commands
+## Quick Git: Direct Production Deployment
 
-Copyable steps to sync `test-main-all`, create a topic branch, commit, push, and open a PR:
+**Key Rule:** Any push to `test-main-all` = Production deployment on Vercel. Any other branch = Preview deployment. No PRs needed for production — merge locally and push directly.
 
 ```bash
-git fetch origin
-git checkout test-main-all || git checkout -b test-main-all origin/test-main-all
+# 1. Start from clean test-main-all
+git checkout test-main-all
 git pull origin test-main-all
 
-# create a topic branch
-git checkout -b <your-branch-name>
-git add .
-git commit -m "<meaningful-msg>"
-git push -u origin <your-branch-name>
+# 2. Create topic branch
+git checkout -b fix/your-feature-name
 
-# or to push updates directly to test-main-all
-git push -u origin test-main-all
+# 3. Make changes, then commit
+git add .
+git commit -m "fix: description of change"
+
+# 4. Push topic branch
+git push -u origin fix/your-feature-name
+
+# 5. Merge directly to test-main-all (triggers Production on Vercel)
+git checkout test-main-all
+git merge fix/your-feature-name
+git push origin test-main-all
+
+# Configure git identity (if needed)
+git config user.name "Damien"
+git config user.email "engagehubonline@gmail.com"
 ```
 
 

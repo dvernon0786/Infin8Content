@@ -1,12 +1,5 @@
-import Navigation from '@/components/marketing/Navigation';
-import Footer from '@/components/marketing/Footer';
+import MarketingShell from '@/components/marketing/MarketingShell';
 
 export default function FeaturesLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <Navigation />
-      {children}
-      <Footer />
-    </>
-  );
+  return <MarketingShell>{children}</MarketingShell>;
 }

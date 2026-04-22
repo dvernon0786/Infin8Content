@@ -1,125 +1,67 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-// ─── Nav data ────────────────────────────────────────────────
-const featuresMenu = {
-  writing: [
-    { label: "AI Content Writer", href: "/features/ai-content-writer" },
-    { label: "AI SEO Editor", href: "/features/ai-seo-editor" },
-    { label: "News Writer", href: "/features/news-writer" },
-    { label: "Video to Blog Post", href: "/features/video-to-blog" },
-  ],
-  automation: [
-    { label: "AI SEO Agent", href: "/features/ai-seo-agent" },
-    { label: "AutoPublish", href: "/features/autopublish" },
-    { label: "SEO Reports", href: "/features/seo-reports" },
-    { label: "LLM Tracker", href: "/features/llm-tracker" },
-  ],
-};
-
-const solutionsMenu = [
-  { label: "SaaS", sub: "Scale organic traffic for your product", href: "/solutions/saas" },
-  { label: "Agencies", sub: "Manage multiple clients at scale", href: "/solutions/agency" },
-  { label: "E-Commerce", sub: "Upgrade your store's content", href: "/solutions/ecommerce" },
-  { label: "Local Business", sub: "Dominate local search", href: "/solutions/local" },
-];
-
-const resourcesMenu = [
-  { label: "Case Studies", href: "/resources/case-studies" },
-  { label: "Learning & Training", href: "/resources/learn" },
-  { label: "Blog", href: "/resources/blog" },
-  { label: "Help Docs", href: "#" },
-];
-
-const footerCols = [
-  {
-    title: "AI Writing",
-    links: [
-      { label: "AI Content Writer", href: "/features/ai-content-writer" },
-      { label: "AI SEO Editor", href: "/features/ai-seo-editor" },
-      { label: "News Writer", href: "#" },
-      { label: "Video to Blog", href: "#" },
-    ],
-  },
-  {
-    title: "Automation",
-    links: [
-      { label: "AI SEO Agent", href: "/features/ai-seo-agent" },
-      { label: "AutoPublish", href: "/features/autopublish" },
-      { label: "SEO Reports", href: "#" },
-      { label: "LLM Tracker", href: "/features/llm-tracker" },
-    ],
-  },
-  {
-    title: "Resources",
-    links: [
-      { label: "Pricing", href: "#" },
-      { label: "Blog", href: "/resources/blog" },
-      { label: "Case Studies", href: "/resources/case-studies" },
-      { label: "Help Docs", href: "#" },
-    ],
-  },
-  {
-    title: "Integrations",
-    links: [
-      { label: "WordPress", href: "#" },
-      { label: "Shopify", href: "#" },
-      { label: "Ghost", href: "#" },
-      { label: "Webflow", href: "#" },
-      { label: "Zapier", href: "#" },
-    ],
-  },
-  {
-    title: "Solutions",
-    links: [
-      { label: "SaaS", href: "/solutions/saas" },
-      { label: "Agencies", href: "/solutions/agency" },
-      { label: "E-Commerce", href: "/solutions/ecommerce" },
-      { label: "Enterprise", href: "#" },
-    ],
-  },
-];
-
-// ─── Countdown hook ───────────────────────────────────────────
-function useCountdown(initialSeconds: number) {
-  const [secs] = useState(initialSeconds);
-  const h = String(Math.floor(secs / 3600)).padStart(2, "0");
-  const m = String(Math.floor((secs % 3600) / 60)).padStart(2, "0");
-  const s = String(secs % 60).padStart(2, "0");
-  return { h, m, s };
+// ─── Shell CSS (nav/footer only — no global reset/body/container overrides) ──
+const shellCss = `
+:root {
+  --mkt-bg: #08090d; --mkt-surface: #0f1117; --mkt-surface2: #13151e;
+  --mkt-border: rgba(255,255,255,0.07);
+  --mkt-accent: #4f6ef7; --mkt-accent-lite: rgba(79,110,247,0.12); --mkt-accent-border: rgba(79,110,247,0.25);
+  --mkt-text: #e8eaf2; --mkt-muted: #7b8098; --mkt-muted2: #4a4f68; --mkt-white: #ffffff;
+  --mkt-font-display: 'Sora', sans-serif; --mkt-font-body: 'DM Sans', sans-serif;
+  --mkt-radius: 14px; --mkt-radius-sm: 8px;
 }
-
-// ─── Sub-components ───────────────────────────────────────────
-function DropdownItem({ label, sub, href }: { label: string; sub?: string; href: string }) {
-  return (
-    <Link
-      href={href}
-      className="block px-3 py-2 rounded-lg text-[13.5px] text-[#7b8098] hover:text-white hover:bg-white/5 transition-all"
-    >
-      {sub ? (
-        <>
-          <span className="block text-[#e8eaf2] font-medium">{label}</span>
-          <span className="block text-[12px] text-[#7b8098]">{sub}</span>
-        </>
-      ) : label}
-    </Link>
-  );
-}
-
-function NavDropdown({ trigger, children }: { trigger: string; children: React.ReactNode }) {
-  return (
-    <div className="relative group">
-      <button className="flex items-center gap-1 px-3 py-1.75 rounded-lg text-small font-medium text-[#7b8098] hover:text-white hover:bg-white/5 transition-all">
-        {trigger}
-        <span className="text-[10px] transition-transform group-hover:rotate-180">▾</span>
-      </button>
-      <div className="absolute top-full left-0 mt-2 hidden group-hover:block bg-[#12141f] border border-white/7 rounded-[14px] p-2 min-w-55 shadow-[0_20px_60px_rgba(0,0,0,0.5)] z-50">
-        {children}
-      </div>
-    </div>
-  );
-}
+/* PROMO BAR */
+.mkt-promo-bar { background: linear-gradient(90deg,#1a1060,#0f1340 50%,#1a1060); border-bottom: 1px solid var(--mkt-accent-border); text-align: center; padding: 10px 20px; font-size: 13px; font-family: var(--mkt-font-display); font-weight: 500; color: var(--mkt-text); position: relative; z-index: 50; }
+.mkt-time-unit { background: var(--mkt-accent-lite); border: 1px solid var(--mkt-accent-border); border-radius: 4px; padding: 2px 6px; font-weight: 700; color: #a5b4fc; font-variant-numeric: tabular-nums; min-width: 28px; display: inline-block; text-align: center; }
+.mkt-deal-link { background: var(--mkt-accent); color: #fff; border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 600; margin-left: 10px; text-decoration: none; }
+/* HEADER */
+.mkt-site-header { position: sticky; top: 0; z-index: 40; background: rgba(8,9,13,.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--mkt-border); }
+.mkt-header-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; gap: 16px; max-width: 1160px; margin: 0 auto; padding: 0 28px; }
+.mkt-brand { font-family: var(--mkt-font-display); font-weight: 800; font-size: 20px; letter-spacing: -.5px; color: var(--mkt-white); flex-shrink: 0; text-decoration: none; }
+.mkt-brand span { color: var(--mkt-accent); }
+.mkt-brand img { height: 32px; width: auto; display: block; }
+.mkt-main-nav { display: flex; align-items: center; gap: 4px; flex: 1; justify-content: center; }
+.mkt-nav-item { position: relative; }
+.mkt-nav-link { display: flex; align-items: center; gap: 4px; padding: 7px 12px; border-radius: var(--mkt-radius-sm); font-size: 14px; font-weight: 500; color: var(--mkt-muted); transition: all .2s; cursor: pointer; white-space: nowrap; text-decoration: none; background: none; border: none; font-family: inherit; }
+.mkt-nav-link:hover { color: var(--mkt-white); background: rgba(255,255,255,.05); }
+.mkt-chevron { font-size: 10px; transition: transform .2s; display: inline-block; }
+.mkt-nav-item:hover .mkt-chevron { transform: rotate(180deg); }
+.mkt-dropdown { display: none; position: absolute; top: 100%; left: 0; background: #12141f; border: 1px solid var(--mkt-border); border-radius: var(--mkt-radius); padding: 16px 8px 8px; min-width: 230px; box-shadow: 0 20px 60px rgba(0,0,0,.5); z-index: 100; }
+.mkt-nav-item:hover .mkt-dropdown { display: block; }
+.mkt-dropdown-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--mkt-muted2); padding: 4px 10px; margin-bottom: 2px; }
+.mkt-dropdown-link { display: block; padding: 8px 10px; border-radius: var(--mkt-radius-sm); font-size: 13.5px; color: var(--mkt-muted); transition: all .15s; text-decoration: none; }
+.mkt-dropdown-link:hover { color: var(--mkt-white); background: rgba(255,255,255,.05); }
+.mkt-dropdown-link strong { display: block; color: var(--mkt-text); font-size: 13.5px; margin-bottom: 1px; }
+.mkt-dropdown-link small { font-size: 12px; color: var(--mkt-muted); }
+.mkt-dropdown hr { border: none; border-top: 1px solid var(--mkt-border); margin: 6px 0; }
+.mkt-header-cta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.mkt-btn-link { font-size: 14px; font-weight: 500; color: var(--mkt-muted); padding: 7px 12px; border-radius: var(--mkt-radius-sm); transition: all .2s; text-decoration: none; }
+.mkt-btn-link:hover { color: var(--mkt-white); background: rgba(255,255,255,.05); }
+.mkt-btn-primary { display: inline-flex; align-items: center; justify-content: center; font-family: var(--mkt-font-display); font-weight: 600; border-radius: var(--mkt-radius-sm); background: var(--mkt-accent); color: #fff; padding: 9px 18px; font-size: 14px; box-shadow: 0 0 20px rgba(79,110,247,.3); text-decoration: none; border: none; cursor: pointer; }
+.mkt-btn-primary:hover { background: #3d5df5; box-shadow: 0 0 30px rgba(79,110,247,.5); transform: translateY(-1px); }
+.mkt-nav-toggle { display: none; background: transparent; border: 1px solid var(--mkt-border); border-radius: var(--mkt-radius-sm); color: var(--mkt-text); padding: 7px 10px; font-size: 18px; cursor: pointer; }
+@media(max-width:860px){ .mkt-main-nav{display:none;} .mkt-nav-toggle{display:flex;} }
+.mkt-main-nav.open { display:flex!important; flex-direction:column; position:fixed; top:62px; left:0; right:0; background:rgba(8,9,13,.97); backdrop-filter:blur(12px); padding:20px; border-bottom:1px solid var(--mkt-border); gap:4px; z-index:39; }
+.mkt-main-nav.open .mkt-dropdown{display:none!important;}
+/* FOOTER */
+.mkt-site-footer { border-top: 1px solid var(--mkt-border); padding: 60px 0 40px; }
+.mkt-footer-inner { max-width: 1160px; margin: 0 auto; padding: 0 28px; }
+.mkt-footer-top { display: grid; grid-template-columns: 220px repeat(5,1fr); gap: 40px; margin-bottom: 48px; }
+.mkt-footer-brand .mkt-brand { display: block; margin-bottom: 12px; }
+.mkt-footer-brand p { font-size: 13.5px; color: var(--mkt-muted); line-height: 1.6; }
+.mkt-footer-col h4 { font-family: var(--mkt-font-display); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--mkt-muted2); margin-bottom: 14px; }
+.mkt-footer-col a { display: block; font-size: 13.5px; color: var(--mkt-muted); margin-bottom: 10px; transition: color .2s; text-decoration: none; }
+.mkt-footer-col a:hover { color: var(--mkt-white); }
+.mkt-footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 24px; border-top: 1px solid var(--mkt-border); flex-wrap: wrap; gap: 12px; }
+.mkt-footer-bottom small { font-size: 12.5px; color: var(--mkt-muted2); }
+.mkt-footer-legal { display: flex; gap: 16px; }
+.mkt-footer-legal a { font-size: 12.5px; color: var(--mkt-muted2); text-decoration: none; }
+.mkt-footer-legal a:hover { color: var(--mkt-muted); }
+@media(max-width:1024px){ .mkt-footer-top{grid-template-columns:1fr 1fr 1fr;} .mkt-footer-brand{grid-column:1/-1;} }
+@media(max-width:860px){ .mkt-footer-top{grid-template-columns:1fr 1fr;} .mkt-footer-brand{grid-column:1/-1;} }
+`;
 
 // ─── SocialProof ─────────────────────────────────────────────
 export function SocialProof({ label = "10,000+ Marketers & Agencies" }: { label?: string }) {
@@ -191,150 +133,156 @@ export function CtaSection({
 
 // ─── MktLayout (default export) ──────────────────────────────
 export default function MktLayout({ children }: { children: React.ReactNode }) {
-  const { h, m, s } = useCountdown(8 * 3600 + 34 * 60 + 12);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [ph, setPh] = useState("08");
+  const [pm, setPm] = useState("34");
+  const [ps, setPs] = useState("12");
+
+  useEffect(() => {
+    let total = 8 * 3600 + 34 * 60 + 12;
+    function tick() {
+      if (total <= 0) return;
+      total--;
+      setPh(String(Math.floor(total / 3600)).padStart(2, "0"));
+      setPm(String(Math.floor((total % 3600) / 60)).padStart(2, "0"));
+      setPs(String(total % 60).padStart(2, "0"));
+    }
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const navToggle = document.getElementById("mkt-nav-toggle");
+    const mainNav = document.getElementById("mkt-main-nav");
+    if (navToggle && mainNav) {
+      const handler = () => {
+        mainNav.classList.toggle("open");
+        navToggle.textContent = mainNav.classList.contains("open") ? "✕" : "☰";
+      };
+      navToggle.addEventListener("click", handler);
+      return () => navToggle.removeEventListener("click", handler);
+    }
+  }, []);
 
   return (
-    <div className="min-h-screen" style={{ background: "#08090d", color: "#e8eaf2" }}>
-      {/* Promo bar */}
-      <div
-        className="text-center py-2.5 px-5 text-[13px] font-semibold relative z-50 border-b"
-        style={{
-          background: "linear-gradient(90deg,#1a1060,#0f1340 50%,#1a1060)",
-          borderColor: "rgba(79,110,247,0.2)",
-          fontFamily: "Sora, sans-serif",
-        }}
-      >
+    <div style={{ background: "#08090d", color: "#e8eaf2", minHeight: "100vh" }}>
+      <style dangerouslySetInnerHTML={{ __html: shellCss }} />
+
+      {/* Promo Bar */}
+      <div className="mkt-promo-bar">
         ✨&nbsp; New Year Offer:{" "}
-        <strong className="text-[#a5b4fc] mx-1.5">40% Off</strong> on Yearly Plans &nbsp;
-        {[h, m, s].map((v, i) => (
-          <span
-            key={i}
-            className="inline-block min-w-7 text-center bg-[rgba(79,110,247,0.2)] border border-[rgba(79,110,247,0.3)] rounded text-[#a5b4fc] font-bold px-1.5 py-0.5 mx-0.5 tabular-nums"
-          >
-            {v}
-          </span>
-        ))}
-        <span className="text-[#7b8098] mx-1">hrs min sec</span>
-        <Link href="#" className="ml-2.5 bg-[#4f6ef7] text-white rounded-full px-3 py-0.5 text-[12px] font-semibold">
-          Get Deal
-        </Link>
+        <strong style={{ color: "#a5b4fc", margin: "0 6px" }}>40% Off</strong> on Yearly Plans
+        &nbsp;
+        <span className="mkt-time-unit">{ph}</span>hrs{" "}
+        <span className="mkt-time-unit">{pm}</span>min{" "}
+        <span className="mkt-time-unit">{ps}</span>sec
+        <a className="mkt-deal-link" href="#">Get Deal</a>
       </div>
 
       {/* Header */}
-      <header
-        className="sticky top-0 z-40 border-b"
-        style={{
-          background: "rgba(8,9,13,0.88)",
-          backdropFilter: "blur(12px)",
-          borderColor: "rgba(255,255,255,0.07)",
-        }}
-      >
-        <div className="container mx-auto px-7 flex items-center justify-between h-15.5 gap-4">
-          <Link href="/" className="font-display font-extrabold text-[20px] tracking-tight text-white shrink-0">
-            infin8<span className="text-[#4f6ef7]">content</span>
-          </Link>
-
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
-            <NavDropdown trigger="Features">
-              <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#4a4f68] px-2.5 py-1 mb-1">
-                AI Writing
+      <header className="mkt-site-header">
+        <div className="mkt-header-inner">
+          <a className="mkt-brand" href="/">
+            <img src="/infin8content_logo.png" alt="Infin8Content" />
+          </a>
+          <nav className="mkt-main-nav" id="mkt-main-nav">
+            <div className="mkt-nav-item">
+              <span className="mkt-nav-link">Features <span className="mkt-chevron">▾</span></span>
+              <div className="mkt-dropdown">
+                <div className="mkt-dropdown-label">AI Writing</div>
+                <a className="mkt-dropdown-link" href="/ai-content-writer">AI Content Writer</a>
+                <a className="mkt-dropdown-link" href="/ai-seo-editor">AI SEO Editor</a>
+                <a className="mkt-dropdown-link" href="#">News Writer</a>
+                <hr />
+                <div className="mkt-dropdown-label">Automation</div>
+                <a className="mkt-dropdown-link" href="/ai-seo-agent">AI SEO Agent</a>
+                <a className="mkt-dropdown-link" href="/autopublish">AutoPublish</a>
+                <a className="mkt-dropdown-link" href="/llm-tracker">LLM Tracker</a>
               </div>
-              {featuresMenu.writing.map((l) => <DropdownItem key={l.href} {...l} />)}
-              <hr className="border-white/7 my-1.5" />
-              <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#4a4f68] px-2.5 py-1 mb-1">
-                Automation
+            </div>
+            <div className="mkt-nav-item">
+              <span className="mkt-nav-link">Solutions <span className="mkt-chevron">▾</span></span>
+              <div className="mkt-dropdown">
+                <a className="mkt-dropdown-link" href="/solutions/saas"><strong>SaaS</strong><small>Scale organic traffic for your product</small></a>
+                <a className="mkt-dropdown-link" href="/solutions/agency"><strong>Agencies</strong><small>Manage multiple clients at scale</small></a>
+                <a className="mkt-dropdown-link" href="/solutions/ecommerce"><strong>E-Commerce</strong><small>Upgrade your store&apos;s content</small></a>
+                <a className="mkt-dropdown-link" href="/solutions/local"><strong>Local Business</strong><small>Dominate local search</small></a>
               </div>
-              {featuresMenu.automation.map((l) => <DropdownItem key={l.href} {...l} />)}
-            </NavDropdown>
-
-            <NavDropdown trigger="Solutions">
-              {solutionsMenu.map((l) => <DropdownItem key={l.href} {...l} />)}
-            </NavDropdown>
-
-            <Link href="#" className="px-3 py-1.75 rounded-lg text-small font-medium text-[#7b8098] hover:text-white hover:bg-white/5 transition-all">
-              Pricing
-            </Link>
-
-            <NavDropdown trigger="Resources">
-              {resourcesMenu.map((l) => <DropdownItem key={l.href} {...l} />)}
-            </NavDropdown>
+            </div>
+            <a className="mkt-nav-link" href="#">Pricing</a>
+            <div className="mkt-nav-item">
+              <span className="mkt-nav-link">Resources <span className="mkt-chevron">▾</span></span>
+              <div className="mkt-dropdown">
+                <a className="mkt-dropdown-link" href="/resources/case-studies">Case Studies</a>
+                <a className="mkt-dropdown-link" href="/resources/learn">Learning &amp; Training</a>
+                <a className="mkt-dropdown-link" href="#">Help Docs</a>
+                <a className="mkt-dropdown-link" href="/resources/blog">Blog</a>
+              </div>
+            </div>
           </nav>
-
-          <div className="hidden md:flex items-center gap-2.5 shrink-0">
-            <Link href="#" className="text-small font-medium text-[#7b8098] px-3 py-1.75 rounded-lg hover:text-white hover:bg-white/5 transition-all">
-              Login
-            </Link>
-            <Link
-              href="#"
-              className="font-display font-semibold bg-[#4f6ef7] text-white px-4.5 py-2.25 text-small rounded-lg shadow-[0_0_20px_rgba(79,110,247,0.3)] hover:bg-[#3d5df5] hover:-translate-y-px transition-all"
-            >
-              Get Started
-            </Link>
+          <div className="mkt-header-cta">
+            <a className="mkt-btn-link" href="#">Login</a>
+            <a className="mkt-btn-primary" href="#">Get Started</a>
           </div>
-
-          <button
-            className="md:hidden border border-white/7 rounded-lg p-2 text-[#e8eaf2]"
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            {mobileOpen ? "✕" : "☰"}
-          </button>
+          <button className="mkt-nav-toggle" id="mkt-nav-toggle">☰</button>
         </div>
-
-        {/* Mobile menu */}
-        {mobileOpen && (
-          <div className="md:hidden border-t border-white/7 px-7 py-4 flex flex-col gap-1" style={{ background: "rgba(8,9,13,0.97)" }}>
-            {[...featuresMenu.writing, ...featuresMenu.automation, ...solutionsMenu, ...resourcesMenu].map((l) => (
-              <Link key={l.href} href={l.href} className="py-2 text-small text-[#7b8098] hover:text-white transition-colors" onClick={() => setMobileOpen(false)}>
-                {l.label}
-              </Link>
-            ))}
-            <Link href="#" className="mt-3 bg-[#4f6ef7] text-white text-center py-2.5 rounded-lg font-semibold" onClick={() => setMobileOpen(false)}>
-              Get Started
-            </Link>
-          </div>
-        )}
       </header>
 
       {/* Page content */}
       <main>{children}</main>
 
       {/* Footer */}
-      <footer className="border-t border-white/7 pt-14 pb-10">
-        <div className="container mx-auto px-7">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10 mb-12">
-            <div className="col-span-2 md:col-span-3 lg:col-span-1">
-              <Link href="/" className="font-display font-extrabold text-[20px] tracking-tight text-white block mb-3">
-                infin8<span className="text-[#4f6ef7]">content</span>
-              </Link>
-              <p className="text-[13.5px] text-[#7b8098] leading-relaxed">
-                AI content workflows for modern teams and agencies.
-              </p>
+      <footer className="mkt-site-footer">
+        <div className="mkt-footer-inner">
+          <div className="mkt-footer-top">
+            <div className="mkt-footer-brand">
+              <a className="mkt-brand" href="/">
+                <img src="/infin8content_logo.png" alt="Infin8Content" />
+              </a>
+              <p>AI content workflows for modern teams and agencies.</p>
             </div>
-            {footerCols.map((col) => (
-              <div key={col.title}>
-                <h4 className="text-[11.5px] font-bold uppercase tracking-[0.08em] text-[#4a4f68] mb-3.5">
-                  {col.title}
-                </h4>
-                {col.links.map((l) => (
-                  <Link key={l.href} href={l.href} className="block text-[13.5px] text-[#7b8098] mb-2.5 hover:text-white transition-colors">
-                    {l.label}
-                  </Link>
-                ))}
-              </div>
-            ))}
+            <div className="mkt-footer-col">
+              <h4>AI Writing</h4>
+              <a href="/ai-content-writer">AI Content Writer</a>
+              <a href="/ai-seo-editor">AI SEO Editor</a>
+              <a href="#">News Writer</a>
+              <a href="#">Video to Blog</a>
+            </div>
+            <div className="mkt-footer-col">
+              <h4>Automation</h4>
+              <a href="/ai-seo-agent">AI SEO Agent</a>
+              <a href="/autopublish">AutoPublish</a>
+              <a href="#">SEO Reports</a>
+              <a href="/llm-tracker">LLM Tracker</a>
+            </div>
+            <div className="mkt-footer-col">
+              <h4>Resources</h4>
+              <a href="#">Pricing</a>
+              <a href="/resources/blog">Blog</a>
+              <a href="#">Help Docs</a>
+              <a href="/resources/case-studies">Case Studies</a>
+            </div>
+            <div className="mkt-footer-col">
+              <h4>Integrations</h4>
+              <a href="#">WordPress</a>
+              <a href="#">Shopify</a>
+              <a href="#">Ghost</a>
+              <a href="#">Webflow</a>
+              <a href="#">Zapier</a>
+            </div>
+            <div className="mkt-footer-col">
+              <h4>Solutions</h4>
+              <a href="/solutions/saas">SaaS</a>
+              <a href="/solutions/agency">Agencies</a>
+              <a href="/solutions/ecommerce">E-Commerce</a>
+              <a href="/solutions/local">Local Business</a>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-6 border-t border-white/7">
-            <p className="text-[12.5px] text-[#4a4f68]">
-              © {new Date().getFullYear()} Infin8Content. All rights reserved.
-            </p>
-            <div className="flex gap-4">
-              {["Privacy Policy", "Terms of Service", "contact@infin8content.com"].map((l) => (
-                <Link key={l} href="#" className="text-[12.5px] text-[#4a4f68] hover:text-[#7b8098] transition-colors">
-                  {l}
-                </Link>
-              ))}
+          <div className="mkt-footer-bottom">
+            <small>© {new Date().getFullYear()} Infin8Content. All rights reserved.</small>
+            <div className="mkt-footer-legal">
+              <a href="#">Privacy Policy</a>
+              <a href="#">Terms of Service</a>
+              <a href="#">contact@infin8content.com</a>
             </div>
           </div>
         </div>

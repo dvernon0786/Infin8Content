@@ -1,11 +1,40 @@
 # BMAD Git Workflow Status
 
-**Date:** 2026-04-22  
-**Status:** 🔄 READY — homepage replacement ready to commit & merge
+**Date:** 2026-04-23  
+**Status:** ✅ UPDATED — Direct production deployment workflow documented
 
 ---
 
 ## Git Workflow Summary
+
+### **Key Rule:** Any push to `test-main-all` = Production deployment on Vercel. Any other branch = Preview deployment. No PRs needed for production — merge locally and push directly.
+
+### Complete Workflow
+
+```bash
+# 1. Start from clean test-main-all
+git checkout test-main-all
+git pull origin test-main-all
+
+# 2. Create topic branch
+git checkout -b fix/your-feature-name
+
+# 3. Make changes, then commit
+git add .
+git commit -m "fix: description of change"
+
+# 4. Push topic branch
+git push -u origin fix/your-feature-name
+
+# 5. Merge directly to test-main-all (triggers Production on Vercel)
+git checkout test-main-all
+git merge fix/your-feature-name
+git push origin test-main-all
+
+# Configure git identity (if needed)
+git config user.name "Damien"
+git config user.email "engagehubonline@gmail.com"
+```
 
 ### Branch Status
 
@@ -19,13 +48,13 @@
 - Status: ✅ PUSHED to remote (merged)
 - Commits: 1 commit (BMAD-FINAL-SCRATCHPAD.md)
 
-**fix/homepage-replacement** (Current)
-- Status: 🔄 READY TO COMMIT
-- Scope: Replace `app/page.tsx` with static HTML homepage via `app/route.ts`
-- Files: `public/homepage.html` (new), `app/route.ts` (new), `app/page.tsx` (deleted)
+**fix/marketing-pages-navigation** (Current)
+- Status: ✅ COMPLETED
+- Scope: Fixed navigation for all 8 marketing pages to use same header/footer as `/ai-content-writer`
+- Files: `MarketingShell.tsx`, `MktLayout.tsx`, `MarketingPageBody.tsx`, `(i8c-mkt)/layout.tsx`
 
-**test-main-all** (Current Working Branch)
-- Status: 🔄 Being updated — homepage replacement
+**test-main-all** (Production Branch)
+- Status: ✅ ACTIVE — Direct production deployment
 - Protected: Yes (requires status checks + PR to main)
 
 ---

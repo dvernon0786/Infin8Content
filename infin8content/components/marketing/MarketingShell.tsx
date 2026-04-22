@@ -153,9 +153,9 @@ export default function MarketingShell({ children }: { children: React.ReactNode
             <div className="nav-item">
               <span className="nav-link">Solutions <span className="chevron">▾</span></span>
               <div className="dropdown">
-                <a className="dropdown-link" href="#"><strong>SaaS</strong><small>Scale organic traffic for your product</small></a>
-                <a className="dropdown-link" href="#"><strong>Agencies</strong><small>Manage multiple clients at scale</small></a>
-                <a className="dropdown-link" href="#"><strong>E-Commerce</strong><small>Upgrade your store&apos;s content</small></a>
+                <a className="dropdown-link" href="/solutions/saas"><strong>SaaS</strong><small>Scale organic traffic for your product</small></a>
+                <a className="dropdown-link" href="/solutions/agency"><strong>Agencies</strong><small>Manage multiple clients at scale</small></a>
+                <a className="dropdown-link" href="/solutions/ecommerce"><strong>E-Commerce</strong><small>Upgrade your store&apos;s content</small></a>
                 <a className="dropdown-link" href="#"><strong>Enterprise</strong><small>SAML, SSO &amp; dedicated support</small></a>
               </div>
             </div>
@@ -163,10 +163,10 @@ export default function MarketingShell({ children }: { children: React.ReactNode
             <div className="nav-item">
               <span className="nav-link">Resources <span className="chevron">▾</span></span>
               <div className="dropdown">
-                <a className="dropdown-link" href="#">Case Studies</a>
-                <a className="dropdown-link" href="#">Learning &amp; Training</a>
+                <a className="dropdown-link" href="/resources/case-studies">Case Studies</a>
+                <a className="dropdown-link" href="/resources/learn">Learning &amp; Training</a>
                 <a className="dropdown-link" href="#">Help Docs</a>
-                <a className="dropdown-link" href="#">Blog</a>
+                <a className="dropdown-link" href="/resources/blog">Blog</a>
               </div>
             </div>
           </nav>
@@ -208,9 +208,9 @@ export default function MarketingShell({ children }: { children: React.ReactNode
             <div className="footer-col">
               <h4>Resources</h4>
               <a href="#">Pricing</a>
-              <a href="#">Blog</a>
+              <a href="/resources/blog">Blog</a>
               <a href="#">Help Docs</a>
-              <a href="#">Case Studies</a>
+              <a href="/resources/case-studies">Case Studies</a>
             </div>
             <div className="footer-col">
               <h4>Integrations</h4>
@@ -222,9 +222,9 @@ export default function MarketingShell({ children }: { children: React.ReactNode
             </div>
             <div className="footer-col">
               <h4>Solutions</h4>
-              <a href="#">SaaS</a>
-              <a href="#">Agencies</a>
-              <a href="#">E-Commerce</a>
+              <a href="/solutions/saas">SaaS</a>
+              <a href="/solutions/agency">Agencies</a>
+              <a href="/solutions/ecommerce">E-Commerce</a>
               <a href="#">Enterprise</a>
             </div>
           </div>

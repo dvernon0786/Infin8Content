@@ -1,7 +1,66 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-04-21  
-**Current Focus:** ARTICLE DETAIL PAGE — IMAGE & CONTENT FIX
+**Last Updated:** 2026-04-23  
+**Current Focus:** MARKETING PAGES NAVIGATION FIX
+
+## **🔥 MARKETING PAGES NAVIGATION FIX**
+
+### **✅ Achievement: Fixed navigation for all marketing pages**
+- **Status:** Complete. All 8 marketing pages now use the same global header/footer as `/ai-content-writer`.
+- **Branch:** `test-main-all`
+- **Deliverables:**
+  1. **Fixed `href="#"` links** in `MarketingShell.tsx` for Solutions and Resources navigation
+  2. **Rewrote `MktLayout.tsx`** to use the exact same HTML/CSS structure as `MarketingShell` (injected CSS with `mkt-` prefixes)
+  3. **Updated `(i8c-mkt)/layout.tsx`** to use `MktLayout` (Tailwind-compatible)
+  4. **Fixed `MarketingPageBody.tsx`** to handle `href="#"` gracefully (no `querySelector('#')` error)
+- **Files changed:**
+  - `infin8content/components/marketing/MarketingShell.tsx` (fixed 10 broken links)
+  - `infin8content/components/MktLayout.tsx` (complete rewrite)
+  - `infin8content/components/marketing/MarketingPageBody.tsx` (fixed querySelector error)
+  - `infin8content/app/(i8c-mkt)/layout.tsx` (uses MktLayout)
+- **Pages affected:**
+  - `/solutions/saas`, `/solutions/agency`, `/solutions/ecommerce`, `/solutions/local`
+  - `/resources/blog`, `/resources/case-studies`, `/resources/learn`
+  - `/call`
+- **Root causes:**
+  - Old marketing pages (`ai-content-writer`, `ai-seo-editor`) use `MarketingShell` with `href="#"` links
+  - New marketing pages (`(i8c-mkt)`) used different nav/footer (Tailwind vs CSS classes)
+  - `MarketingPageBody.tsx` tried `querySelector('#')` which throws DOMException
+
+---
+
+## **🔥 GIT WORKFLOW: DIRECT PRODUCTION DEPLOYMENT**
+
+### **Key Rule:** Any push to `test-main-all` = Production deployment on Vercel. Any other branch = Preview deployment. No PRs needed for production — merge locally and push directly.
+
+```bash
+# 1. Start from clean test-main-all
+git checkout test-main-all
+git pull origin test-main-all
+
+# 2. Create topic branch
+git checkout -b fix/your-feature-name
+
+# 3. Make changes, then commit
+git add .
+git commit -m "fix: description of change"
+
+# 4. Push topic branch
+git push -u origin fix/your-feature-name
+
+# 5. Merge directly to test-main-all (triggers Production on Vercel)
+git checkout test-main-all
+git merge fix/your-feature-name
+git push origin test-main-all
+
+# Configure git identity (if needed)
+git config user.name "Damien"
+git config user.email "engagehubonline@gmail.com"
+```
+
+---
+
+## **🔥 ARTICLE DETAIL PAGE — IMAGE & CONTENT FIX**
 
 ## **🔥 ARTICLE DETAIL PAGE — IMAGE & CONTENT DISPLAY FIX**
 
