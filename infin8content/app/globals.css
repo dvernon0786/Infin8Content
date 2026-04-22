@@ -16,7 +16,7 @@
   /* === UX DESIGN SYSTEM COLORS === */
 
   /* Core Brand Colors */
-  --brand-electric-blue: #0066FF;
+  --brand-electric-blue: #217CEB;
   --brand-infinite-purple: #4A42CC;
   --brand-deep-charcoal: #2C2C2E;
   --brand-soft-light-gray: #F4F4F6;
@@ -48,7 +48,6 @@
   --neutral-900: #1C1C1E;
 
   /* Gradients */
-  --gradient-brand: linear-gradient(to right, #217CEB, #4A42CC);
   --gradient-light: linear-gradient(to right, #EFF6FF, #FAF5FF);
   --gradient-vibrant: linear-gradient(135deg, #217CEB 0%, #4A42CC 50%, #332D85 100%);
   --gradient-mesh:
@@ -73,47 +72,13 @@
   --text-muted: #9aa3b0;
   --primary-tint: #e6f0ff;
 
-  /* Shadow System */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.12);
-  --shadow-brand: 0 10px 25px rgba(33, 124, 235, 0.15);
-  --shadow-purple: 0 10px 25px rgba(74, 66, 204, 0.15);
-
   /* Glow Effects */
   --glow-blue: 0 0 20px rgba(33, 124, 235, 0.3);
   --glow-purple: 0 0 20px rgba(74, 66, 204, 0.3);
 
-  /* Spacing System */
-  --space-xs: 0.5rem;
-  /* 8px */
-  --space-sm: 0.75rem;
-  /* 12px */
-  --space-md: 1rem;
-  /* 16px */
-  --space-lg: 1.5rem;
-  /* 24px */
-  --space-xl: 2rem;
-  /* 32px */
-  --space-2xl: 3rem;
-  /* 48px */
-  --space-3xl: 4rem;
-  /* 64px */
-  --space-4xl: 5rem;
-  /* 80px */
-
   /* Section Spacing */
   --section-padding: 5rem 0;
   --section-padding-mobile: 3rem 0;
-
-  /* Border Radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 24px;
-  --radius-full: 9999px;
 
   /* Typography Scale */
   --text-h1-desktop: clamp(3rem, 5vw, 4rem);
@@ -184,9 +149,6 @@
   --brand-gradient: linear-gradient(to right,
       #217CEB,
       #4A42CC);
-
-  /* === RADIUS === */
-  --radius-md: 0.5rem;
 
   /* UX Spec Required Colors */
   --color-text-primary: #2C2C2E;
@@ -283,6 +245,26 @@
   /* Canonical Button System Variables */
   --color-primary-blue: #217CEB;
   --color-primary-purple: #4A42CC;
+
+  /* ── MARKETING SITE TOKENS (dark theme — prefix --mkt- to avoid collisions) ── */
+  --mkt-bg: #08090d;
+  --mkt-surface: #0f1117;
+  --mkt-surface2: #13151e;
+  --mkt-border: rgba(255,255,255,0.07);
+  --mkt-accent: #4f6ef7;
+  --mkt-accent2: #7c3aed;
+  --mkt-accent-glow: rgba(79,110,247,0.18);
+  --mkt-accent-lite: rgba(79,110,247,0.12);
+  --mkt-text: #e8eaf2;
+  --mkt-muted: #7b8098;
+  --mkt-muted2: #4a4f68;
+  --mkt-white: #ffffff;
+  --mkt-green: #22c55e;
+  --mkt-font-display: 'Sora', sans-serif;
+  --mkt-font-body: 'DM Sans', sans-serif;
+  --mkt-radius: 14px;
+  --mkt-radius-sm: 8px;
+  --mkt-container: 1160px;
 }
 
 /* === DYNAMIC CONFIDENCE BARS === */
@@ -685,6 +667,12 @@
 }
 
 /* Workflow Dashboard Keyframes (Zero Drift Protocol) */
+/* Marketing hero fade-up entrance animation */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
 @keyframes i8c-pulse {
 
   0%,

@@ -100,14 +100,12 @@
       gap: 16px;
     }
     .brand {
-      font-family: var(--font-display);
-      font-weight: 800;
-      font-size: 20px;
-      letter-spacing: -0.5px;
-      color: var(--white);
+      display: inline-flex;
+      align-items: center;
       flex-shrink: 0;
+      line-height: 0;
     }
-    .brand span { color: var(--accent); }
+    .brand img { height: 32px; width: auto; display: block; }
 
     /* Nav */
     .main-nav { display: flex; align-items: center; gap: 4px; flex: 1; justify-content: center; }
@@ -674,7 +672,7 @@
   <!-- HEADER -->
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="#">Infin8<span>Content</span></a>
+      <a class="brand" href="#"><img src="/infin8content_logo.png" alt="Infin8Content"></a>
 
       <nav class="main-nav" id="main-nav">
         <!-- Features -->
@@ -1127,7 +1125,7 @@
     <div class="container">
       <div class="footer-top">
         <div class="footer-brand">
-          <a class="brand" href="#">Infin8<span>Content</span></a>
+          <a class="brand" href="#"><img src="/infin8content_logo.png" alt="Infin8Content"></a>
           <p>AI content workflows for modern teams and agencies.</p>
           <div class="footer-founders">
             <div class="f-founder">F1</div>
