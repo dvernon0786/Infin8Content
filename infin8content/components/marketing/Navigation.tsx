@@ -7,10 +7,11 @@ import MegaMenu, { type MegaMenuItem } from "./navigation/MegaMenu";
 import clsx from "clsx";
 
 const FEATURES: MegaMenuItem[] = [
-  { label: "AI Article Generator", description: "Research-backed, E-E-A-T optimised long-form articles", href: "/features/ai-article-generator" },
-  { label: "Brand Voice Engine", description: "Capture your tone and apply it consistently at scale", href: "/features/brand-voice-engine" },
-  { label: "Research Assistant", description: "Live web research grounded in real citations", href: "/features/research-assistant" },
-  { label: "SEO Optimisation", description: "Schema, keyword density, and E-E-A-T engineered in", href: "/features/seo-optimization" },
+  { label: "AI Content Writer", description: "Rank-ready, SEO-optimised articles in 30 seconds", href: "/ai-content-writer" },
+  { label: "AI SEO Agent", description: "Automatically detect and fix technical SEO issues", href: "/ai-seo-agent" },
+  { label: "AI SEO Editor", description: "Optimise and edit your content for SEO", href: "/ai-seo-editor" },
+  { label: "AutoPublish", description: "Automate your entire content pipeline end-to-end", href: "/autopublish" },
+  { label: "LLM Tracker", description: "Monitor your brand visibility across AI models", href: "/llm-tracker" },
 ];
 
 const SOLUTIONS: MegaMenuItem[] = [
