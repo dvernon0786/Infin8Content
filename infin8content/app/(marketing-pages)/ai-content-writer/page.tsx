@@ -1,13 +1,95 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import MarketingPageBody from '@/components/marketing/MarketingPageBody';
 
 export const metadata: Metadata = {
   title: 'AI Content Writer — Rank-Ready Articles in 30 Seconds | Infin8Content',
-  description: 'Write rank-ready, SEO-optimised articles in 30 seconds with Infin8Content AI Content Writer.',
 };
 
-const CSS = `
-/* ===== ARTICLE PREVIEW MOCKUP ===== */
+const css = `*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #08090d;
+      --surface: #0f1117;
+      --surface2: #13151e;
+      --border: rgba(255,255,255,0.07);
+      --accent: #4f6ef7;
+      --accent-glow: rgba(79,110,247,0.18);
+      --text: #e8eaf2;
+      --muted: #7b8098;
+      --muted2: #4a4f68;
+      --white: #ffffff;
+      --green: #22c55e;
+      --font-display: 'Sora', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --container: 1160px;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    a { color: inherit; text-decoration: none; transition: color .2s; }
+    img { max-width: 100%; display: block; }
+    ul { list-style: none; }
+    .container { max-width: var(--container); margin: 0 auto; padding: 0 28px; }
+
+    /* ===== PROMO BAR ===== */
+    .promo-bar {
+      background: linear-gradient(90deg,#1a1060,#0f1340 50%,#1a1060);
+      border-bottom: 1px solid rgba(79,110,247,.2);
+      text-align: center; padding: 10px 20px;
+      font-size: 13px; font-family: var(--font-display); font-weight: 500; color: var(--text);
+      position: relative; z-index: 50;
+    }
+    .time-unit { background: rgba(79,110,247,.2); border: 1px solid rgba(79,110,247,.3); border-radius: 4px; padding: 2px 6px; font-weight: 700; color: #a5b4fc; font-variant-numeric: tabular-nums; min-width: 28px; display: inline-block; text-align: center; }
+    .deal-link { background: var(--accent); color: #fff; border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 600; margin-left: 10px; }
+
+    /* ===== HEADER ===== */
+    .site-header { position: sticky; top: 0; z-index: 40; background: rgba(8,9,13,.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; gap: 16px; }
+    .brand { font-family: var(--font-display); font-weight: 800; font-size: 20px; letter-spacing: -.5px; color: var(--white); flex-shrink: 0; }
+    .brand span { color: var(--accent); }
+    .main-nav { display: flex; align-items: center; gap: 4px; flex: 1; justify-content: center; }
+    .nav-item { position: relative; }
+    .nav-link { display: flex; align-items: center; gap: 4px; padding: 7px 12px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--muted); transition: all .2s; cursor: pointer; white-space: nowrap; }
+    .nav-link:hover { color: var(--white); background: rgba(255,255,255,.05); }
+    .nav-link .chevron { font-size: 10px; transition: transform .2s; }
+    .nav-item:hover .chevron { transform: rotate(180deg); }
+    .dropdown { display: none; position: absolute; top: 100%; left: 0; background: #12141f; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 8px 8px; min-width: 230px; box-shadow: 0 20px 60px rgba(0,0,0,.5); z-index: 100; }
+    .nav-item:hover .dropdown { display: block; }
+    .dropdown-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); padding: 4px 10px; margin-bottom: 2px; }
+    .dropdown-link { display: block; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13.5px; color: var(--muted); transition: all .15s; }
+    .dropdown-link:hover { color: var(--white); background: rgba(255,255,255,.05); }
+    .dropdown-link strong { display: block; color: var(--text); font-size: 13.5px; margin-bottom: 1px; }
+    .dropdown-link small { font-size: 12px; color: var(--muted); }
+    .dropdown hr { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
+    .header-cta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .btn-link { font-size: 14px; font-weight: 500; color: var(--muted); padding: 7px 12px; border-radius: var(--radius-sm); transition: all .2s; }
+    .btn-link:hover { color: var(--white); background: rgba(255,255,255,.05); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: var(--font-display); font-weight: 600; border-radius: var(--radius-sm); transition: all .2s; cursor: pointer; border: none; text-decoration: none; }
+    .btn-primary { background: var(--accent); color: #fff; padding: 9px 18px; font-size: 14px; box-shadow: 0 0 20px rgba(79,110,247,.3); }
+    .btn-primary:hover { background: #3d5df5; box-shadow: 0 0 30px rgba(79,110,247,.5); transform: translateY(-1px); }
+    .btn-primary-lg { padding: 14px 30px; font-size: 16px; border-radius: 10px; }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 9px 18px; font-size: 14px; }
+    .btn-ghost:hover { border-color: rgba(255,255,255,.2); color: var(--white); }
+    .nav-toggle { display: none; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 7px 10px; font-size: 18px; cursor: pointer; }
+
+    /* ===== HERO ===== */
+    .hero { padding: 80px 0 60px; text-align: center; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%); width: 700px; height: 600px; background: radial-gradient(circle, rgba(79,110,247,.13) 0%, transparent 70%); pointer-events: none; }
+    .hero-eyebrow { display: inline-flex; align-items: center; gap: 6px; background: rgba(79,110,247,.1); border: 1px solid rgba(79,110,247,.25); border-radius: 20px; padding: 5px 14px; font-size: 13px; font-weight: 500; color: #a5b4fc; margin-bottom: 22px; }
+    .hero h1 { font-family: var(--font-display); font-size: clamp(34px,5.5vw,60px); font-weight: 800; line-height: 1.06; letter-spacing: -1.5px; color: var(--white); max-width: 800px; margin: 0 auto 18px; }
+    .hero h1 .high { color: var(--accent); font-style: italic; }
+    .hero .sub { font-size: 18px; color: var(--muted); max-width: 520px; margin: 0 auto 30px; line-height: 1.65; }
+    .hero-actions { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+    .social-proof { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13.5px; color: var(--muted); margin-bottom: 14px; }
+    .avatars { display: flex; }
+    .avatars .av { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--bg); background: var(--surface2); margin-left: -8px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--accent); }
+    .avatars .av:first-child { margin-left: 0; }
+    .social-proof strong { color: var(--white); }
+    .hero-perks { display: flex; align-items: center; justify-content: center; gap: 20px; font-size: 13px; color: var(--muted); margin-bottom: 52px; flex-wrap: wrap; }
+    .hero-perks span { display: flex; align-items: center; gap: 6px; }
+    .hero-perks span::before { content: '✓'; color: var(--green); font-weight: 700; }
+
+    /* ===== ARTICLE PREVIEW MOCKUP ===== */
     .article-preview-wrap { max-width: 880px; margin: 0 auto; position: relative; }
     .article-preview-wrap::after { content: ''; position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); width: 70%; height: 80px; background: radial-gradient(ellipse, rgba(79,110,247,.22) 0%, transparent 70%); filter: blur(20px); pointer-events: none; }
     .browser-frame { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04); }
@@ -41,18 +123,20 @@ const CSS = `
     .mock-content table.art-table td { padding: 5px 10px; border: 1px solid var(--border); color: var(--muted); }
     .mock-content table.art-table tr:nth-child(even) td { background: rgba(255,255,255,.02); }
     .mock-content .img-placeholder { width: 100%; height: 90px; background: linear-gradient(135deg, var(--surface2), #0d1228); border-radius: 8px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted2); margin: 12px 0; }
-
-    /* article tag highlights */
     .mock-content .kw-highlight { background: rgba(79,110,247,.15); border-radius: 3px; padding: 0 3px; color: #a5b4fc; }
     .mock-content .link-highlight { color: var(--accent); border-bottom: 1px solid rgba(79,110,247,.4); cursor: pointer; }
-
-    /* overlay badges on mockup */
     .mockup-badges { display: flex; gap: 8px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
     .m-badge { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
     .m-badge .icon { font-size: 14px; }
     .m-badge strong { color: var(--white); }
 
-    /* ===== FEATURE HIGHLIGHTS (4-grid below article) ===== */
+    /* ===== SECTIONS SHARED ===== */
+    section { padding: 90px 0; }
+    .section-label { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); margin-bottom: 14px; }
+    .section-title { font-family: var(--font-display); font-size: clamp(26px, 3.8vw, 42px); font-weight: 700; letter-spacing: -.6px; color: var(--white); margin-bottom: 14px; line-height: 1.15; }
+    .section-sub { font-size: 16px; color: var(--muted); line-height: 1.65; max-width: 600px; margin: 0 auto 50px; text-align: center; }
+
+    /* ===== HIGHLIGHTS ===== */
     .highlights-section { background: linear-gradient(180deg, transparent, var(--surface2) 20%, var(--surface2) 80%, transparent); }
     .highlights-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
     .highlight-item { background: var(--surface); padding: 28px 24px; }
@@ -60,7 +144,7 @@ const CSS = `
     .highlight-item h4 { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--white); margin-bottom: 8px; }
     .highlight-item p { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
 
-    /* ===== TABBED FEATURE SECTION ===== */
+    /* ===== TABBED FEATURES ===== */
     .tabbed-section { padding: 90px 0; }
     .tabbed-section .section-title { text-align: center; margin-bottom: 10px; }
     .tabbed-section .section-sub { text-align: center; margin-bottom: 0; }
@@ -81,8 +165,6 @@ const CSS = `
     .tab-img-inner .ti-icon { font-size: 40px; opacity: .35; }
     .tab-img-inner .ti-label { font-size: 13px; color: var(--muted2); font-family: var(--font-display); text-align: center; padding: 0 20px; }
     .tab-img .glow { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at 60% 30%, rgba(79,110,247,.08) 0%, transparent 60%); }
-
-    /* Mini icon grid below tabs */
     .mini-icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 40px; }
     .mini-icon-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 16px; transition: all .2s; }
     .mini-icon-card:hover { border-color: rgba(79,110,247,.3); transform: translateY(-2px); }
@@ -90,7 +172,7 @@ const CSS = `
     .mini-icon-card h5 { font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--white); margin-bottom: 6px; }
     .mini-icon-card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
 
-    /* ===== CUSTOM IMAGES SECTION ===== */
+    /* ===== CUSTOM IMAGES ===== */
     .custom-images-section { padding: 90px 0; }
     .ci-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
     .ci-copy .section-title { text-align: left; }
@@ -112,7 +194,6 @@ const CSS = `
     .step-img { width: 100%; height: 100px; border-radius: 8px; background: linear-gradient(135deg, var(--surface2), #0d1228); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 28px; opacity: .5; margin-bottom: 16px; }
     .step-card h4 { font-family: var(--font-display); font-size: 14.5px; font-weight: 600; color: var(--white); margin-bottom: 8px; line-height: 1.3; }
     .step-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
-    .step-connector { display: none; }
 
     /* ===== KNOWLEDGE BASE ===== */
     .kb-section { padding: 90px 0; }
@@ -148,6 +229,25 @@ const CSS = `
     .cta-mock .cm-icon { font-size: 32px; opacity: .3; }
     .cta-mock .cm-label { font-size: 12px; color: var(--muted2); font-family: var(--font-display); }
 
+    /* ===== FOOTER ===== */
+    .site-footer { border-top: 1px solid var(--border); padding: 60px 0 40px; }
+    .footer-top { display: grid; grid-template-columns: 220px repeat(5,1fr); gap: 40px; margin-bottom: 50px; }
+    .footer-brand .brand { display: block; margin-bottom: 12px; }
+    .footer-brand p { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+    .footer-col h4 { font-family: var(--font-display); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); margin-bottom: 14px; }
+    .footer-col a { display: block; font-size: 13.5px; color: var(--muted); margin-bottom: 10px; transition: color .2s; }
+    .footer-col a:hover { color: var(--white); }
+    .footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 24px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
+    .footer-bottom small { font-size: 12.5px; color: var(--muted2); }
+    .footer-legal { display: flex; gap: 16px; }
+    .footer-legal a { font-size: 12.5px; color: var(--muted2); }
+    .footer-legal a:hover { color: var(--muted); }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .fade-up { opacity:0; animation: fadeUp .6s ease forwards; }
+    .fade-up:nth-child(1){animation-delay:.05s}.fade-up:nth-child(2){animation-delay:.15s}.fade-up:nth-child(3){animation-delay:.25s}.fade-up:nth-child(4){animation-delay:.35s}.fade-up:nth-child(5){animation-delay:.45s}
+
     /* ===== RESPONSIVE ===== */
     @media(max-width:1024px){
       .footer-top{grid-template-columns:1fr 1fr 1fr;}
@@ -173,17 +273,15 @@ const CSS = `
       .hero h1{font-size:30px;}
     }
     .main-nav.open{display:flex!important;flex-direction:column;position:fixed;top:62px;left:0;right:0;background:rgba(8,9,13,.97);backdrop-filter:blur(12px);padding:20px;border-bottom:1px solid var(--border);gap:4px;z-index:39;}
-    .main-nav.open .dropdown{display:none!important;}
-`;
+    .main-nav.open .dropdown{display:none!important;}`;
 
-const HTML = `
-<!-- PROMO BAR -->
+const html = `<!-- PROMO BAR -->
 <div class="promo-bar">
   ✨ &nbsp;New Year Offer: <strong style="color:#a5b4fc;margin:0 6px;">40% Off</strong> on Yearly Plans &nbsp;
-  <span class="time-unit js-ph">08</span>hrs
-  <span class="time-unit js-pm">34</span>min
-  <span class="time-unit js-ps">12</span>sec
-  <a class="deal-link" href="#">Get Deal</a>
+  <span class="time-unit" id="ph">08</span>hrs
+  <span class="time-unit" id="pm">34</span>min
+  <span class="time-unit" id="ps">12</span>sec
+  <a class="deal-link" href="#pricing">Get Deal</a>
 </div>
 
 <!-- HEADER -->
@@ -195,16 +293,13 @@ const HTML = `
         <span class="nav-link">Features <span class="chevron">▾</span></span>
         <div class="dropdown">
           <div class="dropdown-label">AI Writing</div>
-          <a class="dropdown-link" href="#">AI Content Writer</a>
-          <a class="dropdown-link" href="#">AI Brief Generator</a>
-          <a class="dropdown-link" href="#">News Writer</a>
-          <a class="dropdown-link" href="#">Video to Blog Post</a>
+          <a class="dropdown-link" href="/ai-content-writer">AI Content Writer</a>
+          <a class="dropdown-link" href="/ai-seo-editor">AI SEO Editor</a>
           <hr>
-          <div class="dropdown-label">Automation</div>
-          <a class="dropdown-link" href="#">AutoPublish</a>
-          <a class="dropdown-link" href="#">Workflow Orchestration</a>
-          <a class="dropdown-link" href="#">SEO Reports</a>
-          <a class="dropdown-link" href="#">Analytics Tracker</a>
+          <div class="dropdown-label">SEO &amp; Automation</div>
+          <a class="dropdown-link" href="/ai-seo-agent">AI SEO Agent</a>
+          <a class="dropdown-link" href="/autopublish">AutoPublish</a>
+          <a class="dropdown-link" href="/llm-tracker">LLM Tracker</a>
         </div>
       </div>
       <div class="nav-item">
@@ -213,15 +308,15 @@ const HTML = `
           <a class="dropdown-link" href="#"><strong>SaaS</strong><small>Scale organic traffic for your product</small></a>
           <a class="dropdown-link" href="#"><strong>Agencies</strong><small>Manage multiple clients at scale</small></a>
           <a class="dropdown-link" href="#"><strong>E-Commerce</strong><small>Upgrade your store's content</small></a>
-          <a class="dropdown-link" href="#"><strong>Enterprise</strong><small>SAML, SSO & dedicated support</small></a>
+          <a class="dropdown-link" href="#"><strong>Enterprise</strong><small>SAML, SSO &amp; dedicated support</small></a>
         </div>
       </div>
-      <a class="nav-link" href="#">Pricing</a>
+      <a class="nav-link" href="#pricing">Pricing</a>
       <div class="nav-item">
         <span class="nav-link">Resources <span class="chevron">▾</span></span>
         <div class="dropdown">
           <a class="dropdown-link" href="#">Case Studies</a>
-          <a class="dropdown-link" href="#">Learning & Training</a>
+          <a class="dropdown-link" href="#">Learning &amp; Training</a>
           <a class="dropdown-link" href="#">Help Docs</a>
           <a class="dropdown-link" href="#">Blog</a>
         </div>
@@ -231,13 +326,13 @@ const HTML = `
       <a class="btn-link" href="#">Login</a>
       <a class="btn btn-primary" href="#">Get Started</a>
     </div>
-    <button class="nav-toggle" id="nav-toggle">☰</button>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu">☰</button>
   </div>
 </header>
 
 <main>
 
-  <!-- ===== HERO ===== -->
+  <!-- HERO -->
   <section class="hero">
     <div class="container">
       <div class="hero-eyebrow fade-up">✍️ &nbsp;AI Content Writer</div>
@@ -250,7 +345,7 @@ const HTML = `
         <div class="avatars">
           <div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div>
         </div>
-        Trusted by <strong>&nbsp;10,000+&nbsp;</strong> Marketers & Agencies
+        Trusted by <strong>&nbsp;10,000+&nbsp;</strong> Marketers &amp; Agencies
       </div>
       <div class="hero-perks fade-up">
         <span>"Ready to rank"</span>
@@ -258,7 +353,6 @@ const HTML = `
         <span>Plagiarism Free</span>
       </div>
 
-      <!-- ARTICLE PREVIEW MOCKUP -->
       <div class="article-preview-wrap fade-up">
         <div class="browser-frame">
           <div class="browser-bar">
@@ -266,7 +360,6 @@ const HTML = `
             <div class="browser-url">infin8content.com/editor — The Future of AI Content Marketing</div>
           </div>
           <div class="article-mock">
-            <!-- Sidebar: TOC -->
             <div class="mock-sidebar">
               <div class="site-label">Your Blog</div>
               <div class="domain-badge">📝 &nbsp;yourwebsite.com</div>
@@ -281,7 +374,6 @@ const HTML = `
               <div class="toc-item">Case Studies</div>
               <div class="toc-item">FAQ</div>
             </div>
-            <!-- Main content -->
             <div class="mock-content">
               <div class="art-tag">AI-Generated · SEO Optimized</div>
               <h2>How AI Content Marketing is Transforming Modern SEO Strategy</h2>
@@ -296,7 +388,7 @@ const HTML = `
                 <li>AI-powered content creation reduces publishing time by <span class="kw-highlight">80%</span> without sacrificing quality</li>
                 <li>Brand voice training ensures every article sounds authentically human, not robotic</li>
                 <li>One-click publish to <span class="link-highlight">WordPress, Shopify, Ghost</span>, and 10+ other platforms</li>
-                <li>Built-in internal & external linking boosts domain authority automatically</li>
+                <li>Built-in internal &amp; external linking boosts domain authority automatically</li>
               </ul>
               <p>The shift to <span class="kw-highlight">AI-powered content workflows</span> is no longer optional for competitive marketers. Teams using Infin8Content report publishing <strong>10x more content</strong> with the same headcount — while simultaneously improving quality scores and organic rankings.</p>
               <div class="art-quote">"Infin8Content cut our time-to-publish by 80% and our organic traffic has tripled in 60 days." — Head of Content, Nova Media</div>
@@ -322,10 +414,10 @@ const HTML = `
     </div>
   </section>
 
-  <!-- ===== HIGHLIGHTS ===== -->
+  <!-- HIGHLIGHTS -->
   <section class="highlights-section" style="padding:70px 0;">
     <div class="container">
-      <p class="section-label" style="justify-content:center;margin-bottom:36px;">✦ &nbsp;Feature-Rich, Factual & SEO-Optimized Articles</p>
+      <p class="section-label" style="justify-content:center;margin-bottom:36px;">✦ &nbsp;Feature-Rich, Factual &amp; SEO-Optimized Articles</p>
       <div class="highlights-grid">
         <div class="highlight-item">
           <div class="h-icon">✅</div>
@@ -334,8 +426,8 @@ const HTML = `
         </div>
         <div class="highlight-item">
           <div class="h-icon">🖼️</div>
-          <h4>Relevant Images, Videos & Links</h4>
-          <p>All articles include a featured image, in-article images, YouTube embeds, and internal & external links.</p>
+          <h4>Relevant Images, Videos &amp; Links</h4>
+          <p>All articles include a featured image, in-article images, YouTube embeds, and internal &amp; external links.</p>
         </div>
         <div class="highlight-item">
           <div class="h-icon">📐</div>
@@ -351,7 +443,7 @@ const HTML = `
     </div>
   </section>
 
-  <!-- ===== TABBED FEATURES ===== -->
+  <!-- TABBED FEATURES -->
   <section class="tabbed-section">
     <div class="container">
       <p class="section-label" style="justify-content:center;">⚡ &nbsp;The AI Content Writer Features</p>
@@ -373,95 +465,46 @@ const HTML = `
           </button>
           <button class="tab-btn" onclick="switchTab(this,'tab-links')">
             <div class="tb-icon">🔗</div>
-            <div class="tb-text"><h5>Relevant Links</h5><p>Internal & external links auto-inserted</p></div>
+            <div class="tb-text"><h5>Relevant Links</h5><p>Internal &amp; external links auto-inserted</p></div>
           </button>
           <button class="tab-btn" onclick="switchTab(this,'tab-toc')">
             <div class="tb-icon">📋</div>
             <div class="tb-text"><h5>Table of Contents</h5><p>Thoughtful outline for every article</p></div>
           </button>
         </div>
-
         <div>
           <div class="tab-panel active" id="tab-formatting">
-            <div class="tab-img">
-              <div class="tab-img-inner"><div class="ti-icon">📐</div><div class="ti-label">Formatting Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div></div>
-              <div class="glow"></div>
-            </div>
+            <div class="tab-img"><div class="tab-img-inner"><div class="ti-icon">📐</div><div class="ti-label">Formatting Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div></div><div class="glow"></div></div>
           </div>
           <div class="tab-panel" id="tab-images">
-            <div class="tab-img">
-              <div class="tab-img-inner"><div class="ti-icon">🖼️</div><div class="ti-label">Image Generation Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div></div>
-              <div class="glow"></div>
-            </div>
+            <div class="tab-img"><div class="tab-img-inner"><div class="ti-icon">🖼️</div><div class="ti-label">Image Generation Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div></div><div class="glow"></div></div>
           </div>
           <div class="tab-panel" id="tab-videos">
-            <div class="tab-img">
-              <div class="tab-img-inner"><div class="ti-icon">📺</div><div class="ti-label">Video Embed Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div></div>
-              <div class="glow"></div>
-            </div>
+            <div class="tab-img"><div class="tab-img-inner"><div class="ti-icon">📺</div><div class="ti-label">Video Embed Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div></div><div class="glow"></div></div>
           </div>
           <div class="tab-panel" id="tab-links">
-            <div class="tab-img">
-              <div class="tab-img-inner"><div class="ti-icon">🔗</div><div class="ti-label">Linking Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div></div>
-              <div class="glow"></div>
-            </div>
+            <div class="tab-img"><div class="tab-img-inner"><div class="ti-icon">🔗</div><div class="ti-label">Linking Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div></div><div class="glow"></div></div>
           </div>
           <div class="tab-panel" id="tab-toc">
-            <div class="tab-img">
-              <div class="tab-img-inner"><div class="ti-icon">📋</div><div class="ti-label">Table of Contents Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div></div>
-              <div class="glow"></div>
-            </div>
+            <div class="tab-img"><div class="tab-img-inner"><div class="ti-icon">📋</div><div class="ti-label">Table of Contents Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div></div><div class="glow"></div></div>
           </div>
         </div>
       </div>
 
-      <!-- Mini icon grid -->
       <div class="mini-icons">
-        <div class="mini-icon-card">
-          <div class="mic-icon">📝</div>
-          <h5>Content</h5>
-          <p>Well-crafted content in seconds with the power of AI and your brand knowledge</p>
-        </div>
-        <div class="mini-icon-card">
-          <div class="mic-icon">🧠</div>
-          <h5>Knowledge</h5>
-          <p>Brand-tailored, with your own tone of voice — without sounding AI-generated</p>
-        </div>
-        <div class="mini-icon-card">
-          <div class="mic-icon">✏️</div>
-          <h5>Formatting</h5>
-          <p>Multiple formatting tools to facilitate editing and ensure a professional output</p>
-        </div>
-        <div class="mini-icon-card">
-          <div class="mic-icon">🖼️</div>
-          <h5>Images</h5>
-          <p>In-article images to increase relevancy, visual appeal, and reader UX</p>
-        </div>
-        <div class="mini-icon-card">
-          <div class="mic-icon">📺</div>
-          <h5>Videos</h5>
-          <p>Relevant in-article videos automatically embedded into your content</p>
-        </div>
-        <div class="mini-icon-card">
-          <div class="mic-icon">🔗</div>
-          <h5>Internal Linking</h5>
-          <p>Automatically links internally to other relevant pages on your site</p>
-        </div>
-        <div class="mini-icon-card">
-          <div class="mic-icon">🌐</div>
-          <h5>External Linking</h5>
-          <p>Automatically builds credibility with links to authoritative external sources</p>
-        </div>
-        <div class="mini-icon-card">
-          <div class="mic-icon">⚙️</div>
-          <h5>Structure</h5>
-          <p>Fully customizable article structure — templates, CTAs, FAQs, and more</p>
-        </div>
+        <div class="mini-icon-card"><div class="mic-icon">📝</div><h5>Content</h5><p>Well-crafted content in seconds with the power of AI and your brand knowledge</p></div>
+        <div class="mini-icon-card"><div class="mic-icon">🧠</div><h5>Knowledge</h5><p>Brand-tailored, with your own tone of voice — without sounding AI-generated</p></div>
+        <div class="mini-icon-card"><div class="mic-icon">✏️</div><h5>Formatting</h5><p>Multiple formatting tools to facilitate editing and ensure a professional output</p></div>
+        <div class="mini-icon-card"><div class="mic-icon">🖼️</div><h5>Images</h5><p>In-article images to increase relevancy, visual appeal, and reader UX</p></div>
+        <div class="mini-icon-card"><div class="mic-icon">📺</div><h5>Videos</h5><p>Relevant in-article videos automatically embedded into your content</p></div>
+        <div class="mini-icon-card"><div class="mic-icon">🔗</div><h5>Internal Linking</h5><p>Automatically links internally to other relevant pages on your site</p></div>
+        <div class="mini-icon-card"><div class="mic-icon">🌐</div><h5>External Linking</h5><p>Automatically builds credibility with links to authoritative external sources</p></div>
+        <div class="mini-icon-card"><div class="mic-icon">⚙️</div><h5>Structure</h5><p>Fully customizable article structure — templates, CTAs, FAQs, and more</p></div>
       </div>
     </div>
   </section>
 
-  <!-- ===== CUSTOM IMAGES ===== -->
+  <!-- CUSTOM IMAGES -->
   <section class="custom-images-section">
     <div class="container">
       <div class="ci-grid">
@@ -486,43 +529,42 @@ const HTML = `
     </div>
   </section>
 
-  <!-- ===== HOW IT WORKS ===== -->
+  <!-- HOW IT WORKS -->
   <section class="how-section">
     <div class="container">
       <p class="section-label" style="justify-content:center;">🔧 &nbsp;How It Works</p>
       <h2 class="section-title" style="text-align:center;">How our AI writer works</h2>
       <p class="section-sub">Input information about your business or product, and let Infin8Content do the rest — from brief to published post.</p>
-
       <div class="how-grid">
         <div class="step-card">
           <div class="step-num">1</div>
           <div class="step-img">🔍</div>
           <h4>Generate Articles from Titles, Keywords or a Description</h4>
-          <p>Generate articles based on keywords you want to rank for, or just describe your business & niche. You can input specific titles, or let AI suggest the best ones.</p>
+          <p>Generate articles based on keywords you want to rank for, or just describe your business &amp; niche. You can input specific titles, or let AI suggest the best ones.</p>
         </div>
         <div class="step-card">
           <div class="step-num">2</div>
           <div class="step-img">✏️</div>
-          <h4>Customize the Outline & Add a CTA</h4>
+          <h4>Customize the Outline &amp; Add a CTA</h4>
           <p>Set article length and take full control of the headings. Add headings manually and let AI generate the rest contextually. Add CTAs, Key Takeaways, FAQs, and custom sections.</p>
         </div>
         <div class="step-card">
           <div class="step-num">3</div>
           <div class="step-img">🌍</div>
-          <h4>Language, Tonality & Geo-Targeting</h4>
+          <h4>Language, Tonality &amp; Geo-Targeting</h4>
           <p>Write content in 150+ languages. Choose formality, point of view, and tonality — from factual to creative. Apply geo-targeting for location-specific content.</p>
         </div>
         <div class="step-card">
           <div class="step-num">4</div>
           <div class="step-img">🚀</div>
-          <h4>Generate & Publish Multiple Articles at Once</h4>
+          <h4>Generate &amp; Publish Multiple Articles at Once</h4>
           <p>Choose how many articles to generate in a single run. Download them as a zip file or publish in one click directly to your website or CMS.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ===== KNOWLEDGE BASE ===== -->
+  <!-- KNOWLEDGE BASE -->
   <section class="kb-section">
     <div class="container">
       <div class="kb-grid">
@@ -533,24 +575,15 @@ const HTML = `
           <div class="kb-steps">
             <div class="kb-step">
               <div class="kb-step-num">1</div>
-              <div>
-                <h4>Upload Assets</h4>
-                <p>Upload your website, videos, text documents, product docs, or any available business information. We'll analyse everything.</p>
-              </div>
+              <div><h4>Upload Assets</h4><p>Upload your website, videos, text documents, product docs, or any available business information. We'll analyse everything.</p></div>
             </div>
             <div class="kb-step">
               <div class="kb-step-num">2</div>
-              <div>
-                <h4>Learning Phase</h4>
-                <p>Our AI enters a learning phase, loading your assets and refining its understanding of your brand voice, expertise, and context.</p>
-              </div>
+              <div><h4>Learning Phase</h4><p>Our AI enters a learning phase, loading your assets and refining its understanding of your brand voice, expertise, and context.</p></div>
             </div>
             <div class="kb-step">
               <div class="kb-step-num">3</div>
-              <div>
-                <h4>Tailored Articles</h4>
-                <p>Generate articles that reflect your business's unique knowledge and context — content that sounds like you wrote it, not an AI.</p>
-              </div>
+              <div><h4>Tailored Articles</h4><p>Generate articles that reflect your business's unique knowledge and context — content that sounds like you wrote it, not an AI.</p></div>
             </div>
           </div>
         </div>
@@ -559,7 +592,7 @@ const HTML = `
             <div class="kb-upload-ui">
               <div class="ku-icon">☁️</div>
               <h5>Upload Your Knowledge Base</h5>
-              <p>Drag & drop your files, paste a URL, or connect your CMS</p>
+              <p>Drag &amp; drop your files, paste a URL, or connect your CMS</p>
             </div>
             <div class="kb-file-chips">
               <div class="kb-chip"><span class="chip-dot"></span> Website scanned</div>
@@ -577,7 +610,7 @@ const HTML = `
     </div>
   </section>
 
-  <!-- ===== FINAL CTA ===== -->
+  <!-- FINAL CTA -->
   <section class="final-cta">
     <div class="container">
       <h2>Scale more content.<br>Do less work.</h2>
@@ -609,17 +642,14 @@ const HTML = `
       </div>
       <div class="footer-col">
         <h4>AI Writing</h4>
-        <a href="#">AI Content Writer</a>
-        <a href="#">AI Brief Generator</a>
-        <a href="#">News Writer</a>
-        <a href="#">Video to Blog</a>
+        <a href="/ai-content-writer">AI Content Writer</a>
+        <a href="/ai-seo-editor">AI SEO Editor</a>
       </div>
       <div class="footer-col">
-        <h4>Automation</h4>
-        <a href="#">AutoPublish</a>
-        <a href="#">Workflow Orchestration</a>
-        <a href="#">SEO Reports</a>
-        <a href="#">Analytics Tracker</a>
+        <h4>SEO &amp; Automation</h4>
+        <a href="/ai-seo-agent">AI SEO Agent</a>
+        <a href="/autopublish">AutoPublish</a>
+        <a href="/llm-tracker">LLM Tracker</a>
       </div>
       <div class="footer-col">
         <h4>Resources</h4>
@@ -646,7 +676,7 @@ const HTML = `
       </div>
     </div>
     <div class="footer-bottom">
-      <small>© <span class="js-year"></span> Infin8Content. All rights reserved.</small>
+      <small>© <span id="year"></span> Infin8Content. All rights reserved.</small>
       <div class="footer-legal">
         <a href="#">Privacy Policy</a>
         <a href="#">Terms of Service</a>
@@ -654,9 +684,8 @@ const HTML = `
       </div>
     </div>
   </div>
-</footer>
-`;
+</footer>`;
 
 export default function AIContentWriterPage() {
-  return <MarketingPageBody html={HTML} css={CSS} />;
+  return <MarketingPageBody css={css} html={html} />;
 }
