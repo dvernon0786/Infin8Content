@@ -1,12 +1,12 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>AI SEO Content Editor & Optimizer | Infin8Content</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
-  <style>
+import { Metadata } from 'next';
+import MarketingPageBody from '@/components/marketing/MarketingPageBody';
+
+export const metadata: Metadata = {
+  title: 'AI SEO Content Editor & Optimizer | Infin8Content',
+  description: 'Optimise and edit your content for SEO with the Infin8Content AI SEO Editor.',
+};
+
+const CSS = `
 /* ===================== RESET & TOKENS ===================== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -217,10 +217,7 @@ ul { list-style: none; }
 @media(max-width:600px){ .hero h1{font-size:28px;} .feat-cards{grid-template-columns:1fr;} }
 .main-nav.open { display:flex!important; flex-direction:column; position:fixed; top:62px; left:0; right:0; background:rgba(8,9,13,.97); backdrop-filter:blur(12px); padding:20px; border-bottom:1px solid var(--border); gap:4px; z-index:39; }
 .main-nav.open .dropdown{display:none!important;}
-
-  </style>
-  <style>
-    /* ── PAGE-SPECIFIC ── */
+/* ── PAGE-SPECIFIC ── */
     /* Editor mockup */
     .editor-wrap { max-width: 960px; margin: 52px auto 0; position: relative; }
     .editor-wrap::after { content:''; position:absolute; bottom:-40px; left:50%; transform:translateX(-50%); width:70%; height:80px; background:radial-gradient(ellipse,rgba(79,110,247,.22) 0%,transparent 70%); filter:blur(20px); pointer-events:none; }
@@ -267,66 +264,9 @@ ul { list-style: none; }
     .t-strip h2 { font-family: var(--font-display); font-size: clamp(22px,3.5vw,36px); font-weight: 700; letter-spacing: -.4px; color: var(--white); text-align: center; margin-bottom: 8px; }
     .t-strip .ts-sub { text-align: center; color: var(--muted); font-size: 15px; margin-bottom: 36px; }
     @media(max-width:860px){ .editor-mock{grid-template-columns:1fr;} .em-sidebar{display:none;} .ftab-panel.active{grid-template-columns:1fr;} }
-  </style>
-</head>
-<body>
+`;
 
-<!-- PROMO BAR -->
-<div class="promo-bar">
-  ✨&nbsp; New Year Offer: <strong style="color:#a5b4fc;margin:0 6px;">40% Off</strong> on Yearly Plans &nbsp;
-  <span class="time-unit js-ph">08</span>hrs <span class="time-unit js-pm">34</span>min <span class="time-unit js-ps">12</span>sec
-  <a class="deal-link" href="#">Get Deal</a>
-</div>
-
-<!-- HEADER -->
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/"><img src="/infin8content_logo.png" alt="Infin8Content"></a>
-    <nav class="main-nav" id="main-nav">
-      <div class="nav-item">
-        <span class="nav-link">Features <span class="chevron">▾</span></span>
-        <div class="dropdown">
-          <div class="dropdown-label">AI Writing</div>
-          <a class="dropdown-link" href="/ai-content-writer.html">AI Content Writer</a>
-          <a class="dropdown-link" href="/ai-seo-editor.html">AI SEO Editor</a>
-          <a class="dropdown-link" href="#">News Writer</a>
-          <a class="dropdown-link" href="#">Video to Blog Post</a>
-          <hr>
-          <div class="dropdown-label">Automation</div>
-          <a class="dropdown-link" href="/ai-seo-agent.html">AI SEO Agent</a>
-          <a class="dropdown-link" href="/autopublish.html">AutoPublish</a>
-          <a class="dropdown-link" href="#">SEO Reports</a>
-          <a class="dropdown-link" href="/llm-tracker.html">LLM Visibility Tracker</a>
-        </div>
-      </div>
-      <div class="nav-item">
-        <span class="nav-link">Solutions <span class="chevron">▾</span></span>
-        <div class="dropdown">
-          <a class="dropdown-link" href="#"><strong>SaaS</strong><small>Scale organic traffic for your product</small></a>
-          <a class="dropdown-link" href="#"><strong>Agencies</strong><small>Manage multiple clients at scale</small></a>
-          <a class="dropdown-link" href="#"><strong>E-Commerce</strong><small>Upgrade your store's content</small></a>
-          <a class="dropdown-link" href="#"><strong>Enterprise</strong><small>SAML, SSO & dedicated support</small></a>
-        </div>
-      </div>
-      <a class="nav-link" href="#">Pricing</a>
-      <div class="nav-item">
-        <span class="nav-link">Resources <span class="chevron">▾</span></span>
-        <div class="dropdown">
-          <a class="dropdown-link" href="#">Case Studies</a>
-          <a class="dropdown-link" href="#">Learning & Training</a>
-          <a class="dropdown-link" href="#">Help Docs</a>
-          <a class="dropdown-link" href="#">Blog</a>
-        </div>
-      </div>
-    </nav>
-    <div class="header-cta">
-      <a class="btn-link" href="#">Login</a>
-      <a class="btn btn-primary" href="#">Get Started</a>
-    </div>
-    <button class="nav-toggle" id="nav-toggle">☰</button>
-  </div>
-</header>
-
+const HTML = `
 <main>
 
 <!-- HERO -->
@@ -548,98 +488,8 @@ ul { list-style: none; }
 </main>
 
 <!-- FOOTER -->
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-top">
-      <div class="footer-brand">
-        <a class="brand" href="/"><img src="/infin8content_logo.png" alt="Infin8Content"></a>
-        <p>AI content workflows for modern teams and agencies.</p>
-      </div>
-      <div class="footer-col"><h4>AI Writing</h4><a href="/ai-content-writer.html">AI Content Writer</a><a href="/ai-seo-editor.html">AI SEO Editor</a><a href="#">News Writer</a><a href="#">Video to Blog</a></div>
-      <div class="footer-col"><h4>Automation</h4><a href="/ai-seo-agent.html">AI SEO Agent</a><a href="/autopublish.html">AutoPublish</a><a href="#">SEO Reports</a><a href="/llm-tracker.html">LLM Tracker</a></div>
-      <div class="footer-col"><h4>Resources</h4><a href="#">Pricing</a><a href="#">Blog</a><a href="#">Help Docs</a><a href="#">Case Studies</a></div>
-      <div class="footer-col"><h4>Integrations</h4><a href="#">WordPress</a><a href="#">Shopify</a><a href="#">Ghost</a><a href="#">Webflow</a><a href="#">Zapier</a></div>
-      <div class="footer-col"><h4>Solutions</h4><a href="#">SaaS</a><a href="#">Agencies</a><a href="#">E-Commerce</a><a href="#">Enterprise</a></div>
-    </div>
-    <div class="footer-bottom">
-      <small>© <span class="js-year"></span> Infin8Content. All rights reserved.</small>
-      <div class="footer-legal"><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">contact@infin8content.com</a></div>
-    </div>
-  </div>
-</footer>
+`;
 
-<script>
-/* shared.js — nav toggle, FAQ, countdown, smooth scroll */
-document.addEventListener('DOMContentLoaded', function() {
-  // Year
-  document.querySelectorAll('.js-year').forEach(el => el.textContent = new Date().getFullYear());
-
-  // Countdown
-  let total = 8*3600+34*60+12;
-  function tick(){
-    if(total<=0)return; total--;
-    const h=String(Math.floor(total/3600)).padStart(2,'0');
-    const m=String(Math.floor((total%3600)/60)).padStart(2,'0');
-    const s=String(total%60).padStart(2,'0');
-    document.querySelectorAll('.js-ph').forEach(e=>e.textContent=h);
-    document.querySelectorAll('.js-pm').forEach(e=>e.textContent=m);
-    document.querySelectorAll('.js-ps').forEach(e=>e.textContent=s);
-  }
-  tick(); setInterval(tick,1000);
-
-  // Nav toggle
-  const navToggle = document.getElementById('nav-toggle');
-  const mainNav = document.getElementById('main-nav');
-  if(navToggle && mainNav) {
-    navToggle.addEventListener('click', () => {
-      mainNav.classList.toggle('open');
-      navToggle.textContent = mainNav.classList.contains('open') ? '✕' : '☰';
-    });
-  }
-
-  // FAQ accordion
-  document.querySelectorAll('.faq-q').forEach(q => {
-    q.addEventListener('click', () => {
-      const item = q.parentElement;
-      const wasOpen = item.classList.contains('open');
-      document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
-      if(!wasOpen) item.classList.add('open');
-    });
-  });
-
-  // Tabs (for pages that have them)
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const panel = btn.dataset.tab;
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      const el = document.getElementById(panel);
-      if(el) el.classList.add('active');
-    });
-  });
-
-  // Smooth scroll
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', e => {
-      const t = document.querySelector(a.getAttribute('href'));
-      if(t){ e.preventDefault(); t.scrollIntoView({behavior:'smooth',block:'start'}); }
-    });
-  });
-});
-
-</script>
-<script>
-  // Feature tabs (page-specific)
-  document.querySelectorAll('.ftab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const panel = btn.dataset.ftab;
-      document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.ftab-panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(panel)?.classList.add('active');
-    });
-  });
-</script>
-</body>
-</html>
+export default function AISeoEditorPage() {
+  return <MarketingPageBody html={HTML} css={CSS} />;
+}

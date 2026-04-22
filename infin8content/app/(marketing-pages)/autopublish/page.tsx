@@ -1,12 +1,12 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>AI SEO Agent — Fix Technical SEO Automatically | Infin8Content</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
-  <style>
+import { Metadata } from 'next';
+import MarketingPageBody from '@/components/marketing/MarketingPageBody';
+
+export const metadata: Metadata = {
+  title: 'AutoPublish — Automated AI Content Writing & Publishing | Infin8Content',
+  description: 'Automate your entire content pipeline from writing to publishing with Infin8Content AutoPublish.',
+};
+
+const CSS = `
 /* ===================== RESET & TOKENS ===================== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -217,135 +217,102 @@ ul { list-style: none; }
 @media(max-width:600px){ .hero h1{font-size:28px;} .feat-cards{grid-template-columns:1fr;} }
 .main-nav.open { display:flex!important; flex-direction:column; position:fixed; top:62px; left:0; right:0; background:rgba(8,9,13,.97); backdrop-filter:blur(12px); padding:20px; border-bottom:1px solid var(--border); gap:4px; z-index:39; }
 .main-nav.open .dropdown{display:none!important;}
+/* AutoPublish pipeline mockup */
+    .ap-wrap { max-width: 920px; margin: 52px auto 0; position: relative; }
+    .ap-wrap::after { content:''; position:absolute; bottom:-40px; left:50%; transform:translateX(-50%); width:70%; height:80px; background:radial-gradient(ellipse,rgba(79,110,247,.22) 0%,transparent 70%); filter:blur(20px); pointer-events:none; }
+    .ap-mock { padding: 28px; }
+    .ap-pipeline { display: flex; align-items: center; gap: 0; margin-bottom: 28px; }
+    .ap-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .ap-step-icon { width: 56px; height: 56px; border-radius: 14px; background: var(--accent-lite); border: 1px solid var(--accent-border); display: flex; align-items: center; justify-content: center; font-size: 22px; position: relative; z-index: 1; }
+    .ap-step-icon.active { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 20px rgba(79,110,247,.4); }
+    .ap-step-icon.done { background: var(--green-lite); border-color: rgba(34,197,94,.3); }
+    .ap-step h5 { font-family: var(--font-display); font-size: 11.5px; font-weight: 600; color: var(--white); text-align: center; }
+    .ap-step p { font-size: 10.5px; color: var(--muted); text-align: center; }
+    .ap-connector { flex-shrink: 0; width: 40px; height: 1px; background: linear-gradient(90deg,var(--accent-border),rgba(79,110,247,.1)); margin-bottom: 28px; }
+    .ap-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+    .ap-article-card { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 9px; padding: 12px; }
+    .ap-article-card .aac-img { width: 100%; height: 60px; background: linear-gradient(135deg,var(--surface2),#0d1228); border-radius: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; opacity: .5; }
+    .ap-article-card .aac-title { font-size: 11.5px; font-weight: 600; color: var(--white); margin-bottom: 5px; line-height: 1.3; font-family: var(--font-display); }
+    .ap-article-card .aac-meta { display: flex; align-items: center; gap: 6px; }
+    .ap-article-card .aac-badge { font-size: 10px; border-radius: 4px; padding: 2px 7px; font-weight: 600; }
+    .aac-badge.pub { background: var(--green-lite); color: var(--green); border: 1px solid rgba(34,197,94,.2); }
+    .aac-badge.sched { background: var(--accent-lite); color: #a5b4fc; border: 1px solid var(--accent-border); }
+    .aac-badge.gen { background: rgba(251,191,36,.1); color: #fbbf24; border: 1px solid rgba(251,191,36,.2); }
+    .ap-article-card .aac-time { font-size: 10px; color: var(--muted2); margin-left: auto; }
 
-  </style>
-  <style>
-    /* Agent dashboard mockup */
-    .agent-wrap { max-width: 920px; margin: 52px auto 0; position: relative; }
-    .agent-wrap::after { content:''; position:absolute; bottom:-40px; left:50%; transform:translateX(-50%); width:70%; height:80px; background:radial-gradient(ellipse,rgba(79,110,247,.22) 0%,transparent 70%); filter:blur(20px); pointer-events:none; }
-    .agent-mock { display: grid; grid-template-columns: 220px 1fr; min-height: 400px; }
-    .am-sidebar { background: rgba(255,255,255,.015); border-right: 1px solid var(--border); padding: 20px 14px; display: flex; flex-direction: column; gap: 6px; }
-    .am-sidebar-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); margin: 6px 0 4px; }
-    .am-nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 7px; font-size: 12.5px; color: var(--muted); cursor: default; }
-    .am-nav-item.active { background: var(--accent-lite); color: var(--accent); }
-    .am-nav-item .dot-sm { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-    .am-main { padding: 22px 26px; }
-    .am-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-    .am-header h4 { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--white); }
-    .am-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--green); font-weight: 600; }
-    .am-status::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
-    .am-issues { display: flex; flex-direction: column; gap: 8px; }
-    .am-issue { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 9px; background: rgba(255,255,255,.02); border: 1px solid var(--border); font-size: 12.5px; transition: all .2s; }
-    .am-issue:hover { border-color: var(--accent-border); background: var(--accent-lite); }
-    .am-issue .ai-icon { font-size: 16px; flex-shrink: 0; }
-    .am-issue .ai-body h5 { font-family: var(--font-display); font-size: 12px; font-weight: 600; color: var(--white); margin-bottom: 2px; }
-    .am-issue .ai-body p { font-size: 11.5px; color: var(--muted); }
-    .am-issue .ai-badge { margin-left: auto; flex-shrink: 0; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 2px 8px; }
-    .ai-badge.fixed { background: var(--green-lite); color: var(--green); border: 1px solid rgba(34,197,94,.2); }
-    .ai-badge.scanning { background: rgba(251,191,36,.1); color: #fbbf24; border: 1px solid rgba(251,191,36,.2); }
-    .ai-badge.pending { background: var(--accent-lite); color: #a5b4fc; border: 1px solid var(--accent-border); }
-    .am-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 14px; }
-    .am-stat { background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
-    .am-stat .as-val { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--white); }
-    .am-stat .as-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    /* ecosystem section */
+    .ecosystem-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+    .eco-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; transition: all .2s; }
+    .eco-card:hover { border-color: var(--accent-border); transform: translateY(-3px); }
+    .eco-card .eco-icon { font-size: 28px; margin-bottom: 14px; }
+    .eco-card h3 { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--white); margin-bottom: 10px; }
+    .eco-card p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+    .eco-card ul li { font-size: 13.5px; color: var(--muted); padding: 4px 0; display: flex; gap: 8px; }
+    .eco-card ul li::before { content:'→'; color: var(--accent); flex-shrink: 0; }
 
-    /* 3-step flow */
-    .agent-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; position: relative; }
-    .agent-steps::before { content:''; position:absolute; top:42px; left:16.6%; right:16.6%; height:1px; background:linear-gradient(90deg,var(--accent-border),rgba(79,110,247,.1)); pointer-events:none; }
-    .agent-step { text-align: center; padding: 32px 24px; }
-    .as-icon-wrap { width: 80px; height: 80px; border-radius: 50%; background: var(--accent-lite); border: 1px solid var(--accent-border); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; font-size: 28px; position: relative; z-index: 1; }
-    .as-step-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); margin-bottom: 6px; }
-    .agent-step h4 { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--white); margin-bottom: 10px; }
-    .agent-step p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+    /* Integrations logos */
+    .integrations-strip { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 36px; }
+    .int-badge { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 18px; font-size: 13px; font-weight: 600; color: var(--muted); transition: all .2s; display: flex; align-items: center; gap: 7px; }
+    .int-badge:hover { color: var(--white); border-color: var(--accent-border); background: var(--accent-lite); }
 
-    /* NOT a to-do list callout */
-    .callout-box { background: linear-gradient(135deg, rgba(79,110,247,.08), rgba(79,110,247,.04)); border: 1px solid var(--accent-border); border-radius: var(--radius); padding: 40px; text-align: center; margin: 56px 0 0; }
-    .callout-box h2 { font-family: var(--font-display); font-size: clamp(22px,3.5vw,38px); font-weight: 800; color: var(--white); letter-spacing: -.5px; margin-bottom: 14px; }
-    .callout-box h2 span { color: var(--accent); }
-    .callout-box p { font-size: 16px; color: var(--muted); max-width: 600px; margin: 0 auto 32px; line-height: 1.65; }
+    @media(max-width:860px){ .ap-pipeline{flex-direction:column; gap:16px;} .ap-connector{width:1px; height:24px; margin:0;} .ecosystem-grid{grid-template-columns:1fr;} .ap-cards{grid-template-columns:1fr 1fr;} }
+    @media(max-width:600px){ .ap-cards{grid-template-columns:1fr;} }
+`;
 
-    /* 12-fix grid */
-    .fixes-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
-    .fix-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 16px; transition: all .2s; }
-    .fix-item:hover { border-color: var(--accent-border); transform: translateY(-2px); }
-    .fix-item .fi-icon { font-size: 20px; margin-bottom: 10px; }
-    .fix-item h4 { font-family: var(--font-display); font-size: 13.5px; font-weight: 600; color: var(--white); margin-bottom: 6px; }
-    .fix-item p { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
-
-    @media(max-width:860px){ .agent-mock{grid-template-columns:1fr;} .am-sidebar{display:none;} .agent-steps{grid-template-columns:1fr;} .agent-steps::before{display:none;} .fixes-grid{grid-template-columns:repeat(2,1fr);} }
-    @media(max-width:600px){ .fixes-grid{grid-template-columns:1fr;} .am-stats{grid-template-columns:1fr 1fr;} }
-  </style>
-</head>
-<body>
-
-<div class="promo-bar">✨&nbsp; New Year Offer: <strong style="color:#a5b4fc;margin:0 6px;">40% Off</strong> on Yearly Plans &nbsp;<span class="time-unit js-ph">08</span>hrs <span class="time-unit js-pm">34</span>min <span class="time-unit js-ps">12</span>sec<a class="deal-link" href="#">Get Deal</a></div>
-
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/"><img src="/infin8content_logo.png" alt="Infin8Content"></a>
-    <nav class="main-nav" id="main-nav">
-      <div class="nav-item"><span class="nav-link">Features <span class="chevron">▾</span></span><div class="dropdown"><div class="dropdown-label">AI Writing</div><a class="dropdown-link" href="/ai-content-writer.html">AI Content Writer</a><a class="dropdown-link" href="/ai-seo-editor.html">AI SEO Editor</a><a class="dropdown-link" href="#">News Writer</a><hr><div class="dropdown-label">Automation</div><a class="dropdown-link" href="/ai-seo-agent.html">AI SEO Agent</a><a class="dropdown-link" href="/autopublish.html">AutoPublish</a><a class="dropdown-link" href="/llm-tracker.html">LLM Tracker</a></div></div>
-      <div class="nav-item"><span class="nav-link">Solutions <span class="chevron">▾</span></span><div class="dropdown"><a class="dropdown-link" href="#"><strong>SaaS</strong><small>Scale organic traffic</small></a><a class="dropdown-link" href="#"><strong>Agencies</strong><small>Manage clients at scale</small></a><a class="dropdown-link" href="#"><strong>E-Commerce</strong><small>Upgrade store content</small></a></div></div>
-      <a class="nav-link" href="#">Pricing</a>
-      <div class="nav-item"><span class="nav-link">Resources <span class="chevron">▾</span></span><div class="dropdown"><a class="dropdown-link" href="#">Case Studies</a><a class="dropdown-link" href="#">Help Docs</a><a class="dropdown-link" href="#">Blog</a></div></div>
-    </nav>
-    <div class="header-cta"><a class="btn-link" href="#">Login</a><a class="btn btn-primary" href="#">Get Started</a></div>
-    <button class="nav-toggle" id="nav-toggle">☰</button>
-  </div>
-</header>
-
+const HTML = `
 <main>
 
 <section class="hero">
   <div class="container">
-    <div class="hero-eyebrow fade-up">⚙️ &nbsp;AI SEO Agent</div>
-    <h1 class="fade-up">The AI SEO Agent that improves<br>your SEO <span class="high">on autopilot</span></h1>
-    <p class="sub fade-up">The AI agent finds gaps in your site's technical SEO, reasons how to fix them, and implements changes live — all automatically, every single day.</p>
+    <div class="hero-eyebrow fade-up">🚀 &nbsp;AutoPublish</div>
+    <h1 class="fade-up">Automatically Generate and Publish<br>Content <span class="high">While You Sleep</span></h1>
+    <p class="sub fade-up">The automated AI blogging system that runs on autopilot — 150+ languages, any niche, any schedule.</p>
     <div class="hero-actions fade-up">
-      <a class="btn btn-primary btn-lg" href="#">Try AI Agent Free</a>
+      <a class="btn btn-primary btn-lg" href="#">Get Started Free</a>
     </div>
     <div class="social-proof fade-up">
       <div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div>
       Trusted by <strong>&nbsp;10,000+&nbsp;</strong> Marketers & Agencies
     </div>
 
-    <!-- Agent dashboard mockup -->
-    <div class="agent-wrap fade-up">
+    <!-- AutoPublish pipeline mockup -->
+    <div class="ap-wrap fade-up">
       <div class="browser-frame">
         <div class="browser-bar">
           <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
-          <div class="browser-url">app.infin8content.com/seo-agent — yoursite.com</div>
+          <div class="browser-url">app.infin8content.com/autopublish — Campaign: Tech Blog</div>
         </div>
-        <div class="agent-mock">
-          <div class="am-sidebar">
-            <div class="am-sidebar-label">Agent Status</div>
-            <div class="am-nav-item active"><span class="dot-sm"></span> Live Scanning</div>
-            <div class="am-nav-item"><span class="dot-sm"></span> Issues Found</div>
-            <div class="am-nav-item"><span class="dot-sm"></span> Fixes Applied</div>
-            <div class="am-sidebar-label" style="margin-top:10px;">Modules</div>
-            <div class="am-nav-item">Schema Markup</div>
-            <div class="am-nav-item">Meta Optimization</div>
-            <div class="am-nav-item">Internal Linking</div>
-            <div class="am-nav-item">Image Alt Texts</div>
-            <div class="am-nav-item">Canonical Tags</div>
+        <div class="ap-mock">
+          <div class="ap-pipeline">
+            <div class="ap-step">
+              <div class="ap-step-icon done">📡</div>
+              <h5>Feed Source</h5><p>RSS / Keywords</p>
+            </div>
+            <div class="ap-connector"></div>
+            <div class="ap-step">
+              <div class="ap-step-icon done">✍️</div>
+              <h5>AI Writes</h5><p>SEO-optimized</p>
+            </div>
+            <div class="ap-connector"></div>
+            <div class="ap-step">
+              <div class="ap-step-icon active">🖼️</div>
+              <h5>Images Generated</h5><p>With context</p>
+            </div>
+            <div class="ap-connector"></div>
+            <div class="ap-step">
+              <div class="ap-step-icon">📤</div>
+              <h5>Auto-Published</h5><p>To your CMS</p>
+            </div>
+            <div class="ap-connector"></div>
+            <div class="ap-step">
+              <div class="ap-step-icon">📊</div>
+              <h5>Analytics</h5><p>Track ranking</p>
+            </div>
           </div>
-          <div class="am-main">
-            <div class="am-header">
-              <h4>AI SEO Agent — yoursite.com</h4>
-              <div class="am-status">Agent Running</div>
-            </div>
-            <div class="am-issues">
-              <div class="am-issue"><div class="ai-icon">📋</div><div class="ai-body"><h5>Schema Markup injected — 24 pages</h5><p>FAQ schema added to top-performing blog posts</p></div><div class="ai-badge fixed">Fixed</div></div>
-              <div class="am-issue"><div class="ai-icon">🔍</div><div class="ai-body"><h5>Scanning meta descriptions — 142 pages</h5><p>Identifying pages with missing or duplicate meta tags</p></div><div class="ai-badge scanning">Scanning</div></div>
-              <div class="am-issue"><div class="ai-icon">🖼️</div><div class="ai-body"><h5>Image alt texts — 67 images optimized</h5><p>Descriptive alt texts added for accessibility & SEO</p></div><div class="ai-badge fixed">Fixed</div></div>
-              <div class="am-issue"><div class="ai-icon">🔗</div><div class="ai-body"><h5>Internal linking opportunities detected</h5><p>12 new internal link opportunities found across site</p></div><div class="ai-badge pending">Queued</div></div>
-            </div>
-            <div class="am-stats">
-              <div class="am-stat"><div class="as-val">247</div><div class="as-label">Issues Fixed</div></div>
-              <div class="am-stat"><div class="as-val">94</div><div class="as-label">SEO Health Score</div></div>
-              <div class="am-stat"><div class="as-val">+38%</div><div class="as-label">Traffic Lift</div></div>
-            </div>
+          <div class="ap-cards">
+            <div class="ap-article-card"><div class="aac-img">📰</div><div class="aac-title">The Future of AI in Content Marketing</div><div class="aac-meta"><span class="aac-badge pub">Published</span><span class="aac-time">2h ago</span></div></div>
+            <div class="ap-article-card"><div class="aac-img">💡</div><div class="aac-title">10 SEO Strategies That Actually Work in 2026</div><div class="aac-meta"><span class="aac-badge sched">Scheduled</span><span class="aac-time">Tomorrow</span></div></div>
+            <div class="ap-article-card"><div class="aac-img">🚀</div><div class="aac-title">How to Scale Content Without Hiring Writers</div><div class="aac-meta"><span class="aac-badge gen">Generating</span><span class="aac-time">Now</span></div></div>
           </div>
         </div>
       </div>
@@ -353,82 +320,112 @@ ul { list-style: none; }
   </div>
 </section>
 
-<!-- HOW IT WORKS -->
+<!-- BEFORE / AFTER -->
 <section class="section section-alt">
   <div class="container">
-    <p class="section-label" style="justify-content:center;">🔧 &nbsp;How the AI Agent Works</p>
-    <h2 class="section-title" style="text-align:center;margin-bottom:50px;">Three steps. Zero manual work.</h2>
-    <div class="agent-steps">
-      <div class="agent-step">
-        <div class="as-icon-wrap">🔍</div>
-        <div class="as-step-label">Step 1</div>
-        <h4>Dynamic Scanning</h4>
-        <p>The AI Agent constantly scans your site to look for flaws, gaps, and bugs in your technical SEO — from meta tags to schema to broken links.</p>
-      </div>
-      <div class="agent-step">
-        <div class="as-icon-wrap">🧠</div>
-        <div class="as-step-label">Step 2</div>
-        <h4>Smart Reasoning</h4>
-        <p>It thinks about the best way to fix each issue, evaluating impact vs. effort and prioritizing the changes that will drive the most ranking improvement.</p>
-      </div>
-      <div class="agent-step">
-        <div class="as-icon-wrap">⚡</div>
-        <div class="as-step-label">Step 3</div>
-        <h4>Implementation</h4>
-        <p>After a thorough analysis, it automatically implements the updates live on your site — no developer needed, no to-do list, no manual fixes.</p>
-      </div>
-    </div>
-
-    <div class="callout-box">
-      <h2>It's <span>NOT</span> a to-do list.</h2>
-      <p>It's an AI agent automatically applying changes to your site that dramatically improve its SEO performance — every single day, without you lifting a finger.</p>
-      <div class="before-after">
-        <div class="ba-card">
-          <div class="ba-header before"><span class="ba-label">Before</span> Without AI SEO Agent</div>
-          <div class="ba-body">
-            <div class="ba-img">📋</div>
-            <ul class="ba-list before">
-              <li>Manually identify the issues</li>
-              <li>Manually think how to fix them</li>
-              <li>Manually implement each fix</li>
-            </ul>
-          </div>
+    <p class="section-label" style="justify-content:center;">⚡ &nbsp;The Difference</p>
+    <h2 class="section-title" style="text-align:center;margin-bottom:40px;">From manual chaos to fully automated</h2>
+    <div class="before-after">
+      <div class="ba-card">
+        <div class="ba-header before"><span class="ba-label">Before</span> Difficult & hard to manage</div>
+        <div class="ba-body">
+          <div class="ba-img">😩</div>
+          <ul class="ba-list before">
+            <li>Setting up blog — ~1 week of work</li>
+            <li>Hiring copywriter — $600/month</li>
+            <li>Hiring designer — $600/month</li>
+            <li>Managing hires — ~10 hours/week</li>
+          </ul>
         </div>
-        <div class="ba-card">
-          <div class="ba-header after"><span class="ba-label">After</span> With AI SEO Agent</div>
-          <div class="ba-body">
-            <div class="ba-img">🤖</div>
-            <ul class="ba-list after">
-              <li>Scans your site for flaws, gaps, and bugs</li>
-              <li>Thinks about the best way to fix and implement</li>
-              <li>Auto-implements updates on your live site</li>
-            </ul>
-          </div>
+      </div>
+      <div class="ba-card">
+        <div class="ba-header after"><span class="ba-label">After</span> Blog runs automatically</div>
+        <div class="ba-body">
+          <div class="ba-img">🚀</div>
+          <ul class="ba-list after">
+            <li>All-in-one solution — set and forget</li>
+            <li>Connect to your blog in seconds</li>
+            <li>AI images generated automatically</li>
+            <li>Publishes on your schedule, 24/7</li>
+          </ul>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 12 FIXES GRID -->
+<!-- ECOSYSTEM -->
 <section class="section">
   <div class="container">
-    <p class="section-label" style="justify-content:center;">🛠️ &nbsp;Everything It Fixes</p>
-    <h2 class="section-title" style="text-align:center;margin-bottom:10px;">The AI SEO Agent That Fixes Everything</h2>
-    <p class="section-sub" style="text-align:center;max-width:580px;margin:0 auto 40px;">From Schema Markup injection to broken links. The AI Agent fixes your technical SEO automatically.</p>
-    <div class="fixes-grid">
-      <div class="fix-item"><div class="fi-icon">📋</div><h4>Schema Markup</h4><p>Automatically inject structured data to help search engines understand your content.</p></div>
-      <div class="fix-item"><div class="fi-icon">📝</div><h4>Page Title Optimization</h4><p>Dynamically optimize page titles for better search visibility and click-through rates.</p></div>
-      <div class="fix-item"><div class="fi-icon">📣</div><h4>Social Metadata</h4><p>Generate and update Open Graph metadata to improve social media sharing presence.</p></div>
-      <div class="fix-item"><div class="fi-icon">❓</div><h4>Structured Data</h4><p>Add FAQ and How-To schema markup to enhance SERP features and rich results.</p></div>
-      <div class="fix-item"><div class="fi-icon">🔤</div><h4>Heading Structure</h4><p>Fix missing or improper heading hierarchies for better content organization and crawlability.</p></div>
-      <div class="fix-item"><div class="fi-icon">↪️</div><h4>Smart Redirects</h4><p>Implement and manage 301/302 redirects automatically to preserve link equity.</p></div>
-      <div class="fix-item"><div class="fi-icon">🔍</div><h4>Meta Optimization</h4><p>Optimize meta titles and descriptions for improved search performance and CTR.</p></div>
-      <div class="fix-item"><div class="fi-icon">🔗</div><h4>Internal Linking</h4><p>Enhance site structure through intelligent internal link optimization across all pages.</p></div>
-      <div class="fix-item"><div class="fi-icon">📄</div><h4>Duplicate Content</h4><p>Prevent duplicate content issues with automated noindex tag management.</p></div>
-      <div class="fix-item"><div class="fi-icon">🏷️</div><h4>Canonical Tags</h4><p>Implement canonical tags to specify preferred content versions for search engines.</p></div>
-      <div class="fix-item"><div class="fi-icon">🖼️</div><h4>Image Optimization</h4><p>Add descriptive alt texts to all images for better accessibility and SEO signals.</p></div>
-      <div class="fix-item"><div class="fi-icon">💔</div><h4>Broken Link Repair</h4><p>Automatically detect and fix broken links across your entire site to maintain health.</p></div>
+    <p class="section-label" style="justify-content:center;">🌐 &nbsp;How It Works</p>
+    <h2 class="section-title" style="text-align:center;margin-bottom:12px;">How The AutoPublish Ecosystem Works</h2>
+    <p class="section-sub" style="text-align:center;max-width:540px;margin:0 auto 44px;">Select a content feed, choose your output frequency, and connect with your site's backend. That's it.</p>
+    <div class="ecosystem-grid">
+      <div class="eco-card">
+        <div class="eco-icon">📡</div>
+        <h3>Feed the AI</h3>
+        <p>Generate content based on feeds with valuable information and context from multiple sources.</p>
+        <ul>
+          <li>RSS feeds from any source</li>
+          <li>Target keywords & topics</li>
+          <li>YouTube videos to blog posts</li>
+          <li>Live news events</li>
+        </ul>
+      </div>
+      <div class="eco-card">
+        <div class="eco-icon">⚙️</div>
+        <h3>Campaigns & AutoPublish</h3>
+        <p>Campaigns define how your content is generated and published. Choose manual or fully automated.</p>
+        <ul>
+          <li>Manual execution or autopilot</li>
+          <li>Custom schedules (daily, weekly)</li>
+          <li>Per-campaign niche & tone settings</li>
+          <li>Multi-site campaign management</li>
+        </ul>
+      </div>
+      <div class="eco-card">
+        <div class="eco-icon">🔌</div>
+        <h3>Integrations</h3>
+        <p>Publish your articles directly to any major CMS platform with a single connection.</p>
+        <ul>
+          <li>Connect unlimited websites</li>
+          <li>One-click publish to any CMS</li>
+          <li>Advanced feature integrations</li>
+          <li>Zapier & webhooks support</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Integration badges -->
+    <div style="text-align:center;margin-top:48px;">
+      <p class="section-label" style="justify-content:center;margin-bottom:20px;">🔗 &nbsp;Connects With</p>
+      <div class="integrations-strip">
+        <div class="int-badge">🔷 WordPress</div>
+        <div class="int-badge">🛍️ Shopify</div>
+        <div class="int-badge">👻 Ghost</div>
+        <div class="int-badge">🌊 Webflow</div>
+        <div class="int-badge">⬡ Wix</div>
+        <div class="int-badge">📝 Squarespace</div>
+        <div class="int-badge">⚡ Zapier</div>
+        <div class="int-badge">🔗 Webhooks</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section section-alt">
+  <div class="container">
+    <p class="section-label" style="justify-content:center;">❓ &nbsp;FAQ</p>
+    <h2 class="section-title" style="text-align:center;">Frequently Asked Questions</h2>
+    <div class="faq-list">
+      <div class="faq-item"><div class="faq-q">What is AutoPublish and how does it work?<div class="faq-icon">+</div></div><div class="faq-a">AutoPublish is an AI-powered tool that automatically generates and publishes SEO-optimized content to your website. It researches topics, writes unique articles, and schedules them to go live — all without manual effort. You configure the schedule, niche, tone, and categories once, and it runs indefinitely.</div></div>
+      <div class="faq-item"><div class="faq-q">Does AutoPublish support multilingual content?<div class="faq-icon">+</div></div><div class="faq-a">Yes. AutoPublish can generate and publish content in 150+ languages, helping you reach global audiences and improve international SEO performance across any market.</div></div>
+      <div class="faq-item"><div class="faq-q">Can I customize the content generated by AutoPublish?<div class="faq-icon">+</div></div><div class="faq-a">Yes. You can set your niche, tone of voice, keyword preferences, and even edit each article before or after it's published using the AI SEO Editor to match your brand's style perfectly.</div></div>
+      <div class="faq-item"><div class="faq-q">Is AutoPublish good for SEO?<div class="faq-icon">+</div></div><div class="faq-a">Absolutely. AutoPublish uses AI trained on top-ranking pages and incorporates SEO best practices including keyword integration, proper headings, internal linking, and structured data to help your blog rank higher on Google.</div></div>
+      <div class="faq-item"><div class="faq-q">How often does AutoPublish publish new articles?<div class="faq-icon">+</div></div><div class="faq-a">You control the frequency entirely. Choose daily, weekly, or custom schedules to keep your website consistently updated with fresh, SEO-optimized content on autopilot.</div></div>
+      <div class="faq-item"><div class="faq-q">Can I connect AutoPublish to WordPress?<div class="faq-icon">+</div></div><div class="faq-a">Yes. AutoPublish integrates directly with WordPress, Shopify, Webflow, Wix, Ghost, Squarespace, Zapier, and many more — auto-publishing content straight to your blog without any extra steps.</div></div>
+      <div class="faq-item"><div class="faq-q">Will the articles be 100% unique?<div class="faq-icon">+</div></div><div class="faq-a">Yes. All articles generated by Infin8Content's AutoPublish are unique and AI-crafted to avoid duplicate content penalties, ensuring strong SEO performance and no plagiarism flags.</div></div>
     </div>
   </div>
 </section>
@@ -436,90 +433,18 @@ ul { list-style: none; }
 <!-- FINAL CTA -->
 <section class="final-cta">
   <div class="container">
-    <h2>Scale more clients.<br>Do less work.</h2>
+    <h2>Your blog. Running itself.</h2>
     <p>Get started and see why agencies trust Infin8Content.</p>
-    <a class="btn btn-primary btn-lg" href="#">Try AI Agent Free</a>
-    <div class="cta-perks"><span class="cta-perk">Cancel anytime</span><span class="cta-perk">No dev needed</span><span class="cta-perk">Works on autopilot</span></div>
+    <a class="btn btn-primary btn-lg" href="#">Start AutoPublish Free</a>
+    <div class="cta-perks"><span class="cta-perk">Cancel anytime</span><span class="cta-perk">150+ languages</span><span class="cta-perk">Set and forget</span></div>
     <div class="cta-social"><div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div><span style="font-size:13.5px;color:var(--muted);">Trusted by <strong style="color:var(--white)">10,000+</strong> marketers</span></div>
-    <div class="cta-mock-img"><div class="cta-mock-inner"><div class="cm-icon">⚙️</div><div class="cm-label">Agent dashboard preview — replace with screenshot</div></div></div>
+    <div class="cta-mock-img"><div class="cta-mock-inner"><div class="cm-icon">🚀</div><div class="cm-label">AutoPublish dashboard — replace with screenshot</div></div></div>
   </div>
 </section>
 
 </main>
+`;
 
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-top">
-      <div class="footer-brand"><a class="brand" href="/"><img src="/infin8content_logo.png" alt="Infin8Content"></a><p>AI content workflows for modern teams and agencies.</p></div>
-      <div class="footer-col"><h4>AI Writing</h4><a href="/ai-content-writer.html">AI Content Writer</a><a href="/ai-seo-editor.html">AI SEO Editor</a><a href="#">News Writer</a><a href="#">Video to Blog</a></div>
-      <div class="footer-col"><h4>Automation</h4><a href="/ai-seo-agent.html">AI SEO Agent</a><a href="/autopublish.html">AutoPublish</a><a href="#">SEO Reports</a><a href="/llm-tracker.html">LLM Tracker</a></div>
-      <div class="footer-col"><h4>Resources</h4><a href="#">Pricing</a><a href="#">Blog</a><a href="#">Help Docs</a><a href="#">Case Studies</a></div>
-      <div class="footer-col"><h4>Integrations</h4><a href="#">WordPress</a><a href="#">Shopify</a><a href="#">Ghost</a><a href="#">Webflow</a><a href="#">Zapier</a></div>
-      <div class="footer-col"><h4>Solutions</h4><a href="#">SaaS</a><a href="#">Agencies</a><a href="#">E-Commerce</a><a href="#">Enterprise</a></div>
-    </div>
-    <div class="footer-bottom"><small>© <span class="js-year"></span> Infin8Content. All rights reserved.</small><div class="footer-legal"><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">contact@infin8content.com</a></div></div>
-  </div>
-</footer>
-<script>
-/* shared.js — nav toggle, FAQ, countdown, smooth scroll */
-document.addEventListener('DOMContentLoaded', function() {
-  // Year
-  document.querySelectorAll('.js-year').forEach(el => el.textContent = new Date().getFullYear());
-
-  // Countdown
-  let total = 8*3600+34*60+12;
-  function tick(){
-    if(total<=0)return; total--;
-    const h=String(Math.floor(total/3600)).padStart(2,'0');
-    const m=String(Math.floor((total%3600)/60)).padStart(2,'0');
-    const s=String(total%60).padStart(2,'0');
-    document.querySelectorAll('.js-ph').forEach(e=>e.textContent=h);
-    document.querySelectorAll('.js-pm').forEach(e=>e.textContent=m);
-    document.querySelectorAll('.js-ps').forEach(e=>e.textContent=s);
-  }
-  tick(); setInterval(tick,1000);
-
-  // Nav toggle
-  const navToggle = document.getElementById('nav-toggle');
-  const mainNav = document.getElementById('main-nav');
-  if(navToggle && mainNav) {
-    navToggle.addEventListener('click', () => {
-      mainNav.classList.toggle('open');
-      navToggle.textContent = mainNav.classList.contains('open') ? '✕' : '☰';
-    });
-  }
-
-  // FAQ accordion
-  document.querySelectorAll('.faq-q').forEach(q => {
-    q.addEventListener('click', () => {
-      const item = q.parentElement;
-      const wasOpen = item.classList.contains('open');
-      document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
-      if(!wasOpen) item.classList.add('open');
-    });
-  });
-
-  // Tabs (for pages that have them)
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const panel = btn.dataset.tab;
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      const el = document.getElementById(panel);
-      if(el) el.classList.add('active');
-    });
-  });
-
-  // Smooth scroll
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', e => {
-      const t = document.querySelector(a.getAttribute('href'));
-      if(t){ e.preventDefault(); t.scrollIntoView({behavior:'smooth',block:'start'}); }
-    });
-  });
-});
-
-</script>
-</body>
-</html>
+export default function AutopublishPage() {
+  return <MarketingPageBody html={HTML} css={CSS} />;
+}

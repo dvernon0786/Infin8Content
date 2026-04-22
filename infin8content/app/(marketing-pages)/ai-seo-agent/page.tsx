@@ -1,0 +1,433 @@
+import { Metadata } from 'next';
+import MarketingPageBody from '@/components/marketing/MarketingPageBody';
+
+export const metadata: Metadata = {
+  title: 'AI SEO Agent — Fix Technical SEO Automatically | Infin8Content',
+  description: 'Automatically detect and fix technical SEO issues with the Infin8Content AI SEO Agent.',
+};
+
+const CSS = `
+/* ===================== RESET & TOKENS ===================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #08090d;
+  --surface: #0f1117;
+  --surface2: #13151e;
+  --surface3: #0b0d14;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.04);
+  --accent: #4f6ef7;
+  --accent-lite: rgba(79,110,247,0.12);
+  --accent-border: rgba(79,110,247,0.25);
+  --accent-glow: rgba(79,110,247,0.18);
+  --text: #e8eaf2;
+  --muted: #7b8098;
+  --muted2: #4a4f68;
+  --white: #ffffff;
+  --green: #22c55e;
+  --green-lite: rgba(34,197,94,0.1);
+  --red: #ef4444;
+  --font-display: 'Sora', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --container: 1160px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--font-body); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; overflow-x: hidden; line-height: 1.6; }
+a { color: inherit; text-decoration: none; transition: color .2s; }
+img { max-width: 100%; display: block; }
+ul { list-style: none; }
+.container { max-width: var(--container); margin: 0 auto; padding: 0 28px; }
+
+/* ===================== PROMO BAR ===================== */
+.promo-bar { background: linear-gradient(90deg,#1a1060,#0f1340 50%,#1a1060); border-bottom: 1px solid var(--accent-border); text-align: center; padding: 10px 20px; font-size: 13px; font-family: var(--font-display); font-weight: 500; color: var(--text); position: relative; z-index: 50; }
+.time-unit { background: var(--accent-lite); border: 1px solid var(--accent-border); border-radius: 4px; padding: 2px 6px; font-weight: 700; color: #a5b4fc; font-variant-numeric: tabular-nums; min-width: 28px; display: inline-block; text-align: center; }
+.deal-link { background: var(--accent); color: #fff; border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 600; margin-left: 10px; }
+
+/* ===================== HEADER ===================== */
+.site-header { position: sticky; top: 0; z-index: 40; background: rgba(8,9,13,.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+.header-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; gap: 16px; }
+.brand { display:inline-flex; align-items:center; flex-shrink:0; line-height:0; }
+.brand img { height:32px; width:auto; display:block; }
+.main-nav { display: flex; align-items: center; gap: 4px; flex: 1; justify-content: center; }
+.nav-item { position: relative; }
+.nav-link { display: flex; align-items: center; gap: 4px; padding: 7px 12px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--muted); transition: all .2s; cursor: pointer; white-space: nowrap; }
+.nav-link:hover { color: var(--white); background: rgba(255,255,255,.05); }
+.chevron { font-size: 10px; transition: transform .2s; }
+.nav-item:hover .chevron { transform: rotate(180deg); }
+.dropdown { display: none; position: absolute; top: 100%; left: 0; background: #12141f; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 8px 8px; min-width: 230px; box-shadow: 0 20px 60px rgba(0,0,0,.5); z-index: 100; }
+.nav-item:hover .dropdown { display: block; }
+.dropdown-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); padding: 4px 10px; margin-bottom: 2px; }
+.dropdown-link { display: block; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13.5px; color: var(--muted); transition: all .15s; }
+.dropdown-link:hover { color: var(--white); background: rgba(255,255,255,.05); }
+.dropdown-link strong { display: block; color: var(--text); font-size: 13.5px; margin-bottom: 1px; }
+.dropdown-link small { font-size: 12px; color: var(--muted); }
+.dropdown hr { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
+.header-cta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.btn-link { font-size: 14px; font-weight: 500; color: var(--muted); padding: 7px 12px; border-radius: var(--radius-sm); transition: all .2s; }
+.btn-link:hover { color: var(--white); background: rgba(255,255,255,.05); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: var(--font-display); font-weight: 600; border-radius: var(--radius-sm); transition: all .2s; cursor: pointer; border: none; text-decoration: none; }
+.btn-primary { background: var(--accent); color: #fff; padding: 9px 18px; font-size: 14px; box-shadow: 0 0 20px rgba(79,110,247,.3); }
+.btn-primary:hover { background: #3d5df5; box-shadow: 0 0 30px rgba(79,110,247,.5); transform: translateY(-1px); }
+.btn-lg { padding: 14px 30px; font-size: 16px; border-radius: 10px; }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 9px 18px; font-size: 14px; }
+.btn-ghost:hover { border-color: rgba(255,255,255,.2); color: var(--white); }
+.nav-toggle { display: none; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 7px 10px; font-size: 18px; cursor: pointer; }
+
+/* ===================== SHARED HERO ===================== */
+.hero { padding: 80px 0 64px; text-align: center; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%); width: 700px; height: 600px; background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%); pointer-events: none; }
+.hero-eyebrow { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-lite); border: 1px solid var(--accent-border); border-radius: 20px; padding: 5px 14px; font-size: 13px; font-weight: 500; color: #a5b4fc; margin-bottom: 22px; }
+.hero h1 { font-family: var(--font-display); font-size: clamp(32px,5.2vw,58px); font-weight: 800; line-height: 1.07; letter-spacing: -1.5px; color: var(--white); max-width: 820px; margin: 0 auto 18px; }
+.hero h1 .high { color: var(--accent); font-style: italic; }
+.hero .sub { font-size: 18px; color: var(--muted); max-width: 560px; margin: 0 auto 30px; line-height: 1.65; }
+.hero-actions { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+.social-proof { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13.5px; color: var(--muted); margin-bottom: 12px; }
+.avatars { display: flex; }
+.avatars .av { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--bg); background: var(--surface2); margin-left: -8px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--accent); }
+.avatars .av:first-child { margin-left: 0; }
+.social-proof strong { color: var(--white); }
+.hero-perks { display: flex; align-items: center; justify-content: center; gap: 20px; font-size: 13px; color: var(--muted); margin-top: 6px; flex-wrap: wrap; }
+.hero-perks span::before { content: '✓'; color: var(--green); font-weight: 700; margin-right: 5px; }
+
+/* ===================== SHARED SECTIONS ===================== */
+.section { padding: 90px 0; }
+.section-alt { background: linear-gradient(180deg, transparent, var(--surface2) 20%, var(--surface2) 80%, transparent); }
+.section-label { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); margin-bottom: 14px; }
+.section-title { font-family: var(--font-display); font-size: clamp(24px,3.5vw,40px); font-weight: 700; letter-spacing: -.6px; color: var(--white); margin-bottom: 14px; line-height: 1.15; }
+.section-sub { font-size: 16px; color: var(--muted); line-height: 1.65; }
+
+/* ===================== BROWSER FRAME ===================== */
+.browser-frame { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04); }
+.browser-bar { background: var(--surface2); padding: 10px 14px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--border); }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot-r { background:#ff5f57; } .dot-y { background:#febc2e; } .dot-g { background:#28c840; }
+.browser-url { flex: 1; background: rgba(255,255,255,.04); border-radius: 6px; height: 24px; margin: 0 12px; display: flex; align-items: center; padding: 0 10px; font-size: 11px; color: var(--muted2); }
+
+/* ===================== BEFORE/AFTER ===================== */
+.before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 40px; }
+.ba-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.ba-header { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 13px; font-weight: 700; }
+.ba-header.before { color: var(--muted); }
+.ba-header.after { color: var(--green); }
+.ba-header .ba-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; border-radius: 4px; padding: 2px 7px; }
+.ba-header.before .ba-label { background: rgba(255,255,255,.06); color: var(--muted); }
+.ba-header.after .ba-label { background: var(--green-lite); color: var(--green); }
+.ba-body { padding: 20px; }
+.ba-img { width: 100%; height: 160px; background: linear-gradient(135deg,var(--surface2),var(--surface3)); border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; opacity: .4; border: 1px solid var(--border); }
+.ba-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; color: var(--muted); padding: 5px 0; }
+.ba-list.before li::before { content: '✗'; color: var(--red); font-weight: 700; flex-shrink: 0; }
+.ba-list.after li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+
+/* ===================== FEATURE ROWS (left/right) ===================== */
+.feature-row { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; padding: 60px 0; border-bottom: 1px solid var(--border); }
+.feature-row:last-child { border-bottom: none; }
+.feature-row.rev { direction: rtl; }
+.feature-row.rev > * { direction: ltr; }
+.feature-row-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); margin-bottom: 12px; }
+.feature-row h2 { font-family: var(--font-display); font-size: clamp(20px,2.8vw,30px); font-weight: 700; letter-spacing: -.4px; color: var(--white); margin-bottom: 16px; line-height: 1.2; }
+.feature-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; color: var(--muted); padding: 5px 0; line-height: 1.5; }
+.feature-list li::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.feat-img { border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+.feat-img-inner { width: 100%; height: 100%; background: linear-gradient(135deg,var(--surface),var(--surface2)); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+.feat-img-icon { font-size: 36px; opacity: .35; }
+.feat-img-label { font-size: 12px; color: var(--muted2); text-align: center; padding: 0 20px; font-family: var(--font-display); }
+.feat-img .glow { position: absolute; inset: 0; background: radial-gradient(ellipse at 60% 30%, rgba(79,110,247,.08) 0%, transparent 60%); }
+
+/* ===================== STEPS ===================== */
+.steps-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+.step-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 22px; transition: all .2s; }
+.step-card:hover { border-color: var(--accent-border); transform: translateY(-3px); }
+.step-num { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-lite); border: 1px solid var(--accent-border); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 16px; }
+.step-icon { font-size: 26px; margin-bottom: 12px; }
+.step-card h4 { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--white); margin-bottom: 8px; line-height: 1.3; }
+.step-card p { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+
+/* ===================== FAQ ===================== */
+.faq-list { max-width: 760px; margin: 40px auto 0; }
+.faq-item { border-bottom: 1px solid var(--border); }
+.faq-q { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; cursor: pointer; font-size: 15px; font-weight: 500; color: var(--text); transition: color .2s; gap: 20px; }
+.faq-q:hover { color: var(--white); }
+.faq-icon { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,.06); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; transition: all .3s; color: var(--muted); }
+.faq-item.open .faq-icon { background: var(--accent-lite); color: var(--accent); transform: rotate(45deg); }
+.faq-a { display: none; padding: 0 0 20px; font-size: 14.5px; color: var(--muted); line-height: 1.7; }
+.faq-item.open .faq-a { display: block; }
+
+/* ===================== TESTIMONIAL CARDS ===================== */
+.t-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 40px; }
+.t-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; display: flex; flex-direction: column; gap: 14px; transition: border-color .2s; }
+.t-card:hover { border-color: var(--accent-border); }
+.t-quote { font-size: 14px; color: var(--text); line-height: 1.65; flex: 1; }
+.t-quote strong { color: var(--white); }
+.t-author { display: flex; align-items: center; gap: 10px; }
+.t-av { width: 36px; height: 36px; border-radius: 50%; background: var(--surface2); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: var(--accent); flex-shrink: 0; }
+.t-name { font-weight: 600; font-size: 13px; color: var(--white); }
+.t-role { font-size: 11.5px; color: var(--muted); }
+
+/* ===================== GRID FEATURE CARDS ===================== */
+.feat-cards { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.feat-card { background: var(--surface); padding: 26px 22px; transition: background .2s; }
+.feat-card:hover { background: var(--surface2); }
+.feat-card .fc-icon { font-size: 22px; margin-bottom: 12px; }
+.feat-card h4 { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--white); margin-bottom: 7px; }
+.feat-card p { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+/* ===================== FINAL CTA ===================== */
+.final-cta { padding: 100px 0; text-align: center; position: relative; overflow: hidden; }
+.final-cta::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 600px; height: 400px; background: radial-gradient(ellipse, rgba(79,110,247,.12) 0%, transparent 70%); pointer-events: none; }
+.final-cta h2 { font-family: var(--font-display); font-size: clamp(28px,5vw,50px); font-weight: 800; letter-spacing: -1px; color: var(--white); margin-bottom: 14px; }
+.final-cta p { font-size: 17px; color: var(--muted); margin-bottom: 34px; }
+.cta-perks { display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 20px; flex-wrap: wrap; }
+.cta-perk { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.cta-perk::before { content: '✓'; color: var(--green); font-weight: 700; }
+.cta-social { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 28px; }
+.cta-mock-img { max-width: 700px; margin: 48px auto 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+.cta-mock-inner { width: 100%; height: 280px; background: linear-gradient(135deg,#0d1226,#0a1020); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; }
+.cta-mock-inner .cm-icon { font-size: 30px; opacity: .3; }
+.cta-mock-inner .cm-label { font-size: 12px; color: var(--muted2); font-family: var(--font-display); }
+
+/* ===================== FOOTER ===================== */
+.site-footer { border-top: 1px solid var(--border); padding: 60px 0 40px; }
+.footer-top { display: grid; grid-template-columns: 220px repeat(5,1fr); gap: 40px; margin-bottom: 48px; }
+.footer-brand .brand { display: block; margin-bottom: 12px; }
+.footer-brand p { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+.footer-col h4 { font-family: var(--font-display); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); margin-bottom: 14px; }
+.footer-col a { display: block; font-size: 13.5px; color: var(--muted); margin-bottom: 10px; transition: color .2s; }
+.footer-col a:hover { color: var(--white); }
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 24px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
+.footer-bottom small { font-size: 12.5px; color: var(--muted2); }
+.footer-legal { display: flex; gap: 16px; }
+.footer-legal a { font-size: 12.5px; color: var(--muted2); }
+.footer-legal a:hover { color: var(--muted); }
+
+/* ===================== ANIMATIONS ===================== */
+@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+.fade-up { opacity:0; animation: fadeUp .6s ease forwards; }
+.fade-up:nth-child(1){animation-delay:.05s} .fade-up:nth-child(2){animation-delay:.15s} .fade-up:nth-child(3){animation-delay:.25s} .fade-up:nth-child(4){animation-delay:.35s} .fade-up:nth-child(5){animation-delay:.45s}
+
+/* ===================== VIDEO PLACEHOLDER ===================== */
+.video-wrap { max-width: 860px; margin: 0 auto; aspect-ratio: 16/9; background: #0c0f1a; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+.play-btn { width: 72px; height: 72px; border-radius: 50%; background: rgba(255,255,255,.1); border: 2px solid rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; font-size: 26px; cursor: pointer; transition: all .2s; backdrop-filter: blur(6px); }
+.play-btn:hover { background: rgba(79,110,247,.4); transform: scale(1.06); }
+
+/* ===================== RESPONSIVE ===================== */
+@media(max-width:1024px){ .footer-top{grid-template-columns:1fr 1fr 1fr;} .footer-brand{grid-column:1/-1;} .feat-cards{grid-template-columns:repeat(2,1fr);} .t-grid{grid-template-columns:repeat(2,1fr);} }
+@media(max-width:860px){ .main-nav{display:none;} .nav-toggle{display:flex;} .feature-row{grid-template-columns:1fr; gap:36px;} .feature-row.rev{direction:ltr;} .before-after{grid-template-columns:1fr;} .steps-grid{grid-template-columns:1fr;} .footer-top{grid-template-columns:1fr 1fr;} .footer-brand{grid-column:1/-1;} .t-grid{grid-template-columns:1fr;} }
+@media(max-width:600px){ .hero h1{font-size:28px;} .feat-cards{grid-template-columns:1fr;} }
+.main-nav.open { display:flex!important; flex-direction:column; position:fixed; top:62px; left:0; right:0; background:rgba(8,9,13,.97); backdrop-filter:blur(12px); padding:20px; border-bottom:1px solid var(--border); gap:4px; z-index:39; }
+.main-nav.open .dropdown{display:none!important;}
+/* Agent dashboard mockup */
+    .agent-wrap { max-width: 920px; margin: 52px auto 0; position: relative; }
+    .agent-wrap::after { content:''; position:absolute; bottom:-40px; left:50%; transform:translateX(-50%); width:70%; height:80px; background:radial-gradient(ellipse,rgba(79,110,247,.22) 0%,transparent 70%); filter:blur(20px); pointer-events:none; }
+    .agent-mock { display: grid; grid-template-columns: 220px 1fr; min-height: 400px; }
+    .am-sidebar { background: rgba(255,255,255,.015); border-right: 1px solid var(--border); padding: 20px 14px; display: flex; flex-direction: column; gap: 6px; }
+    .am-sidebar-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); margin: 6px 0 4px; }
+    .am-nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 7px; font-size: 12.5px; color: var(--muted); cursor: default; }
+    .am-nav-item.active { background: var(--accent-lite); color: var(--accent); }
+    .am-nav-item .dot-sm { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .am-main { padding: 22px 26px; }
+    .am-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .am-header h4 { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--white); }
+    .am-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--green); font-weight: 600; }
+    .am-status::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+    .am-issues { display: flex; flex-direction: column; gap: 8px; }
+    .am-issue { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 9px; background: rgba(255,255,255,.02); border: 1px solid var(--border); font-size: 12.5px; transition: all .2s; }
+    .am-issue:hover { border-color: var(--accent-border); background: var(--accent-lite); }
+    .am-issue .ai-icon { font-size: 16px; flex-shrink: 0; }
+    .am-issue .ai-body h5 { font-family: var(--font-display); font-size: 12px; font-weight: 600; color: var(--white); margin-bottom: 2px; }
+    .am-issue .ai-body p { font-size: 11.5px; color: var(--muted); }
+    .am-issue .ai-badge { margin-left: auto; flex-shrink: 0; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 2px 8px; }
+    .ai-badge.fixed { background: var(--green-lite); color: var(--green); border: 1px solid rgba(34,197,94,.2); }
+    .ai-badge.scanning { background: rgba(251,191,36,.1); color: #fbbf24; border: 1px solid rgba(251,191,36,.2); }
+    .ai-badge.pending { background: var(--accent-lite); color: #a5b4fc; border: 1px solid var(--accent-border); }
+    .am-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 14px; }
+    .am-stat { background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
+    .am-stat .as-val { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--white); }
+    .am-stat .as-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* 3-step flow */
+    .agent-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; position: relative; }
+    .agent-steps::before { content:''; position:absolute; top:42px; left:16.6%; right:16.6%; height:1px; background:linear-gradient(90deg,var(--accent-border),rgba(79,110,247,.1)); pointer-events:none; }
+    .agent-step { text-align: center; padding: 32px 24px; }
+    .as-icon-wrap { width: 80px; height: 80px; border-radius: 50%; background: var(--accent-lite); border: 1px solid var(--accent-border); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; font-size: 28px; position: relative; z-index: 1; }
+    .as-step-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); margin-bottom: 6px; }
+    .agent-step h4 { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--white); margin-bottom: 10px; }
+    .agent-step p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    /* NOT a to-do list callout */
+    .callout-box { background: linear-gradient(135deg, rgba(79,110,247,.08), rgba(79,110,247,.04)); border: 1px solid var(--accent-border); border-radius: var(--radius); padding: 40px; text-align: center; margin: 56px 0 0; }
+    .callout-box h2 { font-family: var(--font-display); font-size: clamp(22px,3.5vw,38px); font-weight: 800; color: var(--white); letter-spacing: -.5px; margin-bottom: 14px; }
+    .callout-box h2 span { color: var(--accent); }
+    .callout-box p { font-size: 16px; color: var(--muted); max-width: 600px; margin: 0 auto 32px; line-height: 1.65; }
+
+    /* 12-fix grid */
+    .fixes-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+    .fix-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 16px; transition: all .2s; }
+    .fix-item:hover { border-color: var(--accent-border); transform: translateY(-2px); }
+    .fix-item .fi-icon { font-size: 20px; margin-bottom: 10px; }
+    .fix-item h4 { font-family: var(--font-display); font-size: 13.5px; font-weight: 600; color: var(--white); margin-bottom: 6px; }
+    .fix-item p { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+
+    @media(max-width:860px){ .agent-mock{grid-template-columns:1fr;} .am-sidebar{display:none;} .agent-steps{grid-template-columns:1fr;} .agent-steps::before{display:none;} .fixes-grid{grid-template-columns:repeat(2,1fr);} }
+    @media(max-width:600px){ .fixes-grid{grid-template-columns:1fr;} .am-stats{grid-template-columns:1fr 1fr;} }
+`;
+
+const HTML = `
+<main>
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow fade-up">⚙️ &nbsp;AI SEO Agent</div>
+    <h1 class="fade-up">The AI SEO Agent that improves<br>your SEO <span class="high">on autopilot</span></h1>
+    <p class="sub fade-up">The AI agent finds gaps in your site's technical SEO, reasons how to fix them, and implements changes live — all automatically, every single day.</p>
+    <div class="hero-actions fade-up">
+      <a class="btn btn-primary btn-lg" href="#">Try AI Agent Free</a>
+    </div>
+    <div class="social-proof fade-up">
+      <div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div>
+      Trusted by <strong>&nbsp;10,000+&nbsp;</strong> Marketers & Agencies
+    </div>
+
+    <!-- Agent dashboard mockup -->
+    <div class="agent-wrap fade-up">
+      <div class="browser-frame">
+        <div class="browser-bar">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <div class="browser-url">app.infin8content.com/seo-agent — yoursite.com</div>
+        </div>
+        <div class="agent-mock">
+          <div class="am-sidebar">
+            <div class="am-sidebar-label">Agent Status</div>
+            <div class="am-nav-item active"><span class="dot-sm"></span> Live Scanning</div>
+            <div class="am-nav-item"><span class="dot-sm"></span> Issues Found</div>
+            <div class="am-nav-item"><span class="dot-sm"></span> Fixes Applied</div>
+            <div class="am-sidebar-label" style="margin-top:10px;">Modules</div>
+            <div class="am-nav-item">Schema Markup</div>
+            <div class="am-nav-item">Meta Optimization</div>
+            <div class="am-nav-item">Internal Linking</div>
+            <div class="am-nav-item">Image Alt Texts</div>
+            <div class="am-nav-item">Canonical Tags</div>
+          </div>
+          <div class="am-main">
+            <div class="am-header">
+              <h4>AI SEO Agent — yoursite.com</h4>
+              <div class="am-status">Agent Running</div>
+            </div>
+            <div class="am-issues">
+              <div class="am-issue"><div class="ai-icon">📋</div><div class="ai-body"><h5>Schema Markup injected — 24 pages</h5><p>FAQ schema added to top-performing blog posts</p></div><div class="ai-badge fixed">Fixed</div></div>
+              <div class="am-issue"><div class="ai-icon">🔍</div><div class="ai-body"><h5>Scanning meta descriptions — 142 pages</h5><p>Identifying pages with missing or duplicate meta tags</p></div><div class="ai-badge scanning">Scanning</div></div>
+              <div class="am-issue"><div class="ai-icon">🖼️</div><div class="ai-body"><h5>Image alt texts — 67 images optimized</h5><p>Descriptive alt texts added for accessibility & SEO</p></div><div class="ai-badge fixed">Fixed</div></div>
+              <div class="am-issue"><div class="ai-icon">🔗</div><div class="ai-body"><h5>Internal linking opportunities detected</h5><p>12 new internal link opportunities found across site</p></div><div class="ai-badge pending">Queued</div></div>
+            </div>
+            <div class="am-stats">
+              <div class="am-stat"><div class="as-val">247</div><div class="as-label">Issues Fixed</div></div>
+              <div class="am-stat"><div class="as-val">94</div><div class="as-label">SEO Health Score</div></div>
+              <div class="am-stat"><div class="as-val">+38%</div><div class="as-label">Traffic Lift</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section section-alt">
+  <div class="container">
+    <p class="section-label" style="justify-content:center;">🔧 &nbsp;How the AI Agent Works</p>
+    <h2 class="section-title" style="text-align:center;margin-bottom:50px;">Three steps. Zero manual work.</h2>
+    <div class="agent-steps">
+      <div class="agent-step">
+        <div class="as-icon-wrap">🔍</div>
+        <div class="as-step-label">Step 1</div>
+        <h4>Dynamic Scanning</h4>
+        <p>The AI Agent constantly scans your site to look for flaws, gaps, and bugs in your technical SEO — from meta tags to schema to broken links.</p>
+      </div>
+      <div class="agent-step">
+        <div class="as-icon-wrap">🧠</div>
+        <div class="as-step-label">Step 2</div>
+        <h4>Smart Reasoning</h4>
+        <p>It thinks about the best way to fix each issue, evaluating impact vs. effort and prioritizing the changes that will drive the most ranking improvement.</p>
+      </div>
+      <div class="agent-step">
+        <div class="as-icon-wrap">⚡</div>
+        <div class="as-step-label">Step 3</div>
+        <h4>Implementation</h4>
+        <p>After a thorough analysis, it automatically implements the updates live on your site — no developer needed, no to-do list, no manual fixes.</p>
+      </div>
+    </div>
+
+    <div class="callout-box">
+      <h2>It's <span>NOT</span> a to-do list.</h2>
+      <p>It's an AI agent automatically applying changes to your site that dramatically improve its SEO performance — every single day, without you lifting a finger.</p>
+      <div class="before-after">
+        <div class="ba-card">
+          <div class="ba-header before"><span class="ba-label">Before</span> Without AI SEO Agent</div>
+          <div class="ba-body">
+            <div class="ba-img">📋</div>
+            <ul class="ba-list before">
+              <li>Manually identify the issues</li>
+              <li>Manually think how to fix them</li>
+              <li>Manually implement each fix</li>
+            </ul>
+          </div>
+        </div>
+        <div class="ba-card">
+          <div class="ba-header after"><span class="ba-label">After</span> With AI SEO Agent</div>
+          <div class="ba-body">
+            <div class="ba-img">🤖</div>
+            <ul class="ba-list after">
+              <li>Scans your site for flaws, gaps, and bugs</li>
+              <li>Thinks about the best way to fix and implement</li>
+              <li>Auto-implements updates on your live site</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 FIXES GRID -->
+<section class="section">
+  <div class="container">
+    <p class="section-label" style="justify-content:center;">🛠️ &nbsp;Everything It Fixes</p>
+    <h2 class="section-title" style="text-align:center;margin-bottom:10px;">The AI SEO Agent That Fixes Everything</h2>
+    <p class="section-sub" style="text-align:center;max-width:580px;margin:0 auto 40px;">From Schema Markup injection to broken links. The AI Agent fixes your technical SEO automatically.</p>
+    <div class="fixes-grid">
+      <div class="fix-item"><div class="fi-icon">📋</div><h4>Schema Markup</h4><p>Automatically inject structured data to help search engines understand your content.</p></div>
+      <div class="fix-item"><div class="fi-icon">📝</div><h4>Page Title Optimization</h4><p>Dynamically optimize page titles for better search visibility and click-through rates.</p></div>
+      <div class="fix-item"><div class="fi-icon">📣</div><h4>Social Metadata</h4><p>Generate and update Open Graph metadata to improve social media sharing presence.</p></div>
+      <div class="fix-item"><div class="fi-icon">❓</div><h4>Structured Data</h4><p>Add FAQ and How-To schema markup to enhance SERP features and rich results.</p></div>
+      <div class="fix-item"><div class="fi-icon">🔤</div><h4>Heading Structure</h4><p>Fix missing or improper heading hierarchies for better content organization and crawlability.</p></div>
+      <div class="fix-item"><div class="fi-icon">↪️</div><h4>Smart Redirects</h4><p>Implement and manage 301/302 redirects automatically to preserve link equity.</p></div>
+      <div class="fix-item"><div class="fi-icon">🔍</div><h4>Meta Optimization</h4><p>Optimize meta titles and descriptions for improved search performance and CTR.</p></div>
+      <div class="fix-item"><div class="fi-icon">🔗</div><h4>Internal Linking</h4><p>Enhance site structure through intelligent internal link optimization across all pages.</p></div>
+      <div class="fix-item"><div class="fi-icon">📄</div><h4>Duplicate Content</h4><p>Prevent duplicate content issues with automated noindex tag management.</p></div>
+      <div class="fix-item"><div class="fi-icon">🏷️</div><h4>Canonical Tags</h4><p>Implement canonical tags to specify preferred content versions for search engines.</p></div>
+      <div class="fix-item"><div class="fi-icon">🖼️</div><h4>Image Optimization</h4><p>Add descriptive alt texts to all images for better accessibility and SEO signals.</p></div>
+      <div class="fix-item"><div class="fi-icon">💔</div><h4>Broken Link Repair</h4><p>Automatically detect and fix broken links across your entire site to maintain health.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <div class="container">
+    <h2>Scale more clients.<br>Do less work.</h2>
+    <p>Get started and see why agencies trust Infin8Content.</p>
+    <a class="btn btn-primary btn-lg" href="#">Try AI Agent Free</a>
+    <div class="cta-perks"><span class="cta-perk">Cancel anytime</span><span class="cta-perk">No dev needed</span><span class="cta-perk">Works on autopilot</span></div>
+    <div class="cta-social"><div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div><span style="font-size:13.5px;color:var(--muted);">Trusted by <strong style="color:var(--white)">10,000+</strong> marketers</span></div>
+    <div class="cta-mock-img"><div class="cta-mock-inner"><div class="cm-icon">⚙️</div><div class="cm-label">Agent dashboard preview — replace with screenshot</div></div></div>
+  </div>
+</section>
+
+</main>
+`;
+
+export default function AISeoAgentPage() {
+  return <MarketingPageBody html={HTML} css={CSS} />;
+}

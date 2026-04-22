@@ -1,12 +1,12 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>AutoPublish — Automated AI Content Writing & Publishing | Infin8Content</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
-  <style>
+import { Metadata } from 'next';
+import MarketingPageBody from '@/components/marketing/MarketingPageBody';
+
+export const metadata: Metadata = {
+  title: 'LLM Brand Visibility Tracker — Monitor AI Mentions | Infin8Content',
+  description: 'Track and monitor your brand visibility across LLM models with Infin8Content LLM Tracker.',
+};
+
+const CSS = `
 /* ===================== RESET & TOKENS ===================== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -217,122 +217,117 @@ ul { list-style: none; }
 @media(max-width:600px){ .hero h1{font-size:28px;} .feat-cards{grid-template-columns:1fr;} }
 .main-nav.open { display:flex!important; flex-direction:column; position:fixed; top:62px; left:0; right:0; background:rgba(8,9,13,.97); backdrop-filter:blur(12px); padding:20px; border-bottom:1px solid var(--border); gap:4px; z-index:39; }
 .main-nav.open .dropdown{display:none!important;}
+/* LLM tracker dashboard mockup */
+    .llm-wrap { max-width: 940px; margin: 52px auto 0; position: relative; }
+    .llm-wrap::after { content:''; position:absolute; bottom:-40px; left:50%; transform:translateX(-50%); width:70%; height:80px; background:radial-gradient(ellipse,rgba(79,110,247,.22) 0%,transparent 70%); filter:blur(20px); pointer-events:none; }
+    .llm-mock { display: grid; grid-template-columns: 200px 1fr; min-height: 420px; }
+    .llm-sidebar { background: rgba(255,255,255,.015); border-right: 1px solid var(--border); padding: 18px 14px; }
+    .llm-sidebar h5 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); margin-bottom: 10px; }
+    .llm-brand-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 7px; font-size: 12.5px; color: var(--muted); margin-bottom: 4px; cursor: default; }
+    .llm-brand-item.active { background: var(--accent-lite); color: var(--white); }
+    .llm-brand-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .llm-main { padding: 22px 26px; }
+    .llm-platforms { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .llm-plat { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; color: var(--muted); transition: all .2s; }
+    .llm-plat.active { background: var(--accent-lite); border-color: var(--accent-border); color: #a5b4fc; }
+    .llm-plat .lp-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+    .llm-metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 18px; }
+    .llm-metric { background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+    .llm-metric .lm-val { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--white); }
+    .llm-metric .lm-label { font-size: 10.5px; color: var(--muted); margin-top: 3px; }
+    .llm-metric .lm-trend { font-size: 10.5px; color: var(--green); margin-top: 2px; }
+    .llm-mentions { display: flex; flex-direction: column; gap: 8px; }
+    .llm-mention { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,.02); border: 1px solid var(--border); font-size: 12px; }
+    .llm-mention .lm-plat-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .llm-mention .lm-body p { font-size: 12px; color: var(--muted); line-height: 1.4; }
+    .llm-mention .lm-body p strong { color: var(--white); }
+    .llm-mention .lm-sent { margin-left: auto; flex-shrink: 0; }
+    .sent-pos { color: var(--green); font-size: 11px; font-weight: 600; }
+    .sent-neu { color: var(--muted); font-size: 11px; font-weight: 600; }
 
-  </style>
-  <style>
-    /* AutoPublish pipeline mockup */
-    .ap-wrap { max-width: 920px; margin: 52px auto 0; position: relative; }
-    .ap-wrap::after { content:''; position:absolute; bottom:-40px; left:50%; transform:translateX(-50%); width:70%; height:80px; background:radial-gradient(ellipse,rgba(79,110,247,.22) 0%,transparent 70%); filter:blur(20px); pointer-events:none; }
-    .ap-mock { padding: 28px; }
-    .ap-pipeline { display: flex; align-items: center; gap: 0; margin-bottom: 28px; }
-    .ap-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-    .ap-step-icon { width: 56px; height: 56px; border-radius: 14px; background: var(--accent-lite); border: 1px solid var(--accent-border); display: flex; align-items: center; justify-content: center; font-size: 22px; position: relative; z-index: 1; }
-    .ap-step-icon.active { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 20px rgba(79,110,247,.4); }
-    .ap-step-icon.done { background: var(--green-lite); border-color: rgba(34,197,94,.3); }
-    .ap-step h5 { font-family: var(--font-display); font-size: 11.5px; font-weight: 600; color: var(--white); text-align: center; }
-    .ap-step p { font-size: 10.5px; color: var(--muted); text-align: center; }
-    .ap-connector { flex-shrink: 0; width: 40px; height: 1px; background: linear-gradient(90deg,var(--accent-border),rgba(79,110,247,.1)); margin-bottom: 28px; }
-    .ap-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
-    .ap-article-card { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 9px; padding: 12px; }
-    .ap-article-card .aac-img { width: 100%; height: 60px; background: linear-gradient(135deg,var(--surface2),#0d1228); border-radius: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; opacity: .5; }
-    .ap-article-card .aac-title { font-size: 11.5px; font-weight: 600; color: var(--white); margin-bottom: 5px; line-height: 1.3; font-family: var(--font-display); }
-    .ap-article-card .aac-meta { display: flex; align-items: center; gap: 6px; }
-    .ap-article-card .aac-badge { font-size: 10px; border-radius: 4px; padding: 2px 7px; font-weight: 600; }
-    .aac-badge.pub { background: var(--green-lite); color: var(--green); border: 1px solid rgba(34,197,94,.2); }
-    .aac-badge.sched { background: var(--accent-lite); color: #a5b4fc; border: 1px solid var(--accent-border); }
-    .aac-badge.gen { background: rgba(251,191,36,.1); color: #fbbf24; border: 1px solid rgba(251,191,36,.2); }
-    .ap-article-card .aac-time { font-size: 10px; color: var(--muted2); margin-left: auto; }
+    /* Platform logos row */
+    .platforms-row { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 36px; }
+    .plat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--muted); transition: all .2s; }
+    .plat-card:hover { border-color: var(--accent-border); color: var(--white); background: var(--accent-lite); }
+    .plat-icon { font-size: 20px; }
 
-    /* ecosystem section */
-    .ecosystem-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
-    .eco-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; transition: all .2s; }
-    .eco-card:hover { border-color: var(--accent-border); transform: translateY(-3px); }
-    .eco-card .eco-icon { font-size: 28px; margin-bottom: 14px; }
-    .eco-card h3 { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--white); margin-bottom: 10px; }
-    .eco-card p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
-    .eco-card ul li { font-size: 13.5px; color: var(--muted); padding: 4px 0; display: flex; gap: 8px; }
-    .eco-card ul li::before { content:'→'; color: var(--accent); flex-shrink: 0; }
+    /* Feature rows with right-side content */
+    .llm-features { padding: 90px 0; }
 
-    /* Integrations logos */
-    .integrations-strip { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 36px; }
-    .int-badge { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 18px; font-size: 13px; font-weight: 600; color: var(--muted); transition: all .2s; display: flex; align-items: center; gap: 7px; }
-    .int-badge:hover { color: var(--white); border-color: var(--accent-border); background: var(--accent-lite); }
+    /* Pricing comparison */
+    .pricing-compare { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 40px; }
+    .pc-head { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+    .pc-col { padding: 20px 24px; border-right: 1px solid var(--border); }
+    .pc-col:last-child { border-right: none; }
+    .pc-col.highlight { background: var(--accent-lite); border-color: var(--accent-border); }
+    .pc-col h4 { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+    .pc-col .pc-price { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--accent); }
+    .pc-col .pc-sub { font-size: 12px; color: var(--muted); }
+    .pc-row { display: grid; grid-template-columns: 1fr 1fr 1fr; border-top: 1px solid var(--border); }
+    .pc-cell { padding: 12px 24px; border-right: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+    .pc-cell:last-child { border-right: none; }
+    .pc-cell.highlight { background: rgba(79,110,247,.04); }
+    .pc-cell .check { color: var(--green); font-weight: 700; margin-right: 6px; }
+    .pc-cell .cross { color: var(--muted2); margin-right: 6px; }
 
-    @media(max-width:860px){ .ap-pipeline{flex-direction:column; gap:16px;} .ap-connector{width:1px; height:24px; margin:0;} .ecosystem-grid{grid-template-columns:1fr;} .ap-cards{grid-template-columns:1fr 1fr;} }
-    @media(max-width:600px){ .ap-cards{grid-template-columns:1fr;} }
-  </style>
-</head>
-<body>
+    @media(max-width:860px){ .llm-mock{grid-template-columns:1fr;} .llm-sidebar{display:none;} .llm-metrics{grid-template-columns:1fr 1fr;} .pc-head,.pc-row{grid-template-columns:1fr;} .pc-col,.pc-cell{border-right:none; border-bottom:1px solid var(--border);} }
+    @media(max-width:600px){ .llm-metrics{grid-template-columns:1fr 1fr;} }
+`;
 
-<div class="promo-bar">✨&nbsp; New Year Offer: <strong style="color:#a5b4fc;margin:0 6px;">40% Off</strong> on Yearly Plans &nbsp;<span class="time-unit js-ph">08</span>hrs <span class="time-unit js-pm">34</span>min <span class="time-unit js-ps">12</span>sec<a class="deal-link" href="#">Get Deal</a></div>
-
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/"><img src="/infin8content_logo.png" alt="Infin8Content"></a>
-    <nav class="main-nav" id="main-nav">
-      <div class="nav-item"><span class="nav-link">Features <span class="chevron">▾</span></span><div class="dropdown"><div class="dropdown-label">AI Writing</div><a class="dropdown-link" href="/ai-content-writer.html">AI Content Writer</a><a class="dropdown-link" href="/ai-seo-editor.html">AI SEO Editor</a><a class="dropdown-link" href="#">News Writer</a><hr><div class="dropdown-label">Automation</div><a class="dropdown-link" href="/ai-seo-agent.html">AI SEO Agent</a><a class="dropdown-link" href="/autopublish.html">AutoPublish</a><a class="dropdown-link" href="/llm-tracker.html">LLM Tracker</a></div></div>
-      <div class="nav-item"><span class="nav-link">Solutions <span class="chevron">▾</span></span><div class="dropdown"><a class="dropdown-link" href="#"><strong>SaaS</strong><small>Scale organic traffic</small></a><a class="dropdown-link" href="#"><strong>Agencies</strong><small>Manage clients at scale</small></a><a class="dropdown-link" href="#"><strong>E-Commerce</strong><small>Upgrade store content</small></a></div></div>
-      <a class="nav-link" href="#">Pricing</a>
-      <div class="nav-item"><span class="nav-link">Resources <span class="chevron">▾</span></span><div class="dropdown"><a class="dropdown-link" href="#">Case Studies</a><a class="dropdown-link" href="#">Help Docs</a><a class="dropdown-link" href="#">Blog</a></div></div>
-    </nav>
-    <div class="header-cta"><a class="btn-link" href="#">Login</a><a class="btn btn-primary" href="#">Get Started</a></div>
-    <button class="nav-toggle" id="nav-toggle">☰</button>
-  </div>
-</header>
-
+const HTML = `
 <main>
 
 <section class="hero">
   <div class="container">
-    <div class="hero-eyebrow fade-up">🚀 &nbsp;AutoPublish</div>
-    <h1 class="fade-up">Automatically Generate and Publish<br>Content <span class="high">While You Sleep</span></h1>
-    <p class="sub fade-up">The automated AI blogging system that runs on autopilot — 150+ languages, any niche, any schedule.</p>
+    <div class="hero-eyebrow fade-up">🔭 &nbsp;LLM Brand Visibility Tracker</div>
+    <h1 class="fade-up">Track Your Brand<br>in <span class="high">AI Search</span></h1>
+    <p class="sub fade-up">See how ChatGPT, Perplexity, Gemini, Claude, and Google AI Overviews talk about your brand. Monitor mentions, citations, and share of voice — all in one dashboard, one price.</p>
     <div class="hero-actions fade-up">
-      <a class="btn btn-primary btn-lg" href="#">Get Started Free</a>
+      <a class="btn btn-primary btn-lg" href="#">Start Tracking Free</a>
     </div>
     <div class="social-proof fade-up">
       <div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div>
       Trusted by <strong>&nbsp;10,000+&nbsp;</strong> Marketers & Agencies
     </div>
 
-    <!-- AutoPublish pipeline mockup -->
-    <div class="ap-wrap fade-up">
+    <!-- LLM dashboard mockup -->
+    <div class="llm-wrap fade-up">
       <div class="browser-frame">
         <div class="browser-bar">
           <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
-          <div class="browser-url">app.infin8content.com/autopublish — Campaign: Tech Blog</div>
+          <div class="browser-url">app.infin8content.com/llm-tracker — Brand Visibility Dashboard</div>
         </div>
-        <div class="ap-mock">
-          <div class="ap-pipeline">
-            <div class="ap-step">
-              <div class="ap-step-icon done">📡</div>
-              <h5>Feed Source</h5><p>RSS / Keywords</p>
-            </div>
-            <div class="ap-connector"></div>
-            <div class="ap-step">
-              <div class="ap-step-icon done">✍️</div>
-              <h5>AI Writes</h5><p>SEO-optimized</p>
-            </div>
-            <div class="ap-connector"></div>
-            <div class="ap-step">
-              <div class="ap-step-icon active">🖼️</div>
-              <h5>Images Generated</h5><p>With context</p>
-            </div>
-            <div class="ap-connector"></div>
-            <div class="ap-step">
-              <div class="ap-step-icon">📤</div>
-              <h5>Auto-Published</h5><p>To your CMS</p>
-            </div>
-            <div class="ap-connector"></div>
-            <div class="ap-step">
-              <div class="ap-step-icon">📊</div>
-              <h5>Analytics</h5><p>Track ranking</p>
-            </div>
+        <div class="llm-mock">
+          <div class="llm-sidebar">
+            <h5>Tracking</h5>
+            <div class="llm-brand-item active"><div class="llm-brand-dot" style="background:var(--accent)"></div> Infin8Content</div>
+            <div class="llm-brand-item"><div class="llm-brand-dot" style="background:#94a3b8"></div> Competitor A</div>
+            <div class="llm-brand-item"><div class="llm-brand-dot" style="background:#64748b"></div> Competitor B</div>
+            <h5 style="margin-top:16px;">Prompts (24)</h5>
+            <div class="llm-brand-item">best content tools</div>
+            <div class="llm-brand-item">ai content writer</div>
+            <div class="llm-brand-item">content automation</div>
           </div>
-          <div class="ap-cards">
-            <div class="ap-article-card"><div class="aac-img">📰</div><div class="aac-title">The Future of AI in Content Marketing</div><div class="aac-meta"><span class="aac-badge pub">Published</span><span class="aac-time">2h ago</span></div></div>
-            <div class="ap-article-card"><div class="aac-img">💡</div><div class="aac-title">10 SEO Strategies That Actually Work in 2026</div><div class="aac-meta"><span class="aac-badge sched">Scheduled</span><span class="aac-time">Tomorrow</span></div></div>
-            <div class="ap-article-card"><div class="aac-img">🚀</div><div class="aac-title">How to Scale Content Without Hiring Writers</div><div class="aac-meta"><span class="aac-badge gen">Generating</span><span class="aac-time">Now</span></div></div>
+          <div class="llm-main">
+            <div class="llm-platforms">
+              <div class="llm-plat active"><span class="lp-dot"></span> ChatGPT</div>
+              <div class="llm-plat active"><span class="lp-dot"></span> Perplexity</div>
+              <div class="llm-plat active"><span class="lp-dot"></span> Gemini</div>
+              <div class="llm-plat active"><span class="lp-dot"></span> Claude</div>
+              <div class="llm-plat active"><span class="lp-dot"></span> Grok</div>
+              <div class="llm-plat active"><span class="lp-dot"></span> AI Overviews</div>
+            </div>
+            <div class="llm-metrics">
+              <div class="llm-metric"><div class="lm-val">68%</div><div class="lm-label">Share of Voice</div><div class="lm-trend">↑ +12% this week</div></div>
+              <div class="llm-metric"><div class="lm-val">247</div><div class="lm-label">Total Mentions</div><div class="lm-trend">↑ +34 this week</div></div>
+              <div class="llm-metric"><div class="lm-val">89%</div><div class="lm-label">Positive Sentiment</div><div class="lm-trend">↑ +5% this week</div></div>
+              <div class="llm-metric"><div class="lm-val">142</div><div class="lm-label">Citations</div><div class="lm-trend">↑ +18 this week</div></div>
+            </div>
+            <div class="llm-mentions">
+              <div class="llm-mention"><div class="lm-plat-icon">🤖</div><div class="lm-body"><p><strong>ChatGPT:</strong> "For AI-powered content workflows, <strong>Infin8Content</strong> is one of the leading solutions — offering automated publishing, SEO optimization…"</p></div><div class="lm-sent"><span class="sent-pos">Positive</span></div></div>
+              <div class="llm-mention"><div class="lm-plat-icon">🔍</div><div class="lm-body"><p><strong>Perplexity:</strong> "According to <strong>infin8content.com</strong>, agencies can reduce their content production time by up to 80%…"</p></div><div class="lm-sent"><span class="sent-pos">Cited</span></div></div>
+              <div class="llm-mention"><div class="lm-plat-icon">💎</div><div class="lm-body"><p><strong>Gemini:</strong> "Several tools handle this well — <strong>Infin8Content</strong> is particularly strong for agencies managing multiple client sites…"</p></div><div class="lm-sent"><span class="sent-neu">Neutral</span></div></div>
+            </div>
           </div>
         </div>
       </div>
@@ -340,95 +335,110 @@ ul { list-style: none; }
   </div>
 </section>
 
-<!-- BEFORE / AFTER -->
+<!-- SETUP STEPS -->
 <section class="section section-alt">
   <div class="container">
-    <p class="section-label" style="justify-content:center;">⚡ &nbsp;The Difference</p>
-    <h2 class="section-title" style="text-align:center;margin-bottom:40px;">From manual chaos to fully automated</h2>
-    <div class="before-after">
-      <div class="ba-card">
-        <div class="ba-header before"><span class="ba-label">Before</span> Difficult & hard to manage</div>
-        <div class="ba-body">
-          <div class="ba-img">😩</div>
-          <ul class="ba-list before">
-            <li>Setting up blog — ~1 week of work</li>
-            <li>Hiring copywriter — $600/month</li>
-            <li>Hiring designer — $600/month</li>
-            <li>Managing hires — ~10 hours/week</li>
-          </ul>
-        </div>
-      </div>
-      <div class="ba-card">
-        <div class="ba-header after"><span class="ba-label">After</span> Blog runs automatically</div>
-        <div class="ba-body">
-          <div class="ba-img">🚀</div>
-          <ul class="ba-list after">
-            <li>All-in-one solution — set and forget</li>
-            <li>Connect to your blog in seconds</li>
-            <li>AI images generated automatically</li>
-            <li>Publishes on your schedule, 24/7</li>
-          </ul>
-        </div>
-      </div>
+    <p class="section-label" style="justify-content:center;">🚀 &nbsp;Getting Started</p>
+    <h2 class="section-title" style="text-align:center;margin-bottom:12px;">Set Up AI Visibility Tracking in 3 Simple Steps</h2>
+    <p class="section-sub" style="text-align:center;max-width:480px;margin:0 auto 44px;">From zero to complete AI search visibility in minutes.</p>
+    <div class="steps-grid">
+      <div class="step-card"><div class="step-num">1</div><div class="step-icon">🏷️</div><h4>Add Your Brands</h4><p>Enter your brand name and the competitors you want to track. Add the topics and queries that matter most to your business and customers.</p></div>
+      <div class="step-card"><div class="step-num">2</div><div class="step-icon">🕵️</div><h4>We Query the AIs</h4><p>Our crawler asks real questions to ChatGPT, Perplexity, Gemini, Claude, Grok, and Google AI Overviews — exactly like your customers do every day.</p></div>
+      <div class="step-card"><div class="step-num">3</div><div class="step-icon">📊</div><h4>See Your Visibility</h4><p>Get detailed reports on mentions, citations, sentiment, and share of voice. Track changes over time and spot opportunities to improve your AI presence.</p></div>
     </div>
   </div>
 </section>
 
-<!-- ECOSYSTEM -->
+<!-- ALL PLATFORMS, ONE PRICE callout -->
 <section class="section">
   <div class="container">
-    <p class="section-label" style="justify-content:center;">🌐 &nbsp;How It Works</p>
-    <h2 class="section-title" style="text-align:center;margin-bottom:12px;">How The AutoPublish Ecosystem Works</h2>
-    <p class="section-sub" style="text-align:center;max-width:540px;margin:0 auto 44px;">Select a content feed, choose your output frequency, and connect with your site's backend. That's it.</p>
-    <div class="ecosystem-grid">
-      <div class="eco-card">
-        <div class="eco-icon">📡</div>
-        <h3>Feed the AI</h3>
-        <p>Generate content based on feeds with valuable information and context from multiple sources.</p>
-        <ul>
-          <li>RSS feeds from any source</li>
-          <li>Target keywords & topics</li>
-          <li>YouTube videos to blog posts</li>
-          <li>Live news events</li>
-        </ul>
-      </div>
-      <div class="eco-card">
-        <div class="eco-icon">⚙️</div>
-        <h3>Campaigns & AutoPublish</h3>
-        <p>Campaigns define how your content is generated and published. Choose manual or fully automated.</p>
-        <ul>
-          <li>Manual execution or autopilot</li>
-          <li>Custom schedules (daily, weekly)</li>
-          <li>Per-campaign niche & tone settings</li>
-          <li>Multi-site campaign management</li>
-        </ul>
-      </div>
-      <div class="eco-card">
-        <div class="eco-icon">🔌</div>
-        <h3>Integrations</h3>
-        <p>Publish your articles directly to any major CMS platform with a single connection.</p>
-        <ul>
-          <li>Connect unlimited websites</li>
-          <li>One-click publish to any CMS</li>
-          <li>Advanced feature integrations</li>
-          <li>Zapier & webhooks support</li>
-        </ul>
-      </div>
+    <p class="section-label" style="justify-content:center;">💰 &nbsp;All AI Platforms. One Price.</p>
+    <h2 class="section-title" style="text-align:center;margin-bottom:14px;">All AI Platforms. One Price.</h2>
+    <p class="section-sub" style="text-align:center;max-width:580px;margin:0 auto 16px;">Other tools charge $99–199/month for each AI platform separately. ChatGPT is one add-on. Perplexity is another. With Infin8Content, you get every platform included — no nickel-and-diming.</p>
+    <div class="platforms-row">
+      <div class="plat-card"><span class="plat-icon">🤖</span> ChatGPT</div>
+      <div class="plat-card"><span class="plat-icon">🔍</span> Perplexity</div>
+      <div class="plat-card"><span class="plat-icon">🌐</span> Google AI Overviews</div>
+      <div class="plat-card"><span class="plat-icon">💎</span> Gemini</div>
+      <div class="plat-card"><span class="plat-icon">🤝</span> Claude</div>
+      <div class="plat-card"><span class="plat-icon">⚡</span> Grok</div>
     </div>
 
-    <!-- Integration badges -->
-    <div style="text-align:center;margin-top:48px;">
-      <p class="section-label" style="justify-content:center;margin-bottom:20px;">🔗 &nbsp;Connects With</p>
-      <div class="integrations-strip">
-        <div class="int-badge">🔷 WordPress</div>
-        <div class="int-badge">🛍️ Shopify</div>
-        <div class="int-badge">👻 Ghost</div>
-        <div class="int-badge">🌊 Webflow</div>
-        <div class="int-badge">⬡ Wix</div>
-        <div class="int-badge">📝 Squarespace</div>
-        <div class="int-badge">⚡ Zapier</div>
-        <div class="int-badge">🔗 Webhooks</div>
+    <!-- Pricing comparison table -->
+    <div class="pricing-compare" style="margin-top:48px;">
+      <div class="pc-head">
+        <div class="pc-col"><h4>Feature</h4><div class="pc-sub">What you get</div></div>
+        <div class="pc-col"><h4>Other Tools</h4><div class="pc-price" style="font-size:16px;color:var(--muted)">$99–199</div><div class="pc-sub">per platform/mo</div></div>
+        <div class="pc-col highlight"><h4>Infin8Content</h4><div class="pc-price">Included</div><div class="pc-sub">all platforms, one plan</div></div>
       </div>
+      <div class="pc-row"><div class="pc-cell">ChatGPT tracking</div><div class="pc-cell"><span class="check">✓</span> Add-on — $99/mo</div><div class="pc-cell highlight"><span class="check">✓</span> Included</div></div>
+      <div class="pc-row"><div class="pc-cell">Perplexity tracking</div><div class="pc-cell"><span class="cross">✗</span> Separate add-on</div><div class="pc-cell highlight"><span class="check">✓</span> Included</div></div>
+      <div class="pc-row"><div class="pc-cell">Gemini + Grok + Claude</div><div class="pc-cell"><span class="cross">✗</span> Not available</div><div class="pc-cell highlight"><span class="check">✓</span> Included</div></div>
+      <div class="pc-row"><div class="pc-cell">White label reports</div><div class="pc-cell"><span class="cross">✗</span> Not included</div><div class="pc-cell highlight"><span class="check">✓</span> Included</div></div>
+      <div class="pc-row"><div class="pc-cell">Sentiment analysis</div><div class="pc-cell"><span class="cross">✗</span> Premium only</div><div class="pc-cell highlight"><span class="check">✓</span> Included</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURE ROWS -->
+<section class="llm-features section-alt" style="padding:70px 0;">
+  <div class="container">
+    <div class="feature-row" style="padding-top:0;">
+      <div>
+        <div class="feature-row-tag">📊 &nbsp;Share of Voice</div>
+        <h2 class="section-title">Track Share of Voice Across AI Search</h2>
+        <p style="color:var(--muted);font-size:15px;line-height:1.65;margin-bottom:18px;">Know exactly how often AI recommends your brand versus competitors. SOV tells you who's winning in AI search — and by how much.</p>
+        <ul class="feature-list">
+          <li>Percentage of AI recommendations you win</li>
+          <li>Head-to-head competitor comparison</li>
+          <li>Historical trends to track your progress over time</li>
+        </ul>
+      </div>
+      <div class="feat-img"><div class="feat-img-inner"><div class="feat-img-icon">📊</div><div class="feat-img-label">Share of Voice Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with screenshot</span></div></div><div class="glow"></div></div>
+    </div>
+    <div class="feature-row rev">
+      <div>
+        <div class="feature-row-tag">🔔 &nbsp;Mention Monitoring</div>
+        <h2 class="section-title">Monitor Every Mention and Citation</h2>
+        <p style="color:var(--muted);font-size:15px;line-height:1.65;margin-bottom:18px;">See exactly when and where AI mentions your brand — from direct recommendations to passing references. Know which sources AI cites when talking about you.</p>
+        <ul class="feature-list">
+          <li>Real-time mention tracking across all platforms</li>
+          <li>Source citations and backlink discovery</li>
+          <li>Full context of every mention captured</li>
+        </ul>
+      </div>
+      <div class="feat-img"><div class="feat-img-inner"><div class="feat-img-icon">🔔</div><div class="feat-img-label">Mentions Dashboard Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with screenshot</span></div></div><div class="glow"></div></div>
+    </div>
+    <div class="feature-row" style="padding-bottom:0;border-bottom:none;">
+      <div>
+        <div class="feature-row-tag">😊 &nbsp;Sentiment Analysis</div>
+        <h2 class="section-title">Understand AI Sentiment About Your Brand</h2>
+        <p style="color:var(--muted);font-size:15px;line-height:1.65;margin-bottom:18px;">Not all mentions are equal. Our sentiment analysis shows whether AI talks about your brand positively, negatively, or neutrally — and alerts you before issues spread.</p>
+        <ul class="feature-list">
+          <li>Positive, negative, neutral classification</li>
+          <li>Early warning system for reputation risks</li>
+          <li>Sentiment trend tracking over time</li>
+        </ul>
+      </div>
+      <div class="feat-img"><div class="feat-img-inner"><div class="feat-img-icon">😊</div><div class="feat-img-label">Sentiment Analysis Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with screenshot</span></div></div><div class="glow"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES GRID -->
+<section class="section">
+  <div class="container">
+    <p class="section-label" style="justify-content:center;">✦ &nbsp;Everything Included</p>
+    <h2 class="section-title" style="text-align:center;margin-bottom:36px;">Everything You Need for AI Search Visibility</h2>
+    <div class="feat-cards">
+      <div class="feat-card"><div class="fc-icon">🌐</div><h4>Multi-Platform Coverage</h4><p>Track ChatGPT, Perplexity, Gemini, Claude, Grok, and Google AI Overviews — all from one dashboard.</p></div>
+      <div class="feat-card"><div class="fc-icon">🏆</div><h4>Competitor Benchmarking</h4><p>Track competitor mentions, SOV, and sentiment alongside your own to see exactly who's winning AI recommendations.</p></div>
+      <div class="feat-card"><div class="fc-icon">📈</div><h4>Historical Tracking</h4><p>Track AI visibility over time. See trends, spot changes, and measure the impact of your content strategy on AI citations.</p></div>
+      <div class="feat-card"><div class="fc-icon">🔔</div><h4>Alerts & Notifications</h4><p>Get notified when AI mentions you or your competitors. Never miss an important change in your AI visibility landscape.</p></div>
+      <div class="feat-card"><div class="fc-icon">🏷️</div><h4>White Label Reports</h4><p>Agencies can white label AI visibility reports with custom branding, logos, and domains for client presentations.</p></div>
+      <div class="feat-card"><div class="fc-icon">🔌</div><h4>API Access</h4><p>Integrate AI visibility data into your own tools and workflows with our API. Build custom dashboards and automations.</p></div>
+      <div class="feat-card"><div class="fc-icon">📋</div><h4>Prompt Tracking</h4><p>Define the exact queries your customers ask AI — and track how often your brand appears in those specific conversations.</p></div>
+      <div class="feat-card"><div class="fc-icon">😊</div><h4>Sentiment Analysis</h4><p>Understand the tone behind every AI mention — positive, negative, or neutral — and monitor changes in brand perception over time.</p></div>
     </div>
   </div>
 </section>
@@ -437,15 +447,13 @@ ul { list-style: none; }
 <section class="section section-alt">
   <div class="container">
     <p class="section-label" style="justify-content:center;">❓ &nbsp;FAQ</p>
-    <h2 class="section-title" style="text-align:center;">Frequently Asked Questions</h2>
+    <h2 class="section-title" style="text-align:center;">AI Visibility Tracking FAQ</h2>
     <div class="faq-list">
-      <div class="faq-item"><div class="faq-q">What is AutoPublish and how does it work?<div class="faq-icon">+</div></div><div class="faq-a">AutoPublish is an AI-powered tool that automatically generates and publishes SEO-optimized content to your website. It researches topics, writes unique articles, and schedules them to go live — all without manual effort. You configure the schedule, niche, tone, and categories once, and it runs indefinitely.</div></div>
-      <div class="faq-item"><div class="faq-q">Does AutoPublish support multilingual content?<div class="faq-icon">+</div></div><div class="faq-a">Yes. AutoPublish can generate and publish content in 150+ languages, helping you reach global audiences and improve international SEO performance across any market.</div></div>
-      <div class="faq-item"><div class="faq-q">Can I customize the content generated by AutoPublish?<div class="faq-icon">+</div></div><div class="faq-a">Yes. You can set your niche, tone of voice, keyword preferences, and even edit each article before or after it's published using the AI SEO Editor to match your brand's style perfectly.</div></div>
-      <div class="faq-item"><div class="faq-q">Is AutoPublish good for SEO?<div class="faq-icon">+</div></div><div class="faq-a">Absolutely. AutoPublish uses AI trained on top-ranking pages and incorporates SEO best practices including keyword integration, proper headings, internal linking, and structured data to help your blog rank higher on Google.</div></div>
-      <div class="faq-item"><div class="faq-q">How often does AutoPublish publish new articles?<div class="faq-icon">+</div></div><div class="faq-a">You control the frequency entirely. Choose daily, weekly, or custom schedules to keep your website consistently updated with fresh, SEO-optimized content on autopilot.</div></div>
-      <div class="faq-item"><div class="faq-q">Can I connect AutoPublish to WordPress?<div class="faq-icon">+</div></div><div class="faq-a">Yes. AutoPublish integrates directly with WordPress, Shopify, Webflow, Wix, Ghost, Squarespace, Zapier, and many more — auto-publishing content straight to your blog without any extra steps.</div></div>
-      <div class="faq-item"><div class="faq-q">Will the articles be 100% unique?<div class="faq-icon">+</div></div><div class="faq-a">Yes. All articles generated by Infin8Content's AutoPublish are unique and AI-crafted to avoid duplicate content penalties, ensuring strong SEO performance and no plagiarism flags.</div></div>
+      <div class="faq-item"><div class="faq-q">What AI platforms do you track?<div class="faq-icon">+</div></div><div class="faq-a">We track all major AI search platforms including ChatGPT, Perplexity, Google AI Overviews, Gemini, Claude, and Grok. All platforms are included in one price — no per-platform fees like other tools charge.</div></div>
+      <div class="faq-item"><div class="faq-q">What metrics does the AI visibility tracker measure?<div class="faq-icon">+</div></div><div class="faq-a">We track share of voice (percentage of AI responses mentioning your brand), direct mentions, citations (when AI links to your content), impressions weighted by search volume, and sentiment analysis. You can also see the actual AI responses that reference your brand.</div></div>
+      <div class="faq-item"><div class="faq-q">Is AI visibility tracking included in my plan?<div class="faq-icon">+</div></div><div class="faq-a">AI visibility tracking is included in all Infin8Content plans. Unlike competitors who charge $99–199/month for each AI platform separately, we include all platforms in your subscription at no extra cost.</div></div>
+      <div class="faq-item"><div class="faq-q">How is this different from Ahrefs Brand Radar or other tools?<div class="faq-icon">+</div></div><div class="faq-a">Most AI visibility tools charge per platform — Ahrefs Brand Radar charges separately for each AI index. Infin8Content includes all AI platforms in one dashboard, one price. Complete visibility without fragmented costs or surprise fees.</div></div>
+      <div class="faq-item"><div class="faq-q">Can I white label the AI visibility reports?<div class="faq-icon">+</div></div><div class="faq-a">Yes. Agencies can white label AI visibility reports with their own logo, brand colors, and custom domain — perfect for sharing branded AI visibility dashboards with clients during monthly reporting.</div></div>
     </div>
   </div>
 </section>
@@ -453,90 +461,18 @@ ul { list-style: none; }
 <!-- FINAL CTA -->
 <section class="final-cta">
   <div class="container">
-    <h2>Your blog. Running itself.</h2>
+    <h2>Know what AI says<br>about your brand.</h2>
     <p>Get started and see why agencies trust Infin8Content.</p>
-    <a class="btn btn-primary btn-lg" href="#">Start AutoPublish Free</a>
-    <div class="cta-perks"><span class="cta-perk">Cancel anytime</span><span class="cta-perk">150+ languages</span><span class="cta-perk">Set and forget</span></div>
+    <a class="btn btn-primary btn-lg" href="#">Start Tracking Free</a>
+    <div class="cta-perks"><span class="cta-perk">All platforms included</span><span class="cta-perk">Cancel anytime</span><span class="cta-perk">White label reports</span></div>
     <div class="cta-social"><div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div><span style="font-size:13.5px;color:var(--muted);">Trusted by <strong style="color:var(--white)">10,000+</strong> marketers</span></div>
-    <div class="cta-mock-img"><div class="cta-mock-inner"><div class="cm-icon">🚀</div><div class="cm-label">AutoPublish dashboard — replace with screenshot</div></div></div>
+    <div class="cta-mock-img"><div class="cta-mock-inner"><div class="cm-icon">🔭</div><div class="cm-label">LLM tracker dashboard — replace with screenshot</div></div></div>
   </div>
 </section>
 
 </main>
+`;
 
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-top">
-      <div class="footer-brand"><a class="brand" href="/"><img src="/infin8content_logo.png" alt="Infin8Content"></a><p>AI content workflows for modern teams and agencies.</p></div>
-      <div class="footer-col"><h4>AI Writing</h4><a href="/ai-content-writer.html">AI Content Writer</a><a href="/ai-seo-editor.html">AI SEO Editor</a><a href="#">News Writer</a><a href="#">Video to Blog</a></div>
-      <div class="footer-col"><h4>Automation</h4><a href="/ai-seo-agent.html">AI SEO Agent</a><a href="/autopublish.html">AutoPublish</a><a href="#">SEO Reports</a><a href="/llm-tracker.html">LLM Tracker</a></div>
-      <div class="footer-col"><h4>Resources</h4><a href="#">Pricing</a><a href="#">Blog</a><a href="#">Help Docs</a><a href="#">Case Studies</a></div>
-      <div class="footer-col"><h4>Integrations</h4><a href="#">WordPress</a><a href="#">Shopify</a><a href="#">Ghost</a><a href="#">Webflow</a><a href="#">Zapier</a></div>
-      <div class="footer-col"><h4>Solutions</h4><a href="#">SaaS</a><a href="#">Agencies</a><a href="#">E-Commerce</a><a href="#">Enterprise</a></div>
-    </div>
-    <div class="footer-bottom"><small>© <span class="js-year"></span> Infin8Content. All rights reserved.</small><div class="footer-legal"><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">contact@infin8content.com</a></div></div>
-  </div>
-</footer>
-<script>
-/* shared.js — nav toggle, FAQ, countdown, smooth scroll */
-document.addEventListener('DOMContentLoaded', function() {
-  // Year
-  document.querySelectorAll('.js-year').forEach(el => el.textContent = new Date().getFullYear());
-
-  // Countdown
-  let total = 8*3600+34*60+12;
-  function tick(){
-    if(total<=0)return; total--;
-    const h=String(Math.floor(total/3600)).padStart(2,'0');
-    const m=String(Math.floor((total%3600)/60)).padStart(2,'0');
-    const s=String(total%60).padStart(2,'0');
-    document.querySelectorAll('.js-ph').forEach(e=>e.textContent=h);
-    document.querySelectorAll('.js-pm').forEach(e=>e.textContent=m);
-    document.querySelectorAll('.js-ps').forEach(e=>e.textContent=s);
-  }
-  tick(); setInterval(tick,1000);
-
-  // Nav toggle
-  const navToggle = document.getElementById('nav-toggle');
-  const mainNav = document.getElementById('main-nav');
-  if(navToggle && mainNav) {
-    navToggle.addEventListener('click', () => {
-      mainNav.classList.toggle('open');
-      navToggle.textContent = mainNav.classList.contains('open') ? '✕' : '☰';
-    });
-  }
-
-  // FAQ accordion
-  document.querySelectorAll('.faq-q').forEach(q => {
-    q.addEventListener('click', () => {
-      const item = q.parentElement;
-      const wasOpen = item.classList.contains('open');
-      document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
-      if(!wasOpen) item.classList.add('open');
-    });
-  });
-
-  // Tabs (for pages that have them)
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const panel = btn.dataset.tab;
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      const el = document.getElementById(panel);
-      if(el) el.classList.add('active');
-    });
-  });
-
-  // Smooth scroll
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', e => {
-      const t = document.querySelector(a.getAttribute('href'));
-      if(t){ e.preventDefault(); t.scrollIntoView({behavior:'smooth',block:'start'}); }
-    });
-  });
-});
-
-</script>
-</body>
-</html>
+export default function LlmTrackerPage() {
+  return <MarketingPageBody html={HTML} css={CSS} />;
+}

@@ -1,13 +1,13 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AI Content Writer — Rank-Ready Articles in 30 Seconds | Infin8Content</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+import { Metadata } from 'next';
+import MarketingPageBody from '@/components/marketing/MarketingPageBody';
+
+export const metadata: Metadata = {
+  title: 'AI Content Writer — Rank-Ready Articles in 30 Seconds | Infin8Content',
+  description: 'Write rank-ready, SEO-optimised articles in 30 seconds with Infin8Content AI Content Writer.',
+};
+
+const CSS = `
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #08090d;
       --surface: #0f1117;
@@ -283,68 +283,9 @@
     }
     .main-nav.open{display:flex!important;flex-direction:column;position:fixed;top:62px;left:0;right:0;background:rgba(8,9,13,.97);backdrop-filter:blur(12px);padding:20px;border-bottom:1px solid var(--border);gap:4px;z-index:39;}
     .main-nav.open .dropdown{display:none!important;}
-  </style>
-</head>
-<body>
+`;
 
-<!-- PROMO BAR -->
-<div class="promo-bar">
-  ✨ &nbsp;New Year Offer: <strong style="color:#a5b4fc;margin:0 6px;">40% Off</strong> on Yearly Plans &nbsp;
-  <span class="time-unit" id="ph">08</span>hrs
-  <span class="time-unit" id="pm">34</span>min
-  <span class="time-unit" id="ps">12</span>sec
-  <a class="deal-link" href="#">Get Deal</a>
-</div>
-
-<!-- HEADER -->
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="/"><img src="/infin8content_logo.png" alt="Infin8Content"></a>
-    <nav class="main-nav" id="main-nav">
-      <div class="nav-item">
-        <span class="nav-link">Features <span class="chevron">▾</span></span>
-        <div class="dropdown">
-          <div class="dropdown-label">AI Writing</div>
-          <a class="dropdown-link" href="#">AI Content Writer</a>
-          <a class="dropdown-link" href="#">AI Brief Generator</a>
-          <a class="dropdown-link" href="#">News Writer</a>
-          <a class="dropdown-link" href="#">Video to Blog Post</a>
-          <hr>
-          <div class="dropdown-label">Automation</div>
-          <a class="dropdown-link" href="#">AutoPublish</a>
-          <a class="dropdown-link" href="#">Workflow Orchestration</a>
-          <a class="dropdown-link" href="#">SEO Reports</a>
-          <a class="dropdown-link" href="#">Analytics Tracker</a>
-        </div>
-      </div>
-      <div class="nav-item">
-        <span class="nav-link">Solutions <span class="chevron">▾</span></span>
-        <div class="dropdown">
-          <a class="dropdown-link" href="#"><strong>SaaS</strong><small>Scale organic traffic for your product</small></a>
-          <a class="dropdown-link" href="#"><strong>Agencies</strong><small>Manage multiple clients at scale</small></a>
-          <a class="dropdown-link" href="#"><strong>E-Commerce</strong><small>Upgrade your store's content</small></a>
-          <a class="dropdown-link" href="#"><strong>Enterprise</strong><small>SAML, SSO & dedicated support</small></a>
-        </div>
-      </div>
-      <a class="nav-link" href="#">Pricing</a>
-      <div class="nav-item">
-        <span class="nav-link">Resources <span class="chevron">▾</span></span>
-        <div class="dropdown">
-          <a class="dropdown-link" href="#">Case Studies</a>
-          <a class="dropdown-link" href="#">Learning & Training</a>
-          <a class="dropdown-link" href="#">Help Docs</a>
-          <a class="dropdown-link" href="#">Blog</a>
-        </div>
-      </div>
-    </nav>
-    <div class="header-cta">
-      <a class="btn-link" href="#">Login</a>
-      <a class="btn btn-primary" href="#">Get Started</a>
-    </div>
-    <button class="nav-toggle" id="nav-toggle">☰</button>
-  </div>
-</header>
-
+const HTML = `
 <main>
 
   <!-- ===== HERO ===== -->
@@ -710,101 +651,8 @@
 </main>
 
 <!-- FOOTER -->
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-top">
-      <div class="footer-brand">
-        <a class="brand" href="/"><img src="/infin8content_logo.png" alt="Infin8Content"></a>
-        <p>AI content workflows for modern teams and agencies.</p>
-      </div>
-      <div class="footer-col">
-        <h4>AI Writing</h4>
-        <a href="#">AI Content Writer</a>
-        <a href="#">AI Brief Generator</a>
-        <a href="#">News Writer</a>
-        <a href="#">Video to Blog</a>
-      </div>
-      <div class="footer-col">
-        <h4>Automation</h4>
-        <a href="#">AutoPublish</a>
-        <a href="#">Workflow Orchestration</a>
-        <a href="#">SEO Reports</a>
-        <a href="#">Analytics Tracker</a>
-      </div>
-      <div class="footer-col">
-        <h4>Resources</h4>
-        <a href="#">Pricing</a>
-        <a href="#">Blog</a>
-        <a href="#">Help Docs</a>
-        <a href="#">Case Studies</a>
-        <a href="#">About Us</a>
-      </div>
-      <div class="footer-col">
-        <h4>Integrations</h4>
-        <a href="#">WordPress</a>
-        <a href="#">Shopify</a>
-        <a href="#">Ghost</a>
-        <a href="#">Webflow</a>
-        <a href="#">Zapier</a>
-      </div>
-      <div class="footer-col">
-        <h4>Solutions</h4>
-        <a href="#">SaaS</a>
-        <a href="#">Agencies</a>
-        <a href="#">E-Commerce</a>
-        <a href="#">Enterprise</a>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <small>© <span id="year"></span> Infin8Content. All rights reserved.</small>
-      <div class="footer-legal">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
-        <a href="#">contact@infin8content.com</a>
-      </div>
-    </div>
-  </div>
-</footer>
+`;
 
-<script>
-  document.getElementById('year').textContent = new Date().getFullYear();
-
-  // Countdown
-  let total = 8*3600+34*60+12;
-  function tick(){
-    if(total<=0)return; total--;
-    const h=String(Math.floor(total/3600)).padStart(2,'0');
-    const m=String(Math.floor((total%3600)/60)).padStart(2,'0');
-    const s=String(total%60).padStart(2,'0');
-    document.getElementById('ph').textContent=h;
-    document.getElementById('pm').textContent=m;
-    document.getElementById('ps').textContent=s;
-  }
-  tick(); setInterval(tick,1000);
-
-  // Nav toggle
-  const navToggle=document.getElementById('nav-toggle');
-  const mainNav=document.getElementById('main-nav');
-  navToggle&&navToggle.addEventListener('click',()=>{
-    mainNav.classList.toggle('open');
-    navToggle.textContent=mainNav.classList.contains('open')?'✕':'☰';
-  });
-
-  // Tabs
-  function switchTab(btn, panelId){
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(panelId).classList.add('active');
-  }
-
-  // Smooth scroll
-  document.querySelectorAll('a[href^="#"]').forEach(a=>{
-    a.addEventListener('click',e=>{
-      const t=document.querySelector(a.getAttribute('href'));
-      if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'});}
-    });
-  });
-</script>
-</body>
-</html>
+export default function AIContentWriterPage() {
+  return <MarketingPageBody html={HTML} css={CSS} />;
+}
