@@ -1,13 +1,183 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import MarketingPageBody from '@/components/marketing/MarketingPageBody';
 
 export const metadata: Metadata = {
   title: 'Infin8Content — AI Content Engine',
-  description: 'AI-powered content creation platform. Research-backed articles, automated SEO, and one-click publishing for modern marketing teams.',
 };
 
-const CSS = `
-:root { --accent2: #7c3aed; }
+const css = `/* ===================== RESET & BASE ===================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #08090d;
+      --surface: #0f1117;
+      --surface2: #13151e;
+      --border: rgba(255,255,255,0.07);
+      --accent: #4f6ef7;
+      --accent2: #7c3aed;
+      --accent-glow: rgba(79,110,247,0.18);
+      --text: #e8eaf2;
+      --muted: #7b8098;
+      --muted2: #4a4f68;
+      --white: #ffffff;
+      --green: #22c55e;
+      --font-display: 'Sora', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --container: 1160px;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; transition: color .2s; }
+    img { max-width: 100%; display: block; }
+    ul { list-style: none; }
+
+    /* ===================== LAYOUT ===================== */
+    .container { max-width: var(--container); margin: 0 auto; padding: 0 28px; }
+
+    /* ===================== PROMO BAR ===================== */
+    .promo-bar {
+      background: linear-gradient(90deg, #1a1060 0%, #0f1340 50%, #1a1060 100%);
+      border-bottom: 1px solid rgba(79,110,247,0.2);
+      text-align: center;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-family: var(--font-display);
+      font-weight: 500;
+      color: var(--text);
+      position: relative;
+      z-index: 50;
+    }
+    .promo-bar .countdown {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .promo-bar .time-unit {
+      background: rgba(79,110,247,0.2);
+      border: 1px solid rgba(79,110,247,0.3);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-weight: 700;
+      color: #a5b4fc;
+      font-variant-numeric: tabular-nums;
+      min-width: 28px;
+      text-align: center;
+    }
+    .promo-bar .deal-link {
+      background: var(--accent);
+      color: #fff;
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+
+    /* ===================== HEADER ===================== */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(8,9,13,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 62px;
+      gap: 16px;
+    }
+    .brand {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+      color: var(--white);
+      flex-shrink: 0;
+    }
+    .brand span { color: var(--accent); }
+
+    /* Nav */
+    .main-nav { display: flex; align-items: center; gap: 4px; flex: 1; justify-content: center; }
+    .nav-item { position: relative; }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      transition: all .2s;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .nav-link:hover { color: var(--white); background: rgba(255,255,255,0.05); }
+    .nav-link .chevron { font-size: 10px; transition: transform .2s; }
+    .nav-item:hover .chevron { transform: rotate(180deg); }
+
+    /* Dropdown */
+    .dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: #12141f;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 8px 8px;
+      min-width: 240px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      z-index: 100;
+    }
+    .nav-item:hover .dropdown { display: block; }
+    .dropdown-section { padding: 6px 0; }
+    .dropdown-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted2);
+      padding: 4px 10px;
+      margin-bottom: 2px;
+    }
+    .dropdown-link {
+      display: block;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      color: var(--muted);
+      transition: all .15s;
+    }
+    .dropdown-link:hover { color: var(--white); background: rgba(255,255,255,0.05); }
+    .dropdown-link strong { display: block; color: var(--text); font-size: 13.5px; margin-bottom: 1px; }
+    .dropdown-link small { font-size: 12px; color: var(--muted); }
+    .dropdown hr { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
+
+    /* Header CTA */
+    .header-cta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .btn-link { font-size: 14px; font-weight: 500; color: var(--muted); padding: 7px 12px; border-radius: var(--radius-sm); transition: all .2s; }
+    .btn-link:hover { color: var(--white); background: rgba(255,255,255,0.05); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: var(--font-display); font-weight: 600; border-radius: var(--radius-sm); transition: all .2s; cursor: pointer; border: none; }
+    .btn-primary { background: var(--accent); color: #fff; padding: 9px 18px; font-size: 14px; box-shadow: 0 0 20px rgba(79,110,247,0.3); }
+    .btn-primary:hover { background: #3d5df5; box-shadow: 0 0 30px rgba(79,110,247,0.5); transform: translateY(-1px); }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 9px 18px; font-size: 14px; }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.2); color: var(--white); }
+    .btn-lg { padding: 14px 28px; font-size: 16px; border-radius: 10px; }
+
+    .nav-toggle { display: none; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 7px 10px; font-size: 18px; cursor: pointer; }
+
     /* ===================== HERO ===================== */
     .hero {
       padding: 90px 0 70px;
@@ -127,7 +297,6 @@ const CSS = `
       position: relative; overflow: hidden;
     }
     .hero-screenshot img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; }
-    /* Placeholder dashboard mockup */
     .dash-placeholder {
       width: 100%; height: 100%;
       display: grid;
@@ -224,7 +393,6 @@ const CSS = `
     }
     .feature-link:hover { color: #a5b4fc; border-color: #a5b4fc; gap: 10px; }
 
-    /* Feature image placeholder */
     .feat-img {
       border-radius: var(--radius);
       overflow: hidden;
@@ -323,7 +491,6 @@ const CSS = `
     .t-name { font-weight: 600; font-size: 14px; color: var(--white); }
     .t-role { font-size: 12px; color: var(--muted); }
 
-    /* Case studies */
     .case-studies { padding: 60px 0 90px; }
     .case-studies h2 {
       font-family: var(--font-display);
@@ -357,9 +524,7 @@ const CSS = `
       color: var(--white); text-align: center; margin-bottom: 50px;
     }
     .faq-list { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 0; }
-    .faq-item {
-      border-bottom: 1px solid var(--border);
-    }
+    .faq-item { border-bottom: 1px solid var(--border); }
     .faq-question {
       display: flex; align-items: center; justify-content: space-between;
       padding: 20px 0; cursor: pointer;
@@ -470,7 +635,6 @@ const CSS = `
       .cases-grid { grid-template-columns: 1fr; }
     }
 
-    /* Mobile nav open */
     .main-nav.open {
       display: flex !important;
       flex-direction: column;
@@ -483,17 +647,15 @@ const CSS = `
       gap: 4px;
       z-index: 39;
     }
-    .main-nav.open .dropdown { display: none !important; }
-`;
+    .main-nav.open .dropdown { display: none !important; }`;
 
-const HTML = `
-<!-- PROMO BAR -->
+const html = `<!-- PROMO BAR -->
   <div class="promo-bar">
     <span class="countdown">
       ✨ &nbsp;New Year Offer: <strong style="color:#a5b4fc;margin:0 4px;">40% Off</strong> on Yearly Plans &nbsp;
-      <span class="time-unit js-ph">00</span>hrs
-      <span class="time-unit js-pm">00</span>min
-      <span class="time-unit js-ps">00</span>sec
+      <span class="time-unit" id="ph">00</span>hrs
+      <span class="time-unit" id="pm">00</span>min
+      <span class="time-unit" id="ps">00</span>sec
     </span>
     <a class="deal-link" href="#pricing">Get Deal</a>
   </div>
@@ -510,18 +672,15 @@ const HTML = `
           <div class="dropdown">
             <div class="dropdown-section">
               <div class="dropdown-label">AI Writing</div>
-              <a class="dropdown-link" href="#">AI Content Writer</a>
-              <a class="dropdown-link" href="#">AI Brief Generator</a>
-              <a class="dropdown-link" href="#">News Writer</a>
-              <a class="dropdown-link" href="#">Video to Blog Post</a>
+              <a class="dropdown-link" href="/ai-content-writer">AI Content Writer</a>
+              <a class="dropdown-link" href="/ai-seo-editor">AI SEO Editor</a>
             </div>
             <hr>
             <div class="dropdown-section">
-              <div class="dropdown-label">Automation</div>
-              <a class="dropdown-link" href="#">AutoPublish</a>
-              <a class="dropdown-link" href="#">Workflow Orchestration</a>
-              <a class="dropdown-link" href="#">SEO Reports</a>
-              <a class="dropdown-link" href="#">Analytics Tracker</a>
+              <div class="dropdown-label">SEO & Automation</div>
+              <a class="dropdown-link" href="/ai-seo-agent">AI SEO Agent</a>
+              <a class="dropdown-link" href="/autopublish">AutoPublish</a>
+              <a class="dropdown-link" href="/llm-tracker">LLM Tracker</a>
             </div>
           </div>
         </div>
@@ -533,7 +692,7 @@ const HTML = `
             <a class="dropdown-link" href="#"><strong>SaaS</strong><small>Scale organic traffic for your product</small></a>
             <a class="dropdown-link" href="#"><strong>Agencies</strong><small>Manage multiple clients at scale</small></a>
             <a class="dropdown-link" href="#"><strong>E-Commerce</strong><small>Upgrade your store's content</small></a>
-            <a class="dropdown-link" href="#"><strong>Enterprise</strong><small>SAML, SSO & dedicated support</small></a>
+            <a class="dropdown-link" href="#"><strong>Enterprise</strong><small>SAML, SSO &amp; dedicated support</small></a>
           </div>
         </div>
 
@@ -544,7 +703,7 @@ const HTML = `
           <span class="nav-link">Resources <span class="chevron">▾</span></span>
           <div class="dropdown">
             <a class="dropdown-link" href="#">Case Studies</a>
-            <a class="dropdown-link" href="#">Learning & Training</a>
+            <a class="dropdown-link" href="#">Learning &amp; Training</a>
             <a class="dropdown-link" href="#">Help Docs</a>
             <a class="dropdown-link" href="#">Blog</a>
           </div>
@@ -580,7 +739,7 @@ const HTML = `
             <div class="av">SB</div>
             <div class="av">TD</div>
           </div>
-          Trusted by <strong>&nbsp;10,000+&nbsp;</strong> Marketers & Agencies
+          Trusted by <strong>&nbsp;10,000+&nbsp;</strong> Marketers &amp; Agencies
         </div>
 
         <div class="hero-image-wrap fade-up">
@@ -631,7 +790,6 @@ const HTML = `
     <section id="product" class="features">
       <div class="container">
 
-        <!-- Feature 1: AI Writer -->
         <div class="feature-row">
           <div>
             <div class="feature-tag">✍️ &nbsp;AI Content Writer</div>
@@ -642,7 +800,7 @@ const HTML = `
               <li>Set a schedule and frequency for auto-posting</li>
               <li>Full SEO metadata generated automatically</li>
             </ul>
-            <a class="feature-link" href="#">Discover AI Writer →</a>
+            <a class="feature-link" href="/ai-content-writer">Discover AI Writer →</a>
           </div>
           <div class="feat-img">
             <div class="feat-img-inner">
@@ -653,18 +811,17 @@ const HTML = `
           </div>
         </div>
 
-        <!-- Feature 2: SEO Editor -->
         <div class="feature-row reverse">
           <div>
             <div class="feature-tag">✏️ &nbsp;AI SEO Editor</div>
-            <h2>Edit New & Existing Content</h2>
+            <h2>Edit New &amp; Existing Content</h2>
             <ul class="feature-list">
               <li>Rewrite content with custom prompts</li>
               <li>Add internal and external links automatically</li>
               <li>Regenerate images with custom prompts</li>
               <li>Sprinkle in target keywords seamlessly</li>
             </ul>
-            <a class="feature-link" href="#">Discover Content Editor →</a>
+            <a class="feature-link" href="/ai-seo-editor">Discover Content Editor →</a>
           </div>
           <div class="feat-img">
             <div class="feat-img-inner">
@@ -675,10 +832,9 @@ const HTML = `
           </div>
         </div>
 
-        <!-- Feature 3: Workflow -->
         <div class="feature-row">
           <div>
-            <div class="feature-tag">⚙️ &nbsp;Workflow Orchestration</div>
+            <div class="feature-tag">⚙️ &nbsp;AI SEO Agent</div>
             <h2>Fix Issues with AI-Powered Agents</h2>
             <ul class="feature-list">
               <li>AI agents find SEO issues and deploy fixes automatically</li>
@@ -686,18 +842,17 @@ const HTML = `
               <li>Meta title, description, and schema optimization</li>
               <li>Improve internal linking structure across your site</li>
             </ul>
-            <a class="feature-link" href="#">Discover Workflow Agent →</a>
+            <a class="feature-link" href="/ai-seo-agent">Discover SEO Agent →</a>
           </div>
           <div class="feat-img">
             <div class="feat-img-inner">
               <div class="feat-img-icon">⚙️</div>
-              <div class="feat-img-label">Workflow Agent Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div>
+              <div class="feat-img-label">SEO Agent Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div>
             </div>
             <div class="glow-accent"></div>
           </div>
         </div>
 
-        <!-- Feature 4: AutoPublish -->
         <div class="feature-row reverse">
           <div>
             <div class="feature-tag">🚀 &nbsp;AutoPublish</div>
@@ -708,7 +863,7 @@ const HTML = `
               <li>Auto-generate and publish social media posts on publish</li>
               <li>Index pages on Google 10x faster with AI-assisted indexing</li>
             </ul>
-            <a class="feature-link" href="#">Discover AutoPublish →</a>
+            <a class="feature-link" href="/autopublish">Discover AutoPublish →</a>
           </div>
           <div class="feat-img">
             <div class="feat-img-inner">
@@ -719,23 +874,22 @@ const HTML = `
           </div>
         </div>
 
-        <!-- Feature 5: Analytics -->
         <div class="feature-row">
           <div>
-            <div class="feature-tag">📊 &nbsp;Analytics & Publishing</div>
-            <h2>Track Performance & Brand Mentions</h2>
+            <div class="feature-tag">📊 &nbsp;LLM Tracker</div>
+            <h2>Track Performance &amp; Brand Mentions</h2>
             <ul class="feature-list">
-              <li>Track brand mentions across multiple platforms</li>
-              <li>One-click publish to WordPress, Shopify, Ghost, Webflow & more</li>
+              <li>Track brand mentions across multiple AI platforms</li>
+              <li>One-click publish to WordPress, Shopify, Ghost, Webflow &amp; more</li>
               <li>Monitor content performance with integrated metrics</li>
-              <li>Preview how your brand appears in search results</li>
+              <li>Preview how your brand appears in AI search results</li>
             </ul>
-            <a class="feature-link" href="#">Discover Analytics →</a>
+            <a class="feature-link" href="/llm-tracker">Discover LLM Tracker →</a>
           </div>
           <div class="feat-img">
             <div class="feat-img-inner">
               <div class="feat-img-icon">📊</div>
-              <div class="feat-img-label">Analytics Dashboard Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div>
+              <div class="feat-img-label">LLM Tracker Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div>
             </div>
             <div class="glow-accent"></div>
           </div>
@@ -750,7 +904,7 @@ const HTML = `
         <h2>Product Demo: How it All Works</h2>
         <p class="sub">An in-depth demo of Infin8Content's features, and how they contribute to getting brands more organic traffic</p>
         <div class="video-placeholder">
-          <div class="play-btn" onclick="alert('Embed your product demo video here')">▶</div>
+          <div class="play-btn">▶</div>
           <span class="vid-label">Infin8Content Product Demo</span>
         </div>
       </div>
@@ -838,87 +992,42 @@ const HTML = `
       <div class="container">
         <h2>Still Have Questions?</h2>
         <div class="faq-list">
-
           <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-              Are the articles copyright/plagiarism free?
-              <div class="faq-icon">+</div>
-            </div>
+            <div class="faq-question" onclick="toggleFaq(this)">Are the articles copyright/plagiarism free?<div class="faq-icon">+</div></div>
             <div class="faq-answer">Yes. All content is 100% AI-generated from your inputs and knowledge base, making it impossible to replicate existing content or trigger plagiarism checks. Every article is unique to your brand.</div>
           </div>
-
           <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-              Can Google tell if an article is written by AI?
-              <div class="faq-icon">+</div>
-            </div>
-            <div class="faq-answer">Google has stated that the appropriate use of AI is not against their guidelines, as long as it's not used to manipulate search rankings. Google rewards high-quality content regardless of how it is produced — they assess quality through E-E-A-T (expertise, experience, authoritativeness, and trustworthiness). That's why Infin8Content lets you upload your own knowledge base, so your unique expertise shapes every article.</div>
+            <div class="faq-question" onclick="toggleFaq(this)">Can Google tell if an article is written by AI?<div class="faq-icon">+</div></div>
+            <div class="faq-answer">Google has stated that the appropriate use of AI is not against their guidelines, as long as it's not used to manipulate search rankings. Google rewards high-quality content regardless of how it is produced — they assess quality through E-E-A-T.</div>
           </div>
-
           <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-              Can I edit articles before they go live?
-              <div class="faq-icon">+</div>
-            </div>
-            <div class="faq-answer">Absolutely. You have complete control over every piece of content before it publishes. Our AI SEO Editor lets you rewrite sections with custom prompts, regenerate images, adjust tone, manage approval stages, and ensure every piece is perfectly on-brand.</div>
+            <div class="faq-question" onclick="toggleFaq(this)">Can I edit articles before they go live?<div class="faq-icon">+</div></div>
+            <div class="faq-answer">Absolutely. You have complete control over every piece of content before it publishes. Our AI SEO Editor lets you rewrite sections, regenerate images, adjust tone, and manage approval stages.</div>
           </div>
-
           <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-              Can I customize the structure of the articles?
-              <div class="faq-icon">+</div>
-            </div>
-            <div class="faq-answer">Yes — structure is 100% customizable. You can configure articles to always include an FAQ section, introduction, key takeaways, product comparisons, or any custom section you define. Templates can be saved per client or brand.</div>
+            <div class="faq-question" onclick="toggleFaq(this)">Can I customize the structure of the articles?<div class="faq-icon">+</div></div>
+            <div class="faq-answer">Yes — structure is 100% customizable. You can configure articles to always include an FAQ section, introduction, key takeaways, product comparisons, or any custom section you define.</div>
           </div>
-
           <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-              Can I integrate with other platforms?
-              <div class="faq-icon">+</div>
-            </div>
-            <div class="faq-answer">Yes. We offer Zapier integration to connect with thousands of platforms. On the Agency plan, you also have access to our full API for deeper, more granular automation — ideal for connecting to your existing content stack.</div>
+            <div class="faq-question" onclick="toggleFaq(this)">Can I integrate with other platforms?<div class="faq-icon">+</div></div>
+            <div class="faq-answer">Yes. We offer Zapier integration to connect with thousands of platforms. On the Agency plan, you also have access to our full API for deeper automation.</div>
           </div>
-
           <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-              Can I post the generated content directly to my website?
-              <div class="faq-icon">+</div>
-            </div>
-            <div class="faq-answer">Yes. After generating content, you can publish directly from Infin8Content. We integrate natively with WordPress, Shopify, Ghost, Wix, Webflow, Blogger, and Squarespace — with more platforms added regularly.</div>
+            <div class="faq-question" onclick="toggleFaq(this)">Can I post the generated content directly to my website?<div class="faq-icon">+</div></div>
+            <div class="faq-answer">Yes. We integrate natively with WordPress, Shopify, Ghost, Wix, Webflow, Blogger, and Squarespace — with more platforms added regularly.</div>
           </div>
-
           <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-              Can I use this for multiple clients or websites?
-              <div class="faq-icon">+</div>
-            </div>
-            <div class="faq-answer">Yes. You can generate content for any niche, industry, or client, and manage multiple CMS integrations and AutoPublish schedules — all under a single account. The Agency plan is specifically designed for this use case.</div>
+            <div class="faq-question" onclick="toggleFaq(this)">Can I use this for multiple clients or websites?<div class="faq-icon">+</div></div>
+            <div class="faq-answer">Yes. You can generate content for any niche, industry, or client, and manage multiple CMS integrations and AutoPublish schedules — all under a single account.</div>
           </div>
-
           <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-              Do the generated articles include images, links, and videos?
-              <div class="faq-icon">+</div>
-            </div>
-            <div class="faq-answer">Yes. Every generated article comes with in-article images, a featured image, internal links, external links, bullet tables, and even embedded videos when relevant. Everything needed to publish immediately is included.</div>
+            <div class="faq-question" onclick="toggleFaq(this)">How is this different from ChatGPT and other AI writers?<div class="faq-icon">+</div></div>
+            <div class="faq-answer">Infin8Content is a complete, end-to-end content operations system — not just a text generator. It automates your entire content workflow: keyword research, brief generation, writing, team approval flows, CMS publishing, and performance analytics.</div>
           </div>
-
           <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-              How is this different from ChatGPT and other AI writers?
-              <div class="faq-icon">+</div>
-            </div>
-            <div class="faq-answer">Infin8Content is a complete, end-to-end content operations system — not just a text generator. ChatGPT gives you text. Infin8Content automates your entire content workflow: keyword research, brief generation, writing, team approval flows, CMS publishing, and performance analytics. It's built for teams and agencies, not individual prompting sessions.</div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-              Do you have an affiliate program?
-              <div class="faq-icon">+</div>
-            </div>
+            <div class="faq-question" onclick="toggleFaq(this)">Do you have an affiliate program?<div class="faq-icon">+</div></div>
             <div class="faq-answer">Yes. You earn a 30% lifetime recurring commission on every referral. Sign up through your account dashboard to get your unique referral link and start earning.</div>
           </div>
-
         </div>
       </div>
     </section>
@@ -961,23 +1070,17 @@ const HTML = `
             <div class="f-founder">F2</div>
           </div>
         </div>
-
         <div class="footer-col">
           <h4>AI Writing</h4>
-          <a href="#">AI Content Writer</a>
-          <a href="#">AI Brief Generator</a>
-          <a href="#">News Writer</a>
-          <a href="#">Video to Blog</a>
+          <a href="/ai-content-writer">AI Content Writer</a>
+          <a href="/ai-seo-editor">AI SEO Editor</a>
         </div>
-
         <div class="footer-col">
-          <h4>Automation</h4>
-          <a href="#">AutoPublish</a>
-          <a href="#">Workflow Orchestration</a>
-          <a href="#">SEO Reports</a>
-          <a href="#">Analytics Tracker</a>
+          <h4>SEO &amp; Automation</h4>
+          <a href="/ai-seo-agent">AI SEO Agent</a>
+          <a href="/autopublish">AutoPublish</a>
+          <a href="/llm-tracker">LLM Tracker</a>
         </div>
-
         <div class="footer-col">
           <h4>Resources</h4>
           <a href="#">Pricing</a>
@@ -987,7 +1090,6 @@ const HTML = `
           <a href="#">Case Studies</a>
           <a href="#">About Us</a>
         </div>
-
         <div class="footer-col">
           <h4>Integrations</h4>
           <a href="#">WordPress</a>
@@ -997,7 +1099,6 @@ const HTML = `
           <a href="#">Wix</a>
           <a href="#">Zapier</a>
         </div>
-
         <div class="footer-col">
           <h4>Solutions</h4>
           <a href="#">SaaS</a>
@@ -1006,9 +1107,8 @@ const HTML = `
           <a href="#">Enterprise</a>
         </div>
       </div>
-
       <div class="footer-bottom">
-        <small>© <span class="js-year"></span> Infin8Content. All rights reserved.</small>
+        <small>© <span id="year"></span> Infin8Content. All rights reserved.</small>
         <div class="footer-legal">
           <a href="#">Privacy Policy</a>
           <a href="#">Terms of Service</a>
@@ -1016,9 +1116,8 @@ const HTML = `
         </div>
       </div>
     </div>
-  </footer>
-`;
+  </footer>`;
 
 export default function HomePage() {
-  return <MarketingPageBody html={HTML} css={CSS} />;
+  return <MarketingPageBody css={css} html={html} />;
 }
