@@ -1,7 +1,22 @@
 # Infin8Content Development Scratchpad
 
 **Last Updated:** 2026-04-24  
-**Current Focus:** Marketing pages parity — Case Studies page
+**Current Focus:** Marketing pages parity — Blog + Case Studies
+
+## **🔥 BLOG PAGE — STATIC MIRROR & FILTER**
+
+### **✅ Achievement: Rebuilt Blog to match /ai-content-writer**
+- **Status:** Complete. Page now uses MarketingShell + MarketingPageBody with tokenized CSS and exact visual parity.
+- **Branch:** `test-main-all`
+- **Deliverables:**
+  1. Implemented static HTML/CSS mirror at `infin8content/app/(marketing-pages)/resources/blog/page.tsx` rendered via `MarketingPageBody`.
+  2. Extended `MarketingPageBody.useEffect` to support blog tag filter (`#post-grid .post-card`) and a placeholder "Load more" handler.
+  3. Removed legacy route `infin8content/app/(i8c-mkt)/resources/blog/page.tsx` to prevent conflicts.
+- **Files changed:**
+  - `infin8content/app/(marketing-pages)/resources/blog/page.tsx` (new static mirror)
+  - `infin8content/components/marketing/MarketingPageBody.tsx` (add blog tag filter + load-more placeholder)
+  - `infin8content/app/(i8c-mkt)/resources/blog/page.tsx` (removed)
+- **Result:** Zero drift with `/ai-content-writer`, consistent shell, and working tag filter without inline scripts. "Load more" currently disables itself as a placeholder pending backend pagination.
 
 ## **🔥 CASE STUDIES PAGE — STATIC MIRROR & FILTER**
 

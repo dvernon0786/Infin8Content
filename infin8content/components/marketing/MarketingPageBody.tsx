@@ -93,8 +93,9 @@ export default function MarketingPageBody({ html, css }: Props) {
       });
     });
 
-    // Tag filter — toggles data-hidden on .cs-card elements
+    // Tag filter — supports case-studies (#cs-grid .cs-card) and blog (#post-grid .post-card)
     const filter = document.getElementById('tag-filter');
+    const cleanupFns: Array<() => void> = [];
     if (filter) {
       const onClick = (e: Event) => {
         const target = e.target as HTMLElement | null;
@@ -102,24 +103,45 @@ export default function MarketingPageBody({ html, css }: Props) {
         if (!btn) return;
         const active = btn.dataset.filter || 'All';
         filter.querySelectorAll<HTMLElement>('.tag-btn').forEach(b => b.classList.toggle('active', (b.dataset.filter || '') === active));
-        document.querySelectorAll<HTMLElement>('#cs-grid .cs-card').forEach(card => {
-          const tags = (card.dataset.tags || '').split(',').map(t => t.trim()).filter(Boolean);
-          if (active === 'All') {
-            card.removeAttribute('data-hidden');
-          } else {
-            const show = tags.includes(active);
-            if (show) card.setAttribute('data-hidden', 'false'); else card.setAttribute('data-hidden', 'true');
-          }
-        });
+
+        // helper to apply filter logic
+        const applyFilter = (selector: string) => {
+          document.querySelectorAll<HTMLElement>(selector).forEach(card => {
+            const tags = (card.dataset.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+            if (active === 'All') {
+              card.removeAttribute('data-hidden');
+            } else {
+              const show = tags.includes(active);
+              if (show) card.setAttribute('data-hidden', 'false'); else card.setAttribute('data-hidden', 'true');
+            }
+          });
+        };
+
+        applyFilter('#cs-grid .cs-card');
+        applyFilter('#post-grid .post-card');
       };
       filter.addEventListener('click', onClick);
-      return () => filter.removeEventListener('click', onClick);
+      cleanupFns.push(() => filter.removeEventListener('click', onClick));
+    }
+
+    // Load more — placeholder for blog pages (disables button)
+    const loadMoreBtn = document.getElementById('load-more-btn') as HTMLButtonElement | null;
+    if (loadMoreBtn) {
+      const onClick = () => {
+        loadMoreBtn.textContent = 'No more posts';
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.style.opacity = '0.4';
+        loadMoreBtn.style.cursor = 'default';
+      };
+      loadMoreBtn.addEventListener('click', onClick);
+      cleanupFns.push(() => loadMoreBtn.removeEventListener('click', onClick));
     }
 
     return () => {
       delete (window as Window & { switchTab?: unknown }).switchTab;
       delete (window as Window & { toggleFaq?: unknown }).toggleFaq;
       delete (window as Window & { _setPricing?: unknown })._setPricing;
+      cleanupFns.forEach(fn => { try { fn(); } catch { /* noop */ } });
     };
   }, []);
 

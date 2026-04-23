@@ -5,6 +5,12 @@
    - Added `infin8content/app/(marketing-pages)/pricing/page.tsx` (HTML+CSS injection)
    - Enhanced `infin8content/components/marketing/MarketingPageBody.tsx` with a billing toggle helper (`window._setPricing`) and button wiring
 
+### Changed
+- Marketing: Rebuilt `/resources/blog` under `(marketing-pages)` to mirror `/ai-content-writer` pattern and unify interactivity via `MarketingPageBody`.
+   - Added `infin8content/app/(marketing-pages)/resources/blog/page.tsx` (HTML+CSS injection; newsletter form is a no-op placeholder)
+   - Extended `infin8content/components/marketing/MarketingPageBody.tsx` to handle blog tag filter (`#post-grid .post-card`) and a placeholder "Load more" button
+   - Removed legacy route `infin8content/app/(i8c-mkt)/resources/blog/page.tsx` to avoid duplicate routing
+
 ### Notes
 - Commit: d9948f86 (branch: test-main-all)
 - Route now available at `/pricing` under `(marketing-pages)`; future migration to `(i8c-mkt)` remains documented in `infin8content/pricing-page-implementation.md`.
