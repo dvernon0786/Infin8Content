@@ -13,7 +13,7 @@ export default function MobileStickyUpgradeBar() {
       </div>
       <a
         href="/register"
-        className="flex-shrink-0 text-sm font-semibold text-white px-5 py-2.5 rounded-xl shadow-sm hover:opacity-90 transition-opacity"
+        className="shrink-0 text-sm font-semibold text-white px-5 py-2.5 rounded-xl shadow-sm hover:opacity-90 transition-opacity"
         style={{ background: "linear-gradient(to right,#217CEB,#4A42CC)" }}
       >
         Try Pro →

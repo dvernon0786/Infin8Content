@@ -104,7 +104,7 @@ export default function PricingFAQ() {
         </div>
 
         {/* Still have questions? */}
-        <div className="mt-12 text-center bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-100 rounded-2xl p-8">
+        <div className="mt-12 text-center bg-linear-to-br from-blue-50 to-purple-50 border border-blue-100 rounded-2xl p-8">
           <p className="text-sm font-semibold text-neutral-700 mb-1">
             Still have questions?
           </p>

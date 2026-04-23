@@ -9,7 +9,7 @@ export default function StickyUpgradeBar() {
         {["JL", "MR", "AK"].map((i, idx) => (
           <div
             key={idx}
-            className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 border-2 border-white flex items-center justify-center text-[9px] font-bold text-white"
+            className="w-7 h-7 rounded-full bg-linear-to-br from-blue-400 to-purple-500 border-2 border-white flex items-center justify-center text-[9px] font-bold text-white"
           >
             {i}
           </div>

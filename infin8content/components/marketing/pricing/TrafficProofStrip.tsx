@@ -31,8 +31,8 @@ export default function TrafficProofStrip() {
       {/* Marquee */}
       <div className="relative">
         {/* Fade edges */}
-        <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-24 bg-linear-to-r from-white to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-24 bg-linear-to-l from-white to-transparent z-10 pointer-events-none" />
 
         <div
           className="flex gap-4"
@@ -44,7 +44,7 @@ export default function TrafficProofStrip() {
           {doubled.map((s, i) => (
             <div
               key={i}
-              className="flex-shrink-0 flex items-center gap-3 bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-3"
+              className="shrink-0 flex items-center gap-3 bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-3"
             >
               <span className="text-sm font-bold text-neutral-900 font-poppins">
                 {s.label}
