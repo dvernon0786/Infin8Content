@@ -487,7 +487,7 @@ const html = `
     <div class="container" style="position:relative;">
       <h2>Read less.<br>Create more.</h2>
       <p>Put the strategies to work — start publishing AI content today.</p>
-      <a href="#" class="btn btn-primary btn-lg">Get Started Free</a>
+      <a href="/register" class="btn btn-primary btn-lg">Start today</a>
       <div class="cta-perks">
         <span class="cta-perk">Cancel anytime</span>
         <span class="cta-perk">Articles in 30 secs</span>

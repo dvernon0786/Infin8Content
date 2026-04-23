@@ -239,7 +239,7 @@ const html = `<main>
     <h1 class="fade-up">The AI SEO Agent that improves<br>your SEO <span class="high">on autopilot</span></h1>
     <p class="sub fade-up">The AI agent finds gaps in your site's technical SEO, reasons how to fix them, and implements changes live — all automatically, every single day.</p>
     <div class="hero-actions fade-up">
-      <a class="btn btn-primary btn-lg" href="#">Try AI Agent Free</a>
+      <a class="btn btn-primary btn-lg" href="/register">Try AI Agent Free</a>
     </div>
     <div class="social-proof fade-up">
       <div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div>
@@ -370,7 +370,7 @@ const html = `<main>
   <div class="container">
     <h2>Scale more clients.<br>Do less work.</h2>
     <p>Get started and see why agencies trust Infin8Content.</p>
-    <a class="btn btn-primary btn-lg" href="#">Try AI Agent Free</a>
+    <a class="btn btn-primary btn-lg" href="/register">Try AI Agent Free</a>
     <div class="cta-perks"><span class="cta-perk">Cancel anytime</span><span class="cta-perk">No dev needed</span><span class="cta-perk">Works on autopilot</span></div>
     <div class="cta-social"><div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div><span style="font-size:13.5px;color:var(--muted);">Trusted by <strong style="color:var(--white)">10,000+</strong> marketers</span></div>
     <div class="cta-mock-img"><div class="cta-mock-inner"><div class="cm-icon">⚙️</div><div class="cm-label">Agent dashboard preview — replace with screenshot</div></div></div>

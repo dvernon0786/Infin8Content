@@ -162,7 +162,7 @@ const Navigation = () => {
               Pricing
             </Link>
             <Link href="/register" className="btn-primary inline-block">
-              Get Started
+              Start today
             </Link>
           </div>
 
@@ -209,7 +209,7 @@ const Navigation = () => {
             </Link>
             <div className="pt-4">
               <Link href="/register" onClick={() => setMobileMenuOpen(false)} className="btn-primary block text-center w-full">
-                Get Started
+                Start today
               </Link>
             </div>
           </div>

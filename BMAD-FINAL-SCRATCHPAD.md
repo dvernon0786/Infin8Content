@@ -1,3 +1,16 @@
+## 2026-04-24 – Marketing CTA normalization
+
+- Global copy: All marketing CTAs now use "Start today" (replaces "Get Started Free", "Start Free Trial", and "Get Started").
+- Routing: All CTA anchors that previously used href="#" are now wired to /register where appropriate (marketing pages + shells).
+- Shells:
+  - MarketingShell header CTA → "Start today" → /register; removed "Login" link; promo bar "Get Deal" → /register.
+  - MktLayout header CTA → "Start today" → /register; promo bar "Get Deal" → /register; default CtaSection button label set to "Start today".
+- Components: Navigation desktop/mobile CTAs now display "Start today" (href already /register).
+- Pricing: Plan CTAs and trial CTA show "Start today"; sticky CTAs unchanged (already /register).
+- Feature pages: ai-content-writer, ai-seo-editor, autopublish CTAs updated to "Start today" and wired to /register.
+- LLM Tracker: Final prose reworded to remove "free" framing: "Start tracking your brand across LLMs today." Related buttons link to /register.
+- Left placeholders (non-CTA informational links like Help Docs/Privacy) intact by design.
+
 # BMAD Brownfield Primary Content Workflow — Final Scratchpad
 
 **Date:** 2026-04-20  

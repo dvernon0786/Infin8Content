@@ -6,6 +6,12 @@
    - Enhanced `infin8content/components/marketing/MarketingPageBody.tsx` with a billing toggle helper (`window._setPricing`) and button wiring
 
 ### Changed
+- Marketing: CTA and copy normalization
+   - Global CTA copy standardized to "Start today" across Navigation, pricing, and feature landing pages.
+   - Replaced legacy "Get Started Free" / "Start Free Trial" / "Get Started" labels.
+   - Wired placeholder CTA href="#" to /register on applicable marketing pages and shells.
+   - MarketingShell & MktLayout: removed "Login" from header CTAs; kept a single primary "Start today" button to /register; promo bar "Get Deal" now routes to /register.
+   - LLM Tracker: final prose updated to remove "free" framing — now reads: "Start tracking your brand across LLMs today." Related CTAs to /register.
 - Marketing: Rebuilt `/resources/blog` under `(marketing-pages)` to mirror `/ai-content-writer` pattern and unify interactivity via `MarketingPageBody`.
    - Added `infin8content/app/(marketing-pages)/resources/blog/page.tsx` (HTML+CSS injection; newsletter form is a no-op placeholder)
    - Extended `infin8content/components/marketing/MarketingPageBody.tsx` to handle blog tag filter (`#post-grid .post-card`) and a placeholder "Load more" button

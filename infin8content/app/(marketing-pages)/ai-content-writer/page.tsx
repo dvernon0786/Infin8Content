@@ -284,7 +284,7 @@ const html = `<main>
       <h1 class="fade-up">The AI Writer <span class="high">Tailored for SEO</span><br>that ranks you #1</h1>
       <p class="sub fade-up">The best AI SEO content writer that actually works — rank-ready articles in 30 seconds, in your brand voice.</p>
       <div class="hero-actions fade-up">
-        <a class="btn btn-primary btn-primary-lg" href="#">Get Started Free</a>
+        <a class="btn btn-primary btn-primary-lg" href="/register">Start today</a>
       </div>
       <div class="social-proof fade-up">
         <div class="avatars">
@@ -560,7 +560,7 @@ const html = `<main>
     <div class="container">
       <h2>Scale more content.<br>Do less work.</h2>
       <p>Get started and see why agencies trust Infin8Content.</p>
-      <a class="btn btn-primary btn-primary-lg" href="#">Get Started Free</a>
+      <a class="btn btn-primary btn-primary-lg" href="/register">Start today</a>
       <div class="cta-perks">
         <span class="cta-perk">Cancel anytime</span>
         <span class="cta-perk">Articles in 30 secs</span>

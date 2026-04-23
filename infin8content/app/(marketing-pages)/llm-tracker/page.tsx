@@ -223,7 +223,7 @@ const html = `<main>
     <h1 class="fade-up">Track Your Brand<br>in <span class="high">AI Search</span></h1>
     <p class="sub fade-up">See how ChatGPT, Perplexity, Gemini, Claude, and Google AI Overviews talk about your brand. Monitor mentions, citations, and share of voice — all in one dashboard, one price.</p>
     <div class="hero-actions fade-up">
-      <a class="btn btn-primary btn-lg" href="#">Start Tracking Free</a>
+      <a class="btn btn-primary btn-lg" href="/register">Start Tracking Free</a>
     </div>
     <div class="social-proof fade-up">
       <div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div>
@@ -394,8 +394,8 @@ const html = `<main>
 <section class="final-cta">
   <div class="container">
     <h2>Know what AI says<br>about your brand.</h2>
-    <p>Get started and see why agencies trust Infin8Content.</p>
-    <a class="btn btn-primary btn-lg" href="#">Start Tracking Free</a>
+    <p>Start tracking your brand across LLMs today.</p>
+    <a class="btn btn-primary btn-lg" href="/register">Start Tracking Free</a>
     <div class="cta-perks"><span class="cta-perk">All platforms included</span><span class="cta-perk">Cancel anytime</span><span class="cta-perk">White label reports</span></div>
     <div class="cta-social"><div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div><span style="font-size:13.5px;color:var(--muted);">Trusted by <strong style="color:var(--white)">10,000+</strong> marketers</span></div>
     <div class="cta-mock-img"><div class="cta-mock-inner"><div class="cm-icon">🔭</div><div class="cm-label">LLM tracker dashboard — replace with screenshot</div></div></div>

@@ -21,7 +21,7 @@ export function MktHero({
   heading,
   headingAccent,
   sub,
-  cta = "Get Started Free",
+  cta = "Start today",
   ctaHref = "#",
   secondaryCta,
   secondaryHref = "#",

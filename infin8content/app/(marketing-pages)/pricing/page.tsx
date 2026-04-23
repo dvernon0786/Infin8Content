@@ -684,7 +684,7 @@ const html = `
         <p class="plan-billed annual-only">billed annually</p>
         <p class="plan-cost-per">Only <strong><span class="price-monthly">$4.90</span><span class="price-annual">$4.15</span></strong> per article</p>
         <p class="plan-savings savings-text">You save $90/year</p>
-        <a href="/register" class="plan-cta">Get Started</a>
+        <a href="/register" class="plan-cta">Start today</a>
         <p class="plan-trial">$1 trial · Cancel anytime</p>
       </div>
       <div class="plan-features">
@@ -733,7 +733,7 @@ const html = `
         <p class="plan-cost-per">Only <strong><span class="price-monthly">$4.40</span><span class="price-annual">$3.50</span></strong> per article</p>
         <p class="plan-savings savings-text">You save $540/year</p>
         <p class="plan-savings" style="margin-top:2px;">Best value for growing teams</p>
-        <a href="/register" class="plan-cta">Get Started</a>
+        <a href="/register" class="plan-cta">Start today</a>
         <p class="plan-trial">$1 trial · Cancel anytime</p>
       </div>
       <div class="plan-features">
@@ -1211,7 +1211,7 @@ const html = `
   <div class="container" style="position:relative;">
     <h2>Start building content<br>that earns authority</h2>
     <p>One trial article included. No credit card required.</p>
-    <a href="/register" class="btn btn-primary btn-lg">Start Free Trial</a>
+    <a href="/register" class="btn btn-primary btn-lg">Start today</a>
     <div class="cta-perks">
       <span class="cta-perk">$1 trial · 3 days full access</span>
       <span class="cta-perk">Cancel anytime</span>

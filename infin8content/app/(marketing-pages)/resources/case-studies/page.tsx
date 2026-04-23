@@ -441,7 +441,7 @@ const html = `
     <div class="container" style="position:relative;">
       <h2>Start writing your<br>own success story.</h2>
       <p>Join 10,000+ marketers growing organic traffic with Infin8Content.</p>
-      <a href="#" class="btn btn-primary btn-lg">Get Started Free</a>
+      <a href="/register" class="btn btn-primary btn-lg">Start today</a>
       <div class="cta-perks">
         <span class="cta-perk">Cancel anytime</span>
         <span class="cta-perk">Articles in 30 secs</span>

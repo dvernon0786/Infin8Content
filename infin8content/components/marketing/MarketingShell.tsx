@@ -126,7 +126,7 @@ export default function MarketingShell({ children }: { children: React.ReactNode
         <span className="time-unit js-ph">08</span>hrs{' '}
         <span className="time-unit js-pm">34</span>min{' '}
         <span className="time-unit js-ps">12</span>sec
-        <a className="deal-link" href="#">Get Deal</a>
+        <a className="deal-link" href="/register">Get Deal</a>
       </div>
 
       {/* Header */}
@@ -171,8 +171,7 @@ export default function MarketingShell({ children }: { children: React.ReactNode
             </div>
           </nav>
           <div className="header-cta">
-            <a className="btn-link" href="#">Login</a>
-            <a className="btn btn-primary" href="#">Get Started</a>
+            <a className="btn btn-primary" href="/register">Start today</a>
           </div>
           <button className="nav-toggle" id="nav-toggle">☰</button>
         </div>

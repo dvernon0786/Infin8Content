@@ -210,7 +210,7 @@ const html = `<main>
     <h1 class="fade-up">Automatically Generate and Publish<br>Content <span class="high">While You Sleep</span></h1>
     <p class="sub fade-up">The automated AI blogging system that runs on autopilot — 150+ languages, any niche, any schedule.</p>
     <div class="hero-actions fade-up">
-      <a class="btn btn-primary btn-lg" href="#">Get Started Free</a>
+      <a class="btn btn-primary btn-lg" href="/register">Start today</a>
     </div>
     <div class="social-proof fade-up">
       <div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div>
@@ -356,7 +356,7 @@ const html = `<main>
   <div class="container">
     <h2>Your blog. Running itself.</h2>
     <p>Get started and see why agencies trust Infin8Content.</p>
-    <a class="btn btn-primary btn-lg" href="#">Start AutoPublish Free</a>
+    <a class="btn btn-primary btn-lg" href="/register">Start AutoPublish Free</a>
     <div class="cta-perks"><span class="cta-perk">Cancel anytime</span><span class="cta-perk">150+ languages</span><span class="cta-perk">Set and forget</span></div>
     <div class="cta-social"><div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div><span style="font-size:13.5px;color:var(--muted);">Trusted by <strong style="color:var(--white)">10,000+</strong> marketers</span></div>
     <div class="cta-mock-img"><div class="cta-mock-inner"><div class="cm-icon">🚀</div><div class="cm-label">AutoPublish dashboard — replace with screenshot</div></div></div>

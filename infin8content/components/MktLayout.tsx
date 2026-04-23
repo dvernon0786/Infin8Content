@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { useState, useEffect } from "react";
 
 // ─── Shell CSS (layout shell only — component styles live in globals.css) ──
@@ -74,7 +73,7 @@ export function SocialProof({ label = "10,000+ Marketers & Agencies" }: { label?
 export function CtaSection({
   heading = "Scale more content.\nDo less work.",
   sub = "Get started and see why agencies trust Infin8Content.",
-  btnLabel = "Get Started Free",
+  btnLabel = "Start today",
   perks = ["Cancel anytime", "Articles in 30 secs", "Plagiarism free"],
 }: {
   heading?: string;
@@ -92,12 +91,12 @@ export function CtaSection({
           {heading}
         </h2>
         <p className="text-[17px] text-mkt-muted mb-9">{sub}</p>
-        <Link
-          href="#"
+        <a
+          href="/register"
           className="inline-flex items-center justify-center font-display font-semibold bg-mkt-accent text-white px-8 py-4 rounded-[10px] text-body shadow-[0_0_20px_var(--mkt-accent-glow)] hover:bg-mkt-accent-hover hover:shadow-[0_0_30px_var(--mkt-accent-glow-heavy)] hover:-translate-y-0.5 transition-all"
         >
           {btnLabel}
-        </Link>
+        </a>
         <div className="flex items-center justify-center gap-6 mt-5 flex-wrap">
           {perks.map((p) => (
             <span key={p} className="flex items-center gap-1.5 text-[13px] text-mkt-muted">
@@ -157,7 +156,7 @@ export default function MktLayout({ children }: { children: React.ReactNode }) {
         <span className="mkt-time-unit">{ph}</span>hrs{" "}
         <span className="mkt-time-unit">{pm}</span>min{" "}
         <span className="mkt-time-unit">{ps}</span>sec
-        <a className="mkt-deal-link" href="#">Get Deal</a>
+        <a className="mkt-deal-link" href="/register">Get Deal</a>
       </div>
 
       {/* Header */}
@@ -202,8 +201,7 @@ export default function MktLayout({ children }: { children: React.ReactNode }) {
             </div>
           </nav>
           <div className="mkt-header-cta">
-            <a className="mkt-btn-link" href="#">Login</a>
-            <a className="mkt-btn-primary" href="#">Get Started</a>
+            <a className="mkt-btn-primary" href="/register">Start today</a>
           </div>
           <button className="mkt-nav-toggle" id="mkt-nav-toggle">☰</button>
         </div>

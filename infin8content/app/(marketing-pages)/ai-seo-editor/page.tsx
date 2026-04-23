@@ -267,7 +267,7 @@ const html = `<main>
     <h1 class="fade-up">Optimize Existing Content with<br>the <span class="high">SEO Editor</span> &amp; AI Assistant</h1>
     <p class="sub fade-up">Add links, images, keywords, and AI-powered rewrites that optimize your existing content — without starting from scratch.</p>
     <div class="hero-actions fade-up">
-      <a class="btn btn-primary btn-lg" href="#">Get Started Free</a>
+      <a class="btn btn-primary btn-lg" href="/register">Start today</a>
     </div>
     <div class="social-proof fade-up">
       <div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div>
@@ -461,7 +461,7 @@ const html = `<main>
   <div class="container">
     <h2>Scale more content.<br>Do less work.</h2>
     <p>Get started and see why agencies trust Infin8Content.</p>
-    <a class="btn btn-primary btn-lg" href="#">Get Started Free</a>
+    <a class="btn btn-primary btn-lg" href="/register">Start today</a>
     <div class="cta-perks">
       <span class="cta-perk">Cancel anytime</span>
       <span class="cta-perk">Articles in 30 secs</span>
