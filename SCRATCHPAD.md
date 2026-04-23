@@ -1,7 +1,23 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-04-23  
-**Current Focus:** MARKETING PAGES NAVIGATION FIX
+**Last Updated:** 2026-04-24  
+**Current Focus:** Marketing pages parity — Case Studies page
+
+## **🔥 CASE STUDIES PAGE — STATIC MIRROR & FILTER**
+
+### **✅ Achievement: Rebuilt Case Studies to match /ai-content-writer**
+- **Status:** Complete. Page now uses MarketingShell + MarketingPageBody with tokenized CSS and exact visual parity.
+- **Branch:** `test-main-all`
+- **Deliverables:**
+  1. Implemented static HTML/CSS mirror at `infin8content/app/(marketing-pages)/resources/case-studies/page.tsx` rendered via `MarketingPageBody`.
+  2. Replaced former dynamic page under `(i8c-mkt)` and deleted legacy route to prevent conflicts.
+  3. Wired tag filter interactivity in `MarketingPageBody.useEffect` (listens to `#tag-filter` buttons; toggles `[data-hidden]` on `.cs-card`).
+- **Files changed:**
+  - `infin8content/app/(marketing-pages)/resources/case-studies/page.tsx` (new static mirror)
+  - `infin8content/components/marketing/MarketingPageBody.tsx` (add tag filter handler)
+  - `infin8content/app/(i8c-mkt)/resources/case-studies/page.tsx` (removed)
+- **Result:** Zero drift with `/ai-content-writer`, consistent shell, and working tag filter without inline scripts.
+
 
 ## **🔥 MARKETING PAGES NAVIGATION FIX**
 

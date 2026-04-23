@@ -93,6 +93,29 @@ export default function MarketingPageBody({ html, css }: Props) {
       });
     });
 
+    // Tag filter — toggles data-hidden on .cs-card elements
+    const filter = document.getElementById('tag-filter');
+    if (filter) {
+      const onClick = (e: Event) => {
+        const target = e.target as HTMLElement | null;
+        const btn = target?.closest('[data-filter]') as HTMLElement | null;
+        if (!btn) return;
+        const active = btn.dataset.filter || 'All';
+        filter.querySelectorAll<HTMLElement>('.tag-btn').forEach(b => b.classList.toggle('active', (b.dataset.filter || '') === active));
+        document.querySelectorAll<HTMLElement>('#cs-grid .cs-card').forEach(card => {
+          const tags = (card.dataset.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+          if (active === 'All') {
+            card.removeAttribute('data-hidden');
+          } else {
+            const show = tags.includes(active);
+            if (show) card.setAttribute('data-hidden', 'false'); else card.setAttribute('data-hidden', 'true');
+          }
+        });
+      };
+      filter.addEventListener('click', onClick);
+      return () => filter.removeEventListener('click', onClick);
+    }
+
     return () => {
       delete (window as Window & { switchTab?: unknown }).switchTab;
       delete (window as Window & { toggleFaq?: unknown }).toggleFaq;

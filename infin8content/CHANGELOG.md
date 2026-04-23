@@ -2,9 +2,14 @@
 
 ### Added
 - `/app/(marketing-pages)/pricing/page.tsx`: Static HTML+CSS mirror of pricing page for exact visual match with `/ai-content-writer` (renders via `MarketingPageBody`).
+- `/app/(marketing-pages)/resources/case-studies/page.tsx`: Static HTML+CSS mirror of case studies page using `MarketingPageBody` for parity with `/ai-content-writer`.
 
 ### Changed
 - `components/marketing/MarketingPageBody.tsx`: Add `window._setPricing(mode)` and bind monthly/annual buttons when present; default to annual.
+- `components/marketing/MarketingPageBody.tsx`: Add tag filter event handler listening on `#tag-filter` to toggle `[data-hidden]` on `.cs-card` items.
+
+### Removed
+- `/app/(i8c-mkt)/resources/case-studies/page.tsx`: Deleted legacy route to avoid duplication with `(marketing-pages)` mirror.
 
 ### Meta
 - Commit: d9948f86 (branch: test-main-all)
