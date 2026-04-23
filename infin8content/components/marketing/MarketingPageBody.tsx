@@ -148,7 +148,7 @@ export default function MarketingPageBody({ html, css }: Props) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: css }} />
-      <div dangerouslySetInnerHTML={{ __html: html }} />
+      <div suppressHydrationWarning dangerouslySetInnerHTML={{ __html: html }} />
     </>
   );
 }
