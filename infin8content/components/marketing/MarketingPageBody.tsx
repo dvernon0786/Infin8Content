@@ -61,6 +61,28 @@ export default function MarketingPageBody({ html, css }: Props) {
       });
     });
 
+    // Pricing billing toggle (if present on page)
+    (window as Window & { _setPricing?: (mode: 'monthly' | 'annual') => void })._setPricing =
+      (mode: 'monthly' | 'annual') => {
+        document.body.classList.remove('billing-monthly', 'billing-annual');
+        document.body.classList.add(`billing-${mode}`);
+        const btnM = document.getElementById('btn-monthly');
+        const btnA = document.getElementById('btn-annual');
+        btnM?.classList.toggle('active', mode === 'monthly');
+        btnA?.classList.toggle('active', mode === 'annual');
+        const savingsEl = document.getElementById('billing-savings') as HTMLElement | null;
+        if (savingsEl) savingsEl.style.display = mode === 'annual' ? 'block' : 'none';
+      };
+
+    const btnMonthly = document.getElementById('btn-monthly');
+    const btnAnnual = document.getElementById('btn-annual');
+    if (btnMonthly && btnAnnual) {
+      btnMonthly.addEventListener('click', () => (window as any)._setPricing?.('monthly'));
+      btnAnnual.addEventListener('click', () => (window as any)._setPricing?.('annual'));
+      // Default to annual display
+      (window as any)._setPricing?.('annual');
+    }
+
     // Smooth scroll for anchor links
     document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach(a => {
       a.addEventListener('click', e => {
@@ -74,6 +96,7 @@ export default function MarketingPageBody({ html, css }: Props) {
     return () => {
       delete (window as Window & { switchTab?: unknown }).switchTab;
       delete (window as Window & { toggleFaq?: unknown }).toggleFaq;
+      delete (window as Window & { _setPricing?: unknown })._setPricing;
     };
   }, []);
 
