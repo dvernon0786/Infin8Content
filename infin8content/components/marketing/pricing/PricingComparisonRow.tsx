@@ -93,19 +93,19 @@ export default function PricingComparisonRow() {
   return (
     <section className="max-w-7xl mx-auto px-6 pb-20">
       <div className="flex items-end justify-between mb-6">
-        <h2 className="text-2xl font-semibold text-neutral-900 font-poppins">
+        <h2 className="text-2xl font-semibold text-mkt-white font-poppins">
           Compare plans in full
         </h2>
-        <p className="text-sm text-neutral-500 font-lato hidden md:block">
+        <p className="text-sm text-mkt-muted font-lato hidden md:block">
           Every feature, side by side
         </p>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-neutral-200 shadow-sm">
+      <div className="overflow-x-auto rounded-2xl border border-mkt-border shadow-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-neutral-50 border-b border-neutral-200">
-              <th className="p-4 text-left font-semibold text-neutral-700 w-[40%]">
+            <tr className="bg-mkt-surface2 border-b border-mkt-border">
+              <th className="p-4 text-left font-semibold text-mkt-muted w-[40%]">
                 Feature
               </th>
               {["Starter", "Pro", "Agency"].map((name) => (
@@ -113,13 +113,13 @@ export default function PricingComparisonRow() {
                   key={name}
                   className={`p-4 text-center font-semibold ${
                     name === "Pro"
-                      ? "text-blue-600 bg-blue-50"
-                      : "text-neutral-700"
+                      ? "text-mkt-accent bg-mkt-accent-lite"
+                      : "text-mkt-muted"
                   }`}
                 >
                   {name}
                   {name === "Pro" && (
-                    <span className="block text-[10px] font-normal text-blue-400 mt-0.5">
+                    <span className="block text-[10px] font-normal text-mkt-accent mt-0.5">
                       Most Popular
                     </span>
                   )}
@@ -127,15 +127,15 @@ export default function PricingComparisonRow() {
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-neutral-100">
+          <tbody className="bg-mkt-surface divide-y divide-mkt-border">
             {rows.map((row, i) => {
               // Section header row
               if (row.category) {
                 return (
-                  <tr key={`${row.category}-${i}`} className="bg-neutral-50">
+                  <tr key={`${row.category}-${i}`} className="bg-mkt-surface2">
                     <td
                       colSpan={4}
-                      className="px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-neutral-400"
+                      className="px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-mkt-muted2"
                     >
                       {row.feature}
                     </td>
@@ -146,15 +146,15 @@ export default function PricingComparisonRow() {
               return (
                 <tr
                   key={row.feature}
-                  className={`transition-colors hover:bg-neutral-50/80 ${
-                    row.highlight ? "bg-blue-50/30" : ""
+                  className={`transition-colors hover:bg-mkt-surface2 ${
+                    row.highlight ? "bg-mkt-accent-lite" : ""
                   }`}
                 >
                   <td
                     className={`p-4 font-lato ${
                       row.highlight
-                        ? "font-semibold text-neutral-900"
-                        : "text-neutral-700"
+                        ? "font-semibold text-mkt-white"
+                        : "text-mkt-muted"
                     }`}
                   >
                     {row.feature}

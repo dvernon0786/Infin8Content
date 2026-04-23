@@ -21,9 +21,9 @@ const doubled = [...stats, ...stats];
 
 export default function TrafficProofStrip() {
   return (
-    <section className="py-12 overflow-hidden border-y border-neutral-200 bg-white">
+    <section className="py-12 overflow-hidden border-y border-mkt-border bg-mkt-surface">
       <div className="mb-5 text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-neutral-400">
+        <p className="text-xs font-bold uppercase tracking-widest text-mkt-muted2">
           Real results from real teams
         </p>
       </div>
@@ -31,8 +31,8 @@ export default function TrafficProofStrip() {
       {/* Marquee */}
       <div className="relative">
         {/* Fade edges */}
-        <div className="absolute left-0 top-0 bottom-0 w-24 bg-linear-to-r from-white to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-24 bg-linear-to-l from-white to-transparent z-10 pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-24 bg-linear-to-r from-mkt-surface to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-24 bg-linear-to-l from-mkt-surface to-transparent z-10 pointer-events-none" />
 
         <div
           className="flex gap-4"
@@ -44,13 +44,13 @@ export default function TrafficProofStrip() {
           {doubled.map((s, i) => (
             <div
               key={i}
-              className="shrink-0 flex items-center gap-3 bg-neutral-50 border border-neutral-200 rounded-xl px-5 py-3"
+              className="shrink-0 flex items-center gap-3 bg-mkt-surface2 border border-mkt-border rounded-xl px-5 py-3"
             >
-              <span className="text-sm font-bold text-neutral-900 font-poppins">
+              <span className="text-sm font-bold text-mkt-white font-poppins">
                 {s.label}
               </span>
-              <span className="text-xs text-neutral-500 font-lato">{s.sub}</span>
-              <span className="text-green-500 text-xs font-bold">↑</span>
+              <span className="text-xs text-mkt-muted font-lato">{s.sub}</span>
+              <span className="text-mkt-green text-xs font-bold">↑</span>
             </div>
           ))}
         </div>

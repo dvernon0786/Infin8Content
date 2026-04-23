@@ -22,33 +22,33 @@ const summary = [
 
 function Cell({ val }: { val: string | boolean }) {
   if (val === true) return <Check className="w-4 h-4 text-blue-500 mx-auto" />;
-  if (val === false) return <Minus className="w-4 h-4 text-neutral-300 mx-auto" />;
-  return <span className="text-sm text-neutral-700 font-lato">{val}</span>;
+  if (val === false) return <Minus className="w-4 h-4 text-mkt-muted mx-auto" />;
+  return <span className="text-sm text-mkt-muted font-lato">{val}</span>;
 }
 
 export default function PricingComparison() {
   return (
     <section className="max-w-7xl mx-auto px-6 pb-20">
-      <h2 className="text-2xl font-semibold text-neutral-900 mb-6 font-poppins">
+      <h2 className="text-2xl font-semibold text-mkt-white mb-6 font-poppins">
         Quick comparison
       </h2>
 
-      <div className="overflow-x-auto bg-white border border-neutral-200 rounded-2xl shadow-sm">
+      <div className="overflow-x-auto bg-mkt-surface border border-mkt-border rounded-2xl shadow-sm">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 border-b border-neutral-200">
+          <thead className="bg-mkt-surface2 border-b border-mkt-border">
             <tr>
-              <th className="p-4 text-left font-semibold text-neutral-700">Feature</th>
-              <th className="p-4 text-center font-semibold text-neutral-700">Starter</th>
-              <th className="p-4 text-center font-semibold text-blue-600 bg-blue-50/50">Pro</th>
-              <th className="p-4 text-center font-semibold text-neutral-700">Agency</th>
+              <th className="p-4 text-left font-semibold text-mkt-muted">Feature</th>
+              <th className="p-4 text-center font-semibold text-mkt-muted">Starter</th>
+              <th className="p-4 text-center font-semibold text-mkt-accent bg-mkt-accent-lite">Pro</th>
+              <th className="p-4 text-center font-semibold text-mkt-muted">Agency</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-100">
+          <tbody className="divide-y divide-mkt-border">
             {summary.map((row) => (
-              <tr key={row.feature} className="hover:bg-neutral-50/60 transition-colors">
-                <td className="p-4 text-neutral-700 font-lato">{row.feature}</td>
+              <tr key={row.feature} className="hover:bg-mkt-surface2 transition-colors">
+                <td className="p-4 text-mkt-muted font-lato">{row.feature}</td>
                 <td className="p-4 text-center"><Cell val={row.starter} /></td>
-                <td className="p-4 text-center bg-blue-50/30"><Cell val={row.pro} /></td>
+                <td className="p-4 text-center bg-mkt-accent-lite"><Cell val={row.pro} /></td>
                 <td className="p-4 text-center"><Cell val={row.agency} /></td>
               </tr>
             ))}

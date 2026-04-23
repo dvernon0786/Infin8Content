@@ -58,16 +58,16 @@ export default function PricingFAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section className="bg-white py-24 border-t border-neutral-100">
+    <section className="bg-mkt-surface py-24 border-t border-mkt-border">
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
         <div className="text-center mb-14">
-          <p className="text-sm font-semibold uppercase tracking-widest text-blue-600 mb-3">
+          <p className="text-sm font-semibold uppercase tracking-widest text-mkt-accent mb-3">
             FAQ
           </p>
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-neutral-900 font-poppins">
+          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-mkt-white font-poppins">
             Questions? We&apos;ve got answers.
           </h2>
-          <p className="text-base text-neutral-600 max-w-xl mx-auto mt-4 font-lato">
+          <p className="text-base text-mkt-muted max-w-xl mx-auto mt-4 font-lato">
             Everything you need to know about Infin8Content pricing and features.
           </p>
         </div>
@@ -76,15 +76,15 @@ export default function PricingFAQ() {
           {faqs.map((faq, idx) => (
             <div
               key={idx}
-              className="border border-neutral-200 rounded-2xl overflow-hidden group hover:border-blue-300 transition-all duration-200"
+              className="border border-mkt-border rounded-2xl overflow-hidden group hover:border-mkt-accent-border transition-all duration-200"
             >
               <button
-                className="w-full p-6 text-left font-semibold text-neutral-900 flex items-center justify-between hover:text-blue-600 transition-colors duration-200 bg-white hover:bg-neutral-50/60 focus:outline-none"
+                className="w-full p-6 text-left font-semibold text-mkt-white flex items-center justify-between hover:text-mkt-accent transition-colors duration-200 bg-mkt-surface hover:bg-mkt-surface2 focus:outline-none"
                 onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
               >
                 <span className="pr-4 text-sm md:text-base">{faq.q}</span>
                 <ChevronDown
-                  className={`w-5 h-5 text-blue-500 transition-transform duration-300 shrink-0 ${
+                  className={`w-5 h-5 text-mkt-accent transition-transform duration-300 shrink-0 ${
                     openIndex === idx ? "rotate-180" : ""
                   }`}
                 />
@@ -95,7 +95,7 @@ export default function PricingFAQ() {
                   openIndex === idx ? "max-h-96" : "max-h-0"
                 }`}
               >
-                <div className="p-6 pt-0 bg-neutral-50 text-sm text-neutral-600 leading-relaxed font-lato border-t border-neutral-100">
+                <div className="p-6 pt-0 bg-mkt-surface2 text-sm text-mkt-muted leading-relaxed font-lato border-t border-mkt-border">
                   {faq.a}
                 </div>
               </div>
@@ -104,11 +104,11 @@ export default function PricingFAQ() {
         </div>
 
         {/* Still have questions? */}
-        <div className="mt-12 text-center bg-linear-to-br from-blue-50 to-purple-50 border border-blue-100 rounded-2xl p-8">
-          <p className="text-sm font-semibold text-neutral-700 mb-1">
+        <div className="mt-12 text-center bg-mkt-surface2 border border-mkt-border rounded-2xl p-8">
+          <p className="text-sm font-semibold text-mkt-white mb-1">
             Still have questions?
           </p>
-          <p className="text-sm text-neutral-500 font-lato mb-5">
+          <p className="text-sm text-mkt-muted font-lato mb-5">
             Our team typically responds within a few hours.
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
@@ -121,7 +121,7 @@ export default function PricingFAQ() {
             </a>
             <a
               href="/call"
-              className="text-sm font-semibold text-blue-600 border border-blue-200 bg-white px-5 py-2.5 rounded-xl hover:border-blue-400 transition-colors"
+              className="text-sm font-semibold text-mkt-accent border border-mkt-accent-border bg-mkt-surface px-5 py-2.5 rounded-xl hover:border-mkt-accent transition-colors"
             >
               Book a demo
             </a>

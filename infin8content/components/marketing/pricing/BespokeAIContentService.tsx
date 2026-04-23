@@ -37,11 +37,11 @@ export default function BespokeAIContentService() {
 
   return (
     <section
-      className="py-24 border-t border-neutral-100"
-      style={{ background: "linear-gradient(135deg,#f0f4ff 0%,#faf5ff 100%)" }}
+      className="py-24 border-t border-mkt-border"
+      style={{ background: "linear-gradient(135deg,#0f1117 0%,#13151e 100%)" }}
     >
       <div className="max-w-6xl mx-auto px-6 lg:px-8">
-        <div className="relative bg-white rounded-3xl shadow-xl overflow-hidden border border-neutral-100">
+        <div className="relative bg-mkt-surface rounded-3xl shadow-xl overflow-hidden border border-mkt-border">
           {/* Top Banner */}
           <div
             className="px-6 py-3 text-center"
@@ -57,7 +57,7 @@ export default function BespokeAIContentService() {
           <div className="grid md:grid-cols-2 gap-12 p-8 md:p-12">
             {/* LEFT — CTA */}
             <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-full mb-5">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-mkt-accent bg-mkt-accent-lite border border-mkt-accent-border px-3 py-1.5 rounded-full mb-5">
                 Done-for-you service
               </div>
 
@@ -74,10 +74,10 @@ export default function BespokeAIContentService() {
                   Bespoke AI Content
                 </span>
                 <br />
-                <span className="text-neutral-900">Service</span>
+                <span className="text-mkt-white">Service</span>
               </h2>
 
-              <p className="text-base text-neutral-600 font-lato mb-8 leading-relaxed">
+              <p className="text-base text-mkt-muted font-lato mb-8 leading-relaxed">
                 We run your entire content operation for you — research,
                 writing, publishing, and LLM visibility — managed by human
                 strategists on top of our AI platform.
@@ -85,14 +85,14 @@ export default function BespokeAIContentService() {
 
               {/* Price */}
               <div className="mb-6">
-                <p className="text-xs text-neutral-500 font-semibold uppercase tracking-widest mb-2">
+                <p className="text-xs text-mkt-muted font-semibold uppercase tracking-widest mb-2">
                   Starting from
                 </p>
                 <div className="flex items-end gap-2">
-                  <span className="text-5xl font-medium tracking-tighter text-neutral-900 font-poppins">
+                  <span className="text-5xl font-medium tracking-tighter text-mkt-white font-poppins">
                     $2,000
                   </span>
-                  <span className="text-lg text-neutral-500 mb-1 font-lato">
+                  <span className="text-lg text-mkt-muted mb-1 font-lato">
                     /mo
                   </span>
                 </div>
@@ -139,12 +139,12 @@ export default function BespokeAIContentService() {
               <div className="md:hidden mt-4">
                 <button
                   onClick={() => setOpen(!open)}
-                  className="w-full flex items-center justify-between text-sm font-semibold text-neutral-700 font-lato py-2 border-b border-neutral-100"
+                  className="w-full flex items-center justify-between text-sm font-semibold text-mkt-white font-lato py-2 border-b border-mkt-border"
                 >
                   What&apos;s included
                   <ChevronDown
                     size={18}
-                    className={`text-neutral-400 transition-transform duration-200 ${
+                    className={`text-mkt-muted transition-transform duration-200 ${
                       open ? "rotate-180" : ""
                     }`}
                   />

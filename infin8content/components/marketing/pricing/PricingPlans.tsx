@@ -173,10 +173,10 @@ export default function PricingPlans({ billing }: Props) {
           return (
             <div
               key={plan.key}
-              className={`relative rounded-2xl border bg-white transition-all duration-300 ${
+              className={`relative rounded-2xl border bg-mkt-surface transition-all duration-300 ${
                 plan.popular
-                  ? "border-blue-500 shadow-xl shadow-blue-100/50 md:scale-[1.03] z-10"
-                  : "border-neutral-200 shadow-sm"
+                  ? "border-mkt-accent shadow-xl md:scale-[1.03] z-10"
+                  : "border-mkt-border"
               }`}
             >
               {/* Popular badge */}
@@ -193,60 +193,60 @@ export default function PricingPlans({ billing }: Props) {
               <div
                 className={`p-8 pb-6 ${
                   plan.popular
-                    ? "border-b border-blue-100"
-                    : "border-b border-neutral-100"
+                    ? "border-b border-mkt-accent-border"
+                    : "border-b border-mkt-border"
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-xl font-semibold text-neutral-900 font-poppins">
+                    <h3 className="text-xl font-semibold text-mkt-white font-poppins">
                       {plan.name}
                     </h3>
-                    <p className="text-xs text-neutral-500 mt-1">{plan.sub}</p>
+                    <p className="text-xs text-mkt-muted mt-1">{plan.sub}</p>
                   </div>
                   {plan.popular && (
-                    <div className="flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-1 rounded-lg">
+                    <div className="flex items-center gap-1 text-xs font-semibold text-mkt-accent bg-mkt-accent-lite border border-mkt-accent-border px-2 py-1 rounded-lg">
                       <Zap className="w-3 h-3" /> Best value
                     </div>
                   )}
                 </div>
 
-                <p className="text-sm text-neutral-500 mt-2 font-lato">
+                <p className="text-sm text-mkt-muted mt-2 font-lato">
                   {plan.tagline}
                 </p>
 
                 {/* Price */}
                 <div className="mt-6 flex items-end gap-1">
-                  <span className="text-5xl font-medium tracking-tighter text-neutral-900 font-poppins">
+                  <span className="text-5xl font-medium tracking-tighter text-mkt-white font-poppins">
                     ${price}
                   </span>
-                  <span className="text-sm text-neutral-500 mb-1.5">
+                  <span className="text-sm text-mkt-muted mb-1.5">
                     {billing === "monthly" ? "/mo" : "/mo"}
                   </span>
                 </div>
 
                 {/* Billing clarifiers */}
                 {billing === "annual" && (
-                  <p className="text-xs text-neutral-400 mt-0.5">
+                  <p className="text-xs text-mkt-muted2 mt-0.5">
                     billed annually
                   </p>
                 )}
                 {costPerArticle && (
-                  <p className="text-xs text-neutral-500 mt-2">
+                  <p className="text-xs text-mkt-muted mt-2">
                     Only{" "}
-                    <strong className="text-neutral-700">
+                    <strong className="text-mkt-white">
                       ${costPerArticle}
                     </strong>{" "}
                     per article
                   </p>
                 )}
                 {billing === "annual" && annualSavings > 0 && (
-                  <p className="text-xs text-green-600 font-semibold mt-1">
+                  <p className="text-xs text-mkt-green font-semibold mt-1">
                     You save ${annualSavings.toLocaleString()}/year
                   </p>
                 )}
                 {plan.popular && (
-                  <p className="text-xs text-green-600 font-semibold mt-1">
+                  <p className="text-xs text-mkt-green font-semibold mt-1">
                     Best value for growing teams
                   </p>
                 )}
@@ -260,7 +260,7 @@ export default function PricingPlans({ billing }: Props) {
                   >
                     {plan.cta}
                   </a>
-                  <p className="text-[10px] text-neutral-400 mt-2 text-center uppercase tracking-widest font-bold">
+                  <p className="text-[10px] text-mkt-muted2 mt-2 text-center uppercase tracking-widest font-bold">
                     {plan.key === "agency"
                       ? "Custom pricing · No lock-in"
                       : "$1 trial · Cancel anytime"}
@@ -278,17 +278,17 @@ export default function PricingPlans({ billing }: Props) {
 
                 {/* Not included (Starter only) */}
                 {plan.notIncluded && plan.notIncluded.length > 0 && (
-                  <div className="mt-5 pt-5 border-t border-neutral-100">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-400 mb-3">
+                  <div className="mt-5 pt-5 border-t border-mkt-border">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-mkt-muted2 mb-3">
                       Not included
                     </p>
                     <ul className="space-y-2">
                       {plan.notIncluded.map((f) => (
                         <li
                           key={f}
-                          className="flex items-center gap-2 text-sm text-neutral-400 font-lato"
+                          className="flex items-center gap-2 text-sm text-mkt-muted2 font-lato"
                         >
-                          <span className="text-neutral-300">✕</span>
+                          <span className="text-mkt-muted">✕</span>
                           {f}
                         </li>
                       ))}
@@ -303,7 +303,7 @@ export default function PricingPlans({ billing }: Props) {
 
       {/* Trial reminder */}
       <div className="mt-12 text-center">
-        <p className="text-sm text-neutral-600 font-medium bg-white px-6 py-3 rounded-full inline-block border border-neutral-200 shadow-sm">
+        <p className="text-sm text-mkt-muted font-medium bg-mkt-surface px-6 py-3 rounded-full inline-block border border-mkt-border shadow-sm">
           🔒 $1 trial for 3 days on Starter &amp; Pro · Cancel anytime · No questions asked
         </p>
       </div>

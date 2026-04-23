@@ -133,17 +133,17 @@ const categories = [
 
 export default function FeatureValueSection() {
   return (
-    <section className="bg-white py-24 border-t border-neutral-100">
+    <section className="bg-mkt-surface py-24 border-t border-mkt-border">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-14">
-          <p className="text-sm font-semibold uppercase tracking-widest text-blue-600 mb-3">
+          <p className="text-sm font-semibold uppercase tracking-widest text-mkt-accent mb-3">
             Everything included
           </p>
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-neutral-900 font-poppins">
+          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-mkt-white font-poppins">
             The most complete AI content platform
           </h2>
-          <p className="mt-4 text-lg text-neutral-600 font-lato max-w-2xl mx-auto">
+          <p className="mt-4 text-lg text-mkt-muted font-lato max-w-2xl mx-auto">
             Every plan includes the full writing stack. Higher plans unlock LLM
             tracking, white-labelling, and agency-scale automation.
           </p>
@@ -154,7 +154,7 @@ export default function FeatureValueSection() {
           {categories.map((cat) => (
             <div
               key={cat.label}
-              className="rounded-2xl border border-neutral-100 bg-neutral-50 p-6 hover:border-neutral-200 hover:shadow-sm transition-all duration-200"
+              className="rounded-2xl border border-mkt-border bg-mkt-surface2 p-6 hover:border-mkt-accent-border transition-all duration-200"
             >
               {/* Category label */}
               <div className="flex items-center gap-2 mb-5">
@@ -173,7 +173,7 @@ export default function FeatureValueSection() {
                     >
                       <Check className={`w-2.5 h-2.5 ${cat.color}`} />
                     </div>
-                    <span className="text-sm text-neutral-700 font-lato leading-snug">
+                    <span className="text-sm text-mkt-muted font-lato leading-snug">
                       {f}
                     </span>
                   </li>
@@ -185,9 +185,9 @@ export default function FeatureValueSection() {
 
         {/* Bottom note */}
         <div className="mt-10 text-center">
-          <p className="text-sm text-neutral-500 font-lato">
+          <p className="text-sm text-mkt-muted font-lato">
             New features ship weekly.{" "}
-            <a href="/resources/learn" className="text-blue-600 font-medium hover:underline">
+            <a href="/resources/learn" className="text-mkt-accent font-medium hover:underline">
               See what&apos;s new →
             </a>
           </p>
