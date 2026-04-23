@@ -311,7 +311,7 @@ const html = `
       <h1>The Content Tool That Ranks Your SaaS on Google and Gets It <span class="accent">Cited by ChatGPT</span></h1>
       <p class="hero-sub">Automatically publish pages on your site that target high-buying-intent keywords — ranking on Google and getting cited by LLMs.</p>
       <div class="hero-actions">
-        <a href="#" class="btn btn-primary btn-lg">Get Started Free</a>
+        <a href="/register" class="btn btn-primary btn-lg">Start today</a>
         <a href="#" class="btn-ghost btn" style="padding:14px 30px;font-size:16px;border-radius:10px;">See It In Action</a>
       </div>
       <!-- Social proof -->
@@ -537,7 +537,7 @@ const html = `
     <div class="container" style="position:relative;">
       <h2>Scale your SaaS.<br>Do less content work.</h2>
       <p>Get started and see why thousands of SaaS teams trust Infin8Content.</p>
-      <a href="#" class="btn btn-primary btn-lg">Get Started Free</a>
+      <a href="/register" class="btn btn-primary btn-lg">Start today</a>
       <div class="cta-perks">
         <span class="cta-perk">Cancel anytime</span>
         <span class="cta-perk">Articles in 30 secs</span>

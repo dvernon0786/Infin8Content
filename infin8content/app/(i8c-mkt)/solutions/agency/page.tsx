@@ -291,7 +291,7 @@ const html = `
       <h1>The AI Content Software for Agencies That Delivers <span class="accent">Client-Ready Content</span></h1>
       <p class="hero-sub">Infin8Content produces content so compelling, you'll want to present it to your client immediately — without any editing.</p>
       <div class="hero-actions">
-        <a href="#" class="btn btn-primary btn-lg">Get Started Free</a>
+        <a href="/register" class="btn btn-primary btn-lg">Start today</a>
         <a href="#" class="btn btn-ghost" style="padding:14px 30px;font-size:16px;border-radius:10px;">See It In Action</a>
       </div>
       <!-- Social proof -->
@@ -504,7 +504,7 @@ const html = `
     <div class="container" style="position:relative;">
       <h2>Rank more clients.<br>Do less work.</h2>
       <p>Get started and see why agencies trust Infin8Content.</p>
-      <a href="#" class="btn btn-primary btn-lg">Start Free Trial</a>
+      <a href="/register" class="btn btn-primary btn-lg">Start today</a>
       <div class="cta-perks">
         <span class="cta-perk">Cancel anytime</span>
         <span class="cta-perk">Unlimited clients</span>

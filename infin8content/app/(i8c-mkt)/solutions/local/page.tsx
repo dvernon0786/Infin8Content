@@ -71,7 +71,7 @@ export default function LocalPage() {
         heading="Get More Clients with our"
         headingAccent="Local SEO-Tailored Software"
         sub="Rank your local business higher in search engines and get more clients with AI-powered content tailored for local SEO."
-        cta="Get Started Free"
+        cta="Start today"
         perks={["Hyper-local targeting", "Auto social sharing", "Cancel anytime"]}
       />
 
@@ -128,7 +128,7 @@ export default function LocalPage() {
       <CtaSection
         heading={"Dominate local search.\nGet more clients."}
         sub="Get started and see why local businesses trust Infin8Content."
-        btnLabel="Start Free Trial"
+        btnLabel="Start today"
         perks={["Cancel anytime", "Hyper-local targeting", "Auto publishing"]}
       />
     </>

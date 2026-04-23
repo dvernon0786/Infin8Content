@@ -286,7 +286,7 @@ const html = `
       <h1>Get More Sales with our AI eCommerce <span class="accent">SEO Content Service</span></h1>
       <p class="hero-sub">Create killer content that ranks. SEO-optimized articles driving targeted traffic to your product pages, converting like crazy.</p>
       <div class="hero-actions">
-        <a href="#" class="btn btn-primary btn-lg">Get Started Free</a>
+        <a href="/register" class="btn btn-primary btn-lg">Start today</a>
         <a href="#" class="btn btn-ghost" style="padding:14px 30px;font-size:16px;border-radius:10px;">See It In Action</a>
       </div>
       <!-- Social proof -->
@@ -495,7 +495,7 @@ const html = `
     <div class="container" style="position:relative;">
       <h2>More traffic.<br>More sales. Less work.</h2>
       <p>Get started and see why e-commerce teams trust Infin8Content.</p>
-      <a href="#" class="btn btn-primary btn-lg">Start Free Trial</a>
+      <a href="/register" class="btn btn-primary btn-lg">Start today</a>
       <div class="cta-perks">
         <span class="cta-perk">Cancel anytime</span>
         <span class="cta-perk">Auto Shopify sync</span>
