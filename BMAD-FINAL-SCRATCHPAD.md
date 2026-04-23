@@ -79,6 +79,38 @@
 - **Dashboard cards** — "Add SEO Articles", "Add News Article", "Add YouTube to Blogpost" now pre-select correct article type and show relevant settings panel
 - **TypeScript:** 0 errors in both modified files
 
+### Unified Marketing Component Styling (✅ COMPLETE — 2026-04-23)
+- **Type:** Design system unification / Single source of truth
+- **Branch:** `fix/unified-marketing-styling` → merged to `test-main-all`
+- **Summary:**
+  - Created unified marketing component library in `globals.css` with `.mkt-*` prefix
+  - Removed duplicate component styles from `MktLayout.tsx` inline `shellCss`
+  - Updated Additional Marketing Pages to use single source of truth for styling
+  - Feature Marketing Pages remain untouched as requested
+  - All components (buttons, cards, sections, etc.) now follow same design tokens
+- **Files changed (3 files):**
+  - `infin8content/app/globals.css` — ADDED: 1004 lines of unified marketing component library
+  - `infin8content/components/MktLayout.tsx` — UPDATED: Removed duplicate `.mkt-btn-primary`, `.mkt-btn-link`, `.mkt-footer-inner` styles
+  - `infin8content/components/marketing/MarketingShell.tsx` — UPDATED: Minor alignment with unified system
+- **Unified Components Created:**
+  - Layout: `.mkt-container`, `.mkt-section`, `.mkt-section-alt`
+  - Hero: `.mkt-hero`, `.mkt-hero-eyebrow`, `.mkt-hero-perks`
+  - Buttons: `.mkt-btn-primary`, `.mkt-btn-ghost`, `.mkt-btn-link`
+  - Cards: `.mkt-card`, `.mkt-step-card`, `.mkt-feat-card`, `.mkt-highlight-item`
+  - Feature Rows: `.mkt-feature-row`, `.mkt-feature-list`
+  - Mockups: `.mkt-browser-frame`, `.mkt-feat-img`
+  - Testimonials: `.mkt-t-grid`, `.mkt-t-card`
+  - FAQ: `.mkt-faq-list`, `.mkt-faq-item`
+  - CTA: `.mkt-final-cta`, `.mkt-cta-perks`
+  - Footer: `.mkt-footer`, `.mkt-footer-top`
+  - Animations: `.mkt-fade-up`
+- **Additional Marketing Pages Updated:**
+  - `/solutions/agency`, `/solutions/ecommerce`, `/solutions/local`, `/solutions/saas`
+  - `/resources/blog`, `/resources/case-studies`, `/resources/learn`
+- **Feature Marketing Pages (Unchanged):**
+  - `/ai-content-writer`, `/ai-seo-agent`, `/ai-seo-editor`, `/autopublish`, `/llm-tracker`
+- **Commit:** `d30378ae` (fix: unify marketing component styling across all pages)
+
 ### Sidebar: Blog Automation (✅ UPDATED — 2026-04-21)
 - **sidebar-navigation.tsx** — Merged "Campaigns" and "AutoBlogs" into a single sub-item `Campaigns & Autoblogs` and moved `Site Optimizers`, `Integrations`, and `Feeds` to be sub-items under `Blog Automation` instead of top-level nav items.
 - **UI effect:** Blog Automation now expands to show 4 sub-items; sub-panel max height increased to avoid clipping. Sub-items currently point to `#` (disabled placeholder) and retain disabled appearance.
@@ -227,6 +259,21 @@ archived     - Removed from workflow
 **Size:** ~200K  
 
 **Next:** Merge to test-main-all for testing
+
+---
+
+## Recent Changes (2026-04-23)
+
+- **Pricing Page Update & Tailwind v4 Canonical Class Fixes** — Updated pricing page to follow same structure as Features, Solutions, and Resources pages:
+  - Created `app/pricing/layout.tsx` providing Navigation + Footer wrapper (matches Solutions/Resources pattern)
+  - Fixed Tailwind v4 canonical class warnings across all pricing components (`flex-shrink-0` → `shrink-0`, `bg-gradient-to-r` → `bg-linear-to-r`)
+  - Added new `TrafficProofStrip.tsx` component between PricingPlans and FeatureValueSection
+  - Extended `plan-limits.ts` with 7 display-only keys: `credits_per_month`, `autoblogs`, `projects`, `team_members`, `knowledge_bases`, `sub_accounts`, `llm_prompts`
+  - Updated all pricing components with Downloads folder versions
+  - Branch: `fix/pricing-page-tailwind-warnings`, merged to `test-main-all`
+  - Commit: `c0224330` (13 files changed, 1086 insertions(+), 436 deletions(-))
+
+These changes align the pricing page with global layout patterns and resolve Tailwind v4 warnings. TypeScript compilation clean (0 errors).
 
 ---
 

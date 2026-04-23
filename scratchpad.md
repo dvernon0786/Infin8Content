@@ -1,5 +1,111 @@
 # Scratchpad
 
+2026-04-23 — Unified Marketing Component Styling System ✅
+
+- **Type:** Design system unification / Single source of truth
+- **Branch:** `fix/unified-marketing-styling` → merged to `test-main-all`
+- **Status:** ✅ Implemented, committed, and pushed to production
+- **Summary:**
+  - Created unified marketing component library in `globals.css` with `.mkt-*` prefix
+  - Removed duplicate component styles from `MktLayout.tsx` inline `shellCss`
+  - Updated Additional Marketing Pages to use single source of truth for styling
+  - Feature Marketing Pages remain untouched as requested
+  - All components (buttons, cards, sections, etc.) now follow same design tokens
+- **Files changed (3 files):**
+  - `infin8content/app/globals.css` — ADDED: 1004 lines of unified marketing component library
+  - `infin8content/components/MktLayout.tsx` — UPDATED: Removed duplicate `.mkt-btn-primary`, `.mkt-btn-link`, `.mkt-footer-inner` styles
+  - `infin8content/components/marketing/MarketingShell.tsx` — UPDATED: Minor alignment with unified system
+- **Unified Components Created:**
+  - Layout: `.mkt-container`, `.mkt-section`, `.mkt-section-alt`
+  - Hero: `.mkt-hero`, `.mkt-hero-eyebrow`, `.mkt-hero-perks`
+  - Buttons: `.mkt-btn-primary`, `.mkt-btn-ghost`, `.mkt-btn-link`
+  - Cards: `.mkt-card`, `.mkt-step-card`, `.mkt-feat-card`, `.mkt-highlight-item`
+  - Feature Rows: `.mkt-feature-row`, `.mkt-feature-list`
+  - Mockups: `.mkt-browser-frame`, `.mkt-feat-img`
+  - Testimonials: `.mkt-t-grid`, `.mkt-t-card`
+  - FAQ: `.mkt-faq-list`, `.mkt-faq-item`
+  - CTA: `.mkt-final-cta`, `.mkt-cta-perks`
+  - Footer: `.mkt-footer`, `.mkt-footer-top`
+  - Animations: `.mkt-fade-up`
+- **Additional Marketing Pages Updated:**
+  - `/solutions/agency` — Uses MktUI components with unified styling
+  - `/solutions/ecommerce` — Uses MktUI components with unified styling
+  - `/solutions/local` — Uses MktUI components with unified styling
+  - `/solutions/saas` — Uses MktUI components with unified styling
+  - `/resources/blog` — Uses MktUI components with unified styling
+  - `/resources/case-studies` — Uses MktUI components with unified styling
+  - `/resources/learn` — Uses MktUI components with unified styling
+- **Feature Marketing Pages (Unchanged):**
+  - `/ai-content-writer` — Remains with inline CSS
+  - `/ai-seo-agent` — Remains with inline CSS
+  - `/ai-seo-editor` — Remains with inline CSS
+  - `/autopublish` — Remains with inline CSS
+  - `/llm-tracker` — Remains with inline CSS
+- **Git workflow followed:**
+  ```bash
+  git checkout test-main-all
+  git stash
+  git pull origin test-main-all
+  git checkout -b fix/unified-marketing-styling
+  git stash pop
+  git add .
+  git commit -m "fix: unify marketing component styling across all pages"
+  git push -u origin fix/unified-marketing-styling
+  git checkout test-main-all
+  git merge fix/unified-marketing-styling
+  git push origin test-main-all
+  ```
+- **Commit:** `d30378ae` (fix: unify marketing component styling across all pages)
+- **Next actions:** Verify Additional Marketing Pages render correctly with unified styling, test component consistency across all pages
+
+2026-04-23 — Pricing Page Update & Tailwind v4 Canonical Class Fixes ✅
+
+- **Type:** Feature implementation / Design system compliance
+- **Branch:** `fix/pricing-page-tailwind-warnings` → merged to `test-main-all`
+- **Status:** ✅ Implemented, committed, and pushed to production
+- **Summary:**
+  - Updated pricing page to follow same structure as Features, Solutions, and Resources pages
+  - Created `app/pricing/layout.tsx` providing Navigation + Footer wrapper (matches Solutions/Resources pattern)
+  - Fixed Tailwind v4 canonical class warnings across all pricing components
+  - Added new `TrafficProofStrip.tsx` component between PricingPlans and FeatureValueSection
+  - Extended `plan-limits.ts` with display-only keys for pricing cards
+  - Updated all pricing components with Downloads folder versions
+- **Files changed (13 files):**
+  - `infin8content/app/pricing/layout.tsx` — NEW: Layout wrapper with Navigation/Footer
+  - `infin8content/app/pricing/page.tsx` — UPDATED: Removed embedded Navigation/Footer, added TrafficProofStrip
+  - `infin8content/components/marketing/pricing/TrafficProofStrip.tsx` — NEW: Animated marquee strip showing traffic proof stats
+  - `infin8content/components/marketing/pricing/BespokeAIContentService.tsx` — REPLACED: Complete file with FEATURES array, Feature component, proper layout
+  - `infin8content/components/marketing/pricing/FeatureValueSection.tsx` — REPLACED: Full 8-category feature grid (was simple 7-item list)
+  - `infin8content/components/marketing/pricing/PricingFAQ.tsx` — REPLACED: 12 specific FAQs with "Still have questions?" CTA block
+  - `infin8content/components/marketing/pricing/PricingComparison.tsx` — REPLACED: 13-row comparison table with Check/Minus icons
+  - `infin8content/components/marketing/pricing/PricingComparisonRow.tsx` — REPLACED: Full 55+ row feature table with section headers
+  - `infin8content/components/marketing/pricing/PricingPlans.tsx` — REPLACED: Detailed cards with credits_per_month, autoblogs, projects, team_members, etc.
+  - `infin8content/components/marketing/pricing/PricingHero.tsx` — REPLACED: Added "Billing cycle" label, "Save 40%" badge, "🎉 You save up to $1,200/year" message
+  - `infin8content/components/marketing/pricing/StickyUpgradeBar.tsx` — REPLACED: Added social proof avatars JL/MR/AK, ✕ dismiss button
+  - `infin8content/components/marketing/pricing/MobileStickyUpgradeBar.tsx` — REPLACED: "$1 trial · Cancel anytime" subtitle, "Try Pro →" CTA
+  - `infin8content/lib/config/plan-limits.ts` — EXTENDED: Added 7 new display-only keys: `credits_per_month`, `autoblogs`, `projects`, `team_members`, `knowledge_bases`, `sub_accounts`, `llm_prompts`
+- **Tailwind v4 canonical class fixes:**
+  - `flex-shrink-0` → `shrink-0` in BespokeAIContentService, FeatureValueSection, PricingFAQ, PricingPlans
+  - `bg-gradient-to-r` → `bg-linear-to-r` in PricingComparisonRow, PricingPlans
+- **Git workflow followed:**
+  ```bash
+  git checkout test-main-all
+  git stash
+  git pull origin test-main-all
+  git checkout -b fix/pricing-page-tailwind-warnings
+  git stash pop
+  git add .
+  git commit -m "fix: resolve Tailwind v4 canonical class warnings in pricing components"
+  git push -u origin fix/pricing-page-tailwind-warnings
+  git checkout test-main-all
+  git merge fix/pricing-page-tailwind-warnings
+  git push origin test-main-all
+  ```
+- **Commit:** `c0224330` (fix: resolve Tailwind v4 canonical class warnings in pricing components)
+- **Next actions:** Verify pricing page renders correctly at `/pricing`, test all interactive components, confirm TypeScript compilation clean
+
+— End entry —
+
 2026-04-21 — Standalone Article Generation Flow Fix ✅
 
 - **Type:** Bug fix / New API routes

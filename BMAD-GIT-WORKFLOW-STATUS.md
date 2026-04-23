@@ -1,7 +1,7 @@
 # BMAD Git Workflow Status
 
 **Date:** 2026-04-23  
-**Status:** ✅ UPDATED — Direct production deployment workflow documented
+**Status:** ✅ UPDATED — Pricing page implementation completed & workflow executed
 
 ---
 
@@ -48,7 +48,37 @@ git config user.email "engagehubonline@gmail.com"
 - Status: ✅ PUSHED to remote (merged)
 - Commits: 1 commit (BMAD-FINAL-SCRATCHPAD.md)
 
-**fix/marketing-pages-navigation** (Current)
+**fix/unified-marketing-styling** (2026-04-23)
+- Status: ✅ COMPLETED & MERGED to test-main-all
+- Scope: Created unified marketing component library in globals.css, removed duplicate styles from MktLayout.tsx, updated Additional Marketing Pages to use single source of truth
+- Files: 3 files changed (1009 insertions(+), 18 deletions(-))
+  - `infin8content/app/globals.css` — ADDED: 1004 lines of unified marketing component library
+  - `infin8content/components/MktLayout.tsx` — UPDATED: Removed duplicate `.mkt-btn-primary`, `.mkt-btn-link`, `.mkt-footer-inner` styles
+  - `infin8content/components/marketing/MarketingShell.tsx` — UPDATED: Minor alignment with unified system
+- Commit: `d30378ae` (fix: unify marketing component styling across all pages)
+- Workflow: Followed direct production deployment workflow (topic branch → merge → push to test-main-all)
+
+**fix/pricing-page-tailwind-warnings** (2026-04-23)
+- Status: ✅ COMPLETED & MERGED to test-main-all
+- Scope: Updated pricing page to follow same structure as Features, Solutions, and Resources pages. Fixed Tailwind v4 canonical class warnings across all pricing components.
+- Files: 13 files changed (1086 insertions(+), 436 deletions(-))
+  - `app/pricing/layout.tsx` (NEW)
+  - `app/pricing/page.tsx` (UPDATED)
+  - `components/marketing/pricing/TrafficProofStrip.tsx` (NEW)
+  - `components/marketing/pricing/BespokeAIContentService.tsx` (REPLACED)
+  - `components/marketing/pricing/FeatureValueSection.tsx` (REPLACED)
+  - `components/marketing/pricing/PricingFAQ.tsx` (REPLACED)
+  - `components/marketing/pricing/PricingComparison.tsx` (REPLACED)
+  - `components/marketing/pricing/PricingComparisonRow.tsx` (REPLACED)
+  - `components/marketing/pricing/PricingPlans.tsx` (REPLACED)
+  - `components/marketing/pricing/PricingHero.tsx` (REPLACED)
+  - `components/marketing/pricing/StickyUpgradeBar.tsx` (REPLACED)
+  - `components/marketing/pricing/MobileStickyUpgradeBar.tsx` (REPLACED)
+  - `lib/config/plan-limits.ts` (EXTENDED)
+- Commit: `c0224330` (fix: resolve Tailwind v4 canonical class warnings in pricing components)
+- Workflow: Followed direct production deployment workflow (topic branch → merge → push to test-main-all)
+
+**fix/marketing-pages-navigation** (Previous)
 - Status: ✅ COMPLETED
 - Scope: Fixed navigation for all 8 marketing pages to use same header/footer as `/ai-content-writer`
 - Files: `MarketingShell.tsx`, `MktLayout.tsx`, `MarketingPageBody.tsx`, `(i8c-mkt)/layout.tsx`
@@ -103,20 +133,19 @@ git config user.email "engagehubonline@gmail.com"
 ## Commit History
 
 ```
-869f000 (HEAD -> feature/bmad-final-deliverables)
-        docs(bmad): Add final BMAD scratchpad
+c0224330 (HEAD -> test-main-all, origin/test-main-all, origin/fix/pricing-page-tailwind-warnings, origin/HEAD, fix/pricing-page-tailwind-warnings)
+        fix: resolve Tailwind v4 canonical class warnings in pricing components
 
-58cebdc (origin/test-main-all)
-        Merge pull request #38 from dvernon0786/feature/bmad-pm-deliverables
+592adc9c (origin/fix/design-system-ts17001-hardcoded-colors, fix/design-system-ts17001-hardcoded-colors)
+        fix: resolve TS17001 duplicate className and hard-coded hex colors in MktLayout/MktUI
 
-3e0fa0b (origin/feature/bmad-pm-deliverables)
-        feat(bmad): Complete Primary Content Workflow PM deliverables
+f81a6824 (origin/fix/design-system-compliance-final, fix/design-system-compliance-final)
+        fix: design system compliance - replace inline styles and hardcoded colors with design tokens in MktUI and MktLayout components
 
-5eb0f13 Merge pull request #37
-        Merge pull request #37 from dvernon0786/feature/openrouter-outline-implementation
+24bad20a (origin/fix/design-system-compliance, fix/design-system-compliance)
+        fix: design system compliance - replace inline styles and hardcoded colors with design tokens
 
-0f43396 (origin/feature/openrouter-outline-implementation)
-        docs: update documentation for completed OpenRouter outline generation
+a3b66c0f Fix design system compliance: Replace inline styles and hardcoded colors with CSS variables
 ```
 
 ---
