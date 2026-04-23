@@ -2,16 +2,8 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
-// ─── Shell CSS (nav/footer only — no global reset/body/container overrides) ──
+// ─── Shell CSS (layout shell only — component styles live in globals.css) ──
 const shellCss = `
-:root {
-  --mkt-bg: var(--mkt-bg); --mkt-surface: var(--mkt-surface); --mkt-surface2: var(--mkt-surface2);
-  --mkt-border: var(--mkt-border);
-  --mkt-accent: var(--mkt-accent); --mkt-accent-lite: var(--mkt-accent-lite); --mkt-accent-border: var(--mkt-accent-border);
-  --mkt-text: var(--mkt-text); --mkt-muted: var(--mkt-muted); --mkt-muted2: var(--mkt-muted2); --mkt-white: var(--mkt-white);
-  --mkt-font-display: 'Sora', sans-serif; --mkt-font-body: 'DM Sans', sans-serif;
-  --mkt-radius: 14px; --mkt-radius-sm: 8px;
-}
 /* PROMO BAR */
 .mkt-promo-bar { background: linear-gradient(90deg, var(--mkt-surface3), var(--mkt-surface) 50%, var(--mkt-surface3)); border-bottom: 1px solid var(--mkt-accent-border); text-align: center; padding: 10px 20px; font-size: 13px; font-family: var(--mkt-font-display); font-weight: 500; color: var(--mkt-text); position: relative; z-index: 50; }
 .mkt-time-unit { background: var(--mkt-accent-lite); border: 1px solid var(--mkt-accent-border); border-radius: 4px; padding: 2px 6px; font-weight: 700; color: var(--mkt-accent-hover); font-variant-numeric: tabular-nums; min-width: 28px; display: inline-block; text-align: center; }
@@ -37,17 +29,12 @@ const shellCss = `
 .mkt-dropdown-link small { font-size: 12px; color: var(--mkt-muted); }
 .mkt-dropdown hr { border: none; border-top: 1px solid var(--mkt-border); margin: 6px 0; }
 .mkt-header-cta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.mkt-btn-link { font-size: 14px; font-weight: 500; color: var(--mkt-muted); padding: 7px 12px; border-radius: var(--mkt-radius-sm); transition: all .2s; text-decoration: none; }
-.mkt-btn-link:hover { color: var(--mkt-white); background: rgba(255,255,255,.05); }
-.mkt-btn-primary { display: inline-flex; align-items: center; justify-content: center; font-family: var(--mkt-font-display); font-weight: 600; border-radius: var(--mkt-radius-sm); background: var(--mkt-accent); color: var(--mkt-white); padding: 9px 18px; font-size: 14px; box-shadow: 0 0 20px var(--mkt-accent-glow); text-decoration: none; border: none; cursor: pointer; }
-.mkt-btn-primary:hover { background: var(--mkt-accent-hover); box-shadow: 0 0 30px var(--mkt-accent-glow-heavy); transform: translateY(-1px); }
 .mkt-nav-toggle { display: none; background: transparent; border: 1px solid var(--mkt-border); border-radius: var(--mkt-radius-sm); color: var(--mkt-text); padding: 7px 10px; font-size: 18px; cursor: pointer; }
 @media(max-width:860px){ .mkt-main-nav{display:none;} .mkt-nav-toggle{display:flex;} }
 .mkt-main-nav.open { display:flex!important; flex-direction:column; position:fixed; top:62px; left:0; right:0; background:var(--mkt-bg-97); backdrop-filter:blur(12px); padding:20px; border-bottom:1px solid var(--mkt-border); gap:4px; z-index:39; }
 .mkt-main-nav.open .mkt-dropdown{display:none!important;}
 /* FOOTER */
 .mkt-site-footer { border-top: 1px solid var(--mkt-border); padding: 60px 0 40px; }
-.mkt-footer-inner { max-width: 1160px; margin: 0 auto; padding: 0 28px; }
 .mkt-footer-top { display: grid; grid-template-columns: 220px repeat(5,1fr); gap: 40px; margin-bottom: 48px; }
 .mkt-footer-brand .mkt-brand { display: block; margin-bottom: 12px; }
 .mkt-footer-brand p { font-size: 13.5px; color: var(--mkt-muted); line-height: 1.6; }
@@ -159,7 +146,7 @@ export default function MktLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="bg-mkt-bg text-mkt-text min-h-screen">
+    <div className="mkt-layout bg-mkt-bg text-mkt-text min-h-screen">
       <style dangerouslySetInnerHTML={{ __html: shellCss }} />
 
       {/* Promo Bar */}
@@ -227,7 +214,7 @@ export default function MktLayout({ children }: { children: React.ReactNode }) {
 
       {/* Footer */}
       <footer className="mkt-site-footer">
-        <div className="mkt-footer-inner">
+        <div className="mkt-container">
           <div className="mkt-footer-top">
             <div className="mkt-footer-brand">
               <a className="mkt-brand" href="/">

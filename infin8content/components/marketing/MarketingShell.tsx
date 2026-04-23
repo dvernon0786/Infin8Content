@@ -115,7 +115,7 @@ export default function MarketingShell({ children }: { children: React.ReactNode
   }, []);
 
   return (
-    <>
+    <div className="mkt-layout">
       <style dangerouslySetInnerHTML={{ __html: shellCss }} />
 
       {/* Promo Bar */}
@@ -238,6 +238,6 @@ export default function MarketingShell({ children }: { children: React.ReactNode
           </div>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
