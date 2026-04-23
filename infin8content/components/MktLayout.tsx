@@ -190,7 +190,7 @@ export default function MktLayout({ children }: { children: React.ReactNode }) {
                 <a className="mkt-dropdown-link" href="/solutions/local"><strong>Local Business</strong><small>Dominate local search</small></a>
               </div>
             </div>
-            <a className="mkt-nav-link" href="#">Pricing</a>
+            <a className="mkt-nav-link" href="/pricing">Pricing</a>
             <div className="mkt-nav-item">
               <span className="mkt-nav-link">Resources <span className="mkt-chevron">▾</span></span>
               <div className="mkt-dropdown">
@@ -238,7 +238,7 @@ export default function MktLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="mkt-footer-col">
               <h4>Resources</h4>
-              <a href="#">Pricing</a>
+              <a href="/pricing">Pricing</a>
               <a href="/resources/blog">Blog</a>
               <a href="#">Help Docs</a>
               <a href="/resources/case-studies">Case Studies</a>

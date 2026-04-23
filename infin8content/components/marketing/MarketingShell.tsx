@@ -159,7 +159,7 @@ export default function MarketingShell({ children }: { children: React.ReactNode
                 <a className="dropdown-link" href="#"><strong>Enterprise</strong><small>SAML, SSO &amp; dedicated support</small></a>
               </div>
             </div>
-            <a className="nav-link" href="#">Pricing</a>
+            <a className="nav-link" href="/pricing">Pricing</a>
             <div className="nav-item">
               <span className="nav-link">Resources <span className="chevron">▾</span></span>
               <div className="dropdown">
@@ -207,7 +207,7 @@ export default function MarketingShell({ children }: { children: React.ReactNode
             </div>
             <div className="footer-col">
               <h4>Resources</h4>
-              <a href="#">Pricing</a>
+              <a href="/pricing">Pricing</a>
               <a href="/resources/blog">Blog</a>
               <a href="#">Help Docs</a>
               <a href="/resources/case-studies">Case Studies</a>

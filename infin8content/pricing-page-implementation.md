@@ -1,14 +1,48 @@
 # Infin8Content Pricing + Quota Implementation Spec
 
-Goal:
-One source of truth for limits
+**Last Updated**: 2026-04-23  
+**Status**: ✅ Production  
+**Route**: `/pricing` → `/app/(i8c-mkt)/pricing/`
+
+---
+
+## 🎯 Goal
+
+One source of truth for limits  
 PLAN_LIMITS drives:
-• quota enforcement
-• pricing UI
-• usage meter
-• soft paywall
+• quota enforcement  
+• pricing UI  
+• usage meter  
+• soft paywall  
 
 No duplicated numbers anywhere.
+
+---
+
+## 📁 Route Structure
+
+**Updated 2026-04-23**: Pricing page moved to `(i8c-mkt)` route group for correct layout system alignment.
+
+```
+app/
+├─ (i8c-mkt)/                          # Uses MktLayout with --mkt-* CSS vars
+│  ├─ layout.tsx                       # MktLayout wrapper
+│  ├─ pricing/
+│  │  ├─ layout.tsx                    # Pass-through (inherits parent MktLayout)
+│  │  └─ page.tsx                      # Pricing page components
+│  ├─ solutions/                       # Agency, E-commerce, Local, SaaS
+│  └─ resources/                       # Blog, Case Studies, Learn
+├─ (marketing-pages)/                  # Uses MarketingShell with --* CSS vars
+│  ├─ layout.tsx                       # MarketingShell wrapper
+│  ├─ ai-content-writer/
+│  ├─ ai-seo-agent/
+│  ├─ ai-seo-editor/
+│  ├─ autopublish/
+│  └─ llm-tracker/
+```
+
+**Why the route change?**  
+Pricing components use `text-mkt-*` classes which are defined in `MktLayout`, not `MarketingShell`. Moving to `(i8c-mkt)` ensures correct CSS variable alignment.
 
 ---
 
