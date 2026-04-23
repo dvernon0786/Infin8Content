@@ -15,17 +15,16 @@ const FEATURES: MegaMenuItem[] = [
 ];
 
 const SOLUTIONS: MegaMenuItem[] = [
-  { label: "Content Marketing", description: "Scale content production without scaling headcount", href: "/solutions/content-marketing" },
-  { label: "SEO Teams", description: "Keyword-to-cluster-to-article pipeline, fully automated", href: "/solutions/seo-teams" },
-  { label: "Agencies", description: "Deliver client content at agency speed", href: "/solutions/agencies" },
-  { label: "Enterprise", description: "Brand-safe, audit-ready content for large teams", href: "/solutions/enterprise" },
+  { label: "SaaS", description: "Scale organic traffic for your product", href: "/solutions/saas" },
+  { label: "Agencies", description: "Manage multiple clients at scale", href: "/solutions/agency" },
+  { label: "E-Commerce", description: "Upgrade your store's content", href: "/solutions/ecommerce" },
+  { label: "Local Business", description: "Dominate local search", href: "/solutions/local" },
 ];
 
 const RESOURCES: MegaMenuItem[] = [
-  { label: "Documentation", description: "API references, guides, and integration docs", href: "/resources/documentation" },
   { label: "Blog", description: "Guides on AI content, SEO, and scaling", href: "/resources/blog" },
-  { label: "Support", description: "Get help from the Infin8Content team", href: "/resources/support" },
-  { label: "Community", description: "Connect with other content teams", href: "/resources/community" },
+  { label: "Case Studies", description: "Real results from real teams", href: "/resources/case-studies" },
+  { label: "Learning & Training", description: "Master Infin8Content with guides", href: "/resources/learn" },
 ];
 
 type DropdownKey = "features" | "solutions" | "resources" | null;

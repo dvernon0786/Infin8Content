@@ -33,23 +33,28 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2">
               <li>
-                <a href="/features/ai-article-generator" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
-                  AI Article Generator
+                <a href="/ai-content-writer" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  AI Content Writer
                 </a>
               </li>
               <li>
-                <a href="/features/brand-voice-engine" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
-                  Brand Voice Engine
+                <a href="/ai-seo-editor" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  AI SEO Editor
                 </a>
               </li>
               <li>
-                <a href="/features/research-assistant" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
-                  Research Assistant
+                <a href="/ai-seo-agent" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  AI SEO Agent
                 </a>
               </li>
               <li>
-                <a href="/features/seo-optimization" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
-                  SEO Optimization
+                <a href="/autopublish" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  AutoPublish
+                </a>
+              </li>
+              <li>
+                <a href="/llm-tracker" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  LLM Tracker
                 </a>
               </li>
             </ul>
@@ -62,23 +67,23 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2">
               <li>
-                <a href="/solutions/content-marketing" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
-                  Marketing Teams
+                <a href="/solutions/saas" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  SaaS
                 </a>
               </li>
               <li>
-                <a href="/solutions/content-marketing" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
-                  Content Writers
-                </a>
-              </li>
-              <li>
-                <a href="/solutions/seo-teams" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
-                  SEO Teams
-                </a>
-              </li>
-              <li>
-                <a href="/solutions/agencies" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                <a href="/solutions/agency" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   Agencies
+                </a>
+              </li>
+              <li>
+                <a href="/solutions/ecommerce" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  E-Commerce
+                </a>
+              </li>
+              <li>
+                <a href="/solutions/local" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  Local Business
                 </a>
               </li>
             </ul>
@@ -91,23 +96,18 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2">
               <li>
-                <a href="/resources/documentation" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
-                  Documentation
-                </a>
-              </li>
-              <li>
                 <a href="/resources/blog" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
                   Blog
                 </a>
               </li>
               <li>
-                <a href="/resources/tutorials" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
-                  Tutorials
+                <a href="/resources/case-studies" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  Case Studies
                 </a>
               </li>
               <li>
-                <a href="/resources/support" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
-                  Support
+                <a href="/resources/learn" className="text-neutral-300 hover:text-blue-400 transition-colors duration-300 text-small">
+                  Learning & Training
                 </a>
               </li>
             </ul>
