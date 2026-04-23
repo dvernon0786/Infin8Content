@@ -1,3 +1,14 @@
+## 2026-04-24
+
+### Added
+- `/app/(marketing-pages)/pricing/page.tsx`: Static HTML+CSS mirror of pricing page for exact visual match with `/ai-content-writer` (renders via `MarketingPageBody`).
+
+### Changed
+- `components/marketing/MarketingPageBody.tsx`: Add `window._setPricing(mode)` and bind monthly/annual buttons when present; default to annual.
+
+### Meta
+- Commit: d9948f86 (branch: test-main-all)
+
 # Changelog
 
 All notable changes to the Infin8Content platform will be documented in this file.

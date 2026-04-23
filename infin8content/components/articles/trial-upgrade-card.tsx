@@ -49,7 +49,7 @@ export function TrialUpgradeCard({ lockedCount, lockedTitles }: TrialUpgradeCard
                         )}
                     </div>
 
-                    <div className="flex flex-col gap-3 min-w-[200px] w-full md:w-auto">
+                    <div className="flex flex-col gap-3 min-w-50 w-full md:w-auto">
                         <Button size="lg" className="bg-[--brand-electric-blue] hover:bg-[--brand-electric-blue]/90 text-white font-bold h-12" asChild>
                             <Link href="/dashboard/settings/billing">
                                 Unlock All Articles

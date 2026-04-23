@@ -1,3 +1,14 @@
+## 2026-04-24
+
+### Added
+- Marketing: Implemented `/pricing` as a static marketing mirror using `MarketingShell` + `MarketingPageBody` for parity with `/ai-content-writer`.
+   - Added `infin8content/app/(marketing-pages)/pricing/page.tsx` (HTML+CSS injection)
+   - Enhanced `infin8content/components/marketing/MarketingPageBody.tsx` with a billing toggle helper (`window._setPricing`) and button wiring
+
+### Notes
+- Commit: d9948f86 (branch: test-main-all)
+- Route now available at `/pricing` under `(marketing-pages)`; future migration to `(i8c-mkt)` remains documented in `infin8content/pricing-page-implementation.md`.
+
 # Infin8Content Changelog
 
 All notable changes to this project will be documented in this file.

@@ -657,7 +657,7 @@ const html = `
       <div class="billing-toggle">
         <button class="billing-btn" id="btn-monthly" onclick="window._setPricing('monthly')">Monthly</button>
         <button class="billing-btn active" id="btn-annual" onclick="window._setPricing('annual')">
-          Annually<span class="save-badge">Save 40%</span>
+          Annually<span class="save-badge">Best annual value</span>
         </button>
       </div>
       <p class="billing-savings" id="billing-savings">🎉 You save up to $1,200/year on Agency</p>
@@ -678,12 +678,12 @@ const html = `
         </div>
         <p class="plan-tagline">Launch fast, learn faster.</p>
         <div class="plan-price-row">
-          <span class="plan-price">$<span class="price-monthly">29</span><span class="price-annual">17</span></span>
+          <span class="plan-price">$<span class="price-monthly">49</span><span class="price-annual">41.5</span></span>
           <span class="plan-price-unit">/mo</span>
         </div>
         <p class="plan-billed annual-only">billed annually</p>
-        <p class="plan-cost-per">Only <strong>$2.90</strong> per article</p>
-        <p class="plan-savings savings-text">You save $144/year</p>
+        <p class="plan-cost-per">Only <strong><span class="price-monthly">$4.90</span><span class="price-annual">$4.15</span></strong> per article</p>
+        <p class="plan-savings savings-text">You save $90/year</p>
         <a href="/register" class="plan-cta">Get Started</a>
         <p class="plan-trial">$1 trial · Cancel anytime</p>
       </div>
@@ -726,12 +726,12 @@ const html = `
         </div>
         <p class="plan-tagline">Grow with confidence.</p>
         <div class="plan-price-row">
-          <span class="plan-price">$<span class="price-monthly">79</span><span class="price-annual">47</span></span>
+          <span class="plan-price">$<span class="price-monthly">220</span><span class="price-annual">175</span></span>
           <span class="plan-price-unit">/mo</span>
         </div>
         <p class="plan-billed annual-only">billed annually</p>
-        <p class="plan-cost-per">Only <strong>$1.58</strong> per article</p>
-        <p class="plan-savings savings-text">You save $384/year</p>
+        <p class="plan-cost-per">Only <strong><span class="price-monthly">$4.40</span><span class="price-annual">$3.50</span></strong> per article</p>
+        <p class="plan-savings savings-text">You save $540/year</p>
         <p class="plan-savings" style="margin-top:2px;">Best value for growing teams</p>
         <a href="/register" class="plan-cta">Get Started</a>
         <p class="plan-trial">$1 trial · Cancel anytime</p>
@@ -767,12 +767,12 @@ const html = `
         <p class="plan-sub">Best for agencies &amp; enterprise sites</p>
         <p class="plan-tagline">Built for scale &amp; serious ROI.</p>
         <div class="plan-price-row">
-          <span class="plan-price">$<span class="price-monthly">199</span><span class="price-annual">119</span></span>
+          <span class="plan-price">$<span class="price-monthly">399</span><span class="price-annual">299</span></span>
           <span class="plan-price-unit">/mo</span>
         </div>
         <p class="plan-billed annual-only">billed annually</p>
-        <p class="plan-cost-per">Only <strong>$1.33</strong> per article</p>
-        <p class="plan-savings savings-text">You save $960/year</p>
+        <p class="plan-cost-per">Only <strong><span class="price-monthly">$2.66</span><span class="price-annual">$1.99</span></strong> per article</p>
+        <p class="plan-savings savings-text">You save $1,200/year</p>
         <a href="/call" class="plan-cta">Talk to Sales</a>
         <p class="plan-trial">Custom pricing · No lock-in</p>
       </div>
@@ -989,7 +989,7 @@ const html = `
         <tr><td>CMS connections</td><td>1</td><td class="pro-col">3</td><td>Unlimited</td></tr>
         <tr><td>WordPress, Shopify, Webflow…</td><td>✓</td><td class="pro-col chk-y">✓</td><td>✓</td></tr>
         <tr><td>Webhooks</td><td class="chk-n">✕</td><td class="pro-col chk-y">✓</td><td>✓</td></tr>
-        <tr><td>Public API access</td><td class="chk-n">✕</td><td class="pro-col chk-n">✕</td><td>✓</td></tr>
+        <tr><td>Public API access</td><td>✓</td><td class="pro-col chk-y">✓</td><td>✓</td></tr>
         <tr><td>API calls / month</td><td>100</td><td class="pro-col">1,000</td><td>Unlimited</td></tr>
 
         <tr class="cat-row"><td colspan="4" class="cat-label">Team &amp; Agency</td></tr>
