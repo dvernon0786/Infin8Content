@@ -19,7 +19,7 @@ export default function PricingPage() {
   const [billing, setBilling] = useState<"monthly" | "annual">("annual");
 
   return (
-    <div className="bg-neutral-100 min-h-screen">
+    <div className="bg-mkt-bg min-h-screen">
       {/* ── 1. Hero with billing toggle ── */}
       <PricingHero billing={billing} setBilling={setBilling} />
 
