@@ -50,6 +50,8 @@ git config user.email "engagehubonline@gmail.com"
 
 **Update (2026-04-22):** Homepage replacement — `app/page.tsx` deleted, `app/route.ts` created to serve `public/homepage.html` at `/`. Static HTML marketing homepage (dark navy theme, Sora/DM Sans fonts, promo bar, hero with dashboard mockup, 5 feature rows, video section, testimonials, case studies, FAQ accordion, final CTA, full footer) now renders at `http://localhost:3000/`. Branch: `fix/homepage-replacement`.
 
+**Update (2026-04-24):** Help Center page added — Implemented `/resources/help` under `(marketing-pages)` using `MarketingShell` + client page (HTML/CSS injection + lightweight JS for category/article search). Updated `MarketingShell` header/footer "Help Docs" links to point to `/resources/help`. Scope limited to marketing site. Branch: `test-main-all` (direct), commit to be pushed with git workflow below.
+
 **Update (2026-04-16):** Marketing site refactor: header/footer added and design-system fixes applied. Commits: `fc70de23`, `6c105c08`, `ab868627`. Changes pushed to `test-main-all`; remote `main` created from it and points to the same commit (no PR diff).
 
 ---

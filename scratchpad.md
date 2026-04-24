@@ -1,5 +1,14 @@
 # Scratchpad
 
+2026-04-24 — Help Center Page + Nav Wiring ✅
+
+- Implemented `/resources/help` under `(marketing-pages)`; page renders Help Center (hero, sidebar, categories, articles, search) using client-side HTML/CSS injection and local JS. Header/footer provided by `MarketingShell` via `(marketing-pages)/layout.tsx` to avoid duplication.
+- Updated `components/marketing/MarketingShell.tsx` to wire both header and footer "Help Docs" links to `/resources/help`.
+- Files:
+  - `infin8content/app/(marketing-pages)/resources/help/page.tsx` — NEW
+  - `infin8content/components/marketing/MarketingShell.tsx` — UPDATED (links)
+- QA: Visit `/resources/help`; confirm Resources → Help Docs opens this page; shell renders once; search and category navigation operate client-side.
+
 2026-04-23 — Unified Marketing Component Styling System ✅
 
 - **Type:** Design system unification / Single source of truth

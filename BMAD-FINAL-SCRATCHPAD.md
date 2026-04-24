@@ -11,6 +11,15 @@
 - LLM Tracker: Final prose reworded to remove "free" framing: "Start tracking your brand across LLMs today." Related buttons link to /register.
 - Left placeholders (non-CTA informational links like Help Docs/Privacy) intact by design.
 
+## 2026-04-24 – Help Center Page + Nav Wiring
+
+- Route: `/resources/help` under `(marketing-pages)` group
+- Page: `infin8content/app/(marketing-pages)/resources/help/page.tsx` (client, HTML+CSS injection, local JS for search/nav)
+- Shell: No duplicate header/footer — page relies on `MarketingShell` via `(marketing-pages)/layout.tsx`
+- Navigation: Updated `components/marketing/MarketingShell.tsx` to wire "Help Docs" links (header + footer) to `/resources/help`
+- Scope: Pure marketing site change; no API or dashboard impact
+- QA: Open `/resources/help`; verify Resources → Help Docs points here; confirm shell renders once
+
 # BMAD Brownfield Primary Content Workflow — Final Scratchpad
 
 **Date:** 2026-04-20  

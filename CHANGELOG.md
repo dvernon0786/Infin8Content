@@ -4,6 +4,9 @@
 - Marketing: Implemented `/pricing` as a static marketing mirror using `MarketingShell` + `MarketingPageBody` for parity with `/ai-content-writer`.
    - Added `infin8content/app/(marketing-pages)/pricing/page.tsx` (HTML+CSS injection)
    - Enhanced `infin8content/components/marketing/MarketingPageBody.tsx` with a billing toggle helper (`window._setPricing`) and button wiring
+ - Marketing: Implemented `/resources/help` (Help Center) under `(marketing-pages)` using `MarketingShell` + client page with HTML/CSS injection and local JS for search/navigation.
+    - Added `infin8content/app/(marketing-pages)/resources/help/page.tsx`
+    - Updated `infin8content/components/marketing/MarketingShell.tsx` to link header/footer "Help Docs" to `/resources/help`
 
 ### Changed
 - Marketing: CTA and copy normalization
@@ -12,6 +15,7 @@
    - Wired placeholder CTA href="#" to /register on applicable marketing pages and shells.
    - MarketingShell & MktLayout: removed "Login" from header CTAs; kept a single primary "Start today" button to /register; promo bar "Get Deal" now routes to /register.
    - LLM Tracker: final prose updated to remove "free" framing — now reads: "Start tracking your brand across LLMs today." Related CTAs to /register.
+   - Navigation: Resources → Help Docs now routes to `/resources/help` (was placeholder `#`).
 - Marketing: Rebuilt `/resources/blog` under `(marketing-pages)` to mirror `/ai-content-writer` pattern and unify interactivity via `MarketingPageBody`.
     - Marketing: Prevented duplicate header/footer on Solutions pages by guarding `MarketingShell` to render shell UI only once when nested under `(marketing-pages)/layout.tsx`.
     - Marketing: Navbar Solutions dropdown replaced “Enterprise” with “Local” linking to `/solutions/local`.
