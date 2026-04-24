@@ -60,6 +60,21 @@
 
 ---
 
+## **🔥 SOLUTIONS PAGES — DUPLICATE HEADER/FOOTER + NAV ITEM**
+
+### **✅ Achievement: One-time MarketingShell mount + Solutions “Local” link**
+- **Status:** Complete. Solutions pages no longer render header/footer twice; navbar shows “Local” instead of “Enterprise”.
+- **Branch:** `test-main-all`
+- **Deliverables:**
+  1. `MarketingShell.tsx`: Added a one-time mount guard using `window.__MARKETING_SHELL_MOUNTED` to prevent duplicate promo bar/header/footer when pages are already wrapped by `(marketing-pages)/layout.tsx`.
+  2. Navbar Solutions dropdown: Replaced “Enterprise” with “Local” and wired to `/solutions/local`.
+- **Files changed:**
+  - `infin8content/components/marketing/MarketingShell.tsx`
+- **Pages affected:**
+  - `/solutions/agency`, `/solutions/ecommerce`, `/solutions/local`, `/solutions/saas`
+- **Result:** Single header/footer across all marketing routes; correct Solutions menu entry for Local.
+
+
 ## **🔥 GIT WORKFLOW: DIRECT PRODUCTION DEPLOYMENT**
 
 ### **Key Rule:** Any push to `test-main-all` = Production deployment on Vercel. Any other branch = Preview deployment. No PRs needed for production — merge locally and push directly.

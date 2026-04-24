@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const shellCss = `
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -77,7 +77,20 @@ ul { list-style: none; }
 `;
 
 export default function MarketingShell({ children }: { children: React.ReactNode }) {
+  const [renderShell, setRenderShell] = useState(false);
+
   useEffect(() => {
+    // Prevent duplicate shell (header/footer) when nested inside a layout that already includes it
+    if (typeof window !== 'undefined') {
+      const w = window as unknown as { __MARKETING_SHELL_MOUNTED?: boolean };
+      if (w.__MARKETING_SHELL_MOUNTED) {
+        setRenderShell(false);
+      } else {
+        w.__MARKETING_SHELL_MOUNTED = true;
+        setRenderShell(true);
+      }
+    }
+
     // Year
     const year = String(new Date().getFullYear());
     document.querySelectorAll<HTMLElement>('.js-year').forEach(el => (el.textContent = year));
@@ -116,127 +129,129 @@ export default function MarketingShell({ children }: { children: React.ReactNode
 
   return (
     <div className="mkt-layout">
-      <style dangerouslySetInnerHTML={{ __html: shellCss }} />
+      {renderShell && <style dangerouslySetInnerHTML={{ __html: shellCss }} />}
 
-      {/* Promo Bar */}
-      <div className="promo-bar">
-        ✨&nbsp; New Year Offer:{' '}
-        <strong style={{ color: '#a5b4fc', margin: '0 6px' }}>40% Off</strong> on Yearly Plans
-        &nbsp;
-        <span className="time-unit js-ph">08</span>hrs{' '}
-        <span className="time-unit js-pm">34</span>min{' '}
-        <span className="time-unit js-ps">12</span>sec
-        <a className="deal-link" href="/register">Get Deal</a>
-      </div>
-
-      {/* Header */}
-      <header className="site-header">
-        <div className="container header-inner">
-          <a className="brand" href="/">
-            <img src="/infin8content_logo.png" alt="Infin8Content" />
-          </a>
-          <nav className="main-nav" id="main-nav">
-            <div className="nav-item">
-              <span className="nav-link">Features <span className="chevron">▾</span></span>
-              <div className="dropdown">
-                <div className="dropdown-label">AI Writing</div>
-                <a className="dropdown-link" href="/ai-content-writer">AI Content Writer</a>
-                <a className="dropdown-link" href="/ai-seo-editor">AI SEO Editor</a>
-                <a className="dropdown-link" href="#">News Writer</a>
-                <hr />
-                <div className="dropdown-label">SEO &amp; Automation</div>
-                <a className="dropdown-link" href="/ai-seo-agent">AI SEO Agent</a>
-                <a className="dropdown-link" href="/autopublish">AutoPublish</a>
-                <a className="dropdown-link" href="/llm-tracker">LLM Tracker</a>
-              </div>
-            </div>
-            <div className="nav-item">
-              <span className="nav-link">Solutions <span className="chevron">▾</span></span>
-              <div className="dropdown">
-                <a className="dropdown-link" href="/solutions/saas"><strong>SaaS</strong><small>Scale organic traffic for your product</small></a>
-                <a className="dropdown-link" href="/solutions/agency"><strong>Agencies</strong><small>Manage multiple clients at scale</small></a>
-                <a className="dropdown-link" href="/solutions/ecommerce"><strong>E-Commerce</strong><small>Upgrade your store&apos;s content</small></a>
-                <a className="dropdown-link" href="#"><strong>Enterprise</strong><small>SAML, SSO &amp; dedicated support</small></a>
-              </div>
-            </div>
-            <a className="nav-link" href="/pricing">Pricing</a>
-            <div className="nav-item">
-              <span className="nav-link">Resources <span className="chevron">▾</span></span>
-              <div className="dropdown">
-                <a className="dropdown-link" href="/resources/case-studies">Case Studies</a>
-                <a className="dropdown-link" href="/resources/learn">Learning &amp; Training</a>
-                <a className="dropdown-link" href="#">Help Docs</a>
-                <a className="dropdown-link" href="/resources/blog">Blog</a>
-              </div>
-            </div>
-          </nav>
-          <div className="header-cta">
-            <a className="btn btn-primary" href="/register">Start today</a>
-          </div>
-          <button className="nav-toggle" id="nav-toggle">☰</button>
+      {renderShell && (
+        <div className="promo-bar">
+          ✨&nbsp; New Year Offer:{' '}
+          <strong style={{ color: '#a5b4fc', margin: '0 6px' }}>40% Off</strong> on Yearly Plans
+          &nbsp;
+          <span className="time-unit js-ph">08</span>hrs{' '}
+          <span className="time-unit js-pm">34</span>min{' '}
+          <span className="time-unit js-ps">12</span>sec
+          <a className="deal-link" href="/register">Get Deal</a>
         </div>
-      </header>
+      )}
 
-      {/* Page content */}
+      {renderShell && (
+        <header className="site-header">
+          <div className="container header-inner">
+            <a className="brand" href="/">
+              <img src="/infin8content_logo.png" alt="Infin8Content" />
+            </a>
+            <nav className="main-nav" id="main-nav">
+              <div className="nav-item">
+                <span className="nav-link">Features <span className="chevron">▾</span></span>
+                <div className="dropdown">
+                  <div className="dropdown-label">AI Writing</div>
+                  <a className="dropdown-link" href="/ai-content-writer">AI Content Writer</a>
+                  <a className="dropdown-link" href="/ai-seo-editor">AI SEO Editor</a>
+                  <a className="dropdown-link" href="#">News Writer</a>
+                  <hr />
+                  <div className="dropdown-label">SEO &amp; Automation</div>
+                  <a className="dropdown-link" href="/ai-seo-agent">AI SEO Agent</a>
+                  <a className="dropdown-link" href="/autopublish">AutoPublish</a>
+                  <a className="dropdown-link" href="/llm-tracker">LLM Tracker</a>
+                </div>
+              </div>
+              <div className="nav-item">
+                <span className="nav-link">Solutions <span className="chevron">▾</span></span>
+                <div className="dropdown">
+                  <a className="dropdown-link" href="/solutions/saas"><strong>SaaS</strong><small>Scale organic traffic for your product</small></a>
+                  <a className="dropdown-link" href="/solutions/agency"><strong>Agencies</strong><small>Manage multiple clients at scale</small></a>
+                  <a className="dropdown-link" href="/solutions/ecommerce"><strong>E-Commerce</strong><small>Upgrade your store&apos;s content</small></a>
+                  <a className="dropdown-link" href="/solutions/local"><strong>Local</strong><small>For local businesses</small></a>
+                </div>
+              </div>
+              <a className="nav-link" href="/pricing">Pricing</a>
+              <div className="nav-item">
+                <span className="nav-link">Resources <span className="chevron">▾</span></span>
+                <div className="dropdown">
+                  <a className="dropdown-link" href="/resources/case-studies">Case Studies</a>
+                  <a className="dropdown-link" href="/resources/learn">Learning &amp; Training</a>
+                  <a className="dropdown-link" href="#">Help Docs</a>
+                  <a className="dropdown-link" href="/resources/blog">Blog</a>
+                </div>
+              </div>
+            </nav>
+            <div className="header-cta">
+              <a className="btn btn-primary" href="/register">Start today</a>
+            </div>
+            <button className="nav-toggle" id="nav-toggle">☰</button>
+          </div>
+        </header>
+      )}
+
       {children}
 
-      {/* Footer */}
-      <footer className="site-footer">
-        <div className="container">
-          <div className="footer-top">
-            <div className="footer-brand">
-              <a className="brand" href="/">
-                <img src="/infin8content_logo.png" alt="Infin8Content" />
-              </a>
-              <p>AI content workflows for modern teams and agencies.</p>
+      {renderShell && (
+        <footer className="site-footer">
+          <div className="container">
+            <div className="footer-top">
+              <div className="footer-brand">
+                <a className="brand" href="/">
+                  <img src="/infin8content_logo.png" alt="Infin8Content" />
+                </a>
+                <p>AI content workflows for modern teams and agencies.</p>
+              </div>
+              <div className="footer-col">
+                <h4>AI Writing</h4>
+                <a href="/ai-content-writer">AI Content Writer</a>
+                <a href="/ai-seo-editor">AI SEO Editor</a>
+                <a href="#">News Writer</a>
+                <a href="#">Video to Blog</a>
+              </div>
+              <div className="footer-col">
+                <h4>Automation</h4>
+                <a href="/ai-seo-agent">AI SEO Agent</a>
+                <a href="/autopublish">AutoPublish</a>
+                <a href="#">SEO Reports</a>
+                <a href="/llm-tracker">LLM Tracker</a>
+              </div>
+              <div className="footer-col">
+                <h4>Resources</h4>
+                <a href="/pricing">Pricing</a>
+                <a href="/resources/blog">Blog</a>
+                <a href="#">Help Docs</a>
+                <a href="/resources/case-studies">Case Studies</a>
+              </div>
+              <div className="footer-col">
+                <h4>Integrations</h4>
+                <a href="#">WordPress</a>
+                <a href="#">Shopify</a>
+                <a href="#">Ghost</a>
+                <a href="#">Webflow</a>
+                <a href="#">Zapier</a>
+              </div>
+              <div className="footer-col">
+                <h4>Solutions</h4>
+                <a href="/solutions/saas">SaaS</a>
+                <a href="/solutions/agency">Agencies</a>
+                <a href="/solutions/ecommerce">E-Commerce</a>
+                <a href="#">Enterprise</a>
+              </div>
             </div>
-            <div className="footer-col">
-              <h4>AI Writing</h4>
-              <a href="/ai-content-writer">AI Content Writer</a>
-              <a href="/ai-seo-editor">AI SEO Editor</a>
-              <a href="#">News Writer</a>
-              <a href="#">Video to Blog</a>
-            </div>
-            <div className="footer-col">
-              <h4>Automation</h4>
-              <a href="/ai-seo-agent">AI SEO Agent</a>
-              <a href="/autopublish">AutoPublish</a>
-              <a href="#">SEO Reports</a>
-              <a href="/llm-tracker">LLM Tracker</a>
-            </div>
-            <div className="footer-col">
-              <h4>Resources</h4>
-              <a href="/pricing">Pricing</a>
-              <a href="/resources/blog">Blog</a>
-              <a href="#">Help Docs</a>
-              <a href="/resources/case-studies">Case Studies</a>
-            </div>
-            <div className="footer-col">
-              <h4>Integrations</h4>
-              <a href="#">WordPress</a>
-              <a href="#">Shopify</a>
-              <a href="#">Ghost</a>
-              <a href="#">Webflow</a>
-              <a href="#">Zapier</a>
-            </div>
-            <div className="footer-col">
-              <h4>Solutions</h4>
-              <a href="/solutions/saas">SaaS</a>
-              <a href="/solutions/agency">Agencies</a>
-              <a href="/solutions/ecommerce">E-Commerce</a>
-              <a href="#">Enterprise</a>
+            <div className="footer-bottom">
+              <small>© <span className="js-year"></span> Infin8Content. All rights reserved.</small>
+              <div className="footer-legal">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">contact@infin8content.com</a>
+              </div>
             </div>
           </div>
-          <div className="footer-bottom">
-            <small>© <span className="js-year"></span> Infin8Content. All rights reserved.</small>
-            <div className="footer-legal">
-              <a href="#">Privacy Policy</a>
-              <a href="#">Terms of Service</a>
-              <a href="#">contact@infin8content.com</a>
-            </div>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 }

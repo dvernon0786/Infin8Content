@@ -13,6 +13,8 @@
    - MarketingShell & MktLayout: removed "Login" from header CTAs; kept a single primary "Start today" button to /register; promo bar "Get Deal" now routes to /register.
    - LLM Tracker: final prose updated to remove "free" framing — now reads: "Start tracking your brand across LLMs today." Related CTAs to /register.
 - Marketing: Rebuilt `/resources/blog` under `(marketing-pages)` to mirror `/ai-content-writer` pattern and unify interactivity via `MarketingPageBody`.
+    - Marketing: Prevented duplicate header/footer on Solutions pages by guarding `MarketingShell` to render shell UI only once when nested under `(marketing-pages)/layout.tsx`.
+    - Marketing: Navbar Solutions dropdown replaced “Enterprise” with “Local” linking to `/solutions/local`.
    - Added `infin8content/app/(marketing-pages)/resources/blog/page.tsx` (HTML+CSS injection; newsletter form is a no-op placeholder)
    - Extended `infin8content/components/marketing/MarketingPageBody.tsx` to handle blog tag filter (`#post-grid .post-card`) and a placeholder "Load more" button
    - Removed legacy route `infin8content/app/(i8c-mkt)/resources/blog/page.tsx` to avoid duplicate routing

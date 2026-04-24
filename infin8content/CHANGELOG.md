@@ -7,6 +7,8 @@
 ### Changed
 - `components/marketing/MarketingPageBody.tsx`: Add `window._setPricing(mode)` and bind monthly/annual buttons when present; default to annual.
 - `components/marketing/MarketingPageBody.tsx`: Add tag filter event handler listening on `#tag-filter` to toggle `[data-hidden]` on `.cs-card` items.
+ - `components/marketing/MarketingShell.tsx`: Guard shell UI (promo bar/header/footer) to render only once per page to prevent duplicates on Solutions routes wrapped by `(marketing-pages)/layout.tsx`.
+ - `components/marketing/MarketingShell.tsx`: Navbar Solutions dropdown now shows “Local” and links to `/solutions/local` (replaces “Enterprise”).
 
 ### Removed
 - `/app/(i8c-mkt)/resources/case-studies/page.tsx`: Deleted legacy route to avoid duplication with `(marketing-pages)` mirror.
