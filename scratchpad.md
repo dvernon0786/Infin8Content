@@ -5081,3 +5081,91 @@ step_9_articles → ARTICLES_COMPLETED → completed
 
 ---
 
+
+## AUTH PAGES RESTRUCTURING - MARKETING SHELL INTEGRATION ✅
+
+**Date:** 2026-04-26  
+**Status:** ✅ COMPLETED - Unified Auth Page Architecture  
+**Branch:** test-main-all
+
+### 🎯 MISSION ACCOMPLISHED
+
+**Unified authentication pages with consistent MarketingShell wrapper and scoped CSS injection.**
+
+### 🔧 CHANGES APPLIED
+
+#### 1. IMPORT PATH FIX - Forgot Password Page
+- **File:** `app/(auth)/forgot-password/page.tsx`
+- **Issue:** Incorrect import path `@/components/MarketingShell`
+- **Fix:** Updated to `@/components/marketing/MarketingShell`
+- **Commit:** bf4128fb
+
+#### 2. LOGIN PAGE RESTRUCTURED
+- **File:** `app/(auth)/login/page.tsx`
+- **Changes:**
+  - Added `MarketingShell` wrapper around entire page
+  - Moved `Suspense` inside `MarketingShell` (wraps `LoginForm` only)
+  - Scoped CSS with token-based design (`--surface`, `--accent`, `--muted`, `--font-display`)
+  - Form logic unchanged (fetch, validation, invitation token, redirects)
+- **Commit:** 68287047
+
+### 📋 AUTH PAGE PATTERN
+
+All auth pages follow this structure:
+```tsx
+'use client';
+
+import { Suspense } from 'react';
+import MarketingShell from '@/components/marketing/MarketingShell';
+
+const css = `/* token-based CSS */`;
+
+function AuthForm() {
+  const searchParams = useSearchParams();
+  // form logic here
+  return <div className="auth-wrap">...</div>;
+}
+
+export default function AuthPage() {
+  return (
+    <MarketingShell>
+      <style dangerouslySetInnerHTML={{ __html: css }} />
+      <Suspense>
+        <AuthForm />
+      </Suspense>
+    </MarketingShell>
+  );
+}
+```
+
+### ✅ PAGES UPDATED
+
+- ✅ `app/(auth)/forgot-password/page.tsx` - Import fixed
+- ✅ `app/(auth)/login/page.tsx` - Restructured with spec compliance
+- ✅ `app/(auth)/register/page.tsx` - Already compliant (no changes needed)
+
+### 🎯 TOKEN CONSISTENCY
+
+All auth pages use identical CSS token variables:
+- `--bg` - Background
+- `--surface` - Card background
+- `--surface2` - Input background
+- `--accent` - Primary accent (blue)
+- `--muted` - Secondary text
+- `--text` - Primary text
+- `--white` - White text
+- `--font-display` - Display font family
+- `--font-body` - Body font family
+
+### 🚀 BUILD STATUS
+
+- ✅ Fixed Vercel build error (missing MarketingShell import)
+- ✅ All auth pages now compile successfully
+- ✅ No component duplication (no AuthForm.tsx or similar)
+- ✅ Self-contained pages with scoped styles
+
+### 🏁 READY FOR DEPLOYMENT
+
+All auth pages are now unified under MarketingShell with consistent design system and no build errors.
+
+---
