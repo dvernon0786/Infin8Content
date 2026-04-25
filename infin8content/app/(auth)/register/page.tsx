@@ -1,203 +1,286 @@
-'use client'
+'use client';
 
-import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { Eye, EyeOff } from 'lucide-react'
-import styles from './register.module.css'
+/**
+ * app/(auth)/register/page.tsx
+ *
+ * Layout system : MarketingShell (wrapper) + scoped <style> injection
+ * Token source  : --bg / --accent / --surface / etc. (same as ai-content-writer)
+ * Auth logic    : unchanged from original — same fetch, validation, redirects,
+ *                 invitation token handling.
+ */
 
-function RegisterPageContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const invitationToken = searchParams.get('invitation_token')
+import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import MarketingShell from '@/components/MarketingShell';
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string; form?: string }>({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
+// ─────────────────────────────────────────────────────────────────────────────
+// CSS — identical token names to /ai-content-writer
+// ─────────────────────────────────────────────────────────────────────────────
+const css = `
+.auth-wrap {
+  min-height: calc(100dvh - 62px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 24px;
+  position: relative; overflow: hidden;
+}
+.auth-wrap::before {
+  content: '';
+  position: absolute; top: -120px; left: 50%;
+  transform: translateX(-50%);
+  width: 600px; height: 500px;
+  background: radial-gradient(circle, rgba(79,110,247,.18) 0%, transparent 70%);
+  pointer-events: none;
+"use client";
 
-  // If invitation token exists, store it in localStorage
-  useEffect(() => {
-    if (invitationToken) {
-      localStorage.setItem('invitation_token', invitationToken)
+/**
+ * app/(auth)/register/page.tsx
+ *
+ * Self-contained register page (MarketingShell wrapper + scoped <style>).
+ * Auth logic maintained: fetch/validation/redirects and invitation token handling.
+ */
+
+import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import MarketingShell from "@/components/MarketingShell";
+
+const css = `
+.auth-wrap {
+  min-height: calc(100dvh - 62px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 24px;
+  position: relative; overflow: hidden;
+}
+.auth-card {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 420px;
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 40px 36px;
+}
+.auth-logo { display:flex; justify-content:center; margin-bottom:28px; }
+.auth-heading { font-family: var(--font-display); font-size:22px; font-weight:700; color:var(--white); text-align:center; margin-bottom:6px; }
+.auth-sub { font-size:14px; color:var(--muted); text-align:center; margin-bottom:28px; }
+.auth-field { margin-bottom:16px; }
+.auth-label { display:block; font-size:13px; color:var(--text); margin-bottom:6px; }
+.auth-input { width:100%; padding:11px 14px; border-radius:10px; box-sizing:border-box; }
+.auth-input.pr { padding-right:52px; }
+.auth-show-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; }
+.auth-submit { width:100%; padding:13px; border-radius:10px; border:none; cursor:pointer; color:var(--white); background:linear-gradient(to right,#217CEB,#4A42CC); }
+`;
+
+export default function RegisterPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const invitationToken = searchParams.get("invitation_token");
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email.");
+      return;
     }
-  }, [invitationToken])
-
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      setErrors((prev) => ({ ...prev, email: 'Please enter a valid email address' }))
-      return false
-    }
-    setErrors((prev) => ({ ...prev, email: undefined }))
-    return true
-  }
-
-  const validatePassword = (password: string) => {
     if (password.length < 8) {
-      setErrors((prev) => ({ ...prev, password: 'Password must be at least 8 characters' }))
-      return false
+      setError("Password must be at least 8 characters.");
+      return;
     }
-    setErrors((prev) => ({ ...prev, password: undefined }))
-    return true
-  }
-
-  const validateConfirmPassword = (confirmPassword: string) => {
-    if (confirmPassword !== password) {
-      setErrors((prev) => ({ ...prev, confirmPassword: 'Passwords do not match' }))
-      return false
-    }
-    setErrors((prev) => ({ ...prev, confirmPassword: undefined }))
-    return true
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validateEmail(email) || !validatePassword(password) || !validateConfirmPassword(confirmPassword)) {
-      return
+    if (confirm !== password) {
+      setError("Passwords do not match.");
+      return;
     }
 
-    setIsSubmitting(true)
+    if (invitationToken) localStorage.setItem("invitation_token", invitationToken);
 
+    setSubmitting(true);
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+      });
+      const data = await res.json();
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        setErrors({ form: data.error || 'Registration failed' })
-        return
+      if (!res.ok) {
+        if (data?.redirectTo) {
+          router.push(data.redirectTo);
+          return;
+        }
+        setError(data?.error ?? "Request failed.");
+        return;
       }
 
-      // Redirect to OTP verification page with email and invitation token if present
-      const redirectUrl = invitationToken
+      const nextUrl = invitationToken
         ? `/verify-email?email=${encodeURIComponent(email)}&invitation_token=${invitationToken}`
-        : `/verify-email?email=${encodeURIComponent(email)}`
-      router.push(redirectUrl)
-    } catch (error) {
-      setErrors({ form: 'An error occurred. Please try again.' })
+        : `/verify-email?email=${encodeURIComponent(email)}`;
+      router.push(nextUrl);
+    } catch (err) {
+      setError("Unexpected error. Please try again.");
     } finally {
-      setIsSubmitting(false)
+      setSubmitting(false);
     }
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.layout}>
+    <MarketingShell>
+      <style dangerouslySetInnerHTML={{ __html: css }} />
 
-        {/* LEFT — REGISTER CARD */}
-        <div className={styles.left}>
-          <section className="order-1 lg:order-2 relative font-lato">
-            <div className="group relative w-full h-full">
+      <div className="auth-wrap">
+        <div className="auth-card">
+          <div className="auth-logo">
+            <img src="/infin8content_logo.png" alt="Infin8Content" />
+          </div>
 
-              {/* Animated background blur */}
-              <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                <div className="absolute -inset-10 bg-linear-to-r from-transparent via-[#217CEB]/25 to-transparent blur-xl opacity-60 animate-spin [animation-duration:12s]" />
-                <div className="absolute -inset-20 bg-linear-to-r from-transparent via-[#4A42CC]/20 to-transparent blur-2xl opacity-40 animate-spin [animation-duration:20s] [animation-direction:reverse]" />
+          <h1 className="auth-heading">Start for free today</h1>
+          <p className="auth-sub">$1 trial · Cancel anytime · No credit card required.</p>
+
+          {error && <p className="auth-error">{error}</p>}
+
+          <form onSubmit={onSubmit} noValidate>
+
+            <div className="auth-field">
+              <label className="auth-label">Email address</label>
+              <input
+                type="email"
+                className="auth-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label">Password</label>
+              <div className="auth-input-wrap" style={{ position: 'relative' }}>
+                <input
+                  type={showPw ? "text" : "password"}
+                  className="auth-input pr"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+                <button type="button" className="auth-show-btn" onClick={() => setShowPw((p) => !p)} aria-label="Toggle password visibility">
+                  {showPw ? "Hide" : "Show"}
+                </button>
               </div>
+            </div>
 
-              {/* Border */}
-              <div className="absolute inset-0 rounded-2xl p-px bg-linear-to-b from-[#217CEB]/40 via-[#4A42CC]/50 to-neutral-900/60" />
+            <div className="auth-field">
+              <label className="auth-label">Confirm password</label>
+              <div className="auth-input-wrap" style={{ position: 'relative' }}>
+                <input
+                  type={showPw ? "text" : "password"}
+                  className="auth-input pr"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+                <button type="button" className="auth-show-btn" onClick={() => setShowPw((p) => !p)} aria-label="Toggle confirm password visibility">
+                  {showPw ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
 
-              {/* Card */}
-              <div
-                className={`${styles.loginCard} ${styles.authCard} relative h-full overflow-hidden rounded-2xl ring-1 ring-white/10 shadow-inner transition-all duration-300 hover:-translate-y-0.5 hover:ring-[#217CEB]/40 hover:shadow-[0_10px_40px_-10px_rgba(33,124,235,0.35)]`}
-              >
-                <div className="relative p-6 sm:p-8 lg:p-10 flex flex-col h-full">
+            <button type="submit" className="auth-submit" disabled={submitting}>
+              {submitting ? "Creating account…" : "Create account"}
+            </button>
+          </form>
 
-                  {/* Header */}
-                  <div className="mb-8">
-                    <img src="/infin8content-logo.png" alt="Infin8Content" className={styles.brandLogo} />
+          <p className="auth-switch">
+            Already have an account?{' '}
+            <a href="/login" className="auth-switch-link">Sign in</a>
+          </p>
 
-                    <div className="flex items-center gap-2 text-xs text-neutral-400 mb-3">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#217CEB]" />
-                      Secure area
-                    </div>
+          <div className="auth-perks">
+            <span className="auth-perk">$1 trial · 3 days</span>
+            <span className="auth-perk">Cancel anytime</span>
+            <span className="auth-perk">No credit card</span>
+          </div>
 
-                    <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white font-poppins">
-                      Create account
-                    </h2>
+        </div>
+      </div>
+    </MarketingShell>
+  );
+}
+          <form onSubmit={onSubmit} noValidate>
 
-                    <p className="text-sm text-neutral-400 mt-2">
-                      Join Infin8Content and start creating AI-powered content.
-                    </p>
-                  </div>
+            <div className="auth-field">
+              <label className="auth-label">Email address</label>
+              <input
+                type="email"
+                className="auth-input"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+              />
+            </div>
 
-                  {errors.form && (
-                    <div className={styles.formError}>
-                      ⚠ {errors.form}
-                    </div>
-                  )}
+            <div className="auth-field">
+              <label className="auth-label">Password</label>
+              <div className="auth-input-wrap">
+                <input
+                  type={showPw ? 'text' : 'password'}
+                  className="auth-input pr"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+                <button type="button" className="auth-show-btn" onClick={() => setShowPw(p => !p)}>
+                  {showPw ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </div>
 
-                  <form onSubmit={handleSubmit} className={styles.form}>
+            <div className="auth-field">
+              <label className="auth-label">Confirm password</label>
+              <div className="auth-input-wrap">
+                <input
+                  type={showPw ? 'text' : 'password'}
+                  className="auth-input pr"
+                  value={confirm}
+                  onChange={e => setConfirm(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+                <button type="button" className="auth-show-btn" onClick={() => setShowPw(p => !p)}>
+                  {showPw ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </div>
 
-                    {/* Email */}
-                    <div className={styles.formGroup}>
-                      <label className={styles.label}>Email</label>
-                      <input
-                        className={styles.input}
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        onBlur={() => validateEmail(email)}
-                        placeholder="you@example.com"
-                        aria-invalid={errors.email ? 'true' : 'false'}
-                        aria-describedby={errors.email ? 'email-error' : undefined}
-                      />
-                      {errors.email && <p className={styles.error}>⚠ {errors.email}</p>}
-                    </div>
+            <button type="submit" className="auth-submit" disabled={submitting}>
+              {submitting ? 'Creating account…' : 'Create account'}
+            </button>
+          </form>
 
-                    {/* Password */}
-                    <div className={styles.formGroup}>
-                      <label className={styles.label}>Password</label>
-                      <div className="relative">
-                        <input
-                          className={`${styles.input} pr-10`}
-                          type={showPassword ? 'text' : 'password'}
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          onBlur={() => validatePassword(password)}
-                          placeholder="••••••••"
-                          aria-invalid={errors.password ? 'true' : 'false'}
-                          aria-describedby={errors.password ? 'password-error' : undefined}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#217CEB]"
-                          aria-label="Toggle password visibility"
-                        >
-                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-                      </div>
-                      {errors.password && <p className={styles.error}>⚠ {errors.password}</p>}
-                    </div>
+          <p className="auth-switch">
+            Already have an account?{' '}
+            <a href="/login" className="auth-switch-link">Sign in</a>
+          </p>
 
-                    {/* Confirm */}
-                    <div className={styles.formGroup}>
-                      <label className={styles.label}>Confirm password</label>
-                      <div className="relative">
-                        <input
-                          className={`${styles.input} ${styles.confirmPasswordInput} pr-10`}
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          onBlur={() => validateConfirmPassword(confirmPassword)}
-                          placeholder="••••••••"
-                          aria-invalid={errors.confirmPassword ? 'true' : 'false'}
-                          aria-describedby={errors.confirmPassword ? 'confirm-password-error' : undefined}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+          <div className="auth-perks">
+            <span className="auth-perk">$1 trial · 3 days</span>
+            <span className="auth-perk">Cancel anytime</span>
+            <span className="auth-perk">No credit card</span>
+          </div>
+
+        </div>
+      </div>
+    </MarketingShell>
+  );
+}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#217CEB]"
                           aria-label="Toggle confirm password visibility"
                         >

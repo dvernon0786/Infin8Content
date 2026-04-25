@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from 'path';
 
 const nextConfig: NextConfig = {
   images: {
@@ -18,6 +19,9 @@ const nextConfig: NextConfig = {
     // trying to resolve untyped Supabase DB references.
     // TODO: Remove after types verified stable
     ignoreBuildErrors: true,
+  },
+  turbopack: {
+    root: path.resolve(__dirname),
   },
 };
 
