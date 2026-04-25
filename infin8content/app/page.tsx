@@ -740,10 +740,7 @@ const html = `<main>
             <a class="feature-link" href="/ai-content-writer">Discover AI Writer →</a>
           </div>
           <div class="feat-img">
-            <div class="feat-img-inner">
-              <div class="feat-img-icon">✍️</div>
-              <div class="feat-img-label">AI Content Writer Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div>
-            </div>
+            <img src="/images/Write-Publish-Schedule-AI-SEO-Writer.webp" alt="AI Content Writer" style="width: 100%; height: 100%; object-fit: cover;" />
             <div class="glow-accent"></div>
           </div>
         </div>
@@ -761,10 +758,7 @@ const html = `<main>
             <a class="feature-link" href="/ai-seo-editor">Discover Content Editor →</a>
           </div>
           <div class="feat-img">
-            <div class="feat-img-inner">
-              <div class="feat-img-icon">✏️</div>
-              <div class="feat-img-label">SEO Editor Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div>
-            </div>
+            <img src="/images/Edit-New-Existing-Content-AI-SEO-Editor.webp" alt="AI SEO Editor" style="width: 100%; height: 100%; object-fit: cover;" />
             <div class="glow-accent"></div>
           </div>
         </div>
@@ -782,10 +776,7 @@ const html = `<main>
             <a class="feature-link" href="/ai-seo-agent">Discover SEO Agent →</a>
           </div>
           <div class="feat-img">
-            <div class="feat-img-inner">
-              <div class="feat-img-icon">⚙️</div>
-              <div class="feat-img-label">SEO Agent Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div>
-            </div>
+            <img src="/images/Fix-Issues-with-AI-SEO-Agents-SEO-Agent.webp" alt="AI SEO Agent" style="width: 100%; height: 100%; object-fit: cover;" />
             <div class="glow-accent"></div>
           </div>
         </div>
@@ -803,10 +794,7 @@ const html = `<main>
             <a class="feature-link" href="/autopublish">Discover AutoPublish →</a>
           </div>
           <div class="feat-img">
-            <div class="feat-img-inner">
-              <div class="feat-img-icon">🚀</div>
-              <div class="feat-img-label">AutoPublish Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div>
-            </div>
+            <img src="/images/Automated-AI-Blog-in-Seconds-Autoblog.webp" alt="Automated AI Blog" style="width: 100%; height: 100%; object-fit: cover;" />
             <div class="glow-accent"></div>
           </div>
         </div>
@@ -824,10 +812,7 @@ const html = `<main>
             <a class="feature-link" href="/llm-tracker">Discover LLM Tracker →</a>
           </div>
           <div class="feat-img">
-            <div class="feat-img-inner">
-              <div class="feat-img-icon">📊</div>
-              <div class="feat-img-label">LLM Tracker Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div>
-            </div>
+            <img src="/images/Track-LLM-Brand-Mentions-LLM-Brand-Tracker.webp" alt="LLM Brand Tracker" style="width: 100%; height: 100%; object-fit: cover;" />
             <div class="glow-accent"></div>
           </div>
         </div>
