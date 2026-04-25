@@ -157,6 +157,7 @@ const css = `*, *::before, *::after { box-sizing: border-box; margin: 0; padding
     .tab-btn.active { background: rgba(79,110,247,.1); border-color: rgba(79,110,247,.25); }
     .tab-btn .tb-icon { font-size: 18px; flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,.04); display: flex; align-items: center; justify-content: center; }
     .tab-btn.active .tb-icon { background: rgba(79,110,247,.15); }
+    .tab-btn.active { background: linear-gradient(135deg, rgba(79,110,247,.1) 0%, rgba(79,110,247,.05) 100%); }
     .tab-btn .tb-text h5 { font-family: var(--font-display); font-size: 13.5px; font-weight: 600; color: var(--text); margin-bottom: 2px; transition: color .2s; }
     .tab-btn.active .tb-text h5 { color: var(--white); }
     .tab-btn .tb-text p { font-size: 12px; color: var(--muted); line-height: 1.4; }
@@ -189,13 +190,15 @@ const css = `*, *::before, *::after { box-sizing: border-box; margin: 0; padding
 
     /* ===== HOW IT WORKS ===== */
     .how-section { padding: 90px 0; background: linear-gradient(180deg, transparent, var(--surface2) 20%, var(--surface2) 80%, transparent); }
-    .how-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-    .step-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 22px; position: relative; transition: all .2s; }
-    .step-card:hover { border-color: rgba(79,110,247,.3); transform: translateY(-3px); }
-    .step-num { width: 32px; height: 32px; border-radius: 50%; background: rgba(79,110,247,.15); border: 1px solid rgba(79,110,247,.3); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 16px; }
-    .step-img { width: 100%; height: 100px; border-radius: 8px; background: linear-gradient(135deg, var(--surface2), #0d1228); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 28px; opacity: .5; margin-bottom: 16px; }
-    .step-card h4 { font-family: var(--font-display); font-size: 14.5px; font-weight: 600; color: var(--white); margin-bottom: 8px; line-height: 1.3; }
-    .step-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+    .how-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; }
+    .step-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0; position: relative; transition: all .2s; overflow: hidden; display: flex; flex-direction: column; }
+    .step-card:hover { border-color: rgba(79,110,247,.3); transform: translateY(-4px); }
+    .step-num { width: 36px; height: 36px; border-radius: 50%; background: rgba(79,110,247,.2); border: 1px solid rgba(79,110,247,.3); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 0; position: absolute; top: 16px; left: 16px; z-index: 10; }
+    .step-img { width: 100%; height: 200px; border-radius: 0; background: transparent; border: none; display: flex; align-items: center; justify-content: center; font-size: 28px; opacity: 1; margin-bottom: 0; overflow: hidden; }
+    .step-img img { width: 100%; height: 100%; object-fit: cover; }
+    .step-content { padding: 24px; flex: 1; display: flex; flex-direction: column; }
+    .step-card h4 { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--white); margin-bottom: 12px; line-height: 1.35; }
+    .step-card p { font-size: 13.5px; color: var(--muted); line-height: 1.65; margin: 0; }
 
     /* ===== KNOWLEDGE BASE ===== */
     .kb-section { padding: 90px 0; }
@@ -256,7 +259,6 @@ const css = `*, *::before, *::after { box-sizing: border-box; margin: 0; padding
       .footer-brand{grid-column:1/-1;}
       .tabs-wrapper{grid-template-columns:1fr;}
       .mini-icons{grid-template-columns:repeat(2,1fr);}
-      .how-grid{grid-template-columns:repeat(2,1fr);}
     }
     @media(max-width:860px){
       .main-nav{display:none;}
@@ -421,19 +423,19 @@ const html = `<main>
         </div>
         <div>
           <div class="tab-panel active" id="tab-formatting">
-            <div class="tab-img"><div class="tab-img-inner"><div class="ti-icon">📐</div><div class="ti-label">Formatting Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div></div><div class="glow"></div></div>
+            <div class="tab-img"><img src="/images/The-Al-SEO-Writer-Features-Extensive-Formatting.webp" alt="Extensive Formatting" style="width:100%;height:100%;object-fit:cover;"/><div class="glow"></div></div>
           </div>
           <div class="tab-panel" id="tab-images">
-            <div class="tab-img"><div class="tab-img-inner"><div class="ti-icon">🖼️</div><div class="ti-label">Image Generation Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div></div><div class="glow"></div></div>
+            <div class="tab-img"><img src="/images/The-Al-SEO-Writer-Features-Relevant-Images.webp" alt="Relevant Images" style="width:100%;height:100%;object-fit:cover;"/><div class="glow"></div></div>
           </div>
           <div class="tab-panel" id="tab-videos">
-            <div class="tab-img"><div class="tab-img-inner"><div class="ti-icon">📺</div><div class="ti-label">Video Embed Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div></div><div class="glow"></div></div>
+            <div class="tab-img"><img src="/images/The-Al-SEO-Writer-Features-Relevant-Videos.png" alt="Relevant Videos" style="width:100%;height:100%;object-fit:cover;"/><div class="glow"></div></div>
           </div>
           <div class="tab-panel" id="tab-links">
-            <div class="tab-img"><div class="tab-img-inner"><div class="ti-icon">🔗</div><div class="ti-label">Linking Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div></div><div class="glow"></div></div>
+            <div class="tab-img"><img src="/images/The-Al-SEO-Writer-Features-Relevant-Links.webp" alt="Relevant Links" style="width:100%;height:100%;object-fit:cover;"/><div class="glow"></div></div>
           </div>
           <div class="tab-panel" id="tab-toc">
-            <div class="tab-img"><div class="tab-img-inner"><div class="ti-icon">📋</div><div class="ti-label">Table of Contents Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div></div><div class="glow"></div></div>
+            <div class="tab-img"><img src="/images/The-Al-SEO-Writer-Features-Table-of-Contents.webp" alt="Table of Contents" style="width:100%;height:100%;object-fit:cover;"/><div class="glow"></div></div>
           </div>
         </div>
       </div>
@@ -466,10 +468,7 @@ const html = `<main>
           </ul>
         </div>
         <div class="ci-img">
-          <div class="ci-img-inner">
-            <div class="ci-icon">🎨</div>
-            <div class="ci-label">AI Image Generation Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with product screenshot</span></div>
-          </div>
+          <img src="/images/Edit-New-Existing-Content-AI-SEO-Editor.webp" alt="AI Image Generation" style="width:100%;height:100%;object-fit:cover;"/>
           <div class="glow"></div>
         </div>
       </div>
@@ -485,27 +484,35 @@ const html = `<main>
       <div class="how-grid">
         <div class="step-card">
           <div class="step-num">1</div>
-          <div class="step-img">🔍</div>
-          <h4>Generate Articles from Titles, Keywords or a Description</h4>
-          <p>Generate articles based on keywords you want to rank for, or just describe your business &amp; niche. You can input specific titles, or let AI suggest the best ones.</p>
+          <div class="step-img"><img src="/images/How-our-AI-writer-works-Generate-Articles-from-Titles-Keywords-Description.png" alt="Generate Articles" /></div>
+          <div class="step-content">
+            <h4>Generate Articles from Titles, Keywords or a Description</h4>
+            <p>Generate articles based on keywords you want to rank for, or just describe your business &amp; niche. You can input specific titles, or let AI suggest the best ones.</p>
+          </div>
         </div>
         <div class="step-card">
           <div class="step-num">2</div>
-          <div class="step-img">✏️</div>
-          <h4>Customize the Outline &amp; Add a CTA</h4>
-          <p>Set article length and take full control of the headings. Add headings manually and let AI generate the rest contextually. Add CTAs, Key Takeaways, FAQs, and custom sections.</p>
+          <div class="step-img"><img src="/images/How-our-AI-writer-works-Customize-the-Outline-Add-CTA.webp" alt="Customize Outline" /></div>
+          <div class="step-content">
+            <h4>Customize the Outline &amp; Add a CTA</h4>
+            <p>Set article length and take full control of the headings. Add headings manually and let AI generate the rest contextually. Add CTAs, Key Takeaways, FAQs, and custom sections.</p>
+          </div>
         </div>
         <div class="step-card">
           <div class="step-num">3</div>
-          <div class="step-img">🌍</div>
-          <h4>Language, Tonality &amp; Geo-Targeting</h4>
-          <p>Write content in 150+ languages. Choose formality, point of view, and tonality — from factual to creative. Apply geo-targeting for location-specific content.</p>
+          <div class="step-img"><img src="/images/How-our-AI-writer-works-Language-Tonality-Geo-Targeting.webp" alt="Language & Tonality" /></div>
+          <div class="step-content">
+            <h4>Language, Tonality &amp; Geo-Targeting</h4>
+            <p>Write content in 150+ languages. Choose formality, point of view, and tonality — from factual to creative. Apply geo-targeting for location-specific content.</p>
+          </div>
         </div>
         <div class="step-card">
           <div class="step-num">4</div>
-          <div class="step-img">🚀</div>
-          <h4>Generate &amp; Publish Multiple Articles at Once</h4>
-          <p>Choose how many articles to generate in a single run. Download them as a zip file or publish in one click directly to your website or CMS.</p>
+          <div class="step-img"><img src="/images/How-our-AI-writer-works-Generate-Publish-Multiple-Articles-Once.webp" alt="Publish Articles" /></div>
+          <div class="step-content">
+            <h4>Generate &amp; Publish Multiple Articles at Once</h4>
+            <p>Choose how many articles to generate in a single run. Download them as a zip file or publish in one click directly to your website or CMS.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -569,15 +576,55 @@ const html = `<main>
         <span class="cta-perk">Plagiarism free</span>
       </div>
       <div class="cta-screenshot">
-        <div class="cta-mock">
-          <div class="cm-icon">🖥️</div>
-          <div class="cm-label">Platform preview — replace with your app screenshot</div>
-        </div>
+        <img src="/images/Scale-more-content-Do-less-work.png" alt="Platform preview" style="width:100%;height:auto;"/>
       </div>
     </div>
   </section>
 
-</main>`;
+</main>
+
+<script>
+  let currentTabIndex = 0;
+  const tabIds = ['tab-formatting', 'tab-images', 'tab-videos', 'tab-links', 'tab-toc'];
+  let autoScrollTimer = null;
+
+  function switchTab(button, tabId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+    button.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+
+    currentTabIndex = tabIds.indexOf(tabId);
+    resetAutoScroll();
+  }
+
+  function autoSwitchTab() {
+    currentTabIndex = (currentTabIndex + 1) % tabIds.length;
+    const nextTabId = tabIds[currentTabIndex];
+    const buttons = document.querySelectorAll('.tab-btn');
+    switchTab(buttons[currentTabIndex], nextTabId);
+  }
+
+  function resetAutoScroll() {
+    if (autoScrollTimer) clearInterval(autoScrollTimer);
+    autoScrollTimer = setInterval(autoSwitchTab, 10000);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', resetAutoScroll);
+  } else {
+    resetAutoScroll();
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (autoScrollTimer) clearInterval(autoScrollTimer);
+    } else {
+      resetAutoScroll();
+    }
+  });
+</script>`;
 
 export default function AIContentWriterPage() {
   return <MarketingPageBody css={css} html={html} />;
