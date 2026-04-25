@@ -659,7 +659,7 @@ const html = `<main>
         <h1 class="fade-up">Scale content faster <em>without losing</em><br>quality or your brand voice</h1>
         <p class="fade-up">Create SEO-optimized articles, briefs, and landing pages in minutes — with full team workflows and integrated analytics.</p>
         <div class="hero-actions fade-up">
-          <a class="btn btn-primary btn-lg" href="#pricing">Start free</a>
+          <a class="btn btn-primary btn-lg" href="/register">Start today</a>
           <a class="btn btn-ghost btn-lg" href="#product">See product ↓</a>
         </div>
         <div class="social-proof fade-up">
@@ -968,7 +968,7 @@ const html = `<main>
       <div class="container">
         <h2>Scale content.<br>Stop doing it manually.</h2>
         <p>Get started and see why agencies trust Infin8Content.</p>
-        <a class="btn btn-primary" href="#pricing">Get Started Free</a>
+        <a class="btn btn-primary" href="/register">Start today</a>
         <div class="cta-perks">
           <span class="cta-perk">Cancel anytime</span>
           <span class="cta-perk">Content in 30 seconds</span>
