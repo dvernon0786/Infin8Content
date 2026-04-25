@@ -11,7 +11,7 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import MarketingShell from '@/components/MarketingShell';
+import MarketingShell from '@/components/marketing/MarketingShell';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CSS — identical token names to /ai-content-writer
@@ -119,9 +119,9 @@ const css = `
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Page
+// Inner Component (uses useSearchParams, must be wrapped in Suspense)
 // ─────────────────────────────────────────────────────────────────────────────
-export default function LoginPage() {
+function LoginPageInner() {
   const router        = useRouter();
   const searchParams  = useSearchParams();
   const invitationToken = searchParams.get('invitation_token');
@@ -238,6 +238,19 @@ export default function LoginPage() {
         </div>
       </div>
     </MarketingShell>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page (wrapped in Suspense)
+// ─────────────────────────────────────────────────────────────────────────────
+import { Suspense } from 'react';
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading…</div>}>
+      <LoginPageInner />
+    </Suspense>
   );
 }
 
