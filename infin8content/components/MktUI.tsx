@@ -77,13 +77,18 @@ export function MktHero({
         {/* Social proof */}
         <div className="flex items-center justify-center gap-2.5 text-[13.5px] text-mkt-muted mb-1.5">
           <div className="flex">
-            {["JL", "MR", "AK", "SB", "TD"].map((i, idx) => (
-              <div
+            {[
+              { src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop", alt: "User 1" },
+              { src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop", alt: "User 2" },
+              { src: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop", alt: "User 3" },
+            ].map((avatar, idx) => (
+              <img
                 key={idx}
-                className={`w-7.5 h-7.5 rounded-full border-2 border-mkt-bg bg-mkt-surface2 flex items-center justify-center text-[10px] font-bold text-mkt-accent ${idx === 0 ? "" : "-ml-2"}`}
-              >
-                {i}
-              </div>
+                src={avatar.src}
+                alt={avatar.alt}
+                className={`w-7.5 h-7.5 min-w-7.5 rounded-full border-2 border-mkt-bg object-cover shrink-0 ${idx === 0 ? "" : "-ml-2"}`}
+                loading="lazy"
+              />
             ))}
           </div>
           Trusted by marketers & agencies worldwide

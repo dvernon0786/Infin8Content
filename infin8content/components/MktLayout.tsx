@@ -51,17 +51,22 @@ const shellCss = `
 
 // ─── SocialProof ─────────────────────────────────────────────
 export function SocialProof({ label = "Trusted by marketers & agencies worldwide" }: { label?: string }) {
-  const initials = ["JL", "MR", "AK", "SB", "TD"];
+  const avatars = [
+    { name: "Avatar 1", src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" },
+    { name: "Avatar 2", src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" },
+    { name: "Avatar 3", src: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" },
+  ];
   return (
     <div className="flex items-center justify-center gap-2.5 text-[13.5px] text-mkt-muted">
       <div className="flex">
-        {initials.map((i, idx) => (
-          <div
+        {avatars.map((avatar, idx) => (
+          <img
             key={idx}
-            className={`w-7.5 h-7.5 rounded-full border-2 border-mkt-bg bg-mkt-surface2 flex items-center justify-center text-[10px] font-bold text-mkt-accent${idx === 0 ? "" : " -ml-2"}`}
-          >
-            {i}
-          </div>
+            src={avatar.src}
+            alt={avatar.name}
+            className={`w-7.5 h-7.5 min-w-7.5 rounded-full border-2 border-mkt-bg object-cover shrink-0${idx === 0 ? "" : " -ml-2"}`}
+            loading="lazy"
+          />
         ))}
       </div>
       Trusted by <strong className="text-white ml-1">{label}</strong>

@@ -246,6 +246,14 @@ const css = `/* ===================== RESET & BASE ===================== */
       font-size: 11px; font-weight: 700; color: var(--accent);
     }
     .avatars .av:first-child { margin-left: 0; }
+    .avatars .av-img {
+      width: 32px; height: 32px; min-width: 32px; border-radius: 50%;
+      border: 2px solid var(--bg);
+      margin-left: -8px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .avatars .av-img:first-child { margin-left: 0; }
     .social-proof strong { color: var(--white); }
 
     /* Hero image */
@@ -664,11 +672,9 @@ const html = `<main>
         </div>
         <div class="social-proof fade-up">
           <div class="avatars">
-            <div class="av">JL</div>
-            <div class="av">MR</div>
-            <div class="av">AK</div>
-            <div class="av">SB</div>
-            <div class="av">TD</div>
+            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" />
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" />
+            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" />
           </div>
           Trusted by marketers &amp; agencies worldwide
         </div>

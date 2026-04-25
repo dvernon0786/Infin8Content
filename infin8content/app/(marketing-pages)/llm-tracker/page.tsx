@@ -62,6 +62,8 @@ ul { list-style: none; }
 .social-proof { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13.5px; color: var(--muted); margin-bottom: 12px; }
 .avatars { display: flex; }
 .avatars .av { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--bg); background: var(--surface2); margin-left: -8px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--accent); }
+.avatars .av-img { width: 30px; height: 30px; min-width: 30px; border-radius: 50%; border: 2px solid var(--bg); margin-left: -8px; object-fit: cover; flex-shrink: 0; }
+.avatars .av-img:first-child { margin-left: 0; }
 .avatars .av:first-child { margin-left: 0; }
 .social-proof strong { color: var(--white); }
 .hero-perks { display: flex; align-items: center; justify-content: center; gap: 20px; font-size: 13px; color: var(--muted); margin-top: 6px; flex-wrap: wrap; }
@@ -226,7 +228,7 @@ const html = `<main>
       <a class="btn btn-primary btn-lg" href="/register">Start Tracking Free</a>
     </div>
     <div class="social-proof fade-up">
-      <div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div>
+      <div class="avatars"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /></div>
       Trusted by marketers &amp; agencies worldwide
     </div>
 
@@ -397,7 +399,7 @@ const html = `<main>
     <p>Start tracking your brand across LLMs today.</p>
     <a class="btn btn-primary btn-lg" href="/register">Start Tracking Free</a>
     <div class="cta-perks"><span class="cta-perk">All platforms included</span><span class="cta-perk">Cancel anytime</span><span class="cta-perk">White label reports</span></div>
-    <div class="cta-social"><div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div><span style="font-size:13.5px;color:var(--muted);">Trusted by marketers &amp; agencies worldwide</span></div>
+    <div class="cta-social"><div class="avatars"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /></div><span style="font-size:13.5px;color:var(--muted);">Trusted by marketers &amp; agencies worldwide</span></div>
     <div class="cta-mock-img"><div class="cta-mock-inner"><div class="cm-icon">🔭</div><div class="cm-label">LLM tracker dashboard — replace with screenshot</div></div></div>
   </div>
 </section>
