@@ -272,7 +272,7 @@ const html = `
           <div class="cat-card fade-up" onclick="navTo('seo')">
             <div class="cat-card-icon" style="background:rgba(34,197,94,.1);">📊</div>
             <div class="cat-card-title">SEO &amp; Analytics</div>
-            <div class="cat-card-desc">Understand SEO scores, DataForSEO keyword research, and performance analytics.</div>
+            <div class="cat-card-desc">Understand SEO scores, keyword research, and performance analytics.</div>
             <span class="cat-card-count">5 articles</span>
           </div>
           <div class="cat-card fade-up" onclick="navTo('features')">
@@ -334,7 +334,7 @@ export default function HelpPage() {
         {id:'publish-cms', icon:'🚀', title:'How to publish an article to your CMS', meta:'Publishing · 4 min read'},
         {id:'schedule-article', icon:'📅', title:'How to schedule future publishing', meta:'Publishing · 3 min read'},
         {id:'bulk-actions', icon:'☑️', title:'How to use Bulk Actions (archive, delete, re-run)', meta:'Articles · 3 min read'},
-        {id:'keyword-research-guide', icon:'🔍', title:'How to run keyword research with DataForSEO', meta:'SEO · 5 min read'},
+        {id:'keyword-research-guide', icon:'🔍', title:'How to run keyword research', meta:'SEO · 5 min read'},
         {id:'export-data', icon:'📤', title:'How to export analytics data (CSV & PDF)', meta:'Analytics · 3 min read'},
         {id:'manage-api-keys', icon:'🔑', title:'How to create & manage v1 API keys', meta:'API · 4 min read'},
         {id:'manage-team', icon:'👥', title:'How to manage your team & permissions', meta:'Team · 3 min read'},
@@ -389,7 +389,7 @@ export default function HelpPage() {
       'seo': { icon:'📊', label:'SEO & Analytics', color:'rgba(34,197,94,.1)', articles:[
         {id:'seo-score', icon:'🎯', title:'Understanding your SEO Score', meta:'SEO · 4 min read'},
         {id:'seo-recommendations', icon:'💡', title:'Acting on SEO recommendations', meta:'SEO · 3 min read'},
-        {id:'keyword-research-guide', icon:'🔍', title:'Running keyword research with DataForSEO', meta:'SEO · 5 min read'},
+        {id:'keyword-research-guide', icon:'🔍', title:'Running keyword research', meta:'SEO · 5 min read'},
         {id:'analytics-dashboard', icon:'📈', title:'Analytics dashboard explained', meta:'Analytics · 4 min read'},
         {id:'weekly-reports', icon:'📋', title:'Weekly performance reports', meta:'Analytics · 3 min read'},
       ]},
@@ -456,7 +456,7 @@ export default function HelpPage() {
         <table>
           <tr><th>Status</th><th>Meaning</th></tr>
           <tr><td><span class="badge badge-blue">queued</span></td><td>In the generation queue</td></tr>
-          <tr><td><span class="badge badge-amber">researching</span></td><td>AI is running web research via Tavily</td></tr>
+          <tr><td><span class="badge badge-amber">researching</span></td><td>AI is running web research</td></tr>
           <tr><td><span class="badge badge-amber">outlining</span></td><td>AI is building the article structure</td></tr>
           <tr><td><span class="badge badge-amber">generating</span></td><td>AI is writing each section</td></tr>
           <tr><td><span class="badge badge-blue">reviewing</span></td><td>Awaiting your review</td></tr>
@@ -710,7 +710,7 @@ Content-Type: application/json
           <tr><th>Status</th><th>Meaning</th><th>Set by</th></tr>
           <tr><td><span class="badge badge-blue">backlog</span></td><td>Created but not yet queued</td><td>Trigger API / Intent pipeline</td></tr>
           <tr><td><span class="badge badge-blue">queued</span></td><td>In queue, waiting for worker</td><td>Trigger API</td></tr>
-          <tr><td><span class="badge badge-amber">researching</span></td><td>Running web research (Tavily)</td><td>Inngest worker</td></tr>
+          <tr><td><span class="badge badge-amber">researching</span></td><td>Running web research</td><td>Inngest worker</td></tr>
           <tr><td><span class="badge badge-amber">outlining</span></td><td>Building section-by-section outline</td><td>Inngest worker</td></tr>
           <tr><td><span class="badge badge-amber">generating</span></td><td>Writing article sections</td><td>Inngest worker</td></tr>
           <tr><td><span class="badge badge-blue">reviewing</span></td><td>Generation complete, awaiting review</td><td>Inngest worker</td></tr>
@@ -740,7 +740,7 @@ Any state → archived  (manual action only)</code></pre>
         <h2>If the article keeps failing after retry</h2>
         <div class="step-list">
           <div class="step-item"><div class="step-num">1</div><div class="step-body"><strong>Check the error details</strong><p>If the article transitions to <span class="badge badge-red">failed</span>, click on it and scroll to <strong>Error Details</strong> to see the exact failure reason.</p></div></div>
-          <div class="step-item"><div class="step-num">2</div><div class="step-body"><strong>Check for LLM provider issues</strong><p>Infin8Content uses OpenRouter which routes to multiple LLM providers. Check <code>status.openrouter.ai</code> if all articles are failing.</p></div></div>
+          <div class="step-item"><div class="step-num">2</div><div class="step-body"><strong>Check for LLM provider issues</strong><p>Check our status page if all articles are failing simultaneously.</p></div></div>
           <div class="step-item"><div class="step-num">3</div><div class="step-body"><strong>Try re-generating</strong><p>From the article detail page, click <strong>Re-generate</strong> to create a fresh generation attempt.</p></div></div>
           <div class="step-item"><div class="step-num">4</div><div class="step-body"><strong>Contact support</strong><p>Use the Feedback widget in the dashboard to report the article ID.</p></div></div>
         </div>
@@ -766,14 +766,14 @@ Any state → archived  (manual action only)</code></pre>
         <table>
           <tr><th>Time</th><th>What happens</th></tr>
           <tr><td>Day 0</td><td>Payment fails. A <strong>payment warning banner</strong> appears in your dashboard. All features remain accessible.</td></tr>
-          <tr><td>Day 1–7</td><td><strong>Grace period.</strong> Stripe automatically retries the payment. Email notifications are sent. All features remain accessible.</td></tr>
+          <tr><td>Day 1–7</td><td><strong>Grace period.</strong> The system automatically retries the payment. Email notifications are sent. All features remain accessible.</td></tr>
           <tr><td>Day 7+</td><td>Account is <strong>suspended</strong>. Article generation is paused. You are redirected to the upgrade/payment page.</td></tr>
         </table>
         <h2>How to resolve a failed payment</h2>
         <div class="step-list">
           <div class="step-item"><div class="step-num">1</div><div class="step-body"><strong>Go to Settings → Billing</strong></div></div>
-          <div class="step-item"><div class="step-num">2</div><div class="step-body"><strong>Click "Manage Billing"</strong><p>This opens the Stripe billing portal where you can update your payment method.</p></div></div>
-          <div class="step-item"><div class="step-num">3</div><div class="step-body"><strong>Update your card</strong><p>Add a new payment method. Stripe will automatically retry the outstanding invoice.</p></div></div>
+          <div class="step-item"><div class="step-num">2</div><div class="step-body"><strong>Click "Manage Billing"</strong><p>This opens the billing portal where you can update your payment method.</p></div></div>
+          <div class="step-item"><div class="step-num">3</div><div class="step-body"><strong>Update your card</strong><p>Add a new payment method. The system will automatically retry the outstanding invoice.</p></div></div>
           <div class="step-item"><div class="step-num">4</div><div class="step-body"><strong>Wait for confirmation</strong><p>Once payment succeeds, your account status updates automatically and the suspension is lifted.</p></div></div>
         </div>
         <div class="callout callout-warn"><span class="callout-emoji">⚠️</span><div class="callout-body"><div class="callout-label">Suspended accounts</div><p>While suspended, your data is safe and preserved. No articles are deleted. Generation simply pauses until the payment issue is resolved.</p></div></div>
@@ -812,8 +812,8 @@ Any state → archived  (manual action only)</code></pre>
         <table>
           <tr><th>Type</th><th>Source</th><th>Use case</th></tr>
           <tr><td><strong>RSS Feed</strong></td><td>Any RSS/Atom URL</td><td>Monitor competitor blogs, industry publications, news sites</td></tr>
-          <tr><td><strong>News Poller</strong></td><td>Built-in news API (Tavily)</td><td>Trending topics in your industry, breaking news</td></tr>
-          <tr><td><strong>Keyword Trend Feed</strong></td><td>DataForSEO trending keywords</td><td>Emerging search terms in your niche</td></tr>
+          <tr><td><strong>News Poller</strong></td><td>Built-in news API</td><td>Trending topics in your industry, breaking news</td></tr>
+          <tr><td><strong>Keyword Trend Feed</strong></td><td>Trending keyword data</td><td>Emerging search terms in your niche</td></tr>
         </table>
         <h2>How feeds are processed</h2>
         <p>Infin8Content checks each active Feed <strong>every hour</strong>. New items that pass your relevance filters are added to the feed's item queue. If the feed is connected to an Autoblog, these items trigger article generation.</p>
