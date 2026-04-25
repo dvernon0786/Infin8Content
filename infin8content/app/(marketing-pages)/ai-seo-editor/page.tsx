@@ -271,7 +271,7 @@ const html = `<main>
     </div>
     <div class="social-proof fade-up">
       <div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div>
-      Trusted by <strong>&nbsp;10,000+&nbsp;</strong> Marketers &amp; Agencies
+      Trusted by marketers &amp; agencies worldwide
     </div>
 
     <div class="editor-wrap fade-up">
@@ -469,7 +469,7 @@ const html = `<main>
     </div>
     <div class="cta-social">
       <div class="avatars"><div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div></div>
-      <span style="font-size:13.5px;color:var(--muted);">Trusted by <strong style="color:var(--white)">10,000+</strong> marketers</span>
+      <span style="font-size:13.5px;color:var(--muted);">Trusted by marketers &amp; agencies worldwide</span>
     </div>
     <div class="cta-mock-img"><div class="cta-mock-inner"><div class="cm-icon">🖥️</div><div class="cm-label">Platform preview — replace with screenshot</div></div></div>
   </div>

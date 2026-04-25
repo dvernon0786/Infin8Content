@@ -298,7 +298,7 @@ const html = `
           <div style="width:30px;height:30px;border-radius:50%;border:2px solid var(--bg);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);margin-left:-8px;">SB</div>
           <div style="width:30px;height:30px;border-radius:50%;border:2px solid var(--bg);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);margin-left:-8px;">TD</div>
         </div>
-        Trusted by <strong style="color:var(--white);margin-left:4px;">10,000+</strong>&nbsp;Marketers &amp; Agencies
+        Trusted by marketers &amp; agencies worldwide
       </div>
       <div class="hero-perks">
         <span>Auto product linking</span>

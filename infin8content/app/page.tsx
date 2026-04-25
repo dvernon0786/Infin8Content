@@ -670,7 +670,7 @@ const html = `<main>
             <div class="av">SB</div>
             <div class="av">TD</div>
           </div>
-          Trusted by <strong>&nbsp;10,000+&nbsp;</strong> Marketers &amp; Agencies
+          Trusted by marketers &amp; agencies worldwide
         </div>
 
         <div class="hero-image-wrap fade-up">
@@ -845,7 +845,7 @@ const html = `<main>
     <section id="testimonials" class="testimonials-section">
       <div class="container">
         <div class="section-header">
-          <h2>Join 10,000+ Agencies and Marketers</h2>
+          <h2>Trusted by marketers & agencies worldwide</h2>
           <p>Infin8Content helps agencies and marketers drive measurable results across every content channel.</p>
         </div>
         <div class="testimonials-grid">

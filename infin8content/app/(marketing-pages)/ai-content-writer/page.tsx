@@ -290,7 +290,7 @@ const html = `<main>
         <div class="avatars">
           <div class="av">JL</div><div class="av">MR</div><div class="av">AK</div><div class="av">SB</div><div class="av">TD</div>
         </div>
-        Trusted by <strong>&nbsp;10,000+&nbsp;</strong> Marketers &amp; Agencies
+        Trusted by marketers &amp; agencies worldwide
       </div>
       <div class="hero-perks fade-up">
         <span>"Ready to rank"</span>

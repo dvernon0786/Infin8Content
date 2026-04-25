@@ -86,7 +86,7 @@ export function MktHero({
               </div>
             ))}
           </div>
-          Trusted by <strong className="text-white ml-1">10,000+</strong>&nbsp;Marketers & Agencies
+          Trusted by marketers & agencies worldwide
         </div>
         {perks && (
           <div className="flex items-center justify-center gap-5 flex-wrap text-[13px] text-mkt-muted mt-2">

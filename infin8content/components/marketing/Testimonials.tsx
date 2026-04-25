@@ -33,7 +33,7 @@ const Testimonials = () => {
             Loved by Content Teams Worldwide
           </h2>
           <p className="text-large text-neutral-600 max-w-3xl mx-auto">
-            Join 10,000+ content creators who trust Infin8Content
+            Trusted by marketers & agencies worldwide
           </p>
         </div>
 

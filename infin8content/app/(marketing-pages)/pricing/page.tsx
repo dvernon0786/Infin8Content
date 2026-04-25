@@ -1087,7 +1087,7 @@ const html = `
     <div class="section-header">
       <p class="section-label">💬 What customers say</p>
       <h2 class="section-title">Loved by content teams worldwide</h2>
-      <p class="section-sub">Join 10,000+ content creators who trust Infin8Content</p>
+      <p class="section-sub">Trusted by marketers &amp; agencies worldwide</p>
     </div>
     <div class="testi-grid">
 

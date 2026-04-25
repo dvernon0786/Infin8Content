@@ -14,7 +14,7 @@ const FinalCTA = () => {
         </h2>
 
         <p className="text-large text-white/90 mb-10 max-w-2xl mx-auto">
-          Join 10,000+ content teams creating better content, faster.
+          Trusted by marketers & agencies worldwide
         </p>
 
         {/* Primary CTA */}

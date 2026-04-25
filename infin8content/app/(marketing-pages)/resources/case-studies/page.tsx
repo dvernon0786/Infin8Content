@@ -279,7 +279,7 @@ const html = `
           <div class="cs-av">SB</div>
           <div class="cs-av">TD</div>
         </div>
-        Trusted by <strong style="color:var(--white);margin-left:4px;">10,000+</strong>&nbsp;Marketers &amp; Agencies
+        Trusted by marketers &amp; agencies worldwide
       </div>
     </div>
   </section>
@@ -440,7 +440,7 @@ const html = `
   <section class="final-cta">
     <div class="container" style="position:relative;">
       <h2>Start writing your<br>own success story.</h2>
-      <p>Join 10,000+ marketers growing organic traffic with Infin8Content.</p>
+      <p>Trusted by marketers &amp; agencies worldwide.</p>
       <a href="/register" class="btn btn-primary btn-lg">Start today</a>
       <div class="cta-perks">
         <span class="cta-perk">Cancel anytime</span>

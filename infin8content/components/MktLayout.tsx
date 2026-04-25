@@ -50,7 +50,7 @@ const shellCss = `
 `;
 
 // ─── SocialProof ─────────────────────────────────────────────
-export function SocialProof({ label = "10,000+ Marketers & Agencies" }: { label?: string }) {
+export function SocialProof({ label = "Trusted by marketers & agencies worldwide" }: { label?: string }) {
   const initials = ["JL", "MR", "AK", "SB", "TD"];
   return (
     <div className="flex items-center justify-center gap-2.5 text-[13.5px] text-mkt-muted">
