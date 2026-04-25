@@ -10,7 +10,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import MarketingShell from '@/components/MarketingShell';
+import MarketingShell from '@/components/marketing/MarketingShell';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CSS — scoped, tokenised (same set as register page)
