@@ -1,15 +1,14 @@
- 'use client';
+'use client';
 
 /**
  * app/(auth)/login/page.tsx
  *
  * Layout system : MarketingShell (wrapper) + scoped <style> injection
- * Token source  : --bg / --accent / --surface / etc. (same as ai-content-writer)
- * Auth logic    : unchanged from original — same fetch, validation, redirects,
- *                 invitation token handling.
+ * Token source  : --bg / --accent / --surface / etc. (same as register & ai-content-writer)
+ * Auth logic    : unchanged — same fetch, validation, invitation token, redirects.
  */
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import MarketingShell from '@/components/marketing/MarketingShell';
 
@@ -119,11 +118,11 @@ const css = `
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Inner Component (uses useSearchParams, must be wrapped in Suspense)
+// Inner form — separated so Suspense can wrap useSearchParams
 // ─────────────────────────────────────────────────────────────────────────────
-function LoginPageInner() {
-  const router        = useRouter();
-  const searchParams  = useSearchParams();
+function LoginForm() {
+  const router          = useRouter();
+  const searchParams    = useSearchParams();
   const invitationToken = searchParams.get('invitation_token');
 
   const [email, setEmail]           = useState('');
@@ -178,79 +177,76 @@ function LoginPageInner() {
   }
 
   return (
-    <MarketingShell>
-      <style dangerouslySetInnerHTML={{ __html: css }} />
+    <div className="auth-wrap">
+      <div className="auth-card">
 
-      <div className="auth-wrap">
-        <div className="auth-card">
+        <div className="auth-logo">
+          <img src="/infin8content_logo.png" alt="Infin8Content" />
+        </div>
 
-          <div className="auth-logo">
-            <img src="/infin8content_logo.png" alt="Infin8Content" />
+        <h1 className="auth-heading">Welcome back</h1>
+        <p className="auth-sub">Sign in to your Infin8Content account.</p>
+
+        {error && <p className="auth-error">{error}</p>}
+
+        <form onSubmit={onSubmit} noValidate>
+
+          <div className="auth-field">
+            <label className="auth-label">Email address</label>
+            <input
+              type="email"
+              className="auth-input"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+            />
           </div>
 
-          <h1 className="auth-heading">Welcome back</h1>
-          <p className="auth-sub">Sign in to your Infin8Content account.</p>
-
-          {error && <p className="auth-error">{error}</p>}
-
-          <form onSubmit={onSubmit} noValidate>
-
-            <div className="auth-field">
-              <label className="auth-label">Email address</label>
+          <div className="auth-field">
+            <label className="auth-label">Password</label>
+            <div className="auth-input-wrap">
               <input
-                type="email"
-                className="auth-input"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                type={showPw ? 'text' : 'password'}
+                className="auth-input pr"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
                 required
               />
+              <button type="button" className="auth-show-btn" onClick={() => setShowPw(p => !p)}>
+                {showPw ? 'Hide' : 'Show'}
+              </button>
             </div>
+            <a href="/forgot-password" className="auth-forgot">Forgot password?</a>
+          </div>
 
-            <div className="auth-field">
-              <label className="auth-label">Password</label>
-              <div className="auth-input-wrap">
-                <input
-                  type={showPw ? 'text' : 'password'}
-                  className="auth-input pr"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                />
-                <button type="button" className="auth-show-btn" onClick={() => setShowPw(p => !p)}>
-                  {showPw ? 'Hide' : 'Show'}
-                </button>
-              </div>
-              <a href="/forgot-password" className="auth-forgot">Forgot password?</a>
-            </div>
+          <button type="submit" className="auth-submit" disabled={submitting}>
+            {submitting ? 'Signing in…' : 'Sign in'}
+          </button>
+        </form>
 
-            <button type="submit" className="auth-submit" disabled={submitting}>
-              {submitting ? 'Signing in…' : 'Sign in'}
-            </button>
-          </form>
+        <p className="auth-switch">
+          Don't have an account?{' '}
+          <a href="/register" className="auth-switch-link">Sign up free</a>
+        </p>
 
-          <p className="auth-switch">
-            Don't have an account?{' '}
-            <a href="/register" className="auth-switch-link">Sign up free</a>
-          </p>
-
-        </div>
       </div>
-    </MarketingShell>
+    </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Page (wrapped in Suspense)
+// Page export
 // ─────────────────────────────────────────────────────────────────────────────
-import { Suspense } from 'react';
-
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div>Loading…</div>}>
-      <LoginPageInner />
-    </Suspense>
+    <MarketingShell>
+      <style dangerouslySetInnerHTML={{ __html: css }} />
+      <Suspense>
+        <LoginForm />
+      </Suspense>
+    </MarketingShell>
   );
 }
 
