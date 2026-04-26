@@ -271,6 +271,94 @@ const css = `
 .fade-up:nth-child(2) { animation-delay: .15s; }
 .fade-up:nth-child(3) { animation-delay: .25s; }
 .fade-up:nth-child(4) { animation-delay: .35s; }
+
+/* ── HERO IMAGE ── */
+.hero-image-section {
+  position: relative;
+  margin-top: -80px;
+  padding-bottom: 0;
+  z-index: 10;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+}
+.hero-image {
+  width: 100%;
+  height: 58vh;
+  display: block;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.07);
+  margin: 0;
+  object-fit: cover;
+  mask-image: linear-gradient(to bottom, black 0%, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 85%, transparent 100%);
+}
+
+/* ── CASE STUDIES ── */
+.case-studies-section {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 64px; align-items: center;
+}
+.case-studies-content h2 {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 800; letter-spacing: -1px;
+  color: var(--white); margin-bottom: 24px; line-height: 1.15;
+}
+.case-studies-content p {
+  font-size: 16px; color: var(--muted);
+  line-height: 1.7; margin-bottom: 28px;
+}
+.case-metric {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 14px; font-size: 15px;
+  color: var(--muted);
+}
+.case-metric::before {
+  content: '';
+  width: 24px; height: 24px;
+  background: rgba(79,110,247,.15);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.case-metric strong {
+  color: var(--white); font-weight: 700;
+}
+.case-studies-image {
+  border-radius: 14px; border: 1px solid rgba(255,255,255,.07);
+  overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.4);
+}
+.case-studies-image img {
+  width: 100%; height: auto; display: block;
+}
+
+@media (max-width: 860px) {
+  .case-studies-section { grid-template-columns: 1fr; gap: 36px; }
+}
+
+@media (max-width: 768px) {
+  .hero-image-section {
+    margin-top: -40px;
+  }
+  .hero-image {
+    height: 35vh;
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero-image-section {
+    margin-top: -20px;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+  }
+  .hero-image {
+    height: 28vh;
+    border-radius: 6px;
+    border-width: 1px;
+  }
+}
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -308,6 +396,17 @@ const html = `
     </div>
   </section>
 
+  <!-- ═══════════════════════════ ECOMMERCE HERO IMAGE ════════════════════ -->
+  <section class="hero-image-section">
+    <div class="container">
+      <img
+        src="/images/e-commerce-hero.png"
+        alt="E-Commerce Solution Hero"
+        class="hero-image"
+      />
+    </div>
+  </section>
+
   <!-- ═══════════════════════════ WHY YOU NEED IT ═══════════════════════ -->
   <section class="section section-alt">
     <div class="container">
@@ -317,21 +416,25 @@ const html = `
       </div>
       <div class="benefits-grid">
         <div class="benefit-card fade-up">
+          <img src="/images/Boost-Traffic.webp" alt="Boost Traffic" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 16px;">
           <div class="benefit-icon">📈</div>
           <h4>Boost Traffic</h4>
           <p>Infin8Content creates beautiful SEO-optimized articles that rank higher in search engines, bringing in more visitors without paid ads.</p>
         </div>
         <div class="benefit-card fade-up">
+          <img src="/images/Save-Time.png" alt="Save Time" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 16px;">
           <div class="benefit-icon">⏱️</div>
           <h4>Save Time</h4>
           <p>Automatically generate tailored product content that links directly to your store, with no manual effort required from your team.</p>
         </div>
         <div class="benefit-card fade-up">
+          <img src="/images/Increase-Sales.webp" alt="Increase Sales" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 16px;">
           <div class="benefit-icon">💰</div>
           <h4>Increase Sales</h4>
           <p>Each article is packed with product links and CTAs designed to convert readers into customers.</p>
         </div>
         <div class="benefit-card fade-up">
+          <img src="/images/Scale-Globally.webp" alt="Scale Globally" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 16px;">
           <div class="benefit-icon">🌍</div>
           <h4>Scale Globally</h4>
           <p>Create content in 150+ languages to reach global audiences, driving more traffic and sales effortlessly.</p>
@@ -390,9 +493,7 @@ const html = `
         </div>
         <div>
           <div class="feat-img">
-            <div class="feat-img-icon">📣</div>
-            <p class="feat-img-label">Social Sharing Preview<br><span style="font-size:11px;">Replace with screenshot</span></p>
-            <div class="glow"></div>
+            <img src="/images/Automatic-Social-Sharing.webp" alt="Automatic Social Sharing" style="width: 100%; height: 100%; object-fit: cover;">
           </div>
         </div>
       </div>
@@ -413,31 +514,25 @@ const html = `
         </div>
         <div>
           <div class="feat-img">
-            <div class="feat-img-icon">🛍️</div>
-            <p class="feat-img-label">Shopify Integration Preview<br><span style="font-size:11px;">Replace with screenshot</span></p>
-            <div class="glow"></div>
+            <img src="/images/Easy-Shopify-Integration.png" alt="Easy Shopify Integration" style="width: 100%; height: 100%; object-fit: cover;">
           </div>
         </div>
       </div>
 
-      <!-- Row 3: Global Markets -->
+      <!-- Row 3: AutoBlog -->
       <div class="feature-row">
         <div>
-          <p class="feature-tag">🌍 Global</p>
-          <h2>Reach Global Markets in 150+ Languages</h2>
-          <p>Expand into any market by generating and publishing SEO-optimized content in 150+ languages. Geo-targeted by country, each article is written for the local search audience.</p>
+          <p class="feature-tag">🤖 AutoBlog</p>
+          <h2>AutoBlog for Hands-Free Marketing</h2>
+          <p>Set it and forget it. Writing, schedules, and publishes content directly to your store on autopilot</p>
           <ul class="feature-list">
-            <li>150+ languages supported out of the box</li>
-            <li>Geo-targeted content per country</li>
-            <li>Local SEO optimization built in</li>
-            <li>Reach international buyers without a translation team</li>
+            <li>Every post is loaded with product links, SEO-optimized, and ready to drive traffic</li>
+            <li>AutoBlog handles everything while you focus on growing your business</li>
           </ul>
         </div>
         <div>
           <div class="feat-img">
-            <div class="feat-img-icon">🌍</div>
-            <p class="feat-img-label">Global Reach Preview<br><span style="font-size:11px;">Replace with screenshot</span></p>
-            <div class="glow"></div>
+            <img src="/images/AutoBlog-for-Hands-Free-Marketing.webp" alt="AutoBlog for Hands-Free Marketing" style="width: 100%; height: 100%; object-fit: cover;">
           </div>
         </div>
       </div>
@@ -445,47 +540,26 @@ const html = `
     </div>
   </section>
 
-  <!-- ═══════════════════════════ BEFORE / AFTER ════════════════════════ -->
-  <section class="section">
-    <div class="container" style="max-width:860px;">
-      <div class="section-header">
-        <p class="section-label">⚡ The Difference</p>
-        <h2 class="section-title">From manual content to automated sales machine</h2>
-      </div>
-      <div class="ba-grid">
-
-        <div class="ba-card">
-          <div class="ba-header before">
-            <span class="ba-label">Before</span>
-            Without Infin8Content
+  <!-- ═════════════════════ CASE STUDIES & TESTIMONIALS ══════════════════ -->
+  <section class="section section-alt">
+    <div class="container">
+      <div class="case-studies-section">
+        <div class="case-studies-content">
+          <p class="section-label" style="display:inline-block;">📊 Real Success</p>
+          <h2>Real Success: eCommerce SEO Service Case Studies & Testimonials</h2>
+          <div class="case-metric">
+            <span>💰 <strong>$50,000</strong> in added tracked revenue</span>
           </div>
-          <div class="ba-body">
-            <div class="ba-img">😩</div>
-            <ul class="ba-list before">
-              <li>Spend hours writing product content manually</li>
-              <li>Pay $600+/mo for a copywriter per client</li>
-              <li>Missed product link opportunities</li>
-              <li>No social sharing or automation</li>
-            </ul>
+          <div class="case-metric">
+            <span>📈 <strong>700%</strong> increase in non-branded traffic</span>
+          </div>
+          <div class="case-metric">
+            <span>🎯 <strong>11,217%</strong> traffic increase over 9 months</span>
           </div>
         </div>
-
-        <div class="ba-card">
-          <div class="ba-header after">
-            <span class="ba-label">After</span>
-            With Infin8Content
-          </div>
-          <div class="ba-body">
-            <div class="ba-img">🚀</div>
-            <ul class="ba-list after">
-              <li>Auto-generate SEO content for every product</li>
-              <li>All-in-one solution — no copywriter needed</li>
-              <li>Product links automatically inserted</li>
-              <li>Auto-share to social on every publish</li>
-            </ul>
-          </div>
+        <div class="case-studies-image">
+          <img src="/images/Real-Success-eCommerce-SEO-Service-Case-Studies-and-Testimonials.webp" alt="eCommerce SEO Case Studies" />
         </div>
-
       </div>
     </div>
   </section>
