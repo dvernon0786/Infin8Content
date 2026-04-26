@@ -1,6 +1,5 @@
 import { createServiceRoleClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/supabase/get-current-user"
-import Link from "next/link"
 import { redirect } from "next/navigation"
 import { TrialChecklist } from "@/components/dashboard/trial-checklist"
 import { WorkflowDashboard } from "@/components/dashboard/workflow-dashboard/WorkflowDashboard"
@@ -83,8 +82,8 @@ export default async function DashboardPage() {
       {/* Page header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold dashboard-header-title">Overview</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Your content engine at a glance</p>
+          <h1 className="font-poppins text-h2-desktop font-bold text-neutral-900 dashboard-header-title">Overview</h1>
+          <p className="mt-1 font-lato text-body text-neutral-600">Your content engine at a glance</p>
         </div>
         <div className="flex items-center gap-2 text-sm text-neutral-800 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white whitespace-nowrap dashboard-watch-btn">
           <div className="dashboard-watch-icon">
@@ -107,15 +106,15 @@ export default async function DashboardPage() {
           {/* Stat: Generated */}
           <div className="stat-card">
             <div className="text-lg mb-1.5">📄</div>
-            <div className="text-xs text-muted-foreground mb-1">Generated — Articles created this month</div>
-            <div className="text-3xl font-extrabold text-neutral-900">{generatedThisMonth}</div>
+            <div className="font-lato text-small text-neutral-600 mb-1">Generated — Articles created this month</div>
+            <div className="font-poppins text-h3-desktop font-bold text-neutral-900">{generatedThisMonth}</div>
           </div>
 
           {/* Stat: Published */}
           <div className="stat-card">
             <div className="text-lg mb-1.5">✅</div>
-            <div className="text-xs text-muted-foreground mb-1">Published — Live on your sites</div>
-            <div className="text-3xl font-extrabold text-neutral-900">{publishedTotal}</div>
+            <div className="font-lato text-small text-neutral-600 mb-1">Published — Live on your sites</div>
+            <div className="font-poppins text-h3-desktop font-bold text-neutral-900">{publishedTotal}</div>
           </div>
         </div>
 

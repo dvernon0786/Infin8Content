@@ -1,6 +1,8 @@
-// LEGACY DASHBOARD PAGE — DISABLED FOR MVP
-// No redirects, no UI, no functionality
-export default function DisabledTrackPage() {
-  return null
+export default function TrackPage() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-center">
+      <h1 className="font-poppins text-h2-desktop font-bold text-neutral-900">Track</h1>
+      <p className="font-lato text-body text-neutral-600">This feature is coming soon.</p>
+    </div>
+  )
 }
-

@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from "react"
+import { useState } from "react"
 
 export default function BacklinkExchange() {
   const [open, setOpen] = useState(false)
@@ -7,8 +7,8 @@ export default function BacklinkExchange() {
   return (
     <div className="max-w-5xl mx-auto p-6">
       <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center mb-12">
-        <h1 className="text-2xl font-extrabold text-slate-900 leading-tight mb-3">Exchange Backlinks with Sites<br/>in Your Niche</h1>
-        <p className="text-sm text-slate-500 max-w-xl mx-auto mb-6">You link to them, they link to you. We match you with relevant, high-quality sites at a similar domain rating — so both sides grow their authority together.</p>
+        <h1 className="font-poppins text-h2-desktop font-bold text-neutral-900 leading-tight mb-3">Exchange Backlinks with Sites<br/>in Your Niche</h1>
+        <p className="font-lato text-body text-neutral-600 max-w-xl mx-auto mb-6">You link to them, they link to you. We match you with relevant, high-quality sites at a similar domain rating — so both sides grow their authority together.</p>
         <div className="flex items-center justify-center gap-4 mb-2">
           <div className="flex -space-x-2">
             <div className="w-8 h-8 rounded-full bg-indigo-700 text-white flex items-center justify-center text-xs font-bold">JK</div>
@@ -26,8 +26,8 @@ export default function BacklinkExchange() {
 
       <section className="mb-12">
         <div className="text-center mb-6">
-          <h2 className="text-lg font-bold">How it works</h2>
-          <p className="text-sm text-slate-500">Three simple steps to start exchanging backlinks</p>
+          <h2 className="font-poppins text-h3-desktop font-bold text-neutral-900">How it works</h2>
+          <p className="font-lato text-body text-neutral-600">Three simple steps to start exchanging backlinks</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -62,8 +62,8 @@ export default function BacklinkExchange() {
 
       <section className="mb-12">
         <div className="text-center mb-6">
-          <h2 className="text-lg font-bold">What you get</h2>
-          <p className="text-sm text-slate-500">Everything you need for effortless link building</p>
+          <h2 className="font-poppins text-h3-desktop font-bold text-neutral-900">What you get</h2>
+          <p className="font-lato text-body text-neutral-600">Everything you need for effortless link building</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -84,8 +84,8 @@ export default function BacklinkExchange() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white border border-gray-200 rounded-2xl p-8 items-start">
         <div>
-          <h3 className="text-xl font-extrabold mb-2">Ready to start exchanging backlinks?</h3>
-          <p className="text-sm text-slate-500 mb-6">Get matched with quality sites and grow your domain authority every month.</p>
+          <h3 className="font-poppins text-h3-desktop font-bold text-neutral-900 mb-2">Ready to start exchanging backlinks?</h3>
+          <p className="font-lato text-body text-neutral-600 mb-6">Get matched with quality sites and grow your domain authority every month.</p>
           <div className="flex items-baseline gap-3 mb-3">
             <span className="text-4xl font-extrabold">$70</span>
             <span className="text-sm text-slate-500">USD / mo</span>

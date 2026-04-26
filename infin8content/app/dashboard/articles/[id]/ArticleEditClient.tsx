@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation'
 import {
   Bold, Italic, Heading1, Heading2, Heading3,
   List, ListOrdered, Link2, Image as ImageIcon,
-  AlignJustify, Undo2, Redo2, Save, ArrowLeft,
-  Upload, X, Plus, ChevronDown, Loader2, CheckCircle2,
-  ExternalLink, Tag, Search, FileText, Eye
+  Undo2, Redo2, Save, ArrowLeft,
+  Upload, X, Plus, Loader2, CheckCircle2,
+  Tag, Search, FileText, Eye
 } from 'lucide-react'
 import { PublishToCmsButton } from '@/components/articles/PublishToCmsButton'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
@@ -96,27 +96,27 @@ function ToolbarBtn({
 
 const SECTION_CONFIG: Record<string, { headerClass: string; containerClass: string }> = {
   introduction: {
-    headerClass: 'font-poppins text-3xl sm:text-4xl font-bold text-neutral-900 leading-tight',
+    headerClass: 'font-poppins text-h2-desktop font-bold text-neutral-900 leading-tight',
     containerClass: 'pb-10 mb-10 border-b border-neutral-200',
   },
   h2: {
-    headerClass: 'font-poppins text-2xl sm:text-3xl font-semibold text-neutral-900 leading-snug',
+    headerClass: 'font-poppins text-h3-desktop font-semibold text-neutral-900 leading-snug',
     containerClass: 'py-8',
   },
   h3: {
-    headerClass: 'font-poppins text-xl sm:text-2xl font-semibold text-neutral-800 leading-snug',
+    headerClass: 'font-poppins text-h3-mobile font-semibold text-neutral-800 leading-snug',
     containerClass: 'py-6',
   },
   section: {
-    headerClass: 'font-poppins text-2xl sm:text-3xl font-semibold text-neutral-900 leading-snug',
+    headerClass: 'font-poppins text-h3-desktop font-semibold text-neutral-900 leading-snug',
     containerClass: 'py-8',
   },
   conclusion: {
-    headerClass: 'font-poppins text-2xl sm:text-3xl font-semibold text-neutral-900 leading-snug',
+    headerClass: 'font-poppins text-h3-desktop font-semibold text-neutral-900 leading-snug',
     containerClass: 'pt-10 mt-10 border-t border-neutral-200',
   },
   faq: {
-    headerClass: 'font-poppins text-2xl sm:text-3xl font-semibold text-neutral-900 leading-snug',
+    headerClass: 'font-poppins text-h3-desktop font-semibold text-neutral-900 leading-snug',
     containerClass: 'py-8',
   },
 }

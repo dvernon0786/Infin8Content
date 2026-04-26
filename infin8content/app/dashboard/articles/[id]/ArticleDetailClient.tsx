@@ -3,9 +3,8 @@
 import Link from 'next/link'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import {
-  ArrowLeft, Edit2, Download, Heading2, Heading3,
+  ArrowLeft, Edit2, Heading2, Heading3,
   List, ListOrdered, Link2, Image as ImageIcon,
   Strikethrough, AlignLeft, Undo2, Redo2,
   X, Plus, Loader2, CheckCircle2, Info, Sparkles, Upload,
@@ -69,32 +68,32 @@ function useDebounce<T extends (...args: any[]) => any>(fn: T, delay: number): T
 const SECTION_CONFIG: Record<string, { labelTag: string; headerClass: string; containerClass: string }> = {
   introduction: {
     labelTag: '',
-    headerClass: 'font-poppins text-3xl font-bold text-neutral-900 leading-tight',
+    headerClass: 'font-poppins text-h2-desktop font-bold text-neutral-900 leading-tight',
     containerClass: 'pb-10 mb-10 border-b border-neutral-200',
   },
   h2: {
     labelTag: 'h2',
-    headerClass: 'font-poppins text-2xl font-semibold text-neutral-900 leading-snug',
+    headerClass: 'font-poppins text-h3-desktop font-semibold text-neutral-900 leading-snug',
     containerClass: 'py-8',
   },
   h3: {
     labelTag: 'h3',
-    headerClass: 'font-poppins text-xl font-semibold text-neutral-800 leading-snug',
+    headerClass: 'font-poppins text-h3-mobile font-semibold text-neutral-800 leading-snug',
     containerClass: 'py-6',
   },
   section: {
     labelTag: 'h2',
-    headerClass: 'font-poppins text-2xl font-semibold text-neutral-900 leading-snug',
+    headerClass: 'font-poppins text-h3-desktop font-semibold text-neutral-900 leading-snug',
     containerClass: 'py-8',
   },
   conclusion: {
     labelTag: 'h2',
-    headerClass: 'font-poppins text-2xl font-semibold text-neutral-900 leading-snug',
+    headerClass: 'font-poppins text-h3-desktop font-semibold text-neutral-900 leading-snug',
     containerClass: 'pt-10 mt-10 border-t border-neutral-200',
   },
   faq: {
     labelTag: 'h2',
-    headerClass: 'font-poppins text-2xl font-semibold text-neutral-900 leading-snug',
+    headerClass: 'font-poppins text-h3-desktop font-semibold text-neutral-900 leading-snug',
     containerClass: 'py-8',
   },
 }
@@ -598,7 +597,6 @@ function SavePill({ status }: { status: SaveStatus }) {
 // ─── Main client component ────────────────────────────────────────────────────
 
 export default function ArticleDetailClient({ initialArticle, initialSections }: Props) {
-  const router = useRouter()
   const supabase = createClient()
 
   const [article]   = useState<SerializedArticle>(initialArticle)

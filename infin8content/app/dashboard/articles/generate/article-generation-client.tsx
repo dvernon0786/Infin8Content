@@ -133,8 +133,8 @@ export function ArticleGenerationPageClient({ organizationId }: ArticleGeneratio
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Generate Article</h1>
-        <p className="text-muted-foreground">
+        <h1 className="font-poppins text-h2-desktop font-bold text-neutral-900">Generate Article</h1>
+        <p className="font-lato text-body text-neutral-600">
           Create long-form content optimized for SEO
         </p>
       </div>
