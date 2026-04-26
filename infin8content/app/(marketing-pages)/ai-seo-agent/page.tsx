@@ -213,12 +213,12 @@ ul { list-style: none; }
     .am-stat { background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
     .am-stat .as-val { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--white); }
     .am-stat .as-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .agent-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; position: relative; }
-    .agent-steps::before { content:''; position:absolute; top:42px; left:16.6%; right:16.6%; height:1px; background:linear-gradient(90deg,var(--accent-border),rgba(79,110,247,.1)); pointer-events:none; }
-    .agent-step { text-align: center; padding: 32px 24px; }
-    .as-icon-wrap { width: 80px; height: 80px; border-radius: 50%; background: var(--accent-lite); border: 1px solid var(--accent-border); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; font-size: 28px; position: relative; z-index: 1; }
-    .as-step-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); margin-bottom: 6px; }
-    .agent-step h4 { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--white); margin-bottom: 10px; }
+    .agent-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; position: relative; }
+    .agent-step { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px 28px; text-align: center; transition: all .2s; }
+    .agent-step:hover { border-color: var(--accent-border); transform: translateY(-4px); }
+    .agent-step img { width: 100%; height: auto; border-radius: 12px; margin-bottom: 24px; display: block; margin-left: auto; margin-right: auto; object-fit: cover; aspect-ratio: 16/10; }
+    .as-step-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); margin-bottom: 10px; }
+    .agent-step h4 { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--white); margin-bottom: 12px; }
     .agent-step p { font-size: 14px; color: var(--muted); line-height: 1.6; }
     .callout-box { background: linear-gradient(135deg, rgba(79,110,247,.08), rgba(79,110,247,.04)); border: 1px solid var(--accent-border); border-radius: var(--radius); padding: 40px; text-align: center; margin: 56px 0 0; }
     .callout-box h2 { font-family: var(--font-display); font-size: clamp(22px,3.5vw,38px); font-weight: 800; color: var(--white); letter-spacing: -.5px; margin-bottom: 14px; }
@@ -292,23 +292,22 @@ const html = `<main>
 
 <section class="section section-alt">
   <div class="container">
-    <p class="section-label" style="justify-content:center;">🔧 &nbsp;How the AI Agent Works</p>
-    <h2 class="section-title" style="text-align:center;margin-bottom:50px;">Three steps. Zero manual work.</h2>
+    <h2 class="section-title" style="text-align:center;margin-bottom:50px;font-size:clamp(28px,4vw,44px);">How the AI Agent Works</h2>
     <div class="agent-steps">
       <div class="agent-step">
-        <div class="as-icon-wrap">🔍</div>
+        <img src="/images/How-the-AI-Agent-Works-Dynamic-Scanning.webp" alt="Dynamic Scanning" style="width: 100%; max-width: 200px; height: auto; margin-bottom: 18px; border-radius: 12px;" />
         <div class="as-step-label">Step 1</div>
         <h4>Dynamic Scanning</h4>
         <p>The AI Agent constantly scans your site to look for flaws, gaps, and bugs in your technical SEO — from meta tags to schema to broken links.</p>
       </div>
       <div class="agent-step">
-        <div class="as-icon-wrap">🧠</div>
+        <img src="/images/How-the-AI-Agent-Works-Smart-Reasoning.webp" alt="Smart Reasoning" style="width: 100%; max-width: 200px; height: auto; margin-bottom: 18px; border-radius: 12px;" />
         <div class="as-step-label">Step 2</div>
         <h4>Smart Reasoning</h4>
         <p>It thinks about the best way to fix each issue, evaluating impact vs. effort and prioritizing the changes that will drive the most ranking improvement.</p>
       </div>
       <div class="agent-step">
-        <div class="as-icon-wrap">⚡</div>
+        <img src="/images/How-the-AI-Agent-Works-Implementation.webp" alt="Implementation" style="width: 100%; max-width: 200px; height: auto; margin-bottom: 18px; border-radius: 12px;" />
         <div class="as-step-label">Step 3</div>
         <h4>Implementation</h4>
         <p>After a thorough analysis, it automatically implements the updates live on your site — no developer needed, no to-do list, no manual fixes.</p>
@@ -322,7 +321,7 @@ const html = `<main>
         <div class="ba-card">
           <div class="ba-header before"><span class="ba-label">Before</span> Without AI SEO Agent</div>
           <div class="ba-body">
-            <div class="ba-img">📋</div>
+            <img src="/images/Its-NOT-a-to-do-list-Without-AI-SEO-Agent.webp" alt="Without AI SEO Agent" style="width: 100%; height: auto; border-radius: 8px; margin-bottom: 16px;" />
             <ul class="ba-list before">
               <li>Manually identify the issues</li>
               <li>Manually think how to fix them</li>
@@ -333,7 +332,7 @@ const html = `<main>
         <div class="ba-card">
           <div class="ba-header after"><span class="ba-label">After</span> With AI SEO Agent</div>
           <div class="ba-body">
-            <div class="ba-img">🤖</div>
+            <img src="/images/Its-NOT-a-to-do-list-With-AI-SEO-Agent.webp" alt="With AI SEO Agent" style="width: 100%; height: auto; border-radius: 8px; margin-bottom: 16px;" />
             <ul class="ba-list after">
               <li>Scans your site for flaws, gaps, and bugs</li>
               <li>Thinks about the best way to fix and implement</li>
@@ -375,7 +374,6 @@ const html = `<main>
     <a class="btn btn-primary btn-lg" href="/register">Try AI Agent Free</a>
     <div class="cta-perks"><span class="cta-perk">Cancel anytime</span><span class="cta-perk">No dev needed</span><span class="cta-perk">Works on autopilot</span></div>
     <div class="cta-social"><div class="avatars"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /></div><span style="font-size:13.5px;color:var(--muted);">Trusted by marketers &amp; agencies worldwide</span></div>
-    <div class="cta-mock-img"><div class="cta-mock-inner"><div class="cm-icon">⚙️</div><div class="cm-label">Agent dashboard preview — replace with screenshot</div></div></div>
   </div>
 </section>
 

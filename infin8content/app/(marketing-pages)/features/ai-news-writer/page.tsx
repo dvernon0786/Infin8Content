@@ -260,10 +260,7 @@ const html = `
       </div>
       <!-- Hero mockup -->
       <div class="hero-mockup">
-        <div class="hero-mockup-inner">
-          <div class="hero-mockup-icon">📰</div>
-          <p class="hero-mockup-label">News Writer Preview — Replace with screenshot</p>
-        </div>
+        <img src="/images/The-AI-News-Article-Generator-on-Autopilot.png" alt="AI News Writer generator interface" style="width: 100%; height: 100%; object-fit: cover;" />
       </div>
     </div>
   </section>
