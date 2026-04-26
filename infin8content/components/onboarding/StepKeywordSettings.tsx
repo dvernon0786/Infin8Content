@@ -135,18 +135,47 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
 
   return (
     <main className={cn("w-full max-w-2xl mx-auto", className)}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Keyword Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <div style={{
+        background: "#0f1117",
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: "14px",
+        padding: "32px",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.4)"
+      }}>
+        <h2 style={{
+          fontSize: "22px",
+          fontWeight: "600",
+          color: "#ffffff",
+          marginBottom: "24px"
+        }}>Keyword Settings</h2>
+
+        <div className="space-y-6">
           {/* Informational Context Box */}
-          <div className="bg-muted/50 rounded-lg p-4 border">
-            <h3 className="font-medium mb-2">Configure your keyword strategy</h3>
-            <p className="text-sm text-muted-foreground mb-2">
+          <div style={{
+            background: "rgba(79, 110, 247, 0.08)",
+            border: "1px solid rgba(79, 110, 247, 0.2)",
+            borderRadius: "10px",
+            padding: "16px"
+          }}>
+            <h3 style={{
+              fontWeight: "600",
+              marginBottom: "8px",
+              color: "#ffffff",
+              fontSize: "14px"
+            }}>Configure your keyword strategy</h3>
+            <p style={{
+              fontSize: "13px",
+              color: "#7b8098",
+              marginBottom: "8px",
+              lineHeight: "1.5"
+            }}>
               Set up keyword generation parameters to align with your SEO goals and resource constraints.
             </p>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <ul style={{
+              fontSize: "13px",
+              color: "#7b8098",
+              lineHeight: "1.5"
+            }}>
               <li>• Region determines the geographic focus for keyword research</li>
               <li>• Generation rules control keyword quality and quantity</li>
               <li>• Thresholds ensure we target valuable keywords</li>
@@ -156,14 +185,30 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Target Region */}
             <div className="space-y-2">
-              <label htmlFor="target_region" className="text-sm font-medium">
-                Target Region <span className="text-destructive">*</span>
+              <label htmlFor="target_region" style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#e8eaf2"
+              }}>
+                Target Region <span style={{ color: "#ef4444" }}>*</span>
               </label>
               <select
                 id="target_region"
                 value={formData.keyword_settings.target_region}
                 onChange={(e) => handleInputChange('target_region', e.target.value)}
-                className="w-full h-9 rounded-md border bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                style={{
+                  width: "100%",
+                  height: "40px",
+                  padding: "10px 12px",
+                  background: "#13151e",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: "8px",
+                  color: "#e8eaf2",
+                  fontSize: "14px",
+                  outline: "none"
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
+                onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"}
               >
                 {['United States', ...Object.keys(LOCATION_CODE_MAP)
                   .filter(r => r !== 'United States')
@@ -176,14 +221,30 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
 
             {/* Language Code */}
             <div className="space-y-2">
-              <label htmlFor="language_code" className="text-sm font-medium">
-                Language <span className="text-destructive">*</span>
+              <label htmlFor="language_code" style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#e8eaf2"
+              }}>
+                Language <span style={{ color: "#ef4444" }}>*</span>
               </label>
               <select
                 id="language_code"
                 value={formData.keyword_settings.language_code}
                 onChange={(e) => handleInputChange('language_code', e.target.value)}
-                className="w-full h-9 rounded-md border bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                style={{
+                  width: "100%",
+                  height: "40px",
+                  padding: "10px 12px",
+                  background: "#13151e",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: "8px",
+                  color: "#e8eaf2",
+                  fontSize: "14px",
+                  outline: "none"
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
+                onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"}
               >
                 {Array.from(SUPPORTED_LANGUAGE_CODES)
                   .sort()
@@ -197,16 +258,33 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
 
             {/* Auto Generate Keywords */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Auto Generate Keywords</label>
-              <div className="flex items-center space-x-2">
+              <label style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#e8eaf2"
+              }}>Auto Generate Keywords</label>
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px"
+              }}>
                 <input
                   type="checkbox"
                   id="auto_generate_keywords"
                   checked={formData.keyword_settings.auto_generate_keywords}
                   onChange={(e) => handleInputChange('auto_generate_keywords', e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300"
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    accentColor: "#4f6ef7",
+                    cursor: "pointer"
+                  }}
                 />
-                <label htmlFor="auto_generate_keywords" className="text-sm text-muted-foreground">
+                <label htmlFor="auto_generate_keywords" style={{
+                  fontSize: "13px",
+                  color: "#7b8098",
+                  cursor: "pointer"
+                }}>
                   Automatically generate keywords based on your business and competitors
                 </label>
               </div>
@@ -214,35 +292,79 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
 
             {/* Monthly Keyword Limit */}
             <div className="space-y-2">
-              <label htmlFor="monthly_keyword_limit" className="text-sm font-medium">
-                Monthly Keyword Limit <span className="text-destructive">*</span>
+              <label htmlFor="monthly_keyword_limit" style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#e8eaf2"
+              }}>
+                Monthly Keyword Limit <span style={{ color: "#ef4444" }}>*</span>
               </label>
-              <Input
+              <input
                 id="monthly_keyword_limit"
                 type="number"
                 min="10"
                 max="1000"
                 value={formData.keyword_settings.monthly_keyword_limit}
                 onChange={(e) => handleInputChange('monthly_keyword_limit', parseInt(e.target.value) || 100)}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  background: "#13151e",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: "8px",
+                  color: "#e8eaf2",
+                  fontSize: "14px",
+                  outline: "none"
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
+                onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"}
               />
-              <p className="text-xs text-muted-foreground">Maximum keywords to generate per month (10-1000)</p>
+              <p style={{
+                fontSize: "11px",
+                color: "#7b8098"
+              }}>Maximum keywords to generate per month (10-1000)</p>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button
+            <div style={{
+              display: "flex",
+              gap: "12px",
+              paddingTop: "16px"
+            }}>
+              <button
                 type="submit"
-                variant="primary"
-                size="default"
                 disabled={!isFormValid || isSubmitting}
-                className="flex-1"
+                style={{
+                  flex: 1,
+                  padding: "10px 18px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  borderRadius: "8px",
+                  background: (!isFormValid || isSubmitting) ? "rgba(79, 110, 247, 0.4)" : "#4f6ef7",
+                  color: "#ffffff",
+                  border: "none",
+                  cursor: (!isFormValid || isSubmitting) ? "not-allowed" : "pointer",
+                  opacity: (!isFormValid || isSubmitting) ? 0.6 : 1,
+                  transition: "all 0.2s",
+                  boxShadow: "0 0 20px rgba(79,110,247,0.3)"
+                }}
+                onMouseEnter={(e) => {
+                  if (isFormValid && !isSubmitting) {
+                    e.currentTarget.style.background = "#3d5df5"
+                    e.currentTarget.style.boxShadow = "0 0 30px rgba(79,110,247,0.5)"
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#4f6ef7"
+                  e.currentTarget.style.boxShadow = "0 0 20px rgba(79,110,247,0.3)"
+                }}
               >
                 {isSubmitting ? "Saving..." : "Next Step"}
-              </Button>
+              </button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </main>
   )
 }
