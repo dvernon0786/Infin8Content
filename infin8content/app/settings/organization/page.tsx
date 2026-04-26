@@ -25,7 +25,7 @@ export default async function OrganizationSettingsPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Organization Settings</h1>
+          <h1 className="font-poppins text-h2-desktop font-bold text-neutral-900">Organization Settings</h1>
           <div className="flex items-center gap-4">
             {currentUser.role === 'owner' && (
               <>
@@ -54,7 +54,7 @@ export default async function OrganizationSettingsPage() {
 
         <div className="bg-white rounded-lg shadow p-6 space-y-6">
           <div>
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Organization Details</h2>
+            <h2 className="font-poppins text-h3-desktop font-semibold text-neutral-900 mb-4">Organization Details</h2>
             <dl className="grid grid-cols-1 gap-4">
               <div>
                 <dt className="text-sm font-medium text-gray-500">Plan</dt>

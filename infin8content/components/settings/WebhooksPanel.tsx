@@ -77,7 +77,7 @@ function NewSecretDialog({ secret, onClose }: { secret: string; onClose: () => v
           <DialogTitle>Webhook Secret</DialogTitle>
           <DialogDescription>
             This is the signing secret for your webhook endpoint. Use it to verify the
-            <code className="mx-1 font-mono text-xs">X-Webhook-Signature</code> header on incoming
+            <code className="mx-1 font-mono text-small">X-Webhook-Signature</code> header on incoming
             deliveries.
           </DialogDescription>
         </DialogHeader>
@@ -89,7 +89,7 @@ function NewSecretDialog({ secret, onClose }: { secret: string; onClose: () => v
           </AlertDescription>
         </Alert>
 
-        <div className="flex items-center gap-2 rounded-md border bg-muted p-3 font-mono text-sm break-all">
+        <div className="flex items-center gap-2 rounded-md border bg-muted p-3 font-mono text-small break-all">
           <span className="flex-1">{secret}</span>
           <Button
             variant="ghost"
@@ -103,7 +103,7 @@ function NewSecretDialog({ secret, onClose }: { secret: string; onClose: () => v
           </Button>
         </div>
 
-        <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+        <label className="flex items-center gap-2 font-lato text-small cursor-pointer select-none">
           <Checkbox checked={confirmed} onCheckedChange={(v) => setConfirmed(!!v)} />
           I have copied the webhook secret
         </label>
@@ -191,7 +191,7 @@ function CreateEndpointModal({ onCreated }: { onCreated: (secret: string) => voi
               <Label>Events *</Label>
               <div className="mt-2 space-y-2">
                 {SUPPORTED_EVENTS.map((e) => (
-                  <label key={e.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <label key={e.value} className="flex items-center gap-2 font-lato text-small cursor-pointer">
                     <Checkbox
                       checked={selectedEvents.includes(e.value)}
                       onCheckedChange={() => toggleEvent(e.value)}
@@ -201,7 +201,7 @@ function CreateEndpointModal({ onCreated }: { onCreated: (secret: string) => voi
                 ))}
               </div>
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="font-lato text-small text-destructive">{error}</p>}
           </div>
 
           <DialogFooter>
@@ -264,11 +264,11 @@ export function WebhooksPanel() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
+          <h3 className="font-poppins text-h3-mobile font-semibold text-neutral-900 flex items-center gap-2">
             <Webhook className="h-4 w-4" />
             Webhook Endpoints
           </h3>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="font-lato text-small text-neutral-600 mt-1">
             Receive real-time notifications when events happen in your account.
           </p>
         </div>
@@ -283,9 +283,9 @@ export function WebhooksPanel() {
       )}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="font-lato text-small text-neutral-600">Loading…</p>
       ) : endpoints.length === 0 ? (
-        <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-md border border-dashed p-8 text-center font-lato text-small text-neutral-600">
           No webhook endpoints yet. Add one to start receiving event notifications.
         </div>
       ) : (
@@ -306,14 +306,14 @@ export function WebhooksPanel() {
               <TableRow key={ep.id}>
                 <TableCell className="font-medium">{ep.name}</TableCell>
                 <TableCell>
-                  <span className="font-mono text-xs text-muted-foreground truncate max-w-50 block">
+                  <span className="font-mono text-small text-neutral-600 truncate max-w-50 block">
                     {ep.url}
                   </span>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {ep.events.map((e) => (
-                      <Badge key={e} variant="secondary" className="text-xs">{e}</Badge>
+                      <Badge key={e} variant="secondary" className="text-small">{e}</Badge>
                     ))}
                   </div>
                 </TableCell>
@@ -322,15 +322,15 @@ export function WebhooksPanel() {
                     {ep.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-sm">
+                <TableCell className="font-lato text-small">
                   <span className="text-green-600">{ep.success_count} ✓</span>
                   {ep.failure_count > 0 && <span className="text-destructive ml-2">{ep.failure_count} ✗</span>}
                 </TableCell>
-                <TableCell className="text-muted-foreground text-sm">{formatDate(ep.last_triggered_at)}</TableCell>
+                <TableCell className="font-lato text-small text-neutral-600">{formatDate(ep.last_triggered_at)}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     {testResult[ep.id] && (
-                      <span className="text-xs text-muted-foreground">{testResult[ep.id]}</span>
+                      <span className="font-lato text-small text-neutral-600">{testResult[ep.id]}</span>
                     )}
                     <Button
                       variant="ghost"

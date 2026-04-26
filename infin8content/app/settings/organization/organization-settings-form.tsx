@@ -73,7 +73,7 @@ export default function OrganizationSettingsForm({ organization }: Props) {
     <form onSubmit={handleSubmit} className="space-y-6">
       {successMessage && (
         <div
-          className="text-sm flex items-center gap-1 text-green-600 bg-green-50 p-3 rounded-md border border-green-200"
+          className="font-lato text-small flex items-center gap-1 text-green-600 bg-green-50 p-3 rounded-md border border-green-200"
           role="alert"
           aria-live="polite"
         >
@@ -82,7 +82,7 @@ export default function OrganizationSettingsForm({ organization }: Props) {
       )}
 
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-900">
+        <label htmlFor="name" className="block font-lato text-small font-medium text-neutral-900">
           Organization Name *
         </label>
         <input
@@ -91,7 +91,7 @@ export default function OrganizationSettingsForm({ organization }: Props) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           onBlur={() => validateName(name)}
-          className="mt-1 block w-full px-3 py-3 text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="mt-1 block w-full px-3 py-3 font-lato text-body border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           required
           minLength={2}
           maxLength={100}
@@ -100,7 +100,7 @@ export default function OrganizationSettingsForm({ organization }: Props) {
           aria-describedby={errors.name ? 'name-error' : undefined}
         />
         {errors.name && (
-          <p id="name-error" className="mt-1 text-sm flex items-center gap-1 text-red-600">
+          <p id="name-error" className="mt-1 font-lato text-small flex items-center gap-1 text-red-600">
             <span aria-hidden="true">⚠</span> {errors.name}
           </p>
         )}
@@ -109,7 +109,7 @@ export default function OrganizationSettingsForm({ organization }: Props) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm font-lato text-small font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {isSubmitting ? 'Saving...' : 'Save Changes'}
       </button>

@@ -18,16 +18,16 @@ export default async function TeamSettingsPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">Team Settings</h1>
+        <h1 className="font-poppins text-h2-desktop font-bold text-neutral-900 mb-8">Team Settings</h1>
 
         <div className="bg-white rounded-lg shadow p-6 space-y-6">
           <div>
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Invite Team Member</h2>
+            <h2 className="font-poppins text-h3-desktop font-semibold text-neutral-900 mb-4">Invite Team Member</h2>
             <InviteTeamMemberForm />
           </div>
 
           <div>
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Team Members</h2>
+            <h2 className="font-poppins text-h3-desktop font-semibold text-neutral-900 mb-4">Team Members</h2>
             <TeamMembersList />
           </div>
         </div>
