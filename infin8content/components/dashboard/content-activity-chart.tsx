@@ -76,7 +76,7 @@ export function ContentActivityChart({ articles }: ContentActivityChartProps) {
             border: "1px solid #eaecf0",
             borderRadius: 12,
             padding: "18px 20px",
-        }}>
+        }} data-tour="activity-chart">
             {/* Card header with legend */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 4 }}>
                 <div>

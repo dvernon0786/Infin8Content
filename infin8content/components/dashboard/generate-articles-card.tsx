@@ -55,7 +55,7 @@ export function GenerateArticlesCard() {
             border: "1px solid #eaecf0",
             borderRadius: 12,
             padding: "18px 20px",
-        }}>
+        }} data-tour="generate-card">
             {/* Header */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
                 <div>

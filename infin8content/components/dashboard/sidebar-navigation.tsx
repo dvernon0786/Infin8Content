@@ -45,6 +45,15 @@ type NavItem = {
 }
 
 // Coming-soon items have no real routes
+// Tour attribute mapping
+const getTourAttribute = (itemId: string): string | undefined => {
+  const map: Record<string, string> = {
+    articles: "articles-nav",
+    "blog-automation": "workflows-nav",
+  }
+  return map[itemId]
+}
+
 const NAV_ITEMS: NavItem[] = [
     {
         id: "overview",
@@ -109,6 +118,7 @@ export function SidebarNavigation({ orgName = "Default Workspace", plan, usage }
         <Sidebar
             style={{ "--sidebar-width": "202px" } as React.CSSProperties}
             className="border-r-0"
+            data-tour="sidebar"
         >
             {/* Brand area */}
             <SidebarHeader style={{ borderBottom: "1px solid #f0f0f0", padding: "15px 16px 11px" }}>
@@ -191,6 +201,7 @@ export function SidebarNavigation({ orgName = "Default Workspace", plan, usage }
                                             href={item.url}
                                             style={{ flex: 1, color: "inherit", textDecoration: "none" }}
                                             onClick={() => isMobile && setSidebarOpenMobile(false)}
+                                            data-tour={getTourAttribute(item.id)}
                                         >
                                             {item.title}
                                         </Link>

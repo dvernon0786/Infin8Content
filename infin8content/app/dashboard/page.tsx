@@ -103,7 +103,7 @@ export default async function DashboardPage() {
       {/* Row 2: Stat cards | Content Activity Chart */}
       <div className="dashboard-grid">
         {/* Two stacked stat cards */}
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-2.5" data-tour="stat-cards">
           {/* Stat: Generated */}
           <div className="stat-card">
             <div className="text-lg mb-1.5">📄</div>

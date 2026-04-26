@@ -620,7 +620,7 @@ export function WorkflowDashboard({ orgId }: { orgId: string }) {
   const workflows = data?.workflows ?? []
 
   return (
-    <div style={{ flex: 1, overflowY: "auto", padding: 24, background: T.lightGray }}>
+    <div style={{ flex: 1, overflowY: "auto", padding: 24, background: T.lightGray }} data-tour="workflow-dashboard">
       {/* BUG FIX #1: keyframes moved to globals.css (Zero Drift) */}
 
       {/* Page header */}

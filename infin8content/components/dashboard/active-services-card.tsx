@@ -18,7 +18,7 @@ export function ActiveServicesCard({ summary }: ActiveServicesCardProps) {
             border: "1px solid #eaecf0",
             borderRadius: 12,
             padding: "18px 20px",
-        }}>
+        }} data-tour="active-services">
             {/* Header */}
             <div style={{ marginBottom: 2 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: "#0a0a0a" }}>
