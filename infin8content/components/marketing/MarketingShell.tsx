@@ -177,7 +177,6 @@ export default function MarketingShell({ children }: { children: React.ReactNode
               <div className="nav-item">
                 <span className="nav-link">Resources <span className="chevron">▾</span></span>
                 <div className="dropdown">
-                  <a className="dropdown-link" href="/resources/case-studies">Case Studies</a>
                   <a className="dropdown-link" href="/resources/learn">Learning &amp; Training</a>
                   <a className="dropdown-link" href="/resources/help">Help Docs</a>
                   <a className="dropdown-link" href="/resources/blog">Blog</a>

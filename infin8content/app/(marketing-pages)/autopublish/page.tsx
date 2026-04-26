@@ -256,7 +256,7 @@ const html = `<main>
       <div class="ba-card">
         <div class="ba-header before"><span class="ba-label">Before</span> Difficult &amp; hard to manage</div>
         <div class="ba-body">
-          <div class="ba-img">😩</div>
+          <img src="/images/Difficult-and-hard-to-manage.webp" alt="Difficult and hard to manage" style="width: 100%; height: auto; border-radius: 8px; margin-bottom: 16px;" />
           <ul class="ba-list before">
             <li>Setting up blog — ~1 week of work</li>
             <li>Hiring copywriter — $600/month</li>
@@ -268,7 +268,7 @@ const html = `<main>
       <div class="ba-card">
         <div class="ba-header after"><span class="ba-label">After</span> Blog runs automatically</div>
         <div class="ba-body">
-          <div class="ba-img">🚀</div>
+          <img src="/images/Blog-runs-automatically.png" alt="Blog runs automatically" style="width: 100%; height: auto; border-radius: 8px; margin-bottom: 16px;" />
           <ul class="ba-list after">
             <li>All-in-one solution — set and forget</li>
             <li>Connect to your blog in seconds</li>
@@ -358,10 +358,9 @@ const html = `<main>
   <div class="container">
     <h2>Your blog. Running itself.</h2>
     <p>Get started and see why agencies trust Infin8Content.</p>
-    <a class="btn btn-primary btn-lg" href="/register">Start AutoPublish Free</a>
+    <a class="btn btn-primary btn-lg" href="/register">Start AutoPublish</a>
     <div class="cta-perks"><span class="cta-perk">Cancel anytime</span><span class="cta-perk">150+ languages</span><span class="cta-perk">Set and forget</span></div>
     <div class="cta-social"><div class="avatars"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /></div><span style="font-size:13.5px;color:var(--muted);">Trusted by marketers &amp; agencies worldwide</span></div>
-    <div class="cta-mock-img"><div class="cta-mock-inner"><div class="cm-icon">🚀</div><div class="cm-label">AutoPublish dashboard — replace with screenshot</div></div></div>
   </div>
 </section>
 

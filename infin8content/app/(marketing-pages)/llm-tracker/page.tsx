@@ -225,7 +225,7 @@ const html = `<main>
     <h1 class="fade-up">Track Your Brand<br>in <span class="high">AI Search</span></h1>
     <p class="sub fade-up">See how ChatGPT, Perplexity, Gemini, Claude, and Google AI Overviews talk about your brand. Monitor mentions, citations, and share of voice — all in one dashboard, one price.</p>
     <div class="hero-actions fade-up">
-      <a class="btn btn-primary btn-lg" href="/register">Start Tracking Free</a>
+      <a class="btn btn-primary btn-lg" href="/register">Start Tracking</a>
     </div>
     <div class="social-proof fade-up">
       <div class="avatars"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /></div>
@@ -282,9 +282,9 @@ const html = `<main>
     <h2 class="section-title" style="text-align:center;margin-bottom:12px;">Set Up AI Visibility Tracking in 3 Simple Steps</h2>
     <p class="section-sub" style="text-align:center;max-width:480px;margin:0 auto 44px;">From zero to complete AI search visibility in minutes.</p>
     <div class="steps-grid">
-      <div class="step-card"><div class="step-num">1</div><div class="step-icon">🏷️</div><h4>Add Your Brands</h4><p>Enter your brand name and the competitors you want to track. Add the topics and queries that matter most to your business and customers.</p></div>
-      <div class="step-card"><div class="step-num">2</div><div class="step-icon">🕵️</div><h4>We Query the AIs</h4><p>Our crawler asks real questions to ChatGPT, Perplexity, Gemini, Claude, Grok, and Google AI Overviews — exactly like your customers do every day.</p></div>
-      <div class="step-card"><div class="step-num">3</div><div class="step-icon">📊</div><h4>See Your Visibility</h4><p>Get detailed reports on mentions, citations, sentiment, and share of voice. Track changes over time and spot opportunities to improve your AI presence.</p></div>
+      <div class="step-card"><img src="/images/Add-Your-Brands.webp" alt="Add Your Brands" style="width: 100%; height: auto; border-radius: 10px; margin-bottom: 16px;" /><div class="step-num">1</div><h4>Add Your Brands</h4><p>Enter your brand name and the competitors you want to track. Add the topics and queries that matter most to your business and customers.</p></div>
+      <div class="step-card"><img src="/images/We-Query-the-AIs.png" alt="We Query the AIs" style="width: 100%; height: auto; border-radius: 10px; margin-bottom: 16px;" /><div class="step-num">2</div><h4>We Query the AIs</h4><p>Our crawler asks real questions to ChatGPT, Perplexity, Gemini, Claude, Grok, and Google AI Overviews — exactly like your customers do every day.</p></div>
+      <div class="step-card"><img src="/images/See-Your-Visibility.webp" alt="See Your Visibility" style="width: 100%; height: auto; border-radius: 10px; margin-bottom: 16px;" /><div class="step-num">3</div><h4>See Your Visibility</h4><p>Get detailed reports on mentions, citations, sentiment, and share of voice. Track changes over time and spot opportunities to improve your AI presence.</p></div>
     </div>
   </div>
 </section>
@@ -331,7 +331,7 @@ const html = `<main>
           <li>Historical trends to track your progress over time</li>
         </ul>
       </div>
-      <div class="feat-img"><div class="feat-img-inner"><div class="feat-img-icon">📊</div><div class="feat-img-label">Share of Voice Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with screenshot</span></div></div><div class="glow"></div></div>
+      <img src="/images/Track-Share-of-Voice-Across-AI-Search.webp" alt="Track Share of Voice Across AI Search" style="width: 100%; height: auto; border-radius: 14px;" />
     </div>
     <div class="feature-row rev">
       <div>
@@ -344,7 +344,7 @@ const html = `<main>
           <li>Full context of every mention captured</li>
         </ul>
       </div>
-      <div class="feat-img"><div class="feat-img-inner"><div class="feat-img-icon">🔔</div><div class="feat-img-label">Mentions Dashboard Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with screenshot</span></div></div><div class="glow"></div></div>
+      <img src="/images/Monitor-Every-Mention-and-Citation.webp" alt="Monitor Every Mention and Citation" style="width: 100%; height: auto; border-radius: 14px;" />
     </div>
     <div class="feature-row" style="padding-bottom:0;border-bottom:none;">
       <div>
@@ -357,7 +357,7 @@ const html = `<main>
           <li>Sentiment trend tracking over time</li>
         </ul>
       </div>
-      <div class="feat-img"><div class="feat-img-inner"><div class="feat-img-icon">😊</div><div class="feat-img-label">Sentiment Analysis Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with screenshot</span></div></div><div class="glow"></div></div>
+      <img src="/images/Understand-AI-Sentiment-About-Your-Brand.webp" alt="Understand AI Sentiment About Your Brand" style="width: 100%; height: auto; border-radius: 14px;" />
     </div>
   </div>
 </section>
@@ -397,10 +397,9 @@ const html = `<main>
   <div class="container">
     <h2>Know what AI says<br>about your brand.</h2>
     <p>Start tracking your brand across LLMs today.</p>
-    <a class="btn btn-primary btn-lg" href="/register">Start Tracking Free</a>
+    <a class="btn btn-primary btn-lg" href="/register">Start Tracking</a>
     <div class="cta-perks"><span class="cta-perk">All platforms included</span><span class="cta-perk">Cancel anytime</span><span class="cta-perk">White label reports</span></div>
     <div class="cta-social"><div class="avatars"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /></div><span style="font-size:13.5px;color:var(--muted);">Trusted by marketers &amp; agencies worldwide</span></div>
-    <div class="cta-mock-img"><div class="cta-mock-inner"><div class="cm-icon">🔭</div><div class="cm-label">LLM tracker dashboard — replace with screenshot</div></div></div>
   </div>
 </section>
 

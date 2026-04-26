@@ -342,14 +342,14 @@ const html = `
       </div>
       <div class="steps-grid">
         <div class="step-card fade-up">
+          <img src="/images/Dominate-Google-Rankings.webp" alt="Dominate Google Rankings" style="width: 100%; height: auto; border-radius: 10px; margin-bottom: 16px;" />
           <div class="step-num">1</div>
-          <div class="step-icon">🎯</div>
           <h4>Dominate Google Rankings</h4>
           <p>Rank your site #1 on Google for high buying-intent keywords — comparison pages, alternative pages, informational pages.</p>
         </div>
         <div class="step-card fade-up">
+          <img src="/images/Turn-Traffic-into-Subscribers.webp" alt="Turn Traffic into Subscribers" style="width: 100%; height: auto; border-radius: 10px; margin-bottom: 16px;" />
           <div class="step-num">2</div>
-          <div class="step-icon">💰</div>
           <h4>Turn Traffic into Subscribers</h4>
           <p>Convert the organic traffic into paying SaaS subscribers with bottom-of-funnel content and embedded CTAs.</p>
         </div>
@@ -375,11 +375,7 @@ const html = `
           <a href="#" class="learn-link">Learn about Informational Pages →</a>
         </div>
         <div>
-          <div class="feat-img">
-            <div class="feat-img-icon">📰</div>
-            <p class="feat-img-label">Informational Page Preview<br><span style="font-size:11px;">Replace with screenshot</span></p>
-            <div class="glow"></div>
-          </div>
+          <img src="/images/Informational-Pages.png" alt="Informational Pages" style="width: 100%; height: auto; border-radius: 14px;" />
         </div>
       </div>
 
@@ -397,11 +393,7 @@ const html = `
           <a href="#" class="learn-link">Learn about Comparison Pages →</a>
         </div>
         <div>
-          <div class="feat-img">
-            <div class="feat-img-icon">⚖️</div>
-            <p class="feat-img-label">Comparison Page Preview<br><span style="font-size:11px;">Replace with screenshot</span></p>
-            <div class="glow"></div>
-          </div>
+          <img src="/images/Comparison-Pages.png" alt="Comparison Pages" style="width: 100%; height: auto; border-radius: 14px;" />
         </div>
       </div>
 
@@ -419,11 +411,7 @@ const html = `
           <a href="#" class="learn-link">Learn about Alternative Pages →</a>
         </div>
         <div>
-          <div class="feat-img">
-            <div class="feat-img-icon">🔄</div>
-            <p class="feat-img-label">Alternative Page Preview<br><span style="font-size:11px;">Replace with screenshot</span></p>
-            <div class="glow"></div>
-          </div>
+          <img src="/images/Alternative-Pages.png" alt="Alternative Pages" style="width: 100%; height: auto; border-radius: 14px;" />
         </div>
       </div>
 
@@ -439,17 +427,17 @@ const html = `
       </div>
       <div class="summary-grid">
         <div class="summary-card fade-up">
-          <div class="sc-icon">📄</div>
+          <img src="/images/Creates-SaaS-SEO-tailored-pages.webp" alt="Creates SaaS-SEO tailored pages" style="width: 100%; height: auto; border-radius: 10px; margin-bottom: 14px;" />
           <h4>Creates SaaS-SEO tailored pages</h4>
           <p>Informational, comparison, and alternative pages targeting high-buying-intent keywords.</p>
         </div>
         <div class="summary-card fade-up">
-          <div class="sc-icon">📈</div>
+          <img src="/images/Ranks-them-on-Google.png" alt="Ranks them on Google" style="width: 100%; height: auto; border-radius: 10px; margin-bottom: 14px;" />
           <h4>Ranks them on Google</h4>
           <p>These pages rank by themselves due to low keyword competition and high topical relevance.</p>
         </div>
         <div class="summary-card fade-up">
-          <div class="sc-icon">💎</div>
+          <img src="/images/Converts-traffic-into-customers.png" alt="Converts traffic into customers" style="width: 100%; height: auto; border-radius: 10px; margin-bottom: 14px;" />
           <h4>Converts traffic into customers</h4>
           <p>Higher conversion rates because of bottom-of-funnel content and smart keyword selection.</p>
         </div>

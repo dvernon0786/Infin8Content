@@ -241,7 +241,7 @@ const html = `<main>
     <h1 class="fade-up">The AI SEO Agent that improves<br>your SEO <span class="high">on autopilot</span></h1>
     <p class="sub fade-up">The AI agent finds gaps in your site's technical SEO, reasons how to fix them, and implements changes live — all automatically, every single day.</p>
     <div class="hero-actions fade-up">
-      <a class="btn btn-primary btn-lg" href="/register">Try AI Agent Free</a>
+      <a class="btn btn-primary btn-lg" href="/register">Try AI Agent</a>
     </div>
     <div class="social-proof fade-up">
       <div class="avatars"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /></div>
@@ -371,7 +371,7 @@ const html = `<main>
   <div class="container">
     <h2>Scale more clients.<br>Do less work.</h2>
     <p>Get started and see why agencies trust Infin8Content.</p>
-    <a class="btn btn-primary btn-lg" href="/register">Try AI Agent Free</a>
+    <a class="btn btn-primary btn-lg" href="/register">Try AI Agent</a>
     <div class="cta-perks"><span class="cta-perk">Cancel anytime</span><span class="cta-perk">No dev needed</span><span class="cta-perk">Works on autopilot</span></div>
     <div class="cta-social"><div class="avatars"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /></div><span style="font-size:13.5px;color:var(--muted);">Trusted by marketers &amp; agencies worldwide</span></div>
   </div>
