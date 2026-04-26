@@ -806,36 +806,144 @@ const html = `
   </div>
 </div><!-- /plans-section -->
 
-<!-- ═══════════════════════ TRAFFIC PROOF STRIP ══════════════════════════ -->
-<section class="strip-section">
-  <p class="strip-label">Real results from real teams</p>
-  <div class="strip-track-wrapper">
-    <div class="strip-fade-l"></div>
-    <div class="strip-fade-r"></div>
-    <div class="strip-track" id="strip-track">
-      <div class="strip-item"><span class="strip-item-stat">0 → 2,600/mo</span><span class="strip-item-sub">in 120 days</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">100 → 4,500/mo</span><span class="strip-item-sub">in 150 days</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">0 → 5,800/mo</span><span class="strip-item-sub">in 30 days</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">0 → 8,000/mo</span><span class="strip-item-sub">in 8 months</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">0 → 6,000/mo</span><span class="strip-item-sub">in 5 months</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">1k → 24,000/mo</span><span class="strip-item-sub">in 12 months</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">0 → 14,000/mo</span><span class="strip-item-sub">in 60 days</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">600 → 6,000/mo</span><span class="strip-item-sub">in 9 months</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">0 → 1,600/mo</span><span class="strip-item-sub">in 60 days</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">4k → 14,000/mo</span><span class="strip-item-sub">in 90 days</span><span class="strip-item-arr">↑</span></div>
-      <!-- duplicated for seamless loop -->
-      <div class="strip-item"><span class="strip-item-stat">0 → 2,600/mo</span><span class="strip-item-sub">in 120 days</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">100 → 4,500/mo</span><span class="strip-item-sub">in 150 days</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">0 → 5,800/mo</span><span class="strip-item-sub">in 30 days</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">0 → 8,000/mo</span><span class="strip-item-sub">in 8 months</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">0 → 6,000/mo</span><span class="strip-item-sub">in 5 months</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">1k → 24,000/mo</span><span class="strip-item-sub">in 12 months</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">0 → 14,000/mo</span><span class="strip-item-sub">in 60 days</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">600 → 6,000/mo</span><span class="strip-item-sub">in 9 months</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">0 → 1,600/mo</span><span class="strip-item-sub">in 60 days</span><span class="strip-item-arr">↑</span></div>
-      <div class="strip-item"><span class="strip-item-stat">4k → 14,000/mo</span><span class="strip-item-sub">in 90 days</span><span class="strip-item-arr">↑</span></div>
+<!-- ═══════════════════════ INTERACTIVE RESULTS SHOWCASE ══════════════════════════ -->
+<section class="results-showcase-section">
+  <div class="container">
+    <p class="section-label" style="justify-content:center;">✨ &nbsp;It just works.</p>
+    <h2 class="section-title" style="text-align:center;">Real results, from real users.</h2>
+
+    <!-- TOP TABS NAVIGATION (2 ROWS) -->
+    <div class="results-tabs-nav-top">
+      <!-- Row 1: 5 Tabs -->
+      <div class="tabs-row-top">
+        <button class="result-tab-btn-top active" data-image="0-to-2600-in-120-days.png">0 to 2,600 in 120 days</button>
+        <button class="result-tab-btn-top" data-image="100-to-4500-in-150-days.png">100 to 4,500 in 150 days</button>
+        <button class="result-tab-btn-top" data-image="0-to-5800-in-30-days.png">0 to 5,800 in 30 days</button>
+        <button class="result-tab-btn-top" data-image="0-to-1000-in-150-days.png">0 to 1,000 in 150 days</button>
+        <button class="result-tab-btn-top" data-image="0-to-8000-in-8-months.png">0 to 8,000 in 8 months</button>
+      </div>
+
+      <!-- Row 2: 5 Tabs -->
+      <div class="tabs-row-top">
+        <button class="result-tab-btn-top" data-image="0-to-6000-in-5-months.png">0 to 6,000 in 5 months</button>
+        <button class="result-tab-btn-top" data-image="1k-to-24000-in-12-months.png">1k to 24,000 in 12 months</button>
+        <button class="result-tab-btn-top" data-image="0-to-1000-in-120-days.png">0 to 1,000 in 120 days</button>
+        <button class="result-tab-btn-top" data-image="4k-to-14000-in-90-days.png">4k to 14,000 in 90 days</button>
+        <button class="result-tab-btn-top" data-image="600-to-6000-in-9-months.png">600 to 6,000 in 9 months</button>
+      </div>
+    </div>
+
+    <!-- DYNAMIC CONTENT PANEL -->
+    <div class="result-panel-top">
+      <div class="result-panel-img-top">
+        <img id="resultImage" src="/images/0-to-2600-in-120-days.png" alt="Result showcase" style="width:100%;height:100%;object-fit:cover;"/>
+        <div class="glow"></div>
+      </div>
     </div>
   </div>
+
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0.8; }
+      to { opacity: 1; }
+    }
+
+    .results-showcase-section { padding: 90px 0; }
+    .results-showcase-section .section-title { text-align: center; margin-bottom: 40px; }
+
+    /* TOP TABS NAVIGATION */
+    .results-tabs-nav-top { display: flex; flex-direction: column; gap: 0; margin-bottom: 32px; }
+    .tabs-row-top { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
+
+    .result-tab-btn-top {
+      padding: 16px 14px;
+      border: 1px solid var(--border);
+      border-right: none;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+      text-align: center;
+      position: relative;
+    }
+
+    .result-tab-btn-top:last-child { border-right: 1px solid var(--border); }
+    .tabs-row-top:first-child .result-tab-btn-top { border-bottom: none; }
+    .tabs-row-top:last-child .result-tab-btn-top { border-bottom: 1px solid var(--border); }
+
+    .result-tab-btn-top:hover { background: rgba(79,110,247,.05); }
+
+    .result-tab-btn-top.active {
+      background: rgba(79,110,247,.08);
+      color: var(--white);
+      font-weight: 600;
+    }
+
+    .result-tab-btn-top.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent);
+    }
+
+    /* DYNAMIC CONTENT PANEL */
+    .result-panel-top {
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      aspect-ratio: 16/9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+      max-width: 87%;
+      margin: 0 auto;
+    }
+    .result-panel-img-top {
+      width: 100%;
+      height: 100%;
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+    }
+    #resultImage { animation: fadeIn 0.3s ease; }
+    .result-panel-img-top .glow {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(ellipse at 60% 30%, rgba(79,110,247,.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* RESPONSIVE */
+    @media(max-width:1024px){
+      .tabs-row-top { grid-template-columns: repeat(4, 1fr); }
+      .result-panel-top { aspect-ratio: 16/9; }
+    }
+
+    @media(max-width:768px){
+      .results-showcase-section { padding: 60px 0; }
+      .tabs-row-top { grid-template-columns: repeat(2, 1fr); }
+      .result-tab-btn-top { padding: 12px 10px; font-size: 12px; }
+      .result-panel-top { aspect-ratio: 4/3; }
+    }
+
+    @media(max-width:480px){
+      .tabs-row-top { grid-template-columns: 1fr; }
+      .result-tab-btn-top { padding: 10px 8px; font-size: 11px; }
+      .result-panel-top { aspect-ratio: 1; }
+    }
+  </style>
 </section>
 
 <!-- ═════════════════════ FEATURE VALUE SECTION ══════════════════════════ -->
@@ -1255,6 +1363,50 @@ window._setPricing = function(mode) {
 };
 // Default: annual
 window._setPricing('annual');
+
+// Result tabs interactivity with auto-scroll
+document.addEventListener('DOMContentLoaded', function() {
+  const resultTabs = document.querySelectorAll('.result-tab-btn-top');
+  const resultImage = document.getElementById('resultImage');
+  let currentTabIndex = 0;
+  let autoScrollInterval = null;
+
+  function activateTab(index) {
+    resultTabs.forEach(t => t.classList.remove('active'));
+    const tab = resultTabs[index];
+    if (tab) {
+      tab.classList.add('active');
+      const imageName = tab.getAttribute('data-image');
+      if (resultImage) {
+        resultImage.src = '/images/' + imageName;
+      }
+      currentTabIndex = index;
+    }
+  }
+
+  function startAutoScroll() {
+    autoScrollInterval = setInterval(() => {
+      currentTabIndex = (currentTabIndex + 1) % resultTabs.length;
+      activateTab(currentTabIndex);
+    }, 10000);
+  }
+
+  function stopAutoScroll() {
+    clearInterval(autoScrollInterval);
+  }
+
+  // Manual tab click
+  resultTabs.forEach((tab, index) => {
+    tab.addEventListener('click', function() {
+      stopAutoScroll();
+      activateTab(index);
+      startAutoScroll();
+    });
+  });
+
+  // Start auto-scroll on load
+  startAutoScroll();
+});
 </script>
 `;
 

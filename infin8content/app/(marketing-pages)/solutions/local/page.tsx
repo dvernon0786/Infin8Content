@@ -278,17 +278,17 @@ const html = `
       </div>
       <div class="reasons-grid">
         <div class="reason-card fade-up">
-          <div class="reason-icon">📍</div>
+          <img src="/images/Rank-Higher.webp" alt="Rank Higher" style="width: 100%; height: 200px; object-fit: cover; border-radius: 10px; margin-bottom: 16px;">
           <h4>Rank Higher</h4>
           <p>Capture high-intent local customers by ranking at the top of search results for your area and service keywords.</p>
         </div>
         <div class="reason-card fade-up">
-          <div class="reason-icon">🧲</div>
+          <img src="/images/Attract-More-Clients.webp" alt="Attract More Clients" style="width: 100%; height: 200px; object-fit: cover; border-radius: 10px; margin-bottom: 16px;">
           <h4>Attract More Clients</h4>
           <p>Through high-quality, SEO-optimized articles, Infin8Content builds organic search rankings, consistently bringing in new clients.</p>
         </div>
         <div class="reason-card fade-up">
-          <div class="reason-icon">⏱️</div>
+          <img src="/images/Save-Time-and-Focus.webp" alt="Save Time and Focus" style="width: 100%; height: 200px; object-fit: cover; border-radius: 10px; margin-bottom: 16px;">
           <h4>Save Time and Focus</h4>
           <p>Infin8Content automates content creation so you can focus on your business while your website acquires new clients 24/7.</p>
         </div>
@@ -347,11 +347,7 @@ const html = `
           <a href="/features/autopublish" class="learn-link">Learn about AutoPublish →</a>
         </div>
         <div>
-          <div class="feat-img">
-            <div class="feat-img-icon">🤖</div>
-            <p class="feat-img-label">AutoPublish Preview<br><span style="font-size:11px;">Replace with screenshot</span></p>
-            <div class="glow"></div>
-          </div>
+          <img src="/images/Effortless-Marketing-on-Autopilot.webp" alt="Effortless Marketing on Autopilot" style="width: 100%; border-radius: 14px; border: 1px solid rgba(255,255,255,.07); box-shadow: 0 20px 60px rgba(0,0,0,.4);">
         </div>
       </div>
 
@@ -370,11 +366,7 @@ const html = `
           <a href="/features/ai-content-writer" class="learn-link">Learn about Custom CTAs →</a>
         </div>
         <div>
-          <div class="feat-img">
-            <div class="feat-img-icon">📞</div>
-            <p class="feat-img-label">Custom CTA Preview<br><span style="font-size:11px;">Replace with screenshot</span></p>
-            <div class="glow"></div>
-          </div>
+          <img src="/images/Custom-CTA-Integration-for-Client-Conversion.webp" alt="Custom CTA Integration for Client Conversion" style="width: 100%; border-radius: 14px; border: 1px solid rgba(255,255,255,.07); box-shadow: 0 20px 60px rgba(0,0,0,.4);">
         </div>
       </div>
 
@@ -393,11 +385,7 @@ const html = `
           <a href="/resources/blog/5-local-seo-tips-google-maps" class="learn-link">Read our Local SEO guide →</a>
         </div>
         <div>
-          <div class="feat-img">
-            <div class="feat-img-icon">🌍</div>
-            <p class="feat-img-label">Geo-Targeting Preview<br><span style="font-size:11px;">Replace with screenshot</span></p>
-            <div class="glow"></div>
-          </div>
+          <img src="/images/Hyper-Local-Geo-Targeting.webp" alt="Hyper-Local Geo-Targeting" style="width: 100%; border-radius: 14px; border: 1px solid rgba(255,255,255,.07); box-shadow: 0 20px 60px rgba(0,0,0,.4);">
         </div>
       </div>
 
