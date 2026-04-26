@@ -248,12 +248,11 @@ export default function PaymentForm({
 
         {/* Billing Frequency Toggle */}
         <div className="max-w-3xl mx-auto mb-8 flex justify-center">
-          <div className="inline-flex rounded-lg p-1 gap-1" role="group" className="payment-frequency-toggle">
+          <div className="payment-frequency-toggle" role="group">
             <button
               type="button"
               onClick={() => setBillingFrequency('monthly')}
               className={`payment-frequency-button ${billingFrequency === 'monthly' ? 'active' : ''}`}
-              className="px-6 py-2 text-sm font-medium rounded-md transition-all hover:text-mkt-white"
             >
               Monthly
             </button>
@@ -261,7 +260,6 @@ export default function PaymentForm({
               type="button"
               onClick={() => setBillingFrequency('annual')}
               className={`payment-frequency-button ${billingFrequency === 'annual' ? 'active' : ''}`}
-              className="px-6 py-2 text-sm font-medium rounded-md transition-all hover:text-mkt-white"
             >
               Annual
             </button>
