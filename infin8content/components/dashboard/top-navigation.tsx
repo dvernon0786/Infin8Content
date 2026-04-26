@@ -1,7 +1,6 @@
 "use client"
 
-import { LogOut, Bell, Search, MoreHorizontal, HelpCircle, Settings } from "lucide-react"
-import { HelpDrawer } from "@/components/dashboard/help-drawer"
+import { LogOut, Settings } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -37,7 +36,6 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
     const [isLoggingOut, setIsLoggingOut] = useState(false)
     const [searchOpen, setSearchOpen] = useState(false)
     const [overflowOpen, setOverflowOpen] = useState(false)
-    const [helpOpen, setHelpOpen] = useState(false)
     const { isMobile, isTablet, isDesktop } = useResponsiveNavigation()
 
     const initials = name
@@ -110,9 +108,10 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
                 <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#f97316", flexShrink: 0 }} />
                 <span style={{ opacity: 0.9 }}>See Infin8Content in action — Full Walkthrough:</span>
                 <a
-                    href="#"
+                    href="/resources/help"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     style={{ color: "#fff", fontWeight: 700, textDecoration: "underline", cursor: "pointer" }}
-                    onClick={(e) => { e.preventDefault(); setHelpOpen(true) }}
                 >
                     Watch Now
                 </a>
@@ -148,15 +147,17 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
                 </button>
 
                 {/* Help & Support */}
-                <button
-                    onClick={() => setHelpOpen(true)}
-                    style={{ display: "flex", alignItems: "center", gap: 5, opacity: 0.85, fontSize: 12, cursor: "pointer", background: "none", border: "none", color: "#fff" }}
+                <a
+                    href="/resources/help"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: "flex", alignItems: "center", gap: 5, opacity: 0.85, fontSize: 12, cursor: "pointer", background: "none", border: "none", color: "#fff", textDecoration: "none" }}
                 >
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" strokeWidth="2">
                         <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
                     </svg>
                     Help &amp; Support
-                </button>
+                </a>
 
                 {/* Avatar dropdown */}
                 <DropdownMenu>
@@ -203,7 +204,6 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
                 </DropdownMenu>
             </div>
         </header>
-        <HelpDrawer open={helpOpen} onOpenChange={setHelpOpen} />
         </>
     )
 }
