@@ -312,7 +312,7 @@ const html = `
       <p class="hero-sub">Automatically publish pages on your site that target high-buying-intent keywords — ranking on Google and getting cited by LLMs.</p>
       <div class="hero-actions">
         <a href="/register" class="btn btn-primary btn-lg">Start today</a>
-        <a href="#" class="btn-ghost btn" style="padding:14px 30px;font-size:16px;border-radius:10px;">See It In Action</a>
+        <a href="#see-it-in-action" class="btn-ghost btn" style="padding:14px 30px;font-size:16px;border-radius:10px;">See It In Action</a>
       </div>
       <!-- Social proof -->
       <div style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:13.5px;color:var(--muted);margin-bottom:12px;">
@@ -334,7 +334,7 @@ const html = `
   </section>
 
   <!-- ═══════════════════════════ 2-STEP PROCESS ═══════════════════════ -->
-  <section class="section section-alt">
+  <section class="section section-alt" id="see-it-in-action">
     <div class="container">
       <div class="section-header">
         <p class="section-label">⚡ The Simple 2-Step Process</p>
