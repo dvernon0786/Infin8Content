@@ -176,7 +176,7 @@ const html = `
     <div class="post-cta">
       <h3>Generate Local SEO Content on Autopilot</h3>
       <p>Infin8Content auto-generates and publishes SEO-optimized articles for any local business – in any language, any location, any niche.</p>
-      <a href="/register" class="btn btn-primary" style="padding:12px 28px;font-size:15px;border-radius:10px;display:inline-flex;text-decoration:none;">Get Started Free</a>
+      <a href="/register" class="btn btn-primary" style="padding:12px 28px;font-size:15px;border-radius:10px;display:inline-flex;text-decoration:none;color:#ffffff;">Start today</a>
       <div class="post-cta-perks">
         <span class="post-cta-perk">Cancel anytime</span>
         <span class="post-cta-perk">Articles in 30 secs</span>
