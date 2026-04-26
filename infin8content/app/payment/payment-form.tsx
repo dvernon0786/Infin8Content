@@ -238,33 +238,43 @@ export default function PaymentForm({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-mkt-bg py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Choose Your Plan</h1>
-          <p className="text-lg text-gray-600">Select a subscription plan to get started</p>
+          <h1 className="text-4xl font-bold text-mkt-white mb-2">Choose Your Plan</h1>
+          <p className="text-lg text-mkt-muted">Select a subscription plan to get started</p>
         </div>
 
         {/* Billing Frequency Toggle */}
         <div className="max-w-3xl mx-auto mb-8 flex justify-center">
-          <div className="inline-flex rounded-md shadow-sm" role="group">
+          <div className="inline-flex rounded-lg p-1 gap-1" role="group" style={{ background: 'var(--mkt-surface2)', border: '1px solid var(--mkt-border)' }}>
             <button
               type="button"
               onClick={() => setBillingFrequency('monthly')}
-              className={`px-6 py-3 text-sm font-medium rounded-l-lg border ${billingFrequency === 'monthly'
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                }`}
+              style={billingFrequency === 'monthly' ? {
+                background: 'var(--mkt-accent)',
+                color: 'white',
+                boxShadow: '0 0 20px rgba(79, 110, 247, 0.3)'
+              } : {
+                background: 'transparent',
+                color: 'var(--mkt-muted)'
+              }}
+              className="px-6 py-2 text-sm font-medium rounded-md transition-all hover:text-mkt-white"
             >
               Monthly
             </button>
             <button
               type="button"
               onClick={() => setBillingFrequency('annual')}
-              className={`px-6 py-3 text-sm font-medium rounded-r-lg border ${billingFrequency === 'annual'
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                }`}
+              style={billingFrequency === 'annual' ? {
+                background: 'var(--mkt-accent)',
+                color: 'white',
+                boxShadow: '0 0 20px rgba(79, 110, 247, 0.3)'
+              } : {
+                background: 'transparent',
+                color: 'var(--mkt-muted)'
+              }}
+              className="px-6 py-2 text-sm font-medium rounded-md transition-all hover:text-mkt-white"
             >
               Annual
             </button>
@@ -282,10 +292,10 @@ export default function PaymentForm({
             return (
               <div
                 key={plan}
-                className={`relative rounded-lg border-2 p-6 ${isSelected
-                  ? 'border-blue-600 bg-blue-50'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
-                  } cursor-pointer transition-colors`}
+                className={`relative rounded-lg border p-6 transition-all cursor-pointer ${isSelected
+                  ? 'border-mkt-accent-border bg-mkt-surface2 shadow-lg'
+                  : 'border-mkt-border bg-mkt-surface hover:border-mkt-accent-border'
+                  }`}
                 onClick={() => handlePlanSelect(plan)}
                 role="button"
                 tabIndex={0}
@@ -299,28 +309,28 @@ export default function PaymentForm({
               >
                 {isSelected && (
                   <div className="absolute top-4 right-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-600 text-white">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white" style={{ background: 'var(--mkt-accent)' }}>
                       Selected
                     </span>
                   </div>
                 )}
 
-                <h3 className="text-xl font-bold text-gray-900 mb-2 capitalize">{plan}</h3>
+                <h3 className="text-xl font-bold text-mkt-white mb-2 capitalize">{plan}</h3>
                 <div className="mb-4">
-                  <span className="text-3xl font-bold text-gray-900">${price}</span>
+                  <span className="text-3xl font-bold text-mkt-white">${price}</span>
                   {plan === 'trial' ? (
-                    <span className="text-gray-600">/one-time</span>
+                    <span className="text-mkt-muted">/one-time</span>
                   ) : (
-                    <span className="text-gray-600">/month</span>
+                    <span className="text-mkt-muted">/month</span>
                   )}
                   {billingFrequency === 'annual' && plan !== 'trial' && (
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-mkt-muted2 mt-1">
                       Billed annually (save ${cardSavings}/month)
                     </p>
                   )}
                 </div>
 
-                <ul className="space-y-2 mb-6 text-sm text-gray-600">
+                <ul className="space-y-2 mb-6 text-sm text-mkt-muted">
                   <li>{features.articles} articles</li>
                   <li>{features.keywordResearches} keyword researches</li>
                   <li>{features.cmsConnections} CMS connections</li>
@@ -342,81 +352,118 @@ export default function PaymentForm({
         </div>
 
         {/* Feature Comparison Table */}
-        <div className="max-w-6xl mx-auto mb-12 overflow-x-auto">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Feature Comparison</h2>
-          <table className="min-w-full bg-white border border-gray-200 rounded-lg">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Feature
-                </th>
-                {availablePlans.map((plan) => (
-                  <th key={plan} className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {plan === 'trial' ? '$1 Trial' : plan.charAt(0).toUpperCase() + plan.slice(1)}
+        <div className="max-w-6xl mx-auto mb-12">
+          <div className="mb-6">
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: '600', color: 'var(--mkt-white)' }}>
+              Compare Plans in Full
+            </h2>
+          </div>
+          <div style={{ overflowX: 'auto', borderRadius: '20px', border: '1px solid rgba(255,255,255,.07)', boxShadow: '0 4px 24px rgba(0,0,0,.3)' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+              <thead>
+                <tr style={{ background: 'var(--mkt-surface2)', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
+                  <th style={{ padding: '16px', fontWeight: '600', color: 'var(--mkt-muted)', textAlign: 'left', whiteSpace: 'nowrap', width: '40%' }}>
+                    Feature
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {[
-                { label: 'Articles/month', key: 'articles' },
-                { label: 'Keyword researches/month', key: 'keywordResearches' },
-                { label: 'CMS connections', key: 'cmsConnections' },
-                { label: 'Projects', key: 'projects' },
-                { label: 'Stores (e-commerce)', key: 'stores' },
-                { label: 'Products tracked', key: 'productsTracked' },
-                { label: 'Team members', key: 'teamMembers' },
-                { label: 'Image storage', key: 'imageStorage' },
-                { label: 'API calls/month', key: 'apiCalls' },
-                { label: 'Revenue attribution', key: 'revenueAttribution', boolean: true },
-                { label: 'White-label & custom domain', key: 'whiteLabel', boolean: true },
-                { label: 'Client portal', key: 'clientPortal', boolean: true },
-                { label: 'Support SLA', key: 'supportSLA' },
-                { label: 'Uptime SLA', key: 'uptimeSLA' },
-              ].map((row) => (
-                <tr key={row.key}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {row.label}
-                  </td>
-                  {availablePlans.map((plan) => {
-                    const value = planFeatures[plan][row.key as keyof PlanFeatures]
-                    return (
-                      <td key={plan} className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">
-                        {row.boolean ? (value ? '✓' : '—') : String(value)}
-                      </td>
-                    )
-                  })}
+                  {availablePlans.map((plan) => (
+                    <th
+                      key={plan}
+                      style={{
+                        padding: '16px',
+                        fontWeight: '600',
+                        color: 'var(--mkt-muted)',
+                        textAlign: 'center',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {plan === 'trial' ? '$1 Trial' : plan.charAt(0).toUpperCase() + plan.slice(1)}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {[
+                  { label: 'Articles/month', key: 'articles' },
+                  { label: 'Keyword researches/month', key: 'keywordResearches' },
+                  { label: 'CMS connections', key: 'cmsConnections' },
+                  { label: 'Projects', key: 'projects' },
+                  { label: 'Stores (e-commerce)', key: 'stores' },
+                  { label: 'Products tracked', key: 'productsTracked' },
+                  { label: 'Team members', key: 'teamMembers' },
+                  { label: 'Image storage', key: 'imageStorage' },
+                  { label: 'API calls/month', key: 'apiCalls' },
+                  { label: 'Revenue attribution', key: 'revenueAttribution', boolean: true },
+                  { label: 'White-label & custom domain', key: 'whiteLabel', boolean: true },
+                  { label: 'Client portal', key: 'clientPortal', boolean: true },
+                  { label: 'Support SLA', key: 'supportSLA' },
+                  { label: 'Uptime SLA', key: 'uptimeSLA' },
+                ].map((row) => (
+                  <tr
+                    key={row.key}
+                    style={{
+                      background: 'var(--mkt-surface)',
+                      borderBottom: '1px solid rgba(255,255,255,.04)',
+                      transition: 'background .15s'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--mkt-surface2)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--mkt-surface)' }}
+                  >
+                    <td style={{ padding: '12px 16px', color: 'var(--mkt-white)', textAlign: 'left', fontWeight: '500' }}>
+                      {row.label}
+                    </td>
+                    {availablePlans.map((plan) => {
+                      const value = planFeatures[plan][row.key as keyof PlanFeatures]
+                      return (
+                        <td
+                          key={plan}
+                          style={{
+                            padding: '12px 16px',
+                            color: 'var(--mkt-muted)',
+                            textAlign: 'center'
+                          }}
+                        >
+                          {row.boolean ? (
+                            <span style={{ color: value ? '#3b82f6' : 'var(--mkt-muted2)', fontSize: '16px', fontWeight: '700' }}>
+                              {value ? '✓' : '—'}
+                            </span>
+                          ) : (
+                            String(value)
+                          )}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Error Display */}
         {(errorInfo || error) && (
           <div className="max-w-3xl mx-auto mb-6">
-            <div className={`rounded-lg p-4 ${errorInfo?.type === 'warning'
-              ? 'bg-yellow-50 border border-yellow-200'
-              : 'bg-red-50 border border-red-200'
+            <div className={`rounded-lg p-4 border ${errorInfo?.type === 'warning'
+              ? 'bg-mkt-accent-lite border-mkt-accent-border'
+              : 'bg-mkt-red bg-opacity-10 border-mkt-red border-opacity-30'
               }`}>
               <div className="flex">
                 <div className="flex-shrink-0">
                   {errorInfo?.type === 'warning' ? (
-                    <svg className="h-5 w-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="h-5 w-5 text-mkt-accent" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                   ) : (
-                    <svg className="h-5 w-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="h-5 w-5 text-mkt-red" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                     </svg>
                   )}
                 </div>
                 <div className="ml-3 flex-1">
-                  <h3 className={`text-sm font-medium ${errorInfo?.type === 'warning' ? 'text-yellow-800' : 'text-red-800'
+                  <h3 className={`text-sm font-medium ${errorInfo?.type === 'warning' ? 'text-mkt-accent' : 'text-mkt-red'
                     }`}>
                     {errorInfo?.title || 'Error'}
                   </h3>
-                  <div className={`mt-2 text-sm ${errorInfo?.type === 'warning' ? 'text-yellow-700' : 'text-red-700'
+                  <div className={`mt-2 text-sm ${errorInfo?.type === 'warning' ? 'text-mkt-accent' : 'text-mkt-red'
                     }`}>
                     <p>{errorInfo?.message || error}</p>
                   </div>
@@ -425,13 +472,10 @@ export default function PaymentForm({
                       <button
                         onClick={handleSubscribe}
                         disabled={isSubmitting}
-                        className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md ${errorInfo?.type === 'warning'
-                          ? 'text-yellow-800 bg-yellow-100 hover:bg-yellow-200'
-                          : 'text-red-800 bg-red-100 hover:bg-red-200'
-                          } focus:outline-none focus:ring-2 focus:ring-offset-2 ${errorInfo?.type === 'warning'
-                            ? 'focus:ring-yellow-500'
-                            : 'focus:ring-red-500'
-                          } disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
+                        className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md transition-all ${errorInfo?.type === 'warning'
+                          ? 'bg-mkt-accent text-white hover:opacity-90'
+                          : 'bg-mkt-red text-white hover:opacity-90'
+                          } disabled:opacity-50 disabled:cursor-not-allowed`}
                       >
                         {isSubmitting ? 'Processing...' : 'Retry Payment'}
                       </button>
@@ -449,7 +493,22 @@ export default function PaymentForm({
             <button
               onClick={handleSubscribe}
               disabled={isSubmitting}
-              className="w-full sm:w-auto px-8 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              style={{
+                background: 'var(--mkt-accent)',
+                color: 'white',
+                boxShadow: '0 0 20px rgba(79, 110, 247, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--mkt-accent-hover)'
+                e.currentTarget.style.boxShadow = '0 0 30px rgba(79, 110, 247, 0.5)'
+                e.currentTarget.style.transform = 'translateY(-2px)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--mkt-accent)'
+                e.currentTarget.style.boxShadow = '0 0 20px rgba(79, 110, 247, 0.3)'
+                e.currentTarget.style.transform = 'translateY(0)'
+              }}
+              className="w-full sm:w-auto px-8 py-3 rounded-lg text-base font-medium border-0 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Processing...' : `Subscribe to ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan`}
             </button>
