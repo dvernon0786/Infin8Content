@@ -168,12 +168,14 @@ const css = `*, *::before, *::after { box-sizing: border-box; margin: 0; padding
     .tab-img-inner .ti-icon { font-size: 40px; opacity: .35; }
     .tab-img-inner .ti-label { font-size: 13px; color: var(--muted2); font-family: var(--font-display); text-align: center; padding: 0 20px; }
     .tab-img .glow { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at 60% 30%, rgba(79,110,247,.08) 0%, transparent 60%); }
-    .mini-icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 40px; }
-    .mini-icon-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 16px; transition: all .2s; }
-    .mini-icon-card:hover { border-color: rgba(79,110,247,.3); transform: translateY(-2px); }
-    .mini-icon-card .mic-icon { font-size: 20px; margin-bottom: 10px; }
-    .mini-icon-card h5 { font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--white); margin-bottom: 6px; }
-    .mini-icon-card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .mini-icons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 50px; }
+    .mini-icon-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0; transition: all .2s; overflow: hidden; display: flex; flex-direction: column; }
+    .mini-icon-card:hover { border-color: rgba(79,110,247,.3); transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+    .mini-icon-card .mic-img { width: 100%; height: auto; aspect-ratio: 3/2; object-fit: cover; display: block; }
+    .mini-icon-card .mic-content { padding: 20px 20px; flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
+    .mini-icon-card .mic-icon { font-size: 20px; margin-bottom: 10px; display: none; }
+    .mini-icon-card h5 { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--white); margin: 0 0 8px 0; line-height: 1.3; }
+    .mini-icon-card p { font-size: 13px; color: var(--muted); line-height: 1.6; margin: 0; }
 
     /* ===== CUSTOM IMAGES ===== */
     .custom-images-section { padding: 90px 0; }
@@ -441,14 +443,14 @@ const html = `<main>
       </div>
 
       <div class="mini-icons">
-        <div class="mini-icon-card"><div class="mic-icon">📝</div><h5>Content</h5><p>Well-crafted content in seconds with the power of AI and your brand knowledge</p></div>
-        <div class="mini-icon-card"><div class="mic-icon">🧠</div><h5>Knowledge</h5><p>Brand-tailored, with your own tone of voice — without sounding AI-generated</p></div>
-        <div class="mini-icon-card"><div class="mic-icon">✏️</div><h5>Formatting</h5><p>Multiple formatting tools to facilitate editing and ensure a professional output</p></div>
-        <div class="mini-icon-card"><div class="mic-icon">🖼️</div><h5>Images</h5><p>In-article images to increase relevancy, visual appeal, and reader UX</p></div>
-        <div class="mini-icon-card"><div class="mic-icon">📺</div><h5>Videos</h5><p>Relevant in-article videos automatically embedded into your content</p></div>
-        <div class="mini-icon-card"><div class="mic-icon">🔗</div><h5>Internal Linking</h5><p>Automatically links internally to other relevant pages on your site</p></div>
-        <div class="mini-icon-card"><div class="mic-icon">🌐</div><h5>External Linking</h5><p>Automatically builds credibility with links to authoritative external sources</p></div>
-        <div class="mini-icon-card"><div class="mic-icon">⚙️</div><h5>Structure</h5><p>Fully customizable article structure — templates, CTAs, FAQs, and more</p></div>
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-Content.webp" alt="Content" class="mic-img"/><div class="mic-content"><h5>Content</h5><p>Well-crafted content in seconds with the power of AI and your brand knowledge</p></div></div>
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-Knowledge.webp" alt="Knowledge" class="mic-img"/><div class="mic-content"><h5>Knowledge</h5><p>Brand-tailored, with your own tone of voice — without sounding AI-generated</p></div></div>
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-Formatting.webp" alt="Formatting" class="mic-img"/><div class="mic-content"><h5>Formatting</h5><p>Multiple formatting tools to facilitate editing and ensure a professional output</p></div></div>
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-Images.webp" alt="Images" class="mic-img"/><div class="mic-content"><h5>Images</h5><p>In-article images to increase relevancy, visual appeal, and reader UX</p></div></div>
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-Videos.png" alt="Videos" class="mic-img"/><div class="mic-content"><h5>Videos</h5><p>Relevant in-article videos automatically embedded into your content</p></div></div>
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-Internal-Linking.webp" alt="Internal Linking" class="mic-img"/><div class="mic-content"><h5>Internal Linking</h5><p>Automatically links internally to other relevant pages on your site</p></div></div>
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-External-Linking.webp" alt="External Linking" class="mic-img"/><div class="mic-content"><h5>External Linking</h5><p>Automatically builds credibility with links to authoritative external sources</p></div></div>
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-Structure.webp" alt="Structure" class="mic-img"/><div class="mic-content"><h5>Structure</h5><p>Fully customizable article structure — templates, CTAs, FAQs, and more</p></div></div>
       </div>
     </div>
   </section>
