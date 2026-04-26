@@ -276,6 +276,24 @@ const css = `
 .fade-up:nth-child(2) { animation-delay: .15s; }
 .fade-up:nth-child(3) { animation-delay: .25s; }
 .fade-up:nth-child(4) { animation-delay: .35s; }
+
+/* ── HERO IMAGE ── */
+.hero-image-section {
+  position: relative;
+  margin-top: -80px;
+  padding-bottom: 0;
+  z-index: 10;
+}
+.hero-image {
+  width: 50%;
+  height: auto;
+  display: block;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.07);
+  margin: 0 auto;
+  mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
+}
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -292,7 +310,7 @@ const html = `
       <p class="hero-sub">Infin8Content produces content so compelling, you'll want to present it to your client immediately — without any editing.</p>
       <div class="hero-actions">
         <a href="/register" class="btn btn-primary btn-lg">Start today</a>
-        <a href="#" class="btn btn-ghost" style="padding:14px 30px;font-size:16px;border-radius:10px;">See It In Action</a>
+        <a href="#real-stories" class="btn btn-ghost" style="padding:14px 30px;font-size:16px;border-radius:10px;">See It In Action</a>
       </div>
       <!-- Social proof -->
       <div style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:13.5px;color:var(--muted);margin-bottom:12px;">
@@ -313,8 +331,19 @@ const html = `
     </div>
   </section>
 
+  <!-- ═══════════════════════════ AGENCY HERO IMAGE ════════════════════ -->
+  <section class="hero-image-section">
+    <div class="container">
+      <img
+        src="/images/agency-hero.png"
+        alt="Agency Solution Hero"
+        class="hero-image"
+      />
+    </div>
+  </section>
+
   <!-- ═══════════════════════════ TESTIMONIALS ═════════════════════════ -->
-  <section class="section section-alt">
+  <section class="section section-alt" id="real-stories">
     <div class="container">
       <div class="section-header">
         <p class="section-label">⭐ Real Stories</p>
@@ -364,24 +393,28 @@ const html = `
       </div>
       <div class="steps-grid">
         <div class="step-card fade-up">
+          <img src="/images/Generate-Client-Specific-Articles-Using-Keywords.webp" alt="Generate Client-Specific Articles" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 16px;">
           <div class="step-num">1</div>
           <div class="step-icon">🔑</div>
           <h4>Generate Client-Specific Articles from Keywords</h4>
           <p>Start content creation by inputting the keywords your clients aim to rank for. The AI handles research, structure, and writing.</p>
         </div>
         <div class="step-card fade-up">
+          <img src="/images/Customize-Formatting-Tone-Content-Structure.webp" alt="Customize Formatting, Tone & Content Structure" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 16px;">
           <div class="step-num">2</div>
           <div class="step-icon">🎨</div>
           <h4>Customize Formatting, Tone &amp; Content Structure</h4>
           <p>Select formatting options, adjust the tone to match each client's brand voice, and structure content for their specific audience.</p>
         </div>
         <div class="step-card fade-up">
+          <img src="/images/Optimize-with-the-AI-SEO-Editor.webp" alt="Optimize with the AI SEO Editor" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 16px;">
           <div class="step-num">3</div>
           <div class="step-icon">✏️</div>
           <h4>Optimize with the AI SEO Editor</h4>
           <p>Easily edit content, incorporate internal and external links, and fine-tune keyword placement for maximum ranking potential.</p>
         </div>
         <div class="step-card fade-up">
+          <img src="/images/Deliver-Exceptional-Results-Straight-to-Your-Clients.webp" alt="Deliver Exceptional Results" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 16px;">
           <div class="step-num">4</div>
           <div class="step-icon">📤</div>
           <h4>Deliver Exceptional Results to Clients</h4>
@@ -411,9 +444,7 @@ const html = `
         </div>
         <div>
           <div class="feat-img">
-            <div class="feat-img-icon">✏️</div>
-            <p class="feat-img-label">AI SEO Editor Preview<br><span style="font-size:11px;">Replace with screenshot</span></p>
-            <div class="glow"></div>
+            <img src="/images/AI-SEO-Editor.webp" alt="AI SEO Editor" style="width: 100%; height: 100%; object-fit: cover;">
           </div>
         </div>
       </div>
@@ -434,9 +465,7 @@ const html = `
         </div>
         <div>
           <div class="feat-img">
-            <div class="feat-img-icon">📚</div>
-            <p class="feat-img-label">Knowledge Base Preview<br><span style="font-size:11px;">Replace with screenshot</span></p>
-            <div class="glow"></div>
+            <img src="/images/Client-Knowledge-Base.webp" alt="Client Knowledge Base" style="width: 100%; height: 100%; object-fit: cover;">
           </div>
         </div>
       </div>
@@ -457,9 +486,7 @@ const html = `
         </div>
         <div>
           <div class="feat-img">
-            <div class="feat-img-icon">📊</div>
-            <p class="feat-img-label">White-Label Reports Preview<br><span style="font-size:11px;">Replace with screenshot</span></p>
-            <div class="glow"></div>
+            <img src="/images/Impress-Clients-with-Branded-SEO-Reports.png" alt="White-Label Reports" style="width: 100%; height: 100%; object-fit: cover;">
           </div>
         </div>
       </div>
