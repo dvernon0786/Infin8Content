@@ -348,7 +348,7 @@ const html = `<main>
           </ul>
         </div>
         <div class="feat-img">
-          <div class="feat-img-inner"><div class="feat-img-icon">✍️</div><div class="feat-img-label">Content Rewriting Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with screenshot</span></div></div>
+          <img src="/images/Content-Rewriting.webp" alt="Content Rewriting feature" style="width: 100%; height: 100%; object-fit: cover;" />
           <div class="glow"></div>
         </div>
       </div>
@@ -365,7 +365,7 @@ const html = `<main>
           </ul>
         </div>
         <div class="feat-img">
-          <div class="feat-img-inner"><div class="feat-img-icon">🔍</div><div class="feat-img-label">Keyword Optimization Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with screenshot</span></div></div>
+          <img src="/images/Adding-Keywords.webp" alt="Adding Keywords feature" style="width: 100%; height: 100%; object-fit: cover;" />
           <div class="glow"></div>
         </div>
       </div>
@@ -382,7 +382,7 @@ const html = `<main>
           </ul>
         </div>
         <div class="feat-img">
-          <div class="feat-img-inner"><div class="feat-img-icon">🔗</div><div class="feat-img-label">Link Building Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with screenshot</span></div></div>
+          <img src="/images/Adding-Links.webp" alt="Adding Links feature" style="width: 100%; height: 100%; object-fit: cover;" />
           <div class="glow"></div>
         </div>
       </div>
@@ -399,7 +399,7 @@ const html = `<main>
           </ul>
         </div>
         <div class="feat-img">
-          <div class="feat-img-inner"><div class="feat-img-icon">🖼️</div><div class="feat-img-label">Image Generation Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with screenshot</span></div></div>
+          <img src="/images/Generating-images.webp" alt="Generating Images feature" style="width: 100%; height: 100%; object-fit: cover;" />
           <div class="glow"></div>
         </div>
       </div>
@@ -416,7 +416,7 @@ const html = `<main>
           </ul>
         </div>
         <div class="feat-img">
-          <div class="feat-img-inner"><div class="feat-img-icon">🤖</div><div class="feat-img-label">AI Assistant Preview<br><span style="font-size:11px;color:var(--muted2)">Replace with screenshot</span></div></div>
+          <img src="/images/AI-SEO-Assistant.webp" alt="AI SEO Assistant feature" style="width: 100%; height: 100%; object-fit: cover;" />
           <div class="glow"></div>
         </div>
       </div>
@@ -473,12 +473,57 @@ const html = `<main>
       <div class="avatars"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /></div>
       <span style="font-size:13.5px;color:var(--muted);">Trusted by marketers &amp; agencies worldwide</span>
     </div>
-    <div class="cta-mock-img"><div class="cta-mock-inner"><div class="cm-icon">🖥️</div><div class="cm-label">Platform preview — replace with screenshot</div></div></div>
   </div>
 </section>
 
 </main>`;
 
+const script = `
+document.addEventListener('DOMContentLoaded', () => {
+  const tabs = document.querySelectorAll('.ftab');
+  const tabPanels = document.querySelectorAll('.ftab-panel');
+  let currentTabIndex = 0;
+  let autoScrollInterval;
+
+  const activateTab = (index) => {
+    tabs.forEach(tab => tab.classList.remove('active'));
+    tabPanels.forEach(panel => panel.classList.remove('active'));
+
+    tabs[index].classList.add('active');
+    tabPanels[index].classList.add('active');
+  };
+
+  const nextTab = () => {
+    currentTabIndex = (currentTabIndex + 1) % tabs.length;
+    activateTab(currentTabIndex);
+  };
+
+  const startAutoScroll = () => {
+    autoScrollInterval = setInterval(nextTab, 10000);
+  };
+
+  const stopAutoScroll = () => {
+    clearInterval(autoScrollInterval);
+  };
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => {
+      currentTabIndex = index;
+      activateTab(index);
+      stopAutoScroll();
+      startAutoScroll();
+    });
+  });
+
+  startAutoScroll();
+});
+`;
+
 export default function AISEOEditorPage() {
-  return <MarketingPageBody css={css} html={html} />;
+  return (
+    <>
+      <MarketingPageBody css={css} html={html} />
+      <script dangerouslySetInnerHTML={{ __html: script }} />
+    </>
+  );
 }
