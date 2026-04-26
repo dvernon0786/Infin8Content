@@ -155,7 +155,7 @@ const html = `
     <p>Your local landing page needs to make it dead simple for a visitor to call, book, or get a quote. That means a phone number above the fold, a clear headline stating what you do and where, and a single primary CTA that's immediately visible without scrolling.</p>
 
     <h3>Local business schema</h3>
-    <p>Add LocalBusiness schema markup to your homepage and location pages. This tells Google exactly what type of business you are, your address, phone number, opening hours, and service area – all in a structured format that directly informs local rankings. You can generate this automatically using <a href="/features/ai-seo-agent">Infin8Content's AI SEO Agent</a>.</p>
+    <p>Add LocalBusiness schema markup to your homepage and location pages. This tells Google exactly what type of business you are, your address, phone number, opening hours, and service area – all in a structured format that directly informs local rankings. You can generate this automatically using <a href="/features/ai-news-writer">Infin8Content's AI Content Tools</a>.</p>
 
     <h3>NAP consistency</h3>
     <p>NAP stands for Name, Address, Phone number. Your NAP must be <em>identical</em> across your website, your Google Business Profile, and every directory listing (Yelp, Yellow Pages, BBB, industry directories). Even small inconsistencies – "St." vs "Street," different phone number formats – dilute your local authority.</p>
