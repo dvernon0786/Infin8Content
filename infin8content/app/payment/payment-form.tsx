@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import './payment-form.css'
 
 type PlanType = 'trial' | 'starter' | 'pro' | 'agency'
 type BillingFrequency = 'monthly' | 'annual'
@@ -247,18 +248,11 @@ export default function PaymentForm({
 
         {/* Billing Frequency Toggle */}
         <div className="max-w-3xl mx-auto mb-8 flex justify-center">
-          <div className="inline-flex rounded-lg p-1 gap-1" role="group" style={{ background: 'var(--mkt-surface2)', border: '1px solid var(--mkt-border)' }}>
+          <div className="inline-flex rounded-lg p-1 gap-1" role="group" className="payment-frequency-toggle">
             <button
               type="button"
               onClick={() => setBillingFrequency('monthly')}
-              style={billingFrequency === 'monthly' ? {
-                background: 'var(--mkt-accent)',
-                color: 'white',
-                boxShadow: '0 0 20px rgba(79, 110, 247, 0.3)'
-              } : {
-                background: 'transparent',
-                color: 'var(--mkt-muted)'
-              }}
+              className={`payment-frequency-button ${billingFrequency === 'monthly' ? 'active' : ''}`}
               className="px-6 py-2 text-sm font-medium rounded-md transition-all hover:text-mkt-white"
             >
               Monthly
@@ -266,14 +260,7 @@ export default function PaymentForm({
             <button
               type="button"
               onClick={() => setBillingFrequency('annual')}
-              style={billingFrequency === 'annual' ? {
-                background: 'var(--mkt-accent)',
-                color: 'white',
-                boxShadow: '0 0 20px rgba(79, 110, 247, 0.3)'
-              } : {
-                background: 'transparent',
-                color: 'var(--mkt-muted)'
-              }}
+              className={`payment-frequency-button ${billingFrequency === 'annual' ? 'active' : ''}`}
               className="px-6 py-2 text-sm font-medium rounded-md transition-all hover:text-mkt-white"
             >
               Annual
@@ -309,7 +296,7 @@ export default function PaymentForm({
               >
                 {isSelected && (
                   <div className="absolute top-4 right-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white" style={{ background: 'var(--mkt-accent)' }}>
+                    <span className="payment-badge">
                       Selected
                     </span>
                   </div>
@@ -354,27 +341,21 @@ export default function PaymentForm({
         {/* Feature Comparison Table */}
         <div className="max-w-6xl mx-auto mb-12">
           <div className="mb-6">
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: '600', color: 'var(--mkt-white)' }}>
+            <h2 className="payment-plan-header">
               Compare Plans in Full
             </h2>
           </div>
-          <div style={{ overflowX: 'auto', borderRadius: '20px', border: '1px solid rgba(255,255,255,.07)', boxShadow: '0 4px 24px rgba(0,0,0,.3)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+          <div className="payment-table-container">
+            <table className="payment-table">
               <thead>
-                <tr style={{ background: 'var(--mkt-surface2)', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
-                  <th style={{ padding: '16px', fontWeight: '600', color: 'var(--mkt-muted)', textAlign: 'left', whiteSpace: 'nowrap', width: '40%' }}>
+                <tr className="payment-table-header-row">
+                  <th className="payment-table-header-cell">
                     Feature
                   </th>
                   {availablePlans.map((plan) => (
                     <th
                       key={plan}
-                      style={{
-                        padding: '16px',
-                        fontWeight: '600',
-                        color: 'var(--mkt-muted)',
-                        textAlign: 'center',
-                        whiteSpace: 'nowrap'
-                      }}
+                      className="payment-table-header-cell payment-table-header-cell-plan"
                     >
                       {plan === 'trial' ? '$1 Trial' : plan.charAt(0).toUpperCase() + plan.slice(1)}
                     </th>
@@ -400,15 +381,8 @@ export default function PaymentForm({
                 ].map((row) => (
                   <tr
                     key={row.key}
-                    style={{
-                      background: 'var(--mkt-surface)',
-                      borderBottom: '1px solid rgba(255,255,255,.04)',
-                      transition: 'background .15s'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--mkt-surface2)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--mkt-surface)' }}
                   >
-                    <td style={{ padding: '12px 16px', color: 'var(--mkt-white)', textAlign: 'left', fontWeight: '500' }}>
+                    <td className="payment-table-data-cell">
                       {row.label}
                     </td>
                     {availablePlans.map((plan) => {
@@ -416,14 +390,10 @@ export default function PaymentForm({
                       return (
                         <td
                           key={plan}
-                          style={{
-                            padding: '12px 16px',
-                            color: 'var(--mkt-muted)',
-                            textAlign: 'center'
-                          }}
+                          className="payment-table-data-cell-feature"
                         >
                           {row.boolean ? (
-                            <span style={{ color: value ? 'var(--brand-electric-blue, #217CEB)' : 'var(--mkt-muted2)', fontSize: '16px', fontWeight: '700' }}>
+                            <span className={`payment-checkmark ${value ? 'active' : 'inactive'}`}>
                               {value ? '✓' : '—'}
                             </span>
                           ) : (
@@ -493,22 +463,7 @@ export default function PaymentForm({
             <button
               onClick={handleSubscribe}
               disabled={isSubmitting}
-              style={{
-                background: 'var(--mkt-accent)',
-                color: 'white',
-                boxShadow: '0 0 20px rgba(79, 110, 247, 0.3)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--mkt-accent-hover)'
-                e.currentTarget.style.boxShadow = '0 0 30px rgba(79, 110, 247, 0.5)'
-                e.currentTarget.style.transform = 'translateY(-2px)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'var(--mkt-accent)'
-                e.currentTarget.style.boxShadow = '0 0 20px rgba(79, 110, 247, 0.3)'
-                e.currentTarget.style.transform = 'translateY(0)'
-              }}
-              className="w-full sm:w-auto px-8 py-3 rounded-lg text-base font-medium border-0 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="payment-button w-full sm:w-auto"
             >
               {isSubmitting ? 'Processing...' : `Subscribe to ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan`}
             </button>

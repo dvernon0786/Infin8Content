@@ -1,0 +1,152 @@
+/* Payment Form Styles */
+
+.payment-frequency-toggle {
+  display: inline-flex;
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+  background: var(--mkt-surface2);
+  border: 1px solid var(--mkt-border);
+}
+
+.payment-frequency-button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--mkt-muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.payment-frequency-button.active {
+  background: var(--mkt-white);
+  color: var(--mkt-black);
+}
+
+.payment-plan-header {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--mkt-white);
+}
+
+.payment-table-container {
+  overflow-x: auto;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.payment-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.payment-table-header-row {
+  background: var(--mkt-surface2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.payment-table-header-cell {
+  padding: 16px;
+  font-weight: 600;
+  color: var(--mkt-muted);
+  text-align: left;
+  white-space: nowrap;
+  width: 40%;
+}
+
+.payment-table-header-cell-plan {
+  width: auto;
+}
+
+.payment-table-data-cell {
+  padding: 12px 16px;
+  color: var(--mkt-white);
+  text-align: left;
+  font-weight: 500;
+}
+
+.payment-table-data-cell-feature {
+  padding: 12px 16px;
+  color: var(--mkt-muted);
+  text-align: center;
+}
+
+.payment-checkmark {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.payment-checkmark.active {
+  color: var(--brand-electric-blue);
+}
+
+.payment-checkmark.inactive {
+  color: var(--mkt-muted2);
+}
+
+.payment-button {
+  padding: 12px 32px;
+  background: var(--mkt-accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 0 20px rgba(79, 110, 247, 0.3);
+}
+
+.payment-button:hover:not(:disabled) {
+  background: var(--mkt-accent-hover);
+  box-shadow: 0 0 30px rgba(79, 110, 247, 0.5);
+  transform: translateY(-2px);
+}
+
+.payment-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.payment-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2.5px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mkt-white);
+  background: var(--mkt-accent);
+}
+
+.payment-plan-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--mkt-white);
+}
+
+.payment-plan-price {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--mkt-white);
+}
+
+.payment-plan-subtitle {
+  font-size: 14px;
+  color: var(--mkt-muted);
+}
+
+.payment-billing-frequency-toggle {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 48px;
+}
