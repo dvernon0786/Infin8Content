@@ -35,14 +35,14 @@
 .stepper-indicator.stepper-completed,
 .stepper-indicator.stepper-current {
   background-color: var(--brand-electric-blue);
-  color: var(--onboarding-text-primary, #ffffff);
+  color: var(--onboarding-text-primary);
   border-color: var(--brand-electric-blue);
 }
 
 .stepper-indicator.stepper-upcoming {
-  background-color: var(--onboarding-input-bg, #13151e);
-  color: var(--onboarding-text-secondary, #7b8098);
-  border-color: var(--onboarding-input-bg, #13151e);
+  background-color: var(--onboarding-input-bg);
+  color: var(--onboarding-text-secondary);
+  border-color: var(--onboarding-input-bg);
 }
 
 .stepper-checkmark {
@@ -64,7 +64,7 @@
 }
 
 .stepper-label-upcoming {
-  color: var(--onboarding-text-secondary, #7b8098);
+  color: var(--onboarding-text-secondary);
 }
 
 .stepper-connector {
@@ -81,5 +81,5 @@
 
 .stepper-connector-current,
 .stepper-connector-upcoming {
-  background-color: var(--onboarding-connector-bg, #4a4f68);
+  background-color: var(--onboarding-connector-bg);
 }

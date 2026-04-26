@@ -20,7 +20,7 @@
 }
 
 .onboarding-page {
-  background: linear-gradient(135deg, #08090d 0%, #0f1117 50%, #08090d 100%);
+  background: linear-gradient(135deg, var(--onboarding-layout-bg) 0%, var(--onboarding-bg-dark) 50%, var(--onboarding-layout-bg) 100%);
   min-height: 100vh;
   padding-top: 60px;
   padding-bottom: 60px;

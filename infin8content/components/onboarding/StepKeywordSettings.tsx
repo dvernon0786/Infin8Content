@@ -207,7 +207,7 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
                   style={{
                     width: "18px",
                     height: "18px",
-                    accentColor: "var(--brand-electric-blue, #217CEB)",
+                    accentColor: "var(--brand-electric-blue)",
                     cursor: "pointer",
                     flexShrink: 0
                   }}

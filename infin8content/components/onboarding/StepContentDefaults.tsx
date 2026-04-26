@@ -148,7 +148,7 @@ export function StepContentDefaults({
               <label style={{
                 fontSize: "13px",
                 fontWeight: "600",
-                color: "var(--onboarding-text-light, #e8eaf2)"
+                color: "var(--onboarding-text-light)"
               }}>Tone</label>
               <select
                 value={formData.content_defaults.tone}
@@ -169,7 +169,7 @@ export function StepContentDefaults({
               <label style={{
                 fontSize: "13px",
                 fontWeight: "600",
-                color: "var(--onboarding-text-light, #e8eaf2)"
+                color: "var(--onboarding-text-light)"
               }}>Style</label>
               <select
                 value={formData.content_defaults.style}
@@ -189,7 +189,7 @@ export function StepContentDefaults({
               <label style={{
                 fontSize: "13px",
                 fontWeight: "600",
-                color: "var(--onboarding-text-light, #e8eaf2)"
+                color: "var(--onboarding-text-light)"
               }}>
                 Target Word Count
               </label>
@@ -223,13 +223,13 @@ export function StepContentDefaults({
                 style={{
                   width: "18px",
                   height: "18px",
-                  accentColor: "var(--brand-electric-blue, #217CEB)",
+                  accentColor: "var(--brand-electric-blue)",
                   cursor: "pointer"
                 }}
               />
               <label style={{
                 fontSize: "13px",
-                color: "var(--onboarding-text-secondary, #7b8098)",
+                color: "var(--onboarding-text-secondary)",
                 cursor: "pointer"
               }}>
                 Auto-publish after generation
@@ -244,7 +244,7 @@ export function StepContentDefaults({
             <h3 style={{
               fontSize: "16px",
               fontWeight: "600",
-              color: "var(--onboarding-text-primary, #ffffff)",
+              color: "var(--onboarding-text-primary)",
               marginBottom: "16px"
             }}>Content Generation Settings</h3>
 
@@ -253,7 +253,7 @@ export function StepContentDefaults({
               <label style={{
                 fontSize: "13px",
                 fontWeight: "600",
-                color: "var(--onboarding-text-light, #e8eaf2)"
+                color: "var(--onboarding-text-light)"
               }}>Brand Color (Hex Code)</label>
               <div style={{
                 display: "flex",
@@ -280,10 +280,10 @@ export function StepContentDefaults({
                   style={{
                     flex: 1,
                     padding: "10px 12px",
-                    background: "var(--onboarding-input-bg, #13151e)",
+                    background: "var(--onboarding-input-bg)",
                     border: "1px solid rgba(255,255,255,0.07)",
                     borderRadius: "8px",
-                    color: "var(--onboarding-text-light, #e8eaf2)",
+                    color: "var(--onboarding-text-light)",
                     fontSize: "14px",
                     outline: "none"
                   }}
@@ -298,7 +298,7 @@ export function StepContentDefaults({
               <label style={{
                 fontSize: "13px",
                 fontWeight: "600",
-                color: "var(--onboarding-text-light, #e8eaf2)"
+                color: "var(--onboarding-text-light)"
               }}>Image Style</label>
               <select
                 value={formData.content_defaults.image_style}
@@ -318,7 +318,7 @@ export function StepContentDefaults({
               <label style={{
                 fontSize: "13px",
                 fontWeight: "600",
-                color: "var(--onboarding-text-light, #e8eaf2)"
+                color: "var(--onboarding-text-light)"
               }}>Max Internal Links</label>
               <input
                 type="number"
@@ -349,13 +349,13 @@ export function StepContentDefaults({
                   style={{
                     width: "18px",
                     height: "18px",
-                    accentColor: "var(--brand-electric-blue, #217CEB)",
+                    accentColor: "var(--brand-electric-blue)",
                     cursor: "pointer"
                   }}
                 />
                 <label style={{
                   fontSize: "13px",
-                  color: "var(--onboarding-text-secondary, #7b8098)",
+                  color: "var(--onboarding-text-secondary)",
                   cursor: "pointer"
                 }}>Include Internal Links</label>
               </div>
@@ -371,13 +371,13 @@ export function StepContentDefaults({
                   style={{
                     width: "18px",
                     height: "18px",
-                    accentColor: "var(--brand-electric-blue, #217CEB)",
+                    accentColor: "var(--brand-electric-blue)",
                     cursor: "pointer"
                   }}
                 />
                 <label style={{
                   fontSize: "13px",
-                  color: "var(--onboarding-text-secondary, #7b8098)",
+                  color: "var(--onboarding-text-secondary)",
                   cursor: "pointer"
                 }}>Add CTA Sections</label>
               </div>
@@ -393,13 +393,13 @@ export function StepContentDefaults({
                   style={{
                     width: "18px",
                     height: "18px",
-                    accentColor: "var(--brand-electric-blue, #217CEB)",
+                    accentColor: "var(--brand-electric-blue)",
                     cursor: "pointer"
                   }}
                 />
                 <label style={{
                   fontSize: "13px",
-                  color: "var(--onboarding-text-secondary, #7b8098)",
+                  color: "var(--onboarding-text-secondary)",
                   cursor: "pointer"
                 }}>Embed YouTube Videos</label>
               </div>
@@ -415,13 +415,13 @@ export function StepContentDefaults({
                   style={{
                     width: "18px",
                     height: "18px",
-                    accentColor: "var(--brand-electric-blue, #217CEB)",
+                    accentColor: "var(--brand-electric-blue)",
                     cursor: "pointer"
                   }}
                 />
                 <label style={{
                   fontSize: "13px",
-                  color: "var(--onboarding-text-secondary, #7b8098)",
+                  color: "var(--onboarding-text-secondary)",
                   cursor: "pointer"
                 }}>Add Infographics</label>
               </div>
@@ -437,13 +437,13 @@ export function StepContentDefaults({
                   style={{
                     width: "18px",
                     height: "18px",
-                    accentColor: "var(--brand-electric-blue, #217CEB)",
+                    accentColor: "var(--brand-electric-blue)",
                     cursor: "pointer"
                   }}
                 />
                 <label style={{
                   fontSize: "13px",
-                  color: "var(--onboarding-text-secondary, #7b8098)",
+                  color: "var(--onboarding-text-secondary)",
                   cursor: "pointer"
                 }}>Use Emojis</label>
               </div>

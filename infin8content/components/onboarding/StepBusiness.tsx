@@ -304,11 +304,11 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
 
                 <div className="onboarding-form-group-space">
                   <p id="target_audiences-guidance" className="onboarding-help-text" style={{ fontWeight: "600" }}>
-                    Format: <strong style={{ color: "var(--onboarding-text-light, #e8eaf2)" }}>role + context + qualifier</strong>
+                    Format: <strong style={{ color: "var(--onboarding-text-light)" }}>role + context + qualifier</strong>
                   </p>
 
                   <div className="onboarding-text-secondary">
-                    <p style={{ fontWeight: "600", marginBottom: "4px", color: "var(--onboarding-text-light, #e8eaf2)" }}>Examples:</p>
+                    <p style={{ fontWeight: "600", marginBottom: "4px", color: "var(--onboarding-text-light)" }}>Examples:</p>
                     <ul style={{ paddingLeft: "16px" }}>
                       <li>• Marketing managers at SaaS startups</li>
                       <li>• E-commerce founders selling physical products</li>
@@ -320,7 +320,7 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
                     <div className="onboarding-flex">
                       <span>{formData.target_audiences.length} / 5 audiences</span>
                       {formData.target_audiences.some(a => a.length > 80) && (
-                        <span style={{ color: "var(--color-error, #ef4444)" }}>Some entries exceed 80 characters</span>
+                        <span style={{ color: "var(--color-error)" }}>Some entries exceed 80 characters</span>
                       )}
                     </div>
                   )}

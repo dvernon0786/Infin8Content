@@ -193,7 +193,7 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
                       aria-label={`Competitor ${index + 1} URL`}
                     />
                     <label className="onboarding-label">
-                      Competitor {index + 1} Name <span style={{ color: "var(--onboarding-text-secondary, #7b8098)" }}>(Optional)</span>
+                      Competitor {index + 1} Name <span style={{ color: "var(--onboarding-text-secondary)" }}>(Optional)</span>
                     </label>
                     <input
                       type="text"
