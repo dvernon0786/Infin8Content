@@ -154,14 +154,14 @@ export default function MarketingShell({ children }: { children: React.ReactNode
                 <span className="nav-link">Features <span className="chevron">▾</span></span>
                 <div className="dropdown">
                   <div className="dropdown-label">AI Writing</div>
-                  <a className="dropdown-link" href="/ai-content-writer">AI Content Writer</a>
-                  <a className="dropdown-link" href="/ai-seo-editor">AI SEO Editor</a>
+                  <a className="dropdown-link" href="/features/ai-content-writer">AI Content Writer</a>
+                  <a className="dropdown-link" href="/features/ai-seo-editor">AI SEO Editor</a>
                   <a className="dropdown-link" href="/features/ai-news-writer">News Writer</a>
                   <hr />
                   <div className="dropdown-label">SEO &amp; Automation</div>
-                  <a className="dropdown-link" href="/ai-seo-agent">AI SEO Agent</a>
-                  <a className="dropdown-link" href="/autopublish">AutoPublish</a>
-                  <a className="dropdown-link" href="/llm-tracker">LLM Tracker</a>
+                  <a className="dropdown-link" href="/features/ai-seo-agent">AI SEO Agent</a>
+                  <a className="dropdown-link" href="/features/autopublish">AutoPublish</a>
+                  <a className="dropdown-link" href="/features/llm-tracker">LLM Tracker</a>
                 </div>
               </div>
               <div className="nav-item">
@@ -205,17 +205,17 @@ export default function MarketingShell({ children }: { children: React.ReactNode
               </div>
               <div className="footer-col">
                 <h4>AI Writing</h4>
-                <a href="/ai-content-writer">AI Content Writer</a>
-                <a href="/ai-seo-editor">AI SEO Editor</a>
+                <a href="/features/ai-content-writer">AI Content Writer</a>
+                <a href="/features/ai-seo-editor">AI SEO Editor</a>
                 <a href="/features/ai-news-writer">News Writer</a>
                 <a href="#">Video to Blog</a>
               </div>
               <div className="footer-col">
                 <h4>Automation</h4>
-                <a href="/ai-seo-agent">AI SEO Agent</a>
-                <a href="/autopublish">AutoPublish</a>
+                <a href="/features/ai-seo-agent">AI SEO Agent</a>
+                <a href="/features/autopublish">AutoPublish</a>
                 <a href="#">SEO Reports</a>
-                <a href="/llm-tracker">LLM Tracker</a>
+                <a href="/features/llm-tracker">LLM Tracker</a>
               </div>
               <div className="footer-col">
                 <h4>Resources</h4>
