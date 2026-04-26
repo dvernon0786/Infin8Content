@@ -153,18 +153,47 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
 
   return (
     <main className={cn("w-full max-w-2xl mx-auto", className)}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Competitor Analysis</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <div style={{
+        background: "#0f1117",
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: "14px",
+        padding: "32px",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.4)"
+      }}>
+        <h2 style={{
+          fontSize: "22px",
+          fontWeight: "600",
+          color: "#ffffff",
+          marginBottom: "24px"
+        }}>Competitor Analysis</h2>
+
+        <div className="space-y-6">
           {/* Informational Context Box */}
-          <div className="bg-muted/50 rounded-lg p-4 border">
-            <h3 className="font-medium mb-2">Understanding your competition</h3>
-            <p className="text-sm text-muted-foreground mb-2">
+          <div style={{
+            background: "rgba(79, 110, 247, 0.08)",
+            border: "1px solid rgba(79, 110, 247, 0.2)",
+            borderRadius: "10px",
+            padding: "16px"
+          }}>
+            <h3 style={{
+              fontWeight: "600",
+              marginBottom: "8px",
+              color: "#ffffff",
+              fontSize: "14px"
+            }}>Understanding your competition</h3>
+            <p style={{
+              fontSize: "13px",
+              color: "#7b8098",
+              marginBottom: "8px",
+              lineHeight: "1.5"
+            }}>
               Adding competitor websites helps us analyze their content strategies and identify opportunities for your business.
             </p>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <ul style={{
+              fontSize: "13px",
+              color: "#7b8098",
+              lineHeight: "1.5"
+            }}>
               <li>• Add 3-7 competitor websites for optimal analysis</li>
               <li>• Focus on direct competitors in your industry</li>
               <li>• We'll analyze their content to help you stand out</li>
@@ -174,44 +203,97 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Competitor Inputs */}
             <div className="space-y-4">
-              <div className="text-sm font-medium">
-                Competitor Websites <span className="text-destructive">*</span>
+              <div style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#e8eaf2"
+              }}>
+                Competitor Websites <span style={{ color: "#ef4444" }}>*</span>
               </div>
               {competitors.map((competitor, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <div className="flex-1 space-y-2">
-                    <label className="text-sm font-medium">
-                      Competitor {index + 1} URL <span className="text-destructive">*</span>
+                <div key={index} style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "8px"
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{
+                      fontSize: "13px",
+                      fontWeight: "600",
+                      color: "#e8eaf2",
+                      display: "block",
+                      marginBottom: "6px"
+                    }}>
+                      Competitor {index + 1} URL <span style={{ color: "#ef4444" }}>*</span>
                     </label>
-                    <Input
+                    <input
                       type="url"
                       value={competitor.url}
                       onChange={(e) => updateCompetitor(index, 'url', e.target.value)}
                       placeholder={`Competitor ${index + 1} URL`}
-                      className={cn(errors[`competitor_${index}`] && "border-destructive")}
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        background: "#13151e",
+                        border: errors[`competitor_${index}`] ? "1px solid #ef4444" : "1px solid rgba(255,255,255,0.07)",
+                        borderRadius: "8px",
+                        color: "#e8eaf2",
+                        fontSize: "14px",
+                        outline: "none",
+                        marginBottom: "12px"
+                      }}
+                      onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
+                      onBlur={(e) => e.currentTarget.style.borderColor = errors[`competitor_${index}`] ? "#ef4444" : "rgba(255,255,255,0.07)"}
                       aria-label={`Competitor ${index + 1} URL`}
                     />
-                    <label className="text-sm font-medium">
-                      Competitor {index + 1} Name <span className="text-muted-foreground">(Optional)</span>
+                    <label style={{
+                      fontSize: "13px",
+                      fontWeight: "600",
+                      color: "#e8eaf2",
+                      display: "block",
+                      marginBottom: "6px"
+                    }}>
+                      Competitor {index + 1} Name <span style={{ color: "#7b8098" }}>(Optional)</span>
                     </label>
-                    <Input
+                    <input
                       type="text"
                       value={competitor.name || ""}
                       onChange={(e) => updateCompetitor(index, 'name', e.target.value)}
                       placeholder={`Competitor ${index + 1} Name`}
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        background: "#13151e",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        borderRadius: "8px",
+                        color: "#e8eaf2",
+                        fontSize: "14px",
+                        outline: "none"
+                      }}
+                      onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
+                      onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"}
                       aria-label={`Competitor ${index + 1} Name`}
                     />
                   </div>
                   {competitors.length > 1 && (
-                    <Button
+                    <button
                       type="button"
-                      variant="outline"
-                      size="icon"
                       onClick={() => removeCompetitor(index)}
-                      className="shrink-0"
+                      style={{
+                        padding: "10px 8px",
+                        background: "#13151e",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        borderRadius: "8px",
+                        color: "#ef4444",
+                        fontSize: "18px",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                        height: "fit-content",
+                        marginTop: "30px"
+                      }}
                     >
                       ×
-                    </Button>
+                    </button>
                   )}
                 </div>
               ))}
@@ -219,44 +301,93 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
 
             {/* Add Competitor Button */}
             {competitors.length < 7 && (
-              <Button
+              <button
                 type="button"
-                variant="outline"
                 onClick={addCompetitor}
-                className="w-full"
+                style={{
+                  width: "100%",
+                  padding: "10px 18px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  borderRadius: "8px",
+                  background: "transparent",
+                  border: "1px dashed rgba(79, 110, 247, 0.4)",
+                  color: "#4f6ef7",
+                  cursor: "pointer",
+                  transition: "all 0.2s"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(79, 110, 247, 0.8)"
+                  e.currentTarget.style.background = "rgba(79, 110, 247, 0.05)"
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(79, 110, 247, 0.4)"
+                  e.currentTarget.style.background = "transparent"
+                }}
               >
                 + Add Competitor
-              </Button>
+              </button>
             )}
 
             {/* Error Message */}
             {errors.competitors && (
-              <p className="text-sm text-destructive" role="alert">
+              <p style={{
+                fontSize: "12px",
+                color: "#ef4444",
+                marginTop: "4px"
+              }} role="alert">
                 {errors.competitors}
               </p>
             )}
 
             {/* Competitor Count */}
-            <p className="text-xs text-muted-foreground">
+            <p style={{
+              fontSize: "11px",
+              color: "#7b8098"
+            }}>
               {validCompetitorsCount} of 3-7 competitors added
             </p>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button
+            <div style={{
+              display: "flex",
+              gap: "12px",
+              paddingTop: "16px"
+            }}>
+              <button
                 type="submit"
-                variant="primary"
-                size="default"
                 disabled={!isFormValid || isSubmitting}
-                loading={isSubmitting}
-                className="flex-1"
+                style={{
+                  flex: 1,
+                  padding: "10px 18px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  borderRadius: "8px",
+                  background: (!isFormValid || isSubmitting) ? "rgba(79, 110, 247, 0.4)" : "#4f6ef7",
+                  color: "#ffffff",
+                  border: "none",
+                  cursor: (!isFormValid || isSubmitting) ? "not-allowed" : "pointer",
+                  opacity: (!isFormValid || isSubmitting) ? 0.6 : 1,
+                  transition: "all 0.2s",
+                  boxShadow: "0 0 20px rgba(79,110,247,0.3)"
+                }}
+                onMouseEnter={(e) => {
+                  if (isFormValid && !isSubmitting) {
+                    e.currentTarget.style.background = "#3d5df5"
+                    e.currentTarget.style.boxShadow = "0 0 30px rgba(79,110,247,0.5)"
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#4f6ef7"
+                  e.currentTarget.style.boxShadow = "0 0 20px rgba(79,110,247,0.3)"
+                }}
               >
                 {isSubmitting ? "Saving..." : "Next Step"}
-              </Button>
+              </button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </main>
   )
 }

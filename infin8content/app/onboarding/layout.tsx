@@ -19,5 +19,14 @@ export default async function OnboardingLayout({
     redirect("/dashboard")
   }
 
-  return <>{children}</>
+  return (
+    <div style={{
+      background: "#08090d",
+      color: "#e8eaf2",
+      minHeight: "100vh",
+      fontFamily: "var(--font-body, 'DM Sans', sans-serif)"
+    }}>
+      {children}
+    </div>
+  )
 }

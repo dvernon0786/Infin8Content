@@ -211,18 +211,47 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
 
   return (
     <main className={cn("w-full max-w-2xl mx-auto", className)}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Business Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <div style={{
+        background: "#0f1117",
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: "14px",
+        padding: "32px",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.4)"
+      }}>
+        <h2 style={{
+          fontSize: "22px",
+          fontWeight: "600",
+          color: "#ffffff",
+          marginBottom: "24px"
+        }}>Business Information</h2>
+
+        <div className="space-y-6">
           {/* Informational Context Box */}
-          <div className="bg-muted/50 rounded-lg p-4 border">
-            <h3 className="font-medium mb-2">Help us understand your business</h3>
-            <p className="text-sm text-muted-foreground mb-2">
+          <div style={{
+            background: "rgba(79, 110, 247, 0.08)",
+            border: "1px solid rgba(79, 110, 247, 0.2)",
+            borderRadius: "10px",
+            padding: "16px"
+          }}>
+            <h3 style={{
+              fontWeight: "600",
+              marginBottom: "8px",
+              color: "#ffffff",
+              fontSize: "14px"
+            }}>Help us understand your business</h3>
+            <p style={{
+              fontSize: "13px",
+              color: "#7b8098",
+              marginBottom: "8px",
+              lineHeight: "1.5"
+            }}>
               This information helps us tailor the content generation to your specific needs and target audience.
             </p>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <ul style={{
+              fontSize: "13px",
+              color: "#7b8098",
+              lineHeight: "1.5"
+            }}>
               <li>• Website URL helps us analyze your online presence</li>
               <li>• Business description guides content tone and style</li>
               <li>• Target audiences ensure content reaches the right people</li>
@@ -232,20 +261,39 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Website URL */}
             <div className="space-y-2">
-              <label htmlFor="website_url" className="text-sm font-medium">
-                Website URL <span className="text-destructive">*</span>
+              <label htmlFor="website_url" style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#e8eaf2"
+              }}>
+                Website URL <span style={{ color: "#ef4444" }}>*</span>
               </label>
-              <Input
+              <input
                 id="website_url"
                 type="url"
                 placeholder="https://example.com"
                 value={formData.website_url}
                 onChange={(e) => handleInputChange('website_url', e.target.value)}
-                className={cn(errors.website_url && "border-destructive")}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  background: "#13151e",
+                  border: errors.website_url ? "1px solid #ef4444" : "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: "8px",
+                  color: "#e8eaf2",
+                  fontSize: "14px",
+                  outline: "none"
+                }}
+                onFocus={(e) => e.target.style.borderColor = "rgba(79,110,247,0.3)"}
+                onBlur={(e) => e.target.style.borderColor = errors.website_url ? "#ef4444" : "rgba(255,255,255,0.07)"}
                 aria-describedby={errors.website_url ? "website_url-error" : undefined}
               />
               {errors.website_url && (
-                <p id="website_url-error" className="text-sm text-destructive" role="alert">
+                <p id="website_url-error" style={{
+                  fontSize: "12px",
+                  color: "#ef4444",
+                  marginTop: "4px"
+                }} role="alert">
                   {errors.website_url}
                 </p>
               )}
@@ -253,8 +301,12 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
 
             {/* Business Description */}
             <div className="space-y-2">
-              <label htmlFor="business_description" className="text-sm font-medium">
-                Business Description <span className="text-destructive">*</span>
+              <label htmlFor="business_description" style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#e8eaf2"
+              }}>
+                Business Description <span style={{ color: "#ef4444" }}>*</span>
               </label>
               <div className="space-y-2">
                 <textarea
@@ -264,22 +316,47 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
                   placeholder="Describe what your business does, who it serves, and what makes it different."
                   value={formData.business_description}
                   onChange={(e) => handleInputChange('business_description', e.target.value)}
-                  className={cn(
-                    "w-full min-h-20 rounded-md border bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-                    errors.business_description && "border-destructive"
-                  )}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    background: "#13151e",
+                    border: errors.business_description ? "1px solid #ef4444" : "1px solid rgba(255,255,255,0.07)",
+                    borderRadius: "8px",
+                    color: "#e8eaf2",
+                    fontSize: "14px",
+                    outline: "none",
+                    fontFamily: "inherit",
+                    resize: "none",
+                    minHeight: "100px"
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
+                  onBlur={(e) => e.currentTarget.style.borderColor = errors.business_description ? "#ef4444" : "rgba(255,255,255,0.07)"}
                   aria-describedby={errors.business_description ? "business_description-error" : "business_description-help"}
                 />
-                <div className="flex justify-between items-center">
-                  <p id="business_description-help" className="text-xs text-muted-foreground">
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center"
+                }}>
+                  <p id="business_description-help" style={{
+                    fontSize: "12px",
+                    color: "#7b8098"
+                  }}>
                     Keep it short and specific. This helps us generate accurate research and content.
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p style={{
+                    fontSize: "12px",
+                    color: "#7b8098"
+                  }}>
                     {formData.business_description?.length || 0} / 500 characters
                   </p>
                 </div>
                 {errors.business_description && (
-                  <p id="business_description-error" className="text-sm text-destructive" role="alert">
+                  <p id="business_description-error" style={{
+                    fontSize: "12px",
+                    color: "#ef4444",
+                    marginTop: "4px"
+                  }} role="alert">
                     {errors.business_description}
                   </p>
                 )}
@@ -288,52 +365,84 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
 
             {/* Target Audiences */}
             <div className="space-y-2">
-              <label htmlFor="target_audiences" className="text-sm font-medium">
-                Target Audiences <span className="text-destructive">*</span>
+              <label htmlFor="target_audiences" style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#e8eaf2"
+              }}>
+                Target Audiences <span style={{ color: "#ef4444" }}>*</span>
               </label>
               <div className="space-y-3">
-                <p id="target_audiences-help" className="text-sm text-muted-foreground">
+                <p id="target_audiences-help" style={{
+                  fontSize: "13px",
+                  color: "#7b8098"
+                }}>
                   Add up to 5 specific audience groups. Each should be a short phrase, not a sentence.
                 </p>
-                
-                <Input
+
+                <input
                   id="target_audiences"
                   type="text"
                   placeholder="e.g. Small business owners in local services"
                   onChange={(e) => handleAudiencesChange(e.target.value)}
-                  className={cn(
-                    "w-full",
-                    errors.target_audiences && "border-destructive"
-                  )}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    background: "#13151e",
+                    border: errors.target_audiences ? "1px solid #ef4444" : "1px solid rgba(255,255,255,0.07)",
+                    borderRadius: "8px",
+                    color: "#e8eaf2",
+                    fontSize: "14px",
+                    outline: "none"
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
+                  onBlur={(e) => e.currentTarget.style.borderColor = errors.target_audiences ? "#ef4444" : "rgba(255,255,255,0.07)"}
                   aria-describedby={errors.target_audiences ? "target_audiences-error" : "target_audiences-guidance"}
                 />
-                
+
                 <div className="space-y-2">
-                  <p id="target_audiences-guidance" className="text-xs text-muted-foreground font-medium">
-                    Format: <strong>role + context + qualifier</strong>
+                  <p id="target_audiences-guidance" style={{
+                    fontSize: "12px",
+                    color: "#7b8098",
+                    fontWeight: "600"
+                  }}>
+                    Format: <strong style={{ color: "#e8eaf2" }}>role + context + qualifier</strong>
                   </p>
-                  
-                  <div className="text-xs text-muted-foreground">
-                    <p className="font-medium mb-1">Examples:</p>
-                    <ul className="space-y-1 ml-4">
+
+                  <div style={{
+                    fontSize: "12px",
+                    color: "#7b8098"
+                  }}>
+                    <p style={{ fontWeight: "600", marginBottom: "4px", color: "#e8eaf2" }}>Examples:</p>
+                    <ul style={{ paddingLeft: "16px" }}>
                       <li>• Marketing managers at SaaS startups</li>
                       <li>• E-commerce founders selling physical products</li>
                       <li>• Healthcare clinic administrators</li>
                     </ul>
                   </div>
-                  
+
                   {formData.target_audiences && formData.target_audiences.length > 0 && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "12px",
+                      color: "#7b8098"
+                    }}>
                       <span>{formData.target_audiences.length} / 5 audiences</span>
                       {formData.target_audiences.some(a => a.length > 80) && (
-                        <span className="text-destructive">Some entries exceed 80 characters</span>
+                        <span style={{ color: "#ef4444" }}>Some entries exceed 80 characters</span>
                       )}
                     </div>
                   )}
                 </div>
-                
+
                 {errors.target_audiences && (
-                  <p id="target_audiences-error" className="text-sm text-destructive" role="alert">
+                  <p id="target_audiences-error" style={{
+                    fontSize: "12px",
+                    color: "#ef4444",
+                    marginTop: "4px"
+                  }} role="alert">
                     {errors.target_audiences}
                   </p>
                 )}
@@ -341,21 +450,45 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button
+            <div style={{
+              display: "flex",
+              gap: "12px",
+              paddingTop: "16px"
+            }}>
+              <button
                 type="submit"
-                variant="primary"
-                size="default"
                 disabled={!isFormValid() || isSubmitting}
-                loading={isSubmitting}
-                className="flex-1"
+                style={{
+                  flex: 1,
+                  padding: "10px 18px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  borderRadius: "8px",
+                  background: (!isFormValid() || isSubmitting) ? "rgba(79, 110, 247, 0.4)" : "#4f6ef7",
+                  color: "#ffffff",
+                  border: "none",
+                  cursor: (!isFormValid() || isSubmitting) ? "not-allowed" : "pointer",
+                  opacity: (!isFormValid() || isSubmitting) ? 0.6 : 1,
+                  transition: "all 0.2s",
+                  boxShadow: "0 0 20px rgba(79,110,247,0.3)"
+                }}
+                onMouseEnter={(e) => {
+                  if (!isFormValid() && !isSubmitting) {
+                    e.currentTarget.style.background = "#3d5df5"
+                    e.currentTarget.style.boxShadow = "0 0 30px rgba(79,110,247,0.5)"
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#4f6ef7"
+                  e.currentTarget.style.boxShadow = "0 0 20px rgba(79,110,247,0.3)"
+                }}
               >
                 {isSubmitting ? "Saving..." : "Next Step"}
-              </Button>
+              </button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </main>
   )
 }
