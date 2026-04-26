@@ -1,0 +1,341 @@
+/* Onboarding Step Container */
+.onboarding-step-container {
+  width: 100%;
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.onboarding-step-card {
+  background: var(--onboarding-bg-dark, #0f1117);
+  border: 1px solid var(--onboarding-border, rgba(255, 255, 255, 0.07));
+  border-radius: 14px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.onboarding-step-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--onboarding-text-primary, #ffffff);
+  margin-bottom: 24px;
+}
+
+.onboarding-step-subtitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--onboarding-text-primary, #ffffff);
+  margin-bottom: 16px;
+}
+
+/* Info Box */
+.onboarding-info-box {
+  background: rgba(79, 110, 247, 0.08);
+  border: 1px solid rgba(79, 110, 247, 0.2);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.onboarding-info-box-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--onboarding-text-primary, #ffffff);
+  font-size: 14px;
+}
+
+.onboarding-info-box-text {
+  font-size: 13px;
+  color: var(--onboarding-text-secondary, #7b8098);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.onboarding-info-box-list {
+  font-size: 13px;
+  color: var(--onboarding-text-secondary, #7b8098);
+  line-height: 1.5;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.onboarding-info-box-list li {
+  margin-bottom: 4px;
+}
+
+/* Form Labels */
+.onboarding-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--onboarding-text-light, #e8eaf2);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.onboarding-label-required {
+  color: var(--color-error, #ef4444);
+}
+
+/* Form Inputs */
+.onboarding-input,
+.onboarding-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--onboarding-input-bg, #13151e);
+  border: 1px solid var(--onboarding-input-border, rgba(255, 255, 255, 0.07));
+  border-radius: 8px;
+  color: var(--onboarding-text-light, #e8eaf2);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+
+.onboarding-input:focus,
+.onboarding-textarea:focus {
+  border-color: rgba(79, 110, 247, 0.3);
+  box-shadow: 0 0 0 2px rgba(79, 110, 247, 0.1);
+}
+
+.onboarding-input.error,
+.onboarding-textarea.error {
+  border-color: var(--color-error, #ef4444);
+}
+
+.onboarding-input.error:focus,
+.onboarding-textarea.error:focus {
+  border-color: var(--color-error, #ef4444);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+}
+
+.onboarding-textarea {
+  resize: none;
+  min-height: 100px;
+}
+
+/* Form Help Text */
+.onboarding-help-text {
+  font-size: 12px;
+  color: var(--onboarding-text-secondary, #7b8098);
+  margin-top: 4px;
+  display: block;
+}
+
+.onboarding-error-text {
+  font-size: 12px;
+  color: var(--color-error, #ef4444);
+  margin-top: 4px;
+  display: block;
+}
+
+/* Form Groups */
+.onboarding-form-group {
+  margin-bottom: 24px;
+}
+
+.onboarding-form-group:last-child {
+  margin-bottom: 0;
+}
+
+.onboarding-form-group-space {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Buttons */
+.onboarding-button {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.onboarding-button-primary {
+  background: var(--brand-electric-blue, #217CEB);
+  color: var(--onboarding-text-primary, #ffffff);
+  box-shadow: 0 0 20px rgba(33, 124, 235, 0.3);
+}
+
+.onboarding-button-primary:hover:not(:disabled) {
+  background: var(--brand-electric-blue-hover, #1a5ebf);
+  box-shadow: 0 0 30px rgba(33, 124, 235, 0.5);
+}
+
+.onboarding-button-primary:disabled {
+  background: rgba(33, 124, 235, 0.4);
+  color: var(--onboarding-text-primary, #ffffff);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.onboarding-button-secondary {
+  background: transparent;
+  color: var(--onboarding-text-secondary, #7b8098);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.onboarding-button-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--onboarding-text-light, #e8eaf2);
+}
+
+.onboarding-button-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.onboarding-button-group {
+  display: flex;
+  gap: 12px;
+  padding-top: 16px;
+}
+
+.onboarding-button-full {
+  flex: 1;
+}
+
+/* Select / Dropdown */
+.onboarding-select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--onboarding-input-bg, #13151e);
+  border: 1px solid var(--onboarding-input-border, rgba(255, 255, 255, 0.07));
+  border-radius: 8px;
+  color: var(--onboarding-text-light, #e8eaf2);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  cursor: pointer;
+}
+
+.onboarding-select:focus {
+  border-color: rgba(79, 110, 247, 0.3);
+}
+
+.onboarding-select.error {
+  border-color: var(--color-error, #ef4444);
+}
+
+/* Flex Utilities */
+.onboarding-flex {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.onboarding-flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.onboarding-flex-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Spacing */
+.onboarding-space-y-4 {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.onboarding-space-y-6 {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Color Overrides for Dark Theme */
+.onboarding-text-primary {
+  color: var(--onboarding-text-primary, #ffffff);
+}
+
+.onboarding-text-secondary {
+  color: var(--onboarding-text-secondary, #7b8098);
+}
+
+.onboarding-text-light {
+  color: var(--onboarding-text-light, #e8eaf2);
+}
+
+/* Onboarding Layout */
+.onboarding-layout {
+  background: var(--onboarding-layout-bg, #08090d);
+  color: var(--onboarding-text-light, #e8eaf2);
+  min-height: 100vh;
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+}
+
+/* Competitor and Remove Button */
+.onboarding-competitor-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.onboarding-competitor-input-group {
+  flex: 1;
+}
+
+.onboarding-remove-button {
+  padding: 10px 8px;
+  background: var(--onboarding-input-bg, #13151e);
+  border: 1px solid var(--onboarding-input-border, rgba(255, 255, 255, 0.07));
+  border-radius: 8px;
+  color: var(--color-error, #ef4444);
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  height: fit-content;
+  margin-top: 30px;
+  transition: all 0.2s;
+}
+
+.onboarding-remove-button:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Add Item Button (Dashed border) */
+.onboarding-add-button {
+  width: 100%;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px dashed rgba(79, 110, 247, 0.4);
+  color: var(--brand-electric-blue, #217CEB);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.onboarding-add-button:hover {
+  border-color: rgba(79, 110, 247, 0.8);
+  background: rgba(79, 110, 247, 0.05);
+}
+
+.onboarding-add-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Count/Status Text */
+.onboarding-counter {
+  font-size: 11px;
+  color: var(--onboarding-text-secondary, #7b8098);
+}
+
+/* Divider */
+.onboarding-divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  margin: 24px 0;
+}

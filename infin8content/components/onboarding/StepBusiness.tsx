@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { validateBusinessDescription, validateTargetAudiences } from "@/lib/validation/onboarding-profile-schema"
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import "./onboarding-steps.css"
 
 interface StepBusinessProps {
   className?: string
@@ -210,63 +211,29 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
   }
 
   return (
-    <main className={cn("w-full max-w-2xl mx-auto", className)}>
-      <div style={{
-        background: "#0f1117",
-        border: "1px solid rgba(255,255,255,0.07)",
-        borderRadius: "14px",
-        padding: "32px",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.4)"
-      }}>
-        <h2 style={{
-          fontSize: "22px",
-          fontWeight: "600",
-          color: "#ffffff",
-          marginBottom: "24px"
-        }}>Business Information</h2>
+    <main className={cn("onboarding-step-container", className)}>
+      <div className="onboarding-step-card">
+        <h2 className="onboarding-step-title">Business Information</h2>
 
-        <div className="space-y-6">
+        <div className="onboarding-space-y-6">
           {/* Informational Context Box */}
-          <div style={{
-            background: "rgba(79, 110, 247, 0.08)",
-            border: "1px solid rgba(79, 110, 247, 0.2)",
-            borderRadius: "10px",
-            padding: "16px"
-          }}>
-            <h3 style={{
-              fontWeight: "600",
-              marginBottom: "8px",
-              color: "#ffffff",
-              fontSize: "14px"
-            }}>Help us understand your business</h3>
-            <p style={{
-              fontSize: "13px",
-              color: "#7b8098",
-              marginBottom: "8px",
-              lineHeight: "1.5"
-            }}>
+          <div className="onboarding-info-box">
+            <h3 className="onboarding-info-box-title">Help us understand your business</h3>
+            <p className="onboarding-info-box-text">
               This information helps us tailor the content generation to your specific needs and target audience.
             </p>
-            <ul style={{
-              fontSize: "13px",
-              color: "#7b8098",
-              lineHeight: "1.5"
-            }}>
+            <ul className="onboarding-info-box-list">
               <li>• Website URL helps us analyze your online presence</li>
               <li>• Business description guides content tone and style</li>
               <li>• Target audiences ensure content reaches the right people</li>
             </ul>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="onboarding-space-y-4">
             {/* Website URL */}
-            <div className="space-y-2">
-              <label htmlFor="website_url" style={{
-                fontSize: "13px",
-                fontWeight: "600",
-                color: "#e8eaf2"
-              }}>
-                Website URL <span style={{ color: "#ef4444" }}>*</span>
+            <div className="onboarding-form-group">
+              <label htmlFor="website_url" className="onboarding-label">
+                Website URL <span className="onboarding-label-required">*</span>
               </label>
               <input
                 id="website_url"
@@ -274,41 +241,22 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
                 placeholder="https://example.com"
                 value={formData.website_url}
                 onChange={(e) => handleInputChange('website_url', e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  background: "#13151e",
-                  border: errors.website_url ? "1px solid #ef4444" : "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: "8px",
-                  color: "#e8eaf2",
-                  fontSize: "14px",
-                  outline: "none"
-                }}
-                onFocus={(e) => e.target.style.borderColor = "rgba(79,110,247,0.3)"}
-                onBlur={(e) => e.target.style.borderColor = errors.website_url ? "#ef4444" : "rgba(255,255,255,0.07)"}
+                className={cn("onboarding-input", errors.website_url && "error")}
                 aria-describedby={errors.website_url ? "website_url-error" : undefined}
               />
               {errors.website_url && (
-                <p id="website_url-error" style={{
-                  fontSize: "12px",
-                  color: "#ef4444",
-                  marginTop: "4px"
-                }} role="alert">
+                <p id="website_url-error" className="onboarding-error-text" role="alert">
                   {errors.website_url}
                 </p>
               )}
             </div>
 
             {/* Business Description */}
-            <div className="space-y-2">
-              <label htmlFor="business_description" style={{
-                fontSize: "13px",
-                fontWeight: "600",
-                color: "#e8eaf2"
-              }}>
-                Business Description <span style={{ color: "#ef4444" }}>*</span>
+            <div className="onboarding-form-group">
+              <label htmlFor="business_description" className="onboarding-label">
+                Business Description <span className="onboarding-label-required">*</span>
               </label>
-              <div className="space-y-2">
+              <div className="onboarding-form-group-space">
                 <textarea
                   id="business_description"
                   rows={4}
@@ -316,47 +264,19 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
                   placeholder="Describe what your business does, who it serves, and what makes it different."
                   value={formData.business_description}
                   onChange={(e) => handleInputChange('business_description', e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    background: "#13151e",
-                    border: errors.business_description ? "1px solid #ef4444" : "1px solid rgba(255,255,255,0.07)",
-                    borderRadius: "8px",
-                    color: "#e8eaf2",
-                    fontSize: "14px",
-                    outline: "none",
-                    fontFamily: "inherit",
-                    resize: "none",
-                    minHeight: "100px"
-                  }}
-                  onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
-                  onBlur={(e) => e.currentTarget.style.borderColor = errors.business_description ? "#ef4444" : "rgba(255,255,255,0.07)"}
+                  className={cn("onboarding-textarea", errors.business_description && "error")}
                   aria-describedby={errors.business_description ? "business_description-error" : "business_description-help"}
                 />
-                <div style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center"
-                }}>
-                  <p id="business_description-help" style={{
-                    fontSize: "12px",
-                    color: "#7b8098"
-                  }}>
+                <div className="onboarding-flex-between">
+                  <p id="business_description-help" className="onboarding-help-text">
                     Keep it short and specific. This helps us generate accurate research and content.
                   </p>
-                  <p style={{
-                    fontSize: "12px",
-                    color: "#7b8098"
-                  }}>
+                  <p className="onboarding-help-text">
                     {formData.business_description?.length || 0} / 500 characters
                   </p>
                 </div>
                 {errors.business_description && (
-                  <p id="business_description-error" style={{
-                    fontSize: "12px",
-                    color: "#ef4444",
-                    marginTop: "4px"
-                  }} role="alert">
+                  <p id="business_description-error" className="onboarding-error-text" role="alert">
                     {errors.business_description}
                   </p>
                 )}
@@ -364,19 +284,12 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
             </div>
 
             {/* Target Audiences */}
-            <div className="space-y-2">
-              <label htmlFor="target_audiences" style={{
-                fontSize: "13px",
-                fontWeight: "600",
-                color: "#e8eaf2"
-              }}>
-                Target Audiences <span style={{ color: "#ef4444" }}>*</span>
+            <div className="onboarding-form-group">
+              <label htmlFor="target_audiences" className="onboarding-label">
+                Target Audiences <span className="onboarding-label-required">*</span>
               </label>
-              <div className="space-y-3">
-                <p id="target_audiences-help" style={{
-                  fontSize: "13px",
-                  color: "#7b8098"
-                }}>
+              <div className="onboarding-form-group-space">
+                <p id="target_audiences-help" className="onboarding-help-text">
                   Add up to 5 specific audience groups. Each should be a short phrase, not a sentence.
                 </p>
 
@@ -385,35 +298,17 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
                   type="text"
                   placeholder="e.g. Small business owners in local services"
                   onChange={(e) => handleAudiencesChange(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    background: "#13151e",
-                    border: errors.target_audiences ? "1px solid #ef4444" : "1px solid rgba(255,255,255,0.07)",
-                    borderRadius: "8px",
-                    color: "#e8eaf2",
-                    fontSize: "14px",
-                    outline: "none"
-                  }}
-                  onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
-                  onBlur={(e) => e.currentTarget.style.borderColor = errors.target_audiences ? "#ef4444" : "rgba(255,255,255,0.07)"}
+                  className={cn("onboarding-input", errors.target_audiences && "error")}
                   aria-describedby={errors.target_audiences ? "target_audiences-error" : "target_audiences-guidance"}
                 />
 
-                <div className="space-y-2">
-                  <p id="target_audiences-guidance" style={{
-                    fontSize: "12px",
-                    color: "#7b8098",
-                    fontWeight: "600"
-                  }}>
-                    Format: <strong style={{ color: "#e8eaf2" }}>role + context + qualifier</strong>
+                <div className="onboarding-form-group-space">
+                  <p id="target_audiences-guidance" className="onboarding-help-text" style={{ fontWeight: "600" }}>
+                    Format: <strong style={{ color: "var(--onboarding-text-light, #e8eaf2)" }}>role + context + qualifier</strong>
                   </p>
 
-                  <div style={{
-                    fontSize: "12px",
-                    color: "#7b8098"
-                  }}>
-                    <p style={{ fontWeight: "600", marginBottom: "4px", color: "#e8eaf2" }}>Examples:</p>
+                  <div className="onboarding-text-secondary">
+                    <p style={{ fontWeight: "600", marginBottom: "4px", color: "var(--onboarding-text-light, #e8eaf2)" }}>Examples:</p>
                     <ul style={{ paddingLeft: "16px" }}>
                       <li>• Marketing managers at SaaS startups</li>
                       <li>• E-commerce founders selling physical products</li>
@@ -422,27 +317,17 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
                   </div>
 
                   {formData.target_audiences && formData.target_audiences.length > 0 && (
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      fontSize: "12px",
-                      color: "#7b8098"
-                    }}>
+                    <div className="onboarding-flex">
                       <span>{formData.target_audiences.length} / 5 audiences</span>
                       {formData.target_audiences.some(a => a.length > 80) && (
-                        <span style={{ color: "#ef4444" }}>Some entries exceed 80 characters</span>
+                        <span style={{ color: "var(--color-error, #ef4444)" }}>Some entries exceed 80 characters</span>
                       )}
                     </div>
                   )}
                 </div>
 
                 {errors.target_audiences && (
-                  <p id="target_audiences-error" style={{
-                    fontSize: "12px",
-                    color: "#ef4444",
-                    marginTop: "4px"
-                  }} role="alert">
+                  <p id="target_audiences-error" className="onboarding-error-text" role="alert">
                     {errors.target_audiences}
                   </p>
                 )}
@@ -450,38 +335,11 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
             </div>
 
             {/* Action Buttons */}
-            <div style={{
-              display: "flex",
-              gap: "12px",
-              paddingTop: "16px"
-            }}>
+            <div className="onboarding-button-group">
               <button
                 type="submit"
                 disabled={!isFormValid() || isSubmitting}
-                style={{
-                  flex: 1,
-                  padding: "10px 18px",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  borderRadius: "8px",
-                  background: (!isFormValid() || isSubmitting) ? "rgba(79, 110, 247, 0.4)" : "#4f6ef7",
-                  color: "#ffffff",
-                  border: "none",
-                  cursor: (!isFormValid() || isSubmitting) ? "not-allowed" : "pointer",
-                  opacity: (!isFormValid() || isSubmitting) ? 0.6 : 1,
-                  transition: "all 0.2s",
-                  boxShadow: "0 0 20px rgba(79,110,247,0.3)"
-                }}
-                onMouseEnter={(e) => {
-                  if (!isFormValid() && !isSubmitting) {
-                    e.currentTarget.style.background = "#3d5df5"
-                    e.currentTarget.style.boxShadow = "0 0 30px rgba(79,110,247,0.5)"
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#4f6ef7"
-                  e.currentTarget.style.boxShadow = "0 0 20px rgba(79,110,247,0.3)"
-                }}
+                className={cn("onboarding-button onboarding-button-primary onboarding-button-full")}
               >
                 {isSubmitting ? "Saving..." : "Next Step"}
               </button>

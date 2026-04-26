@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AIEnhancedInput } from "@/components/onboarding/ai-enhanced-input"
 import { cn } from "@/lib/utils"
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import "./onboarding-steps.css"
 
 interface StepCompetitorsProps {
   className?: string
@@ -152,126 +153,54 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
   const isFormValid = validCompetitorsCount >= 1 && validCompetitorsCount <= 7
 
   return (
-    <main className={cn("w-full max-w-2xl mx-auto", className)}>
-      <div style={{
-        background: "#0f1117",
-        border: "1px solid rgba(255,255,255,0.07)",
-        borderRadius: "14px",
-        padding: "32px",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.4)"
-      }}>
-        <h2 style={{
-          fontSize: "22px",
-          fontWeight: "600",
-          color: "#ffffff",
-          marginBottom: "24px"
-        }}>Competitor Analysis</h2>
+    <main className={cn("onboarding-step-container", className)}>
+      <div className="onboarding-step-card">
+        <h2 className="onboarding-step-title">Competitor Analysis</h2>
 
-        <div className="space-y-6">
+        <div className="onboarding-space-y-6">
           {/* Informational Context Box */}
-          <div style={{
-            background: "rgba(79, 110, 247, 0.08)",
-            border: "1px solid rgba(79, 110, 247, 0.2)",
-            borderRadius: "10px",
-            padding: "16px"
-          }}>
-            <h3 style={{
-              fontWeight: "600",
-              marginBottom: "8px",
-              color: "#ffffff",
-              fontSize: "14px"
-            }}>Understanding your competition</h3>
-            <p style={{
-              fontSize: "13px",
-              color: "#7b8098",
-              marginBottom: "8px",
-              lineHeight: "1.5"
-            }}>
+          <div className="onboarding-info-box">
+            <h3 className="onboarding-info-box-title">Understanding your competition</h3>
+            <p className="onboarding-info-box-text">
               Adding competitor websites helps us analyze their content strategies and identify opportunities for your business.
             </p>
-            <ul style={{
-              fontSize: "13px",
-              color: "#7b8098",
-              lineHeight: "1.5"
-            }}>
+            <ul className="onboarding-info-box-list">
               <li>• Add 3-7 competitor websites for optimal analysis</li>
               <li>• Focus on direct competitors in your industry</li>
               <li>• We'll analyze their content to help you stand out</li>
             </ul>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="onboarding-space-y-4">
             {/* Competitor Inputs */}
-            <div className="space-y-4">
-              <div style={{
-                fontSize: "13px",
-                fontWeight: "600",
-                color: "#e8eaf2"
-              }}>
-                Competitor Websites <span style={{ color: "#ef4444" }}>*</span>
+            <div className="onboarding-space-y-4">
+              <div className="onboarding-label">
+                Competitor Websites <span className="onboarding-label-required">*</span>
               </div>
               {competitors.map((competitor, index) => (
-                <div key={index} style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "8px"
-                }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{
-                      fontSize: "13px",
-                      fontWeight: "600",
-                      color: "#e8eaf2",
-                      display: "block",
-                      marginBottom: "6px"
-                    }}>
-                      Competitor {index + 1} URL <span style={{ color: "#ef4444" }}>*</span>
+                <div key={index} className="onboarding-competitor-row">
+                  <div className="onboarding-competitor-input-group">
+                    <label className="onboarding-label">
+                      Competitor {index + 1} URL <span className="onboarding-label-required">*</span>
                     </label>
                     <input
                       type="url"
                       value={competitor.url}
                       onChange={(e) => updateCompetitor(index, 'url', e.target.value)}
                       placeholder={`Competitor ${index + 1} URL`}
-                      style={{
-                        width: "100%",
-                        padding: "10px 12px",
-                        background: "#13151e",
-                        border: errors[`competitor_${index}`] ? "1px solid #ef4444" : "1px solid rgba(255,255,255,0.07)",
-                        borderRadius: "8px",
-                        color: "#e8eaf2",
-                        fontSize: "14px",
-                        outline: "none",
-                        marginBottom: "12px"
-                      }}
-                      onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
-                      onBlur={(e) => e.currentTarget.style.borderColor = errors[`competitor_${index}`] ? "#ef4444" : "rgba(255,255,255,0.07)"}
+                      className={cn("onboarding-input", errors[`competitor_${index}`] && "error")}
+                      style={{ marginBottom: "12px" }}
                       aria-label={`Competitor ${index + 1} URL`}
                     />
-                    <label style={{
-                      fontSize: "13px",
-                      fontWeight: "600",
-                      color: "#e8eaf2",
-                      display: "block",
-                      marginBottom: "6px"
-                    }}>
-                      Competitor {index + 1} Name <span style={{ color: "#7b8098" }}>(Optional)</span>
+                    <label className="onboarding-label">
+                      Competitor {index + 1} Name <span style={{ color: "var(--onboarding-text-secondary, #7b8098)" }}>(Optional)</span>
                     </label>
                     <input
                       type="text"
                       value={competitor.name || ""}
                       onChange={(e) => updateCompetitor(index, 'name', e.target.value)}
                       placeholder={`Competitor ${index + 1} Name`}
-                      style={{
-                        width: "100%",
-                        padding: "10px 12px",
-                        background: "#13151e",
-                        border: "1px solid rgba(255,255,255,0.07)",
-                        borderRadius: "8px",
-                        color: "#e8eaf2",
-                        fontSize: "14px",
-                        outline: "none"
-                      }}
-                      onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
-                      onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"}
+                      className="onboarding-input"
                       aria-label={`Competitor ${index + 1} Name`}
                     />
                   </div>
@@ -279,18 +208,7 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
                     <button
                       type="button"
                       onClick={() => removeCompetitor(index)}
-                      style={{
-                        padding: "10px 8px",
-                        background: "#13151e",
-                        border: "1px solid rgba(255,255,255,0.07)",
-                        borderRadius: "8px",
-                        color: "#ef4444",
-                        fontSize: "18px",
-                        fontWeight: "600",
-                        cursor: "pointer",
-                        height: "fit-content",
-                        marginTop: "30px"
-                      }}
+                      className="onboarding-remove-button"
                     >
                       ×
                     </button>
@@ -304,26 +222,7 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
               <button
                 type="button"
                 onClick={addCompetitor}
-                style={{
-                  width: "100%",
-                  padding: "10px 18px",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  borderRadius: "8px",
-                  background: "transparent",
-                  border: "1px dashed rgba(79, 110, 247, 0.4)",
-                  color: "#4f6ef7",
-                  cursor: "pointer",
-                  transition: "all 0.2s"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(79, 110, 247, 0.8)"
-                  e.currentTarget.style.background = "rgba(79, 110, 247, 0.05)"
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(79, 110, 247, 0.4)"
-                  e.currentTarget.style.background = "transparent"
-                }}
+                className="onboarding-add-button"
               >
                 + Add Competitor
               </button>
@@ -331,56 +230,22 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
 
             {/* Error Message */}
             {errors.competitors && (
-              <p style={{
-                fontSize: "12px",
-                color: "#ef4444",
-                marginTop: "4px"
-              }} role="alert">
+              <p className="onboarding-error-text" role="alert">
                 {errors.competitors}
               </p>
             )}
 
             {/* Competitor Count */}
-            <p style={{
-              fontSize: "11px",
-              color: "#7b8098"
-            }}>
+            <p className="onboarding-counter">
               {validCompetitorsCount} of 3-7 competitors added
             </p>
 
             {/* Action Buttons */}
-            <div style={{
-              display: "flex",
-              gap: "12px",
-              paddingTop: "16px"
-            }}>
+            <div className="onboarding-button-group">
               <button
                 type="submit"
                 disabled={!isFormValid || isSubmitting}
-                style={{
-                  flex: 1,
-                  padding: "10px 18px",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  borderRadius: "8px",
-                  background: (!isFormValid || isSubmitting) ? "rgba(79, 110, 247, 0.4)" : "#4f6ef7",
-                  color: "#ffffff",
-                  border: "none",
-                  cursor: (!isFormValid || isSubmitting) ? "not-allowed" : "pointer",
-                  opacity: (!isFormValid || isSubmitting) ? 0.6 : 1,
-                  transition: "all 0.2s",
-                  boxShadow: "0 0 20px rgba(79,110,247,0.3)"
-                }}
-                onMouseEnter={(e) => {
-                  if (isFormValid && !isSubmitting) {
-                    e.currentTarget.style.background = "#3d5df5"
-                    e.currentTarget.style.boxShadow = "0 0 30px rgba(79,110,247,0.5)"
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#4f6ef7"
-                  e.currentTarget.style.boxShadow = "0 0 20px rgba(79,110,247,0.3)"
-                }}
+                className={cn("onboarding-button onboarding-button-primary onboarding-button-full")}
               >
                 {isSubmitting ? "Saving..." : "Next Step"}
               </button>

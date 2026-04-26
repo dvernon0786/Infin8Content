@@ -8,25 +8,8 @@ import { StepCompetitors } from "@/components/onboarding/StepCompetitors"
 import { StepKeywordSettings } from "@/components/onboarding/StepKeywordSettings"
 import { StepContentDefaults } from "@/components/onboarding/StepContentDefaults"
 import { StepIntegration } from "@/components/onboarding/StepIntegration"
-
-const darkThemeStyle = `
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.1);
-    border-radius: 4px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255,255,255,0.2);
-  }
-  * {
-    scrollbar-color: rgba(255,255,255,0.1) transparent;
-  }
-`
+import "@/components/onboarding/onboarding-steps.css"
+import "@/components/onboarding/onboarding-page.css"
 
 type OnboardingObserverState = {
   orgId: string
@@ -87,30 +70,18 @@ export default function OnboardingPage() {
   }
 
   return (
-    <>
-      <style>{darkThemeStyle}</style>
-      <div style={{
-        background: "linear-gradient(135deg, #08090d 0%, #0f1117 50%, #08090d 100%)",
-        minHeight: "100vh",
-        paddingTop: "60px",
-        paddingBottom: "60px"
-      }}>
-        <div style={{
-          maxWidth: "1160px",
-          margin: "0 auto",
-          padding: "0 28px"
-        }}>
-          <div style={{ marginBottom: "48px" }}>
-            <OnboardingWizard currentStep={currentStep} />
-          </div>
-
-          {currentStep === 1 && <StepBusiness onNext={handleNext} />}
-          {currentStep === 2 && <StepCompetitors onNext={handleNext} />}
-          {currentStep === 3 && <StepKeywordSettings onNext={handleNext} />}
-          {currentStep === 4 && <StepContentDefaults onNext={handleNext} />}
-          {currentStep === 5 && <StepIntegration onNext={handleNext} />}
+    <div className="onboarding-page">
+      <div className="onboarding-page-container">
+        <div className="onboarding-wizard-wrapper">
+          <OnboardingWizard currentStep={currentStep} />
         </div>
+
+        {currentStep === 1 && <StepBusiness onNext={handleNext} />}
+        {currentStep === 2 && <StepCompetitors onNext={handleNext} />}
+        {currentStep === 3 && <StepKeywordSettings onNext={handleNext} />}
+        {currentStep === 4 && <StepContentDefaults onNext={handleNext} />}
+        {currentStep === 5 && <StepIntegration onNext={handleNext} />}
       </div>
-    </>
+    </div>
   )
 }

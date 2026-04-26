@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { useCurrentUser } from "@/lib/hooks/use-current-user"
+import "./onboarding-steps.css"
 
 interface StepContentDefaultsProps {
   className?: string
@@ -119,47 +120,21 @@ export function StepContentDefaults({
   }
 
   return (
-    <main className={cn("mx-auto w-full max-w-2xl", className)}>
-      <div style={{
-        background: "#0f1117",
-        border: "1px solid rgba(255,255,255,0.07)",
-        borderRadius: "14px",
-        padding: "32px",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.4)"
-      }}>
-        <h2 style={{
-          fontSize: "22px",
-          fontWeight: "600",
-          color: "#ffffff",
-          marginBottom: "24px"
-        }}>Content Defaults</h2>
+    <main className={cn("onboarding-step-container", className)}>
+      <div className="onboarding-step-card">
+        <h2 className="onboarding-step-title">Content Defaults</h2>
 
         <div>
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Language */}
             <div className="space-y-2">
-              <label style={{
-                fontSize: "13px",
-                fontWeight: "600",
-                color: "#e8eaf2"
-              }}>Language</label>
+              <label className="onboarding-label">Language</label>
               <select
                 value={formData.content_defaults.language}
                 onChange={(e) =>
                   updateField("language", e.target.value)
                 }
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  background: "#13151e",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: "8px",
-                  color: "#e8eaf2",
-                  fontSize: "14px",
-                  outline: "none"
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
-                onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"}
+                className="onboarding-select"
               >
                 <option value="english">English</option>
                 <option value="spanish">Spanish</option>
@@ -173,25 +148,14 @@ export function StepContentDefaults({
               <label style={{
                 fontSize: "13px",
                 fontWeight: "600",
-                color: "#e8eaf2"
+                color: "var(--onboarding-text-light, #e8eaf2)"
               }}>Tone</label>
               <select
                 value={formData.content_defaults.tone}
                 onChange={(e) =>
                   updateField("tone", e.target.value)
                 }
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  background: "#13151e",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: "8px",
-                  color: "#e8eaf2",
-                  fontSize: "14px",
-                  outline: "none"
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
-                onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"}
+                className="onboarding-select"
               >
                 <option value="professional">Professional</option>
                 <option value="casual">Casual</option>
@@ -205,25 +169,14 @@ export function StepContentDefaults({
               <label style={{
                 fontSize: "13px",
                 fontWeight: "600",
-                color: "#e8eaf2"
+                color: "var(--onboarding-text-light, #e8eaf2)"
               }}>Style</label>
               <select
                 value={formData.content_defaults.style}
                 onChange={(e) =>
                   updateField("style", e.target.value)
                 }
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  background: "#13151e",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: "8px",
-                  color: "#e8eaf2",
-                  fontSize: "14px",
-                  outline: "none"
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
-                onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"}
+                className="onboarding-select"
               >
                 <option value="informative">Informative</option>
                 <option value="educational">Educational</option>
@@ -236,7 +189,7 @@ export function StepContentDefaults({
               <label style={{
                 fontSize: "13px",
                 fontWeight: "600",
-                color: "#e8eaf2"
+                color: "var(--onboarding-text-light, #e8eaf2)"
               }}>
                 Target Word Count
               </label>
@@ -251,18 +204,7 @@ export function StepContentDefaults({
                     Number(e.target.value) || 1500
                   )
                 }
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  background: "#13151e",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: "8px",
-                  color: "#e8eaf2",
-                  fontSize: "14px",
-                  outline: "none"
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
-                onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"}
+                className="onboarding-select"
               />
             </div>
 
@@ -281,13 +223,13 @@ export function StepContentDefaults({
                 style={{
                   width: "18px",
                   height: "18px",
-                  accentColor: "#4f6ef7",
+                  accentColor: "var(--brand-electric-blue, #217CEB)",
                   cursor: "pointer"
                 }}
               />
               <label style={{
                 fontSize: "13px",
-                color: "#7b8098",
+                color: "var(--onboarding-text-secondary, #7b8098)",
                 cursor: "pointer"
               }}>
                 Auto-publish after generation
@@ -302,7 +244,7 @@ export function StepContentDefaults({
             <h3 style={{
               fontSize: "16px",
               fontWeight: "600",
-              color: "#ffffff",
+              color: "var(--onboarding-text-primary, #ffffff)",
               marginBottom: "16px"
             }}>Content Generation Settings</h3>
 
@@ -311,7 +253,7 @@ export function StepContentDefaults({
               <label style={{
                 fontSize: "13px",
                 fontWeight: "600",
-                color: "#e8eaf2"
+                color: "var(--onboarding-text-light, #e8eaf2)"
               }}>Brand Color (Hex Code)</label>
               <div style={{
                 display: "flex",
@@ -338,10 +280,10 @@ export function StepContentDefaults({
                   style={{
                     flex: 1,
                     padding: "10px 12px",
-                    background: "#13151e",
+                    background: "var(--onboarding-input-bg, #13151e)",
                     border: "1px solid rgba(255,255,255,0.07)",
                     borderRadius: "8px",
-                    color: "#e8eaf2",
+                    color: "var(--onboarding-text-light, #e8eaf2)",
                     fontSize: "14px",
                     outline: "none"
                   }}
@@ -356,23 +298,12 @@ export function StepContentDefaults({
               <label style={{
                 fontSize: "13px",
                 fontWeight: "600",
-                color: "#e8eaf2"
+                color: "var(--onboarding-text-light, #e8eaf2)"
               }}>Image Style</label>
               <select
                 value={formData.content_defaults.image_style}
                 onChange={(e) => updateField("image_style", e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  background: "#13151e",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: "8px",
-                  color: "#e8eaf2",
-                  fontSize: "14px",
-                  outline: "none"
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
-                onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"}
+                className="onboarding-select"
               >
                 <option value="brand_text_realism">Brand &amp; Text Realism</option>
                 <option value="watercolor_realism">Watercolor Realism</option>
@@ -387,7 +318,7 @@ export function StepContentDefaults({
               <label style={{
                 fontSize: "13px",
                 fontWeight: "600",
-                color: "#e8eaf2"
+                color: "var(--onboarding-text-light, #e8eaf2)"
               }}>Max Internal Links</label>
               <input
                 type="number"
@@ -395,18 +326,7 @@ export function StepContentDefaults({
                 max={10}
                 value={formData.content_defaults.num_internal_links}
                 onChange={(e) => updateField("num_internal_links", Number(e.target.value))}
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  background: "#13151e",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: "8px",
-                  color: "#e8eaf2",
-                  fontSize: "14px",
-                  outline: "none"
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
-                onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"}
+                className="onboarding-select"
               />
             </div>
 
@@ -429,13 +349,13 @@ export function StepContentDefaults({
                   style={{
                     width: "18px",
                     height: "18px",
-                    accentColor: "#4f6ef7",
+                    accentColor: "var(--brand-electric-blue, #217CEB)",
                     cursor: "pointer"
                   }}
                 />
                 <label style={{
                   fontSize: "13px",
-                  color: "#7b8098",
+                  color: "var(--onboarding-text-secondary, #7b8098)",
                   cursor: "pointer"
                 }}>Include Internal Links</label>
               </div>
@@ -451,13 +371,13 @@ export function StepContentDefaults({
                   style={{
                     width: "18px",
                     height: "18px",
-                    accentColor: "#4f6ef7",
+                    accentColor: "var(--brand-electric-blue, #217CEB)",
                     cursor: "pointer"
                   }}
                 />
                 <label style={{
                   fontSize: "13px",
-                  color: "#7b8098",
+                  color: "var(--onboarding-text-secondary, #7b8098)",
                   cursor: "pointer"
                 }}>Add CTA Sections</label>
               </div>
@@ -473,13 +393,13 @@ export function StepContentDefaults({
                   style={{
                     width: "18px",
                     height: "18px",
-                    accentColor: "#4f6ef7",
+                    accentColor: "var(--brand-electric-blue, #217CEB)",
                     cursor: "pointer"
                   }}
                 />
                 <label style={{
                   fontSize: "13px",
-                  color: "#7b8098",
+                  color: "var(--onboarding-text-secondary, #7b8098)",
                   cursor: "pointer"
                 }}>Embed YouTube Videos</label>
               </div>
@@ -495,13 +415,13 @@ export function StepContentDefaults({
                   style={{
                     width: "18px",
                     height: "18px",
-                    accentColor: "#4f6ef7",
+                    accentColor: "var(--brand-electric-blue, #217CEB)",
                     cursor: "pointer"
                   }}
                 />
                 <label style={{
                   fontSize: "13px",
-                  color: "#7b8098",
+                  color: "var(--onboarding-text-secondary, #7b8098)",
                   cursor: "pointer"
                 }}>Add Infographics</label>
               </div>
@@ -517,13 +437,13 @@ export function StepContentDefaults({
                   style={{
                     width: "18px",
                     height: "18px",
-                    accentColor: "#4f6ef7",
+                    accentColor: "var(--brand-electric-blue, #217CEB)",
                     cursor: "pointer"
                   }}
                 />
                 <label style={{
                   fontSize: "13px",
-                  color: "#7b8098",
+                  color: "var(--onboarding-text-secondary, #7b8098)",
                   cursor: "pointer"
                 }}>Use Emojis</label>
               </div>
@@ -533,30 +453,7 @@ export function StepContentDefaults({
             <button
               type="submit"
               disabled={isSubmitting}
-              style={{
-                width: "100%",
-                padding: "10px 18px",
-                fontSize: "14px",
-                fontWeight: "600",
-                borderRadius: "8px",
-                background: isSubmitting ? "rgba(79, 110, 247, 0.4)" : "#4f6ef7",
-                color: "#ffffff",
-                border: "none",
-                cursor: isSubmitting ? "not-allowed" : "pointer",
-                opacity: isSubmitting ? 0.6 : 1,
-                transition: "all 0.2s",
-                boxShadow: "0 0 20px rgba(79,110,247,0.3)"
-              }}
-              onMouseEnter={(e) => {
-                if (!isSubmitting) {
-                  e.currentTarget.style.background = "#3d5df5"
-                  e.currentTarget.style.boxShadow = "0 0 30px rgba(79,110,247,0.5)"
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#4f6ef7"
-                e.currentTarget.style.boxShadow = "0 0 20px rgba(79,110,247,0.3)"
-              }}
+              className={cn("onboarding-button onboarding-button-primary", "w-full")}
             >
               {isSubmitting ? "Saving…" : "Save & Continue"}
             </button>
