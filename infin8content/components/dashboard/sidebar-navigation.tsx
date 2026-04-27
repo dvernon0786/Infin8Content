@@ -87,9 +87,10 @@ const NAV_ITEMS: NavItem[] = [
     {
         id: "analytics",
         title: "Analytics & Reports",
-        url: "/analytics",
+        url: "/dashboard/track",
         icon: BarChart3,
         sub: [
+            { title: "Track & Analyze", url: "/dashboard/track" },
             { title: "Analytics Dashboard", url: "/analytics" },
             { title: "LLM Brand Monitors", url: "/dashboard/llm-visibility" },
             { title: "SEO Reports", url: "#" },
