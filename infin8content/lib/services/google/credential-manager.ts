@@ -140,13 +140,17 @@ export async function getValidTokens(
   try {
     const accessToken = decrypt(connection.credentials.access_token)
     const refreshToken = decrypt(connection.credentials.refresh_token)
-    const expiresAt = new Date(connection.credentials.expires_at)
+    const expiresAtIso = connection.credentials.expires_at
+    const expiresAtMs = typeof expiresAtIso === 'string'
+      ? new Date(expiresAtIso).getTime()
+      : expiresAtIso
 
     const tokens: GoogleTokens = {
       access_token: accessToken,
       refresh_token: refreshToken,
-      expires_at: expiresAt,
+      expires_at: expiresAtMs,
       scope: connection.credentials.scope,
+      token_type: 'Bearer',
     }
 
     // Auto-refresh if expired

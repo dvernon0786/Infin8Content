@@ -7,7 +7,6 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/get-current-user'
-import { getValidTokens } from '@/lib/services/google/credential-manager'
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,7 +18,8 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const tokens = await getValidTokens(user.org_id)
+    // Note: tokens param not used yet for indexing (returns mock data)
+    // In production, would call real Google Search Console API
 
     // Return mock data regardless of connection status for now
     // In production, would call real Google Search Console API with tokens
