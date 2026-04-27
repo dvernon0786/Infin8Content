@@ -132,21 +132,30 @@ export default function TrackPage() {
       let indexingData: IndexingData | null = null
 
       if (gaRes.ok) {
-        gaData = await gaRes.json()
-        setGAData(gaData)
+        const data = await gaRes.json()
+        if (data.connected !== false && data.daily) {
+          gaData = data
+          setGAData(gaData)
+        }
       }
 
       if (gscRes.ok) {
-        gscData = await gscRes.json()
-        setGSCData(gscData)
+        const data = await gscRes.json()
+        if (data.connected !== false && data.metrics) {
+          gscData = data
+          setGSCData(gscData)
+        }
       }
 
       if (indexingRes.ok) {
-        indexingData = await indexingRes.json()
-        setIndexingData(indexingData)
+        const data = await indexingRes.json()
+        if (data.connected !== false && data.indexedUrls !== undefined) {
+          indexingData = data
+          setIndexingData(indexingData)
+        }
       }
 
-      // Generate insights from the data
+      // Generate insights from the data (safe now with null checks)
       const newInsights = generateInsights(gaData, gscData, indexingData)
       setInsights(newInsights)
     } catch (err) {
@@ -688,7 +697,7 @@ function generateInsights(
     }
   }
 
-  if (gscData) {
+  if (gscData && gscData.metrics) {
     if (gscData.metrics.ctr < 0.02) {
       insights.push({
         title: 'Low Search CTR',
@@ -732,7 +741,7 @@ function generateInsights(
     }
   }
 
-  if (indexingData && indexingData.crawlErrors > 0) {
+  if (indexingData && indexingData.crawlErrors !== undefined && indexingData.crawlErrors > 0) {
     insights.push({
       title: 'Crawl Errors Detected',
       description: 'Google encountered errors crawling your site',

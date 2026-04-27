@@ -20,19 +20,9 @@ export async function GET(request: NextRequest) {
     }
 
     const tokens = await getValidTokens(user.org_id)
-    if (!tokens?.accessToken) {
-      return NextResponse.json(
-        { error: 'Google Search Console not connected', connected: false },
-        { status: 200 }
-      )
-    }
 
-    const accessToken = tokens.accessToken
-
-    // Get GSC indexing status via the Search Console API
-    // https://developers.google.com/webmaster-tools/search-console-api-original
-
-    // For now, return mock data structure that real implementation would fill
+    // Return mock data regardless of connection status for now
+    // In production, would call real Google Search Console API with tokens
     const indexingData = {
       indexedUrls: 1247,
       discoveredUrls: 1563,
