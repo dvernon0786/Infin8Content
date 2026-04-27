@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -15,17 +16,10 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from 'recharts'
 import {
   TrendingUp,
-  Eye,
-  MousePointerClick,
   AlertCircle,
-  Zap,
-  ExternalLink,
   Settings,
   RefreshCw,
 } from 'lucide-react'
@@ -193,10 +187,12 @@ export default function TrackPage() {
             <RefreshCw className="w-4 h-4" />
             {refreshing ? 'Refreshing...' : 'Refresh'}
           </Button>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Settings className="w-4 h-4" />
-            Settings
-          </Button>
+          <Link href="/dashboard/settings/integrations">
+            <Button variant="outline" size="sm" className="gap-2">
+              <Settings className="w-4 h-4" />
+              Settings
+            </Button>
+          </Link>
         </div>
       </div>
 
