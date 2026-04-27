@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tab, Tabs } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -208,49 +207,48 @@ export default function TrackPage() {
       )}
 
       {/* Tab Navigation */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="flex gap-2 border-b border-neutral-200">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-4 py-2 font-medium border-b-2 transition ${
-              activeTab === 'overview'
-                ? 'border-neutral-900 text-neutral-900'
-                : 'border-transparent text-neutral-600 hover:text-neutral-900'
-            }`}
-          >
-            Overview
-          </button>
-          <button
-            onClick={() => setActiveTab('analytics')}
-            className={`px-4 py-2 font-medium border-b-2 transition ${
-              activeTab === 'analytics'
-                ? 'border-neutral-900 text-neutral-900'
-                : 'border-transparent text-neutral-600 hover:text-neutral-900'
-            }`}
-          >
-            Analytics
-          </button>
-          <button
-            onClick={() => setActiveTab('search-console')}
-            className={`px-4 py-2 font-medium border-b-2 transition ${
-              activeTab === 'search-console'
-                ? 'border-neutral-900 text-neutral-900'
-                : 'border-transparent text-neutral-600 hover:text-neutral-900'
-            }`}
-          >
-            Search Console
-          </button>
-          <button
-            onClick={() => setActiveTab('indexing')}
-            className={`px-4 py-2 font-medium border-b-2 transition ${
-              activeTab === 'indexing'
-                ? 'border-neutral-900 text-neutral-900'
-                : 'border-transparent text-neutral-600 hover:text-neutral-900'
-            }`}
-          >
-            Indexing
-          </button>
-        </div>
+      <div className="flex gap-2 border-b border-neutral-200">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`px-4 py-2 font-medium border-b-2 transition ${
+            activeTab === 'overview'
+              ? 'border-neutral-900 text-neutral-900'
+              : 'border-transparent text-neutral-600 hover:text-neutral-900'
+          }`}
+        >
+          Overview
+        </button>
+        <button
+          onClick={() => setActiveTab('analytics')}
+          className={`px-4 py-2 font-medium border-b-2 transition ${
+            activeTab === 'analytics'
+              ? 'border-neutral-900 text-neutral-900'
+              : 'border-transparent text-neutral-600 hover:text-neutral-900'
+          }`}
+        >
+          Analytics
+        </button>
+        <button
+          onClick={() => setActiveTab('search-console')}
+          className={`px-4 py-2 font-medium border-b-2 transition ${
+            activeTab === 'search-console'
+              ? 'border-neutral-900 text-neutral-900'
+              : 'border-transparent text-neutral-600 hover:text-neutral-900'
+          }`}
+        >
+          Search Console
+        </button>
+        <button
+          onClick={() => setActiveTab('indexing')}
+          className={`px-4 py-2 font-medium border-b-2 transition ${
+            activeTab === 'indexing'
+              ? 'border-neutral-900 text-neutral-900'
+              : 'border-transparent text-neutral-600 hover:text-neutral-900'
+          }`}
+        >
+          Indexing
+        </button>
+      </div>
 
         {/* Overview Tab */}
         {activeTab === 'overview' && (
@@ -634,7 +632,6 @@ export default function TrackPage() {
             )}
           </div>
         )}
-      </Tabs>
     </div>
   )
 }
