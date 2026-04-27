@@ -4,9 +4,7 @@ import { useEffect, useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { Loader2, CheckCircle, XCircle, ArrowLeft } from 'lucide-react'
-import { requireWorkflowStepAccess } from '@/lib/guards/workflow-step-gate'
+import { Loader2, XCircle, ArrowLeft } from 'lucide-react'
 import { getStepFromState } from '@/lib/services/workflow-engine/workflow-progression'
 
 interface WorkflowProgressPageProps {
@@ -152,8 +150,6 @@ export default function WorkflowProgressPage({ params }: WorkflowProgressPagePro
   const state = workflow?.state
   if (!state) return null
 
-  const currentStep = getStepFromState(state)
-  const currentStage = PIPELINE_STAGES.find(s => s.step === currentStep)
   const failedStage = PIPELINE_STAGES.find(s => workflow.state.includes(`${s.state}_failed`))
 
   return (
@@ -207,11 +203,7 @@ export default function WorkflowProgressPage({ params }: WorkflowProgressPagePro
           <div className="flex flex-col items-center gap-6">
             <Button
               disabled
-              style={{
-                background: '#4f6ef7',
-                color: '#ffffff',
-              }}
-              className="px-8 py-6 rounded-full text-lg shadow-lg"
+              className="px-8 py-6 rounded-full text-lg shadow-lg bg-primary text-white"
             >
               <Loader2 className="w-5 h-5 animate-spin mr-2" />
               Generating

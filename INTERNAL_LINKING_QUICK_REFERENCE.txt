@@ -1,0 +1,216 @@
+================================================================================
+                    INTERNAL LINKING TRIGGER QUICK REFERENCE
+================================================================================
+
+USER: damien@flowtic.cloud
+ORG:  Cold Sun Enterprise (e40d7133-bfb6-4349-abe9-7583b21ffe6e)
+
+================================================================================
+WHERE WILL IT TRIGGER?
+================================================================================
+
+1. Dashboard Write Page
+   └─ Path: /dashboard/write
+   └─ Component: Click "Generate Article" button
+
+2. Status Changes
+   └─ Before: status = 'draft'
+   └─ After:  status = 'processing'  (atomic lock)
+
+3. Background Job Queue
+   └─ System: Inngest
+   └─ Event: 'article/generate'
+   └─ Concurrency: 1 per articleId
+
+
+================================================================================
+WHEN WILL IT TRIGGER?
+================================================================================
+
+Timeline:
+  T+0ms    → User clicks "Generate" → POST /api/articles/generate
+  T+100ms  → Status locked to 'processing'
+  T+500ms  → Inngest job enqueued (article/generate)
+  T+1-5s   → Inngest worker picks up job (if capacity available)
+  T+10-30s → Steps 1-17 of pipeline run (planning, research, writing)
+  T+30-60s → Step 18: INTERNAL LINKING RUNS ✓
+  T+60-120s→ Steps 19-22: Assembly, schema, images, publish
+  T+180s   → Article status = 'completed'
+
+TOTAL TIME: ~1-3 minutes from click to finished article
+
+
+================================================================================
+HOW WILL IT TRIGGER?
+================================================================================
+
+Code Path:
+  /app/api/articles/generate/route.ts (line 130-138)
+       ↓
+  inngest.send({
+    name: 'article/generate',
+    id: `article-gen-${articleId}`,
+    data: { articleId, workflowId, organizationId }
+  })
+       ↓
+  /lib/inngest/functions/generate-article.ts (main worker)
+       ↓
+  await step.run('internal-linking', async () => {
+    // Step 18 of 22 steps in the pipeline
+  })
+       ↓
+  /lib/services/article-generation/internal-linking-service.ts
+       ↓
+  runInternalLinking({
+    articleId,
+    orgId,
+    currentKeyword,
+    maxLinks: 3,           ← From their content_defaults
+    supabase
+  })
+
+
+================================================================================
+WHAT WILL HAPPEN?
+================================================================================
+
+Decision Gate:
+  ┌─ Is internal_links === true?
+  │
+  ├─ YES ✅
+  │  └─ Proceed with linking
+  │
+  └─ NO ❌
+     └─ Skip step entirely
+
+For damien@flowtic.cloud: YES ✅
+
+
+Link Injection Process:
+  1. Load all article sections (skip intro + conclusion)
+  2. Build link map from:
+     - Manual links (none configured yet)
+     - Crawled links (from website sitemap, if provided)
+     - DB articles (from completed articles in their org)
+  3. Calculate link budget: word_count ÷ 300 = max 3 links
+  4. Inject links in markdown and HTML:
+     Markdown: [anchor_text](url)
+     HTML:     <a href="url">anchor_text</a>
+  5. Save updated sections back to database
+  6. Log results: "injected=2 sections=3"
+
+
+================================================================================
+CONFIGURATION BEING USED
+================================================================================
+
+From: organizations.content_defaults
+
+  internal_links: true              ✓ Feature enabled
+  num_internal_links: 3             ✓ Max 3 links per article
+
+  language: english
+  tone: professional
+  style: informative
+  target_word_count: 1500
+  auto_publish: false               ← Won't auto-publish to CMS
+  brand_color: #000000
+  image_style: brand_text_realism
+  add_cta: true
+  add_youtube_video: false
+  add_infographics: false
+  add_emojis: false
+
+
+================================================================================
+WHAT WILL BE STORED
+================================================================================
+
+Database: article_sections table
+
+Before Linking:
+  content_markdown: "This is a section about SEO strategy..."
+  content_html: "<p>This is a section about SEO strategy...</p>"
+
+After Linking (with 2 links injected):
+  content_markdown: "This is a section about [SEO strategy](/blog/seo) and [link building](/blog/backlinks)..."
+  content_html: "<p>This is a section about <a href="/blog/seo">SEO strategy</a> and <a href="/blog/backlinks">link building</a>...</p>"
+
+
+================================================================================
+EXPECTED OUTPUT IN LOGS
+================================================================================
+
+Success:
+  [Worker] Internal linking: injected=2 sections=3 skipped=false
+
+Or if not enough content:
+  [Worker] Internal linking: injected=0 sections=0 skipped=true reason=article_too_short
+
+Or if linking disabled:
+  [Worker] Internal linking disabled in generation config — skipping
+
+
+================================================================================
+HOW TO VERIFY IT HAPPENED
+================================================================================
+
+1. Check Inngest dashboard
+   └─ Look for 'article/generate' job with articleId
+   └─ Find the 'internal-linking' step
+   └─ See the output: "injected=X sections=Y"
+
+2. Check Database
+   └─ Query: SELECT * FROM article_sections
+            WHERE article_id = '...'
+   └─ Look for: content_html contains '<a href='
+   └─ Look for: content_markdown contains ']('
+
+3. Check Application Logs
+   └─ Filter for: "[Worker] Internal linking"
+   └─ Should see something like:
+      "[Worker] Internal linking: injected=2 sections=3 skipped=false"
+
+4. View Published Article
+   └─ Go to dashboard
+   └─ Open article
+   └─ Read the content
+   └─ See clickable internal links in the article body
+
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+If internal linking doesn't run:
+  1. Check: Is status actually 'draft' / 'queued' / 'failed'?
+  2. Check: Is internal_links === true in database?
+  3. Check: Is num_internal_links > 0?
+  4. Check: Does article have content? (word count > 300)
+  5. Check: Are there link sources? (crawled links or DB articles)
+
+If links aren't injecting:
+  1. Check: Do linked keywords exist in article text?
+  2. Check: Are keywords already linked in section?
+  3. Check: Are they shorter than 4 characters?
+  4. Check: Are they the primary keyword? (never linked to itself)
+
+For debugging:
+  - Look in Inngest logs for step failures
+  - Check Supabase for article_sections.content_html
+  - Verify organizations.content_defaults fields
+
+
+================================================================================
+SUMMARY
+================================================================================
+
+✅ Status:     Internal linking is ENABLED
+✅ Max Links:  3 per article
+✅ Trigger:    When user clicks "Generate" in /dashboard/write
+✅ Timing:     Step 18 of article generation pipeline (~30-60 seconds)
+✅ Result:     Links injected into article sections and saved to DB
+
+Next Article Generation → Internal Linking WILL RUN ✓
+
+================================================================================
