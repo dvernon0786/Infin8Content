@@ -154,10 +154,6 @@ export function WorkflowStepLayoutClient({
             Exit
           </Button>
 
-          <span className="text-sm text-muted-foreground">
-            Step {currentStep} of 9
-          </span>
-
           <Button
             onClick={() => {
               if (currentStep >= 4 && currentStep <= 7) {
