@@ -63,6 +63,57 @@ export const PLAN_LIMITS = {
         pro: 1000,
         agency: null,
     },
+
+    llm_visibility_prompts: {
+        trial: 0,
+        starter: 20,
+        pro: 75,
+        agency: 200,
+    },
+
+    llm_visibility_projects: {
+        trial: 0,
+        starter: 1,
+        pro: 3,
+        agency: 10,
+    },
+
+    // ── Pricing display keys (additive — do not remove existing keys above) ──
+    credits_per_month: {
+        starter: 1_000,
+        pro: 2_000,
+        agency: 8_000,
+    },
+    autoblogs: {
+        starter: 1,
+        pro: 5,
+        agency: "Unlimited",
+    },
+    projects: {
+        starter: 1,
+        pro: 5,
+        agency: "Unlimited",
+    },
+    team_members: {
+        starter: 1,
+        pro: 3,
+        agency: "Unlimited",
+    },
+    knowledge_bases: {
+        starter: 0,
+        pro: 3,
+        agency: "Unlimited",
+    },
+    sub_accounts: {
+        starter: 0,
+        pro: 1,
+        agency: "Unlimited",
+    },
+    llm_prompts: {
+        starter: 0,
+        pro: 25,
+        agency: "Unlimited",
+    },
 } as const;
 
 export type PlanType = keyof typeof PLAN_LIMITS.article_generation;

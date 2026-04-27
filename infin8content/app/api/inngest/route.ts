@@ -18,6 +18,11 @@ import { articleCmsDraftNotifier } from '@/lib/inngest/functions/article-cms-dra
 import { publishReminderScheduler } from '@/lib/inngest/functions/publish-reminder-scheduler'
 import { expireApiKeys } from '@/lib/inngest/functions/expire-api-keys'
 import { retryWebhookDelivery } from '@/lib/inngest/functions/retry-webhook-delivery'
+import { onboardingEmailSequence } from '@/lib/inngest/functions/onboarding-email-sequence'
+import { newsPollScheduled, newsPollWatch, newsGenerateStory } from '@/lib/inngest/functions/news-poller'
+import { autoPublishToSocial, manualPublishToSocial } from '@/lib/inngest/functions/publish-to-social'
+import { llmVisibilityDailyCron, llmVisibilityRerun } from '@/lib/inngest/functions/llm-visibility-tracker'
+import { generateArticleMeta } from '@/lib/inngest/functions/generate-article-meta'
 
 // Validate environment variables at runtime
 const eventKey = process.env.INNGEST_EVENT_KEY
@@ -48,6 +53,15 @@ export const { GET, POST, PUT } = serve({
     publishReminderScheduler,
     expireApiKeys,
     retryWebhookDelivery,
+    onboardingEmailSequence,
+    newsPollScheduled,
+    newsPollWatch,
+    newsGenerateStory,
+    autoPublishToSocial,      // fires on article/generation.completed
+    manualPublishToSocial,    // fires on article/publish.requested
+    generateArticleMeta,      // fires on article/generation.completed — populates meta, image, tags
+    llmVisibilityDailyCron,
+    llmVisibilityRerun,
   ],
 })
 

@@ -1,89 +1,133 @@
-import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+"use client";
 
-const PricingFAQ = () => {
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
+
+const faqs = [
+  {
+    q: "Will AI-generated content rank on Google?",
+    a: "Yes. Google rewards high-quality, helpful content regardless of how it's produced. Infin8Content creates structured, factual, and SEO-optimized articles that follow Google's E-E-A-T guidelines. Every plan includes brand voice training so your content sounds authentically human — not generic AI.",
+  },
+  {
+    q: "What is the LLM Brand Visibility Tracker and which plans include it?",
+    a: "The LLM Brand Visibility Tracker monitors how ChatGPT, Perplexity, Gemini, Claude, Grok, and Google AI Overviews mention and recommend your brand. It tracks share-of-voice, sentiment, citations, and competitor mentions. It's included in the Pro and Agency plans — and unlike other tools that charge $99–199 per AI platform, all 6 platforms are included in one price.",
+  },
+  {
+    q: "What are credits and how do they work?",
+    a: "Credits are consumed each time you generate content, run the AI SEO Agent, or use other AI-powered features. Starter gets 1,000 credits/month (~10 full articles), Pro gets 2,000 (~50 articles), and Agency gets 8,000 (~150 articles). Unused credits do not roll over, but you can upgrade at any time to unlock more.",
+  },
+  {
+    q: "How does AutoPublish work?",
+    a: "AutoPublish lets you set up a campaign that automatically generates and publishes SEO-optimized content to your CMS on a schedule you define. You connect a feed source (RSS, keywords, YouTube videos, news events), set your publishing frequency, and Infin8Content handles the rest — writing, image generation, linking, and publishing.",
+  },
+  {
+    q: "Can I use this for multiple clients?",
+    a: "Yes. Pro includes 1 sub-account and 5 projects. Agency includes unlimited sub-accounts, unlimited workspaces, a client portal, and white-label reports — built specifically for agencies managing multiple clients from one dashboard.",
+  },
+  {
+    q: "What CMS platforms do you integrate with?",
+    a: "We integrate natively with WordPress, Shopify, Ghost, Webflow, Wix, Squarespace, and Blogger. We also support Zapier (connects to 5,000+ tools), webhooks, and a public API (Agency plan) for fully custom integrations.",
+  },
+  {
+    q: "How does the brand voice feature work?",
+    a: "Upload your style guide, sample articles, website URL, or brand documents. Our AI enters a learning phase to understand your tone, vocabulary, and content patterns — then applies them automatically to every piece of content generated for that project.",
+  },
+  {
+    q: "How is Infin8Content different from ChatGPT or other AI writers?",
+    a: "Infin8Content is a complete, end-to-end content operations system — not a text generator. ChatGPT gives you text. Infin8Content automates the full workflow: keyword research, brief generation, writing in your brand voice, adding images and links, CMS publishing, scheduling, LLM visibility tracking, SEO fixes via the AI Agent, and white-label client reporting.",
+  },
+  {
+    q: "Do you offer a free trial?",
+    a: "We offer a $1 trial for 3 days on Starter and Pro plans. This gives you full access to every feature in your plan — enough to publish your first articles and see results. Cancel any time with no questions asked.",
+  },
+  {
+    q: "What kind of support do you provide?",
+    a: "Starter plans receive email support with a 48h response time. Pro plans get 24h response. Agency plans get a 4h response time plus live chat on Slack and access to strategy support from our team.",
+  },
+  {
+    q: "Can the AI SEO Agent break my site?",
+    a: "No. The AI SEO Agent makes targeted improvements — meta tags, schema markup, alt texts, canonical tags, internal links — that are completely reversible. You can review a log of all changes before or after they're applied, and roll back any individual fix.",
+  },
+  {
+    q: "What is the Bespoke AI Content Service?",
+    a: "It's a done-for-you service starting at $2,000/month where our human strategists manage your entire content operation using Infin8Content. You get 10–20 published articles per month, an in-depth topic cluster, LLM visibility reporting, and a 25% traffic growth guarantee in 90 days — or you don't pay. Only 10 companies are accepted per cohort.",
+  },
+];
+
+export default function PricingFAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  const faqs = [
-    {
-      q: "Will AI-generated content rank on Google?",
-      a: "Yes! Our AI creates original, high-quality content optimized for search engines. We combine AI efficiency with your unique brand voice and expertise to create content that both Google and humans love."
-    },
-    {
-      q: "How does the brand voice feature work?",
-      a: "Upload your style guide, sample content, or brand guidelines. Our AI learns your tone, vocabulary, and writing style—then applies it automatically to every piece of content."
-    },
-    {
-      q: "Can I use this for multiple clients/brands?",
-      a: "Absolutely. Create unlimited organizations, each with its own brand voice, team members, and content library. Perfect for agencies."
-    },
-    {
-      q: "What if I don't like the AI-generated content?",
-      a: "You have full editorial control. Use AI for first drafts, research, or optimization—or write from scratch with AI assistance. The platform adapts to your workflow."
-    },
-    {
-      q: "Do you integrate with my existing tools?",
-      a: "Yes. We integrate with WordPress, Medium, LinkedIn, and more. We also offer API access for custom integrations."
-    },
-    {
-      q: "Do you offer a free trial?",
-      a: "We operate on a professional, paywall-first model. Choose your plan and get instant access to all features. Cancel anytime if it's not the right fit. Annual plans save up to 33%."
-    },
-    {
-      q: "How is this different from ChatGPT?",
-      a: "Infin8Content is a complete content platform, not just a text generator. We provide research tools, SEO optimization, brand voice control, team collaboration, and multi-channel publishing—all in one workflow."
-    },
-    {
-      q: "What kind of support do you offer?",
-      a: "All plans include email support. Pro plans get 24h response time, and Agency plans get 4h response time with dedicated account management."
-    }
-  ];
-
   return (
-    <section className="bg-white section-padding-mobile md:section-padding">
+    <section className="bg-mkt-surface py-24 border-t border-mkt-border">
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-h2-responsive text-neutral-900 mb-4">
-            Questions? We've Got Answers.
+        <div className="text-center mb-14">
+          <p className="text-sm font-semibold uppercase tracking-widest text-mkt-accent mb-3">
+            FAQ
+          </p>
+          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-mkt-white font-poppins">
+            Questions? We&apos;ve got answers.
           </h2>
-          <p className="text-large text-neutral-600 max-w-2xl mx-auto">
-            Everything you need to know about Infin8Content
+          <p className="text-base text-mkt-muted max-w-xl mx-auto mt-4 font-lato">
+            Everything you need to know about Infin8Content pricing and features.
           </p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {faqs.map((faq, idx) => (
-            <div 
-              key={idx} 
-              className="border border-neutral-200 rounded-xl overflow-hidden group hover:border-blue-300 transition-all duration-300"
+            <div
+              key={idx}
+              className="border border-mkt-border rounded-2xl overflow-hidden group hover:border-mkt-accent-border transition-all duration-200"
             >
               <button
-                className="w-full p-6 text-left font-semibold text-neutral-900 flex items-center justify-between hover:text-blue-600 transition-colors duration-300 focus-ring bg-white hover:bg-neutral-50 group-hover:bg-neutral-50"
+                className="w-full p-6 text-left font-semibold text-mkt-white flex items-center justify-between hover:text-mkt-accent transition-colors duration-200 bg-mkt-surface hover:bg-mkt-surface2 focus:outline-none"
                 onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
               >
-                <span className="pr-4">{faq.q}</span>
-                <ChevronDown 
-                  className={`w-5 h-5 text-blue-500 transition-transform duration-300 flex-shrink-0 ${
-                    openIndex === idx ? 'rotate-180' : ''
+                <span className="pr-4 text-sm md:text-base">{faq.q}</span>
+                <ChevronDown
+                  className={`w-5 h-5 text-mkt-accent transition-transform duration-300 shrink-0 ${
+                    openIndex === idx ? "rotate-180" : ""
                   }`}
                 />
               </button>
-              
-              <div 
+
+              <div
                 className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                  openIndex === idx ? 'max-h-96' : 'max-h-0'
+                  openIndex === idx ? "max-h-96" : "max-h-0"
                 }`}
               >
-                <div className="p-6 bg-neutral-50 text-body text-neutral-600 leading-relaxed border-t border-neutral-200">
+                <div className="p-6 pt-0 bg-mkt-surface2 text-sm text-mkt-muted leading-relaxed font-lato border-t border-mkt-border">
                   {faq.a}
                 </div>
               </div>
             </div>
           ))}
         </div>
+
+        {/* Still have questions? */}
+        <div className="mt-12 text-center bg-mkt-surface2 border border-mkt-border rounded-2xl p-8">
+          <p className="text-sm font-semibold text-mkt-white mb-1">
+            Still have questions?
+          </p>
+          <p className="text-sm text-mkt-muted font-lato mb-5">
+            Our team typically responds within a few hours.
+          </p>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <a
+              href="mailto:hello@infin8content.com"
+              className="text-sm font-semibold text-white px-5 py-2.5 rounded-xl shadow-sm hover:opacity-90 transition-opacity"
+              style={{ background: "linear-gradient(to right,#217CEB,#4A42CC)" }}
+            >
+              Email us
+            </a>
+            <a
+              href="/call"
+              className="text-sm font-semibold text-mkt-accent border border-mkt-accent-border bg-mkt-surface px-5 py-2.5 rounded-xl hover:border-mkt-accent transition-colors"
+            >
+              Book a demo
+            </a>
+          </div>
+        </div>
       </div>
     </section>
   );
-};
-
-export default PricingFAQ;
+}

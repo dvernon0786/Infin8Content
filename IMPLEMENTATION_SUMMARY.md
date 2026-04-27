@@ -3,6 +3,8 @@
 **Date:** 2026-03-11 (11-Bug Fix Implementation)
 **Status:** ✅ **CONTENT ENGINE SECURED & PROMPT HARDENED - PRODUCTION READY**
 
+**Update (2026-04-21):** Wired frontend publish UI flows using `PublishToCmsButton` across articles list, article detail, and editor. Accessibility fixes applied to publish dialogs and minor style cleanups. Changes committed to branch `test-main-all`.
+
 ### 🎯 Objective Achieved
 Complete implementation of consolidated fixes for 11 critical, high, and medium-severity bugs identified across the CMS publishing workflow and article generation process.
 
@@ -323,12 +325,30 @@ await generator.store(keywordId, subtopics)  // Properly stored
 - ✅ **Terminal State:** Reached reliably
 - ✅ **Event Chain:** Complete coverage
 
-### 🔄 Git Workflow
+### 🔄 Git Workflow: Direct Production Deployment
 
-- **Branch:** `workflow-completion-fix`
-- **Commit:** `ca01c82` - Complete bug fix with comprehensive documentation
-- **Status:** Pushed to remote, ready for PR
-- **PR URL:** https://github.com/dvernon0786/Infin8Content/pull/new/workflow-completion-fix
+**Key Rule:** Any push to `test-main-all` = Production deployment on Vercel. Any other branch = Preview deployment. No PRs needed for production — merge locally and push directly.
+
+```bash
+# 1. Start from clean test-main-all
+git checkout test-main-all
+git pull origin test-main-all
+
+# 2. Create topic branch
+git checkout -b fix/your-feature-name
+
+# 3. Make changes, then commit
+git add .
+git commit -m "fix: description of change"
+
+# 4. Push topic branch
+git push -u origin fix/your-feature-name
+
+# 5. Merge directly to test-main-all (triggers Production on Vercel)
+git checkout test-main-all
+git merge fix/your-feature-name
+git push origin test-main-all
+```
 
 ---
 

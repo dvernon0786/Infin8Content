@@ -180,7 +180,7 @@ const StatsBar = () => {
               <div className="flex justify-center mb-3 text-blue-500 group-hover:scale-110 transition-transform duration-300">
                 {stat.icon}
               </div>
-              <div className="text-h3-desktop text-h3-mobile text-neutral-900 font-bold mb-1 tracking-tight">
+              <div className="text-h3-desktop text-neutral-900 font-bold mb-1 tracking-tight">
                 {stat.value}
               </div>
               <div className="text-small text-neutral-600 uppercase tracking-wider">
@@ -250,14 +250,14 @@ const ProblemSection = () => {
                 <div className="text-4xl mr-4 group-hover:scale-110 transition-transform duration-300">
                   {problem.icon}
                 </div>
-                <h3 className="text-h3-desktop text-h3-mobile text-neutral-900 group-hover:text-blue-600 transition-colors duration-300">
+                <h3 className="text-h3-desktop text-neutral-900 group-hover:text-blue-600 transition-colors duration-300">
                   {problem.title}
                 </h3>
               </div>
               <ul className="space-y-3">
                 {problem.points.map((point, i) => (
                   <li key={i} className="flex items-start gap-3 text-body text-neutral-600">
-                    <X className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                    <X className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                     <span>{point}</span>
                   </li>
                 ))}
@@ -350,7 +350,7 @@ const FeatureShowcase = () => {
                   {feature.subtitle}
                 </div>
                 
-                <h3 className="text-h3-desktop text-h3-mobile text-neutral-900 group-hover:text-blue-600 transition-colors duration-300">
+                <h3 className="text-h3-desktop text-neutral-900 group-hover:text-blue-600 transition-colors duration-300">
                   {feature.title}
                 </h3>
                 
@@ -427,7 +427,7 @@ const HowItWorks = () => {
                 </div>
                 
                 {/* Content */}
-                <h3 className="text-h3-desktop text-h3-mobile text-neutral-900 mb-3 group-hover:text-blue-600 transition-colors duration-300">
+                <h3 className="text-h3-desktop text-neutral-900 mb-3 group-hover:text-blue-600 transition-colors duration-300">
                   {step.title}
                 </h3>
                 <p className="text-body text-neutral-600 leading-relaxed">
@@ -483,7 +483,7 @@ const Testimonials = () => {
             Loved by Content Teams Worldwide
           </h2>
           <p className="text-large text-neutral-600 max-w-3xl mx-auto">
-            Join 10,000+ content creators who trust Infin8Content
+            Trusted by marketers & agencies worldwide
           </p>
         </div>
 
@@ -596,7 +596,7 @@ const FAQ = () => {
               >
                 <span className="pr-4">{faq.q}</span>
                 <ChevronDown 
-                  className={`w-5 h-5 text-blue-500 transition-transform duration-300 flex-shrink-0 ${
+                  className={`w-5 h-5 text-blue-500 transition-transform duration-300 shrink-0 ${
                     openIndex === idx ? 'rotate-180' : ''
                   }`}
                 />
@@ -637,7 +637,7 @@ const FinalCTA = () => {
           Ready to Scale Your Content? Get Started Today.
         </h2>
         <p className="text-large text-white/90 mb-8 max-w-2xl mx-auto">
-          Join 10,000+ content teams creating better content, faster.
+          Trusted by marketers & agencies worldwide
         </p>
 
         <button className="btn-primary bg-white text-neutral-900 hover:scale-105 focus-ring mb-8 text-lg px-8 py-4 shadow-xl">

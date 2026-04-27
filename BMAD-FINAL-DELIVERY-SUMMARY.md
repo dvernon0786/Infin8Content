@@ -284,6 +284,14 @@ Week 6: Rollout (MEDIUM)
 https://github.com/dvernon0786/Infin8Content/pull/new/feature/bmad-final-deliverables
 ```
 
+**Recent update (2026-04-17):** Tailwind canonical class fixes applied to `infin8content/app/dashboard/articles/articles-client.tsx` and `infin8content/components/dashboard/sidebar-navigation.tsx`; committed on branch `test-main-all` (commit `a083416c`) and pushed to `origin`. PR #458: https://github.com/dvernon0786/Infin8Content/pull/458 is open for CI and review.
+
+## 2026-04-20 — Article Detail Revision UI update
+
+- Implemented client `app/dashboard/articles/[id]/ArticleDetailClient.tsx` and server wrapper `app/dashboard/articles/[id]/page.tsx`; fixed parse error and verified `npm run build` completes successfully.
+- Updated `BMAD-FINAL-SCRATCHPAD.md` and added delivery notes. Next: create branch `test-main-all`, commit, push, and open PR to `main` for CI.
+- Manual testing (editor autosave, meta save) pending.
+
 ---
 
 ## Success Metrics
@@ -355,6 +363,23 @@ https://github.com/dvernon0786/Infin8Content/pull/new/feature/bmad-final-deliver
 **Time:** < 5 minutes (feature flags only)
 
 Disable flags in reverse order, then enable `enable_legacy_workflow`.
+
+---
+
+## Addendum — 2026-04-16: Epic 12 Completed
+
+- **Branch:** `feat/epic-12-onboarding-discovery` → merged / fast-forwarded into `test-main-all`
+- **PR:** https://github.com/dvernon0786/Infin8Content/pull/458
+- **Summary:** Completed Epic 12 (Onboarding & Feature Discovery) — 13 stories implemented. Additive changes only: DB migrations, announcements & feedback tables with RLS, onboarding services, onboarding email Inngest sequence, onboarding APIs, UI components, and help pages.
+- **Highlights:**
+   - Migrations: `supabase/migrations/20260416000001_add_onboarding_discovery_state.sql`, `supabase/migrations/20260416000002_create_feature_announcements.sql`, `supabase/migrations/20260416000003_create_user_feedback.sql`
+   - Feature flags: `ENABLE_GUIDED_TOURS`, `ENABLE_FEATURE_ANNOUNCEMENTS`, `ENABLE_FEEDBACK_WIDGET`
+   - APIs: `/api/onboarding/success-events`, `/api/onboarding/tour-shown`, `/api/announcements`, `/api/announcements/[id]/read`, `/api/feedback`
+   - Inngest: onboarding email sequence (welcome → day-3 → day-7)
+   - UI: GuidedTour, WhatsNewCard, HelpDrawer, AnnouncementBanner, FeedbackWidget, PaymentStatusBanner
+   - Tests: 22 new vitest tests; local subset executed successfully; `tsc --noEmit` clean locally
+- **Files changed:** 36 files committed; ~2012 insertions
+- **Safety:** Additive changes only; feature flags default-disabled where applicable; awaiting CI on PR #458
 
 ---
 

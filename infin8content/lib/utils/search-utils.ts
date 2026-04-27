@@ -73,8 +73,8 @@ function searchSingleArticle(article: DashboardArticle, searchTerm: string): Sea
   }
 
   // Content search (medium weight) - using metadata or current stage info
-  let content = '';
-  let currentStage = '';
+  const content = '';
+  const currentStage = '';
 
   try {
   } catch (error) {

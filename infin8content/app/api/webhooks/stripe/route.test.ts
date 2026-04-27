@@ -7,15 +7,22 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { POST } from './route'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 import { validateStripeEnv } from '@/lib/stripe/env'
 import { stripe } from '@/lib/stripe/server'
 
 // Mock dependencies
-vi.mock('@/lib/supabase/server')
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(),
+  createServiceRoleClient: vi.fn(),
+}))
 vi.mock('@/lib/stripe/env')
 vi.mock('@/lib/stripe/retry', () => ({
   retryWithBackoff: (fn: () => Promise<any>) => fn(), // Execute function immediately without retry in tests
+}))
+
+vi.mock('@/lib/services/audit-logger', () => ({
+  logActionAsync: vi.fn(),
 }))
 
 // Mock Stripe module - need to define mock inside factory function
@@ -29,6 +36,19 @@ vi.mock('@/lib/stripe/server', () => {
         retrieve: vi.fn(),
       },
     },
+    subscriptions: {
+      retrieve: vi.fn().mockResolvedValue({
+        id: 'sub_test_123',
+        status: 'active',
+        current_period_end: Math.floor(Date.now() / 1000) + 86400,
+        items: { data: [{ price: { id: 'price_pro_monthly' } }] },
+      }),
+    },
+    invoices: {
+      listLineItems: vi.fn().mockResolvedValue({
+        data: [],
+      }),
+    },
   }
   return {
     stripe: mockStripeInstance,
@@ -38,7 +58,6 @@ vi.mock('@/lib/stripe/server', () => {
 describe('POST /api/webhooks/stripe', () => {
   let mockSupabase: any
   let mockRequest: Request
-  let mockStripeInstance: any
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -48,19 +67,8 @@ describe('POST /api/webhooks/stripe', () => {
       from: vi.fn(),
     }
     
-    // Mock Stripe webhook instance
-    mockStripeInstance = {
-      webhooks: {
-        constructEvent: vi.fn(),
-      },
-      checkout: {
-        sessions: {
-          retrieve: vi.fn(),
-        },
-      },
-    }
     
-    vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
+    vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
     vi.mocked(validateStripeEnv).mockReturnValue({
       STRIPE_SECRET_KEY: 'sk_test_123',
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_123',
@@ -132,8 +140,8 @@ describe('POST /api/webhooks/stripe', () => {
       const mockWebhookEventsQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: { id: 'existing-id', stripe_event_id: 'evt_test_123' },
+        limit: vi.fn().mockResolvedValue({
+          data: [{ id: 'existing-id', stripe_event_id: 'evt_test_123' }],
           error: null,
         }),
       }
@@ -180,9 +188,9 @@ describe('POST /api/webhooks/stripe', () => {
       const mockWebhookEventsQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116' }, // Not found
+        limit: vi.fn().mockResolvedValue({
+          data: [],
+          error: null,
         }),
       }
       mockSupabase.from.mockReturnValueOnce(mockWebhookEventsQuery)
@@ -191,12 +199,12 @@ describe('POST /api/webhooks/stripe', () => {
       const mockOrgCheck = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: {
+        limit: vi.fn().mockResolvedValue({
+          data: [{
             id: 'org-123',
             name: 'Test Org',
             payment_status: 'pending_payment',
-          },
+          }],
           error: null,
         }),
       }
@@ -230,13 +238,13 @@ describe('POST /api/webhooks/stripe', () => {
       const response = await POST(mockRequest)
 
       expect(response.status).toBe(200)
-      expect(mockOrgsUpdate.update).toHaveBeenCalledWith({
+      expect(mockOrgsUpdate.update).toHaveBeenCalledWith(expect.objectContaining({
         plan: 'pro',
         stripe_customer_id: 'cus_test_123',
         stripe_subscription_id: 'sub_test_123',
         payment_status: 'active',
         payment_confirmed_at: expect.any(String),
-      })
+      }))
       expect(mockWebhookInsert.insert).toHaveBeenCalled()
     })
   })
@@ -251,6 +259,12 @@ describe('POST /api/webhooks/stripe', () => {
             id: 'sub_test_123',
             customer: 'cus_test_123',
             status: 'active',
+            items: {
+              data: [
+                { price: { id: 'price_pro_monthly' } },
+              ],
+            },
+            metadata: { plan: 'pro' },
           },
         },
       }
@@ -261,9 +275,9 @@ describe('POST /api/webhooks/stripe', () => {
       const mockWebhookEventsQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116' },
+        limit: vi.fn().mockResolvedValue({
+          data: [],
+          error: null,
         }),
       }
       mockSupabase.from.mockReturnValueOnce(mockWebhookEventsQuery)
@@ -272,12 +286,19 @@ describe('POST /api/webhooks/stripe', () => {
       const mockOrgsQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: { id: 'org-123' },
+        limit: vi.fn().mockResolvedValue({
+          data: [{ id: 'org-123', plan: 'starter', payment_status: 'active' }],
           error: null,
         }),
       }
       mockSupabase.from.mockReturnValueOnce(mockOrgsQuery)
+
+      // Mock org update
+      const mockOrgsUpdate = {
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      }
+      mockSupabase.from.mockReturnValueOnce(mockOrgsUpdate)
 
       // Mock webhook event storage
       const mockWebhookInsert = {
@@ -318,9 +339,9 @@ describe('POST /api/webhooks/stripe', () => {
       const mockWebhookEventsQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116' },
+        limit: vi.fn().mockResolvedValue({
+          data: [],
+          error: null,
         }),
       }
       mockSupabase.from.mockReturnValueOnce(mockWebhookEventsQuery)
@@ -329,12 +350,19 @@ describe('POST /api/webhooks/stripe', () => {
       const mockOrgsQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: { id: 'org-123' },
+        limit: vi.fn().mockResolvedValue({
+          data: [{ id: 'org-123', payment_status: 'pending_payment' }],
           error: null,
         }),
       }
       mockSupabase.from.mockReturnValueOnce(mockOrgsQuery)
+
+      // Mock org update
+      const mockOrgsUpdate = {
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      }
+      mockSupabase.from.mockReturnValueOnce(mockOrgsUpdate)
 
       const mockWebhookInsert = {
         insert: vi.fn().mockResolvedValue({
@@ -374,9 +402,9 @@ describe('POST /api/webhooks/stripe', () => {
       const mockWebhookEventsQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116' },
+        limit: vi.fn().mockResolvedValue({
+          data: [],
+          error: null,
         }),
       }
       mockSupabase.from.mockReturnValueOnce(mockWebhookEventsQuery)
@@ -385,8 +413,8 @@ describe('POST /api/webhooks/stripe', () => {
       const mockOrgsQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: { id: 'org-123' },
+        limit: vi.fn().mockResolvedValue({
+          data: [{ id: 'org-123' }],
           error: null,
         }),
       }
@@ -430,23 +458,30 @@ describe('POST /api/webhooks/stripe', () => {
       const mockWebhookEventsQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116' },
+        limit: vi.fn().mockResolvedValue({
+          data: [],
+          error: null,
         }),
       }
       mockSupabase.from.mockReturnValueOnce(mockWebhookEventsQuery)
 
-      // Mock organization query (for finding org by subscription)
+      // Mock organization query (for finding org by customer)
       const mockOrgsQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: { id: 'org-123' },
+        limit: vi.fn().mockResolvedValue({
+          data: [{ id: 'org-123', payment_status: 'active' }],
           error: null,
         }),
       }
       mockSupabase.from.mockReturnValueOnce(mockOrgsQuery)
+
+      // Mock org update
+      const mockOrgsUpdate = {
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      }
+      mockSupabase.from.mockReturnValueOnce(mockOrgsUpdate)
 
       const mockWebhookInsert = {
         insert: vi.fn().mockResolvedValue({
@@ -482,9 +517,9 @@ describe('POST /api/webhooks/stripe', () => {
       const mockWebhookEventsQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116' },
+        limit: vi.fn().mockResolvedValue({
+          data: [],
+          error: null,
         }),
       }
       mockSupabase.from.mockReturnValueOnce(mockWebhookEventsQuery)
@@ -493,8 +528,8 @@ describe('POST /api/webhooks/stripe', () => {
       const mockOrgsQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: { id: 'org-123' },
+        limit: vi.fn().mockResolvedValue({
+          data: [{ id: 'org-123' }],
           error: null,
         }),
       }
@@ -546,12 +581,23 @@ describe('POST /api/webhooks/stripe', () => {
       const mockWebhookEventsQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { code: 'PGRST116' },
+        limit: vi.fn().mockResolvedValue({
+          data: [],
+          error: null,
         }),
       }
       mockSupabase.from.mockReturnValueOnce(mockWebhookEventsQuery)
+
+      // Mock organization lookup
+      const mockOrgsQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue({
+          data: [{ id: 'org-123', payment_status: 'active' }],
+          error: null,
+        }),
+      }
+      mockSupabase.from.mockReturnValueOnce(mockOrgsQuery)
 
       // Mock organization update failure
       const mockOrgsUpdate = {
@@ -561,6 +607,12 @@ describe('POST /api/webhooks/stripe', () => {
         }),
       }
       mockSupabase.from.mockReturnValueOnce(mockOrgsUpdate)
+
+      // Mock storeWebhookEvent called in error handler
+      const mockWebhookInsert = {
+        insert: vi.fn().mockResolvedValue({ error: null }),
+      }
+      mockSupabase.from.mockReturnValueOnce(mockWebhookInsert)
 
       mockRequest = new Request('http://localhost/api/webhooks/stripe', {
         method: 'POST',
@@ -572,9 +624,8 @@ describe('POST /api/webhooks/stripe', () => {
 
       const response = await POST(mockRequest)
 
-      // Should still return 200 to Stripe (don't retry on our errors)
-      // But log the error
-      expect(response.status).toBe(200)
+      // Should return 500 for critical events so Stripe retries
+      expect(response.status).toBe(500)
     })
   })
 })

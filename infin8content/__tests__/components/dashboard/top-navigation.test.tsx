@@ -136,7 +136,7 @@ describe('TopNavigation', () => {
         // Check dropdown content
         expect(screen.getByText('Test User')).toBeInTheDocument()
         expect(screen.getByText('test@example.com')).toBeInTheDocument()
-        expect(screen.getByText('Profile')).toBeInTheDocument()
+        expect(screen.getByText('Settings')).toBeInTheDocument()
         expect(screen.getByText('Log out')).toBeInTheDocument()
     })
 

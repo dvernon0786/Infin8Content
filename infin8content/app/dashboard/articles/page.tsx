@@ -5,7 +5,7 @@ import { PLAN_LIMITS, type PlanType } from '@/lib/config/plan-limits'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { TouchTarget } from '@/components/mobile/touch-target'
+
 
 export default async function ArticlesPage() {
   const currentUser = await getCurrentUser()
@@ -26,13 +26,14 @@ export default async function ArticlesPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="font-poppins text-neutral-900 text-h2-desktop">
-              Articles
-            </h1>
-            <p className="font-lato text-neutral-600 text-body">
-              Manage and track your article generation progress
-            </p>
+            <h1 className="font-poppins text-h2-desktop font-bold text-neutral-900">All Articles</h1>
+            <p className="font-lato text-body text-neutral-600 mt-1">Browse through all articles that you've generated so far.</p>
           </div>
+          <Link href="/dashboard/articles/generate">
+            <Button className="bg-(--brand-electric-blue) text-white rounded-md font-semibold text-sm px-4 py-2 flex items-center gap-2">
+              <Plus size={14} /> Write Article
+            </Button>
+          </Link>
         </div>
 
         {/* Search and Filters - Client Component */}

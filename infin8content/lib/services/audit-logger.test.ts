@@ -6,11 +6,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { logAction, logActionAsync, extractIpAddress, extractUserAgent } from './audit-logger';
 import { AuditAction } from '@/types/audit';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 // Mock the Supabase client
 vi.mock('@/lib/supabase/server', () => ({
     createClient: vi.fn(),
+    createServiceRoleClient: vi.fn(),
 }));
 
 describe('Audit Logger Service', () => {
@@ -27,8 +28,8 @@ describe('Audit Logger Service', () => {
         mockFrom = vi.fn().mockReturnValue({ insert: mockInsert });
         mockSupabase = { from: mockFrom };
 
-        // Mock createClient to return our mock
-        vi.mocked(createClient).mockResolvedValue(mockSupabase as never);
+        // Mock createServiceRoleClient (sync) to return our mock
+        vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as never);
 
         // Suppress console.error during tests
         vi.spyOn(console, 'error').mockImplementation(() => { });
@@ -115,7 +116,7 @@ describe('Audit Logger Service', () => {
         });
 
         it('should handle unexpected errors gracefully', async () => {
-            vi.mocked(createClient).mockRejectedValue(new Error('Unexpected error'));
+            vi.mocked(createServiceRoleClient).mockImplementation(() => { throw new Error('Unexpected error'); });
 
             const params = {
                 orgId: 'org-123',
@@ -147,7 +148,7 @@ describe('Audit Logger Service', () => {
         });
 
         it('should suppress errors from logAction', async () => {
-            vi.mocked(createClient).mockRejectedValue(new Error('Database error'));
+            vi.mocked(createServiceRoleClient).mockImplementation(() => { throw new Error('Database error'); });
 
             const params = {
                 orgId: 'org-123',

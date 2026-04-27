@@ -21,6 +21,12 @@ Platform-specific components:
 - **ConfidenceBadge**: AI confidence level indicators
 - **ArticleStateBadge**: Article status indicators
 
+### Marketing & Layout Components (`/components/marketing/`)
+High-level layout and page wrapper components:
+- **MarketingShell**: Header/footer wrapper with dark background and design token integration
+- **MarketingPageBody**: HTML/CSS injection for marketing page content
+- Used by: Auth pages (login, register, forgot-password), marketing pages (SaaS solutions)
+
 ### Utility Library (`/components/lib/`)
 Shared styling utilities and configurations:
 - **component-styles.ts**: Design tokens, color mappings, and utility functions

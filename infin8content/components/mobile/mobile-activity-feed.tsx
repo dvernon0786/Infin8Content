@@ -232,7 +232,7 @@ export function MobileActivityFeed({
         role="article"
         tabIndex={0}
         aria-label={`${activity.user?.name || 'Unknown User'} ${activity.message}`}
-        className="relative bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-2 min-h-[60px] transition-all duration-200 hover:shadow-md"
+        className="relative bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-2 min-h-15 transition-all duration-200 hover:shadow-md"
         onClick={() => onActivityClick?.(activity)}
         onTouchStart={(e) => {
           // Add touch feedback
@@ -246,7 +246,7 @@ export function MobileActivityFeed({
         <div className="flex items-start space-x-3">
           {/* User Avatar */}
           <div
-            className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden"
+            className="shrink-0 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden"
             data-testid={`activity-avatar-${activity.id}`}
           >
             {activity.user?.avatar ? (

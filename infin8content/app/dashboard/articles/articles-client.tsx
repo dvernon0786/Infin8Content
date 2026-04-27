@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArticleStatusList } from '@/components/dashboard/article-status-list'
+import { Card, CardContent } from '@/components/ui/card'
 import { SearchInput } from '@/components/dashboard/search-input'
 import { FilterDropdown } from '@/components/dashboard/filter-dropdown'
 import { SortDropdown } from '@/components/dashboard/sort-dropdown'
@@ -10,52 +9,16 @@ import { ActiveFilters } from '@/components/dashboard/active-filters'
 import { ScrollableArticleList } from '@/components/dashboard/scrollable-article-list'
 import { useDashboardFilters } from '@/hooks/use-dashboard-filters'
 import { useRealtimeArticles } from '@/hooks/use-realtime-articles'
-import { Loader2, FileText, Plus } from 'lucide-react'
+import { Loader2, FileText } from 'lucide-react'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import { ARTICLE_STATUSES, type DashboardArticle } from '@/lib/types/dashboard.types'
 import { ScheduleGuard } from '@/components/guards/schedule-guard'
 import { ScheduleCalendar } from '@/components/dashboard/schedule-calendar'
+import { Button } from '@/components/ui/button'
 
 // ─── Metrics ──────────────────────────────────────────────────────────────────
-function MetricCard({ label, value, alert, icon }: { label: string; value: string | number; alert?: boolean; icon?: string }) {
-  return (
-    <div className={`bg-white rounded-[10px] border px-3.5 py-2.5 relative overflow-hidden ${alert ? 'border-amber-500/30 shadow-[0_4px_12px_rgba(245,158,11,0.1)]' : 'border-neutral-200 shadow-sm'}`}>
-      <div className={`absolute top-0 left-0 right-0 h-[2px] ${alert ? 'bg-linear-to-r from-amber-500 to-red-500 opacity-100' : 'bg-gradient-brand opacity-60'}`} />
-      <div className="relative">
-        <div className="flex justify-between items-start mb-2">
-          <span className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold font-lato">
-            {label}
-          </span>
-          {icon && <span className={`text-[13px] ${alert ? 'text-amber-500' : 'text-neutral-200'}`}>{icon}</span>}
-        </div>
-        <div className={`text-[22px] font-extrabold leading-none mb-1 font-poppins ${alert ? 'text-amber-500' : 'text-neutral-800'}`}>
-          {value}
-        </div>
-      </div>
-    </div>
-  )
-}
 
-function ArticlesKPI({ articles }: { articles: DashboardArticle[] }) {
-  const total = articles.length
-  const completed = articles.filter(a => a.status === 'completed').length
-  const generating = articles.filter(a => (a.status as string) === 'processing' || (a.status as string).endsWith('_running')).length
-  const failed = articles.filter(a => (a.status as string) === 'failed' || (a.status as string).endsWith('_failed')).length
-
-  const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0
-
-  return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4 mb-4">
-      <MetricCard label="Total Articles" value={total} icon="▤" />
-      <MetricCard label="Completed" value={completed} icon="✓" />
-      <MetricCard label="Generating" value={generating} icon="◈" alert={generating > 0} />
-      <MetricCard label="Failed" value={failed} icon="⚠" alert={failed > 0} />
-      <MetricCard label="Completion Rate" value={`${completionRate}%`} icon="◉" />
-    </div>
-  )
-}
 
 function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
   orgId: string
@@ -68,6 +31,9 @@ function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
   const [recentlyUpdatedId, setRecentlyUpdatedId] = useState<string | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [activeTab, setActiveTab] = useState<'all' | 'generated' | 'edited'>('all')
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null)
 
   const { articles, isConnected, error, lastUpdated, refresh } = useRealtimeArticles({
     orgId,
@@ -96,7 +62,19 @@ function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
     hasActiveFilters,
   } = useDashboardFilters(articles);
 
-  const blockedArticles = articles.filter(a => (a.status as string) === 'failed' || (a.status as string).endsWith('_failed'))
+  const tabCounts = {
+    all: articles.length,
+    generated: articles.filter(a => a.status === 'completed').length,
+    edited: 0,
+  }
+
+  const tabFilteredArticles = filteredArticles.filter(a => {
+    if (activeTab === 'all') return true
+    if (activeTab === 'generated') return a.status === 'completed'
+    if (activeTab === 'edited') return false
+    return true
+  })
+
 
   if (error) {
     return (
@@ -133,27 +111,64 @@ function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
 
   return (
     <div className="flex flex-col gap-0">
-      <ArticlesKPI articles={articles} />
+      {/* CTA Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 px-1">
+          {[
+          { label: 'Add SEO Articles', href: '/dashboard/articles/generate?type=seo', iconBg: '#eafaf1', color: '#22c55e', icon: (
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          )},
+          { label: 'Add News Article', href: '/dashboard/articles/generate?type=news', iconBg: '#e6f0ff', color: '#0066FF', icon: (
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0066FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          )},
+          { label: 'Add YouTube to Blogpost', href: '/dashboard/articles/generate?type=youtube', iconBg: '#fef2f2', color: '#ef4444', icon: (
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="23 7 16 12 23 17 23 7"/>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+            </svg>
+          )},
+        ].map(card => (
+          <Link key={card.label} href={card.href}>
+            <div
+              onMouseEnter={() => setHoveredCard(card.label)}
+              onMouseLeave={() => setHoveredCard(null)}
+              className={`bg-white border rounded-[10px] p-4 flex items-center gap-4 cursor-pointer transition ${hoveredCard === card.label ? 'shadow-lg -translate-y-1' : ''}`}
+            >
+              <div className="w-11 h-11 rounded-md bg-neutral-50 flex items-center justify-center shrink-0">
+                {card.icon}
+              </div>
+              <span className="text-sm font-semibold text-neutral-900">{card.label}</span>
+            </div>
+          </Link>
+        ))}
+      </div>
 
-      {/* Action Banner */}
-      {blockedArticles.length > 0 && (
-        <div className="px-4 py-3 bg-red-500/5 border border-red-500/15 rounded-lg mb-4 flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-red-500 animate-[i8c-pulse_2s_infinite]" />
-          <span className="text-[13px] font-bold text-red-500">
-            {blockedArticles.length} Article{blockedArticles.length > 1 ? 's' : ''} Failed — Action Required
-          </span>
-          <button
-            onClick={() => {
-              clearSearch()
-              setFilters({ status: ['failed'], sortBy: filters.sortBy })
-            }}
-            className="ml-auto px-3.5 py-1.5 rounded-md bg-red-500 text-white border-none text-[11px] font-extrabold cursor-pointer"
-          >Review Failures →</button>
-        </div>
-      )}
+      {/* Tabs */}
+      <div className="flex items-center gap-1 mb-4 border-b border-neutral-200 pb-0 px-1">
+        {(['all', 'generated', 'edited'] as const).map(tab => {
+          const labels: Record<string,string> = { all: 'All', generated: 'Generated', edited: 'Edited' }
+          const isActive = activeTab === tab
+          // @ts-ignore
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-3.5 py-2 text-[13px] ${isActive ? 'font-semibold text-(--brand-electric-blue) border-b-2 border-(--brand-electric-blue)' : 'font-normal text-neutral-500 border-b-2 border-transparent'} bg-none cursor-pointer transition-colors whitespace-nowrap`}
+            >
+              {labels[tab]} ({tabCounts[tab as keyof typeof tabCounts]})
+            </button>
+          )
+        })}
+      </div>
 
-      {/* Article Schedule */}
-      <div className="mb-6">
+      {/* Schedule (populated-state position) */}
+      <div className="mb-6 px-1">
         <ScheduleGuard plan={plan}>
             <ScheduleCalendar
               orgId={orgId}
@@ -201,66 +216,75 @@ function ArticlesClient({ orgId, plan, articleUsage, generationLimit }: {
         </div>
       )}
 
-      {/* Results Summary */}
-      <div className="flex justify-between items-center mb-4 px-1">
-        <div className="font-lato text-neutral-600 text-xs font-semibold uppercase tracking-wider">
-          Showing {filteredArticles.length} of {articles.length} Articles
-        </div>
-        {process.env.NODE_ENV === 'development' && (
-          <div className="font-lato text-neutral-400 text-[10px] uppercase tracking-widest font-bold">
-            PFM: {metrics.filterTime?.toFixed(1)}ms
-          </div>
-        )}
-      </div>
+      {/* Results summary removed per redesign (counts are now in tabs/CTA) */}
 
       {/* Articles List */}
       <div className="flex-1 min-h-[50vh]">
-        {filteredArticles.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-20 text-center">
-            <FileText className="h-12 w-12 text-neutral-300 mb-4" />
-            <h3 className="font-poppins text-neutral-900 font-semibold mb-1">No articles found</h3>
-            <p className="font-lato text-neutral-500 text-sm max-w-[200px]">
-              {articles.length > 0 ? "Try adjusting your filters" : "Start by generating your first article"}
-            </p>
-          </div>
-        ) : (
-          <ScrollableArticleList
-            articles={filteredArticles}
-            className="h-full"
-            plan={plan}
-            highlightArticleId={recentlyUpdatedId}
-            onArticleNavigation={(id, e) => {
-              if (e) e.preventDefault()
-              router.push(`/dashboard/articles/${id}`)
-            }}
-            onKeyDown={(id, e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
+        {/* Table header */}
+        <div className="grid grid-cols-[32px_1fr_200px_160px_120px_auto] items-center p-2.5 border-b border-neutral-200 bg-gray-50 rounded-t-md">
+          <input type="checkbox" className="w-3.5 h-3.5 accent-(--brand-electric-blue)" />
+          <span className="text-xs font-semibold text-neutral-500">Article</span>
+          <span className="text-xs font-semibold text-neutral-500">Input</span>
+          <span className="text-xs font-semibold text-neutral-500">Date</span>
+          <span className="text-xs font-semibold text-neutral-500">Language</span>
+          <span />
+        </div>
+
+        {/* Table body wrapper */}
+        <div className="border border-neutral-200 border-t-0 rounded-b-md overflow-hidden bg-white">
+          {tabFilteredArticles.length === 0 ? (
+            <div className="py-20 px-5 flex flex-col items-center justify-center">
+              <div className="w-12 h-12 rounded-lg border border-neutral-200 bg-white flex items-center justify-center mb-4">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9aa3b0" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </div>
+              <p className="text-sm font-semibold text-neutral-900 mb-1">No articles found</p>
+              <p className="text-sm text-neutral-400 mb-5 text-center max-w-70">
+                {articles.length > 0 ? 'Try adjusting your filters' : 'When you create articles, they will show up here.'}
+              </p>
+              {articles.length === 0 && (
+                <Link href="/dashboard">
+                  <Button className="bg-(--brand-electric-blue) text-white rounded-full px-5 py-2 text-sm font-semibold flex items-center gap-2">Generate Articles →</Button>
+                </Link>
+              )}
+            </div>
+          ) : (
+            <ScrollableArticleList
+              articles={tabFilteredArticles}
+              className="h-full"
+              plan={plan}
+              highlightArticleId={recentlyUpdatedId}
+              onArticleNavigation={(id, e) => {
+                if (e) e.preventDefault()
                 router.push(`/dashboard/articles/${id}`)
-              }
-            }}
-            onTouchStart={() => { }}
-            onTouchMove={() => { }}
-            onTouchEnd={(id) => {
-              router.push(`/dashboard/articles/${id}`)
-            }}
-          />
-        )}
+              }}
+              onKeyDown={(id, e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  router.push(`/dashboard/articles/${id}`)
+                }
+              }}
+              onTouchStart={() => { }}
+              onTouchMove={() => { }}
+              onTouchEnd={(id) => {
+                router.push(`/dashboard/articles/${id}`)
+              }}
+            />
+          )}
+        </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between px-4 py-3 border border-t-0 border-neutral-200 bg-white text-sm text-neutral-600">
+          <div>Viewing {tabFilteredArticles.length} results.</div>
+          <div className="flex items-center gap-2">
+            <button disabled className="px-3 py-1 rounded bg-neutral-100 text-neutral-500 cursor-not-allowed">Prev</button>
+            <button disabled className="px-3 py-1 rounded bg-neutral-100 text-neutral-500 cursor-not-allowed">Next</button>
+          </div>
+        </div>
       </div>
 
-      {/* System Status Footer */}
-      <div className="mt-4 py-4 border-t border-neutral-200 flex items-center gap-[18px]">
-        {[
-          { label: "Realtime", status: isConnected ? "Live" : "Polling", ok: isConnected },
-          { label: "Last Sync", status: lastUpdated ? new Date(lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "Never", ok: true },
-        ].map(s => (
-          <div key={s.label} className="flex items-center gap-1.5">
-            <div className={`w-1 h-1 rounded-full ${s.ok ? 'bg-green-500 shadow-[0_0_0_2px_rgba(34,197,94,0.2)]' : 'bg-amber-500 shadow-[0_0_0_2px_rgba(245,158,11,0.2)]'}`} />
-            <span className="text-[10px] text-neutral-800 font-lato font-bold">{s.label}</span>
-            <span className="text-[10px] text-neutral-500 font-lato">· {s.status}</span>
-          </div>
-        ))}
-      </div>
+      
+
+      {/* System status footer removed per redesign */}
     </div>
   )
 }

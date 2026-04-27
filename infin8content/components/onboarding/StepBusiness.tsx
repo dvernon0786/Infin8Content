@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { validateBusinessDescription, validateTargetAudiences } from "@/lib/validation/onboarding-profile-schema"
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import "./onboarding-steps.css"
 
 interface StepBusinessProps {
   className?: string
@@ -182,9 +183,6 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
     }
   }
 
-  const handleSkip = () => {
-    onSkip?.()
-  }
 
   const isFormValid = () => {
     // Website URL validation (optional)
@@ -213,53 +211,52 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
   }
 
   return (
-    <main className={cn("w-full max-w-2xl mx-auto", className)}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Business Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+    <main className={cn("onboarding-step-container", className)}>
+      <div className="onboarding-step-card">
+        <h2 className="onboarding-step-title">Business Information</h2>
+
+        <div className="onboarding-space-y-6">
           {/* Informational Context Box */}
-          <div className="bg-muted/50 rounded-lg p-4 border">
-            <h3 className="font-medium mb-2">Help us understand your business</h3>
-            <p className="text-sm text-muted-foreground mb-2">
+          <div className="onboarding-info-box">
+            <h3 className="onboarding-info-box-title">Help us understand your business</h3>
+            <p className="onboarding-info-box-text">
               This information helps us tailor the content generation to your specific needs and target audience.
             </p>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <ul className="onboarding-info-box-list">
               <li>• Website URL helps us analyze your online presence</li>
               <li>• Business description guides content tone and style</li>
               <li>• Target audiences ensure content reaches the right people</li>
             </ul>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="onboarding-space-y-4">
             {/* Website URL */}
-            <div className="space-y-2">
-              <label htmlFor="website_url" className="text-sm font-medium">
-                Website URL <span className="text-destructive">*</span>
+            <div className="onboarding-form-group">
+              <label htmlFor="website_url" className="onboarding-label">
+                Website URL <span className="onboarding-label-required">*</span>
               </label>
-              <Input
+              <input
                 id="website_url"
                 type="url"
                 placeholder="https://example.com"
                 value={formData.website_url}
                 onChange={(e) => handleInputChange('website_url', e.target.value)}
-                className={cn(errors.website_url && "border-destructive")}
+                className={cn("onboarding-input", errors.website_url && "error")}
                 aria-describedby={errors.website_url ? "website_url-error" : undefined}
               />
               {errors.website_url && (
-                <p id="website_url-error" className="text-sm text-destructive" role="alert">
+                <p id="website_url-error" className="onboarding-error-text" role="alert">
                   {errors.website_url}
                 </p>
               )}
             </div>
 
             {/* Business Description */}
-            <div className="space-y-2">
-              <label htmlFor="business_description" className="text-sm font-medium">
-                Business Description <span className="text-destructive">*</span>
+            <div className="onboarding-form-group">
+              <label htmlFor="business_description" className="onboarding-label">
+                Business Description <span className="onboarding-label-required">*</span>
               </label>
-              <div className="space-y-2">
+              <div className="onboarding-form-group-space">
                 <textarea
                   id="business_description"
                   rows={4}
@@ -267,22 +264,19 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
                   placeholder="Describe what your business does, who it serves, and what makes it different."
                   value={formData.business_description}
                   onChange={(e) => handleInputChange('business_description', e.target.value)}
-                  className={cn(
-                    "w-full min-h-[80px] rounded-md border bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-                    errors.business_description && "border-destructive"
-                  )}
+                  className={cn("onboarding-textarea", errors.business_description && "error")}
                   aria-describedby={errors.business_description ? "business_description-error" : "business_description-help"}
                 />
-                <div className="flex justify-between items-center">
-                  <p id="business_description-help" className="text-xs text-muted-foreground">
+                <div className="onboarding-flex-between">
+                  <p id="business_description-help" className="onboarding-help-text">
                     Keep it short and specific. This helps us generate accurate research and content.
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="onboarding-help-text">
                     {formData.business_description?.length || 0} / 500 characters
                   </p>
                 </div>
                 {errors.business_description && (
-                  <p id="business_description-error" className="text-sm text-destructive" role="alert">
+                  <p id="business_description-error" className="onboarding-error-text" role="alert">
                     {errors.business_description}
                   </p>
                 )}
@@ -290,53 +284,50 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
             </div>
 
             {/* Target Audiences */}
-            <div className="space-y-2">
-              <label htmlFor="target_audiences" className="text-sm font-medium">
-                Target Audiences <span className="text-destructive">*</span>
+            <div className="onboarding-form-group">
+              <label htmlFor="target_audiences" className="onboarding-label">
+                Target Audiences <span className="onboarding-label-required">*</span>
               </label>
-              <div className="space-y-3">
-                <p id="target_audiences-help" className="text-sm text-muted-foreground">
+              <div className="onboarding-form-group-space">
+                <p id="target_audiences-help" className="onboarding-help-text">
                   Add up to 5 specific audience groups. Each should be a short phrase, not a sentence.
                 </p>
-                
-                <Input
+
+                <input
                   id="target_audiences"
                   type="text"
                   placeholder="e.g. Small business owners in local services"
                   onChange={(e) => handleAudiencesChange(e.target.value)}
-                  className={cn(
-                    "w-full",
-                    errors.target_audiences && "border-destructive"
-                  )}
+                  className={cn("onboarding-input", errors.target_audiences && "error")}
                   aria-describedby={errors.target_audiences ? "target_audiences-error" : "target_audiences-guidance"}
                 />
-                
-                <div className="space-y-2">
-                  <p id="target_audiences-guidance" className="text-xs text-muted-foreground font-medium">
-                    Format: <strong>role + context + qualifier</strong>
+
+                <div className="onboarding-form-group-space">
+                  <p id="target_audiences-guidance" className="onboarding-help-text" style={{ fontWeight: "600" }}>
+                    Format: <strong style={{ color: "var(--onboarding-text-light)" }}>role + context + qualifier</strong>
                   </p>
-                  
-                  <div className="text-xs text-muted-foreground">
-                    <p className="font-medium mb-1">Examples:</p>
-                    <ul className="space-y-1 ml-4">
+
+                  <div className="onboarding-text-secondary">
+                    <p style={{ fontWeight: "600", marginBottom: "4px", color: "var(--onboarding-text-light)" }}>Examples:</p>
+                    <ul style={{ paddingLeft: "16px" }}>
                       <li>• Marketing managers at SaaS startups</li>
                       <li>• E-commerce founders selling physical products</li>
                       <li>• Healthcare clinic administrators</li>
                     </ul>
                   </div>
-                  
+
                   {formData.target_audiences && formData.target_audiences.length > 0 && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="onboarding-flex">
                       <span>{formData.target_audiences.length} / 5 audiences</span>
                       {formData.target_audiences.some(a => a.length > 80) && (
-                        <span className="text-destructive">Some entries exceed 80 characters</span>
+                        <span style={{ color: "var(--color-error)" }}>Some entries exceed 80 characters</span>
                       )}
                     </div>
                   )}
                 </div>
-                
+
                 {errors.target_audiences && (
-                  <p id="target_audiences-error" className="text-sm text-destructive" role="alert">
+                  <p id="target_audiences-error" className="onboarding-error-text" role="alert">
                     {errors.target_audiences}
                   </p>
                 )}
@@ -344,31 +335,18 @@ export function StepBusiness({ className, onNext, onSkip }: StepBusinessProps) {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button
+            <div className="onboarding-button-group">
+              <button
                 type="submit"
-                variant="primary"
-                size="default"
                 disabled={!isFormValid() || isSubmitting}
-                loading={isSubmitting}
-                className="flex-1"
+                className={cn("onboarding-button onboarding-button-primary onboarding-button-full")}
               >
                 {isSubmitting ? "Saving..." : "Next Step"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="default"
-                onClick={handleSkip}
-                disabled={isSubmitting}
-                className="flex-1 sm:flex-initial"
-              >
-                Skip & Add Later
-              </Button>
+              </button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </main>
   )
 }

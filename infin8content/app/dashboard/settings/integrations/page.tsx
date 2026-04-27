@@ -1,6 +1,7 @@
 "use client"
 
 import { CmsConnectionsManager } from "@/components/settings/CmsConnectionsManager"
+import { GoogleIntegrationsPanel } from "@/components/settings/GoogleIntegrationsPanel"
 import { ChevronLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -16,7 +17,17 @@ export default function IntegrationsSettingsPage() {
                     </Button>
                 </Link>
 
-                <CmsConnectionsManager />
+                <div className="flex flex-col gap-8">
+                    <div className="flex flex-col gap-4">
+                        <h2 className="font-poppins font-semibold text-neutral-900">CMS Platforms</h2>
+                        <CmsConnectionsManager />
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                        <h2 className="font-poppins font-semibold text-neutral-900">Google Services</h2>
+                        <GoogleIntegrationsPanel />
+                    </div>
+                </div>
             </div>
 
             <div className="bg-primary/5 rounded-xl p-6 border border-primary/10">

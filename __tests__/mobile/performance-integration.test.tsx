@@ -9,10 +9,11 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
+import '@testing-library/jest-dom'
 
-// Mock the mobile performance services
-vi.mock('../../lib/mobile/performance-monitor', () => ({
-  mobilePerformanceMonitor: {
+// Use vi.hoisted so variables are available in vi.mock factories (which are hoisted)
+const { perfMonitorMock, networkOptimizerMock, touchOptimizerMock } = vi.hoisted(() => {
+  const perfMonitorMock = {
     startMonitoring: vi.fn(),
     stopMonitoring: vi.fn(),
     getCurrentMetrics: vi.fn(() => ({
@@ -27,10 +28,7 @@ vi.mock('../../lib/mobile/performance-monitor', () => ({
     measureAnimationPerformance: vi.fn(),
     getOptimizationSuggestions: vi.fn(() => [])
   }
-}))
-
-vi.mock('../../lib/mobile/network-optimizer', () => ({
-  networkOptimizer: {
+  const networkOptimizerMock = {
     getOptimizationConfig: vi.fn(() => ({
       enableImageOptimization: true,
       enableLazyLoading: true,
@@ -42,17 +40,28 @@ vi.mock('../../lib/mobile/network-optimizer', () => ({
     getLoadingStrategy: vi.fn(() => 'lazy'),
     subscribe: vi.fn(() => vi.fn())
   }
-}))
-
-vi.mock('../../lib/mobile/touch-optimizer', () => ({
-  touchOptimizer: {
+  const touchOptimizerMock = {
     optimizeTouchTargets: vi.fn(),
     addTouchFeedback: vi.fn(),
     enablePullToRefresh: vi.fn(() => vi.fn()),
-    validateTouchTarget: vi.fn(() => true),
+    validateTouchTarget: vi.fn((el: any) => {
+      const rect = el.getBoundingClientRect()
+      return rect.width >= 44 && rect.height >= 44
+    }),
     enhanceTouchTarget: vi.fn()
   }
-}))
+  return { perfMonitorMock, networkOptimizerMock, touchOptimizerMock }
+})
+
+// Mock both root wrappers AND infin8content paths (hooks import the latter)
+vi.mock('../../lib/mobile/performance-monitor', () => ({ mobilePerformanceMonitor: perfMonitorMock }))
+vi.mock('../../infin8content/lib/mobile/performance-monitor', () => ({ mobilePerformanceMonitor: perfMonitorMock }))
+
+vi.mock('../../lib/mobile/network-optimizer', () => ({ networkOptimizer: networkOptimizerMock }))
+vi.mock('../../infin8content/lib/mobile/network-optimizer', () => ({ networkOptimizer: networkOptimizerMock }))
+
+vi.mock('../../lib/mobile/touch-optimizer', () => ({ touchOptimizer: touchOptimizerMock }))
+vi.mock('../../infin8content/lib/mobile/touch-optimizer', () => ({ touchOptimizer: touchOptimizerMock }))
 
 // Mock service worker
 vi.mock('../../public/sw.js', () => ({}))
@@ -77,7 +86,9 @@ global.navigator = {
     effectiveType: '4g',
     downlink: 10,
     rtt: 100,
-    saveData: false
+    saveData: false,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn()
   },
   hardwareConcurrency: 8
 } as any
@@ -86,22 +97,22 @@ describe('Mobile Performance Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
+    // Set mobile viewport so isMobile guards in hooks evaluate to true
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 })
+    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 667 })
+    
     // Mock DOM APIs
     document.addEventListener = vi.fn()
     document.removeEventListener = vi.fn()
-    document.querySelectorAll = vi.fn(() => [])
-    document.body = {
-      classList: {
-        add: vi.fn(),
-        remove: vi.fn(),
-        toggle: vi.fn()
-      }
-    } as any
+    document.querySelectorAll = vi.fn(() => [] as unknown as NodeListOf<Element>)
+    vi.spyOn(document.body.classList, 'add').mockImplementation(vi.fn())
+    vi.spyOn(document.body.classList, 'remove').mockImplementation(vi.fn())
+    vi.spyOn(document.body.classList, 'toggle').mockImplementation(vi.fn())
     
     window.addEventListener = vi.fn()
     window.removeEventListener = vi.fn()
     window.scrollY = 0
-    window.requestAnimationFrame = vi.fn((cb) => setTimeout(cb, 16))
+    window.requestAnimationFrame = vi.fn((cb: FrameRequestCallback) => { setTimeout(cb, 16); return 0 }) as any
   })
 
   afterEach(() => {
@@ -269,15 +280,18 @@ describe('Mobile Performance Integration', () => {
   describe('Service Worker Integration', () => {
     it('should register service worker for offline functionality', async () => {
       // Mock service worker registration
-      const mockRegister = vi.fn().mockResolvedValue({
+      const mockRegister: any = vi.fn().mockResolvedValue({
         installing: null,
         waiting: null,
         active: { state: 'activated' }
       })
       
-      global.navigator.serviceWorker = {
-        register: mockRegister
-      } as any
+      const swContainer = { register: mockRegister }
+      Object.defineProperty((global as any).navigator, 'serviceWorker', {
+        value: swContainer,
+        configurable: true,
+        writable: true
+      })
 
       // Import and test service worker registration
       expect(mockRegister).not.toHaveBeenCalled()
@@ -290,13 +304,13 @@ describe('Mobile Performance Integration', () => {
 
     it('should handle offline scenarios', async () => {
       // Mock offline state
-      global.navigator.onLine = false
+      ;(global as any).navigator.onLine = false
       
       // Test offline behavior
       expect(navigator.onLine).toBe(false)
       
       // Mock online state
-      global.navigator.onLine = true
+      ;(global as any).navigator.onLine = true
       
       expect(navigator.onLine).toBe(true)
     })
@@ -317,21 +331,23 @@ describe('Mobile Performance Integration', () => {
         </SwipeNavigation>
       )
       
-      const container = screen.getByText('Test Content').parentElement
-      expect(container).toBeInTheDocument()
+      // Fire on the outer swipe-navigation-container which has the handlers
+      const swipeContainer = screen.getByText('Test Content').closest('.swipe-navigation-container') as HTMLElement
+      expect(swipeContainer).toBeInTheDocument()
       
-      // Simulate pull-to-refresh gesture
-      const touchStart = new TouchEvent('touchstart', {
-        touches: [{ clientY: 100 }]
-      })
-      const touchMove = new TouchEvent('touchmove', {
-        touches: [{ clientY: 200 }]
-      })
-      const touchEnd = new TouchEvent('touchend')
-      
-      fireEvent(container!, touchStart)
-      fireEvent(container!, touchMove)
-      fireEvent(container!, touchEnd)
+      // Pull 300px down: pullDistance = Math.min(150, 100) = 100 >= threshold(100) => triggers refresh
+      fireEvent(swipeContainer, new TouchEvent('touchstart', {
+        touches: [{ clientX: 100, clientY: 100 } as any],
+        bubbles: true
+      } as any))
+      fireEvent(swipeContainer, new TouchEvent('touchmove', {
+        touches: [{ clientX: 100, clientY: 400 } as any],
+        bubbles: true
+      } as any))
+      fireEvent(swipeContainer, new TouchEvent('touchend', {
+        changedTouches: [{ clientX: 100, clientY: 400 } as any],
+        bubbles: true
+      } as any))
       
       // Should trigger refresh after threshold
       await waitFor(() => {
@@ -355,18 +371,17 @@ describe('Mobile Performance Integration', () => {
         </SwipeNavigation>
       )
       
-      const container = screen.getByText('Test Content').parentElement
+      const swipeContainer = screen.getByText('Test Content').closest('.swipe-navigation-container') as HTMLElement
       
-      // Simulate swipe left gesture
-      const touchStart = new TouchEvent('touchstart', {
-        touches: [{ clientX: 100, clientY: 100 }]
-      })
-      const touchEnd = new TouchEvent('touchend', {
-        changedTouches: [{ clientX: 50, clientY: 100 }]
-      })
-      
-      fireEvent(container!, touchStart)
-      fireEvent(container!, touchEnd)
+      // Swipe left 60px (> swipeThreshold=50) quickly enough (<300ms)
+      fireEvent(swipeContainer, new TouchEvent('touchstart', {
+        touches: [{ clientX: 100, clientY: 100 } as any],
+        bubbles: true
+      } as any))
+      fireEvent(swipeContainer, new TouchEvent('touchend', {
+        changedTouches: [{ clientX: 30, clientY: 100 } as any],
+        bubbles: true
+      } as any))
       
       await waitFor(() => {
         expect(mockSwipeLeft).toHaveBeenCalled()
@@ -449,17 +464,17 @@ describe('Mobile Performance Integration', () => {
 
 // Helper function to render hooks in tests
 function renderHook<T>(hook: () => T) {
-  let result: T
-  
+  let result!: T
+
   function TestComponent() {
     result = hook()
     return null
   }
-  
+
   render(React.createElement(TestComponent))
-  
+
   return {
-    result: result as T,
+    result: { current: result } as { current: T },
     rerender: () => render(React.createElement(TestComponent))
   }
 }

@@ -1,5 +1,221 @@
 # Scratchpad
 
+2026-04-24 — Help Center Page + Nav Wiring ✅
+
+- Implemented `/resources/help` under `(marketing-pages)`; page renders Help Center (hero, sidebar, categories, articles, search) using client-side HTML/CSS injection and local JS. Header/footer provided by `MarketingShell` via `(marketing-pages)/layout.tsx` to avoid duplication.
+- Updated `components/marketing/MarketingShell.tsx` to wire both header and footer "Help Docs" links to `/resources/help`.
+- Files:
+  - `infin8content/app/(marketing-pages)/resources/help/page.tsx` — NEW
+  - `infin8content/components/marketing/MarketingShell.tsx` — UPDATED (links)
+- QA: Visit `/resources/help`; confirm Resources → Help Docs opens this page; shell renders once; search and category navigation operate client-side.
+
+2026-04-23 — Unified Marketing Component Styling System ✅
+
+- **Type:** Design system unification / Single source of truth
+- **Branch:** `fix/unified-marketing-styling` → merged to `test-main-all`
+- **Status:** ✅ Implemented, committed, and pushed to production
+- **Summary:**
+  - Created unified marketing component library in `globals.css` with `.mkt-*` prefix
+  - Removed duplicate component styles from `MktLayout.tsx` inline `shellCss`
+  - Updated Additional Marketing Pages to use single source of truth for styling
+  - Feature Marketing Pages remain untouched as requested
+  - All components (buttons, cards, sections, etc.) now follow same design tokens
+- **Files changed (3 files):**
+  - `infin8content/app/globals.css` — ADDED: 1004 lines of unified marketing component library
+  - `infin8content/components/MktLayout.tsx` — UPDATED: Removed duplicate `.mkt-btn-primary`, `.mkt-btn-link`, `.mkt-footer-inner` styles
+  - `infin8content/components/marketing/MarketingShell.tsx` — UPDATED: Minor alignment with unified system
+- **Unified Components Created:**
+  - Layout: `.mkt-container`, `.mkt-section`, `.mkt-section-alt`
+  - Hero: `.mkt-hero`, `.mkt-hero-eyebrow`, `.mkt-hero-perks`
+  - Buttons: `.mkt-btn-primary`, `.mkt-btn-ghost`, `.mkt-btn-link`
+  - Cards: `.mkt-card`, `.mkt-step-card`, `.mkt-feat-card`, `.mkt-highlight-item`
+  - Feature Rows: `.mkt-feature-row`, `.mkt-feature-list`
+  - Mockups: `.mkt-browser-frame`, `.mkt-feat-img`
+  - Testimonials: `.mkt-t-grid`, `.mkt-t-card`
+  - FAQ: `.mkt-faq-list`, `.mkt-faq-item`
+  - CTA: `.mkt-final-cta`, `.mkt-cta-perks`
+  - Footer: `.mkt-footer`, `.mkt-footer-top`
+  - Animations: `.mkt-fade-up`
+- **Additional Marketing Pages Updated:**
+  - `/solutions/agency` — Uses MktUI components with unified styling
+  - `/solutions/ecommerce` — Uses MktUI components with unified styling
+  - `/solutions/local` — Uses MktUI components with unified styling
+  - `/solutions/saas` — Uses MktUI components with unified styling
+  - `/resources/blog` — Uses MktUI components with unified styling
+  - `/resources/case-studies` — Uses MktUI components with unified styling
+  - `/resources/learn` — Uses MktUI components with unified styling
+- **Feature Marketing Pages (Unchanged):**
+  - `/ai-content-writer` — Remains with inline CSS
+  - `/ai-seo-agent` — Remains with inline CSS
+  - `/ai-seo-editor` — Remains with inline CSS
+  - `/autopublish` — Remains with inline CSS
+  - `/llm-tracker` — Remains with inline CSS
+- **Git workflow followed:**
+  ```bash
+  git checkout test-main-all
+  git stash
+  git pull origin test-main-all
+  git checkout -b fix/unified-marketing-styling
+  git stash pop
+  git add .
+  git commit -m "fix: unify marketing component styling across all pages"
+  git push -u origin fix/unified-marketing-styling
+  git checkout test-main-all
+  git merge fix/unified-marketing-styling
+  git push origin test-main-all
+  ```
+- **Commit:** `d30378ae` (fix: unify marketing component styling across all pages)
+- **Next actions:** Verify Additional Marketing Pages render correctly with unified styling, test component consistency across all pages
+
+2026-04-23 — Pricing Page Update & Tailwind v4 Canonical Class Fixes ✅
+
+- **Type:** Feature implementation / Design system compliance
+- **Branch:** `fix/pricing-page-tailwind-warnings` → merged to `test-main-all`
+- **Status:** ✅ Implemented, committed, and pushed to production
+- **Summary:**
+  - Updated pricing page to follow same structure as Features, Solutions, and Resources pages
+  - Created `app/pricing/layout.tsx` providing Navigation + Footer wrapper (matches Solutions/Resources pattern)
+  - Fixed Tailwind v4 canonical class warnings across all pricing components
+  - Added new `TrafficProofStrip.tsx` component between PricingPlans and FeatureValueSection
+  - Extended `plan-limits.ts` with display-only keys for pricing cards
+  - Updated all pricing components with Downloads folder versions
+- **Files changed (13 files):**
+  - `infin8content/app/pricing/layout.tsx` — NEW: Layout wrapper with Navigation/Footer
+  - `infin8content/app/pricing/page.tsx` — UPDATED: Removed embedded Navigation/Footer, added TrafficProofStrip
+  - `infin8content/components/marketing/pricing/TrafficProofStrip.tsx` — NEW: Animated marquee strip showing traffic proof stats
+  - `infin8content/components/marketing/pricing/BespokeAIContentService.tsx` — REPLACED: Complete file with FEATURES array, Feature component, proper layout
+  - `infin8content/components/marketing/pricing/FeatureValueSection.tsx` — REPLACED: Full 8-category feature grid (was simple 7-item list)
+  - `infin8content/components/marketing/pricing/PricingFAQ.tsx` — REPLACED: 12 specific FAQs with "Still have questions?" CTA block
+  - `infin8content/components/marketing/pricing/PricingComparison.tsx` — REPLACED: 13-row comparison table with Check/Minus icons
+  - `infin8content/components/marketing/pricing/PricingComparisonRow.tsx` — REPLACED: Full 55+ row feature table with section headers
+  - `infin8content/components/marketing/pricing/PricingPlans.tsx` — REPLACED: Detailed cards with credits_per_month, autoblogs, projects, team_members, etc.
+  - `infin8content/components/marketing/pricing/PricingHero.tsx` — REPLACED: Added "Billing cycle" label, "Save 40%" badge, "🎉 You save up to $1,200/year" message
+  - `infin8content/components/marketing/pricing/StickyUpgradeBar.tsx` — REPLACED: Added social proof avatars JL/MR/AK, ✕ dismiss button
+  - `infin8content/components/marketing/pricing/MobileStickyUpgradeBar.tsx` — REPLACED: "$1 trial · Cancel anytime" subtitle, "Try Pro →" CTA
+  - `infin8content/lib/config/plan-limits.ts` — EXTENDED: Added 7 new display-only keys: `credits_per_month`, `autoblogs`, `projects`, `team_members`, `knowledge_bases`, `sub_accounts`, `llm_prompts`
+- **Tailwind v4 canonical class fixes:**
+  - `flex-shrink-0` → `shrink-0` in BespokeAIContentService, FeatureValueSection, PricingFAQ, PricingPlans
+  - `bg-gradient-to-r` → `bg-linear-to-r` in PricingComparisonRow, PricingPlans
+- **Git workflow followed:**
+  ```bash
+  git checkout test-main-all
+  git stash
+  git pull origin test-main-all
+  git checkout -b fix/pricing-page-tailwind-warnings
+  git stash pop
+  git add .
+  git commit -m "fix: resolve Tailwind v4 canonical class warnings in pricing components"
+  git push -u origin fix/pricing-page-tailwind-warnings
+  git checkout test-main-all
+  git merge fix/pricing-page-tailwind-warnings
+  git push origin test-main-all
+  ```
+- **Commit:** `c0224330` (fix: resolve Tailwind v4 canonical class warnings in pricing components)
+- **Next actions:** Verify pricing page renders correctly at `/pricing`, test all interactive components, confirm TypeScript compilation clean
+
+— End entry —
+
+2026-04-21 — Standalone Article Generation Flow Fix ✅
+
+- **Type:** Bug fix / New API routes
+- **Branch:** `test-main-all`
+- **Status:** ✅ Implemented & pushed
+- **Summary:**
+  - Fixed broken Generate Article page (`/dashboard/articles/generate?type=seo|news|youtube`) — form was POSTing keyword/config directly to `/api/articles/generate` which only accepts an `articleId`, causing `400 "Article ID is required"` on every submit.
+  - Fixed `GET /api/articles/usage` returning `404` (route file was missing entirely).
+  - Fixed dashboard Overview "Generate Articles" card — all 3 cards were linking to `/dashboard/workflows/new` instead of the generate page with correct `?type=` param.
+- **Root cause:** `POST /api/articles/generate` is a trigger-only endpoint (expects existing DB record). Form needed a create-then-trigger two-step flow.
+- **Files changed:**
+  - `infin8content/app/api/articles/route.ts` — NEW: `POST /api/articles` creates article record (status: draft), returns `{ articleId }`. Stores `article_type`, `article_type_config`, `video_url`, `generation_config` from form input.
+  - `infin8content/app/api/articles/usage/route.ts` — NEW: `GET /api/articles/usage` reads `org.article_usage` + `article_limit` + `plan` from `getCurrentUser()`.
+  - `infin8content/app/dashboard/articles/generate/article-generation-client.tsx` — PATCH: `handleGenerate` updated to two-step (create → generate); now also forwards `articleType`/`language`/`articleTypeConfig` which were previously dropped.
+  - `infin8content/components/dashboard/generate-articles-card.tsx` — PATCH: Fixed `href` for all 3 cards to `/dashboard/articles/generate?type=seo|news|youtube`.
+- **No breaking changes:** Existing workflow/scheduler/Inngest paths unchanged — all already pass `articleId` directly.
+- **Context note:** Standalone generation uses `org.content_defaults` for generation config and empty `subtopic_data` / no ICP context — produces valid articles but less targeted than the full workflow path.
+- **Next actions:** Test all 3 type flows in browser, verify Inngest completes article, confirm usage counter increments.
+
+— End entry —
+
+2026-04-18 — Sync for branch: docs/scratchpad-sync
+
+- Summary: Synchronized local docs with latest feature work implementing analytics, billing, usage dashboard, Google integrations, PostHog, team dashboard, feature-discovery, and in-place article editor.
+- Key commits (working branch): 634c596b (Phase1+2), e8447ee8 (Phase3), 5a1a0c21 (Phase4), 539f7b8a (Phase5).
+- Files touched (representative): app/analytics/page.tsx, components/analytics/*, lib/analytics/*, app/api/articles/[id]/content/route.ts, components/articles/article-editor.tsx, app/dashboard/articles/[id]/page.tsx
+- Next actions: run `npm run typecheck` and `npm test`, push branch `docs/scratchpad-sync` (or create topic branch off `origin/test-main-all`), open PR to `main`.
+
+— End entry —
+
+## Git: Local branch & PR commands (test-main-all)
+
+Follow these commands to align your local branch and open a PR targeting `main`.
+
+```bash
+# fetch remote refs and ensure local view is up-to-date
+git fetch origin
+
+# switch to the remote branch if it exists, otherwise create it tracking origin
+git checkout test-main-all || git checkout -b test-main-all origin/test-main-all
+
+# bring the branch up to date
+git pull origin test-main-all
+
+# (If you need a new feature branch off test-main-all)
+git checkout -b <your-branch-name>
+
+# Stage and commit your changes
+git add .
+git commit -m "<meaningful-msg>"
+
+# Push your topic branch to the remote (do NOT push straight to main)
+git push -u origin <your-branch-name>
+
+# If you intentionally want to push updates to test-main-all itself:
+git push -u origin test-main-all
+
+# Create a PR on GitHub targeting `main` (or `test-main-all` per workflow)
+# Example URL (replace owner/repo):
+# https://github.com/<owner>/<repo>/compare/test-main-all...main
+```
+
+
+## Marketing site: Header/Footer + Design System Fixes — 2026-04-16 ✅
+
+- **Date:** 2026-04-16
+- **Type:** Marketing site / Design system
+- **Status:** ✅ Implemented & pushed to `test-main-all`
+- **Commits:** `fc70de23` (StepsSection JSX fix), `6c105c08` (LandingPage inline styles → Tailwind), `ab868627` (add `Navigation` + `Footer` to pages)
+- **Summary:** Fixed Turbopack JSX parse error in `infin8content/components/marketing/sections/StepsSection.tsx` (missing opening `<div>`), replaced inline styles with canonical Tailwind utility classes in `infin8content/components/marketing/LandingPageRedesigned.tsx`, and added a consistent header + footer across marketing pages by creating new layout files and updating six top-level pages.
+- **Branches & PRs:** Pushed `test-main-all` and created remote `main` from it; `main` and `test-main-all` currently point to the same commit (`ab868627`) so GitHub will not open a PR (no commit diff).
+- **Files (high-level):**
+  - `infin8content/components/marketing/sections/StepsSection.tsx` — JSX parse fix
+  - `infin8content/components/marketing/LandingPageRedesigned.tsx` — inline styles → Tailwind
+  - `infin8content/app/features/layout.tsx`, `app/solutions/layout.tsx`, `app/resources/layout.tsx` — new layouts injecting `Navigation` + `Footer`
+  - Updated pages: `app/about/page.tsx`, `app/careers/page.tsx`, `app/contact/page.tsx`, `app/terms/page.tsx`, `app/privacy/page.tsx`, `app/security/page.tsx`
+- **Next actions:** Confirm Vercel build logs for commit `ab868627`, optionally set `main` as default branch to standardize PR workflow.
+
+### Marketing nav dropdown hover-fix — 2026-04-17 ✅
+
+- **Date:** 2026-04-17
+- **Type:** Marketing UI fix (navigation)
+- **Status:** ✅ Implemented locally and prepared for push to `test-main-all`
+- **Summary:** Fixed a hover-gap race where the desktop mega-dropdown closed when moving the pointer from the trigger into the submenu. Implemented a short debounce on mouseleave and removed the small vertical gap between trigger and submenu to prevent accidental close.
+- **Files changed:**
+  - `infin8content/components/marketing/Navigation.tsx` — added small debounce on mouseleave and attached handlers to submenu
+  - `infin8content/components/marketing/navigation/MegaMenu.tsx` — removed `mt-2` gap (now `mt-0`) and allowed mouse handlers on the menu container
+- **Commit message (used):** `fix(marketing/nav): prevent dropdown disappearing on hover (debounce + remove hover gap)`
+- **Branch:** `test-main-all`
+- **Notes:** Recommended follow-up: consider migrating this UI to Radix `DropdownMenu`/`HoverCard` for robust ARIA/keyboard semantics.
+
+### TSConfig update — 2026-04-17 ⚠️
+
+- **Date:** 2026-04-17
+- **Type:** Build config
+- **Status:** ✅ Changes committed to `test-main-all` (see commit 2ed1df03)
+- **Summary:** Removed `baseUrl` from root and package tsconfig, and set `ignoreDeprecations` to "6.0" to prepare for TypeScript 6+.
+- **Files changed:** `tsconfig.json`, `infin8content/tsconfig.json`
+- **Notes:** Local `npm run typecheck` (TS 5) reported `TS5103: Invalid value for '--ignoreDeprecations'`. Recommendation: either upgrade `typescript` to ^6 in `infin8content/package.json` and run `npm install`, or revert `ignoreDeprecations` to "5.0" to restore typecheck compatibility.
+
+
 ## Dashboard Minimalization & Pure Generation Engine Integration - ✅ COMPLETE
 
 **Date:** 2026-02-28  
@@ -4865,3 +5081,91 @@ step_9_articles → ARTICLES_COMPLETED → completed
 
 ---
 
+
+## AUTH PAGES RESTRUCTURING - MARKETING SHELL INTEGRATION ✅
+
+**Date:** 2026-04-26  
+**Status:** ✅ COMPLETED - Unified Auth Page Architecture  
+**Branch:** test-main-all
+
+### 🎯 MISSION ACCOMPLISHED
+
+**Unified authentication pages with consistent MarketingShell wrapper and scoped CSS injection.**
+
+### 🔧 CHANGES APPLIED
+
+#### 1. IMPORT PATH FIX - Forgot Password Page
+- **File:** `app/(auth)/forgot-password/page.tsx`
+- **Issue:** Incorrect import path `@/components/MarketingShell`
+- **Fix:** Updated to `@/components/marketing/MarketingShell`
+- **Commit:** bf4128fb
+
+#### 2. LOGIN PAGE RESTRUCTURED
+- **File:** `app/(auth)/login/page.tsx`
+- **Changes:**
+  - Added `MarketingShell` wrapper around entire page
+  - Moved `Suspense` inside `MarketingShell` (wraps `LoginForm` only)
+  - Scoped CSS with token-based design (`--surface`, `--accent`, `--muted`, `--font-display`)
+  - Form logic unchanged (fetch, validation, invitation token, redirects)
+- **Commit:** 68287047
+
+### 📋 AUTH PAGE PATTERN
+
+All auth pages follow this structure:
+```tsx
+'use client';
+
+import { Suspense } from 'react';
+import MarketingShell from '@/components/marketing/MarketingShell';
+
+const css = `/* token-based CSS */`;
+
+function AuthForm() {
+  const searchParams = useSearchParams();
+  // form logic here
+  return <div className="auth-wrap">...</div>;
+}
+
+export default function AuthPage() {
+  return (
+    <MarketingShell>
+      <style dangerouslySetInnerHTML={{ __html: css }} />
+      <Suspense>
+        <AuthForm />
+      </Suspense>
+    </MarketingShell>
+  );
+}
+```
+
+### ✅ PAGES UPDATED
+
+- ✅ `app/(auth)/forgot-password/page.tsx` - Import fixed
+- ✅ `app/(auth)/login/page.tsx` - Restructured with spec compliance
+- ✅ `app/(auth)/register/page.tsx` - Already compliant (no changes needed)
+
+### 🎯 TOKEN CONSISTENCY
+
+All auth pages use identical CSS token variables:
+- `--bg` - Background
+- `--surface` - Card background
+- `--surface2` - Input background
+- `--accent` - Primary accent (blue)
+- `--muted` - Secondary text
+- `--text` - Primary text
+- `--white` - White text
+- `--font-display` - Display font family
+- `--font-body` - Body font family
+
+### 🚀 BUILD STATUS
+
+- ✅ Fixed Vercel build error (missing MarketingShell import)
+- ✅ All auth pages now compile successfully
+- ✅ No component duplication (no AuthForm.tsx or similar)
+- ✅ Self-contained pages with scoped styles
+
+### 🏁 READY FOR DEPLOYMENT
+
+All auth pages are now unified under MarketingShell with consistent design system and no build errors.
+
+---

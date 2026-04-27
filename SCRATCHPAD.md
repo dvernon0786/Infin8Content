@@ -1,7 +1,137 @@
 # Infin8Content Development Scratchpad
 
-**Last Updated:** 2026-03-11 11:00 UTC+11  
-**Current Focus:** CMS PUBLISHING & GENERATION HARDENING
+**Last Updated:** 2026-04-24  
+**Current Focus:** Marketing pages parity — Blog + Case Studies
+
+## **🔥 BLOG PAGE — STATIC MIRROR & FILTER**
+
+### **✅ Achievement: Rebuilt Blog to match /ai-content-writer**
+- **Status:** Complete. Page now uses MarketingShell + MarketingPageBody with tokenized CSS and exact visual parity.
+- **Branch:** `test-main-all`
+- **Deliverables:**
+  1. Implemented static HTML/CSS mirror at `infin8content/app/(marketing-pages)/resources/blog/page.tsx` rendered via `MarketingPageBody`.
+  2. Extended `MarketingPageBody.useEffect` to support blog tag filter (`#post-grid .post-card`) and a placeholder "Load more" handler.
+  3. Removed legacy route `infin8content/app/(i8c-mkt)/resources/blog/page.tsx` to prevent conflicts.
+- **Files changed:**
+  - `infin8content/app/(marketing-pages)/resources/blog/page.tsx` (new static mirror)
+  - `infin8content/components/marketing/MarketingPageBody.tsx` (add blog tag filter + load-more placeholder)
+  - `infin8content/app/(i8c-mkt)/resources/blog/page.tsx` (removed)
+- **Result:** Zero drift with `/ai-content-writer`, consistent shell, and working tag filter without inline scripts. "Load more" currently disables itself as a placeholder pending backend pagination.
+
+## **🔥 CASE STUDIES PAGE — STATIC MIRROR & FILTER**
+
+### **✅ Achievement: Rebuilt Case Studies to match /ai-content-writer**
+- **Status:** Complete. Page now uses MarketingShell + MarketingPageBody with tokenized CSS and exact visual parity.
+- **Branch:** `test-main-all`
+- **Deliverables:**
+  1. Implemented static HTML/CSS mirror at `infin8content/app/(marketing-pages)/resources/case-studies/page.tsx` rendered via `MarketingPageBody`.
+  2. Replaced former dynamic page under `(i8c-mkt)` and deleted legacy route to prevent conflicts.
+  3. Wired tag filter interactivity in `MarketingPageBody.useEffect` (listens to `#tag-filter` buttons; toggles `[data-hidden]` on `.cs-card`).
+- **Files changed:**
+  - `infin8content/app/(marketing-pages)/resources/case-studies/page.tsx` (new static mirror)
+  - `infin8content/components/marketing/MarketingPageBody.tsx` (add tag filter handler)
+  - `infin8content/app/(i8c-mkt)/resources/case-studies/page.tsx` (removed)
+- **Result:** Zero drift with `/ai-content-writer`, consistent shell, and working tag filter without inline scripts.
+
+
+## **🔥 MARKETING PAGES NAVIGATION FIX**
+
+### **✅ Achievement: Fixed navigation for all marketing pages**
+- **Status:** Complete. All 8 marketing pages now use the same global header/footer as `/ai-content-writer`.
+- **Branch:** `test-main-all`
+- **Deliverables:**
+  1. **Fixed `href="#"` links** in `MarketingShell.tsx` for Solutions and Resources navigation
+  2. **Rewrote `MktLayout.tsx`** to use the exact same HTML/CSS structure as `MarketingShell` (injected CSS with `mkt-` prefixes)
+  3. **Updated `(i8c-mkt)/layout.tsx`** to use `MktLayout` (Tailwind-compatible)
+  4. **Fixed `MarketingPageBody.tsx`** to handle `href="#"` gracefully (no `querySelector('#')` error)
+- **Files changed:**
+  - `infin8content/components/marketing/MarketingShell.tsx` (fixed 10 broken links)
+  - `infin8content/components/MktLayout.tsx` (complete rewrite)
+  - `infin8content/components/marketing/MarketingPageBody.tsx` (fixed querySelector error)
+  - `infin8content/app/(i8c-mkt)/layout.tsx` (uses MktLayout)
+- **Pages affected:**
+  - `/solutions/saas`, `/solutions/agency`, `/solutions/ecommerce`, `/solutions/local`
+  - `/resources/blog`, `/resources/case-studies`, `/resources/learn`
+  - `/call`
+- **Root causes:**
+  - Old marketing pages (`ai-content-writer`, `ai-seo-editor`) use `MarketingShell` with `href="#"` links
+  - New marketing pages (`(i8c-mkt)`) used different nav/footer (Tailwind vs CSS classes)
+  - `MarketingPageBody.tsx` tried `querySelector('#')` which throws DOMException
+
+---
+
+## **🔥 SOLUTIONS PAGES — DUPLICATE HEADER/FOOTER + NAV ITEM**
+
+### **✅ Achievement: One-time MarketingShell mount + Solutions “Local” link**
+- **Status:** Complete. Solutions pages no longer render header/footer twice; navbar shows “Local” instead of “Enterprise”.
+- **Branch:** `test-main-all`
+- **Deliverables:**
+  1. `MarketingShell.tsx`: Added a one-time mount guard using `window.__MARKETING_SHELL_MOUNTED` to prevent duplicate promo bar/header/footer when pages are already wrapped by `(marketing-pages)/layout.tsx`.
+  2. Navbar Solutions dropdown: Replaced “Enterprise” with “Local” and wired to `/solutions/local`.
+- **Files changed:**
+  - `infin8content/components/marketing/MarketingShell.tsx`
+- **Pages affected:**
+  - `/solutions/agency`, `/solutions/ecommerce`, `/solutions/local`, `/solutions/saas`
+- **Result:** Single header/footer across all marketing routes; correct Solutions menu entry for Local.
+
+
+## **🔥 GIT WORKFLOW: DIRECT PRODUCTION DEPLOYMENT**
+
+### **Key Rule:** Any push to `test-main-all` = Production deployment on Vercel. Any other branch = Preview deployment. No PRs needed for production — merge locally and push directly.
+
+```bash
+# 1. Start from clean test-main-all
+git checkout test-main-all
+git pull origin test-main-all
+
+# 2. Create topic branch
+git checkout -b fix/your-feature-name
+
+# 3. Make changes, then commit
+git add .
+git commit -m "fix: description of change"
+
+# 4. Push topic branch
+git push -u origin fix/your-feature-name
+
+# 5. Merge directly to test-main-all (triggers Production on Vercel)
+git checkout test-main-all
+git merge fix/your-feature-name
+git push origin test-main-all
+
+# Configure git identity (if needed)
+git config user.name "Damien"
+git config user.email "engagehubonline@gmail.com"
+```
+
+---
+
+## **🔥 ARTICLE DETAIL PAGE — IMAGE & CONTENT FIX**
+
+## **🔥 ARTICLE DETAIL PAGE — IMAGE & CONTENT DISPLAY FIX**
+
+### **✅ Achievement: Article Detail Page — Cover Image, Section Images & Full Content**
+- **Status:** Complete. All three issues (redirect, no content, missing images) resolved.
+- **Branch:** `test-main-all`
+- **Deliverables:**
+  1. **DB: `workflow_state` column** — Added missing `workflow_state JSONB` column to `articles` table via migration `20260421000001`. Page query was failing with PostgREST 42703, causing every article detail visit to redirect to `/dashboard/articles`.
+  2. **DB: `article_sections` RLS** — Fixed SELECT/UPDATE policies on `article_sections` that used `request.jwt.claims ->> 'org_id'` (JWT hook not configured → always NULL → 0 rows). Rewrote both policies to use `public.get_auth_user_org_id()` via migration `20260421000002`.
+  3. **Cover image** — Added `cover_image_url` to the articles `.select()` in `page.tsx` and added `cover_image_url: string | null` to `SerializedArticle`. Rendered as a full-width image above the article title in `ArticleDetailClient`.
+  4. **Section inline images** — Added `section_image_url` to the `.select()` on `article_sections` in `page.tsx` (field exists directly on the `article_sections` table, not in the JSONB). Added `section_image_url: string | null` to `SerializedSection`. Rendered after the section header, before the body text in both `ReadOnlySection` and `EditableSection`. `onError` hides broken image containers silently.
+  5. **Error logging** — Added timing + detailed error logging to `ArticleDetailPage` before the redirect guard for future diagnostics.
+- **Files changed:**
+  - `infin8content/app/dashboard/articles/[id]/page.tsx`
+  - `infin8content/app/dashboard/articles/[id]/ArticleDetailClient.tsx`
+  - `infin8content/lib/supabase/database.types.ts` (added `workflow_state`, `slug` to articles Row)
+  - `infin8content/supabase/migrations/20260421000001_add_workflow_state_to_articles.sql`
+  - `infin8content/supabase/migrations/20260421000002_fix_article_sections_rls.sql`
+- **Root causes:**
+  - `workflow_state` column referenced in code but never migrated → PostgREST error on every article select
+  - `article_sections` SELECT RLS used non-existent JWT custom claims → silent 0 rows returned to browser
+  - `cover_image_url` not fetched in page query → never passed to client
+  - `section_image_url` lives in `article_sections` table (not JSONB) but was never selected
+
+---
 
 ## **🔥 CMS PUBLISHING & GENERATION HARDENING**
 
@@ -39,6 +169,72 @@
   - **Hardened (CAL-01 to CAL-05)**: Added protective try/catch around audit logging in Inngest workers, aligned UTC quota windows, fixed calendar "Today" gating, and memoized expensive render dependencies.
   - **Polished (POST-01 to POST-03)**: Muted unclickable "Today" highlights, added developer documentation for timezone normalization edge cases, and documented mount-time freezing.
 - **Workflow State:** Formally moved to `test-main-all` for terminal validation and merge readiness.
+
+## Git Workflow: Direct Production Deployment (test-main-all)
+
+**Key Rule:** Any push to `test-main-all` = Production deployment on Vercel. Any other branch = Preview deployment. No PRs needed for production — merge locally and push directly.
+
+### Complete Workflow:
+
+```bash
+# 1. Start from clean test-main-all
+git checkout test-main-all
+git pull origin test-main-all
+
+# 2. Create topic branch
+git checkout -b fix/your-feature-name
+
+# 3. Make changes, then commit
+git add .
+git commit -m "fix: description of change"
+
+# 4. Push topic branch
+git push -u origin fix/your-feature-name
+
+# 5. Merge directly to test-main-all (triggers Production on Vercel)
+git checkout test-main-all
+git merge fix/your-feature-name
+git push origin test-main-all
+
+# Configure git identity (if needed)
+git config user.name "Damien"
+git config user.email "engagehubonline@gmail.com"
+```
+
+### Important Notes:
+- `test-main-all` is the production branch
+- All merges to `test-main-all` trigger immediate Vercel production deployment
+- Use topic branches for development, then merge directly
+- No PR review required for production merges
+
+## Vercel Deployment Blocked — Quick Resolutions
+
+Deployment failed because the commit author `dvernon0786` (email `engagehubonline@gmail.com`) did not have contributing access to the Vercel project. The Vercel Hobby Plan does not support adding collaborators for private repositories, so deployments from non-owner accounts are blocked.
+
+Immediate options to resolve:
+
+1. Upgrade Vercel to Pro and add team members
+   - Vercel Dashboard → Settings → Billing → Upgrade to Pro.
+   - Team → Members → Invite by GitHub username or email.
+
+2. Add the committing GitHub account to the Vercel team (owner access required)
+
+3. Reassign commit author locally (safe on topic branches) and force-push
+   - Amend last commit author (single-commit fix):
+     ```bash
+     git commit --amend --author="Dev Vernon <dvernon0786@users.noreply.github.com>" --no-edit
+     git push --force-with-lease origin <branch>
+     ```
+   - Rewrite many commits (only on topic branches; history rewrite):
+     ```bash
+     git filter-branch --env-filter 'OLD_EMAIL="engagehubonline@gmail.com"; CORRECT_NAME="dvernon0786"; CORRECT_EMAIL="dvernon0786@users.noreply.github.com"; if [ "$GIT_COMMITTER_EMAIL" = "$OLD_EMAIL" ]; then export GIT_COMMITTER_NAME="$CORRECT_NAME"; export GIT_COMMITTER_EMAIL="$CORRECT_EMAIL"; fi; if [ "$GIT_AUTHOR_EMAIL" = "$OLD_EMAIL" ]; then export GIT_AUTHOR_NAME="$CORRECT_NAME"; export GIT_AUTHOR_EMAIL="$CORRECT_EMAIL"; fi' -- --branches --tags
+     git push --force-with-lease origin <branch>
+     ```
+
+Warning: Do NOT force-push to protected branches such as `main` or `test-main-all`. Prefer creating a new topic branch, amending there, and opening a PR.
+
+If you want, I can prepare a topic branch with these docs changes and push it for you, or prepare the exact git commands to rewrite author emails on a topic branch.
+
 
 
 ## **🔥 DESIGN SYSTEM COMPLIANCE & USAGE REFACTOR**
@@ -780,6 +976,21 @@ export async function GET(...
 
 // RESULT: API returns fresh workflowState on every request
 ```
+
+### **✅ Issue 6: Missing Approval Row Handling (RESOLVED)**
+**Problem:** Fresh workflows without an `intent_approvals` row caused the API route to throw a PostgREST error (PGRST116) and return 500.
+**Root Cause:** The Supabase client call used `.single()` which throws when no rows exist.
+**Fix Applied:** Replaced `.single()` with `.maybeSingle()` in [app/api/workflows/[id]/subtopics-for-review/route.ts](infin8content/app/api/workflows/[id]/subtopics-for-review/route.ts). This returns `null` when no approval row exists and prevents an error.
+**Result:** New workflows show all keywords as `pending` instead of a 500 error; Step 8 UI correctly renders 25 pending keywords and continues polling where appropriate.
+
+### **✅ Issue 7: `column articles.slug does not exist` (RESOLVED)**
+**Problem:** Article detail page and 3 other API routes (`caption`, `publish-to-social`, `internal-linking-service`) selected `slug` from `articles`, but the column was never added via migration. The Postgres error propagated as "Access Denied" on the article detail page.
+**Root Cause:** Epic 13 / prior feature work referenced `slug` in queries and type definitions but the `ALTER TABLE` migration was never created.
+**Fix Applied:**
+- Created `supabase/migrations/20260419000001_add_slug_to_articles.sql`: adds `slug TEXT DEFAULT NULL`, a general index, and a partial unique index (`WHERE slug IS NOT NULL`).
+- Added `slug?: string | null` and `cms_status?: string | null` to `ArticleMetadata` interface in `lib/types/article.ts`.
+- Confirmed caption route and publish-to-social already null-guard slug usage (no code changes needed there).
+**Result:** Once migration runs in Supabase, all 4 slug query sites return `null` for existing articles safely. Article detail page loads correctly; Bug 2 (Access Denied) resolves automatically.
 
 ### **🔧 Fix 6: Database Constraint (Manual SQL Required)**
 ```sql

@@ -10,7 +10,7 @@ import { Loader2 } from 'lucide-react'
 
 // ─── Brand Tokens ─────────────────────────────────────────────────────────────
 const T = {
-  blue: "#217CEB",
+  blue: "#0066FF",
   purple: "#4A42CC",
   charcoal: "#2C2C2E",
   lightGray: "#F4F4F6",
@@ -21,7 +21,7 @@ const T = {
   success: "#22C55E",
   warning: "#F59E0B",
   error: "#EF4444",
-  gradient: "linear-gradient(90deg, #217CEB 0%, #4A42CC 100%)",
+  gradient: "linear-gradient(90deg, #0066FF 0%, #4A42CC 100%)",
 }
 
 // ─── Atoms ────────────────────────────────────────────────────────────────────
@@ -620,7 +620,7 @@ export function WorkflowDashboard({ orgId }: { orgId: string }) {
   const workflows = data?.workflows ?? []
 
   return (
-    <div style={{ flex: 1, overflowY: "auto", padding: 24, background: T.lightGray }}>
+    <div style={{ flex: 1, overflowY: "auto", padding: 24, background: T.lightGray }} data-tour="workflow-dashboard">
       {/* BUG FIX #1: keyframes moved to globals.css (Zero Drift) */}
 
       {/* Page header */}

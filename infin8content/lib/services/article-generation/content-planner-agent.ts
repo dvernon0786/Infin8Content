@@ -36,7 +36,7 @@ const SectionSchema = z.object({
 
 export const PlannerSchema = z.object({
     article_title: z.string(),
-    content_style: z.enum(['informative', 'listicle']),
+    content_style: z.enum(['informative', 'listicle', 'news', 'video_conversion']),
     target_keyword: z.string(),
     semantic_keywords: z.array(z.string()).min(5).max(12),
     article_structure: z.array(SectionSchema),
@@ -83,6 +83,27 @@ export interface PlannerAgentInput {
         num_internal_links: number
         image_style: string
         brand_color: string
+    }
+    // Epic 13: article type overrides
+    articleType?: 'standard' | 'news' | 'listicle_comparison' | 'video_conversion'
+    articleTypeConfig?: {
+        // news fields
+        topic?: string
+        time_range?: '24h' | '7d' | '30d'
+        article_focus?: 'breaking_news' | 'analysis' | 'roundup'
+        newsSources?: string[]          // HackerNews/Google News-fetched headlines for context
+        // listicle fields
+        list_type?: string
+        items_to_include?: string[]
+        comparison_criteria?: string[]
+        include_comparison_table?: boolean
+        editors_choice?: string
+        // video fields
+        video_url?: string
+        video_title?: string
+        video_transcript?: string       // Pre-fetched transcript text
+        include_timestamps?: boolean
+        include_embedded_video?: boolean
     }
 }
 
@@ -214,12 +235,106 @@ Output schema:
   "total_estimated_words": number
 }`
 
+// ---------------------------------------------------------------------------
+// Epic 13: Article-type-specific prompt injections
+// ---------------------------------------------------------------------------
+
+function buildNewsArticlePromptInjection(config: PlannerAgentInput['articleTypeConfig']): string {
+    if (!config) return ''
+    const timeRangeLabel = config.time_range === '24h' ? 'last 24 hours' : config.time_range === '7d' ? 'last 7 days' : 'last 30 days'
+    const focusLabel = config.article_focus === 'breaking_news' ? 'Breaking News' : config.article_focus === 'analysis' ? 'In-Depth Analysis' : 'Weekly Roundup'
+    const sourcesContext = config.newsSources?.length
+        ? `\nRecent news headlines to reference (from HackerNews/Google News):\n${config.newsSources.slice(0, 10).map((s, i) => `${i + 1}. ${s}`).join('\n')}`
+        : ''
+
+    return `
+ARTICLE TYPE: NEWS
+Topic: ${config.topic ?? ''}
+Time Range: ${timeRangeLabel}
+Focus: ${focusLabel}
+${sourcesContext}
+
+Structure the article as a news piece:
+- content_style must be "news"
+- Sections: Headline context → Lead (5 Ws: Who/What/When/Where/Why) → Main Story Details → Background & Context → Implications & Analysis → Related Developments → Conclusion
+- Include a "Key Takeaways" section if analysis focus
+- All section research_questions must target recent, time-sensitive sources
+- Estimated read time: 3–5 minutes
+`
+}
+
+function buildListiclePromptInjection(config: PlannerAgentInput['articleTypeConfig']): string {
+    if (!config) return ''
+    const listType = config.list_type ?? 'Top 10'
+    const items = config.items_to_include?.length
+        ? `\nPre-specified items to include:\n${config.items_to_include.map((item, i) => `${i + 1}. ${item}`).join('\n')}`
+        : ''
+    const criteria = config.comparison_criteria?.join(', ') ?? 'features, pros_cons, ratings'
+    const compTable = config.include_comparison_table ? 'YES — place a Quick Comparison Table section immediately after the Introduction.' : 'NO'
+    const editorsPick = config.editors_choice ? `\nEditor's Choice: ${config.editors_choice}` : ''
+
+    return `
+ARTICLE TYPE: LISTICLE WITH COMPARISON TABLE
+List Type: ${listType}
+Comparison Criteria: ${criteria}
+Include Comparison Table: ${compTable}${editorsPick}
+${items}
+
+Structure the article as a listicle:
+- content_style must be "listicle"
+- Sections: Introduction → (Quick Comparison Table if enabled) → Item #1 through #N (each as its own h2 section) → Editor's Choice (if applicable) → Conclusion → FAQ
+- Each item section must have supporting_points covering: description, key features, pros/cons (research via AI), pricing, "Best for" statement
+- Pros/cons must be sourced from AI research only — no site scraping
+- Research questions must target product review data, user feedback, and expert comparisons
+`
+}
+
+function buildVideoConversionPromptInjection(config: PlannerAgentInput['articleTypeConfig']): string {
+    if (!config) return ''
+    const transcriptContext = config.video_transcript
+        ? `\nVideo Transcript (first 3000 chars):\n${config.video_transcript.slice(0, 3000)}...`
+        : ''
+    const videoTitle = config.video_title ? `\nVideo Title: ${config.video_title}` : ''
+    const withTimestamps = config.include_timestamps ? 'YES — include a Table of Contents with timestamp links as an h2 section.' : 'NO'
+    const withEmbed = config.include_embedded_video ? 'YES — include an Embedded Video section at the top.' : 'NO'
+
+    return `
+ARTICLE TYPE: YOUTUBE VIDEO TO BLOG POST
+Video URL: ${config.video_url ?? ''}${videoTitle}${transcriptContext}
+Include Timestamps TOC: ${withTimestamps}
+Include Embedded Video: ${withEmbed}
+
+Structure the article as a video-to-blog conversion:
+- content_style must be "video_conversion"
+- Sections: Introduction (video overview & context) → Embedded Video (if enabled) → Table of Contents with timestamps (if enabled) → Section Summaries (2–5 key video sections turned into h2 sections) → Key Takeaways → Important Quotes → Conclusion
+- Use the transcript and video title as the primary source material
+- Research questions should target supplementary context, statistics, or background that enriches the video content
+- Do NOT fabricate transcript content — only use what is provided
+`
+}
+
 /**
  * Run content planner agent
  */
 export async function runContentPlannerAgent(
     input: PlannerAgentInput
 ): Promise<PlannerAgentOutput> {
+    // Build article-type-specific instructions
+    let typeInjection = ''
+    if (input.articleType === 'news') {
+        typeInjection = buildNewsArticlePromptInjection(input.articleTypeConfig)
+    } else if (input.articleType === 'listicle_comparison') {
+        typeInjection = buildListiclePromptInjection(input.articleTypeConfig)
+    } else if (input.articleType === 'video_conversion') {
+        typeInjection = buildVideoConversionPromptInjection(input.articleTypeConfig)
+    }
+
+    // Build language instruction for multi-language (13-5)
+    const langCode = input.generationConfig.language ?? 'en'
+    const languageInstruction = langCode !== 'en'
+        ? `\nLANGUAGE: Generate ALL content — article_title, headers, supporting_points, research_questions — in ${langCode}. Do not mix languages.\n`
+        : ''
+
     const userMessage = `ICP:
 ${input.organizationContext.icpText}
 
@@ -241,7 +356,7 @@ Generation Config:
 - Add Emojis: ${input.generationConfig.add_emojis}
 - Number of internal links: ${input.generationConfig.num_internal_links}
 - Image style: ${input.generationConfig.image_style}
-- Brand color: ${input.generationConfig.brand_color}`
+- Brand color: ${input.generationConfig.brand_color}${typeInjection}${languageInstruction}`
 
     const messages: OpenRouterMessage[] = [
         {

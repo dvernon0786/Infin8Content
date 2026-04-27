@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { useCurrentUser } from "@/lib/hooks/use-current-user"
+import "./onboarding-steps.css"
 
 interface StepContentDefaultsProps {
   className?: string
@@ -119,23 +120,21 @@ export function StepContentDefaults({
   }
 
   return (
-    <main className={cn("mx-auto w-full max-w-2xl", className)}>
-      <Card>
-        <CardHeader>
-          <CardTitle>Content Defaults</CardTitle>
-        </CardHeader>
+    <main className={cn("onboarding-step-container", className)}>
+      <div className="onboarding-step-card">
+        <h2 className="onboarding-step-title">Content Defaults</h2>
 
-        <CardContent>
+        <div>
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Language */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Language</label>
+              <label className="onboarding-label">Language</label>
               <select
                 value={formData.content_defaults.language}
                 onChange={(e) =>
                   updateField("language", e.target.value)
                 }
-                className="w-full rounded-md border px-3 py-2 text-sm"
+                className="onboarding-select"
               >
                 <option value="english">English</option>
                 <option value="spanish">Spanish</option>
@@ -146,13 +145,17 @@ export function StepContentDefaults({
 
             {/* Tone */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tone</label>
+              <label style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "var(--onboarding-text-light)"
+              }}>Tone</label>
               <select
                 value={formData.content_defaults.tone}
                 onChange={(e) =>
                   updateField("tone", e.target.value)
                 }
-                className="w-full rounded-md border px-3 py-2 text-sm"
+                className="onboarding-select"
               >
                 <option value="professional">Professional</option>
                 <option value="casual">Casual</option>
@@ -163,13 +166,17 @@ export function StepContentDefaults({
 
             {/* Style */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Style</label>
+              <label style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "var(--onboarding-text-light)"
+              }}>Style</label>
               <select
                 value={formData.content_defaults.style}
                 onChange={(e) =>
                   updateField("style", e.target.value)
                 }
-                className="w-full rounded-md border px-3 py-2 text-sm"
+                className="onboarding-select"
               >
                 <option value="informative">Informative</option>
                 <option value="educational">Educational</option>
@@ -179,10 +186,14 @@ export function StepContentDefaults({
 
             {/* Target Word Count */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">
+              <label style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "var(--onboarding-text-light)"
+              }}>
                 Target Word Count
               </label>
-              <Input
+              <input
                 type="number"
                 min={500}
                 max={10000}
@@ -193,53 +204,106 @@ export function StepContentDefaults({
                     Number(e.target.value) || 1500
                   )
                 }
+                className="onboarding-select"
               />
             </div>
 
             {/* Auto Publish */}
-            <div className="flex items-center gap-2">
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}>
               <input
                 type="checkbox"
                 checked={formData.content_defaults.auto_publish}
                 onChange={(e) =>
                   updateField("auto_publish", e.target.checked)
                 }
+                style={{
+                  width: "18px",
+                  height: "18px",
+                  accentColor: "var(--brand-electric-blue)",
+                  cursor: "pointer"
+                }}
               />
-              <label className="text-sm">
+              <label style={{
+                fontSize: "13px",
+                color: "var(--onboarding-text-secondary)",
+                cursor: "pointer"
+              }}>
                 Auto-publish after generation
               </label>
             </div>
 
-            <hr className="my-6" />
-            <h3 className="text-lg font-semibold mb-4">Content Generation Settings</h3>
+            <hr style={{
+              border: "none",
+              borderTop: "1px solid rgba(255,255,255,0.07)",
+              margin: "24px 0"
+            }} />
+            <h3 style={{
+              fontSize: "16px",
+              fontWeight: "600",
+              color: "var(--onboarding-text-primary)",
+              marginBottom: "16px"
+            }}>Content Generation Settings</h3>
 
             {/* Brand Color */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Brand Color (Hex Code)</label>
-              <div className="flex gap-2">
-                <Input
+              <label style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "var(--onboarding-text-light)"
+              }}>Brand Color (Hex Code)</label>
+              <div style={{
+                display: "flex",
+                gap: "8px"
+              }}>
+                <input
                   type="color"
                   value={formData.content_defaults.brand_color}
                   onChange={(e) => updateField("brand_color", e.target.value)}
-                  className="w-12 h-10 p-1 rounded-md"
+                  style={{
+                    width: "48px",
+                    height: "40px",
+                    padding: "4px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    cursor: "pointer"
+                  }}
                 />
-                <Input
+                <input
                   type="text"
                   placeholder={"#" + "000000"}
                   value={formData.content_defaults.brand_color}
                   onChange={(e) => updateField("brand_color", e.target.value)}
-                  className="flex-1"
+                  style={{
+                    flex: 1,
+                    padding: "10px 12px",
+                    background: "var(--onboarding-input-bg)",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    borderRadius: "8px",
+                    color: "var(--onboarding-text-light)",
+                    fontSize: "14px",
+                    outline: "none"
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = "rgba(79,110,247,0.3)"}
+                  onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"}
                 />
               </div>
             </div>
 
             {/* Image Style */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Image Style</label>
+              <label style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "var(--onboarding-text-light)"
+              }}>Image Style</label>
               <select
                 value={formData.content_defaults.image_style}
                 onChange={(e) => updateField("image_style", e.target.value)}
-                className="w-full rounded-md border px-3 py-2 text-sm"
+                className="onboarding-select"
               >
                 <option value="brand_text_realism">Brand &amp; Text Realism</option>
                 <option value="watercolor_realism">Watercolor Realism</option>
@@ -251,71 +315,151 @@ export function StepContentDefaults({
 
             {/* Internal Links Count */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Max Internal Links</label>
-              <Input
+              <label style={{
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "var(--onboarding-text-light)"
+              }}>Max Internal Links</label>
+              <input
                 type="number"
                 min={0}
                 max={10}
                 value={formData.content_defaults.num_internal_links}
                 onChange={(e) => updateField("num_internal_links", Number(e.target.value))}
+                className="onboarding-select"
               />
             </div>
 
             {/* Feature Toggles */}
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              <div className="flex items-center gap-2">
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "16px",
+              paddingTop: "8px"
+            }}>
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px"
+              }}>
                 <input
                   type="checkbox"
                   checked={formData.content_defaults.internal_links}
                   onChange={(e) => updateField("internal_links", e.target.checked)}
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    accentColor: "var(--brand-electric-blue)",
+                    cursor: "pointer"
+                  }}
                 />
-                <label className="text-sm text-neutral-600">Include Internal Links</label>
+                <label style={{
+                  fontSize: "13px",
+                  color: "var(--onboarding-text-secondary)",
+                  cursor: "pointer"
+                }}>Include Internal Links</label>
               </div>
-              <div className="flex items-center gap-2">
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px"
+              }}>
                 <input
                   type="checkbox"
                   checked={formData.content_defaults.add_cta}
                   onChange={(e) => updateField("add_cta", e.target.checked)}
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    accentColor: "var(--brand-electric-blue)",
+                    cursor: "pointer"
+                  }}
                 />
-                <label className="text-sm text-neutral-600">Add CTA Sections</label>
+                <label style={{
+                  fontSize: "13px",
+                  color: "var(--onboarding-text-secondary)",
+                  cursor: "pointer"
+                }}>Add CTA Sections</label>
               </div>
-              <div className="flex items-center gap-2">
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px"
+              }}>
                 <input
                   type="checkbox"
                   checked={formData.content_defaults.add_youtube_video}
                   onChange={(e) => updateField("add_youtube_video", e.target.checked)}
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    accentColor: "var(--brand-electric-blue)",
+                    cursor: "pointer"
+                  }}
                 />
-                <label className="text-sm text-neutral-600">Embed YouTube Videos</label>
+                <label style={{
+                  fontSize: "13px",
+                  color: "var(--onboarding-text-secondary)",
+                  cursor: "pointer"
+                }}>Embed YouTube Videos</label>
               </div>
-              <div className="flex items-center gap-2">
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px"
+              }}>
                 <input
                   type="checkbox"
                   checked={formData.content_defaults.add_infographics}
                   onChange={(e) => updateField("add_infographics", e.target.checked)}
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    accentColor: "var(--brand-electric-blue)",
+                    cursor: "pointer"
+                  }}
                 />
-                <label className="text-sm text-neutral-600">Add Infographics</label>
+                <label style={{
+                  fontSize: "13px",
+                  color: "var(--onboarding-text-secondary)",
+                  cursor: "pointer"
+                }}>Add Infographics</label>
               </div>
-              <div className="flex items-center gap-2">
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px"
+              }}>
                 <input
                   type="checkbox"
                   checked={formData.content_defaults.add_emojis}
                   onChange={(e) => updateField("add_emojis", e.target.checked)}
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    accentColor: "var(--brand-electric-blue)",
+                    cursor: "pointer"
+                  }}
                 />
-                <label className="text-sm text-neutral-600">Use Emojis</label>
+                <label style={{
+                  fontSize: "13px",
+                  color: "var(--onboarding-text-secondary)",
+                  cursor: "pointer"
+                }}>Use Emojis</label>
               </div>
             </div>
 
             {/* Submit */}
-            <Button
+            <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full"
+              className={cn("onboarding-button onboarding-button-primary", "w-full")}
             >
               {isSubmitting ? "Saving…" : "Save & Continue"}
-            </Button>
+            </button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </main>
   )
 }

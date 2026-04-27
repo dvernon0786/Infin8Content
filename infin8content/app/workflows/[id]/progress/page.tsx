@@ -4,9 +4,7 @@ import { useEffect, useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { Loader2, CheckCircle, XCircle, ArrowLeft } from 'lucide-react'
-import { requireWorkflowStepAccess } from '@/lib/guards/workflow-step-gate'
+import { Loader2, XCircle, ArrowLeft } from 'lucide-react'
 import { getStepFromState } from '@/lib/services/workflow-engine/workflow-progression'
 
 interface WorkflowProgressPageProps {
@@ -20,13 +18,46 @@ const PIPELINE_STAGES = [
   { step: 7, name: 'Cluster Validation', state: 'step_7_validation' },
 ]
 
+const RANDOM_MESSAGES = [
+  '🧠 Teaching AI to think about keywords...',
+  '🔍 Scanning the internet for insights...',
+  '⚡ Boosting your SEO superpowers...',
+  '🚀 Launching keyword expansion protocols...',
+  '🎯 Zeroing in on perfect keywords...',
+  '💡 Generating brilliant ideas...',
+  '🔗 Connecting the dots between topics...',
+  '🌟 Making magic happen...',
+  '⏳ Brewing the perfect keyword strategy...',
+  '🎨 Painting your content roadmap...',
+  '🧩 Fitting puzzle pieces together...',
+  '💫 Sprinkling SEO dust...',
+  '🔬 Running keyword experiments...',
+  '📊 Crunching numbers like a boss...',
+  '🌍 Analyzing global trends...',
+  '🎪 Building your keyword circus...',
+  '🎭 Orchestrating the perfect strategy...',
+  '⚙️ Fine-tuning the algorithm...',
+  '🏗️ Constructing your keyword empire...',
+  '🎸 Harmonizing your content strategy...',
+]
+
 export default function WorkflowProgressPage({ params }: WorkflowProgressPageProps) {
   const router = useRouter()
   const [workflow, setWorkflow] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [messageIndex, setMessageIndex] = useState(0)
 
   const workflowId = use(params).id
+
+  // Change random message every 3 seconds
+  useEffect(() => {
+    const messageInterval = setInterval(() => {
+      setMessageIndex(prev => (prev + 1) % RANDOM_MESSAGES.length)
+    }, 3000)
+
+    return () => clearInterval(messageInterval)
+  }, [])
 
   // Poll workflow state every 2 seconds
   useEffect(() => {
@@ -36,14 +67,14 @@ export default function WorkflowProgressPage({ params }: WorkflowProgressPagePro
     const pollWorkflow = async () => {
       try {
         const response = await fetch(`/api/intent/workflows/${workflowId}`)
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch workflow status')
         }
 
         const data = await response.json()
         if (!isMounted) return
-        
+
         setWorkflow(data.workflow)
 
         const state = data.workflow?.state
@@ -104,8 +135,8 @@ export default function WorkflowProgressPage({ params }: WorkflowProgressPagePro
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">{error}</p>
-            <Button 
-              className="mt-4" 
+            <Button
+              className="mt-4"
               onClick={() => window.location.reload()}
             >
               Retry
@@ -118,9 +149,7 @@ export default function WorkflowProgressPage({ params }: WorkflowProgressPagePro
 
   const state = workflow?.state
   if (!state) return null
-  
-  const currentStep = getStepFromState(state)
-  const currentStage = PIPELINE_STAGES.find(s => s.step === currentStep)
+
   const failedStage = PIPELINE_STAGES.find(s => workflow.state.includes(`${s.state}_failed`))
 
   return (
@@ -143,20 +172,10 @@ export default function WorkflowProgressPage({ params }: WorkflowProgressPagePro
       </div>
 
       {/* Main */}
-      <div className="mx-auto max-w-3xl px-6 py-12 space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Processing Workflow
-          </h1>
-          <p className="text-muted-foreground">
-            We're analyzing your keywords and generating insights. This usually takes 2-5 minutes.
-          </p>
-        </div>
-
+      <div className="mx-auto max-w-3xl px-6 py-12 flex flex-col items-center justify-center min-h-[70vh]">
         {/* Failure State */}
         {failedStage && (
-          <Card className="border-destructive/30 bg-destructive/5">
+          <Card className="w-full max-w-md border-destructive/30 bg-destructive/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-destructive">
                 <XCircle className="w-5 h-5" />
@@ -179,89 +198,21 @@ export default function WorkflowProgressPage({ params }: WorkflowProgressPagePro
           </Card>
         )}
 
-        {/* Progress */}
+        {/* Generating Button */}
         {!failedStage && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {currentStage ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    {currentStage.name}
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    Pipeline Complete
-                  </>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Progress Bar */}
-              <div>
-                <div className="flex justify-between text-sm text-muted-foreground mb-2">
-                  <span>Progress</span>
-                  <span>{Math.round(Math.min(((currentStep - 3) / 4) * 100, 100))}%</span>
-                </div>
-                <Progress value={Math.min(((currentStep - 3) / 4) * 100, 100)} className="w-full" />
-              </div>
-
-              {/* Stage List */}
-              <div className="space-y-3">
-                {PIPELINE_STAGES.map((stage) => {
-                  const isCompleted = getStepFromState(workflow.state) > stage.step
-                  const isCurrent = getStepFromState(workflow.state) === stage.step
-                  const isFailed = workflow.state.includes(`${stage.state}_failed`)
-
-                  return (
-                    <div
-                      key={stage.step}
-                      className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30"
-                    >
-                      {isCompleted && !isFailed && (
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                      )}
-                      {isCurrent && !isFailed && (
-                        <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-                      )}
-                      {isFailed && (
-                        <XCircle className="w-5 h-5 text-destructive" />
-                      )}
-                      {!isCompleted && !isCurrent && !isFailed && (
-                        <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
-                      )}
-                      
-                      <div className="flex-1">
-                        <div className="font-medium">{stage.name}</div>
-                        {isCurrent && !isFailed && (
-                          <div className="text-sm text-muted-foreground">Processing...</div>
-                        )}
-                        {isCompleted && !isFailed && (
-                          <div className="text-sm text-green-600">Completed</div>
-                        )}
-                        {isFailed && (
-                          <div className="text-sm text-destructive">Failed</div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex flex-col items-center gap-6">
+            <Button
+              disabled
+              className="px-8 py-6 rounded-full text-lg shadow-lg bg-primary text-white"
+            >
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              Generating
+            </Button>
+            <p className="text-muted-foreground text-center max-w-sm h-6 transition-opacity duration-500">
+              {RANDOM_MESSAGES[messageIndex]}
+            </p>
+          </div>
         )}
-
-        {/* Info */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-sm text-muted-foreground space-y-2">
-              <p>• This process includes keyword expansion, filtering, clustering, and validation</p>
-              <p>• You'll be redirected to the approval step when processing is complete</p>
-              <p>• You can safely leave this page - the process continues in the background</p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

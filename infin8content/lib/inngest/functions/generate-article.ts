@@ -7,13 +7,19 @@ import { runContentWritingAgent } from '@/lib/services/article-generation/conten
 import { ArticleAssembler } from '@/lib/services/article-generation/article-assembler'
 import { generateArticleImage, selectSectionImages } from '@/lib/services/image-generation/image-generation-agent'
 import { SYSTEM_USER_ID } from '@/lib/constants/system-user'
+import { searchHNStories } from '@/lib/services/hackernews/hackernews-client'
+import { searchGoogleNews } from '@/lib/services/googlenews/googlenews-client'
+import { fetchTranscript } from '@/lib/services/youtube/youtube-transcript-client'
 import type {
   Article,
   ArticleSection,
   ResearchPayload,
   ContentDefaults,
   ArticlePlannerOutput,
-  SectionPlannerOutput
+  SectionPlannerOutput,
+  NewsArticleConfig,
+  ListicleConfig,
+  VideoConversionConfig,
 } from '@/types/article'
 
 // B-4 Required: Retry wrapper with exponential backoff
@@ -67,7 +73,11 @@ export const generateArticle = inngest.createFunction(
           article_plan,
           generation_config,
           icp_context,
-          competitor_context
+          competitor_context,
+          article_type,
+          article_type_config,
+          video_url,
+          video_transcript
         `)
         .eq('id', articleId)
         .single()
@@ -197,6 +207,73 @@ export const generateArticle = inngest.createFunction(
     })
 
     /* -------------------------------------------------- */
+    /* 2.5 Epic 13: Pre-fetch type-specific context      */
+    /*     News: fetch headlines via Tavily               */
+    /*     Video: extract transcript via YouTube API      */
+    /* -------------------------------------------------- */
+
+    const articleType = (article as any).article_type ?? 'standard'
+    const articleTypeConfig = (article as any).article_type_config ?? {}
+
+    const resolvedTypeContext = await step.run('prefetch-article-type-context', async () => {
+      if (articleType === 'news') {
+        const newsConfig = articleTypeConfig as NewsArticleConfig
+        const daysMap: Record<string, number> = { '24h': 1, '7d': 7, '30d': 30 }
+        const daysBack = daysMap[newsConfig.time_range ?? '7d'] ?? 7
+        try {
+          const topic = newsConfig.topic ?? (article as any).keyword ?? ''
+          const newsSource = (newsConfig as any).source ?? 'hackernews'
+          let rawStories: Array<{ title: string; url: string }>
+          if (newsSource === 'google_news') {
+            rawStories = await searchGoogleNews(topic, {
+              country: newsConfig.country,
+              daysBack,
+              maxResults: 10,
+            })
+          } else {
+            rawStories = await searchHNStories(topic, { daysBack, maxResults: 10 })
+          }
+          return { newsSources: rawStories.map(s => `${s.title} (${s.url})`) }
+        } catch (err) {
+          console.warn('[Worker] News source prefetch failed (non-fatal):', err instanceof Error ? err.message : err)
+          return { newsSources: [] }
+        }
+      }
+
+      if (articleType === 'video_conversion') {
+        const videoConfig = articleTypeConfig as VideoConversionConfig
+        const videoUrl = videoConfig.video_url ?? (article as any).video_url ?? ''
+        if (!videoUrl) return { videoTitle: '', videoTranscript: '' }
+
+        // Idempotency: if transcript already saved, skip re-fetching
+        if ((article as any).video_transcript) {
+          return {
+            videoTitle: '',
+            videoTranscript: (article as any).video_transcript as string,
+          }
+        }
+
+        try {
+          const transcript = await fetchTranscript(videoUrl, videoConfig.language ?? 'en')
+
+          // Persist transcript to avoid re-fetching on retry
+          await supabase
+            .from('articles')
+            .update({ video_transcript: transcript.fullText })
+            .eq('id', articleId)
+
+          console.log(`[Worker] Video transcript fetched for article ${articleId} (${transcript.source})`)
+          return { videoTitle: '', videoTranscript: transcript.fullText }
+        } catch (err) {
+          console.warn('[Worker] Video transcript fetch failed (non-fatal):', err instanceof Error ? err.message : err)
+          return { videoTitle: '', videoTranscript: '' }
+        }
+      }
+
+      return {}
+    })
+
+    /* -------------------------------------------------- */
     /* 3. Run Content Planner Agent                      */
     /* -------------------------------------------------- */
 
@@ -231,7 +308,16 @@ export const generateArticle = inngest.createFunction(
           description: organization.business_description || '',
           icpText
         },
-        generationConfig: generationConfig
+        generationConfig: generationConfig,
+        // Epic 13: pass article type context to planner
+        articleType: articleType as any,
+        articleTypeConfig: {
+          ...articleTypeConfig,
+          newsSources: (resolvedTypeContext as any).newsSources,
+          videoTitle: (resolvedTypeContext as any).videoTitle,
+          video_transcript: (resolvedTypeContext as any).videoTranscript,
+          video_url: articleTypeConfig.video_url ?? (article as any).video_url,
+        },
       })
 
       // Update article with top-level plan
@@ -626,6 +712,18 @@ export const generateArticle = inngest.createFunction(
           name: 'article/images.generate',
           id: `images-${articleId}`,
           data: { articleId }
+        })
+
+        // 📣 TRIGGER SOCIAL PUBLISH PIPELINE (auto-publish path)
+        // Idempotency key prevents double-fire if this step retries.
+        // The handler exits early if the org has no active social accounts.
+        await inngest.send({
+          name: 'article/generation.completed',
+          id: `social-publish-${articleId}`,
+          data: {
+            articleId,
+            organizationId: orgId ?? event.data.organizationId,
+          }
         })
       })
     } catch (pipelineError) {

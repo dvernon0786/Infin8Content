@@ -59,7 +59,7 @@ export default function PaymentStatusBanner({ organization }: PaymentStatusBanne
     return (
       <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4" role="alert" aria-live="polite">
         <div className="flex">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <svg
               className="h-5 w-5 text-yellow-400"
               fill="currentColor"
@@ -89,7 +89,7 @@ export default function PaymentStatusBanner({ organization }: PaymentStatusBanne
               <button
                 onClick={() => router.push('/payment')}
                 data-testid="grace-period-retry-payment-button"
-                className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-yellow-50 focus:ring-yellow-500 transition-colors font-semibold"
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-yellow-50 focus:ring-yellow-500 transition-colors font-semibold"
               >
                 Retry Payment
               </button>
@@ -105,7 +105,7 @@ export default function PaymentStatusBanner({ organization }: PaymentStatusBanne
     return (
       <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4" role="alert" aria-live="polite">
         <div className="flex">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <svg
               className="h-5 w-5 text-red-400"
               fill="currentColor"
@@ -150,7 +150,7 @@ export default function PaymentStatusBanner({ organization }: PaymentStatusBanne
     return (
       <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4" role="alert" aria-live="polite">
         <div className="flex">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <svg
               className="h-5 w-5 text-blue-400"
               fill="currentColor"

@@ -1,6 +1,49 @@
+## 2026-04-24
+
+### Added
+- `/app/(marketing-pages)/pricing/page.tsx`: Static HTML+CSS mirror of pricing page for exact visual match with `/ai-content-writer` (renders via `MarketingPageBody`).
+- `/app/(marketing-pages)/resources/case-studies/page.tsx`: Static HTML+CSS mirror of case studies page using `MarketingPageBody` for parity with `/ai-content-writer`.
+
+### Changed
+- `components/marketing/MarketingPageBody.tsx`: Add `window._setPricing(mode)` and bind monthly/annual buttons when present; default to annual.
+- `components/marketing/MarketingPageBody.tsx`: Add tag filter event handler listening on `#tag-filter` to toggle `[data-hidden]` on `.cs-card` items.
+ - `components/marketing/MarketingShell.tsx`: Guard shell UI (promo bar/header/footer) to render only once per page to prevent duplicates on Solutions routes wrapped by `(marketing-pages)/layout.tsx`.
+ - `components/marketing/MarketingShell.tsx`: Navbar Solutions dropdown now shows “Local” and links to `/solutions/local` (replaces “Enterprise”).
+
+### Removed
+- `/app/(i8c-mkt)/resources/case-studies/page.tsx`: Deleted legacy route to avoid duplication with `(marketing-pages)` mirror.
+
+### Meta
+- Commit: d9948f86 (branch: test-main-all)
+
 # Changelog
 
 All notable changes to the Infin8Content platform will be documented in this file.
+
+## [Unreleased] - 2026-04-21
+
+### Fixed
+- **article-generation:** `POST /api/articles/generate` returned `400 "Article ID is required"` when submitting the standalone Generate Article form — form was sending raw keyword/config to a trigger-only endpoint. Fixed by adding `POST /api/articles` create endpoint and splitting `handleGenerate` into a create-then-trigger two-step flow.
+- **article-generation:** `GET /api/articles/usage` returned `404` — created missing route file that reads `org.article_usage`, `article_limit`, and `plan` from the authenticated user's organization.
+- **article-generation:** `handleGenerate` now correctly forwards `articleType`, `language`, and `articleTypeConfig` to the create step (previously dropped, causing default fallbacks).
+- **dashboard:** "Generate Articles" overview cards all linked to `/dashboard/workflows/new` instead of `/dashboard/articles/generate?type=seo|news|youtube` — fixed all 3 card hrefs.
+- **feature-flags:** Add short in-memory caching and `getFeatureFlagsForOrg()` batch fetch to reduce Supabase round-trips during server render; lower missing-flag log level to `info` to avoid noisy warnings. See branch `test-main-all` (commit `58ac8eab`).
+
+
+## [2.6.0] - 2026-04-16
+
+### Added
+- **Epic 12 — Onboarding & Feature Discovery**: Guided tours, announcements, feedback widget, WhatsNewCard, HelpDrawer, PaymentStatusBanner, and supporting APIs and services. Additive DB migrations and RLS applied for announcements and feedback.
+- **Inngest:** `onboarding-email-sequence` (welcome → day-3 → day-7)
+- **APIs:** onboarding success events, tour-shown patch, announcements, announcement read, feedback collection
+
+### Changed
+- Added feature flags: `ENABLE_GUIDED_TOURS`, `ENABLE_FEATURE_ANNOUNCEMENTS`, `ENABLE_FEEDBACK_WIDGET`
+
+### Tests
+- 22 vitest tests added for onboarding services and APIs
+
+**PR:** https://github.com/dvernon0786/Infin8Content/pull/458
 
 ## [2.5.0] - 2026-03-07
 ### Added

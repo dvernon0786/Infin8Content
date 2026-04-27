@@ -1,9 +1,83 @@
+## 2026-04-24
+
+### Added
+- Marketing: Implemented `/pricing` as a static marketing mirror using `MarketingShell` + `MarketingPageBody` for parity with `/ai-content-writer`.
+   - Added `infin8content/app/(marketing-pages)/pricing/page.tsx` (HTML+CSS injection)
+   - Enhanced `infin8content/components/marketing/MarketingPageBody.tsx` with a billing toggle helper (`window._setPricing`) and button wiring
+ - Marketing: Implemented `/resources/help` (Help Center) under `(marketing-pages)` using `MarketingShell` + client page with HTML/CSS injection and local JS for search/navigation.
+    - Added `infin8content/app/(marketing-pages)/resources/help/page.tsx`
+    - Updated `infin8content/components/marketing/MarketingShell.tsx` to link header/footer "Help Docs" to `/resources/help`
+
+### Changed
+- Marketing: CTA and copy normalization
+   - Global CTA copy standardized to "Start today" across Navigation, pricing, and feature landing pages.
+   - Replaced legacy "Get Started Free" / "Start Free Trial" / "Get Started" labels.
+   - Wired placeholder CTA href="#" to /register on applicable marketing pages and shells.
+   - MarketingShell & MktLayout: removed "Login" from header CTAs; kept a single primary "Start today" button to /register; promo bar "Get Deal" now routes to /register.
+   - LLM Tracker: final prose updated to remove "free" framing — now reads: "Start tracking your brand across LLMs today." Related CTAs to /register.
+   - Navigation: Resources → Help Docs now routes to `/resources/help` (was placeholder `#`).
+- Marketing: Rebuilt `/resources/blog` under `(marketing-pages)` to mirror `/ai-content-writer` pattern and unify interactivity via `MarketingPageBody`.
+    - Marketing: Prevented duplicate header/footer on Solutions pages by guarding `MarketingShell` to render shell UI only once when nested under `(marketing-pages)/layout.tsx`.
+    - Marketing: Navbar Solutions dropdown replaced “Enterprise” with “Local” linking to `/solutions/local`.
+   - Added `infin8content/app/(marketing-pages)/resources/blog/page.tsx` (HTML+CSS injection; newsletter form is a no-op placeholder)
+   - Extended `infin8content/components/marketing/MarketingPageBody.tsx` to handle blog tag filter (`#post-grid .post-card`) and a placeholder "Load more" button
+   - Removed legacy route `infin8content/app/(i8c-mkt)/resources/blog/page.tsx` to avoid duplicate routing
+
+### Notes
+- Commit: d9948f86 (branch: test-main-all)
+- Route now available at `/pricing` under `(marketing-pages)`; future migration to `(i8c-mkt)` remains documented in `infin8content/pricing-page-implementation.md`.
+
 # Infin8Content Changelog
 
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [2.3.0] - 2026-04-16
+
+### ✅ ADDED
+- **Epic 12 — Onboarding & Feature Discovery** — Full implementation for onboarding and feature discovery (13 stories). Additive changes only: database migrations, feature announcements, feedback collection, onboarding services, Inngest onboarding-email sequence, guided tours, help drawer, WhatsNewCard, PaymentStatusBanner, and supporting UI primitives and pages.
+- **APIs:** `/api/onboarding/success-events`, `/api/onboarding/tour-shown`, `/api/announcements`, `/api/announcements/[id]/read`, `/api/feedback`
+- **Inngest:** `lib/inngest/functions/onboarding-email-sequence.ts` (welcome → day-3 → day-7)
+
+### 🔧 CHANGED
+- Added feature flags: `ENABLE_GUIDED_TOURS`, `ENABLE_FEATURE_ANNOUNCEMENTS`, `ENABLE_FEEDBACK_WIDGET`
+ - Marketing site: fix JSX parse error in `infin8content/components/marketing/sections/StepsSection.tsx` (`fc70de23`); replace inline styles with Tailwind utility classes in `infin8content/components/marketing/LandingPageRedesigned.tsx` (`6c105c08`); add `Navigation` + `Footer` across marketing pages via new layouts and page updates (`ab868627`). Pushed `test-main-all` and created remote `main` from it (branches identical; no PR diff).
+
+### 🧪 TESTS
+- 22 vitest tests added for onboarding services and APIs; local subset executed successfully
+
+**PR:** https://github.com/dvernon0786/Infin8Content/pull/458
+
+## [Unreleased] - 2026-04-22
+
+### 🔧 CHANGED
+- **Homepage replacement:** `app/page.tsx` deleted; `app/route.ts` created to serve `public/homepage.html` at `/`. Static dark-themed marketing homepage (promo bar, hero with dashboard mockup, 5 feature rows, video section, testimonials, case studies, FAQ accordion, final CTA, full footer) now renders at the root route.
+
+## [Unreleased] - 2026-04-20
+
+### 🔧 CHANGED
+- Editor / Article Detail: moved to client editor pattern and fixed autosave/meta merge races
+   - Added `app/dashboard/articles/[id]/ArticleEditClient.tsx` (client-only editor mounted by server wrapper)
+   - Converted `app/dashboard/articles/[id]/edit/page.tsx` into a server wrapper that supplies serialized props and redirects on auth or missing article
+   - `app/dashboard/articles/[id]/ArticleDetailClient.tsx`: blue info banner for read-only mode; meta-save now re-fetches `workflow_state` before merging
+   - Editor saves now include `content_html` alongside `content_markdown`
+
+### 🐛 FIXED
+- Prevented service-role key leakage in server Supabase client; enforced RLS via `.eq('org_id', currentUser.org_id)` checks on article fetches
+
+### 📝 2026-04-21 - Quick Flow: Article editor fixes
+
+- Fixed layout clipping that hid the Edit button by removing a redundant h-screen wrapper and moving the page header into the client component.
+- Ensured Next.js 15 `params` is awaited in server pages (`params: Promise<{ id: string }>`).
+- Editor height corrected to use `h-full` so it fills the parent layout (prevents nested overflow clipping).
+- Prevent spurious meta saves on mount with an `isFirstRender` guard.
+- Preserve rich formatting: editor now saves `content_html` (capturing innerHTML) and strips tags only for `content_markdown`.
+- Avoid cursor reset by initializing editable content via a ref on mount instead of `dangerouslySetInnerHTML`.
+
 
 ---
 

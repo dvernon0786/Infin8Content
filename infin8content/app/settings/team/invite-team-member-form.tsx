@@ -71,7 +71,7 @@ export default function InviteTeamMemberForm({}: InviteTeamMemberFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       {successMessage && (
         <div
-          className="text-sm flex items-center gap-1 text-green-600 bg-green-50 p-3 rounded-md border border-green-200"
+          className="font-lato text-small flex items-center gap-1 text-green-600 bg-green-50 p-3 rounded-md border border-green-200"
           role="alert"
           aria-live="polite"
         >
@@ -81,7 +81,7 @@ export default function InviteTeamMemberForm({}: InviteTeamMemberFormProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-900">
+          <label htmlFor="email" className="block font-lato text-small font-medium text-neutral-900">
             Email Address *
           </label>
           <input
@@ -90,35 +90,35 @@ export default function InviteTeamMemberForm({}: InviteTeamMemberFormProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             onBlur={() => validateEmail(email)}
-            className="mt-1 block w-full px-3 py-3 text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="mt-1 block w-full px-3 py-3 font-lato text-body border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             required
             disabled={isSubmitting}
             aria-invalid={errors.email ? 'true' : 'false'}
             aria-describedby={errors.email ? 'email-error' : undefined}
           />
           {errors.email && (
-            <p id="email-error" className="mt-1 text-sm flex items-center gap-1 text-red-600">
+            <p id="email-error" className="mt-1 font-lato text-small flex items-center gap-1 text-red-600">
               <span aria-hidden="true">⚠</span> {errors.email}
             </p>
           )}
         </div>
 
         <div>
-          <label htmlFor="role" className="block text-sm font-medium text-gray-900">
+          <label htmlFor="role" className="block font-lato text-small font-medium text-neutral-900">
             Role *
           </label>
           <select
             id="role"
             value={role}
             onChange={(e) => setRole(e.target.value as 'editor' | 'viewer')}
-            className="mt-1 block w-full px-3 py-3 text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="mt-1 block w-full px-3 py-3 font-lato text-body border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             required
             disabled={isSubmitting}
           >
             <option value="editor">Editor</option>
             <option value="viewer">Viewer</option>
           </select>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 font-lato text-small text-neutral-600">
             {role === 'editor'
               ? 'Can create, edit, and manage content'
               : 'Can view content and reports'}
@@ -129,7 +129,7 @@ export default function InviteTeamMemberForm({}: InviteTeamMemberFormProps) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm font-lato text-small font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {isSubmitting ? 'Sending Invitation...' : 'Send Invitation'}
       </button>

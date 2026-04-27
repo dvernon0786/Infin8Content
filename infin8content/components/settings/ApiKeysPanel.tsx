@@ -99,14 +99,14 @@ function NewKeyCopyDialog({
           </AlertDescription>
         </Alert>
 
-        <div className="flex items-center gap-2 rounded-md border bg-muted p-3 font-mono text-sm break-all">
+        <div className="flex items-center gap-2 rounded-md border bg-muted p-3 font-mono text-small break-all">
           <span className="flex-1">{rawKey}</span>
           <Button variant="ghost" size="icon" onClick={handleCopy}>
             {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
           </Button>
         </div>
 
-        <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+        <label className="flex items-center gap-2 font-lato text-small cursor-pointer select-none">
           <Checkbox checked={confirmed} onCheckedChange={(v) => setConfirmed(!!v)} />
           I have copied and securely stored my API key
         </label>
@@ -213,12 +213,12 @@ function CreateKeyModal({ onCreated }: { onCreated: (rawKey: string) => void }) 
               <Label>Scopes *</Label>
               <div className="mt-2 space-y-2">
                 {ALL_SCOPES.map((scope) => (
-                  <label key={scope.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <label key={scope.value} className="flex items-center gap-2 font-lato text-small cursor-pointer">
                     <Checkbox
                       checked={selectedScopes.includes(scope.value)}
                       onCheckedChange={() => toggleScope(scope.value)}
                     />
-                    <span className="font-mono text-xs text-muted-foreground mr-1">{scope.value}</span>
+                    <span className="font-mono text-small text-neutral-600 mr-1">{scope.value}</span>
                     {scope.label}
                   </label>
                 ))}
@@ -233,7 +233,7 @@ function CreateKeyModal({ onCreated }: { onCreated: (rawKey: string) => void }) 
                 onChange={(e) => setExpiresAt(e.target.value ? new Date(e.target.value).toISOString() : '')}
               />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="font-lato text-small text-destructive">{error}</p>}
           </div>
 
           <DialogFooter>
@@ -291,7 +291,7 @@ function RevokeDialog({
             will immediately lose access. This cannot be undone.
           </DialogDescription>
         </DialogHeader>
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p className="font-lato text-small text-destructive">{error}</p>}
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={loading}>Cancel</Button>
           <Button variant="destructive" onClick={handleRevoke} disabled={loading}>
@@ -335,11 +335,11 @@ export function ApiKeysPanel() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
+          <h3 className="font-poppins text-h3-mobile font-semibold text-neutral-900 flex items-center gap-2">
             <Key className="h-4 w-4" />
             API Keys
           </h3>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="font-lato text-small text-neutral-600 mt-1">
             Programmatic access to your content. Pro &amp; Agency plans only.
           </p>
         </div>
@@ -359,9 +359,9 @@ export function ApiKeysPanel() {
       )}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="font-lato text-small text-neutral-600">Loading…</p>
       ) : keys.length === 0 ? (
-        <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-md border border-dashed p-8 text-center font-lato text-small text-neutral-600">
           No API keys yet. Generate one to get started.
         </div>
       ) : (
@@ -389,7 +389,7 @@ export function ApiKeysPanel() {
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {k.scopes.map((s) => (
-                      <Badge key={s} variant="secondary" className="text-xs font-mono">
+                      <Badge key={s} variant="secondary" className="text-small font-mono">
                         {s}
                       </Badge>
                     ))}
@@ -405,10 +405,10 @@ export function ApiKeysPanel() {
                     {k.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-muted-foreground text-sm">
+                <TableCell className="font-lato text-small text-neutral-600">
                   {formatDate(k.last_used_at)}
                 </TableCell>
-                <TableCell className="text-muted-foreground text-sm">
+                <TableCell className="font-lato text-small text-neutral-600">
                   {formatDate(k.expires_at)}
                 </TableCell>
                 <TableCell>

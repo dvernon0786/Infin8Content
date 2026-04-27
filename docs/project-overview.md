@@ -1,56 +1,85 @@
 # Project Overview - Infin8Content
 
-Generated: 2026-03-17
-Project State: **Production Hardened**
+Deep Scan: 2026-04-22
+Project State: **Production SaaS**
 Authority Model: **Zero Drift Protocol** (Deterministic State Management)
 
 ## Purpose
 
-Infin8Content is a high-performance, enterprise-grade AI content generation platform. It handles the entire lifecycle of content creation—from research and SEO analysis to section-by-section generation and automated CMS publishing—managed through a deterministic Finite State Machine (FSM) with 25 states and 30+ events.
+Infin8Content is a multi-tenant SaaS platform for AI-powered content generation and SEO strategy. It covers the complete lifecycle: ICP-driven keyword discovery → competitor analysis → topic clustering → human approval gates → article research → section-by-section LLM generation → CMS publishing. The core is governed by a deterministic Finite State Machine (FSM) and an Intent Workflow Engine with human-in-the-loop approval steps.
 
 ## Core Architectural Directives
 
-The platform adheres to the **Zero Drift Protocol**, ensuring absolute data integrity and state consistency:
+The platform enforces the **Zero Drift Protocol**:
 
-1.  **Single Authority**: The Article Lifecycle is managed exclusively by the **Trigger API** (Transitions) and **Inngest Workers** (Execution). No other component may mutate article state.
-2.  **Deterministic Pipeline**: Generation follows a strict, sequential FSM. State transitions are atomic and irreversible without explicit system intervention.
-3.  **Real-time Stability**: A "Real-time First, Polling Fallback" model ensures the dashboard always reflects the ground truth of the database without UI-side calculation of state.
-4.  **Audit Hardening**: Every state transition and system action is logged with high-fidelity metadata for compliance and debugging.
+1. **Single Authority**: Article lifecycle is mutated exclusively by the **Trigger API** (state transitions) and **Inngest Workers** (execution). No UI or service may mutate article `status` directly.
+2. **Deterministic Pipeline**: FSM transitions are atomic. State cannot be skipped without explicit system override.
+3. **Real-time First**: Dashboard state is driven by Supabase Realtime subscriptions — no client-side state inference.
+4. **Audit Hardening**: Every state transition, generation event, and billing action is logged to `activities` and `workflow_transition_audit` tables.
 
-## Key Capabilities
+## Key Product Areas
 
--   **Deep Research**: Multi-source research integration (Tavily, DataForSEO) for real-time data ingestion with 24-hour caching.
--   **Parallel Generation**: Optimized LLM orchestration (OpenRouter) with parallel section processing and smart quality retries.
--   **Lifecycle Sealing**: Pure generation engine mode eliminates editorial drift by locking content once generation begins.
--   **Multi-tenant SaaS**: Built-in organization management, RBAC, and Stripe-integrated billing with monthly usage limits ($25 default).
--   **Mobile-First**: 15+ mobile-optimized components for on-the-go content management.
+| Area | Description |
+|------|-------------|
+| **Intent Workflow Engine** | 9-step ICP → keyword → cluster → article pipeline with human approval gates |
+| **Article Generation** | Parallel LLM orchestration (OpenRouter) with research, outline, and section-by-section writing |
+| **SEO Suite** | Keyword research (DataForSEO), scoring, validation, recommendations, SERP analysis |
+| **CMS Publishing** | Multi-adapter publishing to WordPress, Ghost, Notion, Shopify, Webflow, custom |
+| **LLM Visibility Tracker** | Monitor brand presence across AI model responses |
+| **Backlink Exchange** | Internal marketplace for backlink partner matching |
+| **Analytics** | Content performance metrics, weekly reports, trend analysis, CSV/PDF export |
+| **Team Management** | Org-scoped RBAC, invitations, role updates, audit log access |
+| **Public v1 API** | Key-authenticated REST API for articles, keywords, social publishing |
 
-## Technology Stack (Verified from package.json)
+## Technology Stack (Verified from package.json, 2026-04-22)
 
--   **Frontend**: Next.js 16.1.1 (App Router), React 19.2.3, Tailwind CSS 4.0
--   **Backend**: Supabase (Auth, PostgreSQL/RLS, Real-time), Inngest 3.48.1 (Workflow Engine)
--   **AI**: OpenRouter 2.1.1 (Gemini 2.0, Claude 3.5 Sonnet, Llama 3), Tavily API
--   **Payments**: Stripe 20.1.0 with usage tracking and cost functions
--   **Email**: Brevo 3.0.1 for transactional emails
--   **Testing**: Vitest 4.0.16, Playwright 1.57.0, Storybook 10.1.11
--   **Monitoring**: Sentry 10.34.0 for error tracking
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Framework | Next.js (App Router) | 16.1.1 |
+| UI | React | 19.2.3 |
+| Styling | Tailwind CSS | 4.x |
+| Component Primitives | Radix UI | multiple |
+| Database/Auth/Realtime | Supabase | 2.89.0 |
+| Background Jobs | Inngest | 3.48.1 |
+| AI SDK | Vercel AI SDK | 6.0.0 |
+| LLM Router | OpenRouter | 2.1.1 |
+| Research | Tavily, DataForSEO | — |
+| Payments | Stripe | 20.1.0 |
+| Email | Brevo | 3.0.1 |
+| Charts | Recharts | 3.7.0 |
+| Validation | Zod | 3.23.8 |
+| Monitoring | Sentry | 10.34.0 |
+| Testing | Vitest / Playwright / Storybook | 4.0.16 / 1.57.0 / 10.1.11 |
 
-## Current Scale Metrics
+## Codebase Scale (Deep Scan, 2026-04-22)
 
-- **Codebase Size**: 7,581+ files across monorepo
-- **Components**: 183 React components with design system compliance
-- **API Routes**: 50+ endpoints with Zod validation
-- **Database**: 15+ tables with comprehensive RLS policies
-- **Migrations**: 75+ applied, latest fixing article status constraints
-- **FSM Coverage**: 25 workflow states with structural coupling to automation
+| Metric | Value |
+|--------|-------|
+| Total files | 7,581+ |
+| Component files (.tsx) | 190 |
+| Component directories | 33 |
+| API route files | 115+ |
+| Lib service files | 130+ |
+| Inngest functions | 16 |
+| DB tables (verified) | 15+ |
+| Migrations applied | 75 |
+| CI/CD workflows | 6 |
+| App page directories | 80+ |
 
-## Production Readiness
+## Platform Features by Route
 
-- **State Management**: Unified workflow engine prevents race conditions
-- **Error Handling**: Comprehensive retry logic and failure states
-- **Security**: Row-level security on all tables with service role bypass
-- **Performance**: Real-time subscriptions, query optimization, and caching
-- **Compliance**: Audit trails, GDPR considerations, and data isolation
+**Dashboard** (`/dashboard`): Article list, generate, edit, research, publish, track, LLM visibility, backlink exchange, workflows, settings/billing/integrations  
+**Onboarding** (`/onboarding`): 7-step wizard — business → competitors → blog → keyword-settings → content-defaults → integration → completion  
+**Workflows** (`/workflows`): 9-step intent pipeline — ICP → competitors → seed keywords → longtail expansion → filtering → clustering → validation → subtopics → queue  
+**Marketing** (`/`): Landing page, pricing, features, solutions, resources, about  
+**Settings** (`/settings`): Org management, team, webhooks, integrations, keyword-settings, audit logs  
+
+## Production Architecture Constraints
+
+- `typescript.ignoreBuildErrors: true` in `next.config.ts` (Vercel build time constraint — TODO: remove)
+- Turbopack enabled via `next.config.ts` with explicit root path for CI compatibility
+- Service Role key is the only mechanism to bypass RLS; all other access is org-scoped
+- Inngest webhook endpoint at `/api/inngest` is the single entry point for all background job dispatch
 
 ---
-*For technical implementation details, see [Architecture Overview](./architecture-infin8content.md) and [Workflow Guide](./workflow-guide.md).*
+*See [Architecture](./architecture.md) · [Data Models](./data-models.md) · [API Contracts](./api-contracts.md) · [Workflow Guide](./workflow-guide.md)*

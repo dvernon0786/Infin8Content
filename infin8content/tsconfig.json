@@ -19,8 +19,7 @@
       }
     ],
     "typeRoots": ["./types", "./node_modules/@types"],
-    "ignoreDeprecations": "5.0",
-    "baseUrl": ".",
+    "rootDir": ".",
     "paths": {
       "@/*": ["./*"]
     }

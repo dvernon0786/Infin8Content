@@ -5,6 +5,8 @@
  * Story 1.9: Account Suspension and Reactivation Workflow
  */
 
+/* eslint-disable react-hooks/rules-of-hooks */
+
 import { test as base } from '@playwright/test'
 import type { Page } from '@playwright/test'
 

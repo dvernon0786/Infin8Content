@@ -5,5 +5,9 @@
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@types/node": "^25.2.2"
+  },
+  "dependencies": {
+    "inngest": "^3.54.0",
+    "tailwindcss": "^4.2.4"
   }
 }

@@ -7,11 +7,14 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { POST } from './route'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { verifyOTPCode } from '@/lib/services/otp'
 
 // Mock dependencies
-vi.mock('@/lib/supabase/server')
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(),
+  createServiceRoleClient: vi.fn(),
+}))
 vi.mock('@/lib/services/otp')
 
 describe('POST /api/auth/verify-otp', () => {
@@ -27,6 +30,7 @@ describe('POST /api/auth/verify-otp', () => {
     }
     
     vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
+    vi.mocked(createServiceRoleClient).mockReturnValue(mockSupabase as any)
   })
 
   describe('Request Validation', () => {
@@ -86,18 +90,14 @@ describe('POST /api/auth/verify-otp', () => {
       vi.mocked(verifyOTPCode).mockResolvedValue({
         valid: true,
         userId: 'user-id',
+        authUserId: 'auth-user-id',
       })
 
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: mockUser,
-              error: null,
-            }),
-          }),
-        }),
-      })
+      mockSupabase.auth = {
+        admin: {
+          updateUserById: vi.fn().mockResolvedValue({ error: null }),
+        },
+      }
 
       mockRequest = new Request('http://localhost/api/auth/verify-otp', {
         method: 'POST',
@@ -158,19 +158,9 @@ describe('POST /api/auth/verify-otp', () => {
 
     it('should handle user not found after OTP verification', async () => {
       vi.mocked(verifyOTPCode).mockResolvedValue({
-        valid: true,
-        userId: 'user-id',
-      })
-
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'User not found' },
-            }),
-          }),
-        }),
+        valid: false,
+        userId: undefined,
+        authUserId: undefined,
       })
 
       mockRequest = new Request('http://localhost/api/auth/verify-otp', {
@@ -184,25 +174,15 @@ describe('POST /api/auth/verify-otp', () => {
       const response = await POST(mockRequest)
       const data = await response.json()
 
-      expect(response.status).toBe(404)
-      expect(data.error).toContain('User not found')
+      expect(response.status).toBe(400)
+      expect(data.error).toContain('Invalid or expired')
     })
 
     it('should handle missing auth_user_id', async () => {
       vi.mocked(verifyOTPCode).mockResolvedValue({
         valid: true,
         userId: 'user-id',
-      })
-
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: { id: 'user-id', auth_user_id: null },
-              error: null,
-            }),
-          }),
-        }),
+        authUserId: undefined,
       })
 
       mockRequest = new Request('http://localhost/api/auth/verify-otp', {
@@ -216,8 +196,8 @@ describe('POST /api/auth/verify-otp', () => {
       const response = await POST(mockRequest)
       const data = await response.json()
 
-      expect(response.status).toBe(404)
-      expect(data.error).toContain('User not found')
+      expect(response.status).toBe(400)
+      expect(data.error).toContain('Invalid or expired')
     })
   })
 

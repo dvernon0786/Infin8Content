@@ -177,6 +177,8 @@ const { data: workflow } = await supabase
 - **Retry Logic:** Exponential backoff with error classification
 
 #### Publishing & Communication
+
+**Update (2026-04-21):** Frontend publish UI wiring: `PublishToCmsButton` integrated into articles list (row Send icon), article detail header, and article editor header. Dialog accessibility improved by adding a visually-hidden `DialogTitle`. Smoke test recommended: open `/dashboard/articles`, trigger the publish modal from list/detail/editor and verify both flows (connect CMS → publish).
 - **WordPress:** REST API integration with idempotency
 - **Stripe:** Payment processing and subscription management
 - **Brevo:** Transactional emails and notifications

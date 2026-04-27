@@ -199,7 +199,7 @@ export function summarizeSections(
   }
 
   let summary = summaries.join('\n\n')
-  let currentTokens = estimateTokens(summary)
+  const currentTokens = estimateTokens(summary)
 
   // If summary exceeds max tokens, truncate from oldest sections
   if (currentTokens > maxTokens) {

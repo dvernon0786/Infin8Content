@@ -1,14 +1,63 @@
 # Infin8Content Pricing + Quota Implementation Spec
 
-Goal:
-One source of truth for limits
+**Last Updated**: 2026-04-24  
+**Status**: ✅ Production — Marketing mirror implemented  
+**Route (implemented)**: `/pricing` → `/app/(marketing-pages)/pricing/`
+
+Note: A static marketing mirror was added under `(marketing-pages)` to exactly match `/ai-content-writer` via `MarketingShell` + `MarketingPageBody`. The dynamic componentized version under `(i8c-mkt)` remains viable for future refactor to `MktLayout` tokens.
+
+---
+
+## 🎯 Goal
+
+One source of truth for limits  
 PLAN_LIMITS drives:
-• quota enforcement
-• pricing UI
-• usage meter
-• soft paywall
+• quota enforcement  
+• pricing UI  
+• usage meter  
+• soft paywall  
 
 No duplicated numbers anywhere.
+
+---
+
+## 📁 Route Structure
+
+**Updated 2026-04-24**: Implemented as a marketing mirror at `(marketing-pages)/pricing` using `MarketingShell` for token parity with `/ai-content-writer`. Keep `(i8c-mkt)` route plan documented below for potential migration back to `MktLayout`.
+
+```
+app/
+├─ (i8c-mkt)/                          # Uses MktLayout with --mkt-* CSS vars (planned)
+│  ├─ layout.tsx                       # MktLayout wrapper (planned)
+│  ├─ pricing/                         # (planned)
+│  │  ├─ layout.tsx                    # Pass-through (inherits parent MktLayout)
+│  │  └─ page.tsx                      # Pricing page components
+│  ├─ solutions/                       # Agency, E-commerce, Local, SaaS
+│  └─ resources/                       # Blog, Case Studies, Learn
+├─ (marketing-pages)/                  # Uses MarketingShell with --* CSS vars (implemented)
+│  ├─ layout.tsx                       # MarketingShell wrapper
+│  ├─ pricing/                         # IMPLEMENTED mirror (static HTML+CSS)
+│  │  └─ page.tsx                      # Injects HTML/CSS via MarketingPageBody
+│  ├─ ai-content-writer/
+│  ├─ ai-seo-agent/
+│  ├─ ai-seo-editor/
+│  ├─ autopublish/
+│  └─ llm-tracker/
+```
+
+**Why the route change?**  
+Pricing visual parity with `/ai-content-writer` was prioritized. The mirror under `(marketing-pages)` guarantees exact token behavior now; a later migration can swap to `(i8c-mkt)` + `MktLayout` without changing content.
+
+---
+
+## ✅ 2026-04-24 Implementation Notes
+
+- Files added/changed:
+  - `app/(marketing-pages)/pricing/page.tsx` — static HTML+CSS mirror rendered via `MarketingPageBody`
+  - `components/marketing/MarketingPageBody.tsx` — wired `window._setPricing(mode)` and button listeners (monthly/annual) for this page
+- Commit: `d9948f86` on `test-main-all`
+- Layout: inherits `MarketingShell` from `app/(marketing-pages)/layout.tsx`
+- Behavior: Billing toggle and FAQ accordion handled by `MarketingPageBody` `useEffect`
 
 ---
 

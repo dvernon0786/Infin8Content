@@ -1,333 +1,343 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { Suspense } from 'react'
+/**
+ * app/(auth)/verify-email/page.tsx
+ *
+ * Layout system : MarketingShell (wrapper) + scoped <style> injection
+ * Token source  : --bg / --accent / --surface / etc. (same as login & register)
+ * Auth logic    : unchanged — same fetch, OTP verify, resend, redirects.
+ */
 
+import React, { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import MarketingShell from '@/components/marketing/MarketingShell';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CSS — identical token names to login / register pages
+// ─────────────────────────────────────────────────────────────────────────────
+const css = `
+.auth-wrap {
+  min-height: calc(100dvh - 62px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 24px;
+  position: relative; overflow: hidden;
+}
+.auth-wrap::before {
+  content: '';
+  position: absolute; top: -120px; left: 50%;
+  transform: translateX(-50%);
+  width: 600px; height: 500px;
+  background: radial-gradient(circle, rgba(79,110,247,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.auth-card {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 420px;
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 20px;
+  padding: 40px 36px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.5);
+}
+.auth-logo {
+  display: flex; justify-content: center; margin-bottom: 28px;
+}
+.auth-logo img { height: 28px; width: auto; display: block; }
+.auth-heading {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 700; letter-spacing: -.5px;
+  color: var(--white); text-align: center; margin-bottom: 6px;
+}
+.auth-sub {
+  font-size: 14px; color: var(--muted);
+  text-align: center; margin-bottom: 28px; line-height: 1.55;
+}
+.auth-sub strong { color: var(--text); font-weight: 500; word-break: break-all; }
+.auth-field { margin-bottom: 16px; }
+.auth-label {
+  display: block; font-size: 13px; font-weight: 500;
+  color: var(--text); margin-bottom: 6px;
+}
+.auth-otp-input {
+  width: 100%; background: var(--surface2);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px; padding: 14px;
+  font-size: 28px; font-weight: 700;
+  letter-spacing: .35em; text-align: center;
+  color: var(--white); font-family: var(--font-display);
+  outline: none; box-sizing: border-box;
+  transition: border-color .2s;
+}
+.auth-otp-input:focus { border-color: rgba(79,110,247,.6); }
+.auth-otp-input::placeholder { color: var(--muted2); font-size: 22px; letter-spacing: .2em; }
+.auth-error {
+  font-size: 13px; color: #f87171;
+  background: rgba(239,68,68,.1);
+  border: 1px solid rgba(239,68,68,.2);
+  border-radius: 8px; padding: 10px 14px;
+  margin-bottom: 16px; line-height: 1.5;
+  display: flex; align-items: center; gap: 6px;
+}
+.auth-success-msg {
+  font-size: 13px; color: #4ade80;
+  background: rgba(34,197,94,.1);
+  border: 1px solid rgba(34,197,94,.2);
+  border-radius: 8px; padding: 10px 14px;
+  margin-bottom: 16px; line-height: 1.5;
+  display: flex; align-items: center; gap: 6px;
+}
+.auth-submit {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 13px; margin-top: 8px;
+  border-radius: 10px; border: none; cursor: pointer;
+  font-family: var(--font-display); font-size: 15px; font-weight: 600;
+  color: var(--white);
+  background: linear-gradient(to right, #217CEB, #4A42CC);
+  box-shadow: 0 0 24px rgba(79,110,247,.35);
+  transition: all .2s;
+}
+.auth-submit:hover:not(:disabled) {
+  opacity: .9;
+  box-shadow: 0 0 32px rgba(79,110,247,.5);
+  transform: translateY(-1px);
+}
+.auth-submit:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
+.auth-divider {
+  border: none; border-top: 1px solid rgba(255,255,255,.07);
+  margin: 24px 0;
+}
+.auth-resend-btn {
+  display: block; width: 100%; text-align: center;
+  font-size: 13.5px; font-weight: 500; color: var(--muted);
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font-body); padding: 0;
+  transition: color .2s;
+}
+.auth-resend-btn:hover:not(:disabled) { color: var(--white); }
+.auth-resend-btn:disabled { opacity: .5; cursor: not-allowed; }
+.auth-resend-btn span { color: var(--accent); font-weight: 600; }
+.auth-switch {
+  text-align: center; font-size: 13px;
+  color: var(--muted); margin-top: 16px;
+}
+.auth-switch-link {
+  color: var(--accent); font-weight: 600;
+  text-decoration: none; transition: color .2s;
+}
+.auth-switch-link:hover { color: #3d5df5; }
+
+/* success state */
+.auth-success-state { text-align: center; }
+.auth-success-icon {
+  font-size: 40px; margin-bottom: 16px;
+}
+.auth-success-cta {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; padding: 13px; margin-top: 20px;
+  border-radius: 10px; border: none; cursor: pointer;
+  font-family: var(--font-display); font-size: 15px; font-weight: 600;
+  color: var(--white);
+  background: linear-gradient(to right, #217CEB, #4A42CC);
+  box-shadow: 0 0 24px rgba(79,110,247,.35);
+  text-decoration: none;
+  transition: all .2s;
+}
+.auth-success-cta:hover {
+  opacity: .9; box-shadow: 0 0 32px rgba(79,110,247,.5);
+  transform: translateY(-1px);
+}
+
+/* spinner */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  animation: spin .7s linear infinite; flex-shrink: 0;
+}
+`;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Inner content — separated so Suspense can wrap useSearchParams
+// ─────────────────────────────────────────────────────────────────────────────
 function VerifyOTPContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const email = searchParams.get('email')
-  const [invitationToken, setInvitationToken] = useState<string | null>(null)
-  
-  // Get invitation token from localStorage only on client side
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+  const email        = searchParams.get('email');
+
+  const [invitationToken, setInvitationToken] = React.useState<string | null>(null);
   React.useEffect(() => {
-    const token = searchParams.get('invitation_token') || localStorage.getItem('invitation_token')
-    setInvitationToken(token)
-  }, [searchParams])
-  
-  const [otpCode, setOtpCode] = useState('')
-  const [error, setError] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
-  const [isVerifying, setIsVerifying] = useState(false)
-  const [isResending, setIsResending] = useState(false)
-  const [success, setSuccess] = useState(false)
+    const token = searchParams.get('invitation_token') || localStorage.getItem('invitation_token');
+    setInvitationToken(token);
+  }, [searchParams]);
 
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!email) {
-      setError('Email address is required')
-      return
-    }
-    
-    if (otpCode.length !== 6) {
-      setError('Please enter the 6-digit verification code')
-      return
-    }
+  const [otpCode, setOtpCode]             = useState('');
+  const [error, setError]                 = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [isVerifying, setIsVerifying]     = useState(false);
+  const [isResending, setIsResending]     = useState(false);
+  const [success, setSuccess]             = useState(false);
 
-    setIsVerifying(true)
-    setError('')
+  async function handleVerify(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email)           { setError('Email address is required.'); return; }
+    if (otpCode.length !== 6) { setError('Please enter the 6-digit verification code.'); return; }
 
+    setIsVerifying(true);
+    setError('');
     try {
-      const response = await fetch('/api/auth/verify-otp', {
+      const res  = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code: otpCode }),
-      })
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Verification failed.'); return; }
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error || 'Verification failed')
-        return
-      }
-
-      setSuccess(true)
-      // Use redirectTo from API response (defaults to /login?verified=true).
-      // Invitation tokens are preserved in localStorage and picked up by the
-      // login page, so we don't need to carry them in the URL here.
-      const redirectUrl = data.redirectTo || '/login?verified=true'
-      setTimeout(() => {
-        router.push(redirectUrl)
-      }, 2000)
-    } catch (error) {
-      setError('An error occurred. Please try again.')
+      setSuccess(true);
+      const redirectUrl = data.redirectTo || '/login?verified=true';
+      setTimeout(() => router.push(redirectUrl), 2000);
+    } catch {
+      setError('An error occurred. Please try again.');
     } finally {
-      setIsVerifying(false)
+      setIsVerifying(false);
     }
   }
 
-  const handleResend = async () => {
-    if (!email) {
-      setError('Email address is required')
-      return
-    }
+  async function handleResend() {
+    if (!email) { setError('Email address is required.'); return; }
 
-    setIsResending(true)
-    setError('')
-
+    setIsResending(true);
+    setError('');
     try {
-      const response = await fetch('/api/auth/resend-otp', {
+      const res  = await fetch('/api/auth/resend-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
-      })
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Failed to resend code.'); return; }
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error || 'Failed to resend code')
-        setSuccessMessage('')
-        return
-      }
-
-      setError('')
-      setSuccessMessage(data.message || 'Verification code has been sent to your email.')
-      
-      setTimeout(() => {
-        setSuccessMessage('')
-      }, 5000)
-    } catch (error) {
-      setError('Failed to resend code. Please try again.')
+      setSuccessMessage(data.message || 'Verification code sent.');
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } catch {
+      setError('Failed to resend code. Please try again.');
     } finally {
-      setIsResending(false)
+      setIsResending(false);
     }
   }
 
+  // ── Success state ──────────────────────────────────────────────────────
   if (success) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', padding: '0 1rem' }}>
-        <div style={{ width: '100%', maxWidth: '448px', padding: '2rem', backgroundColor: 'white', borderRadius: '0.5rem', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', textAlign: 'center', color: '#111827', lineHeight: '1.2' }}>
-              Email Verified
-            </h1>
-            <p style={{ textAlign: 'center', fontSize: '0.875rem', color: '#6b7280', lineHeight: '1.5' }}>
-              Your email has been successfully verified. Redirecting to dashboard...
-            </p>
-            <Link
-              href="/"
-              style={{ display: 'block', width: '100%', textAlign: 'center', padding: '0.625rem 1rem', border: 'none', borderRadius: '0.375rem', fontSize: '0.875rem', fontWeight: '500', color: 'white', backgroundColor: '#2563eb', textDecoration: 'none', transition: 'background-color 0.2s' }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
-            >
-              Go to Dashboard
-            </Link>
+      <div className="auth-wrap">
+        <div className="auth-card">
+          <div className="auth-logo">
+            <img src="/infin8content_logo.png" alt="Infin8Content" />
+          </div>
+          <div className="auth-success-state">
+            <div className="auth-success-icon">✅</div>
+            <h1 className="auth-heading">Email Verified</h1>
+            <p className="auth-sub">Your email has been verified. Redirecting you now…</p>
+            <a href="/dashboard" className="auth-success-cta">Go to Dashboard</a>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
+  // ── Default state ──────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', padding: '0 1rem' }}>
-      <div style={{ width: '100%', maxWidth: '448px', padding: '2rem', backgroundColor: 'white', borderRadius: '0.5rem', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', textAlign: 'center', color: '#111827', lineHeight: '1.2' }}>
-              Verify Your Email
-            </h1>
-            <p style={{ textAlign: 'center', fontSize: '0.875rem', color: '#6b7280', lineHeight: '1.5' }}>
-              We've sent a 6-digit verification code to{' '}
-              <span style={{ fontWeight: '500', color: '#111827', wordBreak: 'break-all' }}>
-                {email || 'your email address'}
-              </span>
-              . Please enter it below.
-            </p>
-          </div>
-          
-          <form onSubmit={handleVerify} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div>
-              <label 
-                htmlFor="otp" 
-                style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#111827', marginBottom: '0.5rem' }}
-              >
-                Verification Code
-              </label>
-              <input
-                id="otp"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]{6}"
-                maxLength={6}
-                value={otpCode}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, '')
-                  setOtpCode(value)
-                  setError('')
-                }}
-                style={{ 
-                  display: 'block',
-                  width: '100%',
-                  padding: '0.75rem',
-                  textAlign: 'center',
-                  fontSize: '1.5rem',
-                  letterSpacing: '0.25em',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.375rem',
-                  boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                  outline: 'none'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#2563eb'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#d1d5db'
-                  e.target.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-                }}
-                placeholder="000000"
-                required
-                autoComplete="one-time-code"
-                aria-invalid={error ? 'true' : 'false'}
-                aria-describedby={error ? 'otp-error' : undefined}
-              />
-              {error && (
-                <p id="otp-error" style={{ marginTop: '0.5rem', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.375rem', color: '#dc2626' }}>
-                  <span aria-hidden="true">⚠</span> 
-                  <span>{error}</span>
-                </p>
-              )}
-              {successMessage && (
-                <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.375rem', color: '#16a34a' }}>
-                  <span aria-hidden="true">✓</span> 
-                  <span>{successMessage}</span>
-                </p>
-              )}
-            </div>
+    <div className="auth-wrap">
+      <div className="auth-card">
 
-            <button
-              type="submit"
-              disabled={isVerifying || otpCode.length !== 6}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                width: '100%', 
-                padding: '0.625rem 1rem', 
-                minHeight: '44px',
-                border: 'none', 
-                borderRadius: '0.375rem', 
-                fontSize: '0.875rem', 
-                fontWeight: '500', 
-                color: 'white', 
-                backgroundColor: isVerifying || otpCode.length !== 6 ? '#9ca3af' : '#2563eb',
-                cursor: isVerifying || otpCode.length !== 6 ? 'not-allowed' : 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseOver={(e) => {
-                if (!isVerifying && otpCode.length === 6) {
-                  e.currentTarget.style.backgroundColor = '#1d4ed8'
-                }
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = isVerifying || otpCode.length !== 6 ? '#9ca3af' : '#2563eb'
-              }}
-            >
-              {isVerifying ? (
-                <>
-                  <svg style={{ animation: 'spin 1s linear infinite', marginRight: '0.5rem', height: '1rem', width: '1rem' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Verifying...
-                </>
-              ) : (
-                'Verify Email'
-              )}
-            </button>
-          </form>
-
-          <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '1.5rem' }}>
-            <div style={{ textAlign: 'center' }}>
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={isResending}
-                style={{ 
-                  fontSize: '0.875rem', 
-                  color: isResending ? '#9ca3af' : '#2563eb', 
-                  cursor: isResending ? 'not-allowed' : 'pointer',
-                  background: 'none',
-                  border: 'none',
-                  textDecoration: 'underline'
-                }}
-                onMouseOver={(e) => {
-                  if (!isResending) {
-                    e.currentTarget.style.color = '#1d4ed8'
-                  }
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.color = isResending ? '#9ca3af' : '#2563eb'
-                }}
-              >
-                {isResending ? (
-                  <>
-                    <svg style={{ animation: 'spin 1s linear infinite', marginRight: '0.5rem', height: '0.75rem', width: '0.75rem', verticalAlign: 'middle' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Sending...
-                  </>
-                ) : (
-                  "Didn't receive the code? Resend"
-                )}
-              </button>
-            </div>
-
-            <p style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.875rem', color: '#6b7280' }}>
-              <Link 
-                href="/register" 
-                style={{ color: '#2563eb', textDecoration: 'underline' }}
-              >
-                ← Back to Registration
-              </Link>
-            </p>
-          </div>
+        <div className="auth-logo">
+          <img src="/infin8content_logo.png" alt="Infin8Content" />
         </div>
+
+        <h1 className="auth-heading">Verify your email</h1>
+        <p className="auth-sub">
+          We sent a 6-digit code to{' '}
+          <strong>{email || 'your email address'}</strong>.
+          Enter it below to continue.
+        </p>
+
+        {error          && <p className="auth-error"><span>⚠</span>{error}</p>}
+        {successMessage && <p className="auth-success-msg"><span>✓</span>{successMessage}</p>}
+
+        <form onSubmit={handleVerify} noValidate>
+          <div className="auth-field">
+            <label className="auth-label">Verification code</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              className="auth-otp-input"
+              value={otpCode}
+              onChange={e => {
+                setOtpCode(e.target.value.replace(/\D/g, ''));
+                setError('');
+              }}
+              placeholder="000000"
+              required
+              autoComplete="one-time-code"
+              aria-invalid={!!error}
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="auth-submit"
+            disabled={isVerifying || otpCode.length !== 6}
+          >
+            {isVerifying && <span className="spinner" />}
+            {isVerifying ? 'Verifying…' : 'Verify email'}
+          </button>
+        </form>
+
+        <hr className="auth-divider" />
+
+        <button
+          type="button"
+          className="auth-resend-btn"
+          onClick={handleResend}
+          disabled={isResending}
+        >
+          {isResending
+            ? <><span className="spinner" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }} />Sending…</>
+            : <>Didn't receive it? <span>Resend code</span></>}
+        </button>
+
+        <p className="auth-switch">
+          <a href="/register" className="auth-switch-link">← Back to registration</a>
+        </p>
+
       </div>
     </div>
-  )
+  );
 }
 
-export default function VerifyOTPPage() {
+// ─────────────────────────────────────────────────────────────────────────────
+// Page export
+// ─────────────────────────────────────────────────────────────────────────────
+export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', padding: '0 1rem' }}>
-        <div style={{ 
-          width: '100%', 
-          maxWidth: '448px', 
-          padding: '2rem',
-          backgroundColor: 'white',
-          borderRadius: '0.5rem',
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '1.5rem'
-        }}>
-          <svg style={{ animation: 'spin 1s linear infinite', height: '2rem', width: '2rem', color: '#2563eb' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', textAlign: 'center', color: '#111827' }}>Loading...</h1>
+    <MarketingShell>
+      <style dangerouslySetInnerHTML={{ __html: css }} />
+      <Suspense fallback={
+        <div className="auth-wrap">
+          <div className="auth-card" style={{ textAlign: 'center' }}>
+            <div className="auth-logo">
+              <img src="/infin8content_logo.png" alt="Infin8Content" />
+            </div>
+            <p className="auth-sub">Loading…</p>
+          </div>
         </div>
-      </div>
-    }>
-      <VerifyOTPContent />
-    </Suspense>
-  )
+      }>
+        <VerifyOTPContent />
+      </Suspense>
+    </MarketingShell>
+  );
 }
 

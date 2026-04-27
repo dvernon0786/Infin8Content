@@ -2,9 +2,9 @@
 
 **Enterprise-scale AI-powered content generation platform**
 
-**Status**: ✅ **ZERO-LEGACY FSM WORKFLOW ENGINE COMPLETE**  
-**Version**: v2.0.0  
-**Last Updated**: 2026-02-15
+**Status**: ✅ **ZERO-LEGACY FSM WORKFLOW ENGINE + UNIFIED AUTH PAGES**  
+**Version**: v2.1.0  
+**Last Updated**: 2026-04-26
 
 ---
 
@@ -25,6 +25,8 @@ The Infin8Content platform has completed a comprehensive architectural transform
 | **Code Quality** | ✅ Production-Grade | All lint errors resolved, TypeScript compliant |
 | **API Layer** | ✅ Complete | 91 endpoints across 13 categories |
 | **Service Layer** | ✅ Robust | 65+ specialized services |
+| **Auth Pages** | ✅ Unified Design | MarketingShell wrapper, scoped CSS, token-based design |
+| **Vercel Build** | ✅ Clean | No import/module resolution errors |
 
 ### 🎯 Latest Achievement: Zero-Legacy FSM Hardening Complete (February 15, 2026)
 
@@ -144,6 +146,61 @@ step_9_articles → completed
 
 ---
 
+## 🎨 Unified Authentication Pages (April 26, 2026)
+
+### Architecture
+All auth pages follow a consistent pattern with **MarketingShell** wrapper and **scoped CSS injection** using unified token variables.
+
+### Pages Implemented
+- ✅ **Login** (`/login`) - Sign in with email/password, invitation token support, redirect logic
+- ✅ **Register** (`/register`) - Sign up with onboarding flow
+- ✅ **Forgot Password** (`/forgot-password`) - Password reset flow with email verification
+
+### Design System
+All auth pages use identical CSS tokens from `MarketingShell`:
+- `--bg` - Dark background
+- `--surface` - Card background (slightly lighter)
+- `--surface2` - Input field background
+- `--accent` - Primary blue accent color
+- `--muted` - Secondary text color
+- `--text` - Primary text
+- `--white` - White text
+- `--font-display` - Display font family
+- `--font-body` - Body font family
+
+### Page Structure
+```tsx
+'use client';
+
+import MarketingShell from '@/components/marketing/MarketingShell';
+
+const css = `/* token-based CSS */`;
+
+function AuthForm() {
+  // Form logic (fetch, validation, etc.)
+}
+
+export default function AuthPage() {
+  return (
+    <MarketingShell>
+      <style dangerouslySetInnerHTML={{ __html: css }} />
+      <Suspense>
+        <AuthForm />
+      </Suspense>
+    </MarketingShell>
+  );
+}
+```
+
+### Key Features
+- **Self-contained**: No shared component files (no `AuthForm.tsx`)
+- **Scoped styling**: CSS injected per-page, no global class conflicts
+- **Token consistency**: All pages use same design tokens
+- **Suspense safety**: `useSearchParams()` wrapped correctly
+- **Build clean**: No module resolution errors in Vercel build
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -240,11 +297,39 @@ npm test -- --testNamePattern="workflow"
 - **Husky**: Pre-commit hooks
 
 ### Development Workflow
-1. Create feature branch from `main`
-2. Implement changes with tests
-3. Run full test suite
-4. Submit pull request
-5. Code review and merge
+
+**Key Rule:** Any push to `test-main-all` = Production deployment on Vercel. Any other branch = Preview deployment. No PRs needed for production — merge locally and push directly.
+
+```bash
+# 1. Start from clean test-main-all
+git checkout test-main-all
+git pull origin test-main-all
+
+# 2. Create topic branch
+git checkout -b fix/your-feature-name
+
+# 3. Make changes, then commit
+git add .
+git commit -m "fix: description of change"
+
+# 4. Push topic branch
+git push -u origin fix/your-feature-name
+
+# 5. Merge directly to test-main-all (triggers Production on Vercel)
+git checkout test-main-all
+git merge fix/your-feature-name
+git push origin test-main-all
+
+# Configure git identity (if needed)
+git config user.name "Damien"
+git config user.email "engagehubonline@gmail.com"
+```
+
+**Important Notes:**
+- `test-main-all` is the production branch
+- All merges to `test-main-all` trigger immediate Vercel production deployment
+- Use topic branches for development, then merge directly
+- No PR review required for production merges
 
 ### Key Patterns
 - **Service Pattern**: One service per file with clear interfaces

@@ -1,13 +1,12 @@
 {
   "extends": "./infin8content/tsconfig.json",
   "compilerOptions": {
-    "ignoreDeprecations": "5.0",
-    "baseUrl": "./infin8content",
+    "rootDir": ".",
     "skipLibCheck": true,
     "paths": {
       "@/*": ["./*"],
-      "vitest": ["node_modules/vitest/dist/index.d.ts"],
-      "vitest/*": ["node_modules/vitest/*"]
+      "vitest": ["./node_modules/vitest/dist/index.d.ts"],
+      "vitest/*": ["./node_modules/vitest/*"]
     },
     "typeRoots": [
       "./infin8content/node_modules/@types",

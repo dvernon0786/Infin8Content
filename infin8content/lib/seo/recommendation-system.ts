@@ -533,7 +533,7 @@ function generateGeneralRecommendations(
   // Process validation issues into recommendations
   validationResult.issues.forEach((issue: SEOIssue, index: number) => {
     let priority: 'critical' | 'high' | 'medium' | 'low' = 'medium'
-    let category: 'immediate' | 'next-section' | 'future' = 'immediate'
+    const category: 'immediate' | 'next-section' | 'future' = 'immediate'
     let effort: 'low' | 'medium' | 'high' = 'medium'
     let timeframe: 'now' | 'next-paragraph' | 'next-section' | 'revision' = 'now'
     

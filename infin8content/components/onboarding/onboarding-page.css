@@ -1,0 +1,37 @@
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+* {
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.onboarding-page {
+  background: linear-gradient(135deg, var(--onboarding-layout-bg) 0%, var(--onboarding-bg-dark) 50%, var(--onboarding-layout-bg) 100%);
+  min-height: 100vh;
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+
+.onboarding-page-container {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+.onboarding-wizard-wrapper {
+  margin-bottom: 48px;
+}

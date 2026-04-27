@@ -6,6 +6,12 @@ import { getCurrentUser } from "@/lib/supabase/get-current-user"
 import { checkOnboardingStatus } from "@/lib/guards/onboarding-guard"
 import { redirect } from "next/navigation"
 import { PaymentGuard } from "@/components/guards/payment-guard"
+// Epic 12: Onboarding & Feature Discovery — additive imports
+import { PaymentStatusBanner } from "@/components/dashboard/payment-status-banner"
+import { AnnouncementBanner } from "@/components/dashboard/announcement-banner"
+import { GuidedTourWrapper } from "@/components/onboarding/guided-tour/GuidedTourWrapper"
+import { isFeatureFlagEnabled, getFeatureFlagsForOrg } from "@/lib/utils/feature-flags"
+import { FEATURE_FLAG_KEYS } from "@/lib/types/feature-flag"
 
 export default async function DashboardLayout({
     children,
@@ -36,8 +42,29 @@ export default async function DashboardLayout({
         }
     }
 
+    // Epic 12: Load feature flags and org state for new components (additive)
+    const tourShown = (currentUser.organizations as any)?.onboarding_tour_shown ?? true
+    let toursEnabled = false
+    let announcementsEnabled = false
+    if (currentUser.org_id) {
+        const flags = await getFeatureFlagsForOrg(currentUser.org_id, [
+            FEATURE_FLAG_KEYS.ENABLE_GUIDED_TOURS,
+            FEATURE_FLAG_KEYS.ENABLE_FEATURE_ANNOUNCEMENTS,
+        ])
+        toursEnabled = !!flags[FEATURE_FLAG_KEYS.ENABLE_GUIDED_TOURS]
+        announcementsEnabled = !!flags[FEATURE_FLAG_KEYS.ENABLE_FEATURE_ANNOUNCEMENTS]
+    }
+
     return (
         <PaymentGuard>
+            {/* Epic 12: Payment status + announcements — additive, above main layout */}
+            <PaymentStatusBanner
+                paymentStatus={currentUser.organizations?.payment_status}
+                trialEndsAt={(currentUser.organizations as any)?.trial_ends_at}
+                planType={currentUser.organizations?.plan}
+            />
+            {announcementsEnabled && <AnnouncementBanner />}
+            {toursEnabled && <GuidedTourWrapper tourShown={tourShown} />}
             <ResponsiveLayoutProvider>
                 <SidebarProvider>
                     <SidebarNavigation
@@ -52,7 +79,7 @@ export default async function DashboardLayout({
                             plan={currentUser.organizations?.plan as any}
                             usage={currentUser.organizations?.article_usage}
                         />
-                        <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
+                        <div className="flex flex-1 flex-col dashboard-content-area">
                             {children}
                         </div>
                     </SidebarInset>

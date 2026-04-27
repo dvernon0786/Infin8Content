@@ -8,6 +8,8 @@ import { StepCompetitors } from "@/components/onboarding/StepCompetitors"
 import { StepKeywordSettings } from "@/components/onboarding/StepKeywordSettings"
 import { StepContentDefaults } from "@/components/onboarding/StepContentDefaults"
 import { StepIntegration } from "@/components/onboarding/StepIntegration"
+import "@/components/onboarding/onboarding-steps.css"
+import "@/components/onboarding/onboarding-page.css"
 
 type OnboardingObserverState = {
   orgId: string
@@ -68,9 +70,9 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
+    <div className="onboarding-page">
+      <div className="onboarding-page-container">
+        <div className="onboarding-wizard-wrapper">
           <OnboardingWizard currentStep={currentStep} />
         </div>
 

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { LOCATION_CODE_MAP, SUPPORTED_LANGUAGE_CODES } from '@/lib/config/dataforseo-geo'
+import "./onboarding-steps.css"
 
 const LANGUAGE_LABELS: Record<string, string> = {
   en: 'English', de: 'German', fr: 'French', es: 'Spanish', it: 'Italian', ja: 'Japanese',
@@ -134,36 +135,35 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
   }
 
   return (
-    <main className={cn("w-full max-w-2xl mx-auto", className)}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Keyword Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+    <main className={cn("onboarding-step-container", className)}>
+      <div className="onboarding-step-card">
+        <h2 className="onboarding-step-title">Keyword Settings</h2>
+
+        <div className="onboarding-space-y-6">
           {/* Informational Context Box */}
-          <div className="bg-muted/50 rounded-lg p-4 border">
-            <h3 className="font-medium mb-2">Configure your keyword strategy</h3>
-            <p className="text-sm text-muted-foreground mb-2">
+          <div className="onboarding-info-box">
+            <h3 className="onboarding-info-box-title">Configure your keyword strategy</h3>
+            <p className="onboarding-info-box-text">
               Set up keyword generation parameters to align with your SEO goals and resource constraints.
             </p>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <ul className="onboarding-info-box-list">
               <li>• Region determines the geographic focus for keyword research</li>
               <li>• Generation rules control keyword quality and quantity</li>
               <li>• Thresholds ensure we target valuable keywords</li>
             </ul>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="onboarding-space-y-4">
             {/* Target Region */}
-            <div className="space-y-2">
-              <label htmlFor="target_region" className="text-sm font-medium">
-                Target Region <span className="text-destructive">*</span>
+            <div className="onboarding-form-group">
+              <label htmlFor="target_region" className="onboarding-label">
+                Target Region <span className="onboarding-label-required">*</span>
               </label>
               <select
                 id="target_region"
                 value={formData.keyword_settings.target_region}
                 onChange={(e) => handleInputChange('target_region', e.target.value)}
-                className="w-full h-9 rounded-md border bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="onboarding-select"
               >
                 {['United States', ...Object.keys(LOCATION_CODE_MAP)
                   .filter(r => r !== 'United States')
@@ -175,15 +175,15 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
             </div>
 
             {/* Language Code */}
-            <div className="space-y-2">
-              <label htmlFor="language_code" className="text-sm font-medium">
-                Language <span className="text-destructive">*</span>
+            <div className="onboarding-form-group">
+              <label htmlFor="language_code" className="onboarding-label">
+                Language <span className="onboarding-label-required">*</span>
               </label>
               <select
                 id="language_code"
                 value={formData.keyword_settings.language_code}
                 onChange={(e) => handleInputChange('language_code', e.target.value)}
-                className="w-full h-9 rounded-md border bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="onboarding-select"
               >
                 {Array.from(SUPPORTED_LANGUAGE_CODES)
                   .sort()
@@ -196,63 +196,58 @@ export function StepKeywordSettings({ className, onNext, onSkip }: StepKeywordSe
             </div>
 
             {/* Auto Generate Keywords */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Auto Generate Keywords</label>
-              <div className="flex items-center space-x-2">
+            <div className="onboarding-form-group">
+              <label className="onboarding-label">Auto Generate Keywords</label>
+              <div className="onboarding-flex">
                 <input
                   type="checkbox"
                   id="auto_generate_keywords"
                   checked={formData.keyword_settings.auto_generate_keywords}
                   onChange={(e) => handleInputChange('auto_generate_keywords', e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300"
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    accentColor: "var(--brand-electric-blue)",
+                    cursor: "pointer",
+                    flexShrink: 0
+                  }}
                 />
-                <label htmlFor="auto_generate_keywords" className="text-sm text-muted-foreground">
+                <label htmlFor="auto_generate_keywords" className="onboarding-help-text" style={{ cursor: "pointer", margin: 0 }}>
                   Automatically generate keywords based on your business and competitors
                 </label>
               </div>
             </div>
 
             {/* Monthly Keyword Limit */}
-            <div className="space-y-2">
-              <label htmlFor="monthly_keyword_limit" className="text-sm font-medium">
-                Monthly Keyword Limit <span className="text-destructive">*</span>
+            <div className="onboarding-form-group">
+              <label htmlFor="monthly_keyword_limit" className="onboarding-label">
+                Monthly Keyword Limit <span className="onboarding-label-required">*</span>
               </label>
-              <Input
+              <input
                 id="monthly_keyword_limit"
                 type="number"
                 min="10"
                 max="1000"
                 value={formData.keyword_settings.monthly_keyword_limit}
                 onChange={(e) => handleInputChange('monthly_keyword_limit', parseInt(e.target.value) || 100)}
+                className="onboarding-input"
               />
-              <p className="text-xs text-muted-foreground">Maximum keywords to generate per month (10-1000)</p>
+              <p className="onboarding-help-text">Maximum keywords to generate per month (10-1000)</p>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button
+            <div className="onboarding-button-group">
+              <button
                 type="submit"
-                variant="primary"
-                size="default"
                 disabled={!isFormValid || isSubmitting}
-                className="flex-1"
+                className={cn("onboarding-button onboarding-button-primary onboarding-button-full")}
               >
                 {isSubmitting ? "Saving..." : "Next Step"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="default"
-                onClick={handleSkip}
-                disabled={isSubmitting}
-                className="flex-1 sm:flex-initial"
-              >
-                Skip & Add Later
-              </Button>
+              </button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </main>
   )
 }

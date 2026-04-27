@@ -369,7 +369,7 @@ function calculateStructureScore(input: SEOScoreInput): {
       return { score: 100, recommendations, issues }
     }
 
-    let score = Math.max(0, 100 - (structureValidation.issues.length * 15))
+    const score = Math.max(0, 100 - (structureValidation.issues.length * 15))
 
     structureValidation.issues.forEach(issue => {
       recommendations.push({
@@ -437,7 +437,7 @@ function calculateSemanticCoverageScore(input: SEOScoreInput): {
     }
 
     const coveragePercentage = semanticKeywords.length > 0 ? (foundSemanticCount / semanticKeywords.length) * 100 : 0
-    let score = coveragePercentage
+    const score = coveragePercentage
 
     if (coveragePercentage < 50) {
       recommendations.push({

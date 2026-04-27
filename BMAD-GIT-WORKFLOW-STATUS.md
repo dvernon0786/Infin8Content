@@ -1,11 +1,40 @@
 # BMAD Git Workflow Status
 
-**Date:** 2026-03-17  
-**Status:** 🔄 PENDING PUSH — multi-CMS engine ready to commit
+**Date:** 2026-04-23  
+**Status:** ✅ UPDATED — Pricing page implementation completed & workflow executed
 
 ---
 
 ## Git Workflow Summary
+
+### **Key Rule:** Any push to `test-main-all` = Production deployment on Vercel. Any other branch = Preview deployment. No PRs needed for production — merge locally and push directly.
+
+### Complete Workflow
+
+```bash
+# 1. Start from clean test-main-all
+git checkout test-main-all
+git pull origin test-main-all
+
+# 2. Create topic branch
+git checkout -b fix/your-feature-name
+
+# 3. Make changes, then commit
+git add .
+git commit -m "fix: description of change"
+
+# 4. Push topic branch
+git push -u origin fix/your-feature-name
+
+# 5. Merge directly to test-main-all (triggers Production on Vercel)
+git checkout test-main-all
+git merge fix/your-feature-name
+git push origin test-main-all
+
+# Configure git identity (if needed)
+git config user.name "Damien"
+git config user.email "engagehubonline@gmail.com"
+```
 
 ### Branch Status
 
@@ -19,9 +48,43 @@
 - Status: ✅ PUSHED to remote (merged)
 - Commits: 1 commit (BMAD-FINAL-SCRATCHPAD.md)
 
-**test-main-all** (Current Working Branch)
-- Status: 🔄 Being updated — multi-CMS publishing engine
-- Scope: feat(cms): multi-platform CMS publishing engine
+**fix/unified-marketing-styling** (2026-04-23)
+- Status: ✅ COMPLETED & MERGED to test-main-all
+- Scope: Created unified marketing component library in globals.css, removed duplicate styles from MktLayout.tsx, updated Additional Marketing Pages to use single source of truth
+- Files: 3 files changed (1009 insertions(+), 18 deletions(-))
+  - `infin8content/app/globals.css` — ADDED: 1004 lines of unified marketing component library
+  - `infin8content/components/MktLayout.tsx` — UPDATED: Removed duplicate `.mkt-btn-primary`, `.mkt-btn-link`, `.mkt-footer-inner` styles
+  - `infin8content/components/marketing/MarketingShell.tsx` — UPDATED: Minor alignment with unified system
+- Commit: `d30378ae` (fix: unify marketing component styling across all pages)
+- Workflow: Followed direct production deployment workflow (topic branch → merge → push to test-main-all)
+
+**fix/pricing-page-tailwind-warnings** (2026-04-23)
+- Status: ✅ COMPLETED & MERGED to test-main-all
+- Scope: Updated pricing page to follow same structure as Features, Solutions, and Resources pages. Fixed Tailwind v4 canonical class warnings across all pricing components.
+- Files: 13 files changed (1086 insertions(+), 436 deletions(-))
+  - `app/pricing/layout.tsx` (NEW)
+  - `app/pricing/page.tsx` (UPDATED)
+  - `components/marketing/pricing/TrafficProofStrip.tsx` (NEW)
+  - `components/marketing/pricing/BespokeAIContentService.tsx` (REPLACED)
+  - `components/marketing/pricing/FeatureValueSection.tsx` (REPLACED)
+  - `components/marketing/pricing/PricingFAQ.tsx` (REPLACED)
+  - `components/marketing/pricing/PricingComparison.tsx` (REPLACED)
+  - `components/marketing/pricing/PricingComparisonRow.tsx` (REPLACED)
+  - `components/marketing/pricing/PricingPlans.tsx` (REPLACED)
+  - `components/marketing/pricing/PricingHero.tsx` (REPLACED)
+  - `components/marketing/pricing/StickyUpgradeBar.tsx` (REPLACED)
+  - `components/marketing/pricing/MobileStickyUpgradeBar.tsx` (REPLACED)
+  - `lib/config/plan-limits.ts` (EXTENDED)
+- Commit: `c0224330` (fix: resolve Tailwind v4 canonical class warnings in pricing components)
+- Workflow: Followed direct production deployment workflow (topic branch → merge → push to test-main-all)
+
+**fix/marketing-pages-navigation** (Previous)
+- Status: ✅ COMPLETED
+- Scope: Fixed navigation for all 8 marketing pages to use same header/footer as `/ai-content-writer`
+- Files: `MarketingShell.tsx`, `MktLayout.tsx`, `MarketingPageBody.tsx`, `(i8c-mkt)/layout.tsx`
+
+**test-main-all** (Production Branch)
+- Status: ✅ ACTIVE — Direct production deployment
 - Protected: Yes (requires status checks + PR to main)
 
 ---
@@ -70,20 +133,19 @@
 ## Commit History
 
 ```
-869f000 (HEAD -> feature/bmad-final-deliverables)
-        docs(bmad): Add final BMAD scratchpad
+c0224330 (HEAD -> test-main-all, origin/test-main-all, origin/fix/pricing-page-tailwind-warnings, origin/HEAD, fix/pricing-page-tailwind-warnings)
+        fix: resolve Tailwind v4 canonical class warnings in pricing components
 
-58cebdc (origin/test-main-all)
-        Merge pull request #38 from dvernon0786/feature/bmad-pm-deliverables
+592adc9c (origin/fix/design-system-ts17001-hardcoded-colors, fix/design-system-ts17001-hardcoded-colors)
+        fix: resolve TS17001 duplicate className and hard-coded hex colors in MktLayout/MktUI
 
-3e0fa0b (origin/feature/bmad-pm-deliverables)
-        feat(bmad): Complete Primary Content Workflow PM deliverables
+f81a6824 (origin/fix/design-system-compliance-final, fix/design-system-compliance-final)
+        fix: design system compliance - replace inline styles and hardcoded colors with design tokens in MktUI and MktLayout components
 
-5eb0f13 Merge pull request #37
-        Merge pull request #37 from dvernon0786/feature/openrouter-outline-implementation
+24bad20a (origin/fix/design-system-compliance, fix/design-system-compliance)
+        fix: design system compliance - replace inline styles and hardcoded colors with design tokens
 
-0f43396 (origin/feature/openrouter-outline-implementation)
-        docs: update documentation for completed OpenRouter outline generation
+a3b66c0f Fix design system compliance: Replace inline styles and hardcoded colors with CSS variables
 ```
 
 ---
@@ -183,6 +245,79 @@ Includes:
 BMAD-Clean Checklist: 13/13 PASSED
 Ready for engineering execution
 ```
+
+---
+
+### Quick local commands (safe copy)
+
+See the canonical central scratchpad for copyable branch & PR steps: [SCRATCHPAD.md](SCRATCHPAD.md)
+
+Use these commands to sync `test-main-all`, create a branch, commit, push, and open a PR:
+
+```bash
+# fetch remote refs
+git fetch origin
+
+# switch to remote branch if present (or create local tracking branch)
+git checkout test-main-all || git checkout -b test-main-all origin/test-main-all
+git pull origin test-main-all
+
+# create a topic branch off test-main-all
+git checkout -b <your-branch-name>
+
+# make changes, then stage & commit
+git add .
+git commit -m "<meaningful-msg>"
+
+# push topic branch (do not push to main directly)
+git push -u origin <your-branch-name>
+
+# if you must update test-main-all directly
+git push -u origin test-main-all
+
+# open PR on GitHub targeting `main` (or `test-main-all` per workflow)
+# Example browser URL (replace owner/repo):
+# https://github.com/<owner>/<repo>/compare/<your-branch-name>...main
+```
+
+---
+
+## Git Workflow: Direct Production Deployment
+
+**Key Rule:** Any push to `test-main-all` = Production deployment on Vercel. Any other branch = Preview deployment. No PRs needed for production — merge locally and push directly.
+
+### Complete Workflow:
+
+```bash
+# 1. Start from clean test-main-all
+git checkout test-main-all
+git pull origin test-main-all
+
+# 2. Create topic branch
+git checkout -b fix/your-feature-name
+
+# 3. Make changes, then commit
+git add .
+git commit -m "fix: description of change"
+
+# 4. Push topic branch
+git push -u origin fix/your-feature-name
+
+# 5. Merge directly to test-main-all (triggers Production on Vercel)
+git checkout test-main-all
+git merge fix/your-feature-name
+git push origin test-main-all
+
+# Configure git identity (if needed)
+git config user.name "Damien"
+git config user.email "engagehubonline@gmail.com"
+```
+
+### Important Notes:
+- `test-main-all` is the production branch
+- All merges to `test-main-all` trigger immediate Vercel production deployment
+- Use topic branches for development, then merge directly
+- No PR review required for production merges
 
 ---
 

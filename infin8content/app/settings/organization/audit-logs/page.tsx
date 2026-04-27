@@ -16,7 +16,7 @@ export default async function AuditLogsPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="max-w-2xl mx-auto px-4">
-                    <p className="text-center text-gray-600">Only organization owners can view audit logs</p>
+                    <p className="font-lato text-body text-neutral-600 text-center">Only organization owners can view audit logs</p>
                 </div>
             </div>
         )
@@ -27,14 +27,14 @@ export default async function AuditLogsPage() {
             <div className="max-w-6xl mx-auto px-4">
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
-                        <p className="mt-1 text-sm text-gray-600">
+                        <h1 className="font-poppins text-h2-desktop font-bold text-neutral-900">Audit Logs</h1>
+                        <p className="mt-1 font-lato text-small text-neutral-600">
                             View all security-relevant actions in your organization
                         </p>
                     </div>
                     <Link
                         href="/settings/organization"
-                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                        className="font-lato text-small font-medium text-blue-600 hover:text-blue-700"
                     >
                         ← Back to Settings
                     </Link>

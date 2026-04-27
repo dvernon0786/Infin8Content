@@ -47,14 +47,14 @@ describe('ICP Service', () => {
           error: null
         })
       }
-      mockCreateClient.mockReturnValue(mockQueryBuilder)
+      mockCreateClient.mockResolvedValue(mockQueryBuilder)
 
-      const result = await getICPSettings(mockOrganizationId)
+      const result = await getICPSettings('org-found')
 
       expect(result).toEqual(mockICPSettings)
       expect(mockQueryBuilder.from).toHaveBeenCalledWith('icp_settings')
       expect(mockQueryBuilder.select).toHaveBeenCalled()
-      expect(mockQueryBuilder.eq).toHaveBeenCalledWith('organization_id', mockOrganizationId)
+      expect(mockQueryBuilder.eq).toHaveBeenCalledWith('organization_id', 'org-found')
     })
 
     it('should return null when ICP settings not found', async () => {
@@ -67,9 +67,9 @@ describe('ICP Service', () => {
           error: { code: 'PGRST116' }
         })
       }
-      mockCreateClient.mockReturnValue(mockQueryBuilder)
+      mockCreateClient.mockResolvedValue(mockQueryBuilder)
 
-      const result = await getICPSettings(mockOrganizationId)
+      const result = await getICPSettings('org-not-found')
 
       expect(result).toBeNull()
     })
@@ -84,9 +84,9 @@ describe('ICP Service', () => {
           error: { message: 'Database connection failed' }
         })
       }
-      mockCreateClient.mockReturnValue(mockQueryBuilder)
+      mockCreateClient.mockResolvedValue(mockQueryBuilder)
 
-      await expect(getICPSettings(mockOrganizationId)).rejects.toThrow(
+      await expect(getICPSettings('org-db-error')).rejects.toThrow(
         'Failed to fetch ICP settings: Database connection failed'
       )
     })
@@ -103,7 +103,7 @@ describe('ICP Service', () => {
           error: null
         })
       }
-      mockCreateClient.mockReturnValue(mockQueryBuilder)
+      mockCreateClient.mockResolvedValue(mockQueryBuilder)
 
       const result = await upsertICPSettings(mockOrganizationId, mockUserId, mockCreateICPRequest)
 
@@ -134,7 +134,7 @@ describe('ICP Service', () => {
           error: { message: 'Upsert failed' }
         })
       }
-      mockCreateClient.mockReturnValue(mockQueryBuilder)
+      mockCreateClient.mockResolvedValue(mockQueryBuilder)
 
       await expect(
         upsertICPSettings(mockOrganizationId, mockUserId, mockCreateICPRequest)
@@ -153,7 +153,7 @@ describe('ICP Service', () => {
           error: null
         })
       }
-      mockCreateClient.mockReturnValue(mockQueryBuilder)
+      mockCreateClient.mockResolvedValue(mockQueryBuilder)
 
       const result = await validateICPAccess(mockUserId, mockOrganizationId)
 
@@ -170,7 +170,7 @@ describe('ICP Service', () => {
           error: null
         })
       }
-      mockCreateClient.mockReturnValue(mockQueryBuilder)
+      mockCreateClient.mockResolvedValue(mockQueryBuilder)
 
       const result = await validateICPAccess(mockUserId, mockOrganizationId)
 
@@ -187,7 +187,7 @@ describe('ICP Service', () => {
           error: null
         })
       }
-      mockCreateClient.mockReturnValue(mockQueryBuilder)
+      mockCreateClient.mockResolvedValue(mockQueryBuilder)
 
       const result = await validateICPAccess(mockUserId, mockOrganizationId)
 
@@ -204,7 +204,7 @@ describe('ICP Service', () => {
           error: { code: 'PGRST116' }
         })
       }
-      mockCreateClient.mockReturnValue(mockQueryBuilder)
+      mockCreateClient.mockResolvedValue(mockQueryBuilder)
 
       const result = await validateICPAccess(mockUserId, mockOrganizationId)
 
@@ -221,7 +221,7 @@ describe('ICP Service', () => {
           error: { message: 'Database error' }
         })
       }
-      mockCreateClient.mockReturnValue(mockQueryBuilder)
+      mockCreateClient.mockResolvedValue(mockQueryBuilder)
 
       const result = await validateICPAccess(mockUserId, mockOrganizationId)
 

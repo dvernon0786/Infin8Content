@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createServiceRoleClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/supabase/get-current-user"
+import "@/components/onboarding/onboarding-steps.css"
 
 export default async function OnboardingLayout({
   children,
@@ -19,5 +20,9 @@ export default async function OnboardingLayout({
     redirect("/dashboard")
   }
 
-  return <>{children}</>
+  return (
+    <div className="onboarding-layout">
+      {children}
+    </div>
+  )
 }

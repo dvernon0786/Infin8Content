@@ -1,390 +1,252 @@
-'use client'
+'use client';
 
-import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { Eye, EyeOff } from 'lucide-react'
-import styles from './login.module.css'
+/**
+ * app/(auth)/login/page.tsx
+ *
+ * Layout system : MarketingShell (wrapper) + scoped <style> injection
+ * Token source  : --bg / --accent / --surface / etc. (same as register & ai-content-writer)
+ * Auth logic    : unchanged — same fetch, validation, invitation token, redirects.
+ */
 
-function LoginPageContent() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [emailVerified, setEmailVerified] = useState(false)
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const invitationToken = searchParams.get('invitation_token')
-  
-  // Check for expired session message or email-verified redirect
-  useEffect(() => {
-    const expired = searchParams.get('expired')
-    if (expired === 'true') {
-      setErrors((prev) => ({
-        ...prev,
-        form: 'Your session has expired. Please log in again.',
-      }))
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import MarketingShell from '@/components/marketing/MarketingShell';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CSS — identical token names to /ai-content-writer
+// ─────────────────────────────────────────────────────────────────────────────
+const css = `
+.auth-wrap {
+  min-height: calc(100dvh - 62px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 24px;
+  position: relative; overflow: hidden;
+}
+.auth-wrap::before {
+  content: '';
+  position: absolute; top: -120px; left: 50%;
+  transform: translateX(-50%);
+  width: 600px; height: 500px;
+  background: radial-gradient(circle, rgba(79,110,247,.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.auth-card {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 420px;
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 20px;
+  padding: 40px 36px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.5);
+}
+.auth-logo {
+  display: flex; justify-content: center; margin-bottom: 28px;
+}
+.auth-logo img { height: 28px; width: auto; display: block; }
+.auth-heading {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 700; letter-spacing: -.5px;
+  color: var(--white); text-align: center; margin-bottom: 6px;
+}
+.auth-sub {
+  font-size: 14px; color: var(--muted);
+  text-align: center; margin-bottom: 28px; line-height: 1.55;
+}
+.auth-field { margin-bottom: 16px; }
+.auth-label {
+  display: block; font-size: 13px; font-weight: 500;
+  color: var(--text); margin-bottom: 6px;
+}
+.auth-input-wrap { position: relative; }
+.auth-input {
+  width: 100%; background: var(--surface2);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px; padding: 11px 14px;
+  font-size: 14px; color: var(--text);
+  font-family: var(--font-body); outline: none;
+  box-sizing: border-box; transition: border-color .2s;
+}
+.auth-input:focus { border-color: rgba(79,110,247,.6); }
+.auth-input.pr { padding-right: 52px; }
+.auth-show-btn {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none;
+  font-size: 12px; font-weight: 600;
+  color: var(--muted); cursor: pointer; padding: 0;
+  transition: color .2s; font-family: var(--font-body);
+}
+.auth-show-btn:hover { color: var(--white); }
+.auth-forgot {
+  display: block; text-align: right;
+  font-size: 12.5px; font-weight: 600; color: var(--accent);
+  margin-top: 6px; text-decoration: none; transition: color .2s;
+}
+.auth-forgot:hover { color: #3d5df5; }
+.auth-error {
+  font-size: 13px; color: #f87171;
+  background: rgba(239,68,68,.1);
+  border: 1px solid rgba(239,68,68,.2);
+  border-radius: 8px; padding: 10px 14px;
+  margin-bottom: 16px; line-height: 1.5;
+}
+.auth-submit {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; padding: 13px; margin-top: 8px;
+  border-radius: 10px; border: none; cursor: pointer;
+  font-family: var(--font-display); font-size: 15px; font-weight: 600;
+  color: var(--white);
+  background: linear-gradient(to right, #217CEB, #4A42CC);
+  box-shadow: 0 0 24px rgba(79,110,247,.35);
+  transition: all .2s;
+}
+.auth-submit:hover:not(:disabled) {
+  opacity: .9;
+  box-shadow: 0 0 32px rgba(79,110,247,.5);
+  transform: translateY(-1px);
+}
+.auth-submit:disabled { opacity: .5; cursor: not-allowed; }
+.auth-switch {
+  text-align: center; font-size: 13.5px;
+  color: var(--muted); margin-top: 20px;
+}
+.auth-switch-link {
+  color: var(--accent); font-weight: 600;
+  text-decoration: none; transition: color .2s;
+}
+.auth-switch-link:hover { color: #3d5df5; }
+`;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Inner form — separated so Suspense can wrap useSearchParams
+// ─────────────────────────────────────────────────────────────────────────────
+function LoginForm() {
+  const router          = useRouter();
+  const searchParams    = useSearchParams();
+  const invitationToken = searchParams.get('invitation_token');
+
+  const [email, setEmail]           = useState('');
+  const [password, setPassword]     = useState('');
+  const [showPw, setShowPw]         = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError]           = useState<string | null>(null);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Please enter a valid email.');
+      return;
     }
-    const verified = searchParams.get('verified')
-    if (verified === 'true') {
-      setEmailVerified(true)
-    }
-  }, [searchParams])
-  
-  // Store invitation token in localStorage if present
-  useEffect(() => {
-    if (invitationToken) {
-      localStorage.setItem('invitation_token', invitationToken)
-    }
-  }, [invitationToken])
-
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      setErrors((prev) => ({ ...prev, email: 'Please enter a valid email address' }))
-      return false
-    }
-    setErrors((prev) => ({ ...prev, email: undefined }))
-    return true
-  }
-
-  const validatePassword = (password: string) => {
-    if (!password || password.length === 0) {
-      setErrors((prev) => ({ ...prev, password: 'Password is required' }))
-      return false
-    }
-    setErrors((prev) => ({ ...prev, password: undefined }))
-    return true
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // Clear form-level errors
-    setErrors({})
-    
-    if (!validateEmail(email) || !validatePassword(password)) {
-      return
+    if (!password.length) {
+      setError('Password is required.');
+      return;
     }
 
-    setIsSubmitting(true)
+    if (invitationToken) localStorage.setItem('invitation_token', invitationToken);
 
+    setSubmitting(true);
     try {
-      const response = await fetch('/api/auth/login', {
+      const res  = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+      });
+      const data = await res.json();
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        // Handle redirect for email verification
-        if (data.redirectTo) {
-          router.push(data.redirectTo)
-          return
-        }
-        // Display error message
-        setErrors({ form: data.error || 'Login failed. Please try again.' })
-        return
+      if (!res.ok) {
+        if (data?.redirectTo) { router.push(data.redirectTo); return; }
+        setError(data?.error ?? 'Request failed.');
+        return;
       }
 
-      // If invitation token exists, redirect to accept invitation page
-      // Otherwise redirect based on payment status
-      const storedToken = invitationToken || localStorage.getItem('invitation_token')
+      const storedToken = invitationToken || localStorage.getItem('invitation_token');
       if (storedToken) {
-        localStorage.removeItem('invitation_token')
-        router.push(`/accept-invitation?token=${storedToken}`)
-      } else if (data.redirectTo) {
-        router.push(data.redirectTo)
-      } else {
-        // Default redirect to dashboard
-        router.push('/dashboard')
+        localStorage.removeItem('invitation_token');
+        router.push(`/accept-invitation?token=${storedToken}`);
+        return;
       }
-    } catch (error) {
-      setErrors({ form: 'An error occurred. Please try again.' })
+      if (data?.redirectTo) { router.push(data.redirectTo); return; }
+      router.push('/dashboard');
+    } catch {
+      setError('Unexpected error. Please try again.');
     } finally {
-      setIsSubmitting(false)
+      setSubmitting(false);
     }
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.layout}>
-        
-        {/* LEFT — LOGIN CARD */}
-        <div className={styles.left}>
-          <section className="order-1 lg:order-2 relative font-lato">
-            <div className="group relative w-full h-full">
-              
-              {/* Rotating brand blur background */}
-              <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                <div className="pointer-events-none absolute -inset-10 rounded-full bg-linear-to-r from-transparent via-[#217CEB]/25 to-transparent blur-xl opacity-60 animate-spin [animation-duration:10s]" />
-                <div className="pointer-events-none absolute -inset-20 rounded-full bg-linear-to-r from-transparent via-[#4A42CC]/20 to-transparent blur-2xl opacity-40 animate-spin [animation-duration:18s] [animation-direction:reverse]" />
-              </div>
+    <div className="auth-wrap">
+      <div className="auth-card">
 
-              {/* Border gradient */}
-              <div className="absolute inset-0 rounded-2xl p-px bg-linear-to-b from-[#217CEB]/40 via-[#4A42CC]/50 to-neutral-900/60" />
-
-              {/* Card */}
-              <div
-                className={`${styles.loginCard} ${styles.authCard} relative h-full overflow-hidden rounded-2xl ring-1 ring-white/10 shadow-inner transition-all duration-300 hover:-translate-y-0.5 hover:ring-[#217CEB]/40 hover:shadow-[0_10px_40px_-10px_rgba(33,124,235,0.35)]`}
-              >
-                <div className="relative p-6 sm:p-8 lg:p-10 flex flex-col h-full">
-
-                  {/* Header */}
-                  <div className="mb-8">
-                    {/* Brand Logo */}
-                    <img
-                      src="/infin8content-logo.png"
-                      alt="Infin8Content"
-                      className={styles.brandLogo}
-                    />
-
-                    <div className="flex items-center gap-2 text-xs text-neutral-400 mb-3">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#217CEB]" />
-                      <span>Secure area</span>
-                    </div>
-
-                    <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white font-poppins">
-                      Sign in
-                    </h2>
-
-                    <p className="text-sm text-neutral-400 mt-2">
-                      Use your email and password, or continue with a provider.
-                    </p>
-                  </div>
-
-                  {/* EXISTING LOGIN FORM - UNCHANGED LOGIC */}
-                  {emailVerified && (
-                    <div
-                      className={styles.formSuccess}
-                      role="status"
-                      aria-live="polite"
-                    >
-                      <span aria-hidden="true">✓</span> Email verified! Please log in to continue.
-                    </div>
-                  )}
-
-                  {errors.form && (
-                    <div
-                      className={styles.formError}
-                      role="alert"
-                      aria-live="polite"
-                    >
-                      <span aria-hidden="true">⚠</span> {errors.form}
-                    </div>
-                  )}
-
-                  <form onSubmit={handleSubmit} className={styles.form}>
-                    <div className={styles.formGroup}>
-                      <label htmlFor="email" className={styles.label}>
-                        Email
-                      </label>
-                      <input
-                        id="email"
-                        data-testid="email-input"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        onBlur={() => validateEmail(email)}
-                        className={styles.input}
-                        required
-                        aria-invalid={errors.email ? 'true' : 'false'}
-                        aria-describedby={errors.email ? 'email-error' : undefined}
-                        placeholder="you@example.com"
-                      />
-                      {errors.email && (
-                        <p id="email-error" className={styles.error}>
-                          <span aria-hidden="true">⚠</span> {errors.email}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className={styles.formGroup}>
-                      <label htmlFor="password" className={styles.label}>
-                        Password
-                      </label>
-                      <div className="relative">
-                        <input
-                          id="password"
-                          data-testid="password-input"
-                          type={showPassword ? 'text' : 'password'}
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          onBlur={() => validatePassword(password)}
-                          className={`${styles.input} pr-10`}
-                          required
-                          aria-invalid={errors.password ? 'true' : 'false'}
-                          aria-describedby={errors.password ? 'password-error' : undefined}
-                          placeholder="••••••••"
-                        />
-                        <button
-                          type="button"
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#217CEB] cursor-pointer p-1"
-                          aria-label="Toggle password visibility"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                        </button>
-                      </div>
-                      {errors.password && (
-                        <p id="password-error" className={styles.error}>
-                          <span aria-hidden="true">⚠</span> {errors.password}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs text-neutral-400">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" className="accent-[#217CEB]" />
-                        Remember me
-                      </label>
-                      <Link href="/forgot-password" className="hover:text-white underline-offset-4 hover:underline">
-                        Trouble signing in?
-                      </Link>
-                    </div>
-
-                    <button
-                      type="submit"
-                      data-testid="login-button"
-                      disabled={isSubmitting}
-                      className={styles.button}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <div className={styles.spinner}></div>
-                          Signing in...
-                        </>
-                      ) : (
-                        'Sign in'
-                      )}
-                    </button>
-
-                    {/* Divider */}
-                    <div className="relative py-2">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-white/10" />
-                      </div>
-                      <div className="relative flex justify-center">
-                        <span className="bg-transparent px-2 text-[10px] uppercase tracking-wide text-neutral-500">
-                          or
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Provider */}
-                    <button
-                      type="button"
-                      className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-neutral-200 bg-white/5 ring-1 ring-white/15 hover:bg-white/10 hover:ring-[#217CEB]/40 transition"
-                    >
-                      Continue with GitHub
-                    </button>
-                  </form>
-
-                  {/* Footer */}
-                  <div className="mt-8 text-xs text-neutral-500">
-                    <div className="flex items-center justify-between">
-                      <p>
-                        Don't have an account?{' '}
-                        <Link href="/register" className="text-white hover:underline underline-offset-4">
-                          Sign up
-                        </Link>
-                      </p>
-                      <div className="flex items-center gap-3">
-                        <a href="#" className="hover:text-white">Terms</a>
-                        <span>•</span>
-                        <a href="#" className="hover:text-white">Privacy</a>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-          </section>
+        <div className="auth-logo">
+          <img src="/infin8content_logo.png" alt="Infin8Content" />
         </div>
 
-        {/* RIGHT — TRUST / SOCIAL PROOF */}
-        <div className={styles.right}>
-          <div className={styles.proof}>
-            
-            {/* Rating + avatars */}
-            <div className={styles.rating}>
-              <div className={styles.avatars}>
-                {[1,2,3,4,5].map((i) => (
-                  <div
-                    key={i}
-                    className={styles.avatar}
-                  >
-                    {i}
-                  </div>
-                ))}
-              </div>
-              <div>
-                <div className={styles.stars}>
-                  ★★★★★
-                </div>
-                <p className={styles.trusted}>
-                  Trusted by 20,000+ marketers & agencies
-                </p>
-              </div>
-            </div>
+        <h1 className="auth-heading">Welcome back</h1>
+        <p className="auth-sub">Sign in to your Infin8Content account.</p>
 
-            {/* Quote */}
-            <blockquote className={styles.quote}>
-              "We manage SEO for dozens of clients.  
-              When we saw Infin8Content, it was obvious —  
-              this is built for scale."
-            </blockquote>
+        {error && <p className="auth-error">{error}</p>}
 
-            {/* Author */}
-            <div className={styles.author}>
-              <div className={styles.authorAvatar} />
-              <div>
-                <p className={styles.authorName}>
-                  Elliot Dean
-                </p>
-                <p className={styles.authorRole}>
-                  Agency Owner, Performance Marketing
-                </p>
-              </div>
-            </div>
+        <form onSubmit={onSubmit} noValidate>
 
-            {/* Logos */}
-            <div>
-              <p className="text-sm text-neutral-500 mb-4">
-                Used by leading content teams and agencies
-              </p>
-              <div className={styles.logos}>
-                <span>Scale</span>
-                <span>Growth</span>
-                <span>Trust</span>
-              </div>
-            </div>
-
+          <div className="auth-field">
+            <label className="auth-label">Email address</label>
+            <input
+              type="email"
+              className="auth-input"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+            />
           </div>
-        </div>
+
+          <div className="auth-field">
+            <label className="auth-label">Password</label>
+            <div className="auth-input-wrap">
+              <input
+                type={showPw ? 'text' : 'password'}
+                className="auth-input pr"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+              <button type="button" className="auth-show-btn" onClick={() => setShowPw(p => !p)}>
+                {showPw ? 'Hide' : 'Show'}
+              </button>
+            </div>
+            <a href="/forgot-password" className="auth-forgot">Forgot password?</a>
+          </div>
+
+          <button type="submit" className="auth-submit" disabled={submitting}>
+            {submitting ? 'Signing in…' : 'Sign in'}
+          </button>
+        </form>
+
+        <p className="auth-switch">
+          Don't have an account?{' '}
+          <a href="/register" className="auth-switch-link">Sign up free</a>
+        </p>
 
       </div>
     </div>
-  )
+  );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Page export
+// ─────────────────────────────────────────────────────────────────────────────
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className={styles.page}>
-        <div className={styles.layout}>
-          <div className={styles.left}>
-            <div className="w-full h-96 bg-neutral-100 rounded-2xl animate-pulse" />
-          </div>
-        </div>
-      </div>
-    }>
-      <LoginPageContent />
-    </Suspense>
-  )
+    <MarketingShell>
+      <style dangerouslySetInnerHTML={{ __html: css }} />
+      <Suspense>
+        <LoginForm />
+      </Suspense>
+    </MarketingShell>
+  );
 }
 

@@ -179,3 +179,7 @@ The article generation pipeline is operational and ready for Story 38.2 to build
 
 **Last Updated**: 2026-02-02 23:20 UTC
 **Next Review**: After Story 38.2 implementation
+
+---
+
+2026-04-18 — synced with docs/scratchpad-sync; referenced in central scratchpad.

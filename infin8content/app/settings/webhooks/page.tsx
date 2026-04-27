@@ -9,8 +9,8 @@ export default function WebhooksSettingsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Webhooks</h2>
-        <p className="text-muted-foreground mt-1">
+        <h2 className="font-poppins text-h2-desktop font-bold text-neutral-900">Webhooks</h2>
+        <p className="font-lato text-body text-neutral-600 mt-1">
           Receive real-time POST notifications when articles are generated, published, or when events
           occur in your account.
         </p>

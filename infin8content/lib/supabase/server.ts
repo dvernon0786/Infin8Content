@@ -42,10 +42,13 @@ export async function createClient() {
  * WARNING: This client bypasses all security - use with caution!
  */
 export function createServiceRoleClient() {
+  // Safety: never allow this function to run in the browser.
+  if (typeof window !== 'undefined') {
+    throw new Error('createServiceRoleClient() must only be used on the server')
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  console.log('🔧 Using service role key:', serviceRoleKey?.slice(0, 10) + '...')
 
   if (!url || !serviceRoleKey) {
     throw new Error(

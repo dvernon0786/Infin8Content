@@ -4,6 +4,20 @@ import React, { useState, FormEvent, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
+import type { ArticleType } from '@/types/article'
+
+const SUPPORTED_LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Spanish' },
+  { code: 'fr', label: 'French' },
+  { code: 'de', label: 'German' },
+  { code: 'pt', label: 'Portuguese' },
+  { code: 'zh', label: 'Chinese' },
+  { code: 'ja', label: 'Japanese' },
+  { code: 'ar', label: 'Arabic' },
+  { code: 'it', label: 'Italian' },
+  { code: 'nl', label: 'Dutch' },
+]
 
 interface ArticleGenerationFormProps {
   onGenerate: (data: {
@@ -12,13 +26,18 @@ interface ArticleGenerationFormProps {
     writingStyle: string
     targetAudience: string
     customInstructions?: string
+    // Epic 13: article type fields
+    articleType?: ArticleType
+    language?: string
+    articleTypeConfig?: Record<string, any>
   }) => Promise<void>
   isLoading: boolean
   error?: string | null
   initialKeyword?: string
+  initialArticleType?: ArticleType
 }
 
-export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKeyword = '' }: ArticleGenerationFormProps) {
+export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKeyword = '', initialArticleType = 'standard' }: ArticleGenerationFormProps) {
   const [keyword, setKeyword] = useState(initialKeyword)
   const [targetWordCount, setTargetWordCount] = useState<number>(2000)
   const [customWordCount, setCustomWordCount] = useState('')
@@ -28,6 +47,25 @@ export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKey
   const [customInstructions, setCustomInstructions] = useState('')
   const [validationError, setValidationError] = useState<string | null>(null)
   const customWordCountRef = useRef<HTMLInputElement>(null)
+
+  // Epic 13: article type state
+  const [articleType, setArticleType] = useState<ArticleType>(initialArticleType)
+  const [language, setLanguage] = useState('en')
+  // News (13-1)
+  const [newsTopic, setNewsTopic] = useState('')
+  const [newsCountry, setNewsCountry] = useState('US')
+  const [newsTimeRange, setNewsTimeRange] = useState<'24h' | '7d' | '30d'>('7d')
+  const [newsArticleFocus, setNewsArticleFocus] = useState<'breaking_news' | 'analysis' | 'roundup'>('analysis')
+  // Listicle (13-2)
+  const [listicleListType, setListicleListType] = useState('Top 10')
+  const [listicleComparisonCriteria, setListicleComparisonCriteria] = useState<string[]>(['features', 'pros_cons'])
+  const [listicleIncludeTable, setListicleIncludeTable] = useState(true)
+  const [listicleEditorsChoice, setListicleEditorsChoice] = useState('')
+  // Video (13-3)
+  const [videoUrl, setVideoUrl] = useState('')
+  const [videoIncludeTimestamps, setVideoIncludeTimestamps] = useState(true)
+  const [videoIncludeEmbed, setVideoIncludeEmbed] = useState(true)
+  const [videoIncludeTranscript, setVideoIncludeTranscript] = useState(false)
 
   // Auto-focus custom word count input when custom option is selected
   useEffect(() => {
@@ -41,8 +79,9 @@ export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKey
     setValidationError(null)
 
     const trimmedKeyword = keyword.trim()
-    
-    if (!trimmedKeyword) {
+
+    // For video type the keyword is derived from the video title — allow empty keyword
+    if (!trimmedKeyword && articleType !== 'video_conversion') {
       setValidationError('Please enter a keyword')
       return
     }
@@ -50,6 +89,17 @@ export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKey
     if (trimmedKeyword.length > 200) {
       setValidationError('Keyword must be less than 200 characters')
       return
+    }
+
+    if (articleType === 'video_conversion') {
+      if (!videoUrl.trim()) {
+        setValidationError('Please enter a YouTube video URL')
+        return
+      }
+      if (!/youtu\.?be/.test(videoUrl)) {
+        setValidationError('Please enter a valid YouTube URL')
+        return
+      }
     }
 
     let finalWordCount = targetWordCount
@@ -67,26 +117,280 @@ export function ArticleGenerationForm({ onGenerate, isLoading, error, initialKey
       return
     }
 
+    // Build article_type_config
+    let articleTypeConfig: Record<string, any> | undefined
+    if (articleType === 'news') {
+      articleTypeConfig = {
+        topic: newsTopic || trimmedKeyword,
+        country: newsCountry,
+        time_range: newsTimeRange,
+        article_focus: newsArticleFocus,
+      }
+    } else if (articleType === 'listicle_comparison') {
+      articleTypeConfig = {
+        list_type: listicleListType,
+        topic: trimmedKeyword,
+        comparison_criteria: listicleComparisonCriteria,
+        include_comparison_table: listicleIncludeTable,
+        include_pros_cons: listicleComparisonCriteria.includes('pros_cons'),
+        include_pricing: listicleComparisonCriteria.includes('pricing'),
+        editors_choice: listicleEditorsChoice || undefined,
+      }
+    } else if (articleType === 'video_conversion') {
+      articleTypeConfig = {
+        video_url: videoUrl.trim(),
+        include_transcript: videoIncludeTranscript,
+        include_timestamps: videoIncludeTimestamps,
+        include_embedded_video: videoIncludeEmbed,
+        language,
+      }
+    }
+
     await onGenerate({
       keyword: trimmedKeyword,
       targetWordCount: finalWordCount,
       writingStyle,
       targetAudience,
       customInstructions: customInstructions.trim() || undefined,
+      articleType,
+      language,
+      articleTypeConfig,
     })
+  }
+
+  const toggleCriteria = (c: string) => {
+    setListicleComparisonCriteria(prev =>
+      prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]
+    )
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+
+      {/* Article Type (Epic 13) */}
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium">Article Type</label>
+        <div className="flex flex-wrap gap-3">
+          {([
+            { value: 'standard', label: 'Standard' },
+            { value: 'news', label: '📰 News Article' },
+            { value: 'listicle_comparison', label: '📋 Listicle + Table' },
+            { value: 'video_conversion', label: '▶️ YouTube to Blog' },
+          ] as { value: ArticleType; label: string }[]).map(({ value, label }) => (
+            <label key={value} className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-md border text-sm transition-colors ${articleType === value ? 'border-primary bg-primary/5 font-medium' : 'border-input hover:bg-accent/50'}`}>
+              <input
+                type="radio"
+                name="articleType"
+                value={value}
+                checked={articleType === value}
+                onChange={() => setArticleType(value)}
+                disabled={isLoading}
+                className="sr-only"
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Language (13-5 — shown for all types, prominently for non-standard) */}
+      <div className="flex flex-col gap-2">
+        <label htmlFor="language" className="text-sm font-medium">
+          Content Language
+        </label>
+        <select
+          id="language"
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+          disabled={isLoading}
+          className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {SUPPORTED_LANGUAGES.map(({ code, label }) => (
+            <option key={code} value={code}>{label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* News-specific fields (13-1) */}
+      {articleType === 'news' && (
+        <div className="flex flex-col gap-4 p-4 rounded-md border border-input bg-muted/30">
+          <p className="text-sm font-medium text-muted-foreground">News Article Settings</p>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="newsTopic" className="text-sm font-medium">News Topic</label>
+            <Input
+              id="newsTopic"
+              placeholder="e.g. artificial intelligence, e-commerce trends"
+              value={newsTopic}
+              onChange={(e) => setNewsTopic(e.target.value)}
+              disabled={isLoading}
+            />
+            <p className="text-xs text-muted-foreground">Leave blank to use the keyword above</p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="newsTimeRange" className="text-sm font-medium">Time Range</label>
+              <select
+                id="newsTimeRange"
+                value={newsTimeRange}
+                onChange={(e) => setNewsTimeRange(e.target.value as any)}
+                disabled={isLoading}
+                className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm outline-none disabled:opacity-50"
+              >
+                <option value="24h">Last 24 hours</option>
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="newsCountry" className="text-sm font-medium">Country</label>
+              <Input
+                id="newsCountry"
+                placeholder="US"
+                value={newsCountry}
+                onChange={(e) => setNewsCountry(e.target.value.toUpperCase().slice(0, 2))}
+                disabled={isLoading}
+                maxLength={2}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="newsArticleFocus" className="text-sm font-medium">Article Focus</label>
+            <select
+              id="newsArticleFocus"
+              value={newsArticleFocus}
+              onChange={(e) => setNewsArticleFocus(e.target.value as any)}
+              disabled={isLoading}
+              className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm outline-none disabled:opacity-50"
+            >
+              <option value="breaking_news">Breaking News</option>
+              <option value="analysis">In-Depth Analysis</option>
+              <option value="roundup">Weekly Roundup</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {/* Listicle-specific fields (13-2) */}
+      {articleType === 'listicle_comparison' && (
+        <div className="flex flex-col gap-4 p-4 rounded-md border border-input bg-muted/30">
+          <p className="text-sm font-medium text-muted-foreground">Listicle Settings</p>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="listicleListType" className="text-sm font-medium">List Type</label>
+            <select
+              id="listicleListType"
+              value={listicleListType}
+              onChange={(e) => setListicleListType(e.target.value)}
+              disabled={isLoading}
+              className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm outline-none disabled:opacity-50"
+            >
+              <option value="Top 10">Top 10</option>
+              <option value="Best 7">Best 7</option>
+              <option value="Ultimate 15">Ultimate 15</option>
+              <option value="Top 5">Top 5</option>
+              <option value="Best 12">Best 12</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium">Comparison Criteria</label>
+            <div className="flex flex-wrap gap-3">
+              {[
+                { value: 'features', label: 'Features' },
+                { value: 'pros_cons', label: 'Pros & Cons' },
+                { value: 'pricing', label: 'Pricing' },
+                { value: 'ratings', label: 'Ratings' },
+                { value: 'best_for', label: 'Best For' },
+              ].map(({ value, label }) => (
+                <label key={value} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={listicleComparisonCriteria.includes(value)}
+                    onChange={() => toggleCriteria(value)}
+                    disabled={isLoading}
+                    className="h-4 w-4"
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={listicleIncludeTable}
+              onChange={(e) => setListicleIncludeTable(e.target.checked)}
+              disabled={isLoading}
+              className="h-4 w-4"
+            />
+            Include Quick Comparison Table
+          </label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="listicleEditorsChoice" className="text-sm font-medium">
+              Editor's Choice <span className="text-muted-foreground">(Optional)</span>
+            </label>
+            <Input
+              id="listicleEditorsChoice"
+              placeholder="e.g. Notion"
+              value={listicleEditorsChoice}
+              onChange={(e) => setListicleEditorsChoice(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Video-specific fields (13-3) */}
+      {articleType === 'video_conversion' && (
+        <div className="flex flex-col gap-4 p-4 rounded-md border border-input bg-muted/30">
+          <p className="text-sm font-medium text-muted-foreground">YouTube Video Settings</p>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="videoUrl" className="text-sm font-medium">
+              YouTube URL <span className="text-destructive">*</span>
+            </label>
+            <Input
+              id="videoUrl"
+              type="url"
+              placeholder="https://www.youtube.com/watch?v=..."
+              value={videoUrl}
+              onChange={(e) => { setVideoUrl(e.target.value); setValidationError(null) }}
+              disabled={isLoading}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            {[
+              { checked: videoIncludeTimestamps, onChange: setVideoIncludeTimestamps, label: 'Include Table of Contents with timestamps' },
+              { checked: videoIncludeEmbed, onChange: setVideoIncludeEmbed, label: 'Embed video in article' },
+              { checked: videoIncludeTranscript, onChange: setVideoIncludeTranscript, label: 'Include full transcript accordion' },
+            ].map(({ checked, onChange, label }) => (
+              <label key={label} className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(e) => onChange(e.target.checked)}
+                  disabled={isLoading}
+                  className="h-4 w-4"
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Keyword Input */}
       <div className="flex flex-col gap-2">
         <label htmlFor="keyword" className="text-sm font-medium">
-          Keyword <span className="text-destructive">*</span>
+          {articleType === 'video_conversion' ? 'Keyword (Optional)' : <>Keyword <span className="text-destructive">*</span></>}
         </label>
         <Input
           id="keyword"
           type="text"
-          placeholder="Enter keyword or keyword cluster (e.g., 'best running shoes for marathons')"
+          placeholder={
+            articleType === 'video_conversion'
+              ? "Leave blank to auto-extract from video title"
+              : articleType === 'news'
+              ? "e.g. artificial intelligence, e-commerce"
+              : "Enter keyword or keyword cluster (e.g., 'best running shoes for marathons')"
+          }
           value={keyword}
           onChange={(e) => {
             setKeyword(e.target.value)

@@ -61,11 +61,9 @@ export async function GET(
       .select('approved_items, created_at')
       .eq('workflow_id', workflowId)
       .eq('approval_type', 'subtopics')
-      .single()
+      .maybeSingle()
 
-    if (approvalError && approvalError.code !== 'PGRST116') { // PGRST116 = no rows
-      throw approvalError
-    }
+    if (approvalError) throw approvalError
 
     const approvedIds = new Set<string>(
       (approval as unknown as ApprovalRow)?.approved_items ?? []

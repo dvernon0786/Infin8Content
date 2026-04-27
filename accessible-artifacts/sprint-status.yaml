@@ -3,6 +3,19 @@
 # project_key: infin8content
 # tracking_system: file-system
 # story_location: "{project-root}/_bmad-output/implementation-artifacts"
+# Note (2026-04-16): Marketing site header/footer and design-system fixes applied. Commits: fc70de23, 6c105c08, ab868627. Pushed to `test-main-all`; remote `main` created from it and currently points to same commit (no PR diff). Confirm Vercel build for `ab868627`.
+# Note (2026-04-18): Outstand social publishing integration implemented. Branch: test-main-all.
+# Note (2026-04-19): Quick dev session — fixed multiple failing tests (auth routes + stripe webhook).
+# - Key fixes: explicit factory mock for `createServiceRoleClient`, mock `stripe.invoices.listLineItems` and `stripe.subscriptions.retrieve`, and convert `.single()` mocks to `.limit(1)` where the route uses `limit(1)`.
+# - Files updated (tests): `app/api/webhooks/stripe/route.test.ts`, `app/api/auth/login/route.test.ts`, `app/api/auth/register/route.test.ts`, `app/api/auth/verify-otp/route.test.ts`, `app/api/organizations/create/route.test.ts`.
+# - Branch: `test-main-all` updated and pushed to `origin/test-main-all` (PR to `main` pending).
+# Files: 9 backend (migration, outstand client, caption generator, inngest functions, API routes, webhook),
+#         3 frontend components (SocialPublishModal, PublishToSocialButton, SocialAnalytics),
+#         3 patched files (inngest route, generate-article, article detail page).
+# TypeScript: tsc --noEmit exits 0. Migration + env vars still require manual deployment steps.
+# __tests__/tsconfig.json: ignoreDeprecations updated to "6.0".
+
+# Note (2026-04-17): Small marketing UI fix — desktop nav dropdown hover gap fixed to prevent premature close. Files changed: `infin8content/components/marketing/Navigation.tsx`, `infin8content/components/marketing/navigation/MegaMenu.tsx`. Branch: `test-main-all`. Commit message: "fix(marketing/nav): prevent dropdown disappearing on hover (debounce + remove hover gap)".
 
 # STATUS DEFINITIONS:
 # ==================
@@ -296,7 +309,7 @@ development_status:
   5-4-schedule-publishing-dates-and-times: backlog
   5-5-publish-to-multiple-cms-platforms: backlog
   5-6-content-export-formats-pdf-doc-markdown: backlog
-  5-7-social-media-sharing-integration: backlog
+  5-7-social-media-sharing-integration: done
   5-8-publishing-workflow-and-approvals: backlog
   5-9-validate-cms-connection-credentials: backlog
   5-10-refresh-expired-oauth-tokens-automatically: backlog
@@ -394,30 +407,30 @@ development_status:
   11-10-third-party-integrations-zapier-make: backlog
   epic-11-retrospective: optional
 
-  # Epic 12: Onboarding & Feature Discovery (BACKLOG)
-  epic-12: backlog
-  12-1-post-payment-guided-tours-and-tutorials: backlog
-  12-2-feature-discovery-mechanisms-for-new-users: backlog
-  12-3-help-documentation-and-support-resources: backlog
-  12-4-interactive-onboarding-checklist: backlog
-  12-5-contextual-help-and-tooltips: backlog
-  12-6-user-success-tracking: backlog
-  12-7-onboarding-email-sequences: backlog
-  12-8-feature-announcement-system: backlog
-  12-9-user-feedback-collection: backlog
-  12-10-knowledge-base-and-faq: backlog
-  12-11-video-tutorials-and-guides: backlog
-  12-12-account-creation-and-payment-before-dashboard-access: backlog
-  12-13-payment-status-and-account-activation-display: backlog
+  # Epic 12: Onboarding & Feature Discovery (DONE — branch: feat/epic-12-onboarding-discovery)
+  epic-12: done
+  12-1-post-payment-guided-tours-and-tutorials: done
+  12-2-feature-discovery-mechanisms-for-new-users: done
+  12-3-help-documentation-and-support-resources: done
+  12-4-interactive-onboarding-checklist: done
+  12-5-contextual-help-and-tooltips: done
+  12-6-user-success-tracking: done
+  12-7-onboarding-email-sequences: done
+  12-8-feature-announcement-system: done
+  12-9-user-feedback-collection: done
+  12-10-knowledge-base-and-faq: done
+  12-11-video-tutorials-and-guides: done
+  12-12-account-creation-and-payment-before-dashboard-access: done
+  12-13-payment-status-and-account-activation-display: done
   epic-12-retrospective: optional
 
-  # Epic 13: Phase 2 Advanced Features (BACKLOG)
-  epic-13: backlog
-  13-1-generate-news-articles-from-latest-events: backlog
-  13-2-generate-listicle-articles-with-comparison-tables: backlog
-  13-3-convert-youtube-videos-to-blog-posts: backlog
+  # Epic 13: Phase 2 Advanced Features (IN PROGRESS — 13-1, 13-2, 13-3, 13-5 implemented 2026-04-16)
+  epic-13: in-progress
+  13-1-generate-news-articles-from-latest-events: ready-for-dev
+  13-2-generate-listicle-articles-with-comparison-tables: ready-for-dev
+  13-3-convert-youtube-videos-to-blog-posts: ready-for-dev
   13-4-advanced-content-templates: backlog
-  13-5-multi-language-content-translation: backlog
+  13-5-multi-language-content-translation: ready-for-dev
   13-6-content-personalization-engine: backlog
   13-7-advanced-seo-optimization: backlog
   13-8-content-a-b-testing: backlog
@@ -667,6 +680,11 @@ development_status:
   # - components/workflows/steps/KeywordOpportunityChart.tsx (Chart rendering)
   # - lib/services/intent-engine/competitor-seed-extractor.ts (Always null competitor_url_id)
   # - supabase/migrations/20260214000000_remove_competitor_url_fk_for_stateless_step2.sql (Schema fix)
+
+# TSConfig update (2026-04-17)
+# - Updated `tsconfig.json` and `infin8content/tsconfig.json`: removed `baseUrl`, set `ignoreDeprecations: "6.0"`.
+# - Commit: 2ed1df03; branch: test-main-all
+# - Note: TypeScript 5 reports `TS5103` for `ignoreDeprecations: "6.0"`. Recommend upgrading TypeScript to ^6 or reverting the setting to "5.0" to pass `tsc --noEmit`.
   # - __tests__/api/intent/workflows/competitor-analyze.test.ts (Updated tests)
   #
   # Database Fix: APPLIED AND VERIFIED 
@@ -762,3 +780,8 @@ development_status:
   c-3-wordpress-publishing-service: done
   c-4-publishing-api-endpoint: done
   epic-c-retrospective: done
+
+# Update (2026-04-20): LLM Brand Visibility Tracker implemented in codebase.
+# Migration SQL: infin8content/supabase/migrations/20260419000000_add_llm_visibility.sql (NOT APPLIED)
+# Branch: test-main-all — changes committed; push initiated by automation.
+# Next: Apply migration in Supabase, regenerate types, remove temporary type casts.

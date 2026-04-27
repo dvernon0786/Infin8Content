@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, User, Bell, Search, MoreHorizontal } from "lucide-react"
+import { LogOut, Settings } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -86,98 +86,96 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
     }
 
     return (
-        <header className={cn(
-            "flex shrink-0 items-center justify-between border-b bg-white shadow-sm transition-[width,height] ease-linear",
-            "h-16 px-6"
-        )}>
-            {/* Left side: Breadcrumb / Title */}
-            <div className="flex items-center gap-3">
-                <SidebarTrigger className="md:hidden -ml-2 mr-1" />
-                <h1 className="font-poppins text-lg font-bold text-[#2C2C2E] tracking-tight">
-                    Dashboard
-                </h1>
-                <span className="text-[#E5E5E7]">·</span>
-                <span className="font-lato text-sm text-[#71717A]">
-                    {today}
-                </span>
+        <>
+        <header style={{
+            background: "#0066FF",
+            height: "38px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 18px",
+            flexShrink: 0,
+            fontSize: "12px",
+            color: "#fff",
+        }}>
+            {/* Left spacer — keeps center truly centred */}
+            <div style={{ width: 90, flexShrink: 0 }}>
+                <SidebarTrigger className="md:hidden text-white opacity-80 hover:opacity-100" />
             </div>
 
-            {/* Middle: Search */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-[#F4F4F6] border border-[#E5E5E7] rounded-lg w-80 group focus-within:ring-2 focus-within:ring-[#217CEB]/20 transition-all">
-                <Search className="h-4 w-4 text-[#71717A] group-focus-within:text-[#217CEB]" />
-                <input
-                    type="text"
-                    placeholder="Search workflows…"
-                    className="bg-transparent border-none outline-none text-sm font-lato text-[#2C2C2E] placeholder:text-[#71717A] w-full"
-                />
-                <kbd className="hidden lg:inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-[#E5E5E7] bg-[#E5E5E7] text-[9px] font-bold text-[#71717A] font-sans">
-                    <span className="text-xs">⌘</span>K
-                </kbd>
+            {/* Center promo */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#f97316", flexShrink: 0 }} />
+                <span style={{ opacity: 0.9 }}>See Infin8Content in action — Full Walkthrough:</span>
+                <a
+                    href="/resources/help"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "#fff", fontWeight: 700, textDecoration: "underline", cursor: "pointer" }}
+                >
+                    Watch Now
+                </a>
             </div>
 
-            {/* Right side Actions */}
-            <div className="flex items-center gap-4">
-                {/* Plan Indicator */}
-                {plan && (
-                    <div className="hidden lg:flex items-center gap-3 px-4 py-1.5 bg-[#F59E0B]/5 border border-[#F59E0B]/15 rounded-lg mr-2">
-                        <div className="flex flex-col">
-                            <span className="font-lato text-[9px] font-black text-[#F59E0B] uppercase tracking-wider leading-none mb-1">
-                                {plan === 'trial' ? 'Trial Usage' : `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`}
-                            </span>
-                            {limit !== null && (
-                                <div className="flex items-center gap-2">
-                                    <div className="h-1.5 w-24 bg-[#E5E5E7] rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-linear-to-r from-[#F59E0B] to-[#D97706] rounded-full transition-all duration-500 ease-out"
-                                            style={{ width: `${Math.min(100, Math.round(((usage || 0) / limit) * 100))}%` }}
-                                        />
-                                    </div>
-                                    <span className="font-lato text-[11px] font-bold text-[#F59E0B]">
-                                        {usage || 0} / {limit}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            className="bg-[#217CEB] hover:bg-[#217CEB]/90 text-white border-none font-bold text-[11px] h-8 shadow-sm"
-                            onClick={() => router.push('/dashboard/settings/billing')}
-                        >
-                            {plan === 'trial' ? 'Upgrade' : 'Manage'}
-                        </Button>
-                    </div>
-                )}
-
-                {/* Mobile Search - Icon only */}
-                <Button variant="ghost" size="icon" className="md:hidden h-9 w-9 text-[#71717A]">
-                    <Search className="h-5 w-5" />
-                </Button>
-
-                {/* Notifications */}
-                <div className="relative cursor-pointer group">
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-[#71717A] group-hover:bg-[#F4F4F6]">
-                        <Bell className="h-5 w-5" />
-                    </Button>
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#F59E0B] border-2 border-white ring-1 ring-[#F59E0B]/20" />
+            {/* Right controls */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                {/* Plan pill */}
+                <div style={{
+                    display: "flex", alignItems: "center", gap: 5,
+                    background: "rgba(255,255,255,.18)", borderRadius: 20, padding: "3px 10px",
+                    fontSize: 12, fontWeight: 600,
+                }}>
+                    <div style={{
+                        width: 14, height: 14, borderRadius: "50%", background: "#fff",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 8, fontWeight: 700, color: "#0066FF",
+                    }}>∞</div>
+                    <span>{plan ? (plan.charAt(0).toUpperCase() + plan.slice(1) + " Plan") : "Pro Plan"}</span>
                 </div>
 
-                {/* User Dropdown */}
+                {/* Upgrade button */}
+                <button
+                    onClick={() => router.push('/dashboard/settings/billing')}
+                    style={{
+                        background: "rgba(255,255,255,.22)",
+                        border: "1px solid rgba(255,255,255,.45)",
+                        borderRadius: 20, padding: "3px 11px",
+                        fontSize: 12, fontWeight: 700, cursor: "pointer", color: "#fff",
+                    }}
+                >
+                    Upgrade
+                </button>
+
+                {/* Help & Support */}
+                <a
+                    href="/resources/help"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: "flex", alignItems: "center", gap: 5, opacity: 0.85, fontSize: 12, cursor: "pointer", background: "none", border: "none", color: "#fff", textDecoration: "none" }}
+                >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                    Help &amp; Support
+                </a>
+
+                {/* Avatar dropdown */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            className="relative h-9 w-9 rounded-full p-0 overflow-hidden ring-2 ring-transparent hover:ring-[#217CEB]/30 transition-all"
-                        >
-                            <div className="h-full w-full bg-linear-to-br from-[#217CEB] to-[#4A42CC] flex items-center justify-center text-white text-[11px] font-bold font-poppins shadow-md">
-                                {initials}
-                            </div>
-                        </Button>
+                        <button style={{
+                            width: 28, height: 28, borderRadius: "50%",
+                            background: "rgba(255,255,255,.28)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            cursor: "pointer", border: "none", color: "#fff",
+                            fontSize: 11, fontWeight: 700,
+                        }}>
+                            {initials}
+                        </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56" align="end" forceMount>
                         <DropdownMenuLabel className="font-normal p-4">
                             <div className="flex flex-col space-y-1">
-                                <p className="font-poppins text-sm font-bold text-[#2C2C2E] leading-none">
+                                <p className="font-poppins text-sm font-bold text-text-primary leading-none">
                                     {name || "User"}
                                 </p>
                                 <p className="font-lato text-xs text-[#71717A] truncate">
@@ -186,9 +184,12 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="cursor-pointer font-lato text-[#52525B] hover:text-[#217CEB]">
-                            <User className="mr-2 h-4 w-4" />
-                            <span>Profile</span>
+                        <DropdownMenuItem
+                            onClick={() => router.push('/dashboard/settings')}
+                            className="cursor-pointer font-lato text-[#52525B] hover:text-[#0066FF]"
+                        >
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Settings</span>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -203,5 +204,6 @@ export function TopNavigation({ email, name, avatarUrl, plan, usage }: TopNaviga
                 </DropdownMenu>
             </div>
         </header>
+        </>
     )
 }

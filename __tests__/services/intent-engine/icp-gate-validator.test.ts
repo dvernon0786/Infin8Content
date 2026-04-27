@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { ICPGateValidator } from '@/lib/services/intent-engine/icp-gate-validator'
+import { logIntentAction } from '@/lib/services/intent-engine/intent-audit-logger'
 
 // Mock Supabase client
 vi.mock('@/lib/supabase/server', () => ({
@@ -8,6 +9,147 @@ vi.mock('@/lib/supabase/server', () => ({
 }))
 
 // Mock audit logger
+vi.mock('@/lib/services/intent-engine/intent-audit-logger', () => ({
+  logIntentAction: vi.fn()
+}))
+
+describe('ICPGateValidator', () => {
+  let validator: ICPGateValidator
+  let mockSingle: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    validator = new ICPGateValidator()
+
+    // Stable chain: every call to from().select().eq().single() goes to mockSingle
+    mockSingle = vi.fn()
+    const mockEq = vi.fn().mockReturnValue({ single: mockSingle })
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq })
+    const mockFrom = vi.fn().mockReturnValue({ select: mockSelect })
+
+    vi.mocked(createServiceRoleClient).mockReturnValue({ from: mockFrom } as any)
+  })
+
+  describe('validateICPCompletion', () => {
+    it('should allow access when ICP is complete', async () => {
+      mockSingle.mockResolvedValue({
+        data: { id: 'wf-1', state: 'step_2_icp_complete', organization_id: 'org-1', icp_data: { niche: 'SaaS' } },
+        error: null
+      })
+
+      const result = await validator.validateICPCompletion('wf-1')
+
+      expect(result.allowed).toBe(true)
+      expect(result.workflowStatus).toBe('step_2_icp_complete')
+      expect(result.error).toBeUndefined()
+    })
+
+    it('should block access when ICP is not complete (state = step_1_icp)', async () => {
+      mockSingle.mockResolvedValue({
+        data: { id: 'wf-1', state: 'step_1_icp', organization_id: 'org-1', icp_data: null },
+        error: null
+      })
+
+      const result = await validator.validateICPCompletion('wf-1')
+
+      expect(result.allowed).toBe(false)
+      expect(result.workflowStatus).toBe('step_1_icp')
+      expect(result.error).toContain('ICP must be completed')
+    })
+
+    it('should block access when icp_data is missing', async () => {
+      mockSingle.mockResolvedValue({
+        data: { id: 'wf-1', state: 'step_2_icp_complete', organization_id: 'org-1', icp_data: null },
+        error: null
+      })
+
+      const result = await validator.validateICPCompletion('wf-1')
+
+      expect(result.allowed).toBe(false)
+      expect(result.error).toContain('ICP data missing')
+    })
+
+    it('should allow access when workflow state is past ICP completion', async () => {
+      mockSingle.mockResolvedValue({
+        data: { id: 'wf-1', state: 'step_3_competitors', organization_id: 'org-1', icp_data: { niche: 'SaaS' } },
+        error: null
+      })
+
+      const result = await validator.validateICPCompletion('wf-1')
+
+      expect(result.allowed).toBe(true)
+      expect(result.workflowStatus).toBe('step_3_competitors')
+    })
+
+    it('should handle database errors gracefully (fail closed)', async () => {
+      // Supabase .single() throwing causes the catch block to return fail-closed
+      mockSingle.mockRejectedValue(new Error('Database connection failed'))
+
+      const result = await validator.validateICPCompletion('wf-1')
+
+      expect(result.allowed).toBe(false)
+      expect(result.error).toContain('ICP validation failed unexpectedly')
+    })
+
+    it('should handle workflow not found', async () => {
+      mockSingle.mockResolvedValue({
+        data: null,
+        error: { code: 'PGRST116', message: 'No rows returned' }
+      })
+
+      const result = await validator.validateICPCompletion('non-existent-id')
+
+      expect(result.allowed).toBe(false)
+      expect(result.error).toContain('Workflow not found')
+    })
+  })
+
+  describe('logGateEnforcement', () => {
+    it('should log gate enforcement attempts', async () => {
+      // Provide org data for the second supabase query inside logGateEnforcement
+      mockSingle.mockResolvedValue({
+        data: { organization_id: 'org-1' },
+        error: null
+      })
+
+      const gateResult = {
+        allowed: false,
+        icpStatus: 'not_completed',
+        workflowStatus: 'step_1_icp',
+        error: 'ICP must be completed before competitor analysis'
+      }
+
+      await validator.logGateEnforcement('wf-1', 'competitor-analyze', gateResult)
+
+      expect(logIntentAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId: 'org-1',
+          workflowId: 'wf-1',
+          details: expect.objectContaining({
+            attempted_step: 'competitor-analyze',
+            enforcement_action: 'blocked'
+          })
+        })
+      )
+    })
+  })
+
+  describe('performance', () => {
+    it('should complete validation in under 50ms', async () => {
+      mockSingle.mockResolvedValue({
+        data: { id: 'wf-1', state: 'step_2_icp_complete', organization_id: 'org-1', icp_data: { niche: 'SaaS' } },
+        error: null
+      })
+
+      const startTime = performance.now()
+      await validator.validateICPCompletion('wf-1')
+      const endTime = performance.now()
+
+      expect(endTime - startTime).toBeLessThan(50)
+    })
+  })
+})
+
 vi.mock('@/lib/services/intent-engine/intent-audit-logger', () => ({
   logIntentAction: vi.fn()
 }))

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AIEnhancedInput } from "@/components/onboarding/ai-enhanced-input"
 import { cn } from "@/lib/utils"
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import "./onboarding-steps.css"
 
 interface StepCompetitorsProps {
   className?: string
@@ -147,74 +148,70 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
     }
   }
 
-  const handleSkip = () => {
-    console.warn('Skip not implemented - all steps required for System Law compliance')
-  }
 
   const validCompetitorsCount = competitors.filter(c => c.url.trim()).length
   const isFormValid = validCompetitorsCount >= 1 && validCompetitorsCount <= 7
 
   return (
-    <main className={cn("w-full max-w-2xl mx-auto", className)}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Competitor Analysis</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+    <main className={cn("onboarding-step-container", className)}>
+      <div className="onboarding-step-card">
+        <h2 className="onboarding-step-title">Competitor Analysis</h2>
+
+        <div className="onboarding-space-y-6">
           {/* Informational Context Box */}
-          <div className="bg-muted/50 rounded-lg p-4 border">
-            <h3 className="font-medium mb-2">Understanding your competition</h3>
-            <p className="text-sm text-muted-foreground mb-2">
+          <div className="onboarding-info-box">
+            <h3 className="onboarding-info-box-title">Understanding your competition</h3>
+            <p className="onboarding-info-box-text">
               Adding competitor websites helps us analyze their content strategies and identify opportunities for your business.
             </p>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <ul className="onboarding-info-box-list">
               <li>• Add 3-7 competitor websites for optimal analysis</li>
               <li>• Focus on direct competitors in your industry</li>
               <li>• We'll analyze their content to help you stand out</li>
             </ul>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="onboarding-space-y-4">
             {/* Competitor Inputs */}
-            <div className="space-y-4">
-              <div className="text-sm font-medium">
-                Competitor Websites <span className="text-destructive">*</span>
+            <div className="onboarding-space-y-4">
+              <div className="onboarding-label">
+                Competitor Websites <span className="onboarding-label-required">*</span>
               </div>
               {competitors.map((competitor, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <div className="flex-1 space-y-2">
-                    <label className="text-sm font-medium">
-                      Competitor {index + 1} URL <span className="text-destructive">*</span>
+                <div key={index} className="onboarding-competitor-row">
+                  <div className="onboarding-competitor-input-group">
+                    <label className="onboarding-label">
+                      Competitor {index + 1} URL <span className="onboarding-label-required">*</span>
                     </label>
-                    <Input
+                    <input
                       type="url"
                       value={competitor.url}
                       onChange={(e) => updateCompetitor(index, 'url', e.target.value)}
                       placeholder={`Competitor ${index + 1} URL`}
-                      className={cn(errors[`competitor_${index}`] && "border-destructive")}
+                      className={cn("onboarding-input", errors[`competitor_${index}`] && "error")}
+                      style={{ marginBottom: "12px" }}
                       aria-label={`Competitor ${index + 1} URL`}
                     />
-                    <label className="text-sm font-medium">
-                      Competitor {index + 1} Name <span className="text-muted-foreground">(Optional)</span>
+                    <label className="onboarding-label">
+                      Competitor {index + 1} Name <span style={{ color: "var(--onboarding-text-secondary)" }}>(Optional)</span>
                     </label>
-                    <Input
+                    <input
                       type="text"
                       value={competitor.name || ""}
                       onChange={(e) => updateCompetitor(index, 'name', e.target.value)}
                       placeholder={`Competitor ${index + 1} Name`}
+                      className="onboarding-input"
                       aria-label={`Competitor ${index + 1} Name`}
                     />
                   </div>
                   {competitors.length > 1 && (
-                    <Button
+                    <button
                       type="button"
-                      variant="outline"
-                      size="icon"
                       onClick={() => removeCompetitor(index)}
-                      className="flex-shrink-0"
+                      className="onboarding-remove-button"
                     >
                       ×
-                    </Button>
+                    </button>
                   )}
                 </div>
               ))}
@@ -222,54 +219,40 @@ export function StepCompetitors({ className, onNext, onSkip }: StepCompetitorsPr
 
             {/* Add Competitor Button */}
             {competitors.length < 7 && (
-              <Button
+              <button
                 type="button"
-                variant="outline"
                 onClick={addCompetitor}
-                className="w-full"
+                className="onboarding-add-button"
               >
                 + Add Competitor
-              </Button>
+              </button>
             )}
 
             {/* Error Message */}
             {errors.competitors && (
-              <p className="text-sm text-destructive" role="alert">
+              <p className="onboarding-error-text" role="alert">
                 {errors.competitors}
               </p>
             )}
 
             {/* Competitor Count */}
-            <p className="text-xs text-muted-foreground">
+            <p className="onboarding-counter">
               {validCompetitorsCount} of 3-7 competitors added
             </p>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button
+            <div className="onboarding-button-group">
+              <button
                 type="submit"
-                variant="primary"
-                size="default"
                 disabled={!isFormValid || isSubmitting}
-                loading={isSubmitting}
-                className="flex-1"
+                className={cn("onboarding-button onboarding-button-primary onboarding-button-full")}
               >
                 {isSubmitting ? "Saving..." : "Next Step"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="default"
-                onClick={handleSkip}
-                disabled={isSubmitting}
-                className="flex-1 sm:flex-initial"
-              >
-                Skip & Add Later
-              </Button>
+              </button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </main>
   )
 }

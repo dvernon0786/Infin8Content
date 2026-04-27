@@ -4,6 +4,56 @@
 **Status:** ✅ COMPLETE & BMAD-CLEAN  
 **Phase:** Ready for Engineering
 
+**Sync (2026-04-18):** Docs synchronized for branch `docs/scratchpad-sync` (source: `origin/test-main-all`). See central `scratchpad.md` for full commit refs and next steps.
+
+## Quick Git: Direct Production Deployment
+
+**Key Rule:** Any push to `test-main-all` = Production deployment on Vercel. Any other branch = Preview deployment. No PRs needed for production — merge locally and push directly.
+
+```bash
+# 1. Start from clean test-main-all
+git checkout test-main-all
+git pull origin test-main-all
+
+# 2. Create topic branch
+git checkout -b fix/your-feature-name
+
+# 3. Make changes, then commit
+git add .
+git commit -m "fix: description of change"
+
+# 4. Push topic branch
+git push -u origin fix/your-feature-name
+
+# 5. Merge directly to test-main-all (triggers Production on Vercel)
+git checkout test-main-all
+git merge fix/your-feature-name
+git push origin test-main-all
+
+# Configure git identity (if needed)
+git config user.name "Damien"
+git config user.email "engagehubonline@gmail.com"
+```
+
+
+**Update (2026-04-18):** Outstand social publishing integration complete. Branch `test-main-all`. Backend: 9 files (migration, Outstand client, caption generator, Inngest functions, API routes, webhook). Frontend: 3 new components (`SocialPublishModal`, `PublishToSocialButton`, `SocialAnalytics`). Article detail page patched. `tsc --noEmit` exits 0. Epic 5 story `5-7-social-media-sharing-integration` now implementable. `__tests__/tsconfig.json` `ignoreDeprecations` updated to `"6.0"`.
+
+**Update (2026-04-16):** Epic 12 — Onboarding & Feature Discovery completed (branch `feat/epic-12-onboarding-discovery`, PR #458)
+
+**Update (2026-04-21):** UI tweak — Header avatar dropdown: removed `Profile`, added `Settings` (redirects to `/dashboard/settings`). Tests updated to expect `Settings`. Committed on branch `test-main-all` and pushed. Verify UI and run unit tests.
+
+**Update (2026-04-21):** Publish flows wired — `PublishToCmsButton` integrated into three UI touchpoints (articles list Send icon, article detail header, article editor header). Accessibility improvement: added visually-hidden `DialogTitle` to all publish dialogs. Minor style tweak: `min-w-[220px]` → `min-w-55`. Changes committed and pushed to `test-main-all`.
+
+**Update (2026-04-23):** Unified marketing component styling — Created unified marketing component library in `globals.css` with `.mkt-*` prefix, removed duplicate component styles from `MktLayout.tsx` inline `shellCss`, updated Additional Marketing Pages to use single source of truth for styling. Feature Marketing Pages remain untouched as requested. All components (buttons, cards, sections, etc.) now follow same design tokens. Branch: `fix/unified-marketing-styling`, merged to `test-main-all`. Commit: `d30378ae`.
+
+**Update (2026-04-23):** Pricing page update & Tailwind v4 canonical class fixes — Updated pricing page to follow same structure as Features, Solutions, and Resources pages. Created `app/pricing/layout.tsx` providing Navigation + Footer wrapper. Fixed Tailwind v4 canonical class warnings across all pricing components (`flex-shrink-0` → `shrink-0`, `bg-gradient-to-r` → `bg-linear-to-r`). Added new `TrafficProofStrip.tsx` component. Extended `plan-limits.ts` with display-only keys. Updated all pricing components with Downloads folder versions. Branch: `fix/pricing-page-tailwind-warnings`, merged to `test-main-all`. Commit: `c0224330`.
+
+**Update (2026-04-22):** Homepage replacement — `app/page.tsx` deleted, `app/route.ts` created to serve `public/homepage.html` at `/`. Static HTML marketing homepage (dark navy theme, Sora/DM Sans fonts, promo bar, hero with dashboard mockup, 5 feature rows, video section, testimonials, case studies, FAQ accordion, final CTA, full footer) now renders at `http://localhost:3000/`. Branch: `fix/homepage-replacement`.
+
+**Update (2026-04-24):** Help Center page added — Implemented `/resources/help` under `(marketing-pages)` using `MarketingShell` + client page (HTML/CSS injection + lightweight JS for category/article search). Updated `MarketingShell` header/footer "Help Docs" links to point to `/resources/help`. Scope limited to marketing site. Branch: `test-main-all` (direct), commit to be pushed with git workflow below.
+
+**Update (2026-04-16):** Marketing site refactor: header/footer added and design-system fixes applied. Commits: `fc70de23`, `6c105c08`, `ab868627`. Changes pushed to `test-main-all`; remote `main` created from it and points to the same commit (no PR diff).
+
 ---
 
 ## Phase Completion Summary

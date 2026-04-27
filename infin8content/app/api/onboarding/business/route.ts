@@ -122,11 +122,16 @@ export async function POST(request: Request) {
           id: `crawl-${organizationId}-${Buffer.from(validated.website_url).toString('base64').slice(0, 16)}`,
           data: { orgId: organizationId, websiteUrl: validated.website_url },
         })
+        console.log('[Onboarding Business] Inngest crawl event sent successfully')
       } catch (err: any) {
-        console.error('[Onboarding Business] Failed to send Inngest crawl event', {
+        // Log error but don't fail the response - this is a background task
+        const errorMsg = err?.message ?? JSON.stringify(err)
+        console.warn('[Onboarding Business] Non-blocking: Failed to send Inngest crawl event', {
           orgId: organizationId,
           websiteUrl: validated.website_url,
-          error: err?.message ?? err,
+          error: errorMsg,
+          // Only log stack in development
+          stack: process.env.NODE_ENV === 'development' ? err?.stack : undefined,
         })
       }
     }

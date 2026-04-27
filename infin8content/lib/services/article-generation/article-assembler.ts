@@ -82,6 +82,8 @@ export class ArticleAssembler {
           cta_url: article.cta_url,
           slug: (article as any).slug ?? null,
           org_website_url: article.org_website_url ?? null,
+          article_type: (article as any).article_type ?? null,
+          video_url: (article as any).video_url ?? null,
         },
         sectionsJson
       )
@@ -119,7 +121,7 @@ export class ArticleAssembler {
   private async loadArticle({ articleId, organizationId }: AssemblyInput) {
     const { data, error } = await this.supabaseAdmin
       .from('articles')
-      .select('id, title, status, keyword, cover_image_url, org_id')
+      .select('id, title, status, keyword, cover_image_url, org_id, article_type, video_url')
       .eq('id', articleId)
       .eq('org_id', organizationId)
       .single()
@@ -246,6 +248,8 @@ export class ArticleAssembler {
       cta_url?: string | null
       org_website_url?: string | null
       slug?: string | null
+      article_type?: string | null
+      video_url?: string | null
     },
     sections: any[]
   ): string {
@@ -339,6 +343,69 @@ export class ArticleAssembler {
       cta,
       disclaimer,
       socialShare,
+      buildStructuredDataBlock(article, today),
     ].filter(Boolean).join('\n\n')
   }
+}
+
+// ---------------------------------------------------------------------------
+// Epic 13: Structured data (JSON-LD) injection helpers
+// ---------------------------------------------------------------------------
+
+function buildStructuredDataBlock(
+  article: {
+    title: string
+    keyword: string
+    cover_image_url?: string | null
+    org_website_url?: string | null
+    slug?: string | null
+    article_type?: string | null
+    video_url?: string | null
+  },
+  today: string
+): string | null {
+  const articleType = article.article_type ?? 'standard'
+  if (articleType === 'standard' || articleType === 'listicle_comparison') return null
+
+  const canonicalUrl = (() => {
+    const base = (article.org_website_url || '').replace(/\/$/, '')
+    const slug = (article.slug || article.title || '')
+      .toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').slice(0, 120)
+    if (!base || !slug) return null
+    return `${base}/blog/${slug}`
+  })()
+
+  if (articleType === 'news') {
+    const schema = {
+      '@context': 'https://schema.org',
+      '@type': 'NewsArticle',
+      headline: article.title,
+      datePublished: today,
+      dateModified: today,
+      author: { '@type': 'Person', name: 'Editorial Team' },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Infin8Content',
+        logo: { '@type': 'ImageObject', url: '' }
+      },
+      ...(article.cover_image_url ? { image: article.cover_image_url } : {}),
+      ...(canonicalUrl ? { url: canonicalUrl } : {}),
+    }
+    return `\n\n<script type="application/ld+json">\n${JSON.stringify(schema, null, 2)}\n</script>`
+  }
+
+  if (articleType === 'video_conversion' && article.video_url) {
+    const schema = {
+      '@context': 'https://schema.org',
+      '@type': 'VideoObject',
+      name: article.title,
+      description: article.title,
+      contentUrl: article.video_url,
+      uploadDate: today,
+      ...(article.cover_image_url ? { thumbnailUrl: article.cover_image_url } : {}),
+    }
+    return `\n\n<script type="application/ld+json">\n${JSON.stringify(schema, null, 2)}\n</script>`
+  }
+
+  return null
 }

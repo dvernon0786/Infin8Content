@@ -65,6 +65,8 @@ export type Database = {
           generation_completed_at: string | null
           error_details: Json | null
           outline_generation_duration_ms: number | null
+          workflow_state: Json | null
+          slug: string | null
           [key: string]: any;
         }
         Insert: {
@@ -137,6 +139,8 @@ export type Database = {
           plan_type?: string | null
           trial_ends_at?: string | null
           usage_reset_at?: string | null
+          onboarding_checklist_state?: Json
+          onboarding_tour_shown?: boolean
           [key: string]: any;
         }
         Insert: {
@@ -160,6 +164,8 @@ export type Database = {
           plan_type?: string | null
           trial_ends_at?: string | null
           usage_reset_at?: string | null
+          onboarding_checklist_state?: Json
+          onboarding_tour_shown?: boolean
           [key: string]: any;
         }
         Update: {
@@ -183,6 +189,8 @@ export type Database = {
           plan_type?: string | null
           trial_ends_at?: string | null
           usage_reset_at?: string | null
+          onboarding_checklist_state?: Json
+          onboarding_tour_shown?: boolean
           [key: string]: any;
         }
         Relationships: []

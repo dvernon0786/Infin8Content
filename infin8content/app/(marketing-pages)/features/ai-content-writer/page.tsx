@@ -1,0 +1,633 @@
+import type { Metadata } from 'next';
+import MarketingPageBody from '@/components/marketing/MarketingPageBody';
+
+export const metadata: Metadata = {
+  title: 'AI Content Writer — Rank-Ready Articles in 30 Seconds | Infin8Content',
+};
+
+const css = `*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #08090d;
+      --surface: #0f1117;
+      --surface2: #13151e;
+      --border: rgba(255,255,255,0.07);
+      --accent: #4f6ef7;
+      --accent-glow: rgba(79,110,247,0.18);
+      --text: #e8eaf2;
+      --muted: #7b8098;
+      --muted2: #4a4f68;
+      --white: #ffffff;
+      --green: #22c55e;
+      --font-display: 'Sora', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --container: 1160px;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    a { color: inherit; text-decoration: none; transition: color .2s; }
+    img { max-width: 100%; display: block; }
+    ul { list-style: none; }
+    .container { max-width: var(--container); margin: 0 auto; padding: 0 28px; }
+
+    /* ===== PROMO BAR ===== */
+    .promo-bar {
+      background: linear-gradient(90deg,#1a1060,#0f1340 50%,#1a1060);
+      border-bottom: 1px solid rgba(79,110,247,.2);
+      text-align: center; padding: 10px 20px;
+      font-size: 13px; font-family: var(--font-display); font-weight: 500; color: var(--text);
+      position: relative; z-index: 50;
+    }
+    .time-unit { background: rgba(79,110,247,.2); border: 1px solid rgba(79,110,247,.3); border-radius: 4px; padding: 2px 6px; font-weight: 700; color: #a5b4fc; font-variant-numeric: tabular-nums; min-width: 28px; display: inline-block; text-align: center; }
+    .deal-link { background: var(--accent); color: #fff; border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 600; margin-left: 10px; }
+
+    /* ===== HEADER ===== */
+    .site-header { position: sticky; top: 0; z-index: 40; background: rgba(8,9,13,.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; gap: 16px; }
+    .brand { font-family: var(--font-display); font-weight: 800; font-size: 20px; letter-spacing: -.5px; color: var(--white); flex-shrink: 0; }
+    .brand span { color: var(--accent); }
+    .main-nav { display: flex; align-items: center; gap: 4px; flex: 1; justify-content: center; }
+    .nav-item { position: relative; }
+    .nav-link { display: flex; align-items: center; gap: 4px; padding: 7px 12px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--muted); transition: all .2s; cursor: pointer; white-space: nowrap; }
+    .nav-link:hover { color: var(--white); background: rgba(255,255,255,.05); }
+    .nav-link .chevron { font-size: 10px; transition: transform .2s; }
+    .nav-item:hover .chevron { transform: rotate(180deg); }
+    .dropdown { display: none; position: absolute; top: 100%; left: 0; background: #12141f; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 8px 8px; min-width: 230px; box-shadow: 0 20px 60px rgba(0,0,0,.5); z-index: 100; }
+    .nav-item:hover .dropdown { display: block; }
+    .dropdown-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); padding: 4px 10px; margin-bottom: 2px; }
+    .dropdown-link { display: block; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13.5px; color: var(--muted); transition: all .15s; }
+    .dropdown-link:hover { color: var(--white); background: rgba(255,255,255,.05); }
+    .dropdown-link strong { display: block; color: var(--text); font-size: 13.5px; margin-bottom: 1px; }
+    .dropdown-link small { font-size: 12px; color: var(--muted); }
+    .dropdown hr { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
+    .header-cta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .btn-link { font-size: 14px; font-weight: 500; color: var(--muted); padding: 7px 12px; border-radius: var(--radius-sm); transition: all .2s; }
+    .btn-link:hover { color: var(--white); background: rgba(255,255,255,.05); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: var(--font-display); font-weight: 600; border-radius: var(--radius-sm); transition: all .2s; cursor: pointer; border: none; text-decoration: none; }
+    .btn-primary { background: var(--accent); color: #fff; padding: 9px 18px; font-size: 14px; box-shadow: 0 0 20px rgba(79,110,247,.3); }
+    .btn-primary:hover { background: #3d5df5; box-shadow: 0 0 30px rgba(79,110,247,.5); transform: translateY(-1px); }
+    .btn-primary-lg { padding: 14px 30px; font-size: 16px; border-radius: 10px; }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 9px 18px; font-size: 14px; }
+    .btn-ghost:hover { border-color: rgba(255,255,255,.2); color: var(--white); }
+    .nav-toggle { display: none; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 7px 10px; font-size: 18px; cursor: pointer; }
+
+    /* ===== HERO ===== */
+    .hero { padding: 80px 0 60px; text-align: center; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%); width: 700px; height: 600px; background: radial-gradient(circle, rgba(79,110,247,.13) 0%, transparent 70%); pointer-events: none; }
+    .hero-eyebrow { display: inline-flex; align-items: center; gap: 6px; background: rgba(79,110,247,.1); border: 1px solid rgba(79,110,247,.25); border-radius: 20px; padding: 5px 14px; font-size: 13px; font-weight: 500; color: #a5b4fc; margin-bottom: 22px; }
+    .hero h1 { font-family: var(--font-display); font-size: clamp(34px,5.5vw,60px); font-weight: 800; line-height: 1.06; letter-spacing: -1.5px; color: var(--white); max-width: 800px; margin: 0 auto 18px; }
+    .hero h1 .high { color: var(--accent); font-style: italic; }
+    .hero .sub { font-size: 18px; color: var(--muted); max-width: 520px; margin: 0 auto 30px; line-height: 1.65; }
+    .hero-actions { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+    .social-proof { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13.5px; color: var(--muted); margin-bottom: 14px; }
+    .avatars { display: flex; }
+    .avatars .av { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--bg); background: var(--surface2); margin-left: -8px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--accent); }
+    .avatars .av:first-child { margin-left: 0; }
+    .avatars .av-img { width: 30px; height: 30px; min-width: 30px; border-radius: 50%; border: 2px solid var(--bg); margin-left: -8px; object-fit: cover; flex-shrink: 0; }
+    .avatars .av-img:first-child { margin-left: 0; }
+    .social-proof strong { color: var(--white); }
+    .hero-perks { display: flex; align-items: center; justify-content: center; gap: 20px; font-size: 13px; color: var(--muted); margin-bottom: 52px; flex-wrap: wrap; }
+    .hero-perks span { display: flex; align-items: center; gap: 6px; }
+    .hero-perks span::before { content: '✓'; color: var(--green); font-weight: 700; }
+
+    /* ===== ARTICLE PREVIEW MOCKUP ===== */
+    .article-preview-wrap { max-width: 880px; margin: 0 auto; position: relative; }
+    .article-preview-wrap::after { content: ''; position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); width: 70%; height: 80px; background: radial-gradient(ellipse, rgba(79,110,247,.22) 0%, transparent 70%); filter: blur(20px); pointer-events: none; }
+    .browser-frame { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04); }
+    .browser-bar { background: var(--surface2); padding: 10px 14px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--border); }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-r { background: #ff5f57; } .dot-y { background: #febc2e; } .dot-g { background: #28c840; }
+    .browser-url { flex: 1; background: rgba(255,255,255,.04); border-radius: 6px; height: 24px; margin: 0 12px; display: flex; align-items: center; padding: 0 10px; font-size: 11px; color: var(--muted2); }
+    .article-mock { display: grid; grid-template-columns: 220px 1fr; min-height: 480px; }
+    .mock-sidebar { background: rgba(255,255,255,.015); border-right: 1px solid var(--border); padding: 20px 16px; display: flex; flex-direction: column; gap: 4px; }
+    .mock-sidebar .site-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); margin-bottom: 10px; }
+    .mock-sidebar .domain-badge { background: rgba(79,110,247,.12); border: 1px solid rgba(79,110,247,.2); border-radius: 6px; padding: 6px 10px; font-size: 11px; color: #a5b4fc; margin-bottom: 14px; }
+    .toc-item { padding: 5px 8px; border-radius: 5px; font-size: 11.5px; color: var(--muted); cursor: default; transition: all .15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .toc-item:hover { color: var(--white); background: rgba(255,255,255,.04); }
+    .toc-item.active { color: var(--accent); background: rgba(79,110,247,.1); }
+    .toc-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); padding: 8px 8px 4px; margin-top: 6px; }
+    .mock-content { padding: 28px 32px; overflow: hidden; text-align: left; }
+    .mock-content .art-tag { display: inline-block; background: rgba(79,110,247,.1); border: 1px solid rgba(79,110,247,.2); border-radius: 4px; font-size: 10px; font-weight: 700; color: #a5b4fc; padding: 2px 8px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .06em; }
+    .mock-content h2 { font-family: var(--font-display); font-size: 19px; font-weight: 700; color: var(--white); margin-bottom: 14px; line-height: 1.3; }
+    .mock-content .art-badges { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .art-badge { background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+    .art-badge .dot-sm { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+    .mock-content p { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 14px; }
+    .mock-content p strong { color: var(--text); }
+    .mock-content h3 { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--white); margin: 16px 0 8px; }
+    .mock-content ul.art-list { padding-left: 0; display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .mock-content ul.art-list li { font-size: 12.5px; color: var(--muted); display: flex; align-items: flex-start; gap: 8px; }
+    .mock-content ul.art-list li::before { content: '→'; color: var(--accent); flex-shrink: 0; }
+    .mock-content .art-quote { border-left: 2px solid var(--accent); padding: 8px 14px; background: rgba(79,110,247,.06); border-radius: 0 6px 6px 0; font-size: 12.5px; color: var(--text); font-style: italic; margin: 14px 0; line-height: 1.6; }
+    .mock-content table.art-table { width: 100%; border-collapse: collapse; font-size: 11.5px; margin-top: 10px; }
+    .mock-content table.art-table th { background: rgba(79,110,247,.1); color: #a5b4fc; padding: 6px 10px; text-align: left; border: 1px solid rgba(79,110,247,.15); font-weight: 600; }
+    .mock-content table.art-table td { padding: 5px 10px; border: 1px solid var(--border); color: var(--muted); }
+    .mock-content table.art-table tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+    .mock-content .img-placeholder { width: 100%; height: 90px; background: linear-gradient(135deg, var(--surface2), #0d1228); border-radius: 8px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted2); margin: 12px 0; }
+    .mock-content .kw-highlight { background: rgba(79,110,247,.15); border-radius: 3px; padding: 0 3px; color: #a5b4fc; }
+    .mock-content .link-highlight { color: var(--accent); border-bottom: 1px solid rgba(79,110,247,.4); cursor: pointer; }
+    .mockup-badges { display: flex; gap: 8px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+    .m-badge { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    .m-badge .icon { font-size: 14px; }
+    .m-badge strong { color: var(--white); }
+
+    /* ===== SECTIONS SHARED ===== */
+    section { padding: 90px 0; }
+    .section-label { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); margin-bottom: 14px; }
+    .section-title { font-family: var(--font-display); font-size: clamp(26px, 3.8vw, 42px); font-weight: 700; letter-spacing: -.6px; color: var(--white); margin-bottom: 14px; line-height: 1.15; }
+    .section-sub { font-size: 16px; color: var(--muted); line-height: 1.65; max-width: 600px; margin: 0 auto 50px; text-align: center; }
+
+    /* ===== HIGHLIGHTS ===== */
+    .highlights-section { background: linear-gradient(180deg, transparent, var(--surface2) 20%, var(--surface2) 80%, transparent); }
+    .highlights-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .highlight-item { background: var(--surface); padding: 28px 24px; }
+    .highlight-item .h-icon { font-size: 22px; margin-bottom: 12px; }
+    .highlight-item h4 { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--white); margin-bottom: 8px; }
+    .highlight-item p { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+
+    /* ===== TABBED FEATURES ===== */
+    .tabbed-section { padding: 90px 0; }
+    .tabbed-section .section-title { text-align: center; margin-bottom: 10px; }
+    .tabbed-section .section-sub { text-align: center; margin-bottom: 0; }
+    .tabs-wrapper { display: grid; grid-template-columns: 260px 1fr; gap: 32px; margin-top: 40px; align-items: start; }
+    .tabs-nav { display: flex; flex-direction: column; gap: 4px; }
+    .tab-btn { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 10px; cursor: pointer; transition: all .2s; border: 1px solid transparent; background: transparent; text-align: left; width: 100%; }
+    .tab-btn:hover { background: rgba(255,255,255,.03); }
+    .tab-btn.active { background: rgba(79,110,247,.1); border-color: rgba(79,110,247,.25); }
+    .tab-btn .tb-icon { font-size: 18px; flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,.04); display: flex; align-items: center; justify-content: center; }
+    .tab-btn.active .tb-icon { background: rgba(79,110,247,.15); }
+    .tab-btn.active { background: linear-gradient(135deg, rgba(79,110,247,.1) 0%, rgba(79,110,247,.05) 100%); }
+    .tab-btn .tb-text h5 { font-family: var(--font-display); font-size: 13.5px; font-weight: 600; color: var(--text); margin-bottom: 2px; transition: color .2s; }
+    .tab-btn.active .tb-text h5 { color: var(--white); }
+    .tab-btn .tb-text p { font-size: 12px; color: var(--muted); line-height: 1.4; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .tab-img { border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); aspect-ratio: 16/10; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+    .tab-img-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; width: 100%; height: 100%; background: linear-gradient(135deg, var(--surface), var(--surface2)); }
+    .tab-img-inner .ti-icon { font-size: 40px; opacity: .35; }
+    .tab-img-inner .ti-label { font-size: 13px; color: var(--muted2); font-family: var(--font-display); text-align: center; padding: 0 20px; }
+    .tab-img .glow { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at 60% 30%, rgba(79,110,247,.08) 0%, transparent 60%); }
+    .mini-icons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 50px; }
+    .mini-icon-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0; transition: all .2s; overflow: hidden; display: flex; flex-direction: column; }
+    .mini-icon-card:hover { border-color: rgba(79,110,247,.3); transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+    .mini-icon-card .mic-img { width: 100%; height: auto; aspect-ratio: 3/2; object-fit: cover; display: block; }
+    .mini-icon-card .mic-content { padding: 20px 20px; flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
+    .mini-icon-card .mic-icon { font-size: 20px; margin-bottom: 10px; display: none; }
+    .mini-icon-card h5 { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--white); margin: 0 0 8px 0; line-height: 1.3; }
+    .mini-icon-card p { font-size: 13px; color: var(--muted); line-height: 1.6; margin: 0; }
+
+    /* ===== CUSTOM IMAGES ===== */
+    .custom-images-section { padding: 90px 0; }
+    .ci-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    .ci-copy .section-title { text-align: left; }
+    .ci-list { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+    .ci-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; color: var(--muted); line-height: 1.5; }
+    .ci-list li::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .ci-img { border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; box-shadow: 0 20px 60px rgba(0,0,0,.4); overflow: hidden; position: relative; }
+    .ci-img-inner { width: 100%; height: 100%; background: linear-gradient(135deg, var(--surface), var(--surface2)); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+    .ci-img-inner .ci-icon { font-size: 36px; opacity: .35; }
+    .ci-img-inner .ci-label { font-size: 12px; color: var(--muted2); font-family: var(--font-display); text-align: center; }
+    .ci-img .glow { position: absolute; inset: 0; background: radial-gradient(ellipse at 40% 40%, rgba(79,110,247,.07) 0%, transparent 60%); }
+
+    /* ===== HOW IT WORKS ===== */
+    .how-section { padding: 90px 0; background: linear-gradient(180deg, transparent, var(--surface2) 20%, var(--surface2) 80%, transparent); }
+    .how-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; }
+    .step-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0; position: relative; transition: all .2s; overflow: hidden; display: flex; flex-direction: column; }
+    .step-card:hover { border-color: rgba(79,110,247,.3); transform: translateY(-4px); }
+    .step-num { width: 36px; height: 36px; border-radius: 50%; background: rgba(79,110,247,.2); border: 1px solid rgba(79,110,247,.3); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 0; position: absolute; top: 16px; left: 16px; z-index: 10; }
+    .step-img { width: 100%; height: 200px; border-radius: 0; background: transparent; border: none; display: flex; align-items: center; justify-content: center; font-size: 28px; opacity: 1; margin-bottom: 0; overflow: hidden; }
+    .step-img img { width: 100%; height: 100%; object-fit: cover; }
+    .step-content { padding: 24px; flex: 1; display: flex; flex-direction: column; }
+    .step-card h4 { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--white); margin-bottom: 12px; line-height: 1.35; }
+    .step-card p { font-size: 13.5px; color: var(--muted); line-height: 1.65; margin: 0; }
+
+    /* ===== KNOWLEDGE BASE ===== */
+    .kb-section { padding: 90px 0; }
+    .kb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    .kb-copy .section-title { text-align: left; margin-bottom: 16px; }
+    .kb-copy .section-label { margin-bottom: 14px; }
+    .kb-steps { display: flex; flex-direction: column; gap: 0; margin-top: 10px; }
+    .kb-step { display: flex; gap: 18px; padding: 22px 0; border-bottom: 1px solid var(--border); }
+    .kb-step:last-child { border-bottom: none; }
+    .kb-step-num { width: 36px; height: 36px; border-radius: 50%; background: rgba(79,110,247,.12); border: 1px solid rgba(79,110,247,.25); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+    .kb-step h4 { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--white); margin-bottom: 6px; }
+    .kb-step p { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+    .kb-visual { border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); aspect-ratio: 1; display: flex; align-items: center; justify-content: center; box-shadow: 0 20px 60px rgba(0,0,0,.4); overflow: hidden; position: relative; }
+    .kb-visual-inner { width: 100%; height: 100%; background: linear-gradient(135deg, var(--surface), var(--surface2)); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 30px; }
+    .kb-upload-ui { width: 100%; background: rgba(79,110,247,.06); border: 1.5px dashed rgba(79,110,247,.3); border-radius: 12px; padding: 28px 20px; text-align: center; }
+    .kb-upload-ui .ku-icon { font-size: 28px; margin-bottom: 10px; opacity: .6; }
+    .kb-upload-ui h5 { font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
+    .kb-upload-ui p { font-size: 11.5px; color: var(--muted); }
+    .kb-file-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .kb-chip { background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+    .kb-chip .chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+    /* ===== FINAL CTA ===== */
+    .final-cta { padding: 100px 0; text-align: center; position: relative; overflow: hidden; }
+    .final-cta::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 600px; height: 400px; background: radial-gradient(ellipse, rgba(79,110,247,.12) 0%, transparent 70%); pointer-events: none; }
+    .final-cta h2 { font-family: var(--font-display); font-size: clamp(28px,5vw,52px); font-weight: 800; letter-spacing: -1px; color: var(--white); margin-bottom: 14px; }
+    .final-cta p { font-size: 17px; color: var(--muted); margin-bottom: 34px; }
+    .cta-perks { display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 22px; flex-wrap: wrap; }
+    .cta-perk { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    .cta-perk::before { content: '✓'; color: var(--green); font-weight: 700; }
+    .cta-screenshot { max-width: 720px; margin: 52px auto 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+    .cta-mock { width: 100%; height: 300px; background: linear-gradient(135deg,#0d1226,#0a1020); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; }
+    .cta-mock .cm-icon { font-size: 32px; opacity: .3; }
+    .cta-mock .cm-label { font-size: 12px; color: var(--muted2); font-family: var(--font-display); }
+
+    /* ===== FOOTER ===== */
+    .site-footer { border-top: 1px solid var(--border); padding: 60px 0 40px; }
+    .footer-top { display: grid; grid-template-columns: 220px repeat(5,1fr); gap: 40px; margin-bottom: 50px; }
+    .footer-brand .brand { display: block; margin-bottom: 12px; }
+    .footer-brand p { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+    .footer-col h4 { font-family: var(--font-display); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted2); margin-bottom: 14px; }
+    .footer-col a { display: block; font-size: 13.5px; color: var(--muted); margin-bottom: 10px; transition: color .2s; }
+    .footer-col a:hover { color: var(--white); }
+    .footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 24px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
+    .footer-bottom small { font-size: 12.5px; color: var(--muted2); }
+    .footer-legal { display: flex; gap: 16px; }
+    .footer-legal a { font-size: 12.5px; color: var(--muted2); }
+    .footer-legal a:hover { color: var(--muted); }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .fade-up { opacity:0; animation: fadeUp .6s ease forwards; }
+    .fade-up:nth-child(1){animation-delay:.05s}.fade-up:nth-child(2){animation-delay:.15s}.fade-up:nth-child(3){animation-delay:.25s}.fade-up:nth-child(4){animation-delay:.35s}.fade-up:nth-child(5){animation-delay:.45s}
+
+    /* ===== RESPONSIVE ===== */
+    @media(max-width:1024px){
+      .footer-top{grid-template-columns:1fr 1fr 1fr;}
+      .footer-brand{grid-column:1/-1;}
+      .tabs-wrapper{grid-template-columns:1fr;}
+      .mini-icons{grid-template-columns:repeat(2,1fr);}
+    }
+    @media(max-width:860px){
+      .main-nav{display:none;}
+      .nav-toggle{display:flex;}
+      .article-mock{grid-template-columns:1fr;}
+      .mock-sidebar{display:none;}
+      .highlights-grid{grid-template-columns:repeat(2,1fr);}
+      .ci-grid,.kb-grid{grid-template-columns:1fr;}
+      .footer-top{grid-template-columns:1fr 1fr;}
+      .footer-brand{grid-column:1/-1;}
+    }
+    @media(max-width:600px){
+      .highlights-grid{grid-template-columns:1fr;}
+      .how-grid{grid-template-columns:1fr;}
+      .mini-icons{grid-template-columns:1fr 1fr;}
+      .hero h1{font-size:30px;}
+    }
+    .main-nav.open{display:flex!important;flex-direction:column;position:fixed;top:62px;left:0;right:0;background:rgba(8,9,13,.97);backdrop-filter:blur(12px);padding:20px;border-bottom:1px solid var(--border);gap:4px;z-index:39;}
+    .main-nav.open .dropdown{display:none!important;}`;
+
+const html = `<main>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-eyebrow fade-up">✍️ &nbsp;AI Content Writer</div>
+      <h1 class="fade-up">The AI Writer <span class="high">Tailored for SEO</span><br>that ranks you #1</h1>
+      <p class="sub fade-up">The best AI SEO content writer that actually works — rank-ready articles in 30 seconds, in your brand voice.</p>
+      <div class="hero-actions fade-up">
+        <a class="btn btn-primary btn-primary-lg" href="/register">Start today</a>
+      </div>
+      <div class="social-proof fade-up">
+        <div class="avatars">
+          <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" /><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" alt="User avatar" class="av-img" loading="lazy" />
+        </div>
+        Trusted by marketers &amp; agencies worldwide
+      </div>
+      <div class="hero-perks fade-up">
+        <span>"Ready to rank"</span>
+        <span>Articles in 30 secs</span>
+        <span>Plagiarism Free</span>
+      </div>
+
+      <div class="article-preview-wrap fade-up">
+        <div class="browser-frame">
+          <div class="browser-bar">
+            <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+            <div class="browser-url">infin8content.com/editor — The Future of AI Content Marketing</div>
+          </div>
+          <div class="article-mock">
+            <div class="mock-sidebar">
+              <div class="site-label">Your Blog</div>
+              <div class="domain-badge">📝 &nbsp;yourwebsite.com</div>
+              <div class="toc-label">Table of Contents</div>
+              <div class="toc-item active">Key Highlights</div>
+              <div class="toc-item">The Content Revolution</div>
+              <div class="toc-item">AI Writer Features</div>
+              <div class="toc-item">Brand Voice Training</div>
+              <div class="toc-item">Publishing Workflow</div>
+              <div class="toc-item">Technical Specs</div>
+              <div class="toc-item">SEO Optimization</div>
+              <div class="toc-item">Case Studies</div>
+              <div class="toc-item">FAQ</div>
+            </div>
+            <div class="mock-content">
+              <div class="art-tag">AI-Generated · SEO Optimized</div>
+              <h2>How AI Content Marketing is Transforming Modern SEO Strategy</h2>
+              <div class="art-badges">
+                <span class="art-badge"><span class="dot-sm"></span> Published</span>
+                <span class="art-badge">🌍 English</span>
+                <span class="art-badge">📊 SEO Score: 94/100</span>
+                <span class="art-badge">⏱ 2,400 words</span>
+              </div>
+              <h3>Key Highlights</h3>
+              <ul class="art-list">
+                <li>AI-powered content creation reduces publishing time by <span class="kw-highlight">80%</span> without sacrificing quality</li>
+                <li>Brand voice training ensures every article sounds authentically human, not robotic</li>
+                <li>One-click publish to <span class="link-highlight">WordPress, Shopify, Ghost</span>, and 10+ other platforms</li>
+                <li>Built-in internal &amp; external linking boosts domain authority automatically</li>
+              </ul>
+              <p>The shift to <span class="kw-highlight">AI-powered content workflows</span> is no longer optional for competitive marketers. Teams using Infin8Content report publishing <strong>10x more content</strong> with the same headcount — while simultaneously improving quality scores and organic rankings.</p>
+              <div class="art-quote">"Infin8Content cut our time-to-publish by 80% and our organic traffic has tripled in 60 days." — Head of Content, Nova Media</div>
+              <div class="img-placeholder">📸 &nbsp;In-article image — auto-generated with article context</div>
+              <h3>Technical Comparison</h3>
+              <table class="art-table">
+                <tr><th>Metric</th><th>Before AI</th><th>With Infin8Content</th></tr>
+                <tr><td>Articles/week</td><td>4</td><td>40+</td></tr>
+                <tr><td>Avg. publish time</td><td>3 days</td><td>30 minutes</td></tr>
+                <tr><td>SEO score avg.</td><td>62/100</td><td>91/100</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="mockup-badges">
+          <div class="m-badge"><span class="icon">🔗</span> <strong>Internal linking</strong></div>
+          <div class="m-badge"><span class="icon">🖼️</span> <strong>Auto images</strong></div>
+          <div class="m-badge"><span class="icon">📺</span> <strong>Embedded videos</strong></div>
+          <div class="m-badge"><span class="icon">🌍</span> <strong>150+ languages</strong></div>
+          <div class="m-badge"><span class="icon">✅</span> <strong>Google compliant</strong></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HIGHLIGHTS -->
+  <section class="highlights-section" style="padding:70px 0;">
+    <div class="container">
+      <p class="section-label" style="justify-content:center;margin-bottom:36px;">✦ &nbsp;Feature-Rich, Factual &amp; SEO-Optimized Articles</p>
+      <div class="highlights-grid">
+        <div class="highlight-item">
+          <div class="h-icon">✅</div>
+          <h4>Google Compliant</h4>
+          <p>Equivalent to an expert writer — informed articles that follow Google's E-E-A-T guidelines and rank fast.</p>
+        </div>
+        <div class="highlight-item">
+          <div class="h-icon">🖼️</div>
+          <h4>Relevant Images, Videos &amp; Links</h4>
+          <p>All articles include a featured image, in-article images, YouTube embeds, and internal &amp; external links.</p>
+        </div>
+        <div class="highlight-item">
+          <div class="h-icon">📐</div>
+          <h4>Extensive Formatting</h4>
+          <p>Properly formatted with all key HTML elements: H2s, H3s, paragraphs, lists, tables, and blockquotes.</p>
+        </div>
+        <div class="highlight-item">
+          <div class="h-icon">📋</div>
+          <h4>Table of Contents</h4>
+          <p>Every article includes a structured outline that follows a natural flow to maximize engagement and read time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TABBED FEATURES -->
+  <section class="tabbed-section">
+    <div class="container">
+      <p class="section-label" style="justify-content:center;">⚡ &nbsp;The AI Content Writer Features</p>
+      <h2 class="section-title">The AI Writer That's<br>Tailored for SEO</h2>
+
+      <div class="tabs-wrapper">
+        <div class="tabs-nav">
+          <button class="tab-btn active" onclick="switchTab(this,'tab-formatting')">
+            <div class="tb-icon">📐</div>
+            <div class="tb-text"><h5>Extensive Formatting</h5><p>H2s, H3s, paragraphs, lists, tables</p></div>
+          </button>
+          <button class="tab-btn" onclick="switchTab(this,'tab-images')">
+            <div class="tb-icon">🖼️</div>
+            <div class="tb-text"><h5>Relevant Images</h5><p>Featured + in-article images auto-generated</p></div>
+          </button>
+          <button class="tab-btn" onclick="switchTab(this,'tab-videos')">
+            <div class="tb-icon">📺</div>
+            <div class="tb-text"><h5>Relevant Videos</h5><p>YouTube videos embedded contextually</p></div>
+          </button>
+          <button class="tab-btn" onclick="switchTab(this,'tab-links')">
+            <div class="tb-icon">🔗</div>
+            <div class="tb-text"><h5>Relevant Links</h5><p>Internal &amp; external links auto-inserted</p></div>
+          </button>
+          <button class="tab-btn" onclick="switchTab(this,'tab-toc')">
+            <div class="tb-icon">📋</div>
+            <div class="tb-text"><h5>Table of Contents</h5><p>Thoughtful outline for every article</p></div>
+          </button>
+        </div>
+        <div>
+          <div class="tab-panel active" id="tab-formatting">
+            <div class="tab-img"><img src="/images/The-Al-SEO-Writer-Features-Extensive-Formatting.webp" alt="Extensive Formatting" style="width:100%;height:100%;object-fit:cover;"/><div class="glow"></div></div>
+          </div>
+          <div class="tab-panel" id="tab-images">
+            <div class="tab-img"><img src="/images/The-Al-SEO-Writer-Features-Relevant-Images.webp" alt="Relevant Images" style="width:100%;height:100%;object-fit:cover;"/><div class="glow"></div></div>
+          </div>
+          <div class="tab-panel" id="tab-videos">
+            <div class="tab-img"><img src="/images/The-Al-SEO-Writer-Features-Relevant-Videos.png" alt="Relevant Videos" style="width:100%;height:100%;object-fit:cover;"/><div class="glow"></div></div>
+          </div>
+          <div class="tab-panel" id="tab-links">
+            <div class="tab-img"><img src="/images/The-Al-SEO-Writer-Features-Relevant-Links.webp" alt="Relevant Links" style="width:100%;height:100%;object-fit:cover;"/><div class="glow"></div></div>
+          </div>
+          <div class="tab-panel" id="tab-toc">
+            <div class="tab-img"><img src="/images/The-Al-SEO-Writer-Features-Table-of-Contents.webp" alt="Table of Contents" style="width:100%;height:100%;object-fit:cover;"/><div class="glow"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mini-icons">
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-Content.webp" alt="Content" class="mic-img"/><div class="mic-content"><h5>Content</h5><p>Well-crafted content in seconds with the power of AI and your brand knowledge</p></div></div>
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-Knowledge.webp" alt="Knowledge" class="mic-img"/><div class="mic-content"><h5>Knowledge</h5><p>Brand-tailored, with your own tone of voice — without sounding AI-generated</p></div></div>
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-Formatting.webp" alt="Formatting" class="mic-img"/><div class="mic-content"><h5>Formatting</h5><p>Multiple formatting tools to facilitate editing and ensure a professional output</p></div></div>
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-Images.webp" alt="Images" class="mic-img"/><div class="mic-content"><h5>Images</h5><p>In-article images to increase relevancy, visual appeal, and reader UX</p></div></div>
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-Videos.png" alt="Videos" class="mic-img"/><div class="mic-content"><h5>Videos</h5><p>Relevant in-article videos automatically embedded into your content</p></div></div>
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-Internal-Linking.webp" alt="Internal Linking" class="mic-img"/><div class="mic-content"><h5>Internal Linking</h5><p>Automatically links internally to other relevant pages on your site</p></div></div>
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-External-Linking.webp" alt="External Linking" class="mic-img"/><div class="mic-content"><h5>External Linking</h5><p>Automatically builds credibility with links to authoritative external sources</p></div></div>
+        <div class="mini-icon-card"><img src="/images/The-AI-Writer-Thats-Tailored-for-SEO-Structure.webp" alt="Structure" class="mic-img"/><div class="mic-content"><h5>Structure</h5><p>Fully customizable article structure — templates, CTAs, FAQs, and more</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CUSTOM IMAGES -->
+  <section class="custom-images-section">
+    <div class="container">
+      <div class="ci-grid">
+        <div class="ci-copy">
+          <div class="section-label">🎨 &nbsp;AI Image Generation</div>
+          <h2 class="section-title">Get creative with your blog<br>using <span style="color:var(--accent)">Custom Images</span></h2>
+          <p style="color:var(--muted);font-size:15px;line-height:1.65;margin-bottom:20px;">Use AI to generate custom, on-brand images for your content. Iterate as many times as you need until you're satisfied — no design tool required.</p>
+          <ul class="ci-list">
+            <li>Unlimited generations and regenerations per article</li>
+            <li>Images are generated with full article context for relevance</li>
+            <li>Regenerate specific images easily with custom prompts</li>
+          </ul>
+        </div>
+        <div class="ci-img">
+          <img src="/images/Edit-New-Existing-Content-AI-SEO-Editor.webp" alt="AI Image Generation" style="width:100%;height:100%;object-fit:cover;"/>
+          <div class="glow"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how-section">
+    <div class="container">
+      <p class="section-label" style="justify-content:center;">🔧 &nbsp;How It Works</p>
+      <h2 class="section-title" style="text-align:center;">How our AI writer works</h2>
+      <p class="section-sub">Input information about your business or product, and let Infin8Content do the rest — from brief to published post.</p>
+      <div class="how-grid">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-img"><img src="/images/How-our-AI-writer-works-Generate-Articles-from-Titles-Keywords-Description.png" alt="Generate Articles" /></div>
+          <div class="step-content">
+            <h4>Generate Articles from Titles, Keywords or a Description</h4>
+            <p>Generate articles based on keywords you want to rank for, or just describe your business &amp; niche. You can input specific titles, or let AI suggest the best ones.</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-img"><img src="/images/How-our-AI-writer-works-Customize-the-Outline-Add-CTA.webp" alt="Customize Outline" /></div>
+          <div class="step-content">
+            <h4>Customize the Outline &amp; Add a CTA</h4>
+            <p>Set article length and take full control of the headings. Add headings manually and let AI generate the rest contextually. Add CTAs, Key Takeaways, FAQs, and custom sections.</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-img"><img src="/images/How-our-AI-writer-works-Language-Tonality-Geo-Targeting.webp" alt="Language & Tonality" /></div>
+          <div class="step-content">
+            <h4>Language, Tonality &amp; Geo-Targeting</h4>
+            <p>Write content in 150+ languages. Choose formality, point of view, and tonality — from factual to creative. Apply geo-targeting for location-specific content.</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <div class="step-img"><img src="/images/How-our-AI-writer-works-Generate-Publish-Multiple-Articles-Once.webp" alt="Publish Articles" /></div>
+          <div class="step-content">
+            <h4>Generate &amp; Publish Multiple Articles at Once</h4>
+            <p>Choose how many articles to generate in a single run. Download them as a zip file or publish in one click directly to your website or CMS.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KNOWLEDGE BASE -->
+  <section class="kb-section">
+    <div class="container">
+      <div class="kb-grid">
+        <div class="kb-copy">
+          <div class="section-label">📚 &nbsp;Knowledge Base</div>
+          <h2 class="section-title">Upload your own<br>Knowledge Base</h2>
+          <p style="color:var(--muted);font-size:15px;line-height:1.65;margin-bottom:24px;">Get articles that reflect deep, in-depth knowledge about your specific business — not generic AI-sounding fluff.</p>
+          <div class="kb-steps">
+            <div class="kb-step">
+              <div class="kb-step-num">1</div>
+              <div><h4>Upload Assets</h4><p>Upload your website, videos, text documents, product docs, or any available business information. We'll analyse everything.</p></div>
+            </div>
+            <div class="kb-step">
+              <div class="kb-step-num">2</div>
+              <div><h4>Learning Phase</h4><p>Our AI enters a learning phase, loading your assets and refining its understanding of your brand voice, expertise, and context.</p></div>
+            </div>
+            <div class="kb-step">
+              <div class="kb-step-num">3</div>
+              <div><h4>Tailored Articles</h4><p>Generate articles that reflect your business's unique knowledge and context — content that sounds like you wrote it, not an AI.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="kb-visual">
+          <div class="kb-visual-inner">
+            <div class="kb-upload-ui">
+              <div class="ku-icon">☁️</div>
+              <h5>Upload Your Knowledge Base</h5>
+              <p>Drag &amp; drop your files, paste a URL, or connect your CMS</p>
+            </div>
+            <div class="kb-file-chips">
+              <div class="kb-chip"><span class="chip-dot"></span> Website scanned</div>
+              <div class="kb-chip"><span class="chip-dot"></span> 3 PDFs uploaded</div>
+              <div class="kb-chip"><span class="chip-dot"></span> Brand voice set</div>
+              <div class="kb-chip"><span class="chip-dot"></span> 12 videos indexed</div>
+            </div>
+            <div style="width:100%;background:rgba(79,110,247,.08);border:1px solid rgba(79,110,247,.2);border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:10px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 8px var(--green);"></div>
+              <span style="font-size:12.5px;color:var(--text);">Knowledge base ready — generating tailored articles…</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta">
+    <div class="container">
+      <h2>Scale more content.<br>Do less work.</h2>
+      <p>Get started and see why agencies trust Infin8Content.</p>
+      <a class="btn btn-primary btn-primary-lg" href="/register">Start today</a>
+      <div class="cta-perks">
+        <span class="cta-perk">Cancel anytime</span>
+        <span class="cta-perk">Articles in 30 secs</span>
+        <span class="cta-perk">Plagiarism free</span>
+      </div>
+      <div class="cta-screenshot">
+        <img src="/images/Scale-more-content-Do-less-work.png" alt="Platform preview" style="width:100%;height:auto;"/>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  let currentTabIndex = 0;
+  const tabIds = ['tab-formatting', 'tab-images', 'tab-videos', 'tab-links', 'tab-toc'];
+  let autoScrollTimer = null;
+
+  function switchTab(button, tabId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+    button.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+
+    currentTabIndex = tabIds.indexOf(tabId);
+    resetAutoScroll();
+  }
+
+  function autoSwitchTab() {
+    currentTabIndex = (currentTabIndex + 1) % tabIds.length;
+    const nextTabId = tabIds[currentTabIndex];
+    const buttons = document.querySelectorAll('.tab-btn');
+    switchTab(buttons[currentTabIndex], nextTabId);
+  }
+
+  function resetAutoScroll() {
+    if (autoScrollTimer) clearInterval(autoScrollTimer);
+    autoScrollTimer = setInterval(autoSwitchTab, 10000);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', resetAutoScroll);
+  } else {
+    resetAutoScroll();
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (autoScrollTimer) clearInterval(autoScrollTimer);
+    } else {
+      resetAutoScroll();
+    }
+  });
+</script>`;
+
+export default function AIContentWriterPage() {
+  return <MarketingPageBody css={css} html={html} />;
+}

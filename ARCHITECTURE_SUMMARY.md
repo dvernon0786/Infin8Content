@@ -190,3 +190,18 @@ types/
 *Architecture Evolution Complete: February 14, 2026*  
 *Status: Production-Solid with Enterprise Safety Guarantees* ✅  
 *Next Step: Deploy and Focus on Product Features* 🚀
+
+---
+
+## Addendum — 2026-04-16: Onboarding & Feature Discovery
+
+- **DB additions:** `organizations` extended with `onboarding_checklist_state` (JSONB) and `onboarding_tour_shown` (BOOLEAN)
+- **New tables / migrations:** `feature_announcements` (+ `announcement_reads`) and `user_feedback` (with RLS policies)
+- **Feature flags added:** `ENABLE_GUIDED_TOURS`, `ENABLE_FEATURE_ANNOUNCEMENTS`, `ENABLE_FEEDBACK_WIDGET`
+- **Services:** onboarding success tracker and onboarding email functions (Brevo) with Inngest sequence registered
+- **Safety:** Additive schema changes; RLS and feature flags enforce safe rollout and rollback
+
+### 2026-04-20: Feature-Flag Performance Improvement
+
+- Implemented short in-memory caching for feature flag lookups and a batch-fetch API (`getFeatureFlagsForOrg`) to reduce round-trips during server-rendered pages (dashboard). Missing flags still default to enabled; logging for absent flags lowered to `info` to avoid excessive warnings. See branch `test-main-all` (commit `58ac8eab`).
+

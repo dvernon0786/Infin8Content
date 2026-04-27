@@ -1,9 +1,14 @@
 import { createServiceRoleClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/supabase/get-current-user"
-import Link from "next/link"
 import { redirect } from "next/navigation"
-import { WorkflowDashboard } from "@/components/dashboard/workflow-dashboard/WorkflowDashboard"
 import { TrialChecklist } from "@/components/dashboard/trial-checklist"
+import { WorkflowDashboard } from "@/components/dashboard/workflow-dashboard/WorkflowDashboard"
+import { ActiveServicesCard } from "@/components/dashboard/active-services-card"
+import { GenerateArticlesCard } from "@/components/dashboard/generate-articles-card"
+import { ContentActivityChart } from "@/components/dashboard/content-activity-chart"
+import { calculateSummary } from "@/lib/services/intent-engine/workflow-dashboard-service"
+import type { DashboardArticle } from "@/lib/types/dashboard.types"
+import type { WorkflowDashboardItem } from "@/lib/services/intent-engine/workflow-dashboard-service"
 
 export default async function DashboardPage() {
   const user = await getCurrentUser()
@@ -14,79 +19,110 @@ export default async function DashboardPage() {
 
   const supabase = createServiceRoleClient()
 
-  const { data: workflows } = await supabase
-    .from("intent_workflows")
-    .select("id")
-    .eq("organization_id", user.org_id)
-
-  if (!workflows || workflows.length === 0) {
-    const isTrial = (user.organizations?.plan || user.organizations?.plan_type)?.toLowerCase() === 'trial'
-
-    if (isTrial) {
-      return (
-        <div className="space-y-6 mx-auto max-w-xl py-20">
-          <TrialChecklist hasWorkflow={false} hasCompletedArticle={false} />
-          <div className="text-center">
-            <h1 className="text-2xl font-semibold">Your $1 trial is active ✨</h1>
-            <p className="mt-2 text-muted-foreground">
-              Experience the power of Infin8Content. You can generate one complete, full-length article during your trial to see the quality of our AI engine.
-            </p>
-            <Link
-              href="/dashboard/workflows/new"
-              className="inline-block mt-6 rounded-md bg-primary px-6 py-3 text-white"
-            >
-              Generate your first article
-            </Link>
-          </div>
-        </div>
-      )
-    }
-
-    return (
-      <div className="mx-auto max-w-xl py-20 text-center">
-        <h1 className="text-2xl font-semibold">You're all set 🎉</h1>
-        <p className="mt-2 text-muted-foreground">
-          Your workspace is ready. Create your first workflow to start generating content automatically.
-        </p>
-        <Link
-          href="/dashboard/workflows/new"
-          className="inline-block mt-6 rounded-md bg-primary px-6 py-3 text-white"
-        >
-          Create your first workflow
-        </Link>
-      </div>
-    )
-  }
+  // Fetch workflows and articles in parallel
+  const [{ data: workflows }, { data: rawArticles }] = await Promise.all([
+    supabase
+      .from("intent_workflows")
+      .select("id, name, state, progress_percentage, created_at, updated_at, created_by, estimated_completion")
+      .eq("organization_id", user.org_id),
+    supabase
+      .from("articles")
+      .select("id, keyword, title, status, created_at, updated_at, scheduled_at, publish_at")
+      .eq("org_id", user.org_id)
+      .order("created_at", { ascending: false })
+      .limit(500),
+  ])
 
   const isTrial = (user.organizations?.plan || user.organizations?.plan_type)?.toLowerCase() === 'trial'
 
-  let hasWorkflow = false
-  let hasCompletedArticle = false
+  // Show the dashboard UI regardless of whether workflows exist.
+  // TrialChecklist will render as a collapsible banner when appropriate.
+  const hasWorkflow = (workflows ?? []).length > 0
+  const hasCompletedArticle = (rawArticles ?? []).some((a) => a.status === 'completed')
 
-  if (isTrial) {
-    // workflows is already fetched above — no extra query needed
-    hasWorkflow = (workflows?.length ?? 0) > 0
+  // (flags computed above) TrialChecklist will receive `hasWorkflow` and `hasCompletedArticle`.
 
-    // Only one extra query needed instead of two
-    // Optimized check: Exit as soon as we find 1 completed article instead of full count
-    const { data: completedArticles } = await supabase
-      .from('articles')
-      .select('id')
-      .eq('org_id', user.org_id)
-      .eq('status', 'completed')
-      .limit(1)
+  // ----- Summary for ActiveServicesCard -----
+  // Build lightweight WorkflowDashboardItem list (only fields calculateSummary needs)
+  const workflowItems: WorkflowDashboardItem[] = (workflows ?? []).map((w) => ({
+    id: w.id,
+    name: w.name ?? "",
+    state: w.state,
+    progress_percentage: w.progress_percentage ?? 0,
+    created_at: w.created_at,
+    updated_at: w.updated_at,
+    created_by: w.created_by ?? "",
+    estimated_completion: w.estimated_completion ?? undefined,
+    keywords: 0,
+    articles: 0,
+    display_updated_at: w.updated_at,
+    display_created_at: w.created_at,
+  }))
+  const summary = calculateSummary(workflowItems)
 
-    hasCompletedArticle = (completedArticles?.length ?? 0) > 0
-  }
+  // ----- Stat card calculations -----
+  const articles: DashboardArticle[] = (rawArticles ?? []) as DashboardArticle[]
+  const thisMonth = new Date()
+  thisMonth.setDate(1)
+  thisMonth.setHours(0, 0, 0, 0)
+
+  const generatedThisMonth = articles.filter((a) => new Date(a.created_at) >= thisMonth).length
+  const publishedTotal = articles.filter((a) => !!a.publish_at).length
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-5">
+      {/* Onboarding checklist (collapses to slim bar by default — TrialChecklist handles its own state) */}
       {isTrial && (
         <TrialChecklist
           hasWorkflow={hasWorkflow}
           hasCompletedArticle={hasCompletedArticle}
         />
       )}
+
+      {/* Page header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="font-poppins text-h2-desktop font-bold text-neutral-900 dashboard-header-title">Overview</h1>
+          <p className="mt-1 font-lato text-body text-neutral-600">Your content engine at a glance</p>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-neutral-800 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white whitespace-nowrap dashboard-watch-btn">
+          <div className="dashboard-watch-icon">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </div>
+          Watch Video Tutorial
+        </div>
+      </div>
+
+      {/* Row 1: Active Services | Generate Articles */}
+      <div className="dashboard-grid">
+        <ActiveServicesCard summary={summary} />
+        <GenerateArticlesCard />
+      </div>
+
+      {/* Row 2: Stat cards | Content Activity Chart */}
+      <div className="dashboard-grid">
+        {/* Two stacked stat cards */}
+        <div className="flex flex-col gap-2.5" data-tour="stat-cards">
+          {/* Stat: Generated */}
+          <div className="stat-card">
+            <div className="text-lg mb-1.5">📄</div>
+            <div className="font-lato text-small text-neutral-600 mb-1">Generated — Articles created this month</div>
+            <div className="font-poppins text-h3-desktop font-bold text-neutral-900">{generatedThisMonth}</div>
+          </div>
+
+          {/* Stat: Published */}
+          <div className="stat-card">
+            <div className="text-lg mb-1.5">✅</div>
+            <div className="font-lato text-small text-neutral-600 mb-1">Published — Live on your sites</div>
+            <div className="font-poppins text-h3-desktop font-bold text-neutral-900">{publishedTotal}</div>
+          </div>
+        </div>
+
+        {/* Content Activity Chart */}
+        <ContentActivityChart articles={articles} />
+      </div>
+
+      {/* Existing workflow dashboard (full width below) */}
       <WorkflowDashboard orgId={user.org_id} />
     </div>
   )
